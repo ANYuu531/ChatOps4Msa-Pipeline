@@ -1,0 +1,82 @@
+info:
+  version: 1.0.0
+  title: pipeline
+  description: Use an LLM to generate a pipeline.
+
+low_code:
+  operation:
+    - name: get-pipeline-pipeline_suggestion
+      parameter:
+        structure: Project directory structure or GutHub URL
+        dockerfile: Dockerfile
+        process: CI/CD process(like test->bulid->deploy)
+      description: |
+        Use an LLM to generate a pipeline.
+      access: public # all users can execute the operation
+      body:
+        - toolkit-string-pattern:
+            string: ${structure}
+            regex: ^https:\/\/github\.com\/[^\/]+\/[^\/]+$
+            assign: is_github_url
+        - toolkit-flow-if:
+            condition: ${is_github_url}
+            true:
+              - toolkit-string-split:
+                  string: ${structure}
+                  separator: /
+              - toolkit-list-get:
+                  list: ${toolkit-string-split}
+                  index: 3
+                  assign: username
+              - toolkit-list-get:
+                  list: ${toolkit-string-split}
+                  index: 4
+                  assign: repository
+              - toolkit-restapi-get:
+                  url: https://api.github.com/repos/${username}/${repository}/git/trees/main?recursive=1
+                  assign: tree
+              - toolkit-llm-call:
+                  prompt: |
+                    專案目錄結構如下:
+                    ${tree}
+                    Dockerfile如下:
+                    ${dockerfile}
+                    想執行的流程如下:
+                    ${process}
+                  prompt_template: cicd_pipeline
+                  assign: response
+              - toolkit-discord-text: # return to Discord
+                  text: |
+                    ${response}
+                  assign: pipeline
+            false:
+              - toolkit-llm-call:
+                  prompt: |
+                    專案目錄結構如下:
+                    ${structure}
+                    Dockerfile如下:
+                    ${dockerfile}
+                    想執行的流程如下:
+                    ${process}
+                  prompt_template: cicd_pipeline
+                  assign: response
+              - toolkit-discord-text: # return to Discord
+                  text: |
+                    ${response}
+                  assign: pipeline
+
+    - name: get-pipeline-pipeline_modifications
+      parameter:
+        text: text
+      description: |
+        Use an LLM to modify a pipeline.
+      access: public
+      body:
+        - toolkit-llm-call:
+            prompt: ${text}
+            prompt_template: none
+            assign: response
+        - toolkit-discord-text: # return to Discord
+             text: |
+                ${response}
+             assign: pipeline
