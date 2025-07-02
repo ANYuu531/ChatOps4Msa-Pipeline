@@ -37,7 +37,7 @@ public class SlashCommandListener extends ListenerAdapter {
 
         System.out.println(">>> trigger slash command event");
 
-        event.reply("got it\n").queue();
+        event.reply("got it, processing...\n").queue();
 
         // print time
         System.out.println("[Time] " + new Date());

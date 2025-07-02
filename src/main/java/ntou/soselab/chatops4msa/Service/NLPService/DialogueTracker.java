@@ -53,7 +53,7 @@ public class DialogueTracker {
 
         if (llmService.isPromptInjection(message)) {
             System.out.println("[WARNING] Prompt Injection");
-            return mb.setContent("Sorry, the message you entered is beyond the scope of the capability.\n").build();
+            return mb.setContent("Sorry, the message you entered is beyond the scope of the capability.\nYou may try rephrasing your request with a clearer intention, such as mentioning keywords like pipeline, argo workflow, or specific actions you want to perform.\n").build();
         }
 
         if (llmService.isEndOfTopic(message)) {

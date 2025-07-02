@@ -43,7 +43,7 @@ public class ButtonListener extends ListenerAdapter {
         System.out.println(">>> trigger button interaction event");
 
         System.out.println("[TIME] " + new Date());
-
+        event.deferReply().queue();
         User tester = event.getUser();
         String testerId = tester.getId();
         String testerName = tester.getName();
@@ -97,7 +97,9 @@ public class ButtonListener extends ListenerAdapter {
         if (dialogueTracker.isWaitingTester(testerId)) {
             dialogueTracker.removeWaitingTesterList(testerId);
             String question = dialogueTracker.generateQuestionString(testerId);
-            event.reply("got it\n" + buttonId + " `" + intentNameList + "`\n\n" + question).queue();
+            //event.reply("got it\n" + buttonId + " `" + intentNameList + "`\n\n" + question).queue();
+            event.getHook().editOriginal("got it\n" + buttonId + " `" + intentNameList + "`\n\n" + question).queue();
+
             System.out.println("[DEBUG] generate question to " + testerName);
         }
 

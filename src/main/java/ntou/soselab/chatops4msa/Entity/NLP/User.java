@@ -74,7 +74,7 @@ public class User {
             // out of scope
             if ("out_of_scope".equals(intentName) || "".equals(intentName)) {
                 System.out.println("[DEBUG] OUT OF SCOPE");
-                return "Sorry, the message you entered is beyond the scope of the capability.\n";
+                return "Sorry, the message you entered is beyond the scope of the capability.\nYou may try rephrasing your request with a clearer intention, such as mentioning keywords like pipeline, argo workflow, or specific actions you want to perform.\n";
             }
 
             // only entity
