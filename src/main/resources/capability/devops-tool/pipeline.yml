@@ -14,6 +14,8 @@ low_code:
         Use an LLM to generate a pipeline.
       access: public # all users can execute the operation
       body:
+        - toolkit-k8s-resource:
+            assign: k8s_resource
         - toolkit-string-pattern:
             string: ${structure}
             regex: ^https:\/\/github\.com\/[^\/]+\/[^\/]+$
@@ -37,6 +39,8 @@ low_code:
                   assign: tree
               - toolkit-llm-call:
                   prompt: |
+                    K8s資源如下:
+                    ${k8s_resource}
                     專案目錄結構如下:
                     ${tree}
                     Dockerfile如下:
@@ -52,6 +56,8 @@ low_code:
             false:
               - toolkit-llm-call:
                   prompt: |
+                    K8s資源如下:
+                    ${k8s_resource}
                     專案目錄結構如下:
                     ${structure}
                     Dockerfile如下:

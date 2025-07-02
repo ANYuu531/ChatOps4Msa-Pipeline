@@ -2,6 +2,7 @@
 請依照以下規則進行分析與產出：
 一、分析專案
 我將提供以下資訊，請你依此推論整體流程：
+- Kubernetes的資源配置
 - 專案的目錄結構
 - 關鍵檔案內容（Dockerfile）
 - 想執行的自動化流程（例如：測試 → 建置 → 部署）
@@ -14,7 +15,12 @@
 5. 每個 template 明確定義 inputs、outputs、container 或 script。
 6. 使用合理的容器（如 alpine/git、python:3.9、kaniko 等）。
 7. 儘量使用 Argo 支援的變數格式，如 {{workflow.parameters.repo-url}}、{{inputs.parameters.message}}。
-8. 確保生成出的yaml檔符合縮排與語法規範。
+8. 根據提供的 Kubernetes 可用資源總量（如 6 核心、12Gi 記憶體），推估合理的每步資源配置。請讓每個步驟的 `resources.requests` 與 `resources.limits` 保持在不會超過總量的範圍，並考慮每步驟的負載特性：
+   - `git-clone`: 通常為輕量操作，建議配置 0.25–0.5 CPU / 256–512Mi memory。
+   - `run-tests`: 中度負載，建議配置 0.5–1 CPU / 512Mi–1Gi memory。
+   - `build-image`: 負載偏高，建議配置 1–2 CPU / 1–2Gi memory，但仍須低於總量上限。
+   - 若輸入中有多個節點，請平均分配資源負載，避免單一 Pod 超載。
+9. 確保生成出的yaml檔符合縮排與語法規範。
 請僅輸出 YAML 內容與必要的註解（例如 template 說明、步驟目的等），**不要額外解釋或回覆任何說明性文字**，也不要用 markdown 語法包住 YAML。
 
 三、範例格式（請參考下列範例生成）：

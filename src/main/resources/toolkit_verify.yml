@@ -108,3 +108,5 @@ toolkit-argo-workflow_detail:
 toolkit-llm-call:
   - prompt
   - prompt_template
+toolkit-k8s-resource:
+  []
