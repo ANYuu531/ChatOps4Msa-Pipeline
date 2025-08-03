@@ -6,26 +6,26 @@ info:
 
 service:
   - name: productpage
-    url: http://192.168.100.223:9080
-    repository: https://github.com/RogerNaN/ChatOps4Msa-Sample-Bookinfo-Productpage
+    url: http://192.168.101.4:9080
+    repository: https://github.com/ANYuu531/ChatOps4Msa-Sample-Bookinfo-Productpage
     description: This is the product page microservice.
     scan_run_id: 7036556039
 
   - name: reviews
-    url: http://192.168.100.223:9083
-    repository: https://github.com/RogerNaN/ChatOps4Msa-Sample-Bookinfo-Reviews
+    url: http://192.168.101.4:9083
+    repository: https://github.com/ANYuu531/ChatOps4Msa-Sample-Bookinfo-Reviews
     description: This is the reviews microservice.
     scan_run_id: 7035913677
 
   - name: details
-    url: http://192.168.100.223:9081
-    repository: https://github.com/RogerNaN/ChatOps4Msa-Sample-Bookinfo-Details
+    url: http://192.168.101.4:9081
+    repository: https://github.com/ANYuu531/ChatOps4Msa-Sample-Bookinfo-Details
     description: This is the details microservice.
     scan_run_id: 7036397689
 
   - name: ratings
-    url: http://192.168.100.223:9082
-    repository: https://github.com/RogerNaN/ChatOps4Msa-Sample-Bookinfo-Ratings
+    url: http://192.168.101.4:9082
+    repository: https://github.com/ANYuu531/ChatOps4Msa-Sample-Bookinfo-Ratings
     description: This is the ratings microservice.
     scan_run_id: 7086468365
 
