@@ -106,12 +106,12 @@ services:
 
 # Trello microservices system ============================================================
 
-  trello:
-    container_name: chatops4mas-trello
-    build:
-      context: ../ChatOps4Msa-Trello
-    ports:
-      - '9000:8080'
+#  trello:
+#    container_name: chatops4mas-trello
+#    build:
+#      context: ../ChatOps4Msa-Trello
+#    ports:
+#      - '9000:8080'
 
 # Bookinfo microservices system ==========================================================
 
