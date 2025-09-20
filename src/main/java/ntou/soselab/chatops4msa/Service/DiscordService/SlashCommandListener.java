@@ -85,6 +85,8 @@ public class SlashCommandListener extends ListenerAdapter {
         System.out.println("[User Role] " + roleNameList);
         String userId = event.getUser().getId();  // 取出 Discord userId
         UserContextHolder.setUserId(userId);
+        optionMap.put("user_id", userId);
+        
         // perform the capability
         try {
             if (optionMap.containsKey("subscribe")) {

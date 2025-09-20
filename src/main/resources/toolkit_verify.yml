@@ -108,10 +108,8 @@ toolkit-argo-workflow_detail:
 toolkit-llm-call:
   - prompt
   - prompt_template
-toolkit-k8s-resource:
-  []
-toolkit-user-context:
-  []
+toolkit-k8s-resource: []
+toolkit-user-context: []
 toolkit-pipeline-cache:
   - user_id
   - pipeline_yaml

@@ -171,6 +171,12 @@ low_code:
                     ${process}
                   prompt_template: cicd_pipeline
                   assign: pipeline_yaml
+              - toolkit-pipeline-cache:
+                  user_id: ${user_id}
+                  pipeline_yaml: ${pipeline_yaml}
+              - toolkit-discord-text:
+                  text: |
+                    ${pipeline_yaml}
             false:
               - toolkit-llm-call:
                   prompt: |
@@ -184,18 +190,12 @@ low_code:
                     ${process}
                   prompt_template: cicd_pipeline
                   assign: pipeline_yaml
-
-        # Cache the suggestion
-        - toolkit-user-context:
-            assign: user_id
-        - toolkit-pipeline-cache:
-            user_id: ${user_id}
-            pipeline_yaml: ${pipeline_yaml}
-
-        # Send YAML to Discord (as file or message)
-        - toolkit-discord-text:
-            text: |
-              ${pipeline_yaml}
+              - toolkit-pipeline-cache:
+                  user_id: ${user_id}
+                  pipeline_yaml: ${pipeline_yaml}
+              - toolkit-discord-text:
+                  text: |
+                    ${pipeline_yaml}
 
 #        # Send buttons: Save / Modify / Exit
 #        - toolkit-discord-buttons:
