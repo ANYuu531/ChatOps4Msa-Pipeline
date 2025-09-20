@@ -110,3 +110,8 @@ toolkit-llm-call:
   - prompt_template
 toolkit-k8s-resource:
   []
+toolkit-user-context:
+  []
+toolkit-pipeline-cache:
+  - user_id
+  - pipeline_yaml

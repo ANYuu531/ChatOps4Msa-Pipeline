@@ -61,3 +61,4 @@ capability:
   - get-pipeline-pipeline_suggestion
   - get-pipeline-pipeline_modifications
   - get-pipeline-pipeline_comparison
+  - get-pipeline-suggestion_with_save
