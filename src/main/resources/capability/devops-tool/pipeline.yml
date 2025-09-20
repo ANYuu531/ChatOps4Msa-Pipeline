@@ -83,6 +83,129 @@ low_code:
             prompt_template: none
             assign: response
         - toolkit-discord-text: # return to Discord
-             text: |
+              text: |
                 ${response}
-             assign: pipeline
+              assign: pipeline
+
+    #### New function
+    - name: get-pipeline-pipeline_comparison
+      parameter:
+        namespace: namespace
+        workflow_name: workflow_name
+      description: |
+        Compare the previously suggested pipeline (CPU/Memory) with actual workflow executions.
+      access: public
+      body:
+        # 取得 workflow detail
+        - toolkit-argo-workflow_detail:
+            namespace: ${namespace}
+            workflow_name: ${workflow_name}
+            assign: workflow_detail
+        - toolkit-discord-embed:
+            title: Your workflows in the namespace_${namespace}
+            color: green
+            field_json: "{\"namespace\": \"${namespace}\", \"workflow_name\": \"${workflow_name}\"}"
+
+        # 執行比對
+        - toolkit-llm-call:
+            prompt: |
+              以下是 namespace `${namespace}` 中 `${workflow_name}` 的detail：
+              ${workflow_detail}
+
+              請你以此資料及剛剛產生的pipeline：
+              1. 比對每個 pipeline step 的建議 CPU / Memory 與實際 workflow 中的使用情形
+              2. 對每個 step 做出分析與調整建議
+              3. 最後給出總結建議（是否建議調整資源配額）
+              4. 請將內容整理成 Markdown 表格格式，欄位為 Step Name、建議 CPU/實際 CPU、建議 Memory/實際Memory、建議調整，並加上可貼 Discord 的 code block。
+
+            prompt_template: none
+            assign: comparison_result
+
+        - toolkit-discord-text:
+            text: |
+              Pipeline 與 Workflow 資源使用比對如下：
+
+              ${comparison_result}
+    ####################
+    - name: get-pipeline-suggestion_with_save
+      parameter:
+        structure: Project directory structure or GitHub URL
+        dockerfile: Dockerfile
+        process: CI/CD process (like test->build->deploy)
+      description: |
+        Generate a pipeline with LLM and let user choose to Save / Modify / Exit.
+      access: public
+      body:
+        - toolkit-k8s-resource:
+            assign: k8s_resource
+        - toolkit-string-pattern:
+            string: ${structure}
+            regex: ^https:\/\/github\.com\/[^\/]+\/[^\/]+$
+            assign: is_github_url
+        - toolkit-flow-if:
+            condition: ${is_github_url}
+            true:
+              - toolkit-string-split:
+                  string: ${structure}
+                  separator: /
+              - toolkit-list-get:
+                  list: ${toolkit-string-split}
+                  index: 3
+                  assign: username
+              - toolkit-list-get:
+                  list: ${toolkit-string-split}
+                  index: 4
+                  assign: repository
+              - toolkit-restapi-get:
+                  url: https://api.github.com/repos/${username}/${repository}/git/trees/main?recursive=1
+                  assign: tree
+              - toolkit-llm-call:
+                  prompt: |
+                    K8s資源如下:
+                    ${k8s_resource}
+                    專案目錄結構如下:
+                    ${tree}
+                    Dockerfile如下:
+                    ${dockerfile}
+                    想執行的流程如下:
+                    ${process}
+                  prompt_template: cicd_pipeline
+                  assign: pipeline_yaml
+            false:
+              - toolkit-llm-call:
+                  prompt: |
+                    K8s資源如下:
+                    ${k8s_resource}
+                    專案目錄結構如下:
+                    ${structure}
+                    Dockerfile如下:
+                    ${dockerfile}
+                    想執行的流程如下:
+                    ${process}
+                  prompt_template: cicd_pipeline
+                  assign: pipeline_yaml
+
+        # Cache the suggestion
+        - toolkit-user-context:
+            assign: user_id
+        - toolkit-pipeline-cache:
+            user_id: ${user_id}
+            pipeline_yaml: ${pipeline_yaml}
+
+        # Send YAML to Discord (as file or message)
+        - toolkit-discord-text:
+            text: |
+              ${pipeline_yaml}
+
+#        # Send buttons: Save / Modify / Exit
+#        - toolkit-discord-buttons:
+#            buttons:
+#              - id: save_pipeline_button
+#                label: 儲存
+#                style: primary
+#              - id: modify_pipeline_button
+#                label: 修改
+#                style: primary
+#              - id: exit_pipeline_button
+#                label: 結束
+#                style: danger

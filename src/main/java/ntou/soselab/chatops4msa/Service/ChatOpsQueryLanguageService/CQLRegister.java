@@ -29,9 +29,9 @@ public class CQLRegister {
         this.configLoader = configLoader;
 
         //TODO: When executing for the first time, it's necessary to uncomment the following.
-//        removeOriginalCommands();
-//        upsertNewCommands();
-//        checkCommandsStatusAndRestart(jdaService);
+        removeOriginalCommands();
+        upsertNewCommands();
+        checkCommandsStatusAndRestart(jdaService);
     }
 
     private void removeOriginalCommands() {
