@@ -113,3 +113,5 @@ toolkit-user-context: []
 toolkit-pipeline-cache:
   - user_id
   - pipeline_yaml
+toolkit-discord-buttons:
+  - buttons
