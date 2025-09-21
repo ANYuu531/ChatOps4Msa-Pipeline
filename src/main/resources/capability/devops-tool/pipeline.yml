@@ -178,10 +178,7 @@ low_code:
                   text: |
                     ${pipeline_yaml}
               - toolkit-discord-buttons:
-                  buttons:
-                    - id: save_pipeline_button
-                      label: 儲存
-                      style: primary
+                  buttons: '[{"id": "save_pipeline_button", "label": "儲存", "style": "primary"}]'
             false:
               - toolkit-llm-call:
                   prompt: |
@@ -202,7 +199,4 @@ low_code:
                   text: |
                     ${pipeline_yaml}
               - toolkit-discord-buttons:
-                  buttons:
-                    - id: save_pipeline_button
-                      label: 儲存
-                      style: primary
+                  buttons: '[{"id": "save_pipeline_button", "label": "儲存", "style": "primary"}]'
