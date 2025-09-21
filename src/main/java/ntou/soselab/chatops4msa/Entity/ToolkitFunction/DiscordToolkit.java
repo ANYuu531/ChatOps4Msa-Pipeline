@@ -171,7 +171,15 @@ public class DiscordToolkit extends ToolkitFunction {
         return colorObj;
     }
 
-    public void toolkitDiscordButtons(List<Map<String, String>> buttons) {
-        jdaService.sendChatOpsChannelButtons(buttons);
+    public void toolkitDiscordButtons(String buttons) {
+        ObjectMapper mapper = new ObjectMapper();
+        List<Map<String, String>> buttonList;
+        try {
+            buttonList = mapper.readValue(buttons, new TypeReference<List<Map<String, String>>>() {});
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to parse buttons JSON string", e);
+        }
+
+        jdaService.sendChatOpsChannelButtons(buttonList);
     }
 }

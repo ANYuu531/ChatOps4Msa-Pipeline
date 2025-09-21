@@ -141,7 +141,17 @@ public class ButtonListener extends ListenerAdapter {
         String fileName = "pipeline-" + userId + "-" + timestamp + ".yaml";
 
         // 儲存路徑
-        String saveDir = "/pipeline";
+        String saveDirPath = "/pipeline";
+        File saveDir = new File(saveDirPath);
+
+        // 資料夾不存在要先建立
+        if (!saveDir.exists()) {
+            if (!saveDir.mkdirs()) {
+                event.getHook().editOriginal("無法建立儲存資料夾：" + saveDirPath).queue();
+                return;
+            }
+        }
+
         File outputFile = new File(saveDir, fileName);
 
         try (FileOutputStream fos = new FileOutputStream(outputFile)) {
