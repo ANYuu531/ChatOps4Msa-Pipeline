@@ -6,10 +6,13 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import ntou.soselab.chatops4msa.Entity.NLP.IntentAndEntity;
+import ntou.soselab.chatops4msa.Entity.ToolkitFunction.TimeToolkit;
 import ntou.soselab.chatops4msa.Exception.CapabilityRoleException;
 import ntou.soselab.chatops4msa.Exception.ToolkitFunctionException;
 import ntou.soselab.chatops4msa.Service.CapabilityOrchestrator.CapabilityOrchestrator;
 import ntou.soselab.chatops4msa.Service.NLPService.DialogueTracker;
+import ntou.soselab.chatops4msa.Service.PipelineService.PipelineCacheService;
+
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -19,6 +22,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class ButtonListener extends ListenerAdapter {
@@ -65,6 +73,15 @@ public class ButtonListener extends ListenerAdapter {
         }
         System.out.println("[User Role] " + roleNameList);
 
+        // pipeline file按鈕邏輯
+        switch (buttonId) {
+            case "save_pipeline_button":
+                handleSavePipeline(testerId, event);
+                return;
+            default:
+                break;
+        }
+
         // clear the temporary data
         List<IntentAndEntity> performedCapabilityList = dialogueTracker.removeAllPerformableIntentAndEntity(testerId);
 
@@ -105,5 +122,34 @@ public class ButtonListener extends ListenerAdapter {
 
         System.out.println("<<< end of current button interaction event");
         System.out.println();
+    }
+
+    @Autowired private PipelineCacheService pipelineCacheService;
+    @Autowired private TimeToolkit timeToolkit;
+
+    /**
+     * 儲存 YAML
+     */
+    private void handleSavePipeline(String userId, ButtonInteractionEvent event) {
+        if (!pipelineCacheService.has(userId)) {
+            event.getHook().editOriginal("沒有找到暫存的 pipeline，請先使用 `/get-pipeline` 產生一個。").queue();
+            return;
+        }
+
+        String pipelineYaml = pipelineCacheService.get(userId);
+        String timestamp = timeToolkit.toolkitTimeNowTaiwanForFile();
+        String fileName = "pipeline-" + userId + "-" + timestamp + ".yaml";
+
+        // 儲存路徑
+        String saveDir = "/pipeline";
+        File outputFile = new File(saveDir, fileName);
+
+        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+            fos.write(pipelineYaml.getBytes(StandardCharsets.UTF_8));
+            event.getHook().editOriginal("Pipeline YAML 已儲存到本地：`" + outputFile.getAbsolutePath() + "`").queue();
+        } catch (IOException e) {
+            e.printStackTrace();
+            event.getHook().editOriginal("儲存失敗：" + e.getMessage()).queue();
+        }
     }
 }

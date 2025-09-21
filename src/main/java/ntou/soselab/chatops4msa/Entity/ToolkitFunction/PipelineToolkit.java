@@ -17,22 +17,22 @@ public class PipelineToolkit extends ToolkitFunction {
     /**
      * 將 Pipeline YAML 暫存起來（使用 userId 作為 key）
      */
-    public void toolkitPipelineCache(String userId, String pipelineYaml) {
+    public void toolkitPipelineCache(String user_id, String pipeline_yaml) {
         System.out.println("[DEBUG] toolkitPipelineCache called");
-        System.out.println("[DEBUG] userId = " + userId);
-        System.out.println("[DEBUG] pipelineYaml = " + (pipelineYaml == null ? "null" : "length = " + pipelineYaml.length()));
+        System.out.println("[DEBUG] userId = " + user_id);
+        System.out.println("[DEBUG] pipelineYaml = " + (pipeline_yaml == null ? "null" : "length = " + pipeline_yaml.length()));
 
-        if (userId == null || userId.isEmpty()) {
+        if (user_id == null || user_id.isEmpty()) {
             System.out.println("[DEBUG] userId is null or empty, skipping.");
             return;
         }
-        if (pipelineYaml == null || pipelineYaml.isEmpty()) {
+        if (pipeline_yaml == null || pipeline_yaml.isEmpty()) {
             System.out.println("[DEBUG] pipelineYaml is null or empty, skipping.");
             return;
         }
 
-        pipelineCacheService.cache(userId, pipelineYaml);
-        System.out.println("[DEBUG] Pipeline cached for user: " + userId);
-        System.out.println(pipelineYaml);
+        pipelineCacheService.cache(user_id, pipeline_yaml);
+        System.out.println("[DEBUG] Pipeline cached for user: " + user_id);
+        System.out.println(pipeline_yaml);
     }
 }

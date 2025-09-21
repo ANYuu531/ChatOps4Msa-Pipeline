@@ -170,4 +170,8 @@ public class DiscordToolkit extends ToolkitFunction {
         if ("red".equals(colorName)) colorObj = Color.RED;
         return colorObj;
     }
+
+    public void toolkitDiscordButtons(List<Map<String, String>> buttons) {
+        jdaService.sendChatOpsChannelButtons(buttons);
+    }
 }

@@ -44,4 +44,14 @@ public class TimeToolkit extends ToolkitFunction {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm");
         return targetDateTime.format(formatter);
     }
+
+
+    /**
+     * for saving pipeline file
+     */
+    public String toolkitTimeNowTaiwanForFile() {
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Taipei"));
+        System.out.println("[DEBUG] Pipeline saved time: " + now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")));
+        return now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+    }
 }

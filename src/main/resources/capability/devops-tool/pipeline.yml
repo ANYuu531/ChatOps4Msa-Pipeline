@@ -177,6 +177,11 @@ low_code:
               - toolkit-discord-text:
                   text: |
                     ${pipeline_yaml}
+              - toolkit-discord-buttons:
+                  buttons:
+                    - id: save_pipeline_button
+                      label: 儲存
+                      style: primary
             false:
               - toolkit-llm-call:
                   prompt: |
@@ -196,16 +201,8 @@ low_code:
               - toolkit-discord-text:
                   text: |
                     ${pipeline_yaml}
-
-#        # Send buttons: Save / Modify / Exit
-#        - toolkit-discord-buttons:
-#            buttons:
-#              - id: save_pipeline_button
-#                label: 儲存
-#                style: primary
-#              - id: modify_pipeline_button
-#                label: 修改
-#                style: primary
-#              - id: exit_pipeline_button
-#                label: 結束
-#                style: danger
+              - toolkit-discord-buttons:
+                  buttons:
+                    - id: save_pipeline_button
+                      label: 儲存
+                      style: primary

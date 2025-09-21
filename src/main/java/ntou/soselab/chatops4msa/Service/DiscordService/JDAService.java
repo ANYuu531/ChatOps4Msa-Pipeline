@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.FileUpload;
 import ntou.soselab.chatops4msa.Exception.DiscordIdException;
@@ -14,6 +15,10 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.List;
+
 
 @Service
 public class JDAService {
@@ -107,5 +112,26 @@ public class JDAService {
         if (channel != null) {
             channel.sendFiles(FileUpload.fromData(inputStream, filename)).queue();
         }
+    }
+
+
+    public void sendChatOpsChannelButtons(List<Map<String, String>> buttons) {
+        List<Button> buttonList = buttons.stream().map(button -> {
+            String id = button.get("id");
+            String label = button.get("label");
+            String style = button.getOrDefault("style", "primary").toLowerCase();
+            return switch (style) {
+                case "primary" -> Button.primary(id, label);
+                case "secondary" -> Button.secondary(id, label);
+                case "success" -> Button.success(id, label);
+                case "danger" -> Button.danger(id, label);
+                case "link" -> Button.link(id, label); 
+                default -> Button.primary(id, label); 
+            };
+        }).collect(Collectors.toList());
+
+        chatOpsChannel.sendMessage("請選擇操作：")
+                .setActionRow(buttonList)
+                .queue();
     }
 }
