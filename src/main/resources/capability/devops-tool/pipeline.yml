@@ -201,24 +201,29 @@ low_code:
               - toolkit-discord-buttons:
                   buttons: '[{"id": "save_pipeline_button", "label": "儲存", "style": "primary"}]'
 ######
-    - name: get-pipeline-upload_to_rag
+    - name: upload-pipeline-text
       parameter:
-        file_url: URL of uploaded file
-        file_name: Original file name
+        file_name: Set the name of the file
+        pipeline_content: The content of Pipeline YAML
       description: |
-        Upload a document to RAG for future question answering.
+        Save Pipeline to RAG.
       access: public
       body:
         - toolkit-restapi-post:
-            url: http://haystack-service:8000/upload_doc/
+            url: http://haystack-service:8000/add_pipeline/
             headers:
-              Content-Type: multipart/form-data
-            formdata:
-              file: ${file_url}
-            assign: rag_response
+              Content-Type: application/json
+            body: |
+              {
+                "repo_url": "${file_name}",
+                "content": ${pipeline_content}
+              }
+            assign: upload_response
 
         - toolkit-discord-text:
             text: |
-              檔案 `${file_name}` 已成功上傳到 RAG！
-              回應如下：
-              ${rag_response}
+              Pipeline 已成功上傳！
+
+              檔名：`${file_name}`  
+              回應內容：
+              ${upload_response}
