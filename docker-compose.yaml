@@ -104,6 +104,19 @@ services:
       - ./rabbitmq/data:/var/lib/rabbitmq
       - /etc/localtime:/etc/localtime:ro
 
+  haystack:
+    container_name: chatops4msa-haystack
+    build:
+      context: ../Haystack-Service
+      dockerfile: Dockerfile
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "8000:8000"
+    environment:
+      - TZ=Asia/Taipei
+
+
 # Trello microservices system ============================================================
 
 #  trello:

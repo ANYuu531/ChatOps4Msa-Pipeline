@@ -1,10 +1,14 @@
 package ntou.soselab.chatops4msa.Service.DiscordService;
 
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 import ntou.soselab.chatops4msa.Entity.NLP.IntentAndEntity;
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.TimeToolkit;
 import ntou.soselab.chatops4msa.Exception.CapabilityRoleException;
@@ -16,15 +20,26 @@ import ntou.soselab.chatops4msa.Service.PipelineService.PipelineCacheService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpResponse;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
@@ -51,7 +66,6 @@ public class ButtonListener extends ListenerAdapter {
         System.out.println(">>> trigger button interaction event");
 
         System.out.println("[TIME] " + new Date());
-        event.deferReply().queue();
         User tester = event.getUser();
         String testerId = tester.getId();
         String testerName = tester.getName();
@@ -132,34 +146,60 @@ public class ButtonListener extends ListenerAdapter {
      */
     private void handleSavePipeline(String userId, ButtonInteractionEvent event) {
         if (!pipelineCacheService.has(userId)) {
-            event.getHook().editOriginal("沒有找到暫存的 pipeline，請先使用 `/get-pipeline` 產生一個。").queue();
+            event.reply("沒有找到暫存的 pipeline，請先使用 `/get-pipeline` 產生一個。")
+                .setEphemeral(true)
+                .queue(); 
+            return;
+        }
+
+        Modal modal = Modal.create("save_pipeline_modal", "Save Pipeline")
+            .addActionRow(
+                TextInput.create("filename", "Please set the name of the file.", TextInputStyle.SHORT)
+                    .setPlaceholder("e.g. frontend-deploy.yml")
+                    .setRequired(true) 
+                    .build()
+            )
+            .build();
+
+        event.replyModal(modal).queue(); 
+    }
+
+    @Override
+    public void onModalInteraction(ModalInteractionEvent event) {
+        if (!event.getModalId().equals("save_pipeline_modal")) return;
+
+        String userId = event.getUser().getId();
+        String fileName = event.getValue("filename").getAsString();  // 使用者輸入的名稱
+
+        if (!pipelineCacheService.has(userId)) {
+            event.reply("找不到暫存的 pipeline，請先使用 `/get-pipeline`。").setEphemeral(true).queue();
             return;
         }
 
         String pipelineYaml = pipelineCacheService.get(userId);
-        String timestamp = timeToolkit.toolkitTimeNowTaiwanForFile();
-        String fileName = "pipeline-" + userId + "-" + timestamp + ".yaml";
 
-        // 儲存路徑
-        String saveDirPath = "/pipeline";
-        File saveDir = new File(saveDirPath);
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String url = "http://haystack-service:8000/add_pipeline/";
 
-        // 資料夾不存在要先建立
-        if (!saveDir.exists()) {
-            if (!saveDir.mkdirs()) {
-                event.getHook().editOriginal("無法建立儲存資料夾：" + saveDirPath).queue();
-                return;
+            Map<String, String> payload = new HashMap<>();
+            payload.put("content", pipelineYaml);
+            payload.put("repo_url", fileName);  
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, String>> request = new HttpEntity<>(payload, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                event.reply("Pipeline 已以檔名 `" + fileName + "` 儲存成功！").setEphemeral(true).queue();
+            } else {
+                event.reply("儲存失敗 (Haystack 回傳 " + response.getStatusCode() + ")").setEphemeral(true).queue();
             }
-        }
-
-        File outputFile = new File(saveDir, fileName);
-
-        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-            fos.write(pipelineYaml.getBytes(StandardCharsets.UTF_8));
-            event.getHook().editOriginal("Pipeline YAML 已儲存到本地：`" + outputFile.getAbsolutePath() + "`").queue();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            event.getHook().editOriginal("儲存失敗：" + e.getMessage()).queue();
+            event.reply("儲存失敗：" + e.getMessage()).setEphemeral(true).queue();
         }
     }
 }

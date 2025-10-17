@@ -200,3 +200,25 @@ low_code:
                     ${pipeline_yaml}
               - toolkit-discord-buttons:
                   buttons: '[{"id": "save_pipeline_button", "label": "儲存", "style": "primary"}]'
+######
+    - name: get-pipeline-upload_to_rag
+      parameter:
+        file_url: URL of uploaded file
+        file_name: Original file name
+      description: |
+        Upload a document to RAG for future question answering.
+      access: public
+      body:
+        - toolkit-restapi-post:
+            url: http://haystack-service:8000/upload_doc/
+            headers:
+              Content-Type: multipart/form-data
+            formdata:
+              file: ${file_url}
+            assign: rag_response
+
+        - toolkit-discord-text:
+            text: |
+              檔案 `${file_name}` 已成功上傳到 RAG！
+              回應如下：
+              ${rag_response}
