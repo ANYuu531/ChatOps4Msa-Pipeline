@@ -3,6 +3,6 @@ FROM openjdk:17
 WORKDIR /app
 ENV TZ=Asia/Taipei
 
-COPY app.jar app.jar
+COPY target/ChatOps4Msa-0.0.1-SNAPSHOT.jar app.jar
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

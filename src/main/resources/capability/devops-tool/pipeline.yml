@@ -201,29 +201,96 @@ low_code:
               - toolkit-discord-buttons:
                   buttons: '[{"id": "save_pipeline_button", "label": "儲存", "style": "primary"}]'
 ######
-    - name: upload-pipeline-text
+    - name: get-pipeline-upload_to_rag
       parameter:
         file_name: Set the name of the file
-        pipeline_content: The content of Pipeline YAML
+        pipeline_url: GitHub file URL (e.g. https://github.com/user/repo/blob/main/path/to/file.yaml)
       description: |
-        Save Pipeline to RAG.
+        Download pipeline YAML from a normal GitHub file URL and upload to RAG.
       access: public
       body:
+        # 1. 分割 URL
+        - toolkit-string-split:
+            string: ${pipeline_url}
+            separator: /
+            assign: url_parts
+
+        # 2. 擷取 user、repo、branch
+        - toolkit-list-get:
+            list: ${url_parts}
+            index: 3
+            assign: user
+        - toolkit-list-get:
+            list: ${url_parts}
+            index: 4
+            assign: repo
+        - toolkit-list-get:
+            list: ${url_parts}
+            index: 6
+            assign: branch
+
+        # 3. 擷取 file path：從 index 7 以後的全部部分
+        - toolkit-list-slice:
+            list: ${url_parts}
+            start: 7
+            assign: file_path_parts
+
+        # 4. 把 list 轉成字串（會有逗號）
+        - toolkit-list-to_string:
+            list: ${file_path_parts}
+            assign: raw_file_path_with_commas
+
+        # 5. 把逗號換成斜線（模擬 join）
+        - toolkit-string-replace:
+            string: ${raw_file_path_with_commas}
+            original: ", "
+            replace: "/"
+            assign: file_path
+
+        # 6. 拼出 raw URL（用多次 replace 拼湊）
+        - toolkit-string-replace:
+            string: https://raw.githubusercontent.com/USER/REPO/BRANCH/FILEPATH
+            original: USER
+            replace: ${user}
+            assign: step1
+        - toolkit-string-replace:
+            string: ${step1}
+            original: REPO
+            replace: ${repo}
+            assign: step2
+        - toolkit-string-replace:
+            string: ${step2}
+            original: BRANCH
+            replace: ${branch}
+            assign: step3
+        - toolkit-string-replace:
+            string: ${step3}
+            original: FILEPATH
+            replace: ${file_path}
+            assign: raw_url
+
+        # 7. 下載 raw file
+        - toolkit-restapi-get:
+            url: ${raw_url}
+            assign: pipeline_content
+
+        # 8. 上傳到 RAG（authorization 必填，無則空字串）
         - toolkit-restapi-post:
             url: http://haystack-service:8000/add_pipeline/
-            headers:
-              Content-Type: application/json
             body: |
               {
                 "repo_url": "${file_name}",
                 "content": ${pipeline_content}
               }
+            authorization: ""
             assign: upload_response
 
+        # 9. 回覆訊息
         - toolkit-discord-text:
             text: |
               Pipeline 已成功上傳！
 
               檔名：`${file_name}`  
+              GitHub URL：`${pipeline_url}`  
               回應內容：
               ${upload_response}
