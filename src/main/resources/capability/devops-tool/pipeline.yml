@@ -215,7 +215,7 @@ low_code:
             separator: /
             assign: url_parts
 
-        # 2. 擷取 user、repo、branch
+        # 2. 擷取 user、repo、branch（index 3, 4, 6）
         - toolkit-list-get:
             list: ${url_parts}
             index: 3
@@ -229,25 +229,24 @@ low_code:
             index: 6
             assign: branch
 
-        # 3. 擷取 file path：從 index 7 以後的全部部分
-        - toolkit-list-slice:
+        # 3. 擷取 file path 的前兩段（index 7 與 8）
+        - toolkit-list-get:
             list: ${url_parts}
-            start: 7
-            assign: file_path_parts
+            index: 7
+            assign: file_path_part1
+        - toolkit-list-get:
+            list: ${url_parts}
+            index: 8
+            assign: file_path_part2
 
-        # 4. 把 list 轉成字串（會有逗號）
-        - toolkit-list-to_string:
-            list: ${file_path_parts}
-            assign: raw_file_path_with_commas
-
-        # 5. 把逗號換成斜線（模擬 join）
+        # 4. 拼成 file path（e.g. "ci/node.js.yml"）
         - toolkit-string-replace:
-            string: ${raw_file_path_with_commas}
+            string: ${file_path_part1}, ${file_path_part2}
             original: ", "
-            replace: "/"
+            replace: /
             assign: file_path
 
-        # 6. 拼出 raw URL（用多次 replace 拼湊）
+        # 5. 拼出 raw URL（透過多段 replace）
         - toolkit-string-replace:
             string: https://raw.githubusercontent.com/USER/REPO/BRANCH/FILEPATH
             original: USER
@@ -269,23 +268,37 @@ low_code:
             replace: ${file_path}
             assign: raw_url
 
-        # 7. 下載 raw file
+        # 6. 下載檔案內容
         - toolkit-restapi-get:
             url: ${raw_url}
             assign: pipeline_content
+        # 7. LLM escape pipeline_content 成合法 JSON 字串
+        - toolkit-llm-call:
+            prompt: |
+              請將以下內容轉換成合法 JSON 字串的格式，注意以下要求：
+              不要包在 Markdown code block 中
+              不要產生 JSON Object
+              不要在最前後自動加引號
+              保留換行（使用 \n）
+              只輸出純字串
+              不要多任何其他文字
 
-        # 8. 上傳到 RAG（authorization 必填，無則空字串）
+              ${pipeline_content}
+            prompt_template: none
+            assign: escaped_content
+
+        # 8. 上傳至 RAG
         - toolkit-restapi-post:
             url: http://haystack-service:8000/add_pipeline/
             body: |
               {
                 "repo_url": "${file_name}",
-                "content": ${pipeline_content}
+                "content": "${escaped_content}"
               }
             authorization: ""
             assign: upload_response
 
-        # 9. 回覆訊息
+        # 9. 回傳結果到 Discord
         - toolkit-discord-text:
             text: |
               Pipeline 已成功上傳！
@@ -294,3 +307,23 @@ low_code:
               GitHub URL：`${pipeline_url}`  
               回應內容：
               ${upload_response}
+#####
+    - name: get-pipeline-list_uploaded_pipelines
+      description: |
+        Show all the files saved in RAG。
+      access: public
+      parameter: {}
+      body:
+        - toolkit-restapi-get:
+            url: http://haystack-service:8000/list_pipelines/
+            assign: rag_docs
+
+        - toolkit-string-join:
+            list: ${rag_docs}
+            separator: "\n- "
+            assign: filename_list
+
+        - toolkit-discord-text:
+            text: |
+              以下是目前已儲存的 pipeline 文件：
+              - ${filename_list}

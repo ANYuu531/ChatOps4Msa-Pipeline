@@ -63,3 +63,4 @@ capability:
   - get-pipeline-pipeline_comparison
   - get-pipeline-suggestion_with_save
   - get-pipeline-upload_to_rag
+  - get-pipeline-list_uploaded_pipelines
