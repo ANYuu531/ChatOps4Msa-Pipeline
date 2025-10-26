@@ -318,12 +318,18 @@ low_code:
             url: http://haystack-service:8000/list_pipelines/
             assign: rag_docs
 
-        - toolkit-string-join:
-            list: ${rag_docs}
-            separator: "\n- "
-            assign: filename_list
-
-        - toolkit-discord-text:
-            text: |
-              以下是目前已儲存的 pipeline 文件：
-              - ${filename_list}
+        - toolkit-flow-if:
+          condition: ${rag_docs != []}
+          true:
+            - toolkit-string-join:
+                list: ${rag_docs}
+                separator: "\n- "
+                assign: filename_list
+            - toolkit-discord-text:
+                text: |
+                  以下是目前已上傳的 pipeline 文件：
+                  - ${filename_list}
+          false:
+            - toolkit-discord-text:
+                text: |
+                  目前尚未上傳任何 pipeline 文件至 RAG。
