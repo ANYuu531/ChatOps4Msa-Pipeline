@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,30 +40,29 @@ public class McpToolkit extends ToolkitFunction {
                 return "MCP session already connected: " + server_name;
             }
 
-            Path kubeConfig = Path.of(System.getProperty("user.home"), ".kube", "config");
+            Path kubeConfig = Path.of(System.getProperty("user.home"), "kubeconfig-mcp.yaml");
             if (!Files.exists(kubeConfig)) {
                 return error("~/.kube/config not found. Please configure kubectl context first.");
             }
             String raw = Files.readString(kubeConfig);
 
-            String patched = raw
-                    .replaceAll("server: https://127\\.0\\.0\\.1:\\d+", "server: https://mcp-control-plane:6443")
-                    .replaceAll("server: https://localhost:\\d+", "server: https://mcp-control-plane:6443");
+            String patched = raw;
 
             Path tmp = Files.createTempFile("kubeconfig-mcp-", ".yaml");
             Files.writeString(tmp, patched);
             tempKubeconfigs.put(server_name, tmp);
+            Files.setPosixFilePermissions(tmp, PosixFilePermissions.fromString("rw-r--r--"));
 
             StdioClientTransport transport = new StdioClientTransport(
                     ServerParameters.builder("docker")
                             .args(
-                                    "run",
-                                    "-i",
-                                    "--rm",
-                                    "--network", "kind",
-                                    "-v", tmp.toAbsolutePath() + ":/home/appuser/.kube/config:ro",
-                                    "-e", "KUBECONFIG=/home/appuser/.kube/config",
-                                    "ghcr.io/alexei-led/k8s-mcp-server:latest"
+                                "run",
+                                "-i",
+                                "--rm",
+                                "--network", "host",
+                                "-v", tmp.toAbsolutePath() + ":/tmp/kubeconfig:ro",
+                                "-e", "KUBECONFIG=/tmp/kubeconfig",
+                                "ghcr.io/alexei-led/k8s-mcp-server:latest"
                             )
                             .build()
             );

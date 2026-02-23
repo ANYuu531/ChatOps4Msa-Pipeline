@@ -161,3 +161,14 @@ services:
       - /etc/localtime:/etc/localtime:ro
     ports:
       - '9083:9080'
+
+# MCP Server ==========================================================
+  k8s-mcp:
+    container_name: k8s-mcp
+    image: ghcr.io/alexei-led/k8s-mcp-server:latest
+    restart: unless-stopped
+    environment:
+      - KUBECONFIG=/tmp/kubeconfig
+      - TZ=Asia/Taipei
+    volumes:
+      - ./kube/config:/tmp/kubeconfig:ro

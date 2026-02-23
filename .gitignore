@@ -37,3 +37,6 @@ build/
 application.properties
 .mvn/wrapper/maven-wrapper.properties
 src/main/resources/capability/secret.yml
+# kubeconfig
+kube/config
+
