@@ -1,0 +1,45 @@
+info:
+  version: 1.0.0
+  title: MCP Toolkit
+  description: |
+    Use MCP server to execute kubectl via ChatOps.
+
+low_code:
+  operation:
+    - name: get-mcp-execute_kubectl
+      parameter:
+        command: kubectl command (e.g. "get ns")
+      description: |
+        Execute kubectl command via MCP k8s server.
+      access: public
+      body:
+        - toolkit-mcp-connect:
+            server_name: k8s
+        - toolkit-mcp-list-tools:
+            server_name: k8s
+            assign: tools
+        - toolkit-mcp-call-tool:
+            server_name: k8s
+            tool_name: execute_kubectl
+            tool_arguments: |
+              {"command": "${command}"}
+            assign: result
+        - toolkit-mcp-disconnect:
+            server_name: k8s
+            assign: disconnect_msg
+        - toolkit-discord-text:
+            text: |
+              **MCP execute_kubectl 結果**
+
+              Command:
+              `${command}`
+
+              Tools:
+              ${tools}
+
+              Result:
+              ${result}
+
+              Disconnect:
+              ${disconnect_msg}
+            assign: pipeline

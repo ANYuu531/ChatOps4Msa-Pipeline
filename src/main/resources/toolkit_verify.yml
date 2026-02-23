@@ -110,3 +110,13 @@ toolkit-llm-call:
   - prompt_template
 toolkit-k8s-resource:
   []
+toolkit-mcp-connect:
+  - server_name
+toolkit-mcp-list-tools:
+  - server_name
+toolkit-mcp-disconnect:
+  - server_name
+toolkit-mcp-call-tool:
+  - server_name
+  - tool_name
+  - tool_arguments

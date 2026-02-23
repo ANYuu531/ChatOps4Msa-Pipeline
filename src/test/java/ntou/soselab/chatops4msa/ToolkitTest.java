@@ -1,12 +1,22 @@
 package ntou.soselab.chatops4msa;
 
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.StringToolkit;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
 public class ToolkitTest {
+
+    @BeforeAll
+    static void skipIfNoDiscordToken() {
+        String token = System.getenv("DISCORD_TOKEN");
+        Assumptions.assumeTrue(token != null && !token.isBlank(),
+                "DISCORD_TOKEN not set, skipping ToolkitTest");
+    }
+
     private final StringToolkit stringToolkit;
 
     @Autowired
