@@ -5,9 +5,6 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,14 +12,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.ServerParameters;
-import io.modelcontextprotocol.client.transport.StdioClientTransport;
+import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 
 @Component
 public class McpToolkit extends ToolkitFunction {
 
     private final Map<String, McpSyncClient> sessions = new ConcurrentHashMap<>();
-    private final Map<String, Path> tempKubeconfigs = new ConcurrentHashMap<>();
+
     private static final ObjectMapper OM = new ObjectMapper();
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
 
@@ -30,7 +26,30 @@ public class McpToolkit extends ToolkitFunction {
         return generateFunctionErrorMessage() + " " + msg;
     }
 
+    /**
+     * Backward compatible version.
+     * Uses environment variables:
+     * MCP_SERVER_BASE_URL
+     * MCP_SERVER_ENDPOINT
+     */
     public String toolkitMcpConnect(String server_name) {
+        return toolkitMcpConnect(server_name, null, null);
+    }
+
+    /**
+     * Connect to selected MCP server.
+     *
+     * Example:
+     * server_name = "k8s"
+     * base_url = "http://k8s-mcp-server:8000"
+     * endpoint = "/mcp"
+     *
+     * DeepWiki:
+     * server_name = "deepwiki"
+     * base_url = "https://mcp.deepwiki.com"
+     * endpoint = "/mcp"
+     */
+    public String toolkitMcpConnect(String server_name, String base_url, String endpoint) {
         try {
             if (server_name == null || server_name.isBlank()) {
                 return error("server_name is required");
@@ -40,32 +59,28 @@ public class McpToolkit extends ToolkitFunction {
                 return "MCP session already connected: " + server_name;
             }
 
-            Path kubeConfig = Path.of(System.getProperty("user.home"), "kubeconfig-mcp.yaml");
-            if (!Files.exists(kubeConfig)) {
-                return error("~/.kube/config not found. Please configure kubectl context first.");
+            if (base_url == null || base_url.isBlank()) {
+                base_url = System.getenv().getOrDefault(
+                        "MCP_SERVER_BASE_URL",
+                        "http://k8s-mcp-server:8000"
+                );
             }
-            String raw = Files.readString(kubeConfig);
 
-            String patched = raw;
+            if (endpoint == null || endpoint.isBlank()) {
+                endpoint = System.getenv().getOrDefault(
+                        "MCP_SERVER_ENDPOINT",
+                        "/mcp"
+                );
+            }
 
-            Path tmp = Files.createTempFile("kubeconfig-mcp-", ".yaml");
-            Files.writeString(tmp, patched);
-            tempKubeconfigs.put(server_name, tmp);
-            Files.setPosixFilePermissions(tmp, PosixFilePermissions.fromString("rw-r--r--"));
+            if (!endpoint.startsWith("/")) {
+                endpoint = "/" + endpoint;
+            }
 
-            StdioClientTransport transport = new StdioClientTransport(
-                    ServerParameters.builder("docker")
-                            .args(
-                                "run",
-                                "-i",
-                                "--rm",
-                                "--network", "host",
-                                "-v", tmp.toAbsolutePath() + ":/tmp/kubeconfig:ro",
-                                "-e", "KUBECONFIG=/tmp/kubeconfig",
-                                "ghcr.io/alexei-led/k8s-mcp-server:latest"
-                            )
-                            .build()
-            );
+            var transport = HttpClientStreamableHttpTransport
+                    .builder(base_url)
+                    .endpoint(endpoint)
+                    .build();
 
             McpSyncClient client = McpClient.sync(transport)
                     .requestTimeout(Duration.ofSeconds(30))
@@ -74,10 +89,10 @@ public class McpToolkit extends ToolkitFunction {
             client.initialize();
             sessions.put(server_name, client);
 
-            return "MCP connected: " + server_name;
+            return "MCP connected: " + server_name + " -> " + base_url + endpoint;
 
         } catch (Exception e) {
-            return error("MCP connect failed: " + e.getMessage());
+            return error("MCP connect failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 
@@ -96,7 +111,7 @@ public class McpToolkit extends ToolkitFunction {
             return tools.toString();
 
         } catch (Exception e) {
-            return error("MCP list tools failed: " + e.getMessage());
+            return error("MCP list tools failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 
@@ -105,9 +120,11 @@ public class McpToolkit extends ToolkitFunction {
             if (server_name == null || server_name.isBlank()) {
                 return error("server_name is required");
             }
+
             if (tool_name == null || tool_name.isBlank()) {
                 return error("tool_name is required");
             }
+
             if (tool_arguments == null || tool_arguments.isBlank()) {
                 tool_arguments = "{}";
             }
@@ -125,24 +142,30 @@ public class McpToolkit extends ToolkitFunction {
             return result.toString();
 
         } catch (Exception e) {
-            return error("MCP call tool failed: " + e.getMessage());
+            return error("MCP call tool failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 
     public String toolkitMcpDisconnect(String server_name) {
         try {
+            if (server_name == null || server_name.isBlank()) {
+                return error("server_name is required");
+            }
+
             McpSyncClient client = sessions.remove(server_name);
             if (client == null) {
                 return "MCP session not found: " + server_name;
             }
-            client.closeGracefully();
-            Path tmp = tempKubeconfigs.remove(server_name);
-            if (tmp != null) {
-                try { Files.deleteIfExists(tmp); } catch (Exception ignore) {}
+
+            try {
+                client.closeGracefully();
+            } catch (Exception ignore) {
             }
+
             return "MCP disconnected: " + server_name;
+
         } catch (Exception e) {
-            return error("MCP disconnect failed: " + e.getMessage());
+            return error("MCP disconnect failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 }
