@@ -6,7 +6,7 @@ info:
 
 low_code:
   operation:
-    - name: get-mcp-call-tool
+    - name: get-mcp-calltool
       parameter:
         server_name: MCP session name, e.g. "k8s" or "deepwiki"
         base_url: MCP server base URL, e.g. "http://k8s-mcp-server:8000"
