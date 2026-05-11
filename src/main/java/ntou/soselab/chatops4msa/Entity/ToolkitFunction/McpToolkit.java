@@ -31,56 +31,142 @@ public class McpToolkit extends ToolkitFunction {
         return toolkitMcpConnect(server_name, null, null);
     }
 
-    public String toolkitMcpConnect(String server_name, String base_url, String endpoint) {
+   public String toolkitMcpConnect(
+
+            String server_name,
+
+            String base_url,
+
+            String endpoint
+
+    ) {
+
         try {
+
             if (server_name == null || server_name.isBlank()) {
+
                 return error("server_name is required");
+
             }
 
             if (sessions.containsKey(server_name)) {
-                return "MCP session already connected: `" + server_name + "`";
+
+                return """
+
+                        ⚠️ MCP session already connected
+
+                        Server:
+
+                        `%s`
+
+                        """.formatted(server_name);
+
             }
 
             if (base_url == null || base_url.isBlank()) {
+
                 base_url = System.getenv().getOrDefault(
+
                         "MCP_SERVER_BASE_URL",
+
                         "http://k8s-mcp-server:8000"
+
                 );
+
             }
 
             if (endpoint == null || endpoint.isBlank()) {
+
                 endpoint = System.getenv().getOrDefault(
+
                         "MCP_SERVER_ENDPOINT",
+
                         "/mcp"
+
                 );
+
             }
 
             if (!endpoint.startsWith("/")) {
+
                 endpoint = "/" + endpoint;
+
+            }
+
+            // 防止 base_url 已經帶 /mcp
+
+            if (base_url.endsWith("/mcp")) {
+
+                base_url = base_url.substring(0, base_url.length() - 4);
+
+                endpoint = "/mcp";
+
             }
 
             var transport = HttpClientStreamableHttpTransport
+
                     .builder(base_url)
+
                     .endpoint(endpoint)
+
                     .build();
 
             McpSyncClient client = McpClient.sync(transport)
+
                     .requestTimeout(Duration.ofSeconds(30))
+
                     .build();
 
             client.initialize();
+
             sessions.put(server_name, client);
 
             return """
-                    **MCP connected**
 
-                    **Server:** `%s`
-                    **URL:** `%s%s`
+                    ## MCP connected
+
+                    Server:
+
+                    `%s`
+
+                    Endpoint:
+
+                    `%s%s`
+
                     """.formatted(server_name, base_url, endpoint);
 
         } catch (Exception e) {
-            return error("MCP connect failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.append(error("MCP connect failed: "))
+
+                    .append(e.getClass().getName())
+
+                    .append(": ")
+
+                    .append(e.getMessage());
+
+            Throwable cause = e.getCause();
+
+            while (cause != null) {
+
+                sb.append("\nCaused by: ")
+
+                        .append(cause.getClass().getName())
+
+                        .append(": ")
+
+                        .append(cause.getMessage());
+
+                cause = cause.getCause();
+
+            }
+
+            return sb.toString();
+
         }
+
     }
 
     public String toolkitMcpListSessions() {
