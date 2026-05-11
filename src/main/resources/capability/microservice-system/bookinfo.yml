@@ -60,8 +60,8 @@ capability:
   - get-github-info_of_service_branch
   - get-pipeline-pipeline_suggestion
   - get-pipeline-pipeline_modifications
-  - mcp-connect
-  - mcp-list-sessions
-  - mcp-list-tools
-  - mcp-call-tool
-  - mcp-disconnect
+  - mcp-server-connect
+  - mcp-server-list_sessions
+  - mcp-server-list_tools
+  - mcp-server-call_tool
+  - mcp-server-disconnect
