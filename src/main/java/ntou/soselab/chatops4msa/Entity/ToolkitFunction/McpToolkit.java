@@ -26,29 +26,10 @@ public class McpToolkit extends ToolkitFunction {
         return generateFunctionErrorMessage() + " " + msg;
     }
 
-    /**
-     * Backward compatible version.
-     * Uses environment variables:
-     * MCP_SERVER_BASE_URL
-     * MCP_SERVER_ENDPOINT
-     */
     public String toolkitMcpConnect(String server_name) {
         return toolkitMcpConnect(server_name, null, null);
     }
 
-    /**
-     * Connect to selected MCP server.
-     *
-     * Example:
-     * server_name = "k8s"
-     * base_url = "http://k8s-mcp-server:8000"
-     * endpoint = "/mcp"
-     *
-     * DeepWiki:
-     * server_name = "deepwiki"
-     * base_url = "https://mcp.deepwiki.com"
-     * endpoint = "/mcp"
-     */
     public String toolkitMcpConnect(String server_name, String base_url, String endpoint) {
         try {
             if (server_name == null || server_name.isBlank()) {
@@ -93,6 +74,19 @@ public class McpToolkit extends ToolkitFunction {
 
         } catch (Exception e) {
             return error("MCP connect failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
+
+    public String toolkitMcpListSessions() {
+        try {
+            if (sessions.isEmpty()) {
+                return "No MCP sessions connected.";
+            }
+
+            return "Connected MCP sessions: " + String.join(", ", sessions.keySet());
+
+        } catch (Exception e) {
+            return error("MCP list sessions failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 

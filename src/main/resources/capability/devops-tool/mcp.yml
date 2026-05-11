@@ -2,31 +2,86 @@ info:
   version: 1.0.0
   title: MCP Toolkit
   description: |
-    Use selected MCP server to execute tools via ChatOps.
+    Use selected MCP servers to execute MCP tools via ChatOps.
 
 low_code:
   operation:
-    - name: get-mcp-calltool
+    - name: mcp-connect
       parameter:
-        server_name: MCP session name, e.g. "k8s" or "deepwiki"
-        base_url: MCP server base URL, e.g. "http://k8s-mcp-server:8000"
-        endpoint: MCP endpoint, e.g. "/mcp"
-        tool_name: MCP tool name, e.g. "execute_kubectl"
-        tool_arguments: MCP tool arguments JSON string
+        server_name: MCP session name, e.g. "deepwiki" or "k8s"
+        base_url: Optional. MCP server base URL. Default from MCP_SERVER_BASE_URL or http://k8s-mcp-server:8000
+        endpoint: Optional. MCP endpoint. Default from MCP_SERVER_ENDPOINT or /mcp
       description: |
-        Connect to selected MCP server and call selected MCP tool.
+        Connect to selected MCP server.
       access: public
       body:
         - toolkit-mcp-connect:
             server_name: ${server_name}
             base_url: ${base_url}
             endpoint: ${endpoint}
-            assign: connect_msg
+            assign: result
 
+        - toolkit-discord-text:
+            text: |
+              **MCP 連線結果**
+
+              Server:
+              `${server_name}`
+
+              Endpoint:
+              `${base_url}${endpoint}`
+
+              Result:
+              ${result}
+            assign: pipeline
+
+    - name: mcp-list-sessions
+      parameter: {}
+      description: |
+        List currently connected MCP sessions.
+      access: public
+      body:
+        - toolkit-mcp-list-sessions:
+            assign: result
+
+        - toolkit-discord-text:
+            text: |
+              **目前已連線 MCP**
+
+              ${result}
+            assign: pipeline
+
+    - name: mcp-list-tools
+      parameter:
+        server_name: MCP session name, e.g. "deepwiki"
+      description: |
+        List available tools for selected MCP server.
+      access: public
+      body:
         - toolkit-mcp-list-tools:
             server_name: ${server_name}
-            assign: tools
+            assign: result
 
+        - toolkit-discord-text:
+            text: |
+              **MCP 可用工具**
+
+              Server:
+              `${server_name}`
+
+              Tools:
+              ${result}
+            assign: pipeline
+
+    - name: mcp-call-tool
+      parameter:
+        server_name: MCP session name, e.g. "deepwiki"
+        tool_name: MCP tool name, e.g. "ask_question"
+        tool_arguments: MCP tool arguments JSON string, e.g. {"repoName":"facebook/react","question":"What is React?"}
+      description: |
+        Call a tool on connected MCP server.
+      access: public
+      body:
         - toolkit-mcp-call-tool:
             server_name: ${server_name}
             tool_name: ${tool_name}
@@ -34,19 +89,12 @@ low_code:
               ${tool_arguments}
             assign: result
 
-        - toolkit-mcp-disconnect:
-            server_name: ${server_name}
-            assign: disconnect_msg
-
         - toolkit-discord-text:
             text: |
               **MCP Tool 呼叫結果**
 
               Server:
               `${server_name}`
-
-              Endpoint:
-              `${base_url}${endpoint}`
 
               Tool:
               `${tool_name}`
@@ -56,15 +104,28 @@ low_code:
               ${tool_arguments}
               ```
 
-              Connect:
-              ${connect_msg}
+              Result:
+              ${result}
+            assign: pipeline
 
-              Tools:
-              ${tools}
+    - name: mcp-disconnect
+      parameter:
+        server_name: MCP session name, e.g. "deepwiki"
+      description: |
+        Disconnect selected MCP server.
+      access: public
+      body:
+        - toolkit-mcp-disconnect:
+            server_name: ${server_name}
+            assign: result
+
+        - toolkit-discord-text:
+            text: |
+              **MCP 斷線結果**
+
+              Server:
+              `${server_name}`
 
               Result:
               ${result}
-
-              Disconnect:
-              ${disconnect_msg}
             assign: pipeline

@@ -112,8 +112,6 @@ toolkit-k8s-resource:
   []
 toolkit-mcp-connect:
   - server_name
-  - base_url
-  - endpoint
 toolkit-mcp-list-tools:
   - server_name
 toolkit-mcp-disconnect:
