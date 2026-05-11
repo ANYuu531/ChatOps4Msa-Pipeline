@@ -114,6 +114,8 @@ toolkit-mcp-connect:
   - server_name
 toolkit-mcp-list-tools:
   - server_name
+toolkit-mcp-list-sessions:
+  []
 toolkit-mcp-disconnect:
   - server_name
 toolkit-mcp-call-tool:

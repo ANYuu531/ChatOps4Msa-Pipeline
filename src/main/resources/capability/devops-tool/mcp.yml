@@ -6,7 +6,7 @@ info:
 
 low_code:
   operation:
-    - name: mcp-server-connect
+    - name: get-mcp-connect
       parameter:
         server_name: MCP session name, e.g. "deepwiki" or "k8s"
         base_url: Optional. MCP server base URL. Default from MCP_SERVER_BASE_URL or http://k8s-mcp-server:8000
@@ -35,7 +35,7 @@ low_code:
               ${result}
             assign: pipeline
 
-    - name: mcp-server-list_sessions
+    - name: get-mcp-list_sessions
       parameter: {}
       description: |
         List currently connected MCP sessions.
@@ -51,7 +51,7 @@ low_code:
               ${result}
             assign: pipeline
 
-    - name: mcp-server-list_tools
+    - name: get-mcp-list_tools
       parameter:
         server_name: MCP session name, e.g. "deepwiki"
       description: |
@@ -73,7 +73,7 @@ low_code:
               ${result}
             assign: pipeline
 
-    - name: mcp-server-call_tool
+    - name: get-mcp-call_tool
       parameter:
         server_name: MCP session name, e.g. "deepwiki"
         tool_name: MCP tool name, e.g. "ask_question"
@@ -108,7 +108,7 @@ low_code:
               ${result}
             assign: pipeline
 
-    - name: mcp-server-disconnect
+    - name: get-mcp-disconnect
       parameter:
         server_name: MCP session name, e.g. "deepwiki"
       description: |
