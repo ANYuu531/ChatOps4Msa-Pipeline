@@ -65,3 +65,4 @@ capability:
   - get-mcp-list_tools
   - get-mcp-call_tool
   - get-mcp-disconnect
+  - analyze-dependency

@@ -1,0 +1,21 @@
+What are all synchronous API calls between microservices?
+
+Only include calls explicitly mentioned in:
+- source code documentation,
+- API routes,
+- Istio VirtualServices,
+- runtime routing data.
+
+Do not infer undocumented API calls.
+
+For each call, specify:
+- caller service,
+- callee service,
+- HTTP method,
+- endpoint path,
+- purpose of the call,
+- evidence source.
+
+Format as a markdown table:
+
+| Caller | Callee | Method | Endpoint | Purpose | Evidence Source |

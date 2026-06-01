@@ -1,0 +1,26 @@
+What external dependencies does each microservice have?
+
+Distinguish between:
+- infrastructure dependencies,
+- application dependencies,
+- external third-party services.
+
+Include:
+- databases,
+- caches,
+- message brokers,
+- external APIs,
+- cloud services,
+- shared infrastructure components.
+
+For each dependency, specify:
+- service name,
+- dependency type,
+- dependency name,
+- whether it is detected in runtime data,
+- purpose.
+
+Format as a markdown table:
+
+| Service | Dependency Type | Dependency Name | Runtime Detected | Purpose |
+

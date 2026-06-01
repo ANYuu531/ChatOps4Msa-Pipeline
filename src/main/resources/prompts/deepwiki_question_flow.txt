@@ -1,0 +1,19 @@
+Describe the overall request flow in this microservice system.
+
+Identify:
+- ingress entry points,
+- API gateways,
+- Istio gateways,
+- frontend services,
+- central dependency hubs.
+
+Describe how a typical user request flows through the services.
+
+Identify:
+- circular dependencies,
+- highly coupled services,
+- services acting as dependency hubs.
+
+If runtime data conflicts with documentation,
+explicitly report the inconsistency.
+

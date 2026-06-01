@@ -1,0 +1,218 @@
+info:  
+  version: 1.0.0  
+  title: Dependency Analysis  
+  description: |  
+    Connect to DeepWiki and K8s MCP servers to read architecture docs  
+    and cluster state, then use LLM to generate a microservice dependency report.  
+  
+low_code:  
+  operation:  
+    - name: analyze-dependency  
+      parameter:  
+        repo_name: GitHub repository in owner/repo format, e.g. "myorg/bookinfo"  
+        namespace: Kubernetes namespace, e.g. "default"  
+      description: |  
+        Analyze microservice dependency by reading DeepWiki architecture docs  
+        and Kubernetes cluster state, then generate a dependency report using LLM.  
+      access: public  
+      body:  
+        - toolkit-mcp-connect:  
+            server_name: deepwiki  
+            base_url: https://mcp.deepwiki.com  
+            endpoint: /mcp  
+            assign: connect_deepwiki_result  
+  
+        - toolkit-mcp-call-tool:  
+            server_name: deepwiki  
+            tool_name: read_wiki_contents  
+            tool_arguments: |  
+              {"repoName": "${repo_name}"}  
+            assign: wiki_contents  
+
+        # --- Deepwiki: 釐清服務清單與各自職責 ---  
+        - toolkit-prompt-template:  
+            template: deepwiki_question_responsibility  
+            assign: deepwiki_question  
+          
+        - toolkit-mcp-call-tool:  
+            server_name: deepwiki  
+            tool_name: ask_question  
+            tool_arguments: |  
+              {"repoName":"${repo_name}","question":"${deepwiki_question}"}  
+            assign: deepwiki_responsibility
+
+        # --- Deepwiki: 同步呼叫關係 ---  
+        - toolkit-prompt-template:  
+            template: deepwiki_question_synchronous
+            assign: deepwiki_question
+  
+        - toolkit-mcp-call-tool:  
+            server_name: deepwiki  
+            tool_name: ask_question  
+            tool_arguments: |  
+              {"repoName":"${repo_name}","question":"${deepwiki_question}"}  
+            assign: deepwiki_synchronous
+
+        # --- Deepwiki: 非同步通訊與事件 ---  
+        - toolkit-prompt-template:  
+            template: deepwiki_question_asynchronous
+            assign: deepwiki_question
+  
+        - toolkit-mcp-call-tool:  
+            server_name: deepwiki  
+            tool_name: ask_question  
+            tool_arguments: |  
+              {"repoName":"${repo_name}","question":"${deepwiki_question}"}  
+            assign: deepwiki_asynchronous
+
+        # --- Deepwiki: 釐清外部依賴 ---
+        - toolkit-prompt-template:  
+            template: deepwiki_question_external
+            assign: deepwiki_question
+  
+        - toolkit-mcp-call-tool:  
+            server_name: deepwiki  
+            tool_name: ask_question  
+            tool_arguments: |  
+              {"repoName":"${repo_name}","question":"${deepwiki_question}"}  
+            assign: deepwiki_external
+
+        # --- Deepwiki: 釐清架構模式與入口點 ---
+        - toolkit-prompt-template:  
+            template: deepwiki_question_flow
+            assign: deepwiki_question
+  
+        - toolkit-mcp-call-tool:  
+            server_name: deepwiki  
+            tool_name: ask_question  
+            tool_arguments: |  
+              {"repoName":"${repo_name}","question":"${deepwiki_question}"}  
+            assign: deepwiki_flow
+
+        - toolkit-mcp-connect:  
+            server_name: k8s 
+            base_url: http://k8s-mcp-server:8000
+            endpoint: /mcp  
+            assign: connect_k8s_result  
+
+        # --- K8s: 取得 Services ---
+        - toolkit-mcp-call-tool:  
+            server_name: k8s  
+            tool_name: execute_kubectl  
+            tool_arguments: |  
+              {"command":"get services -n ${namespace} -o json"}  
+            assign: k8s_services  
+  
+        # --- K8s: 取得 Deployments ---  
+        - toolkit-mcp-call-tool:  
+            server_name: k8s  
+            tool_name: execute_kubectl  
+            tool_arguments: |  
+              {"command":"get deployments -n ${namespace} -o json"}  
+            assign: k8s_deployments  
+  
+        # --- K8s: 取得 Pods 與 Labels ---  
+        - toolkit-mcp-call-tool:  
+            server_name: k8s  
+            tool_name: execute_kubectl  
+            tool_arguments: |  
+              {"command":"get pods -n ${namespace} --show-labels -o json"}  
+            assign: k8s_pods  
+  
+        # --- K8s: 取得 EndpointSlices ---  
+        - toolkit-mcp-call-tool:  
+            server_name: k8s  
+            tool_name: execute_kubectl  
+            tool_arguments: |  
+              {"command":"get endpointslices -n ${namespace} -o json"}  
+            assign: k8s_endpoint_slices  
+  
+        # --- K8s: 跨 namespace 搜尋 workload ---  
+        - toolkit-mcp-call-tool:  
+            server_name: k8s  
+            tool_name: execute_kubectl  
+            tool_arguments: |  
+              {"command":"get deployments,statefulsets,daemonsets,services,pods --all-namespaces -o json", "timeout": 60}  
+            assign: k8s_cross_namespace  
+  
+        # --- Istio: 取得 VirtualServices ---  
+        - toolkit-mcp-call-tool:  
+            server_name: k8s  
+            tool_name: execute_kubectl  
+            tool_arguments: |  
+              {"command":"get virtualservices -n ${namespace} -o json"}  
+            assign: istio_virtual_services  
+  
+        # --- Istio: 取得 DestinationRules ---  
+        - toolkit-mcp-call-tool:  
+            server_name: k8s  
+            tool_name: execute_kubectl  
+            tool_arguments: |  
+              {"command":"get destinationrules -n ${namespace} -o json"}  
+            assign: istio_destination_rules  
+  
+        # --- Istio: 設定分析（-o json 輸出結構化資料） ---  
+        - toolkit-mcp-call-tool:  
+            server_name: k8s  
+            tool_name: execute_istioctl  
+            tool_arguments: |  
+              {"command":"analyze -n ${namespace} -o json", "timeout": 60}  
+            assign: istio_analysis 
+  
+        - toolkit-discord-info:  
+            text: |  
+              Analyzing dependency for `${repo_name}` (namespace: `${namespace}`)...  
+              DeepWiki and K8s data collected. Calling LLM for analysis.  
+  
+        - toolkit-llm-call:  
+            prompt: |  
+              ## DeepWiki Wiki 結構  
+              ${wiki_contents}  
+  
+              ## DeepWiki 分析 - 服務清單與各自職責
+              ${deepwiki_responsibility}  
+  
+              ## DeepWiki 分析 - 同步呼叫關係
+              ${deepwiki_synchronous}  
+  
+              ## DeepWiki 分析 - 非同步通訊與事件
+              ${deepwiki_asynchronous}  
+  
+              ## DeepWiki 分析 - 外部依賴 
+              ${deepwiki_external}  
+  
+              ## DeepWiki 分析 - 架構模式與入口點  
+              ${deepwiki_flow}  
+  
+              ## Kubernetes Services  
+              ${k8s_services}  
+  
+              ## Kubernetes Deployments  
+              ${k8s_deployments}  
+  
+              ## Kubernetes Pods 與 Labels  
+              ${k8s_pods}  
+  
+              ## EndpointSlices  
+              ${k8s_endpoint_slices}  
+  
+              ## 跨 Namespace Workloads  
+              ${k8s_cross_namespace}  
+  
+              ## Istio VirtualServices  
+              ${istio_virtual_services}  
+  
+              ## Istio DestinationRules  
+              ${istio_destination_rules}  
+  
+              ## Istio 設定分析  
+              ${istio_analysis}  
+            prompt_template: dependency_analysis  
+            assign: response
+    
+        - toolkit-discord-text:  
+            text: |  
+              ## Microservice Dependency Analysis Report  
+              **Repository:** `${repo_name}` | **Namespace:** `${namespace}`  
+  
+              ${response}  

@@ -1,0 +1,18 @@
+What asynchronous communication mechanisms exist between services?
+
+List all message queues, event buses, Kafka topics, or pub/sub patterns.
+
+For each, specify:
+- producer service,
+- consumer service,
+- topic or queue name,
+- event type.
+
+If no asynchronous communication mechanism is found in either runtime data or documentation,
+explicitly state:
+
+"No asynchronous communication mechanism detected."
+
+Format as a markdown table:
+
+| Producer | Consumer | Topic / Queue | Event Type |

@@ -122,3 +122,5 @@ toolkit-mcp-call-tool:
   - server_name
   - tool_name
   - tool_arguments
+toolkit-prompt-template:  
+  - template  
