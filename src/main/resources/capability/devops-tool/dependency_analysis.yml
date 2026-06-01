@@ -7,7 +7,7 @@ info:
   
 low_code:  
   operation:  
-    - name: analyze-dependency  
+    - name: get-analyze-dependency  
       parameter:  
         repo_name: GitHub repository in owner/repo format, e.g. "myorg/bookinfo"  
         namespace: Kubernetes namespace, e.g. "default"  
