@@ -30,6 +30,68 @@ public class TrafficToolkit extends ToolkitFunction {
     private static final long MAX_GAP_MILLIS = 500;
 
     /**
+     * Resolve the effective entry URL to drive.
+     *
+     * @param entry_url    user input: a URL (used as-is), "auto" (detect from services),
+     *                     or anything else / "none" (returns empty -> manual mode).
+     * @param namespace    the namespace being analyzed.
+     * @param k8s_services raw output of the pipeline's "kubectl get services ..." (custom-columns
+     *                     NAME TYPE PORTS ... --no-headers).
+     * @return an "http://..." URL to drive, or "" if it should fall back to manual.
+     */
+    public String toolkitTrafficResolveEntry(String entry_url, String namespace, String k8s_services) {
+        if (entry_url != null) {
+            String e = entry_url.trim();
+            if (e.startsWith("http://") || e.startsWith("https://")) return e;   // explicit override
+            if (!e.equalsIgnoreCase("auto")) return "";                          // "none" / anything -> manual
+        }
+        // auto-detect: pick a NodePort / LoadBalancer service as the entry.
+        if (k8s_services == null || k8s_services.isBlank()) return "";
+
+        String best = null, bestPort = null;
+        int bestScore = -1;
+        for (String rawLine : k8s_services.replace("\\n", "\n").split("\\r?\\n")) {
+            String line = rawLine.trim();
+            if (line.isEmpty()) continue;
+            String[] t = line.split("\\s+");
+            if (t.length < 3) continue;
+            String name = t[0];
+            String type = t[1];
+            if (!type.equalsIgnoreCase("NodePort") && !type.equalsIgnoreCase("LoadBalancer")) continue;
+
+            String port = firstPort(t[2]);
+            if (port == null) continue;
+
+            int score = nameScore(name);
+            if (score > bestScore) {
+                bestScore = score;
+                best = name;
+                bestPort = port;
+            }
+        }
+        if (best == null) return "";
+        String portSuffix = "80".equals(bestPort) ? "" : ":" + bestPort;
+        return "http://" + best + "." + namespace + ".svc.cluster.local" + portSuffix;
+    }
+
+    /** Prefer names that look like a user-facing front door. */
+    private int nameScore(String name) {
+        String n = name.toLowerCase();
+        for (String hint : new String[]{"front", "gateway", "ingress", "productpage", "ui", "web", "portal", "api"}) {
+            if (n.contains(hint)) return 2;
+        }
+        return 1;
+    }
+
+    private String firstPort(String portsField) {
+        for (String p : portsField.split("[,;/]")) {
+            String d = p.replaceAll("[^0-9].*$", "").trim();
+            if (!d.isEmpty()) return d;
+        }
+        return null;
+    }
+
+    /**
      * @param url      entry point to drive, e.g. "http://front-end.sock-shop.svc.cluster.local"
      * @param requests number of GET requests to send
      * @return a short summary of the traffic run

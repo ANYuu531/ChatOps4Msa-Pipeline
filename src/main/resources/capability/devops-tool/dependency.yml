@@ -13,7 +13,7 @@ low_code:
       parameter:
         repo_name: GitHub repository in owner/repo format, e.g. "myorg/bookinfo"
         namespace: Kubernetes namespace, e.g. "default"
-        entry_url: In-cluster entry URL to auto-drive traffic; pass 'none' to drive manually.
+        entry_url: Use 'auto' to detect the entry and drive traffic, a URL to override, or 'none' for manual.
       description: |
         Analyze microservice dependencies and generate a report.
       access: public
@@ -290,8 +290,16 @@ low_code:
               ${k8s_runtime_notes}
 
         # ---- Optimization 1: drive traffic + collect Istio runtime evidence ----
+        # Resolve the entry URL: 'auto' -> detect NodePort/LoadBalancer service from the
+        # already-collected k8s_services; a URL -> use as-is; 'none'/other -> manual.
+        - toolkit-traffic-resolve_entry:
+            entry_url: ${entry_url}
+            namespace: ${namespace}
+            k8s_services: ${k8s_services}
+            assign: resolved_entry_url
+
         - toolkit-string-pattern:
-            string: ${entry_url}
+            string: ${resolved_entry_url}
             regex: ^https?://.+
             assign: has_entry_url
 
@@ -299,11 +307,11 @@ low_code:
             condition: ${has_entry_url}
             true:
               - toolkit-discord-text:
-                  text: "DEBUG: auto-driving end-to-end traffic to ${entry_url} (in-cluster HTTP, ~18s)"
+                  text: "DEBUG: auto-driving end-to-end traffic to ${resolved_entry_url} (in-cluster HTTP, ~18s)"
               # In-cluster HTTP driver: works from the bot pod (no docker needed) and
               # runs synchronously, so the traffic is done before we query the metric.
               - toolkit-traffic-http_drive:
-                  url: ${entry_url}
+                  url: ${resolved_entry_url}
                   requests: 60
                   assign: traffic_result
               - toolkit-discord-text:
@@ -314,10 +322,11 @@ low_code:
             false:
               - toolkit-discord-warning:
                   text: |
-                    [ACTION NEEDED] No entry_url was provided, so traffic was not auto-driven.
+                    [ACTION NEEDED] No entry could be auto-detected (no NodePort/LoadBalancer service) and no entry_url was given.
                     Istio can only observe a dependency after a real request crosses it.
                     Please drive traffic now (click through the UI / run your own load / curl the endpoints),
                     then run:  supplement-dependency-traffic  namespace=${namespace}
+                    Or re-run with entry_url set to a reachable in-cluster URL.
                     This report will still include any traffic already observed in the mesh.
 
         - toolkit-discord-text:
