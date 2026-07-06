@@ -1,21 +1,61 @@
-What are all synchronous API calls between microservices?
+You are analyzing repository documentation, source-code references, configuration, and declared routes only.
 
-Only include calls explicitly mentioned in:
-- source code documentation,
-- API routes,
-- Istio VirtualServices,
-- runtime routing data.
+Identify synchronous dependency candidates between components.
 
-Do not infer undocumented API calls.
+A candidate may be included only when the relationship is explicitly supported by at least one of:
+- source-code reference to an HTTP, gRPC, RPC, or client call
+- route forwarding or gateway configuration
+- service hostname, URL, client initialization, environment variable, or configuration reference
+- explicit architecture documentation that names both source and target
 
-For each call, specify:
-- caller service,
-- callee service,
-- HTTP method,
-- endpoint path,
-- purpose of the call,
-- evidence source.
+For each candidate, provide:
+- Source component
+- Target component
+- Relationship role: direct_call | gateway_route | documented_association
+- Dependency type: application | gateway_route | database | cache | unknown
+- Protocol: HTTP | HTTPS | gRPC | TCP | UNKNOWN
+- HTTP method, if explicitly documented; otherwise UNKNOWN
+- Endpoint path, if explicitly documented; otherwise UNKNOWN
+- Purpose
+- Evidence type: source_code_reference | configuration | documentation
+- Evidence reference
+- Directness: confirmed_direct | not_confirmed
+- Limitations
 
-Format as a markdown table:
+Rules:
+1. Do NOT infer calls from service names, general architecture conventions, health endpoints, metrics endpoints, Prometheus scraping, Kubernetes resources, or deployment names.
+2. Health checks, readiness probes, liveness probes, and metrics scraping are NOT business dependencies.
+3. Do NOT claim any candidate is observed at runtime.
+4. If documentation explicitly describes communication between two components but directness is unclear, include it as:
+   relationship_role = documented_association
+   directness = not_confirmed
+5. Documentation-supported candidates must not be dropped merely because no runtime trace is available.
+6. If source, target, dependency type, or relationship role is unknown, do not include it as a candidate. List it under "Unresolved candidates".
+7. Do not invent methods or endpoint paths.
 
-| Caller | Callee | Method | Endpoint | Purpose | Evidence Source |
+Return Markdown:
+
+## Synchronous dependency candidates
+
+For each candidate:
+
+### Candidate: <source> -> <target>
+- Relationship role:
+- Dependency type:
+- Protocol:
+- Method:
+- Endpoint:
+- Purpose:
+- Evidence type:
+- Evidence reference:
+- Directness:
+- Runtime observed: UNKNOWN
+- Limitations:
+
+## Excluded non-business relations
+- Health checks, probes, metrics scraping, or similar relations, if found
+
+## Unresolved candidates
+- Item:
+- Reason:
+- Missing evidence:

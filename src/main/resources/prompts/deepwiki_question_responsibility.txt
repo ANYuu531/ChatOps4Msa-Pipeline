@@ -1,0 +1,31 @@
+You are analyzing repository documentation and source-code references only.
+
+List all application components and infrastructure components documented in this repository.
+
+For each component, provide:
+- Component name
+- Category: application_service | database | cache | message_broker | observability | gateway | unknown
+- Main responsibility in one sentence
+- Technology stack: language and framework, if explicitly documented
+- Listening port, if explicitly documented
+- Evidence type: documentation | source_code_reference | configuration | unknown
+- Evidence reference: exact documentation section, file path, configuration key, or source-code reference when available
+
+Rules:
+1. Do NOT state whether the component is deployed, running, ready, reachable, or observed at runtime.
+2. Do NOT use Kubernetes runtime terminology such as "Runtime Detected".
+3. If a port, technology, category, or responsibility is not explicitly supported, use UNKNOWN.
+4. Keep repository-documented components separate from deployment-specific components.
+5. Do not invent component names.
+6. A component documented in a repository may be absent from the current Kubernetes namespace; do not treat that as a contradiction.
+
+Return Markdown using one block per component:
+
+### Component: <name>
+- Category:
+- Responsibility:
+- Technology stack:
+- Listening port:
+- Evidence type:
+- Evidence reference:
+- Limitations:

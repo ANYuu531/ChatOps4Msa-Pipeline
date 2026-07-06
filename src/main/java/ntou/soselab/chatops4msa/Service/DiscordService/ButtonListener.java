@@ -6,9 +6,11 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import ntou.soselab.chatops4msa.Entity.NLP.IntentAndEntity;
+import ntou.soselab.chatops4msa.Entity.ToolkitFunction.DepstateToolkit;
 import ntou.soselab.chatops4msa.Exception.CapabilityRoleException;
 import ntou.soselab.chatops4msa.Exception.ToolkitFunctionException;
 import ntou.soselab.chatops4msa.Service.CapabilityOrchestrator.CapabilityOrchestrator;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyReportService;
 import ntou.soselab.chatops4msa.Service.NLPService.DialogueTracker;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,16 +27,19 @@ public class ButtonListener extends ListenerAdapter {
     private final DialogueTracker dialogueTracker;
     private final CapabilityOrchestrator orchestrator;
     private final JDAService jdaService;
+    private final DependencyReportService dependencyReportService;
 
     @Lazy
     @Autowired
     public ButtonListener(DialogueTracker dialogueTracker,
                           CapabilityOrchestrator orchestrator,
-                          JDAService jdaService) {
+                          JDAService jdaService,
+                          DependencyReportService dependencyReportService) {
 
         this.dialogueTracker = dialogueTracker;
         this.orchestrator = orchestrator;
         this.jdaService = jdaService;
+        this.dependencyReportService = dependencyReportService;
     }
 
     @Override
@@ -54,6 +59,28 @@ public class ButtonListener extends ListenerAdapter {
         List<MessageEmbed> originalEmbedList = event.getMessage().getEmbeds();
         Button disabledButton = event.getComponent().asDisabled();
         event.getMessage().editMessageEmbeds(originalEmbedList).setActionRow(disabledButton).queue();
+
+        // dependency-analysis decision buttons (handled before the NLP intent flow)
+        if (DepstateToolkit.CONTINUE_BUTTON_ID.equals(buttonId)) {
+            try {
+                UserContextHolder.setUserId(testerId);
+                event.getHook().editOriginal("Generating report...").queue();
+                dependencyReportService.generateAndPost(testerId);
+            } catch (Exception e) {
+                e.printStackTrace();
+                jdaService.sendChatOpsChannelErrorMessage("[ERROR] failed to generate report: " + e.getLocalizedMessage());
+            } finally {
+                UserContextHolder.clear();
+            }
+            return;
+        }
+        if (DepstateToolkit.PAUSE_BUTTON_ID.equals(buttonId)) {
+            event.getHook().editOriginal(
+                    "Paused. Please supplement evidence first (re-run with a valid entry_url to auto-drive traffic, "
+                            + "drive traffic manually then use supplement-dependency-traffic, or add source code that can be "
+                            + "statically extracted), then re-run get-dependency-analysis.").queue();
+            return;
+        }
 
         // get the user roles
         List<String> roleNameList = new ArrayList<>();

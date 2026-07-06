@@ -1,18 +1,53 @@
-What asynchronous communication mechanisms exist between services?
+You are analyzing repository documentation, source-code references, and configuration only.
 
-List all message queues, event buses, Kafka topics, or pub/sub patterns.
+Identify asynchronous communication mechanisms and event-driven workflow candidates.
 
-For each, specify:
-- producer service,
-- consumer service,
-- topic or queue name,
-- event type.
+Look for:
+- message brokers
+- event buses
+- RabbitMQ, Kafka, NATS, Pub/Sub, SQS, Service Bus, or equivalent systems
+- publisher or producer code/configuration
+- subscriber or consumer code/configuration
+- exchanges, queues, topics, routing keys, event names, and handlers
 
-If no asynchronous communication mechanism is found in either runtime data or documentation,
-explicitly state:
+Rules:
+1. A broker name is NOT a queue, exchange, topic, or routing key.
+2. Do NOT infer queue names, exchange names, routing keys, event types, producers, or consumers.
+3. Do NOT represent producer -> consumer as a direct network edge.
+   Use the logical workflow:
+   producer -> broker <- consumer
+4. If only the broker is documented, report it as broker inventory only.
+5. Do NOT claim any event or message was observed at runtime.
+6. Use UNKNOWN for unsupported values.
+7. If a workflow is documented but exchange, queue, routing key, or event type is unknown, retain the workflow and mark the missing fields UNKNOWN.
+8. If no asynchronous mechanism is supported by repository evidence, state:
+   "No repository-documented asynchronous communication mechanism detected."
 
-"No asynchronous communication mechanism detected."
+Return Markdown:
 
-Format as a markdown table:
+## Broker inventory
 
-| Producer | Consumer | Topic / Queue | Event Type |
+For each broker:
+
+### Broker: <name>
+- Protocol:
+- Evidence type:
+- Evidence reference:
+- Notes:
+
+## Producer-broker-consumer workflows
+
+For each workflow:
+
+### Workflow: <producer> -> <broker> <- <consumer>
+- Protocol:
+- Event type:
+- Exchange:
+- Queue:
+- Topic:
+- Routing key:
+- Producer evidence:
+- Consumer evidence:
+- Runtime observed: UNKNOWN
+- Confidence:
+- Limitations:

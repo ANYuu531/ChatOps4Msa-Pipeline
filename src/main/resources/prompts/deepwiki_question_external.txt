@@ -1,26 +1,50 @@
-What external dependencies does each microservice have?
+You are analyzing repository documentation, source-code references, and configuration only.
 
-Distinguish between:
-- infrastructure dependencies,
-- application dependencies,
-- external third-party services.
+Identify non-application dependencies used or referenced by repository components.
 
-Include:
-- databases,
-- caches,
-- message brokers,
-- external APIs,
-- cloud services,
-- shared infrastructure components.
+Classify each dependency as one of:
+- database
+- cache
+- message_broker
+- observability
+- third_party_api
+- cloud_service
+- shared_platform_component
+- unknown
 
-For each dependency, specify:
-- service name,
-- dependency type,
-- dependency name,
-- whether it is detected in runtime data,
-- purpose.
+For each dependency, provide:
+- Source component
+- Dependency name
+- Dependency type
+- Deployment scope: repository_declared | external | optional | unknown
+- Purpose
+- Evidence type: documentation | source_code_reference | configuration
+- Evidence reference
+- Confidence
+- Limitations
 
-Format as a markdown table:
+Rules:
+1. Do NOT use "Runtime Detected", "Deployed", or claim that a dependency is currently active.
+2. Do NOT use deployment_scope = in_cluster in this repository-only analysis.
+   Kubernetes runtime evidence is collected separately.
+3. A dependency described only in documentation must be marked as repository_declared or optional, not active.
+4. A database, cache, broker, or observability component is not automatically external merely because it is infrastructure.
+5. Optional cloud integrations must be marked deployment_scope = optional unless repository evidence explicitly requires them.
+6. Do not infer actual network usage from architecture descriptions.
+7. Use UNKNOWN when evidence is insufficient.
 
-| Service | Dependency Type | Dependency Name | Runtime Detected | Purpose |
+Return Markdown:
 
+## Infrastructure and external dependency candidates
+
+For each dependency:
+
+### Dependency: <source component> -> <dependency name>
+- Dependency type:
+- Deployment scope:
+- Purpose:
+- Evidence type:
+- Evidence reference:
+- Runtime observed: UNKNOWN
+- Confidence:
+- Limitations:

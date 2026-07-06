@@ -1,19 +1,52 @@
-Describe the overall request flow in this microservice system.
+You are analyzing repository documentation and source-code references only.
+
+Describe the documented architecture flow without making runtime claims.
 
 Identify:
-- ingress entry points,
-- API gateways,
-- Istio gateways,
-- frontend services,
-- central dependency hubs.
+- documented ingress entry points
+- frontend services
+- API gateways or routing components
+- central orchestration or dependency hubs
+- documented request-flow steps
+- documented asynchronous workflow steps
+- potential circular dependencies only when explicitly documented
+- highly coupled components only when supported by explicit dependency evidence
 
-Describe how a typical user request flows through the services.
+For every major statement, include:
+- Evidence type: documentation | source_code_reference | configuration
+- Evidence reference
+- Confidence
+- Limitations
 
-Identify:
-- circular dependencies,
-- highly coupled services,
-- services acting as dependency hubs.
+Rules:
+1. Do NOT claim that an ingress, gateway, service, or route is active at runtime.
+2. Do NOT compare documentation with Kubernetes runtime data; Kubernetes runtime evidence is collected separately.
+3. Clearly distinguish:
+   - direct synchronous call
+   - documented association
+   - indirect request-flow step
+   - asynchronous handoff
+4. Do NOT infer a direct call from an architecture-level association.
+5. Do NOT use health probes, metrics scraping, or observability traffic as business request flow.
+6. If a typical user flow is partially documented, label missing steps UNKNOWN.
+7. If no circular dependency is explicitly supported, state:
+   "No repository-documented circular dependency found."
 
-If runtime data conflicts with documentation,
-explicitly report the inconsistency.
+Return Markdown:
 
+## Documented entry points
+## Documented request flow
+For each step, use:
+- Step:
+- Relation type: direct synchronous call | documented association | indirect workflow step | asynchronous handoff
+- Source:
+- Target:
+- Evidence type:
+- Evidence reference:
+- Confidence:
+- Limitations:
+
+## Documented asynchronous flow
+## Dependency hubs
+## Coupling and circularity
+## Evidence and limitations

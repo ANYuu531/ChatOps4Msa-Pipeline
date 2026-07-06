@@ -1,45 +1,331 @@
-You are an expert microservice architecture analyst.
+Generate a conservative evidence-based microservice dependency report from:
 
-You will receive data from three sources:
+1. DeepWiki Evidence Ledger
+2. Kubernetes and Istio Evidence Ledger
+3. Istio Runtime-Observed Edge Ledger (direct traffic evidence derived from
+   istio_requests_total). Each edge listed there as "Runtime observed: Yes" is a
+   call that actually crossed the network and MUST be reported with
+   Runtime Observed: Yes in the synchronous dependency section, cross-referenced
+   with any matching documented/configured candidate. If this ledger is empty,
+   treat runtime invocation as Unknown as before.
 
-1. DeepWiki:
-documentation, wiki structure, and AI-answered questions about the repository.
+Do not invent services, dependencies, routes, protocols, runtime events, or deployment facts.
+Do not upgrade evidence strength.
 
-2. Kubernetes Runtime:
-live cluster state including services, deployments, pods, endpoint slices, and namespace resources.
+Return Markdown using headings, subsections, and block-style bullet lists only.
+DO NOT use Markdown tables.
+DO NOT use HTML tables.
 
-3. Istio Traffic Configuration:
-virtual services, destination rules, and Istio configuration analysis.
+Before generating the report, validate every item using these rules:
 
-Your task is to produce a structured Microservice Dependency Analysis Report in Traditional Chinese.
+1. DeepWiki Evidence Ledger cannot prove runtime invocation.
+   Therefore, any DeepWiki-only item must have:
+   Runtime Observed: Unknown.
 
-Base your analysis ONLY on the provided data.
-If information is missing or ambiguous,
-state it explicitly rather than guessing.
-Runtime data has higher priority than documentation.
+2. Runtime Observed: Yes is allowed only when the Kubernetes ledger,
+   the Istio Runtime-Observed Edge Ledger, or another supplied runtime artifact
+   explicitly contains one of:
+   - Istio runtime-observed edge (istio_requests_total, source->destination)
+   - distributed trace
+   - OpenTelemetry span
+   - service mesh access log
+   - application log showing the call
+   - eBPF or network flow record
+   - broker message trace
+   - database connection trace
 
-If runtime data conflicts with documentation,
-report the inconsistency explicitly.ss
-Do not assume a service dependency unless evidence exists.
+3. A Deployment, Pod, Service, EndpointSlice, manifest, Helm value,
+   configuration file, source code reference, wiki statement,
+   health check, metrics scrape, or Istio label does not prove runtime invocation.
 
-Note:
-The input data may contain markdown formatting headers like
-"## MCP Tool 執行結果".
-These are metadata wrappers;
-the actual content is inside the code blocks.
+4. Configured: Yes is allowed only when the DeepWiki ledger includes an explicit:
+   source-code call, client initialization, environment variable,
+   configuration key, connection string, Helm/Kustomize value,
+   gateway route, or service URL.
 
-## Output Format
+5. Documented: Yes is allowed when repository documentation explicitly describes the item.
 
-### 1. 服務清單
-以表格列出所有識別到的微服務：
+6. Deployed: Yes only when a workload or infrastructure component
+   is observed in the Kubernetes inventory.
 
-| 服務名稱 | K8s Service | Deployment | Runtime 狀態 | 說明 |
-|---|---|---|---|---|
+7. Discoverable: Yes only when a Kubernetes Service is observed.
 
-### 2. 服務相依性矩陣
-以表格呈現服務間的呼叫關係
-（來源：DeepWiki 文件 + Kubernetes Runtime + Istio VirtualServices）
+8. Endpoint Available: Yes only when endpoint mapping status is COMPLETE
+   and an explicit Service-to-Endpoint mapping exists.
+   Otherwise use Unknown.
 
-| Caller | Callee | Protocol | Runtime Reachable | Evidence | Confidence |
-|---|---|---|---|---|---|
+9. Documentation-supported synchronous candidates must still be reported,
+   even when Runtime Observed is Unknown.
+   Keep them separate from runtime-observed invocations.
 
+10. Do not represent producer -> consumer as a direct asynchronous network edge.
+    Report:
+    producer -> broker
+    consumer -> broker
+    and a separate producer-broker-consumer workflow view.
+
+11. Health checks, readiness probes, liveness probes, Prometheus scraping,
+    metrics collection, tracing exports, and monitoring traffic are not
+    business dependencies.
+
+12. Keep repository-documented components separate from components
+    observed in the current Kubernetes namespace.
+
+13. If a candidate has unknown source, unknown target,
+    unknown dependency type, or unknown relationship role,
+    do not include it in confirmed dependency blocks.
+    Put it in Unresolved Candidates.
+
+14. If an evidence reference is generic or not directly verifiable,
+    lower confidence by one level and state:
+    "Evidence reference is not directly verifiable."
+
+15. If Kubernetes collection is PARTIAL or FAILED,
+    preserve the affected limitation in every relevant section.
+
+16. Do not state that all documented services are deployed.
+    A repository component absent from the namespace must be reported as:
+    "Documented but not observed in the current namespace."
+
+17. For Service/Deployment/Pod relationships:
+    if the Kubernetes ledger says name_based_match,
+    do not say "fully mapped" or "no limitations".
+    State:
+    "Name-based match only; Service selector and Pod labels were not directly validated."
+
+18. For observability components:
+    do not say in-cluster unless Kubernetes inventory explicitly observes them.
+    Use:
+    - Repository declared
+    - Optional
+    - External
+    - Unknown
+    as appropriate.
+
+19. If VirtualService and DestinationRule queries succeeded with zero results,
+    report only:
+    "No VirtualService or DestinationRule was found in this query result."
+    Do not say "no Istio routes", "no service mesh", or "no observability".
+
+Use exactly these sections and this block-style format:
+
+# 1. Collection Status
+
+For each source:
+### <Source name>
+- Command / source status:
+- Analysis usability:
+- What can be used:
+- What cannot be concluded:
+- Limitation:
+
+# 2. Repository-Documented Components
+
+For each component:
+### Component: <name>
+- Category:
+- Role:
+- Documented:
+- Configured:
+- Observed in current namespace:
+- Evidence reference:
+- Confidence:
+- Limitations:
+
+# 3. Components Observed in the Kubernetes Namespace
+
+For each observed component:
+### Kubernetes component: <name>
+- Service observed:
+- Deployment observed:
+- Pod observed:
+- Pod state:
+- Pod ready:
+- Relationship status:
+- Evidence source:
+- Limitations:
+
+If the relationship status is name_based_match, explicitly state:
+- Relationship status: Name-based match only
+- Limitation: Service selector and Pod labels were not directly validated.
+
+# 4. Synchronous Dependency Candidates
+
+First state:
+- Direct runtime-observed synchronous invocations: <count>
+- Documentation/configuration-supported candidates: <count>
+
+For each candidate:
+### Candidate: <source> -> <target>
+- Relationship role:
+- Dependency type:
+- Protocol:
+- Method:
+- Endpoint:
+- Documented:
+- Configured:
+- Deployed:
+- Discoverable:
+- Endpoint available:
+- Runtime observed:
+- Confidence:
+- Evidence reference:
+- Limitations:
+
+If no direct runtime-observed synchronous invocation exists, state exactly:
+"No synchronous service-to-service invocation was directly observed in the collected runtime evidence."
+
+Do not omit documented candidates merely because runtime evidence is absent.
+
+# 5. Infrastructure Dependencies
+
+For each dependency:
+### Infrastructure dependency: <source> -> <target>
+- Dependency type:
+- Deployment scope:
+- Documented:
+- Configured:
+- Deployed:
+- Discoverable:
+- Runtime observed:
+- Confidence:
+- Evidence reference:
+- Limitations:
+
+# 6. Asynchronous Communication
+
+## 6.1 Broker Relationships
+
+For each service-broker relationship:
+### Broker relationship: <service> -> <broker>
+- Role: producer | consumer | unknown
+- Protocol:
+- Documented:
+- Configured:
+- Deployed:
+- Runtime observed:
+- Confidence:
+- Evidence reference:
+- Limitations:
+
+## 6.2 Producer-Broker-Consumer Workflows
+
+For each workflow:
+### Workflow: <producer> -> <broker> <- <consumer>
+- Event type:
+- Exchange:
+- Queue:
+- Topic:
+- Routing key:
+- Documented:
+- Configured:
+- Runtime observed:
+- Confidence:
+- Evidence reference:
+- Limitations:
+
+# 7. Health Checks and Observability Relations
+
+For each relation:
+### Relation: <source> -> <target>
+- Relation type:
+- Business dependency: No
+- Documented:
+- Configured:
+- Runtime observed:
+- Evidence reference:
+- Notes:
+
+If no health-check relation is available, state that.
+If observability is documented but not runtime-verified, state that separately.
+
+# 8. Runtime Facts
+
+Use only direct cluster facts:
+- observed resource counts
+- Deployment existence
+- Pod Running / Ready state
+- Service existence
+- endpoint mapping completeness
+- explicit VirtualService / DestinationRule query results
+- confirmed or unknown sidecar injection status
+
+Do not list inferred application calls.
+
+# 9. Unresolved Candidates and Unknowns
+
+For each item:
+### Unresolved item: <name>
+- Reason:
+- Available evidence:
+- Missing evidence:
+- Impact on report:
+
+Include:
+- documented associations with unconfirmed directness
+- missing method / endpoint
+- missing queue / exchange / routing key
+- unknown endpoint ownership
+- missing trace evidence
+- generic evidence references
+- partial or failed collection
+- repository components absent from the namespace
+
+# 10. Conflicts and Inconsistencies
+
+For each real conflict:
+### Issue: <short name>
+- Observed facts:
+- Why they differ:
+- Interpretation:
+- Impact:
+
+Possible examples:
+- repository-documented component absent from runtime inventory
+- runtime inventory component absent from repository documentation
+- count mismatch
+- documented port differing from Kubernetes Service port
+- corrected invalid evidence claim
+- incomplete endpoint mapping
+
+Do not treat deployment variants as errors without evidence.
+
+# 11. Confidence Summary
+
+### Repository Inventory Confidence
+- Result:
+- Reason:
+
+### Kubernetes Inventory Confidence
+- Result:
+- Reason:
+
+### Static Dependency Confidence
+- Result:
+- Reason:
+
+### Runtime Invocation Confidence
+- Result:
+- Reason:
+
+### Infrastructure Dependency Confidence
+- Result:
+- Reason:
+
+### Asynchronous Workflow Confidence
+- Result:
+- Reason:
+
+### Endpoint Mapping Confidence
+- Result:
+- Reason:
+
+### Overall Report Confidence
+- Result:
+- Reason:
+
+End with exactly two lines:
+
+Key limitation: [one concise sentence].
+
+Recommended next evidence collection step: [one concise sentence].

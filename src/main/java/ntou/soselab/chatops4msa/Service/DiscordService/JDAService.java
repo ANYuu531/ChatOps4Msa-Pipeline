@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.FileUpload;
 import ntou.soselab.chatops4msa.Exception.DiscordIdException;
@@ -14,6 +15,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.util.List;
 
 @Service
 public class JDAService {
@@ -100,6 +102,10 @@ public class JDAService {
 
     public void sendChatOpsChannelEmbedMessage(MessageEmbed embedMessage) {
         chatOpsChannel.sendMessageEmbeds(embedMessage).queue();
+    }
+
+    public void sendChatOpsChannelMessageWithButtons(String message, List<Button> buttons) {
+        chatOpsChannel.sendMessage(message).setActionRow(buttons).queue();
     }
 
     public void sendChatOpsChannelFile(String filename, InputStream inputStream) {

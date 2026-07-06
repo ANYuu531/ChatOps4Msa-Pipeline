@@ -1,0 +1,85 @@
+Build a compact Kubernetes and Istio Evidence Ledger from the provided command outputs.
+
+This stage extracts observable cluster facts only.
+Do not infer application-level business dependencies.
+Do not claim that one service invoked another service.
+
+Return valid JSON only.
+
+Use this exact top-level structure:
+
+{
+  "collection_status": {},
+  "kubernetes_inventory": {},
+  "resource_relationships": {},
+  "endpoint_analysis": {},
+  "istio_analysis": {},
+  "runtime_facts": [],
+  "unknowns_and_limitations": []
+}
+
+For each command category:
+- services
+- deployments
+- pods
+- endpointslices
+- virtualservices
+- destinationrules
+
+include:
+- command_status: SUCCESS | FAILED
+- analysis_usable_status: COMPLETE | PARTIAL | UNUSABLE
+- reason
+- safe_fields
+- unsafe_fields
+
+Definitions:
+- SUCCESS: command completed without an explicit error.
+- FAILED: command includes an error, timeout, exception, interruption, or unusable output.
+- COMPLETE: output contains all fields required for its intended analysis.
+- PARTIAL: command completed but key fields are missing, empty, malformed, or insufficient for mapping.
+- UNUSABLE: failed command or no usable output.
+
+Inventory requirements:
+1. Report observed counts only.
+2. Keep Services, Deployments, and Pods separate.
+3. For Service/Deployment pairs with the same name, use:
+   match_type = "name_based_match".
+4. A name_based_match is not selector validation.
+5. Always attach this limitation to name_based_match unless explicit selector-to-label validation was performed:
+   "Service selector and Pod labels were not directly validated."
+
+Endpoint rules:
+1. EndpointSlice data proves only endpoint information exists.
+2. A Service-to-Endpoint mapping is valid only when the Service identity is explicitly present.
+3. If EndpointSlice service-name is missing, empty, or "<none>":
+   - endpointslices analysis_usable_status must be PARTIAL
+   - endpoint mapping status must be PARTIAL or UNKNOWN
+   - do not create mapped_service_endpoints
+   - report endpoint addresses and ports only as unmapped endpoint facts
+4. Do not infer endpoint ownership from IP address, port number, or naming similarity.
+
+Istio rules:
+1. If no VirtualService or DestinationRule is returned by a successful command, record:
+   "No VirtualService or DestinationRule was found in this query result."
+2. A successful zero-result query is usable for that narrow fact.
+   Do not classify the entire Istio analysis as UNUSABLE solely because no resources were returned.
+3. Do not conclude that no traffic management, no service mesh,
+   or no observability exists.
+4. Sidecar injection is CONFIRMED only when the output explicitly contains:
+   - an istio-proxy container, or
+   - an explicit injection annotation.
+5. If container lists and annotations are unavailable:
+   sidecar_injection_status = "UNKNOWN".
+
+Runtime fact rules:
+- Deployment existence proves deployment configuration.
+- Pod Running proves only process state.
+- Pod Ready proves only readiness to receive traffic.
+- Service existence proves only discoverability.
+- Endpoint mapping proves only backend availability.
+- None of these prove service-to-service invocation.
+- Do not output any application dependency edge.
+
+Do not use the phrase "all expected services".
+Use observed counts and explicit limitations instead.

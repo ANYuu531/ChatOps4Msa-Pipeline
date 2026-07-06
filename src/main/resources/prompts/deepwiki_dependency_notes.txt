@@ -1,0 +1,138 @@
+Build a compact DeepWiki Evidence Ledger from the provided DeepWiki answers.
+
+This stage summarizes repository-level evidence only.
+It must not create a final architecture report.
+It must not use Kubernetes runtime terminology.
+It must not infer missing dependencies.
+
+Return valid JSON only.
+
+Use this exact top-level structure:
+
+{
+  "repository_identity": {},
+  "service_inventory": [],
+  "synchronous_candidates": [],
+  "asynchronous_workflows": [],
+  "broker_inventory": [],
+  "infrastructure_dependencies": [],
+  "health_checks_and_observability": [],
+  "unresolved_candidates": [],
+  "unknowns": []
+}
+
+Definitions:
+- documented: explicitly described in documentation or architecture text.
+- configured: explicitly supported by source code, configuration, environment variable, connection string, Helm/Kustomize value, route configuration, or client initialization.
+- runtime_observed: this ledger must always use "unknown"; DeepWiki evidence alone cannot prove runtime invocation.
+
+For every service item, include:
+- component_name
+- category
+- role
+- documented
+- configured
+- evidence_type
+- evidence_reference
+- confidence
+- limitations
+
+For every synchronous candidate, include:
+- source
+- target
+- relationship_role: direct_call | gateway_route | documented_association
+- dependency_type: application | gateway_route | database | cache
+- protocol
+- method
+- endpoint
+- purpose
+- documented
+- configured
+- runtime_observed
+- evidence_type
+- evidence_reference
+- directness: confirmed_direct | not_confirmed
+- confidence
+- limitations
+
+For every asynchronous workflow, include:
+- producer
+- broker
+- consumer
+- protocol
+- event_type
+- exchange
+- queue
+- topic
+- routing_key
+- documented
+- configured
+- runtime_observed
+- producer_evidence_reference
+- consumer_evidence_reference
+- confidence
+- limitations
+
+For every infrastructure dependency, include:
+- source_component
+- target
+- dependency_type
+- deployment_scope: repository_declared | external | optional | unknown
+- documented
+- configured
+- runtime_observed
+- evidence_type
+- evidence_reference
+- confidence
+- limitations
+
+Strict rules:
+1. Documentation-only evidence:
+   documented = "yes"
+   configured = "unknown"
+   runtime_observed = "unknown"
+
+2. Set configured = "yes" only when the input explicitly contains:
+   source code, client initialization, environment variable, configuration key,
+   connection string, Helm/Kustomize value, or gateway route.
+
+3. runtime_observed MUST always be "unknown" in this DeepWiki-only ledger.
+   Documentation, source code, configuration, manifests, and wiki text do not prove runtime invocation.
+
+4. Retain documentation-supported synchronous candidates even when:
+   - directness is not confirmed
+   - method is UNKNOWN
+   - endpoint is UNKNOWN
+   - runtime_observed is unknown
+   Such candidates must use:
+   relationship_role = "documented_association"
+   directness = "not_confirmed"
+
+5. Do not include health checks, readiness probes, liveness probes,
+   Prometheus scraping, metrics endpoints, or tracing exports in
+   synchronous_candidates. Put them in health_checks_and_observability.
+
+6. A broker is not a queue, exchange, topic, or routing key.
+
+7. In asynchronous_workflows:
+   - producer must be the producer service
+   - broker must be the broker
+   - consumer must be the consumer service
+   Do not place the consumer in the broker field or use the consumer as the broker target.
+
+8. Do not invent ports, protocols, endpoints, queues, exchanges,
+   routing keys, event types, technology stacks, or deployment scopes.
+
+9. If source, target, dependency_type, or relationship_role cannot be determined,
+   place the item in unresolved_candidates.
+
+10. Evidence references must be as specific as the input allows:
+   file path, section heading, route name, configuration key, or quoted source location.
+   If the input does not provide a verifiable reference, state that explicitly in limitations.
+
+11. Add all material missing information to unknowns, including:
+   unknown directness, unknown method, unknown endpoint,
+   unknown queue/exchange/routing key, unknown runtime evidence,
+   and unknown deployment location.
+
+12. Unknown is preferred over unsupported inference.

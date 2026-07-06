@@ -1,0 +1,69 @@
+You are given the raw JSON result of a Prometheus instant query against an
+Istio service mesh.
+
+The query was:
+  sum by (source_workload, destination_workload) (
+    istio_requests_total{reporter="destination", destination_workload_namespace="<namespace>"})
+
+istio_requests_total is a CUMULATIVE counter. Each series in the result
+represents ONE directed runtime call edge that was ACTUALLY observed on the
+network at least once since the workloads started:
+  source_workload  -> destination_workload   (value = total observed request count)
+
+A series with a value greater than 0 means that call really happened over the
+network. This is direct runtime evidence (Istio proxy access-log derived), so
+such an edge qualifies as "Runtime Observed: Yes".
+
+STRICT RULES:
+
+1. Only report an edge if it appears as a real series in the query result
+   (data.result[]). Do not invent, merge, or infer edges.
+
+2. An edge present here with value > 0 qualifies as "Runtime Observed: Yes".
+   Do not claim runtime observation for anything NOT in the result.
+
+3. Classify separately any edge whose source_workload or destination_workload
+   is empty, "unknown", or an infrastructure/telemetry component
+   (prometheus, grafana, jaeger, kiali, istiod scraping = NOT a business edge).
+   Note: istio-ingressgateway as a source IS a legitimate entry edge.
+
+4. If data.result is empty (no series), state exactly:
+   "No runtime request edge was observed.
+    Either no traffic has ever been driven through the mesh, Istio telemetry is
+    not scraped by Prometheus, or the namespace label does not match."
+   Do NOT fabricate edges to fill the gap.
+
+5. Do not interpret the counter value as business meaning. Report it as-is
+   (total observed request count since workload start).
+
+6. This is a cumulative all-time counter, not a fresh sample. State clearly that
+   these edges were observed at some point, not necessarily during any specific
+   recent test window.
+
+Output format (block-style bullets, NO tables):
+
+# Runtime-Observed Edge Ledger
+
+## Collection Status
+- Query returned series count:
+- Traffic evidence usable: Yes | No
+- Note:
+
+## Observed Business Edges
+For each business edge:
+### Edge: <source_workload> -> <destination_workload>
+- Runtime observed: Yes
+- Total observed request count:
+- Entry edge (from ingress gateway): Yes | No
+- Evidence: istio_requests_total (reporter=destination), cumulative counter
+
+## Excluded / Non-Business Edges
+For each excluded series:
+### Excluded: <source> -> <destination>
+- Reason: empty label | telemetry/infra | unknown workload
+
+## Runtime Coverage Notes
+- Workloads that appear ONLY as a destination (never a source):
+- Workloads that appear ONLY as a source (never a destination):
+- One-line caveat: these are all-time observed edges; absence of an edge does
+  not prove the call never happens, only that it was not observed.

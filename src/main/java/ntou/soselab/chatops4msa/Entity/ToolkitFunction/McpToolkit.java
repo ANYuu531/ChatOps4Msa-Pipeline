@@ -430,6 +430,7 @@ public class McpToolkit extends ToolkitFunction {
             McpSchema.CallToolRequest req =
                     new McpSchema.CallToolRequest(tool_name, args);
 
+            Thread.interrupted(); // clear any stale interrupt from MCP session init
             McpSchema.CallToolResult result = client.callTool(req);
 
             String resultText = extractCallToolResultText(result);

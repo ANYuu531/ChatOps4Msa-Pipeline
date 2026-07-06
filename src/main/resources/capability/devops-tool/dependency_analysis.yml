@@ -1,218 +1,416 @@
-info:  
-  version: 1.0.0  
-  title: Dependency Analysis  
-  description: |  
-    Connect to DeepWiki and K8s MCP servers to read architecture docs  
-    and cluster state, then use LLM to generate a microservice dependency report.  
-  
-low_code:  
-  operation:  
-    - name: get-analyze-dependency  
-      parameter:  
-        repo_name: GitHub repository in owner/repo format, e.g. "myorg/bookinfo"  
-        namespace: Kubernetes namespace, e.g. "default"  
-      description: |  
-        Analyze microservice dependency by reading DeepWiki architecture docs  
-        and Kubernetes cluster state, then generate a dependency report using LLM.  
-      access: public  
-      body:  
-        - toolkit-mcp-connect:  
-            server_name: deepwiki  
-            base_url: https://mcp.deepwiki.com  
-            endpoint: /mcp  
-            assign: connect_deepwiki_result  
-  
-        - toolkit-mcp-call-tool:  
-            server_name: deepwiki  
-            tool_name: read_wiki_contents  
-            tool_arguments: |  
-              {"repoName": "${repo_name}"}  
-            assign: wiki_contents  
+info:
+  version: 1.0.0
+  title: dependency
+  description: |
+    Analyze microservice dependencies and generate a report.
 
-        # --- Deepwiki: 釐清服務清單與各自職責 ---  
-        - toolkit-prompt-template:  
-            template: deepwiki_question_responsibility  
-            assign: deepwiki_question  
-          
-        - toolkit-mcp-call-tool:  
-            server_name: deepwiki  
-            tool_name: ask_question  
-            tool_arguments: |  
-              {"repoName":"${repo_name}","question":"${deepwiki_question}"}  
+low_code:
+  property:
+    prometheus_host_url: ${secret.prometheus_host_url}
+    k6_test_script_path: ${secret.k6_test_script_path}
+
+  operation:
+    - name: get-dependency-analysis
+      parameter:
+        repo_name: GitHub repository in owner/repo format, e.g. "myorg/bookinfo"
+        namespace: Kubernetes namespace, e.g. "default"
+        entry_url: Ingress URL to auto-drive traffic; pass 'none' to drive traffic manually instead.
+      description: |
+        Analyze microservice dependencies and generate a report.
+      access: public
+      body:
+        - toolkit-discord-text:
+            text: "DEBUG: start dependency analysis"
+
+        - toolkit-mcp-connect:
+            server_name: deepwiki
+            base_url: https://mcp.deepwiki.com
+            endpoint: /mcp
+            assign: connect_deepwiki_result
+
+        - toolkit-discord-text:
+            text: "DEBUG: connected DeepWiki"
+
+        - toolkit-mcp-call-tool:
+            server_name: deepwiki
+            tool_name: read_wiki_contents
+            tool_arguments: |
+              {"repoName": "${repo_name}"}
+            assign: wiki_contents
+
+        - toolkit-discord-text:
+            text: "DEBUG: wiki contents loaded"
+
+        # ---- Optimization 3: architecture detection + Java/Spring code-extraction branch ----
+        # Ask the already-indexed DeepWiki what stack this is (avoids GitHub auth / branch / base64).
+        - toolkit-mcp-call-tool:
+            server_name: deepwiki
+            tool_name: ask_question
+            tool_arguments: |
+              {"repoName":"${repo_name}","question":"Is this repository primarily a Java Spring Boot application? Answer with a single word: YES or NO."}
+            assign: framework_answer
+
+        # matches() is a FULL-string match, so wrap with (?is).*...* to catch
+        # "YES", "YES.", "Yes, this is a Spring Boot ..." across multiple lines.
+        - toolkit-string-pattern:
+            string: ${framework_answer}
+            regex: (?is).*\byes\b.*
+            assign: is_spring_boot
+
+        - toolkit-discord-text:
+            text: "DEBUG: Spring Boot detected = ${is_spring_boot}"
+
+        - toolkit-flow-if:
+            condition: ${is_spring_boot}
+            true:
+              - toolkit-discord-text:
+                  text: "DEBUG: supported architecture -> running deterministic Java/Spring code extraction (JavaParser)"
+              # Deterministic (non-LLM) AST + config extraction. Clones the repo and
+              # parses Feign/RestTemplate/WebClient/Kafka/Rabbit/config signals.
+              - toolkit-code-extract-java:
+                  repo: ${repo_name}
+                  assign: code_extraction_notes
+            false:
+              # Unsupported architecture: keep code_extraction_notes defined but empty of edges.
+              - toolkit-string-replace:
+                  string: "Code extraction skipped: repository is not a supported architecture (Java / Spring Boot). Falling back to documentation-based DeepWiki analysis only."
+                  original: "__keep__"
+                  replace: "__keep__"
+                  assign: code_extraction_notes
+
+        - toolkit-discord-text:
+            text: |
+              DEBUG: code_extraction_notes
+
+              ${code_extraction_notes}
+
+        - toolkit-prompt-template:
+            template: deepwiki_question_responsibility
+            assign: deepwiki_question
+
+        - toolkit-mcp-call-tool:
+            server_name: deepwiki
+            tool_name: ask_question
+            tool_arguments: |
+              {"repoName":"${repo_name}","question":"${deepwiki_question}"}
             assign: deepwiki_responsibility
 
-        # --- Deepwiki: 同步呼叫關係 ---  
-        - toolkit-prompt-template:  
+        - toolkit-prompt-template:
             template: deepwiki_question_synchronous
             assign: deepwiki_question
-  
-        - toolkit-mcp-call-tool:  
-            server_name: deepwiki  
-            tool_name: ask_question  
-            tool_arguments: |  
-              {"repoName":"${repo_name}","question":"${deepwiki_question}"}  
+
+        - toolkit-mcp-call-tool:
+            server_name: deepwiki
+            tool_name: ask_question
+            tool_arguments: |
+              {"repoName":"${repo_name}","question":"${deepwiki_question}"}
             assign: deepwiki_synchronous
 
-        # --- Deepwiki: 非同步通訊與事件 ---  
-        - toolkit-prompt-template:  
+        - toolkit-prompt-template:
             template: deepwiki_question_asynchronous
             assign: deepwiki_question
-  
-        - toolkit-mcp-call-tool:  
-            server_name: deepwiki  
-            tool_name: ask_question  
-            tool_arguments: |  
-              {"repoName":"${repo_name}","question":"${deepwiki_question}"}  
+
+        - toolkit-mcp-call-tool:
+            server_name: deepwiki
+            tool_name: ask_question
+            tool_arguments: |
+              {"repoName":"${repo_name}","question":"${deepwiki_question}"}
             assign: deepwiki_asynchronous
 
-        # --- Deepwiki: 釐清外部依賴 ---
-        - toolkit-prompt-template:  
+        - toolkit-prompt-template:
             template: deepwiki_question_external
             assign: deepwiki_question
-  
-        - toolkit-mcp-call-tool:  
-            server_name: deepwiki  
-            tool_name: ask_question  
-            tool_arguments: |  
-              {"repoName":"${repo_name}","question":"${deepwiki_question}"}  
+
+        - toolkit-mcp-call-tool:
+            server_name: deepwiki
+            tool_name: ask_question
+            tool_arguments: |
+              {"repoName":"${repo_name}","question":"${deepwiki_question}"}
             assign: deepwiki_external
 
-        # --- Deepwiki: 釐清架構模式與入口點 ---
-        - toolkit-prompt-template:  
+        - toolkit-prompt-template:
             template: deepwiki_question_flow
             assign: deepwiki_question
-  
-        - toolkit-mcp-call-tool:  
-            server_name: deepwiki  
-            tool_name: ask_question  
-            tool_arguments: |  
-              {"repoName":"${repo_name}","question":"${deepwiki_question}"}  
+
+        - toolkit-mcp-call-tool:
+            server_name: deepwiki
+            tool_name: ask_question
+            tool_arguments: |
+              {"repoName":"${repo_name}","question":"${deepwiki_question}"}
             assign: deepwiki_flow
 
-        - toolkit-mcp-connect:  
-            server_name: k8s 
-            base_url: http://k8s-mcp-server:8000
-            endpoint: /mcp  
-            assign: connect_k8s_result  
+        - toolkit-discord-text:
+            text: |
+              DEBUG: DeepWiki questions done
 
-        # --- K8s: 取得 Services ---
-        - toolkit-mcp-call-tool:  
-            server_name: k8s  
-            tool_name: execute_kubectl  
-            tool_arguments: |  
-              {"command":"get services -n ${namespace} -o json"}  
-            assign: k8s_services  
-  
-        # --- K8s: 取得 Deployments ---  
-        - toolkit-mcp-call-tool:  
-            server_name: k8s  
-            tool_name: execute_kubectl  
-            tool_arguments: |  
-              {"command":"get deployments -n ${namespace} -o json"}  
-            assign: k8s_deployments  
-  
-        # --- K8s: 取得 Pods 與 Labels ---  
-        - toolkit-mcp-call-tool:  
-            server_name: k8s  
-            tool_name: execute_kubectl  
-            tool_arguments: |  
-              {"command":"get pods -n ${namespace} --show-labels -o json"}  
-            assign: k8s_pods  
-  
-        # --- K8s: 取得 EndpointSlices ---  
-        - toolkit-mcp-call-tool:  
-            server_name: k8s  
-            tool_name: execute_kubectl  
-            tool_arguments: |  
-              {"command":"get endpointslices -n ${namespace} -o json"}  
-            assign: k8s_endpoint_slices  
-  
-        # --- K8s: 跨 namespace 搜尋 workload ---  
-        - toolkit-mcp-call-tool:  
-            server_name: k8s  
-            tool_name: execute_kubectl  
-            tool_arguments: |  
-              {"command":"get deployments,statefulsets,daemonsets,services,pods --all-namespaces -o json", "timeout": 60}  
-            assign: k8s_cross_namespace  
-  
-        # --- Istio: 取得 VirtualServices ---  
-        - toolkit-mcp-call-tool:  
-            server_name: k8s  
-            tool_name: execute_kubectl  
-            tool_arguments: |  
-              {"command":"get virtualservices -n ${namespace} -o json"}  
-            assign: istio_virtual_services  
-  
-        # --- Istio: 取得 DestinationRules ---  
-        - toolkit-mcp-call-tool:  
-            server_name: k8s  
-            tool_name: execute_kubectl  
-            tool_arguments: |  
-              {"command":"get destinationrules -n ${namespace} -o json"}  
-            assign: istio_destination_rules  
-  
-        # --- Istio: 設定分析（-o json 輸出結構化資料） ---  
-        - toolkit-mcp-call-tool:  
-            server_name: k8s  
-            tool_name: execute_istioctl  
-            tool_arguments: |  
-              {"command":"analyze -n ${namespace} -o json", "timeout": 60}  
-            assign: istio_analysis 
-  
-        - toolkit-discord-info:  
-            text: |  
-              Analyzing dependency for `${repo_name}` (namespace: `${namespace}`)...  
-              DeepWiki and K8s data collected. Calling LLM for analysis.  
-  
-        - toolkit-llm-call:  
-            prompt: |  
-              ## DeepWiki Wiki 結構  
-              ${wiki_contents}  
-  
+              Responsibility:
+              ${deepwiki_responsibility}
+
+              Synchronous:
+              ${deepwiki_synchronous}
+
+              Asynchronous:
+              ${deepwiki_asynchronous}
+
+              External:
+              ${deepwiki_external}
+
+              Flow:
+              ${deepwiki_flow}
+
+        - toolkit-llm-call:
+            prompt: |
               ## DeepWiki 分析 - 服務清單與各自職責
-              ${deepwiki_responsibility}  
-  
+              ${deepwiki_responsibility}
+
               ## DeepWiki 分析 - 同步呼叫關係
-              ${deepwiki_synchronous}  
-  
+              ${deepwiki_synchronous}
+
               ## DeepWiki 分析 - 非同步通訊與事件
-              ${deepwiki_asynchronous}  
-  
-              ## DeepWiki 分析 - 外部依賴 
-              ${deepwiki_external}  
-  
-              ## DeepWiki 分析 - 架構模式與入口點  
-              ${deepwiki_flow}  
-  
-              ## Kubernetes Services  
-              ${k8s_services}  
-  
-              ## Kubernetes Deployments  
-              ${k8s_deployments}  
-  
-              ## Kubernetes Pods 與 Labels  
-              ${k8s_pods}  
-  
-              ## EndpointSlices  
-              ${k8s_endpoint_slices}  
-  
-              ## 跨 Namespace Workloads  
-              ${k8s_cross_namespace}  
-  
-              ## Istio VirtualServices  
-              ${istio_virtual_services}  
-  
-              ## Istio DestinationRules  
-              ${istio_destination_rules}  
-  
-              ## Istio 設定分析  
-              ${istio_analysis}  
-            prompt_template: dependency_analysis  
-            assign: response
-    
-        - toolkit-discord-text:  
-            text: |  
-              ## Microservice Dependency Analysis Report  
-              **Repository:** `${repo_name}` | **Namespace:** `${namespace}`  
-  
-              ${response}  
+              ${deepwiki_asynchronous}
+
+              ## DeepWiki 分析 - 外部依賴
+              ${deepwiki_external}
+
+              ## DeepWiki 分析 - 架構模式與入口點
+              ${deepwiki_flow}
+
+              ## 程式碼確定性抽取 - Java/Spring 依賴 (JavaParser AST; 若架構不支援則為 fallback 說明)
+              ${code_extraction_notes}
+            prompt_template: deepwiki_dependency_notes
+            assign: deepwiki_dependency_notes
+
+        - toolkit-discord-text:
+            text: |
+              DEBUG: deepwiki_dependency_notes
+
+              ${deepwiki_dependency_notes}
+
+        - toolkit-mcp-connect:
+            server_name: k8s
+            base_url: http://k8s-mcp-server:8000
+            endpoint: /mcp
+            assign: connect_k8s_result
+
+        - toolkit-discord-text:
+            text: "DEBUG: connected K8s MCP"
+
+        - toolkit-mcp-call-tool:
+            server_name: k8s
+            tool_name: execute_kubectl
+            tool_arguments: |
+              {"command":"get services -n ${namespace} -o custom-columns=NAME:.metadata.name,TYPE:.spec.type,PORTS:.spec.ports[*].port,TARGETPORTS:.spec.ports[*].targetPort,SELECTOR:.spec.selector --no-headers", "timeout": 20}
+            assign: k8s_services
+
+        - toolkit-mcp-call-tool:
+            server_name: k8s
+            tool_name: execute_kubectl
+            tool_arguments: |
+              {"command":"get deployments -n ${namespace} -o custom-columns=NAME:.metadata.name,READY:.status.readyReplicas,REPLICAS:.status.replicas,IMAGES:.spec.template.spec.containers[*].image,LABELS:.metadata.labels --no-headers", "timeout": 20}
+            assign: k8s_deployments
+
+        - toolkit-mcp-call-tool:
+            server_name: k8s
+            tool_name: execute_kubectl
+            tool_arguments: |
+              {"command":"get pods -n ${namespace} -o custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[*].ready,STATUS:.status.phase,LABELS:.metadata.labels --no-headers", "timeout": 20}
+            assign: k8s_pods
+
+        - toolkit-mcp-call-tool:
+            server_name: k8s
+            tool_name: execute_kubectl
+            tool_arguments: |
+              {"command":"get endpointslices -n ${namespace} -o custom-columns=SERVICE:.metadata.labels.kubernetes\\.io/service-name,ENDPOINTS:.endpoints[*].addresses,PORTS:.ports[*].port --no-headers", "timeout": 20}
+            assign: k8s_endpoint_slices
+
+        - toolkit-mcp-call-tool:
+            server_name: k8s
+            tool_name: execute_kubectl
+            tool_arguments: |
+              {"command":"get virtualservices -n ${namespace} -o custom-columns=NAME:.metadata.name,HOSTS:.spec.hosts,GATEWAYS:.spec.gateways,DEST:.spec.http[*].route[*].destination.host --no-headers", "timeout": 20}
+            assign: istio_virtual_services
+
+        - toolkit-mcp-call-tool:
+            server_name: k8s
+            tool_name: execute_kubectl
+            tool_arguments: |
+              {"command":"get destinationrules -n ${namespace} -o custom-columns=NAME:.metadata.name,HOST:.spec.host,SUBSETS:.spec.subsets[*].name --no-headers", "timeout": 20}
+            assign: istio_destination_rules
+
+        - toolkit-discord-text:
+            text: |
+              DEBUG: K8s runtime data collected
+
+              Services:
+              ${k8s_services}
+
+              Deployments:
+              ${k8s_deployments}
+
+              Pods:
+              ${k8s_pods}
+
+              EndpointSlices:
+              ${k8s_endpoint_slices}
+
+              VirtualServices:
+              ${istio_virtual_services}
+
+              DestinationRules:
+              ${istio_destination_rules}
+
+        - toolkit-discord-text:
+            text: "DEBUG: calling k8s_runtime_notes LLM"
+
+        - toolkit-llm-call:
+            prompt: |
+              ## Kubernetes Services
+              ${k8s_services}
+
+              ## Kubernetes Deployments
+              ${k8s_deployments}
+
+              ## Kubernetes Pods 與 Labels
+              ${k8s_pods}
+
+              ## EndpointSlices
+              ${k8s_endpoint_slices}
+
+              ## Istio VirtualServices
+              ${istio_virtual_services}
+
+              ## Istio DestinationRules
+              ${istio_destination_rules}
+            prompt_template: k8s_runtime_notes
+            assign: k8s_runtime_notes
+
+        - toolkit-discord-text:
+            text: |
+              DEBUG: k8s_runtime_notes
+
+              ${k8s_runtime_notes}
+
+        # ---- Optimization 1: drive traffic + collect Istio runtime evidence ----
+        - toolkit-string-pattern:
+            string: ${entry_url}
+            regex: ^https?://.+
+            assign: has_entry_url
+
+        - toolkit-flow-if:
+            condition: ${has_entry_url}
+            true:
+              - toolkit-discord-text:
+                  text: "DEBUG: driving end-to-end traffic to ${entry_url} (k6, background)"
+              - toolkit-command-bash:
+                  command: docker run --rm -i grafana/k6 run --vus 3 --duration 20s - -e TEST_URL=${entry_url}
+                  input_stream: ${k6_test_script_path}/smokeTest.js
+            false:
+              - toolkit-discord-warning:
+                  text: |
+                    [ACTION NEEDED] No entry_url was provided, so traffic was not auto-driven.
+                    Istio can only observe a dependency after a real request crosses it.
+                    Please drive traffic now (click through the UI / run your own load / curl the endpoints),
+                    then run:  supplement-dependency-traffic  namespace=${namespace}
+                    This report will still include any traffic already observed in the mesh.
+
+        - toolkit-discord-text:
+            text: "DEBUG: querying Prometheus for Istio runtime edges (cumulative counter)"
+
+        # Cumulative counter: captures every edge observed at least once, immune to the
+        # background/async timing of the traffic step above. PromQL is URL-encoded inline
+        # because toolkit-restapi-get only accepts a URL and namespace has no special chars.
+        - toolkit-restapi-get:
+            url: ${prometheus_host_url}/api/v1/query?query=sum%20by(source_workload,destination_workload)(istio_requests_total%7Breporter%3D%22destination%22,destination_workload_namespace%3D%22${namespace}%22%7D)
+            assign: istio_requests_raw
+
+        - toolkit-discord-text:
+            text: |
+              DEBUG: istio_requests_total raw result
+
+              ${istio_requests_raw}
+
+        - toolkit-llm-call:
+            prompt: |
+              ## Prometheus instant query result (istio_requests_total, namespace=${namespace})
+              ${istio_requests_raw}
+            prompt_template: istio_runtime_edges
+            assign: runtime_edges_notes
+
+        - toolkit-discord-text:
+            text: |
+              DEBUG: runtime_edges_notes
+
+              ${runtime_edges_notes}
+
+        - toolkit-discord-text:
+            text: "DEBUG: calling final dependency_analysis LLM"
+
+        # ---- Optimization 2: completeness / health check BEFORE the report ----
+        # The gap list is shown first so the user can decide (via the buttons below)
+        # whether to generate the report now or pause to supplement and re-run.
+        - toolkit-discord-text:
+            text: "DEBUG: running completeness health check (before report)"
+
+        - toolkit-llm-call:
+            prompt: |
+              ## DeepWiki dependency notes
+              ${deepwiki_dependency_notes}
+
+              ## Kubernetes / Istio runtime notes
+              ${k8s_runtime_notes}
+
+              ## Istio runtime-observed edge ledger
+              ${runtime_edges_notes}
+            prompt_template: dependency_health_check
+            assign: health_check
+
+        - toolkit-discord-text:
+            text: |
+              ## Analysis Completeness & Supplement Suggestions
+              **Namespace:** `${namespace}`
+
+              ${health_check}
+
+        # ---- Checkpoint: save evidence + ask continue / pause via buttons ----
+        # The final report is produced only when the user clicks "繼續產生報告"
+        # (handled in ButtonListener -> DependencyReportService, using the saved
+        # evidence so nothing is re-collected).
+        - toolkit-depstate-checkpoint:
+            repo_name: ${repo_name}
+            namespace: ${namespace}
+            deepwiki_notes: ${deepwiki_dependency_notes}
+            k8s_notes: ${k8s_runtime_notes}
+            runtime_notes: ${runtime_edges_notes}
+
+    - name: supplement-dependency-traffic
+      parameter:
+        namespace: Kubernetes namespace, e.g. "default"
+      description: Re-query Istio runtime traffic to fill Runtime Observed gaps after driving load.
+      access: public
+      body:
+        - toolkit-discord-text:
+            text: "DEBUG: re-querying Istio runtime edges for ${namespace}"
+
+        - toolkit-restapi-get:
+            url: ${prometheus_host_url}/api/v1/query?query=sum%20by(source_workload,destination_workload)(istio_requests_total%7Breporter%3D%22destination%22,destination_workload_namespace%3D%22${namespace}%22%7D)
+            assign: istio_requests_raw
+
+        - toolkit-discord-text:
+            text: |
+              DEBUG: istio_requests_total raw result
+
+              ${istio_requests_raw}
+
+        - toolkit-llm-call:
+            prompt: |
+              ## Prometheus instant query result (istio_requests_total, namespace=${namespace})
+              ${istio_requests_raw}
+            prompt_template: istio_runtime_edges
+            assign: runtime_edges_notes
+
+        - toolkit-discord-text:
+            text: |
+              ## Updated Istio Runtime-Observed Edge Ledger
+              **Namespace:** `${namespace}`
+
+              ${runtime_edges_notes}
