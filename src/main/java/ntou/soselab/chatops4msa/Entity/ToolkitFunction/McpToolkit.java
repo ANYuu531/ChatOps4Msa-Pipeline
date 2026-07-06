@@ -243,17 +243,39 @@ public class McpToolkit extends ToolkitFunction {
             base_url = normalized[0];
             endpoint = normalized[1];
 
-            var transport = HttpClientStreamableHttpTransport
-                    .builder(base_url)
-                    .endpoint(endpoint)
-                    .build();
-
-            McpSyncClient client = McpClient.sync(transport)
-                    .requestTimeout(Duration.ofSeconds(30))
-                    .build();
-
-            client.initialize();
-            sessions.put(server_name, client);
+            // Retry: MCP servers here (e.g. k8s-mcp-server) periodically exit/restart,
+            // so a single initialize() often hits a moment when the server is down.
+            Exception lastError = null;
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                McpSyncClient client = null;
+                try {
+                    var transport = HttpClientStreamableHttpTransport
+                            .builder(base_url)
+                            .endpoint(endpoint)
+                            .build();
+                    client = McpClient.sync(transport)
+                            .requestTimeout(Duration.ofSeconds(30))
+                            .build();
+                    client.initialize();
+                    sessions.put(server_name, client);
+                    lastError = null;
+                    break;
+                } catch (Exception e) {
+                    lastError = e;
+                    if (client != null) {
+                        try { client.close(); } catch (Exception ignored) {}
+                    }
+                    if (attempt < 3) {
+                        try { Thread.sleep(2000L * attempt); } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
+                }
+            }
+            if (lastError != null) {
+                return fullError("MCP connect failed after 3 attempts: ", lastError);
+            }
 
             return """
                     MCP connected
