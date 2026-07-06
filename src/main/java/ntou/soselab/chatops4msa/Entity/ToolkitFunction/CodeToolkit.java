@@ -75,6 +75,17 @@ public class CodeToolkit extends ToolkitFunction {
                         "Note: source code could not be retrieved; fall back to documentation-based analysis.";
             }
 
+            // Self-contained architecture detection (no DeepWiki / no flow-if needed):
+            // only Spring Boot repos are supported by the deterministic extractor.
+            if (!isSpringBoot(tempDir)) {
+                return "# Code-Extracted Edge Ledger\n\n"
+                        + "Collection status: SKIPPED\n"
+                        + "Repository: " + repo + "\n"
+                        + "Reason: not a Spring Boot project (no spring-boot marker in pom.xml/build.gradle).\n"
+                        + "Deterministic code extraction supports Spring Boot only; "
+                        + "the DeepWiki documentation analysis still applies to this repository.";
+            }
+
             Extraction ex = new Extraction();
             extractFromSources(tempDir, ex);
             extractFromConfig(tempDir, ex);
@@ -86,6 +97,29 @@ public class CodeToolkit extends ToolkitFunction {
                     "Repository: " + repo;
         } finally {
             deleteQuietly(tempDir);
+        }
+    }
+
+    // ---------- architecture detection ----------
+
+    /** True if any pom.xml / build.gradle in the repo references Spring Boot. */
+    private boolean isSpringBoot(Path root) {
+        try (var stream = Files.walk(root)) {
+            return stream.filter(Files::isRegularFile)
+                    .filter(p -> {
+                        String n = p.getFileName().toString();
+                        return n.equals("pom.xml") || n.equals("build.gradle") || n.equals("build.gradle.kts");
+                    })
+                    .anyMatch(p -> {
+                        try {
+                            String c = Files.readString(p, StandardCharsets.UTF_8).toLowerCase();
+                            return c.contains("spring-boot") || c.contains("org.springframework.boot");
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    });
+        } catch (Exception e) {
+            return false;
         }
     }
 

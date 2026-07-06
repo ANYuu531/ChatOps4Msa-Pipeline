@@ -30,6 +30,29 @@ public class TrafficToolkit extends ToolkitFunction {
     private static final long MAX_GAP_MILLIS = 500;
 
     /**
+     * One-shot: resolve the entry and drive traffic, or explain the manual fallback.
+     * Self-contained so the pipeline needs no mid-flow toolkit-flow-if (which the
+     * orchestrator treats as terminal and would abort the rest of the pipeline).
+     *
+     * @param entry_url    'auto' | a URL | 'none'/other
+     * @param namespace    namespace being analyzed
+     * @param k8s_services raw "kubectl get services ..." output
+     * @param requests     number of GET requests when driving
+     * @return a summary of what happened (drove traffic, or manual fallback guidance)
+     */
+    public String toolkitTrafficAutoDrive(String entry_url, String namespace, String k8s_services, String requests) {
+        String url = toolkitTrafficResolveEntry(entry_url, namespace, k8s_services);
+        if (url.isEmpty()) {
+            return "[traffic] No traffic auto-driven "
+                    + "(entry_url='" + entry_url + "'; no NodePort/LoadBalancer entry auto-detected). "
+                    + "Drive traffic manually through the system, then run supplement-dependency-traffic "
+                    + "namespace=" + namespace + ", or re-run with entry_url set to a reachable in-cluster URL. "
+                    + "Any traffic already observed in the mesh is still included.";
+        }
+        return "Resolved entry: " + url + "\n" + toolkitTrafficHttpDrive(url, requests);
+    }
+
+    /**
      * Resolve the effective entry URL to drive.
      *
      * @param entry_url    user input: a URL (used as-is), "auto" (detect from services),

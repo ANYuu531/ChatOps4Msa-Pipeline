@@ -40,42 +40,18 @@ low_code:
         - toolkit-discord-text:
             text: "DEBUG: wiki contents loaded"
 
-        # ---- Optimization 3: architecture detection + Java/Spring code-extraction branch ----
-        # Ask the already-indexed DeepWiki what stack this is (avoids GitHub auth / branch / base64).
-        - toolkit-mcp-call-tool:
-            server_name: deepwiki
-            tool_name: ask_question
-            tool_arguments: |
-              {"repoName":"${repo_name}","question":"Is this repository primarily a Java Spring Boot application? Answer with a single word: YES or NO."}
-            assign: framework_answer
-
-        # matches() is a FULL-string match, so wrap with (?is).*...* to catch
-        # "YES", "YES.", "Yes, this is a Spring Boot ..." across multiple lines.
-        - toolkit-string-pattern:
-            string: ${framework_answer}
-            regex: (?is).*\byes\b.*
-            assign: is_spring_boot
-
+        # ---- Optimization 3: deterministic Java/Spring code extraction ----
+        # NOTE: no toolkit-flow-if here on purpose. The orchestrator treats flow-if as
+        # terminal (it breaks out of the rest of the body once a branch runs), so all
+        # branching is done INSIDE the toolkit. toolkit-code-extract-java clones the repo,
+        # auto-detects Spring Boot from pom.xml/build.gradle, and either extracts
+        # (JavaParser AST) or returns a "skipped: not Spring Boot" note. Always safe to run.
         - toolkit-discord-text:
-            text: "DEBUG: Spring Boot detected = ${is_spring_boot}"
+            text: "DEBUG: running deterministic code extraction (auto-detects Spring Boot)"
 
-        - toolkit-flow-if:
-            condition: ${is_spring_boot}
-            true:
-              - toolkit-discord-text:
-                  text: "DEBUG: supported architecture -> running deterministic Java/Spring code extraction (JavaParser)"
-              # Deterministic (non-LLM) AST + config extraction. Clones the repo and
-              # parses Feign/RestTemplate/WebClient/Kafka/Rabbit/config signals.
-              - toolkit-code-extract-java:
-                  repo: ${repo_name}
-                  assign: code_extraction_notes
-            false:
-              # Unsupported architecture: keep code_extraction_notes defined but empty of edges.
-              - toolkit-string-replace:
-                  string: "Code extraction skipped: repository is not a supported architecture (Java / Spring Boot). Falling back to documentation-based DeepWiki analysis only."
-                  original: "__keep__"
-                  replace: "__keep__"
-                  assign: code_extraction_notes
+        - toolkit-code-extract-java:
+            repo: ${repo_name}
+            assign: code_extraction_notes
 
         - toolkit-discord-text:
             text: |
@@ -290,44 +266,25 @@ low_code:
               ${k8s_runtime_notes}
 
         # ---- Optimization 1: drive traffic + collect Istio runtime evidence ----
-        # Resolve the entry URL: 'auto' -> detect NodePort/LoadBalancer service from the
-        # already-collected k8s_services; a URL -> use as-is; 'none'/other -> manual.
-        - toolkit-traffic-resolve_entry:
+        # Resolve entry + drive traffic in one toolkit (no flow-if; see note above).
+        # 'auto' -> detect NodePort/LoadBalancer entry from k8s_services and drive it;
+        # a URL -> drive it; 'none'/other or no entry found -> returns manual guidance.
+        # Runs synchronously (in-cluster HTTP) so traffic is done before the metric query.
+        - toolkit-discord-text:
+            text: "DEBUG: driving end-to-end traffic (entry_url=${entry_url})"
+
+        - toolkit-traffic-auto_drive:
             entry_url: ${entry_url}
             namespace: ${namespace}
             k8s_services: ${k8s_services}
-            assign: resolved_entry_url
+            requests: 60
+            assign: traffic_result
 
-        - toolkit-string-pattern:
-            string: ${resolved_entry_url}
-            regex: ^https?://.+
-            assign: has_entry_url
+        - toolkit-discord-text:
+            text: |
+              DEBUG: traffic result
 
-        - toolkit-flow-if:
-            condition: ${has_entry_url}
-            true:
-              - toolkit-discord-text:
-                  text: "DEBUG: auto-driving end-to-end traffic to ${resolved_entry_url} (in-cluster HTTP, ~18s)"
-              # In-cluster HTTP driver: works from the bot pod (no docker needed) and
-              # runs synchronously, so the traffic is done before we query the metric.
-              - toolkit-traffic-http_drive:
-                  url: ${resolved_entry_url}
-                  requests: 60
-                  assign: traffic_result
-              - toolkit-discord-text:
-                  text: |
-                    DEBUG: traffic driven
-
-                    ${traffic_result}
-            false:
-              - toolkit-discord-warning:
-                  text: |
-                    [ACTION NEEDED] No entry could be auto-detected (no NodePort/LoadBalancer service) and no entry_url was given.
-                    Istio can only observe a dependency after a real request crosses it.
-                    Please drive traffic now (click through the UI / run your own load / curl the endpoints),
-                    then run:  supplement-dependency-traffic  namespace=${namespace}
-                    Or re-run with entry_url set to a reachable in-cluster URL.
-                    This report will still include any traffic already observed in the mesh.
+              ${traffic_result}
 
         - toolkit-discord-text:
             text: "DEBUG: querying Prometheus for Istio runtime edges (cumulative counter)"
