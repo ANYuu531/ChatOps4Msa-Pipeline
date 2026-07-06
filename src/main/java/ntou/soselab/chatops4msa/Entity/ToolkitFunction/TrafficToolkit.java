@@ -49,8 +49,11 @@ public class TrafficToolkit extends ToolkitFunction {
     private static final String IN_CLUSTER_PROMETHEUS = "http://prometheus.istio-system:9090";
 
     public String toolkitTrafficQueryIstio(String prometheus_url, String namespace) {
+        // reporter="source": the source proxy reports the metric and always knows its own
+        // workload identity, so internal edges get a real source_workload (with
+        // reporter="destination" and no mTLS, the source shows up as "unknown").
         String promql = "sum by (source_workload, destination_workload) "
-                + "(istio_requests_total{reporter=\"destination\",destination_workload_namespace=\"" + namespace + "\"})";
+                + "(istio_requests_total{reporter=\"source\",source_workload_namespace=\"" + namespace + "\"})";
         String queryPath = "/api/v1/query?query=" + URLEncoder.encode(promql, StandardCharsets.UTF_8);
 
         StringBuilder problems = new StringBuilder();

@@ -3,7 +3,12 @@ Istio service mesh.
 
 The query was:
   sum by (source_workload, destination_workload) (
-    istio_requests_total{reporter="destination", destination_workload_namespace="<namespace>"})
+    istio_requests_total{reporter="source", source_workload_namespace="<namespace>"})
+
+reporter="source" means each edge is reported by the CALLER's Istio proxy, so
+source_workload is always a real identified workload in the namespace (not
+"unknown"). These are the outbound / service-to-service edges originating from
+the namespace's workloads.
 
 istio_requests_total is a CUMULATIVE counter. Each series in the result
 represents ONE directed runtime call edge that was ACTUALLY observed on the
