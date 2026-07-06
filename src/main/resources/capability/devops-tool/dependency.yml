@@ -7,14 +7,13 @@ info:
 low_code:
   property:
     prometheus_host_url: ${secret.prometheus_host_url}
-    k6_test_script_path: ${secret.k6_test_script_path}
 
   operation:
     - name: get-dependency-analysis
       parameter:
         repo_name: GitHub repository in owner/repo format, e.g. "myorg/bookinfo"
         namespace: Kubernetes namespace, e.g. "default"
-        entry_url: Ingress URL to auto-drive traffic; pass 'none' to drive traffic manually instead.
+        entry_url: In-cluster entry URL to auto-drive traffic; pass 'none' to drive manually.
       description: |
         Analyze microservice dependencies and generate a report.
       access: public
@@ -300,10 +299,18 @@ low_code:
             condition: ${has_entry_url}
             true:
               - toolkit-discord-text:
-                  text: "DEBUG: driving end-to-end traffic to ${entry_url} (k6, background)"
-              - toolkit-command-bash:
-                  command: docker run --rm -i grafana/k6 run --vus 3 --duration 20s - -e TEST_URL=${entry_url}
-                  input_stream: ${k6_test_script_path}/smokeTest.js
+                  text: "DEBUG: auto-driving end-to-end traffic to ${entry_url} (in-cluster HTTP, ~18s)"
+              # In-cluster HTTP driver: works from the bot pod (no docker needed) and
+              # runs synchronously, so the traffic is done before we query the metric.
+              - toolkit-traffic-http_drive:
+                  url: ${entry_url}
+                  requests: 60
+                  assign: traffic_result
+              - toolkit-discord-text:
+                  text: |
+                    DEBUG: traffic driven
+
+                    ${traffic_result}
             false:
               - toolkit-discord-warning:
                   text: |
@@ -316,9 +323,9 @@ low_code:
         - toolkit-discord-text:
             text: "DEBUG: querying Prometheus for Istio runtime edges (cumulative counter)"
 
-        # Cumulative counter: captures every edge observed at least once, immune to the
-        # background/async timing of the traffic step above. PromQL is URL-encoded inline
-        # because toolkit-restapi-get only accepts a URL and namespace has no special chars.
+        # Cumulative counter: captures every edge observed at least once. PromQL is
+        # URL-encoded inline because toolkit-restapi-get only accepts a URL and the
+        # namespace has no special chars.
         - toolkit-restapi-get:
             url: ${prometheus_host_url}/api/v1/query?query=sum%20by(source_workload,destination_workload)(istio_requests_total%7Breporter%3D%22destination%22,destination_workload_namespace%3D%22${namespace}%22%7D)
             assign: istio_requests_raw
