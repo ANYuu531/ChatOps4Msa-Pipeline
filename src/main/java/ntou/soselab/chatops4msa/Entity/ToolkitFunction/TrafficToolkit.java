@@ -3,9 +3,11 @@ package ntou.soselab.chatops4msa.Entity.ToolkitFunction;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
@@ -28,6 +30,52 @@ public class TrafficToolkit extends ToolkitFunction {
     private static final long TARGET_TOTAL_MILLIS = 18_000; // spread window so Prometheus scrapes mid-run
     private static final long MIN_GAP_MILLIS = 100;
     private static final long MAX_GAP_MILLIS = 500;
+
+    /**
+     * Query Istio runtime edges from Prometheus, FAIL-SOFT.
+     *
+     * toolkit-restapi-get throws on any non-2xx (e.g. a transient 502 from the Prometheus
+     * proxy), which aborts the whole dependency-analysis pipeline. This wrapper never
+     * throws: on any error it returns a short note so the report can still be produced
+     * (with runtime edges simply marked unavailable this run).
+     *
+     * @param prometheus_url base Prometheus URL, e.g. "https://.../"
+     * @param namespace      namespace to filter destination workloads by
+     * @return the raw Prometheus JSON on success, or a "[istio-query] ..." note on failure
+     */
+    public String toolkitTrafficQueryIstio(String prometheus_url, String namespace) {
+        if (prometheus_url == null || prometheus_url.isBlank()) {
+            return "[istio-query] no prometheus_url configured; runtime edges unavailable this run.";
+        }
+        String base = prometheus_url.trim();
+        if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+
+        String promql = "sum by (source_workload, destination_workload) "
+                + "(istio_requests_total{reporter=\"destination\",destination_workload_namespace=\"" + namespace + "\"})";
+        String url = base + "/api/v1/query?query=" + URLEncoder.encode(promql, StandardCharsets.UTF_8);
+
+        try {
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(8))
+                    .build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(20))
+                    .header("Accept", "application/json")
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            int sc = response.statusCode();
+            if (sc >= 200 && sc < 300) {
+                return response.body();
+            }
+            return "[istio-query] Prometheus returned HTTP " + sc
+                    + "; runtime edges unavailable this run (check the Prometheus endpoint). namespace=" + namespace;
+        } catch (Exception e) {
+            return "[istio-query] Prometheus query failed (" + e.getClass().getSimpleName() + ": " + e.getMessage()
+                    + "); runtime edges unavailable this run. namespace=" + namespace;
+        }
+    }
 
     /**
      * One-shot: resolve the entry and drive traffic, or explain the manual fallback.

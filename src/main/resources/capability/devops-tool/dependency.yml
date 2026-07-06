@@ -289,11 +289,12 @@ low_code:
         - toolkit-discord-text:
             text: "DEBUG: querying Prometheus for Istio runtime edges (cumulative counter)"
 
-        # Cumulative counter: captures every edge observed at least once. PromQL is
-        # URL-encoded inline because toolkit-restapi-get only accepts a URL and the
-        # namespace has no special chars.
-        - toolkit-restapi-get:
-            url: ${prometheus_host_url}/api/v1/query?query=sum%20by(source_workload,destination_workload)(istio_requests_total%7Breporter%3D%22destination%22,destination_workload_namespace%3D%22${namespace}%22%7D)
+        # Cumulative counter: captures every edge observed at least once. FAIL-SOFT:
+        # toolkit-restapi-get throws on non-2xx (a transient Prometheus 502 would abort
+        # the whole pipeline), so query via a toolkit that returns a note instead of throwing.
+        - toolkit-traffic-query_istio:
+            prometheus_url: ${prometheus_host_url}
+            namespace: ${namespace}
             assign: istio_requests_raw
 
         - toolkit-discord-text:
@@ -364,8 +365,9 @@ low_code:
         - toolkit-discord-text:
             text: "DEBUG: re-querying Istio runtime edges for ${namespace}"
 
-        - toolkit-restapi-get:
-            url: ${prometheus_host_url}/api/v1/query?query=sum%20by(source_workload,destination_workload)(istio_requests_total%7Breporter%3D%22destination%22,destination_workload_namespace%3D%22${namespace}%22%7D)
+        - toolkit-traffic-query_istio:
+            prometheus_url: ${prometheus_host_url}
+            namespace: ${namespace}
             assign: istio_requests_raw
 
         - toolkit-discord-text:
