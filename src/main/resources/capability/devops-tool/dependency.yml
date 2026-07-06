@@ -280,11 +280,21 @@ low_code:
             requests: 60
             assign: traffic_result
 
+        # Stateful checkout flow (sock-shop shaped) so order fan-out edges appear:
+        # front-end->orders, orders->payment/shipping/user/carts. Best-effort elsewhere.
+        - toolkit-traffic-checkout:
+            entry_url: ${entry_url}
+            namespace: ${namespace}
+            k8s_services: ${k8s_services}
+            rounds: 5
+            assign: checkout_result
+
         - toolkit-discord-text:
             text: |
               DEBUG: traffic result
 
               ${traffic_result}
+              ${checkout_result}
 
         - toolkit-discord-text:
             text: "DEBUG: querying Prometheus for Istio runtime edges (cumulative counter)"

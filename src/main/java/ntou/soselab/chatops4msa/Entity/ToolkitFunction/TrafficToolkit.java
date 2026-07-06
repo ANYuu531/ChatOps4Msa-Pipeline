@@ -2,6 +2,7 @@ package ntou.soselab.chatops4msa.Entity.ToolkitFunction;
 
 import org.springframework.stereotype.Component;
 
+import java.net.CookieManager;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -9,6 +10,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * In-cluster HTTP traffic driver for end-to-end dependency observation.
@@ -89,6 +92,103 @@ public class TrafficToolkit extends ToolkitFunction {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * Drive a stateful checkout flow (sock-shop / microservice-demo shaped) so the order
+     * fan-out edges appear: front-end->orders, orders->payment, orders->shipping,
+     * orders->user, orders->carts. Best-effort: unknown endpoints just 4xx harmlessly.
+     *
+     * Per round (with a shared cookie jar so the login session persists):
+     *   POST /register -> /addresses -> /cards -> GET /catalogue -> POST /cart -> POST /orders
+     *
+     * @param entry_url    'auto' | a URL | 'none'
+     * @param namespace    namespace being analyzed
+     * @param k8s_services raw "kubectl get services ..." output (for 'auto')
+     * @param rounds       number of checkout rounds
+     */
+    public String toolkitTrafficCheckout(String entry_url, String namespace, String k8s_services, String rounds) {
+        String base = toolkitTrafficResolveEntry(entry_url, namespace, k8s_services);
+        if (base.isEmpty()) {
+            return "[checkout] skipped: no entry URL resolved.";
+        }
+        String origin;
+        try {
+            URI u = URI.create(base);
+            origin = u.getScheme() + "://" + u.getAuthority();
+        } catch (Exception e) {
+            return "[checkout] skipped: malformed entry URL " + base;
+        }
+
+        int n;
+        try { n = Integer.parseInt(rounds.trim()); } catch (Exception e) { n = 5; }
+        n = Math.max(1, Math.min(20, n));
+
+        int reg = 0, addr = 0, card = 0, cart = 0, order = 0;
+        Pattern idPattern = Pattern.compile("\"id\"\\s*:\\s*\"([^\"]+)\"");
+
+        for (int i = 0; i < n; i++) {
+            // fresh session per round so each order has its own logged-in customer
+            HttpClient client = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .connectTimeout(Duration.ofSeconds(5))
+                    .cookieHandler(new CookieManager())
+                    .build();
+
+            String user = "loadtest" + System.nanoTime() + i;
+            if (post(client, origin + "/register", "{\"username\":\"" + user + "\",\"password\":\"pw12345\","
+                    + "\"email\":\"" + user + "@example.com\",\"firstName\":\"Load\",\"lastName\":\"Test\"}")) reg++;
+            if (post(client, origin + "/addresses", "{\"street\":\"Main\",\"number\":\"1\",\"country\":\"UK\","
+                    + "\"city\":\"London\",\"postcode\":\"NW1\"}")) addr++;
+            if (post(client, origin + "/cards", "{\"longNum\":\"1234567890123456\",\"expires\":\"12/26\",\"ccv\":\"123\"}")) card++;
+
+            String itemId = firstMatch(get(client, origin + "/catalogue?size=3"), idPattern);
+            if (itemId == null) itemId = "3395a43e-2d88-40de-b95f-e00e1502085b"; // sock-shop default sock id
+            if (post(client, origin + "/cart", "{\"id\":\"" + itemId + "\"}")) cart++;
+            if (post(client, origin + "/orders", "{}")) order++;
+        }
+
+        return "[checkout] " + n + " rounds against " + origin
+                + " | register=" + reg + " address=" + addr + " card=" + card
+                + " cart=" + cart + " order=" + order
+                + (order > 0
+                    ? " | OK: orders placed (order fan-out edges should now appear)."
+                    : " | note: no order completed; front-end/user/cart edges may still appear.");
+    }
+
+    private boolean post(HttpClient client, String url, String jsonBody) {
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(6))
+                    .header("Content-Type", "application/json")
+                    .header("User-Agent", "ChatOps4Msa-traffic-driver")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build();
+            int sc = client.send(req, HttpResponse.BodyHandlers.discarding()).statusCode();
+            return sc >= 200 && sc < 400;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private String get(HttpClient client, String url) {
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(6))
+                    .GET()
+                    .build();
+            return client.send(req, HttpResponse.BodyHandlers.ofString()).body();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String firstMatch(String body, Pattern p) {
+        if (body == null) return null;
+        Matcher m = p.matcher(body);
+        return m.find() ? m.group(1) : null;
     }
 
     /**
