@@ -27,6 +27,9 @@ public class TrafficToolkit extends ToolkitFunction {
 
     private static final int MIN_REQUESTS = 1;
     private static final int MAX_REQUESTS = 300;
+    // Common gateway->backend paths (microservice-demo / sock-shop style); harmless 404s elsewhere.
+    private static final String[] EXTRA_PATHS =
+            {"/catalogue", "/tags", "/cart", "/orders", "/customers", "/category.html"};
     private static final long TARGET_TOTAL_MILLIS = 18_000; // spread window so Prometheus scrapes mid-run
     private static final long MIN_GAP_MILLIS = 100;
     private static final long MAX_GAP_MILLIS = 500;
@@ -43,17 +46,30 @@ public class TrafficToolkit extends ToolkitFunction {
      * @param namespace      namespace to filter destination workloads by
      * @return the raw Prometheus JSON on success, or a "[istio-query] ..." note on failure
      */
-    public String toolkitTrafficQueryIstio(String prometheus_url, String namespace) {
-        if (prometheus_url == null || prometheus_url.isBlank()) {
-            return "[istio-query] no prometheus_url configured; runtime edges unavailable this run.";
-        }
-        String base = prometheus_url.trim();
-        if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+    private static final String IN_CLUSTER_PROMETHEUS = "http://prometheus.istio-system:9090";
 
+    public String toolkitTrafficQueryIstio(String prometheus_url, String namespace) {
         String promql = "sum by (source_workload, destination_workload) "
                 + "(istio_requests_total{reporter=\"destination\",destination_workload_namespace=\"" + namespace + "\"})";
-        String url = base + "/api/v1/query?query=" + URLEncoder.encode(promql, StandardCharsets.UTF_8);
+        String queryPath = "/api/v1/query?query=" + URLEncoder.encode(promql, StandardCharsets.UTF_8);
 
+        StringBuilder problems = new StringBuilder();
+        // Try the configured endpoint first, then fall back to the in-cluster Prometheus
+        // (the external proxy has been observed returning transient 502s).
+        for (String base : new String[]{prometheus_url, IN_CLUSTER_PROMETHEUS}) {
+            if (base == null || base.isBlank()) continue;
+            String b = base.trim();
+            if (b.endsWith("/")) b = b.substring(0, b.length() - 1);
+            String body = tryQuery(b + queryPath);
+            if (body != null) return body;
+            problems.append(b).append(" -> failed; ");
+        }
+        return "[istio-query] Prometheus query failed (" + problems + "); "
+                + "runtime edges unavailable this run. namespace=" + namespace;
+    }
+
+    /** Returns the response body on 2xx, or null on any failure (never throws). */
+    private String tryQuery(String url) {
         try {
             HttpClient client = HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(8))
@@ -66,14 +82,9 @@ public class TrafficToolkit extends ToolkitFunction {
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             int sc = response.statusCode();
-            if (sc >= 200 && sc < 300) {
-                return response.body();
-            }
-            return "[istio-query] Prometheus returned HTTP " + sc
-                    + "; runtime edges unavailable this run (check the Prometheus endpoint). namespace=" + namespace;
+            return (sc >= 200 && sc < 300) ? response.body() : null;
         } catch (Exception e) {
-            return "[istio-query] Prometheus query failed (" + e.getClass().getSimpleName() + ": " + e.getMessage()
-                    + "); runtime edges unavailable this run. namespace=" + namespace;
+            return null;
         }
     }
 
@@ -145,6 +156,20 @@ public class TrafficToolkit extends ToolkitFunction {
         return "http://" + best + "." + namespace + ".svc.cluster.local" + portSuffix;
     }
 
+    /** Entry URL first, then origin + each common API path. */
+    private java.util.List<String> buildTargets(String url) {
+        java.util.List<String> targets = new java.util.ArrayList<>();
+        targets.add(url);
+        try {
+            URI u = URI.create(url);
+            String origin = u.getScheme() + "://" + u.getAuthority();
+            for (String p : EXTRA_PATHS) targets.add(origin + p);
+        } catch (Exception ignored) {
+            // malformed url: just drive the entry as given
+        }
+        return targets;
+    }
+
     /** Prefer names that look like a user-facing front door. */
     private int nameScore(String name) {
         String n = name.toLowerCase();
@@ -182,6 +207,12 @@ public class TrafficToolkit extends ToolkitFunction {
 
         long gap = Math.max(MIN_GAP_MILLIS, Math.min(MAX_GAP_MILLIS, TARGET_TOTAL_MILLIS / count));
 
+        // Hit the entry itself PLUS common gateway->backend API paths, so the entry
+        // service fans out to its downstreams (a plain GET of a UI root usually does
+        // not trigger the backend calls that a browser makes via JS). Unknown paths
+        // just 404 harmlessly on other apps.
+        java.util.List<String> targets = buildTargets(url);
+
         HttpClient client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .connectTimeout(Duration.ofSeconds(5))
@@ -191,9 +222,10 @@ public class TrafficToolkit extends ToolkitFunction {
         Integer firstError = null;
 
         for (int i = 0; i < count; i++) {
+            String target = targets.get(i % targets.size());
             try {
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
+                        .uri(URI.create(target))
                         .timeout(Duration.ofSeconds(5))
                         .header("User-Agent", "ChatOps4Msa-traffic-driver")
                         .GET()
@@ -220,6 +252,7 @@ public class TrafficToolkit extends ToolkitFunction {
 
         boolean anySuccess = ok + redirect > 0;
         return "[traffic] drove " + count + " requests to " + url
+                + " (+" + (targets.size() - 1) + " api paths)"
                 + " over ~" + (count * gap / 1000) + "s"
                 + " | 2xx=" + ok + " 3xx=" + redirect + " 4xx=" + clientErr
                 + " 5xx=" + serverErr + " failed=" + failed
