@@ -21,6 +21,8 @@ import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTranspor
 public class McpToolkit extends ToolkitFunction {
 
     private final Map<String, McpSyncClient> sessions = new ConcurrentHashMap<>();
+    // remember each server's connection params so a dead session can be re-established
+    private final Map<String, String[]> endpoints = new ConcurrentHashMap<>();
 
     private static final ObjectMapper OM = new ObjectMapper()
             .enable(SerializationFeature.INDENT_OUTPUT);
@@ -66,6 +68,60 @@ public class McpToolkit extends ToolkitFunction {
     private boolean isFullUrl(String value) {
         return value != null &&
                 (value.startsWith("http://") || value.startsWith("https://"));
+    }
+
+    /**
+     * Build + initialize an MCP client, retrying because these servers
+     * (e.g. k8s-mcp-server) periodically exit/restart.
+     */
+    private McpSyncClient establishClient(String base_url, String endpoint) throws Exception {
+        Exception lastError = null;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            McpSyncClient client = null;
+            try {
+                var transport = HttpClientStreamableHttpTransport
+                        .builder(base_url)
+                        .endpoint(endpoint)
+                        .build();
+                client = McpClient.sync(transport)
+                        .requestTimeout(Duration.ofSeconds(30))
+                        .build();
+                client.initialize();
+                return client;
+            } catch (Exception e) {
+                lastError = e;
+                if (client != null) {
+                    try { client.close(); } catch (Exception ignored) {}
+                }
+                if (attempt < 3) {
+                    try { Thread.sleep(2000L * attempt); } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        }
+        throw lastError != null ? lastError : new RuntimeException("MCP connect failed");
+    }
+
+    /**
+     * Re-establish a dead session (the server crashed/restarted mid-use) using the
+     * stored connection params. Returns the new client, or null if it can't reconnect.
+     */
+    private McpSyncClient reconnect(String server_name) {
+        String[] params = endpoints.get(server_name);
+        if (params == null) return null;
+        McpSyncClient old = sessions.remove(server_name);
+        if (old != null) {
+            try { old.close(); } catch (Exception ignored) {}
+        }
+        try {
+            McpSyncClient client = establishClient(params[0], params[1]);
+            sessions.put(server_name, client);
+            return client;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private String[] normalizeMcpUrl(String baseUrl, String endpoint) {
@@ -243,38 +299,12 @@ public class McpToolkit extends ToolkitFunction {
             base_url = normalized[0];
             endpoint = normalized[1];
 
-            // Retry: MCP servers here (e.g. k8s-mcp-server) periodically exit/restart,
-            // so a single initialize() often hits a moment when the server is down.
-            Exception lastError = null;
-            for (int attempt = 1; attempt <= 3; attempt++) {
-                McpSyncClient client = null;
-                try {
-                    var transport = HttpClientStreamableHttpTransport
-                            .builder(base_url)
-                            .endpoint(endpoint)
-                            .build();
-                    client = McpClient.sync(transport)
-                            .requestTimeout(Duration.ofSeconds(30))
-                            .build();
-                    client.initialize();
-                    sessions.put(server_name, client);
-                    lastError = null;
-                    break;
-                } catch (Exception e) {
-                    lastError = e;
-                    if (client != null) {
-                        try { client.close(); } catch (Exception ignored) {}
-                    }
-                    if (attempt < 3) {
-                        try { Thread.sleep(2000L * attempt); } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        }
-                    }
-                }
-            }
-            if (lastError != null) {
-                return fullError("MCP connect failed after 3 attempts: ", lastError);
+            try {
+                McpSyncClient client = establishClient(base_url, endpoint);
+                sessions.put(server_name, client);
+                endpoints.put(server_name, new String[]{base_url, endpoint});
+            } catch (Exception e) {
+                return fullError("MCP connect failed after 3 attempts: ", e);
             }
 
             return """
@@ -444,7 +474,9 @@ public class McpToolkit extends ToolkitFunction {
             McpSyncClient client = sessions.get(server_name);
 
             if (client == null) {
-                return error("MCP session not connected: " + server_name);
+                // session was never established or dropped; try to (re)connect
+                client = reconnect(server_name);
+                if (client == null) return error("MCP session not connected: " + server_name);
             }
 
             Map<String, Object> args = OM.readValue(tool_arguments, MAP_TYPE);
@@ -453,7 +485,18 @@ public class McpToolkit extends ToolkitFunction {
                     new McpSchema.CallToolRequest(tool_name, args);
 
             Thread.interrupted(); // clear any stale interrupt from MCP session init
-            McpSchema.CallToolResult result = client.callTool(req);
+            McpSchema.CallToolResult result;
+            try {
+                result = client.callTool(req);
+            } catch (Exception callError) {
+                // the server likely crashed/restarted mid-session; reconnect once and retry
+                McpSyncClient fresh = reconnect(server_name);
+                if (fresh == null) {
+                    return fullError("MCP call tool failed (session terminated, reconnect failed): ", callError);
+                }
+                Thread.interrupted();
+                result = fresh.callTool(req);
+            }
 
             String resultText = extractCallToolResultText(result);
 
