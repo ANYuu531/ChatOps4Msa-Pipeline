@@ -1,0 +1,87 @@
+You are given the raw JSON results of TWO Prometheus instant queries against an
+Istio service mesh. Both look for traffic LEAVING the mesh (external dependencies).
+
+Query 1 (HTTP-level, L7):
+  sum by (source_workload, destination_service_name) (
+    istio_requests_total{reporter="source",
+                         source_workload_namespace="<namespace>",
+                         destination_workload="unknown"})
+
+Query 2 (TCP-level, L4):
+  sum by (source_workload, destination_service_name) (
+    istio_tcp_connections_opened_total{reporter="source",
+                                       source_workload_namespace="<namespace>",
+                                       destination_workload="unknown"})
+
+WHY THERE ARE TWO QUERIES — this matters for how you read them:
+
+- reporter="source" is used because an external host has NO sidecar, so nobody on
+  the destination side can report the request. Only the CALLER's sidecar sees it.
+- destination_workload="unknown" is the marker that the callee is not a mesh
+  workload, i.e. the traffic is leaving the mesh.
+- Query 1 only sees calls Envoy can parse as HTTP. When the application
+  originates TLS itself (a plain `https://...` call), Envoy sees an opaque TCP
+  stream, so the call appears ONLY in Query 2, with no request count and no
+  status codes — just connections.
+- destination_service_name is the real hostname ONLY if a ServiceEntry exists for
+  that host. Without one, Istio routes through PassthroughCluster and the label
+  degrades to "PassthroughCluster" or "unknown" — the edge is real but the target
+  is unidentifiable.
+
+STRICT RULES:
+
+1. Only report an edge that appears as a real series in one of the results.
+   Never invent or infer an external dependency here.
+
+2. For each edge, state which query it came from and therefore what is known:
+   - from Query 1 (HTTP): request count is real traffic evidence.
+   - from Query 2 (TCP):  connection count only. Do NOT report a request count.
+
+3. If destination_service_name is "PassthroughCluster", "unknown", or empty, the
+   edge is REAL but the TARGET IS UNKNOWN. Report it as such and say explicitly
+   that a ServiceEntry must be declared for the host before Istio can name it.
+   Do not guess which host it was, even if the code analysis mentions candidates.
+
+4. If a query's input begins with PROMETHEUS_UNAVAILABLE, Prometheus could not be
+   reached for that query. That is NOT an empty result: it is NO EVIDENCE AT ALL.
+   Report that query's dimension as UNKNOWN, never as "no external calls". Say
+   which query was unavailable and why, and report no edges from it.
+
+5. If Prometheus DID answer and both results are empty, that is real evidence.
+   State exactly:
+   "No egress edge was observed. Either the services make no external calls, no
+    traffic has exercised those paths yet, or no ServiceEntry is declared and the
+    calls are not being attributed."
+   Do NOT fabricate edges.
+
+   Rules 4 and 5 mean opposite things. Never conflate them.
+
+6. Do not treat in-cluster infrastructure (kube-dns, istiod, prometheus) as an
+   external business dependency.
+
+Output format (block-style bullets, NO tables):
+
+# Egress (External Dependency) Edge Ledger
+
+## Collection Status
+- Query 1 (HTTP) series count:
+- Query 2 (TCP) series count:
+- Egress evidence usable: Yes | No
+
+## Observed External Edges
+For each edge:
+### Edge: <source_workload> -> <destination_service_name>
+- Observed via: HTTP (istio_requests_total) | TCP only (istio_tcp_connections_opened_total)
+- Count:  <request count, or connection count for TCP-only>
+- Target identified: Yes | No (PassthroughCluster / unknown -> needs a ServiceEntry)
+- Runtime observed: Yes
+
+## Unidentified Egress
+For each PassthroughCluster/unknown series:
+### Edge: <source_workload> -> (unidentified external target)
+- Count:
+- Action: declare a ServiceEntry for the host so Istio can attribute it
+
+## Notes
+- One line on whether HTTPS targets could be under-reported (they appear only in
+  the TCP query, and only if a ServiceEntry with the right SNI host exists).

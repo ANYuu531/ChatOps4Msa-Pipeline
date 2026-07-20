@@ -7,10 +7,15 @@ import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import ntou.soselab.chatops4msa.Entity.NLP.IntentAndEntity;
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.DepstateToolkit;
+import ntou.soselab.chatops4msa.Entity.ToolkitFunction.McpToolkit;
 import ntou.soselab.chatops4msa.Exception.CapabilityRoleException;
 import ntou.soselab.chatops4msa.Exception.ToolkitFunctionException;
 import ntou.soselab.chatops4msa.Service.CapabilityOrchestrator.CapabilityOrchestrator;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ExternalHost;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ExternalHostDetector;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisStateStore;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyReportService;
+import org.json.JSONObject;
 import ntou.soselab.chatops4msa.Service.NLPService.DialogueTracker;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,18 +33,27 @@ public class ButtonListener extends ListenerAdapter {
     private final CapabilityOrchestrator orchestrator;
     private final JDAService jdaService;
     private final DependencyReportService dependencyReportService;
+    private final DependencyAnalysisStateStore stateStore;
+    private final McpToolkit mcpToolkit;
+    private final ExternalHostDetector externalHostDetector;
 
     @Lazy
     @Autowired
     public ButtonListener(DialogueTracker dialogueTracker,
                           CapabilityOrchestrator orchestrator,
                           JDAService jdaService,
-                          DependencyReportService dependencyReportService) {
+                          DependencyReportService dependencyReportService,
+                          DependencyAnalysisStateStore stateStore,
+                          McpToolkit mcpToolkit,
+                          ExternalHostDetector externalHostDetector) {
 
         this.dialogueTracker = dialogueTracker;
         this.orchestrator = orchestrator;
         this.jdaService = jdaService;
         this.dependencyReportService = dependencyReportService;
+        this.stateStore = stateStore;
+        this.mcpToolkit = mcpToolkit;
+        this.externalHostDetector = externalHostDetector;
     }
 
     @Override
@@ -60,6 +74,16 @@ public class ButtonListener extends ListenerAdapter {
         Button disabledButton = event.getComponent().asDisabled();
         event.getMessage().editMessageEmbeds(originalEmbedList).setActionRow(disabledButton).queue();
 
+        // get the user roles
+        List<String> roleNameList = new ArrayList<>();
+        Member member = event.getMember();
+        if (member != null) {
+            for (Role role : member.getRoles()) {
+                roleNameList.add(role.getName());
+            }
+        }
+        System.out.println("[User Role] " + roleNameList);
+
         // dependency-analysis decision buttons (handled before the NLP intent flow)
         if (DepstateToolkit.CONTINUE_BUTTON_ID.equals(buttonId)) {
             try {
@@ -74,23 +98,104 @@ public class ButtonListener extends ListenerAdapter {
             }
             return;
         }
+
         if (DepstateToolkit.PAUSE_BUTTON_ID.equals(buttonId)) {
+            // The checkpoint is kept, so resuming re-runs only the traffic query and
+            // the health check. DeepWiki and the code extraction are not repeated.
+            DependencyAnalysisStateStore.State state = stateStore.get(testerId);
+            if (state == null) {
+                event.getHook().editOriginal(
+                        "Paused, but the checkpoint has expired. Please re-run get-dependency-analysis.").queue();
+                return;
+            }
             event.getHook().editOriginal(
-                    "Paused. Please supplement evidence first (re-run with a valid entry_url to auto-drive traffic, "
-                            + "drive traffic manually then use supplement-dependency-traffic, or add source code that can be "
-                            + "statically extracted), then re-run get-dependency-analysis.").queue();
+                    "**Paused — checkpoint kept.**\n"
+                            + "Drive traffic now (click through the UI, run your load test, or curl the endpoints) "
+                            + "so Istio can observe the dependencies, then click **Resume** below.\n"
+                            + "Resuming re-queries runtime traffic and re-runs the completeness check only — "
+                            + "DeepWiki and code extraction are reused from the checkpoint.").queue();
+            jdaService.sendChatOpsChannelMessageWithButtons(
+                    "Namespace: `" + state.namespace + "` — resume when the traffic has been driven.",
+                    List.of(Button.primary(DepstateToolkit.RESUME_BUTTON_ID, "Resume (re-check traffic)")));
             return;
         }
 
-        // get the user roles
-        List<String> roleNameList = new ArrayList<>();
-        Member member = event.getMember();
-        if (member != null) {
-            for (Role role : member.getRoles()) {
-                roleNameList.add(role.getName());
+        if (DepstateToolkit.RESUME_BUTTON_ID.equals(buttonId)) {
+            DependencyAnalysisStateStore.State state = stateStore.get(testerId);
+            if (state == null) {
+                event.getHook().editOriginal(
+                        "The checkpoint has expired. Please re-run get-dependency-analysis.").queue();
+                return;
             }
+            try {
+                UserContextHolder.setUserId(testerId);
+                event.getHook().editOriginal("Resuming from the checkpoint...").queue();
+                // Runs the low-code resume capability, which owns the Prometheus
+                // property and re-posts the checkpoint buttons when it finishes.
+                orchestrator.performTheCapability(
+                        "resume-dependency-analysis",
+                        Map.of("namespace", state.namespace),
+                        roleNameList);
+            } catch (Exception e) {
+                e.printStackTrace();
+                jdaService.sendChatOpsChannelErrorMessage("[ERROR] failed to resume: " + e.getLocalizedMessage());
+            } finally {
+                UserContextHolder.clear();
+            }
+            return;
         }
-        System.out.println("[User Role] " + roleNameList);
+
+        // Apply the ServiceEntry manifests the code extraction found. This is the
+        // one dependency-analysis button that changes the cluster, so it only runs
+        // on an explicit click: it re-renders the manifest from the checkpoint and
+        // runs kubectl apply through the k8s MCP server.
+        if (DepstateToolkit.APPLY_SERVICE_ENTRIES_BUTTON_ID.equals(buttonId)) {
+            try {
+                UserContextHolder.setUserId(testerId);
+
+                DependencyAnalysisStateStore.State state = stateStore.get(testerId);
+                if (state == null) {
+                    event.getHook().editOriginal(
+                            "The checkpoint has expired. Please re-run get-dependency-analysis.").queue();
+                    return;
+                }
+
+                List<ExternalHost> hosts = ExternalHost.fromJson(
+                        stateStore.getStage(testerId, DependencyAnalysisStateStore.STAGE_EXTERNAL_HOSTS));
+                if (hosts.isEmpty()) {
+                    event.getHook().editOriginal("No external hosts were found; nothing to apply.").queue();
+                    return;
+                }
+
+                String manifest = externalHostDetector.renderServiceEntries(hosts, state.namespace);
+                event.getHook().editOriginal("Applying " + hosts.size()
+                        + " ServiceEntry manifest(s) to `" + state.namespace + "`...").queue();
+
+                // The low-code flow already connected this session; reconnecting is
+                // idempotent (returns "already connected") and covers the case where
+                // it was dropped between collection and this click.
+                mcpToolkit.toolkitMcpConnect("k8s", "http://k8s-mcp-server:8000", "/mcp");
+
+                String toolArguments = new JSONObject()
+                        .put("manifest", manifest)
+                        .put("namespace", state.namespace)
+                        .put("timeout", 30)
+                        .toString();
+                String applyResult = mcpToolkit.toolkitMcpCallTool("k8s", "apply_manifest", toolArguments);
+
+                jdaService.sendChatOpsChannelMessage(
+                        "**ServiceEntry apply result**\n"
+                                + "Drive traffic now so Istio can observe the external edges, then click **Resume**.\n\n"
+                                + applyResult);
+            } catch (Exception e) {
+                e.printStackTrace();
+                jdaService.sendChatOpsChannelErrorMessage(
+                        "[ERROR] failed to apply ServiceEntries: " + e.getLocalizedMessage());
+            } finally {
+                UserContextHolder.clear();
+            }
+            return;
+        }
 
         // clear the temporary data
         List<IntentAndEntity> performedCapabilityList = dialogueTracker.removeAllPerformableIntentAndEntity(testerId);

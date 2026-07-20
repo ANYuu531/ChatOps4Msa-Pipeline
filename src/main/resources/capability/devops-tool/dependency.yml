@@ -6,14 +6,21 @@ info:
 
 low_code:
   property:
-    prometheus_host_url: ${secret.prometheus_host_url}
+    # Istio's Prometheus, which runs INSIDE the Kubernetes cluster — it is the only
+    # one that collects istio_requests_total. This is deliberately not
+    # ${secret.prometheus_host_url}: that one is ChatOps4Msa's own monitoring
+    # Prometheus (node-exporter / cadvisor) and has no Istio metrics at all.
+    # After splitting the machines the two also live on different hosts.
+    istio_prometheus_host_url: ${secret.istio_prometheus_host_url}
+    k6_test_script_path: ${secret.k6_test_script_path}
 
   operation:
     - name: get-dependency-analysis
       parameter:
         repo_name: GitHub repository in owner/repo format, e.g. "myorg/bookinfo"
         namespace: Kubernetes namespace, e.g. "default"
-        entry_url: Use 'auto' to detect the entry and drive traffic, a URL to override, or 'none' for manual.
+        entry_url: Ingress URL to auto-drive traffic; pass 'none' to drive traffic manually instead.
+        auth_hint: Credentials or token if the system requires login, e.g. "user/password"; pass 'none' if not needed.
       description: |
         Analyze microservice dependencies and generate a report.
       access: public
@@ -21,6 +28,65 @@ low_code:
         - toolkit-discord-text:
             text: "DEBUG: start dependency analysis"
 
+        # Opens a fresh checkpoint, discarding any earlier one for this user.
+        # Every collection stage below stores its result, so a pause can resume
+        # from the breakpoint instead of re-running the whole analysis.
+        - toolkit-depstate-start:
+            repo_name: ${repo_name}
+            namespace: ${namespace}
+            entry_url: ${entry_url}
+            auth_hint: ${auth_hint}
+
+        # ---- Source-code extraction ----
+        # The stack is detected from the repository's build manifests after cloning.
+        # Supported stacks (a tree-sitter grammar + query pack exists) are extracted
+        # deterministically; the rest have their source read by an LLM. Both tiers
+        # emit the same Code-Extracted Edge Ledger, so no branching is needed here.
+        - toolkit-discord-text:
+            text: "DEBUG: extracting dependencies from source code"
+
+        - toolkit-code-extract:
+            repo: ${repo_name}
+            assign: code_extraction_notes
+
+        - toolkit-depstate-put:
+            stage: code
+            value: ${code_extraction_notes}
+
+        - toolkit-discord-text:
+            text: |
+              DEBUG: code_extraction_notes
+
+              ${code_extraction_notes}
+
+        # ---- External dependencies: code -> ServiceEntry -> runtime evidence ----
+        # Istio cannot observe an external dependency by itself: the callee has no
+        # sidecar to report the request, and with no ServiceEntry the caller's
+        # sidecar routes through PassthroughCluster, which loses the hostname.
+        # The code is therefore the only place the host is knowable — and declaring
+        # it as a ServiceEntry is what lets the mesh confirm the edge at runtime.
+        - toolkit-code-service-entries:
+            namespace: ${namespace}
+            assign: service_entry_manifest
+
+        - toolkit-discord-text:
+            text: |
+              ## External hosts found in code (ServiceEntry suggestions)
+
+              Applying these lets Istio observe and attribute the external edges,
+              which it otherwise cannot see at all.
+
+              ```yaml
+              ${service_entry_manifest}
+              ```
+
+        # Offer to apply the manifest for the user. The button is posted only when
+        # external hosts were actually found; clicking it runs kubectl apply through
+        # the k8s MCP server (see ButtonListener). Applying is never automatic — it
+        # is a change to the cluster and waits for the user's click.
+        - toolkit-depstate-apply-button: {}
+
+        # ---- Documentation analysis (DeepWiki) ----
         - toolkit-mcp-connect:
             server_name: deepwiki
             base_url: https://mcp.deepwiki.com
@@ -29,35 +95,6 @@ low_code:
 
         - toolkit-discord-text:
             text: "DEBUG: connected DeepWiki"
-
-        - toolkit-mcp-call-tool:
-            server_name: deepwiki
-            tool_name: read_wiki_contents
-            tool_arguments: |
-              {"repoName": "${repo_name}"}
-            assign: wiki_contents
-
-        - toolkit-discord-text:
-            text: "DEBUG: wiki contents loaded"
-
-        # ---- Optimization 3: deterministic Java/Spring code extraction ----
-        # NOTE: no toolkit-flow-if here on purpose. The orchestrator treats flow-if as
-        # terminal (it breaks out of the rest of the body once a branch runs), so all
-        # branching is done INSIDE the toolkit. toolkit-code-extract-java clones the repo,
-        # auto-detects Spring Boot from pom.xml/build.gradle, and either extracts
-        # (JavaParser AST) or returns a "skipped: not Spring Boot" note. Always safe to run.
-        - toolkit-discord-text:
-            text: "DEBUG: running deterministic code extraction (auto-detects Spring Boot)"
-
-        - toolkit-code-extract-java:
-            repo: ${repo_name}
-            assign: code_extraction_notes
-
-        - toolkit-discord-text:
-            text: |
-              DEBUG: code_extraction_notes
-
-              ${code_extraction_notes}
 
         - toolkit-prompt-template:
             template: deepwiki_question_responsibility
@@ -115,24 +152,9 @@ low_code:
             assign: deepwiki_flow
 
         - toolkit-discord-text:
-            text: |
-              DEBUG: DeepWiki questions done
+            text: "DEBUG: DeepWiki questions done"
 
-              Responsibility:
-              ${deepwiki_responsibility}
-
-              Synchronous:
-              ${deepwiki_synchronous}
-
-              Asynchronous:
-              ${deepwiki_asynchronous}
-
-              External:
-              ${deepwiki_external}
-
-              Flow:
-              ${deepwiki_flow}
-
+        # ---- Merge documentation + code into one set of notes ----
         - toolkit-llm-call:
             prompt: |
               ## DeepWiki 分析 - 服務清單與各自職責
@@ -150,10 +172,14 @@ low_code:
               ## DeepWiki 分析 - 架構模式與入口點
               ${deepwiki_flow}
 
-              ## 程式碼確定性抽取 - Java/Spring 依賴 (JavaParser AST; 若架構不支援則為 fallback 說明)
+              ## 程式碼抽取 - Code-Extracted Edge Ledger
               ${code_extraction_notes}
             prompt_template: deepwiki_dependency_notes
             assign: deepwiki_dependency_notes
+
+        - toolkit-depstate-put:
+            stage: merged_notes
+            value: ${deepwiki_dependency_notes}
 
         - toolkit-discord-text:
             text: |
@@ -161,6 +187,7 @@ low_code:
 
               ${deepwiki_dependency_notes}
 
+        # ---- Kubernetes / Istio static runtime data ----
         - toolkit-mcp-connect:
             server_name: k8s
             base_url: http://k8s-mcp-server:8000
@@ -213,29 +240,7 @@ low_code:
             assign: istio_destination_rules
 
         - toolkit-discord-text:
-            text: |
-              DEBUG: K8s runtime data collected
-
-              Services:
-              ${k8s_services}
-
-              Deployments:
-              ${k8s_deployments}
-
-              Pods:
-              ${k8s_pods}
-
-              EndpointSlices:
-              ${k8s_endpoint_slices}
-
-              VirtualServices:
-              ${istio_virtual_services}
-
-              DestinationRules:
-              ${istio_destination_rules}
-
-        - toolkit-discord-text:
-            text: "DEBUG: calling k8s_runtime_notes LLM"
+            text: "DEBUG: K8s runtime data collected"
 
         - toolkit-llm-call:
             prompt: |
@@ -259,59 +264,59 @@ low_code:
             prompt_template: k8s_runtime_notes
             assign: k8s_runtime_notes
 
+        - toolkit-depstate-put:
+            stage: k8s
+            value: ${k8s_runtime_notes}
+
         - toolkit-discord-text:
             text: |
               DEBUG: k8s_runtime_notes
 
               ${k8s_runtime_notes}
 
-        # ---- Optimization 1: drive traffic + collect Istio runtime evidence ----
-        # Resolve entry + drive traffic in one toolkit (no flow-if; see note above).
-        # 'auto' -> detect NodePort/LoadBalancer entry from k8s_services and drive it;
-        # a URL -> drive it; 'none'/other or no entry found -> returns manual guidance.
-        # Runs synchronously (in-cluster HTTP) so traffic is done before the metric query.
-        - toolkit-discord-text:
-            text: "DEBUG: driving end-to-end traffic (entry_url=${entry_url})"
+        # ---- Drive traffic so Istio can observe the dependencies ----
+        # Coverage, not load, is what matters here: Istio records an edge the first
+        # time a request crosses it. The hard part is reaching the DEEP edges
+        # (orders -> payment only happens on a real checkout), so a journey is
+        # generated from the API surface + routing + docs rather than smoke-testing
+        # the front page. Anything the journey cannot reach becomes a reported gap.
+        - toolkit-llm-call:
+            prompt: |
+              ## Entry URL (all relative paths resolve against this)
+              ${entry_url}
 
-        - toolkit-traffic-auto_drive:
-            entry_url: ${entry_url}
-            namespace: ${namespace}
-            k8s_services: ${k8s_services}
-            requests: 60
-            assign: traffic_result
+              ## Authentication hint supplied by the user ('none' if absent)
+              ${auth_hint}
 
-        # Stateful checkout flow (sock-shop shaped) so order fan-out edges appear:
-        # front-end->orders, orders->payment/shipping/user/carts. Best-effort elsewhere.
-        - toolkit-traffic-checkout:
+              ## API surface + dependency edges extracted from the source code
+              ${code_extraction_notes}
+
+              ## Kubernetes / Istio routing
+              ${k8s_runtime_notes}
+
+              ## Architecture summary from the documentation
+              ${deepwiki_dependency_notes}
+            prompt_template: traffic_scenario_generation
+            assign: traffic_scenario
+
+        - toolkit-traffic-run:
+            scenario_json: ${traffic_scenario}
             entry_url: ${entry_url}
-            namespace: ${namespace}
-            k8s_services: ${k8s_services}
-            rounds: 5
-            assign: checkout_result
+            repeats: 2
+            assign: traffic_report
 
         - toolkit-discord-text:
             text: |
-              DEBUG: traffic result
+              ## Traffic Driven
+              ${traffic_report}
 
-              ${traffic_result}
-              ${checkout_result}
-
-        - toolkit-discord-text:
-            text: "DEBUG: querying Prometheus for Istio runtime edges (cumulative counter)"
-
-        # Cumulative counter: captures every edge observed at least once. FAIL-SOFT:
-        # toolkit-restapi-get throws on non-2xx (a transient Prometheus 502 would abort
-        # the whole pipeline), so query via a toolkit that returns a note instead of throwing.
-        - toolkit-traffic-query_istio:
-            prometheus_url: ${prometheus_host_url}
-            namespace: ${namespace}
+        # Cumulative counter: captures every edge observed at least once, so it is
+        # immune to the timing of the traffic step above.
+        - toolkit-prometheus-query:
+            host_url: ${istio_prometheus_host_url}
+            promql: |
+              sum by(source_workload,destination_workload)(istio_requests_total{reporter="destination",destination_workload_namespace="${namespace}"})
             assign: istio_requests_raw
-
-        - toolkit-discord-text:
-            text: |
-              DEBUG: istio_requests_total raw result
-
-              ${istio_requests_raw}
 
         - toolkit-llm-call:
             prompt: |
@@ -320,33 +325,82 @@ low_code:
             prompt_template: istio_runtime_edges
             assign: runtime_edges_notes
 
+        - toolkit-depstate-put:
+            stage: traffic
+            value: ${runtime_edges_notes}
+
         - toolkit-discord-text:
             text: |
               DEBUG: runtime_edges_notes
 
               ${runtime_edges_notes}
 
-        - toolkit-discord-text:
-            text: "DEBUG: calling final dependency_analysis LLM"
+        # ---- Egress: traffic LEAVING the mesh (external dependencies) ----
+        # reporter="source" because an external host has no sidecar to report the
+        # call; destination_workload="unknown" marks a non-mesh callee.
+        # Two queries: HTTP-level calls appear in istio_requests_total, but an
+        # app-originated TLS call (plain https://) is an opaque TCP stream to Envoy
+        # and appears ONLY in the TCP metric.
+        - toolkit-prometheus-query:
+            host_url: ${istio_prometheus_host_url}
+            promql: |
+              sum by(source_workload,destination_service_name)(istio_requests_total{reporter="source",source_workload_namespace="${namespace}",destination_workload="unknown"})
+            assign: istio_egress_http_raw
 
-        # ---- Optimization 2: completeness / health check BEFORE the report ----
-        # The gap list is shown first so the user can decide (via the buttons below)
-        # whether to generate the report now or pause to supplement and re-run.
-        - toolkit-discord-text:
-            text: "DEBUG: running completeness health check (before report)"
+        - toolkit-prometheus-query:
+            host_url: ${istio_prometheus_host_url}
+            promql: |
+              sum by(source_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="${namespace}",destination_workload="unknown"})
+            assign: istio_egress_tcp_raw
 
         - toolkit-llm-call:
             prompt: |
-              ## DeepWiki dependency notes
+              ## Query 1 - HTTP egress (istio_requests_total, reporter=source, namespace=${namespace})
+              ${istio_egress_http_raw}
+
+              ## Query 2 - TCP egress (istio_tcp_connections_opened_total, reporter=source, namespace=${namespace})
+              ${istio_egress_tcp_raw}
+            prompt_template: istio_egress_edges
+            assign: egress_edges_notes
+
+        - toolkit-depstate-put:
+            stage: egress
+            value: ${egress_edges_notes}
+
+        - toolkit-discord-text:
+            text: |
+              DEBUG: egress_edges_notes
+
+              ${egress_edges_notes}
+
+        # ---- Completeness / health check BEFORE the report ----
+        # The gap list is shown first so the user can decide whether to generate the
+        # report now, or pause to supplement evidence and resume.
+        - toolkit-llm-call:
+            prompt: |
+              ## Documentation + code dependency notes
               ${deepwiki_dependency_notes}
 
               ## Kubernetes / Istio runtime notes
               ${k8s_runtime_notes}
 
-              ## Istio runtime-observed edge ledger
+              ## Istio runtime-observed edge ledger (internal, mesh-to-mesh)
               ${runtime_edges_notes}
+
+              ## Istio egress edge ledger (external dependencies)
+              ${egress_edges_notes}
+
+              ## External hosts found in code + ServiceEntry suggestions
+              ${service_entry_manifest}
+
+              ## Traffic that was actually driven (what was attempted, and how it went)
+              ${traffic_report}
             prompt_template: dependency_health_check
             assign: health_check
+
+        - toolkit-depstate-put:
+            stage: health
+            value: ${health_check}
 
         - toolkit-discord-text:
             text: |
@@ -355,36 +409,110 @@ low_code:
 
               ${health_check}
 
-        # ---- Checkpoint: save evidence + ask continue / pause via buttons ----
-        # The final report is produced only when the user clicks "繼續產生報告"
-        # (handled in ButtonListener -> DependencyReportService, using the saved
-        # evidence so nothing is re-collected).
-        - toolkit-depstate-checkpoint:
-            repo_name: ${repo_name}
-            namespace: ${namespace}
-            deepwiki_notes: ${deepwiki_dependency_notes}
-            k8s_notes: ${k8s_runtime_notes}
-            runtime_notes: ${runtime_edges_notes}
+        # The final report is produced only when the user clicks "Generate report"
+        # (ButtonListener -> DependencyReportService), from the stored checkpoint,
+        # so nothing is collected twice.
+        - toolkit-depstate-checkpoint: {}
 
-    - name: supplement-dependency-traffic
+    # Resume from the checkpoint after the user paused to supplement evidence.
+    #
+    # This is the coverage-guided loop. It does NOT just re-query Prometheus: it
+    # reads the previous completeness check (which edges are still missing) and the
+    # previous traffic report (what was already tried and how it failed), generates
+    # a scenario TARGETING those specific missing edges, drives it, and re-measures.
+    #
+    # The expensive stages -- the DeepWiki questions and the repository clone --
+    # are reused from the checkpoint and never re-run.
+    - name: resume-dependency-analysis
       parameter:
         namespace: Kubernetes namespace, e.g. "default"
-      description: Re-query Istio runtime traffic to fill Runtime Observed gaps after driving load.
+      description: Resume a paused dependency analysis, driving traffic aimed at the edges still missing.
       access: public
       body:
         - toolkit-discord-text:
-            text: "DEBUG: re-querying Istio runtime edges for ${namespace}"
+            text: "DEBUG: resuming from checkpoint for ${namespace} (targeting the missing edges)"
 
-        - toolkit-traffic-query_istio:
-            prometheus_url: ${prometheus_host_url}
-            namespace: ${namespace}
-            assign: istio_requests_raw
+        # ---- Everything expensive comes back from the checkpoint ----
+        - toolkit-depstate-get:
+            stage: merged_notes
+            assign: deepwiki_dependency_notes
+
+        - toolkit-depstate-get:
+            stage: code
+            assign: code_extraction_notes
+
+        - toolkit-depstate-get:
+            stage: k8s
+            assign: k8s_runtime_notes
+
+        - toolkit-depstate-get:
+            stage: entry_url
+            assign: entry_url
+
+        - toolkit-depstate-get:
+            stage: auth_hint
+            assign: auth_hint
+
+        # The previous completeness check IS the list of edges still missing:
+        # it is what makes this round targeted rather than a blind repeat.
+        - toolkit-depstate-get:
+            stage: health
+            assign: previous_health_check
+
+        - toolkit-traffic-last-scenario:
+            assign: previous_scenario
+
+        - toolkit-traffic-last-report:
+            assign: previous_traffic_report
+
+        # ---- Generate a scenario aimed at what is still missing ----
+        - toolkit-llm-call:
+            prompt: |
+              ## Entry URL (all relative paths resolve against this)
+              ${entry_url}
+
+              ## Authentication hint supplied by the user ('none' if absent)
+              ${auth_hint}
+
+              ## MISSING EDGES - this is the objective of this round
+              The completeness check below lists what is still NOT observed at runtime.
+              Build a journey that causes those specific edges to happen.
+              ${previous_health_check}
+
+              ## The scenario already tried
+              ${previous_scenario}
+
+              ## How it went (fix what returned 4xx; do not repeat it unchanged)
+              ${previous_traffic_report}
+
+              ## API surface + dependency edges extracted from the source code
+              ${code_extraction_notes}
+
+              ## Kubernetes / Istio routing
+              ${k8s_runtime_notes}
+
+              ## Architecture summary from the documentation
+              ${deepwiki_dependency_notes}
+            prompt_template: traffic_scenario_generation
+            assign: traffic_scenario
+
+        - toolkit-traffic-run:
+            scenario_json: ${traffic_scenario}
+            entry_url: ${entry_url}
+            repeats: 2
+            assign: traffic_report
 
         - toolkit-discord-text:
             text: |
-              DEBUG: istio_requests_total raw result
+              ## Traffic Driven (targeting the missing edges)
+              ${traffic_report}
 
-              ${istio_requests_raw}
+        # ---- Re-measure ----
+        - toolkit-prometheus-query:
+            host_url: ${istio_prometheus_host_url}
+            promql: |
+              sum by(source_workload,destination_workload)(istio_requests_total{reporter="destination",destination_workload_namespace="${namespace}"})
+            assign: istio_requests_raw
 
         - toolkit-llm-call:
             prompt: |
@@ -393,9 +521,91 @@ low_code:
             prompt_template: istio_runtime_edges
             assign: runtime_edges_notes
 
+        # Write the refreshed traffic back into the checkpoint. Without this the
+        # report would still be generated from the stale, pre-supplement traffic.
+        - toolkit-depstate-put:
+            stage: traffic
+            value: ${runtime_edges_notes}
+
         - toolkit-discord-text:
             text: |
               ## Updated Istio Runtime-Observed Edge Ledger
               **Namespace:** `${namespace}`
 
               ${runtime_edges_notes}
+
+        # Egress is re-checked too: applying a ServiceEntry and then resuming is a
+        # main reason to pause, and it only shows up in these two queries.
+        - toolkit-prometheus-query:
+            host_url: ${istio_prometheus_host_url}
+            promql: |
+              sum by(source_workload,destination_service_name)(istio_requests_total{reporter="source",source_workload_namespace="${namespace}",destination_workload="unknown"})
+            assign: istio_egress_http_raw
+
+        - toolkit-prometheus-query:
+            host_url: ${istio_prometheus_host_url}
+            promql: |
+              sum by(source_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="${namespace}",destination_workload="unknown"})
+            assign: istio_egress_tcp_raw
+
+        - toolkit-llm-call:
+            prompt: |
+              ## Query 1 - HTTP egress (istio_requests_total, reporter=source, namespace=${namespace})
+              ${istio_egress_http_raw}
+
+              ## Query 2 - TCP egress (istio_tcp_connections_opened_total, reporter=source, namespace=${namespace})
+              ${istio_egress_tcp_raw}
+            prompt_template: istio_egress_edges
+            assign: egress_edges_notes
+
+        - toolkit-depstate-put:
+            stage: egress
+            value: ${egress_edges_notes}
+
+        - toolkit-discord-text:
+            text: |
+              ## Updated Egress (External Dependency) Edge Ledger
+              **Namespace:** `${namespace}`
+
+              ${egress_edges_notes}
+
+        # The ServiceEntry suggestions come from the checkpoint (the repository is
+        # not cloned again on resume).
+        - toolkit-code-service-entries:
+            namespace: ${namespace}
+            assign: service_entry_manifest
+
+        - toolkit-llm-call:
+            prompt: |
+              ## Documentation + code dependency notes
+              ${deepwiki_dependency_notes}
+
+              ## Kubernetes / Istio runtime notes
+              ${k8s_runtime_notes}
+
+              ## Istio runtime-observed edge ledger (internal, mesh-to-mesh)
+              ${runtime_edges_notes}
+
+              ## Istio egress edge ledger (external dependencies)
+              ${egress_edges_notes}
+
+              ## External hosts found in code + ServiceEntry suggestions
+              ${service_entry_manifest}
+
+              ## Traffic that was actually driven (what was attempted, and how it went)
+              ${traffic_report}
+            prompt_template: dependency_health_check
+            assign: health_check
+
+        - toolkit-depstate-put:
+            stage: health
+            value: ${health_check}
+
+        - toolkit-discord-text:
+            text: |
+              ## Analysis Completeness & Supplement Suggestions (after resume)
+              **Namespace:** `${namespace}`
+
+              ${health_check}
+
+        - toolkit-depstate-checkpoint: {}

@@ -1,22 +1,113 @@
-version: "3.8"
+# ChatOps4Msa control-plane side.
+#
+# The Kubernetes cluster (k8s + Istio + the system under analysis, e.g. sock-shop
+# or train-ticket) runs on a SEPARATE machine on the same LAN. Nothing in this
+# file starts a cluster; this side only talks to one over the network.
+# See docs/split-deployment.md.
+#
+# Everything not needed for a dependency-analysis run sits behind a compose
+# profile, so it does not start by default — the whole point of splitting the
+# machines is to stop spending RAM here that the cluster needs there.
+#
+#   docker compose up -d                        core only (app + k8s-mcp + rabbitmq)
+#   docker compose --profile monitoring up -d   + prometheus/grafana/exporters
+#   docker compose --profile bookinfo up -d     + the compose (non-k8s) bookinfo
+#   docker compose --profile trello up -d       + trello
 
 services:
-  # For the Docker-in-Docker configuration (k6)
-  # chatops4msa:
-    # container_name: chatops4msa
-    # build:
-    #   context: .
-    # volumes:
-    #   - /etc/localtime:/etc/localtime:ro
-    #   - /var/run/docker.sock:/var/run/docker.sock
-    #   - /usr/bin/docker:/usr/bin/docker
-    #   - ./k6:/k6
-    # depends_on:
-    #   - rabbitmq
-    # ports:
-    #   - 8080:8080
+
+# Core =====================================================================
+
+  chatops4msa:
+    container_name: chatops4msa
+    build:
+      context: .
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Taipei
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      # k6 is launched as a sibling container through the host's Docker daemon.
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./k6:/k6
+      # Dependency-analysis checkpoints. Mounted so a restart does not discard a
+      # paused analysis — DeepWiki's questions and the repo clone are the
+      # expensive stages and resuming is supposed to skip them.
+      - ./dep-state:/app/dep-state
+    depends_on:
+      - rabbitmq
+      - k8s-mcp-server
+    ports:
+      - 8080:8080
+
+  # Runs kubectl/helm/istioctl against the cluster on behalf of the bot.
+  #
+  # It previously ran as a POD INSIDE the cluster, which is why the analysis was
+  # unstable: it competed for memory with the very system it was measuring. Moving
+  # it here costs almost nothing (it is a thin kubectl wrapper) and takes its
+  # memory off the experiment machine entirely. It does not need to be in the
+  # cluster — only a kubeconfig plus network reach to the API server.
+  #
+  # NOTE ON THE SERVICE NAME: it must stay `k8s-mcp-server`. The patched build
+  # enables MCP transport-security DNS-rebinding protection with an allowed_hosts
+  # allowlist containing `k8s-mcp-server:*`. Renaming the service, or reaching it
+  # by IP:port instead of by name, makes the Host header fall outside the
+  # allowlist and the request is REJECTED — add the new host to allowed_hosts
+  # first if you ever change this.
+  k8s-mcp-server:
+    container_name: k8s-mcp-server
+    # Built from OUR PATCHED FORK, not the upstream image. The fork carries fixes
+    # upstream does not have:
+    #   - CommandResult as a dataclass + asdict()  (upstream fails to serialise it)
+    #   - the allowed_hosts allowlist below
+    #   - traceback logging on crash (upstream exits 255 silently, which is why the
+    #     instability was so hard to diagnose)
+    # Point K8S_MCP_SRC at your checkout of the fork.
+    build:
+      context: ${K8S_MCP_SRC:-../k8s-mcp-server}
+      dockerfile: deploy/docker/Dockerfile
+    restart: unless-stopped
+    environment:
+      # The server defaults to stdio transport (for Claude Desktop), which opens
+      # no HTTP listener at all. HTTP is required for toolkit-mcp-connect.
+      - K8S_MCP_TRANSPORT=streamable-http
+      - KUBECONFIG=/tmp/kubeconfig
+      - TZ=Asia/Taipei
+    volumes:
+      # Running outside the cluster means there is no ServiceAccount to borrow, so
+      # a kubeconfig must be supplied. Its `server:` must be the cluster machine's
+      # LAN address — NOT 127.0.0.1, which inside this container resolves to the
+      # container itself.
+      - ./kube/config:/tmp/kubeconfig:ro
+    ports:
+      # chatops4msa reaches this by service name on the compose network; this is
+      # published only for debugging.
+      - 8000:8000
+
+  rabbitmq:
+    image: rabbitmq:3.8-management
+    container_name: chatops4msa-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=soselab
+    volumes:
+      - ./rabbitmq/data:/var/lib/rabbitmq
+      - /etc/localtime:/etc/localtime:ro
+
+# Monitoring (profile: monitoring) =========================================
+#
+# ChatOps4Msa's OWN monitoring stack, used by the prometheus/grafana
+# capabilities. This is NOT the Prometheus the dependency analysis reads:
+# istio_requests_total is only collected by Istio's Prometheus, which runs inside
+# the cluster on the other machine. The two are separate settings in secret.yml
+# (prometheus_host_url vs istio_prometheus_host_url).
 
   prometheus:
+    profiles: ["monitoring"]
     container_name: chatops4msa-prometheus
     image: prom/prometheus:v2.30.0
     volumes:
@@ -28,6 +119,7 @@ services:
       - 9090:9090
 
   node-exporter:
+    profiles: ["monitoring"]
     container_name: chatops4msa-prometheus-node-exporter
     image: prom/node-exporter:v1.2.2
     restart: unless-stopped
@@ -48,6 +140,7 @@ services:
       - '--no-collector.softnet'
 
   alertmanager:
+    profiles: ["monitoring"]
     container_name: chatops4msa-prometheus-alertmanager
     image: prom/alertmanager:v0.23.0
     restart: unless-stopped
@@ -58,8 +151,9 @@ services:
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
-  
+
   grafana:
+    profiles: ["monitoring"]
     container_name: chatops4msa-grafana
     image: grafana/grafana:8.1.5
     restart: unless-stopped
@@ -75,6 +169,7 @@ services:
       - 3000:3000
 
   cadvisor:
+    profiles: ["monitoring"]
     container_name: chatops4msa-prometheus-google-cadvisor
     image: gcr.io/cadvisor/cadvisor:v0.47.2
     volumes:
@@ -90,32 +185,15 @@ services:
     devices:
       - /dev/kmsg
 
-  rabbitmq:
-    image: rabbitmq:3.8-management
-    container_name: chatops4msa-rabbitmq
-    restart: always
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=soselab
-    volumes:
-      - ./rabbitmq/data:/var/lib/rabbitmq
-      - /etc/localtime:/etc/localtime:ro
-
-# Trello microservices system ============================================================
-
-  trello:
-    container_name: chatops4mas-trello
-    build:
-      context: ../ChatOps4Msa-Trello
-    ports:
-      - '9000:8080'
-
-# Bookinfo microservices system ==========================================================
+# Sample systems (profiles) ================================================
+#
+# These bookinfo containers are the COMPOSE deployment of bookinfo — a different
+# deployment from the bookinfo you install into Kubernetes. The dependency
+# analysis inspects the Kubernetes one (through k8s-mcp and Istio), so these are
+# not involved in it and stay off by default.
 
   productpage:
+    profiles: ["bookinfo"]
     container_name: chatops4msa-bookinfo-productpage
     build:
       context: ../ChatOps4Msa-Sample-Bookinfo-Productpage/src/productpage
@@ -127,6 +205,7 @@ services:
       - '9080:9080'
 
   details:
+    profiles: ["bookinfo"]
     container_name: chatops4msa-bookinfo-details
     build:
       context: ../ChatOps4Msa-Sample-Bookinfo-Details/src/details
@@ -139,6 +218,7 @@ services:
       - '9081:9080'
 
   ratings:
+    profiles: ["bookinfo"]
     container_name: chatops4msa-bookinfo-ratings
     build:
       context: ../ChatOps4Msa-Sample-Bookinfo-Ratings/src/ratings
@@ -150,6 +230,7 @@ services:
       - '9082:9080'
 
   reviews:
+    profiles: ["bookinfo"]
     container_name: chatops4msa-bookinfo-reviews
     build:
       context: ../ChatOps4Msa-Sample-Bookinfo-Reviews/src/reviews
@@ -162,13 +243,10 @@ services:
     ports:
       - '9083:9080'
 
-# MCP Server ==========================================================
-  k8s-mcp:
-    container_name: k8s-mcp
-    image: ghcr.io/alexei-led/k8s-mcp-server:latest
-    restart: unless-stopped
-    environment:
-      - KUBECONFIG=/tmp/kubeconfig
-      - TZ=Asia/Taipei
-    volumes:
-      - ./kube/config:/tmp/kubeconfig:ro
+  trello:
+    profiles: ["trello"]
+    container_name: chatops4mas-trello
+    build:
+      context: ../ChatOps4Msa-Trello
+    ports:
+      - '9000:8080'

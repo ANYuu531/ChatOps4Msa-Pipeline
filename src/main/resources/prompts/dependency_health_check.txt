@@ -35,12 +35,34 @@ one block:
 - Confidence impact: High | Medium | Low
 - Recommended action: <one concrete next step; prefer one of the commands below>
 
-Available supplement actions the user can run:
-- Drive more traffic then run:  supplement-dependency-traffic  namespace=<ns>
-  (best for filling Runtime Observed gaps)
+Available supplement actions the user can take:
+- Click "Pause & supplement", drive more traffic through the mesh, then click
+  "Resume". This re-checks runtime traffic and keeps everything already collected
+  (best for filling Runtime Observed gaps).
+- Apply the suggested ServiceEntry manifests, then drive traffic and Resume.
+  This is the ONLY way to get runtime evidence for an EXTERNAL dependency: an
+  external host has no sidecar, so without a ServiceEntry Istio routes the call
+  through PassthroughCluster and cannot name the target at all. If the code
+  analysis found external hosts that do NOT appear in the egress ledger (or appear
+  there only as "PassthroughCluster"/"unidentified"), raise this as a gap and
+  recommend this action.
 - Re-run get-dependency-analysis with a valid entry_url to auto-drive traffic.
 - Provide/point to source code so synchronous & async edges can be extracted
-  statically (best when documentation is thin).
+  from the source (best when documentation is thin).
+
+Note on external dependencies: an HTTPS call originated by the application is an
+opaque TCP stream to Envoy, so it can only ever appear in the TCP egress query
+(connections, no request counts). Absence from the HTTP egress ledger is therefore
+NOT evidence that an external call does not happen. Say so rather than reporting
+it as a missing dependency.
+
+CRITICAL — "unknown" is not "absent":
+If the runtime or egress ledger reports that Prometheus was UNAVAILABLE, then the
+runtime dimension was never measured. Do NOT report the edges as "not observed at
+runtime", and do NOT lower confidence in an edge on that basis — we did not get to
+look. Raise it as the TOP gap ("runtime evidence could not be collected at all")
+and recommend fixing the Prometheus endpoint before anything else. An analysis with
+an unreachable Prometheus is a documentation-and-code analysis only, and must say so.
 
 End with exactly two lines:
 

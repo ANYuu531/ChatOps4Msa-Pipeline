@@ -32,16 +32,27 @@ STRICT RULES:
    (prometheus, grafana, jaeger, kiali, istiod scraping = NOT a business edge).
    Note: istio-ingressgateway as a source IS a legitimate entry edge.
 
-4. If data.result is empty (no series), state exactly:
+4. If the input begins with PROMETHEUS_UNAVAILABLE, then Prometheus could not be
+   reached at all. This is NOT an empty result and must NEVER be reported as
+   "no dependencies observed" — we did not get to ask the question. State exactly:
+   "Runtime evidence UNAVAILABLE: Prometheus could not be queried (<reason>).
+    The runtime dimension is UNKNOWN, not empty. Absence of an edge here proves
+    nothing. Fix the Prometheus endpoint and resume."
+   Set "Traffic evidence usable: No" and report NO edges. Do not guess any.
+
+5. If Prometheus DID answer and data.result is empty (no series), that is real
+   evidence — we asked, and the mesh has seen no such traffic. State exactly:
    "No runtime request edge was observed.
     Either no traffic has ever been driven through the mesh, Istio telemetry is
     not scraped by Prometheus, or the namespace label does not match."
    Do NOT fabricate edges to fill the gap.
 
-5. Do not interpret the counter value as business meaning. Report it as-is
+   Rules 4 and 5 mean opposite things. Never conflate them.
+
+6. Do not interpret the counter value as business meaning. Report it as-is
    (total observed request count since workload start).
 
-6. This is a cumulative all-time counter, not a fresh sample. State clearly that
+7. This is a cumulative all-time counter, not a fresh sample. State clearly that
    these edges were observed at some point, not necessarily during any specific
    recent test window.
 
@@ -51,7 +62,7 @@ Output format (block-style bullets, NO tables):
 
 ## Collection Status
 - Query returned series count:
-- Traffic evidence usable: Yes | No
+- Traffic evidence usable: Yes | No (No = Prometheus unreachable, i.e. UNKNOWN)
 - Note:
 
 ## Observed Business Edges

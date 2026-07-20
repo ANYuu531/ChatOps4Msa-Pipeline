@@ -10,11 +10,11 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 
 /**
- * Produces the final dependency-analysis report from evidence that was already
- * collected and stored, so clicking "continue" does not re-run collection.
+ * Produces the final dependency-analysis report from the stored checkpoint, so
+ * clicking "Generate report" never re-runs collection.
  *
- * Mirrors the final toolkit-llm-call in dependency_analysis.yml: same inputs,
- * same prompt template (dependency_analysis).
+ * Mirrors the final LLM step of the low-code flow: same inputs, same prompt
+ * template (dependency_analysis).
  */
 @Service
 public class DependencyReportService {
@@ -36,20 +36,26 @@ public class DependencyReportService {
     }
 
     /**
-     * Generates and posts the report for the given user from stored evidence.
-     * Assumes UserContextHolder is already set to this user (LlmToolkit needs it).
+     * Generates and posts the report for the given user from the stored evidence.
+     * UserContextHolder must already be set to this user (LlmToolkit needs it).
      */
     public void generateAndPost(String userId) {
         DependencyAnalysisStateStore.State state = stateStore.get(userId);
         if (state == null) {
             jdaService.sendChatOpsChannelWarningMessage(
-                    "[WARNING] No collected dependency-analysis evidence found (it may have expired). Please re-run get-dependency-analysis.");
+                    "[WARNING] No dependency-analysis checkpoint found (it may have expired). "
+                            + "Please re-run get-dependency-analysis.");
             return;
         }
 
-        String prompt = "## DeepWiki dependency notes\n" + state.deepwikiNotes + "\n\n"
-                + "## Kubernetes / Istio runtime notes\n" + state.k8sNotes + "\n\n"
-                + "## Istio runtime-observed edge ledger (direct traffic evidence)\n" + state.runtimeNotes;
+        String prompt = "## Documentation + code dependency notes\n"
+                + state.stage(DependencyAnalysisStateStore.STAGE_MERGED_NOTES) + "\n\n"
+                + "## Kubernetes / Istio runtime notes\n"
+                + state.stage(DependencyAnalysisStateStore.STAGE_K8S) + "\n\n"
+                + "## Istio runtime-observed edge ledger (internal, mesh-to-mesh traffic)\n"
+                + state.stage(DependencyAnalysisStateStore.STAGE_TRAFFIC) + "\n\n"
+                + "## Istio egress edge ledger (external dependencies leaving the mesh)\n"
+                + state.stage(DependencyAnalysisStateStore.STAGE_EGRESS);
 
         String response = llmToolkit.toolkitLlmCall(prompt, "dependency_analysis");
 

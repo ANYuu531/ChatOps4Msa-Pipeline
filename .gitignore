@@ -40,3 +40,6 @@ src/main/resources/capability/secret.yml
 # kubeconfig
 kube/config
 
+
+# dependency-analysis checkpoints
+dep-state/

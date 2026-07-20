@@ -122,5 +122,34 @@ toolkit-mcp-call-tool:
   - server_name
   - tool_name
   - tool_arguments
-toolkit-prompt-template:  
-  - template  
+toolkit-prompt-template:
+  - template
+toolkit-prometheus-query:
+  - host_url
+  - promql
+toolkit-code-extract:
+  - repo
+toolkit-code-service-entries:
+  - namespace
+toolkit-depstate-start:
+  - repo_name
+  - namespace
+  - entry_url
+  - auth_hint
+toolkit-traffic-run:
+  - scenario_json
+  - entry_url
+  - repeats
+toolkit-traffic-last-scenario:
+  []
+toolkit-traffic-last-report:
+  []
+toolkit-depstate-put:
+  - stage
+  - value
+toolkit-depstate-get:
+  - stage
+toolkit-depstate-checkpoint:
+  []
+toolkit-depstate-apply-button:
+  []

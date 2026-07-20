@@ -66,4 +66,4 @@ capability:
   - get-mcp-call_tool
   - get-mcp-disconnect
   - get-dependency-analysis
-  - supplement-dependency-traffic
+  - resume-dependency-analysis
