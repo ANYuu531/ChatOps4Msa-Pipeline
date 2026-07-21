@@ -65,26 +65,15 @@ low_code:
         # sidecar routes through PassthroughCluster, which loses the hostname.
         # The code is therefore the only place the host is knowable — and declaring
         # it as a ServiceEntry is what lets the mesh confirm the edge at runtime.
+        # The ServiceEntry suggestions are rendered here (from the freshly cloned
+        # code) but SHOWN and OFFERED for apply only at the very end, together with
+        # the report decision — see the checkpoint block below. Doing it mid-run
+        # interrupts collection, and worse: clicking a button while the (synchronous)
+        # collection flow is still running blocks the bot from acking the Discord
+        # interaction within its 3s window, so the click fails with "did not respond".
         - toolkit-code-service-entries:
             namespace: ${namespace}
             assign: service_entry_manifest
-
-        - toolkit-discord-text:
-            text: |
-              ## External hosts found in code (ServiceEntry suggestions)
-
-              Applying these lets Istio observe and attribute the external edges,
-              which it otherwise cannot see at all.
-
-              ```yaml
-              ${service_entry_manifest}
-              ```
-
-        # Offer to apply the manifest for the user. The button is posted only when
-        # external hosts were actually found; clicking it runs kubectl apply through
-        # the k8s MCP server (see ButtonListener). Applying is never automatic — it
-        # is a change to the cluster and waits for the user's click.
-        - toolkit-depstate-apply-button: {}
 
         # ---- Documentation analysis (DeepWiki) ----
         - toolkit-mcp-connect:
@@ -415,6 +404,25 @@ low_code:
               **Namespace:** `${namespace}`
 
               ${health_check}
+
+        # ---- All decisions are asked HERE, at the end, when collection is done and
+        # the bot is idle (so the interaction acks in time). First the optional
+        # external-dependency apply, then the report / pause decision. ----
+        - toolkit-discord-text:
+            text: |
+              ## External hosts found in code (ServiceEntry suggestions)
+
+              Applying these lets Istio observe and attribute the external edges,
+              which it otherwise cannot see at all.
+
+              ```yaml
+              ${service_entry_manifest}
+              ```
+
+        # Posts the "Apply ServiceEntries" button, but only when external hosts were
+        # actually found; clicking it runs kubectl apply through the k8s MCP server
+        # (see ButtonListener). Applying is never automatic — it waits for the click.
+        - toolkit-depstate-apply-button: {}
 
         # The final report is produced only when the user clicks "Generate report"
         # (ButtonListener -> DependencyReportService), from the stored checkpoint,
