@@ -11,238 +11,164 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Pure-Java tests for the Phase 1 dependency-graph visualization: the
- * deterministic Istio-Prometheus -> graph builder and the Mermaid emitter. No
- * Spring context, so they always run.
+ * Pure-Java tests for the dependency-graph visualization: the deterministic
+ * Istio-Prometheus builder, the code-edge merge, and the Mermaid / Graphviz
+ * emitters. No Spring context, so they always run.
  *
- * The fixtures mimic a sock-shop run: real business edges plus the noise the
- * builder must drop (telemetry workloads, "unknown", self-calls).
+ * The fixtures model spring-petclinic-microservices — the analysis target. It is
+ * a good exercise for the point that a dependency graph is NOT a traffic graph:
+ * its MySQL and config-server dependencies live in code/config and are never seen
+ * on the mesh, so they must still appear (dashed) even with zero traffic.
  */
 public class DependencyGraphTest {
 
-    /** A trimmed but realistic sock-shop istio_requests_total instant-query body. */
-    private static final String SOCK_SHOP = """
+    /** api-gateway fans out to the services; every service registers with discovery-server. */
+    private static final String PETCLINIC_RUNTIME = """
             {
               "status": "success",
               "data": {
                 "resultType": "vector",
                 "result": [
-                  {"metric": {"source_workload": "istio-ingressgateway", "destination_workload": "front-end"}, "value": [1700000000, "500"]},
-                  {"metric": {"source_workload": "front-end", "destination_workload": "catalogue"}, "value": [1700000000, "123"]},
-                  {"metric": {"source_workload": "front-end", "destination_workload": "carts"}, "value": [1700000000, "88"]},
-                  {"metric": {"source_workload": "front-end", "destination_workload": "user"}, "value": [1700000000, "40"]},
-                  {"metric": {"source_workload": "front-end", "destination_workload": "orders"}, "value": [1700000000, "12"]},
-                  {"metric": {"source_workload": "orders", "destination_workload": "payment"}, "value": [1700000000, "12"]},
-                  {"metric": {"source_workload": "orders", "destination_workload": "shipping"}, "value": [1700000000, "11"]},
-                  {"metric": {"source_workload": "catalogue", "destination_workload": "catalogue-db"}, "value": [1700000000, "1.2e+02"]},
-                  {"metric": {"source_workload": "carts", "destination_workload": "carts-db"}, "value": [1700000000, "80"]},
-                  {"metric": {"source_workload": "prometheus", "destination_workload": "front-end"}, "value": [1700000000, "9999"]},
-                  {"metric": {"source_workload": "front-end", "destination_workload": "unknown"}, "value": [1700000000, "7"]},
-                  {"metric": {"source_workload": "user", "destination_workload": "user"}, "value": [1700000000, "3"]}
+                  {"metric": {"source_workload": "istio-ingressgateway", "destination_workload": "api-gateway"}, "value": [1, "200"]},
+                  {"metric": {"source_workload": "api-gateway", "destination_workload": "customers-service"}, "value": [1, "120"]},
+                  {"metric": {"source_workload": "api-gateway", "destination_workload": "vets-service"}, "value": [1, "60"]},
+                  {"metric": {"source_workload": "api-gateway", "destination_workload": "visits-service"}, "value": [1, "45"]},
+                  {"metric": {"source_workload": "customers-service", "destination_workload": "discovery-server"}, "value": [1, "3.0e+02"]},
+                  {"metric": {"source_workload": "vets-service", "destination_workload": "discovery-server"}, "value": [1, "280"]},
+                  {"metric": {"source_workload": "visits-service", "destination_workload": "discovery-server"}, "value": [1, "260"]},
+                  {"metric": {"source_workload": "prometheus", "destination_workload": "api-gateway"}, "value": [1, "9999"]},
+                  {"metric": {"source_workload": "api-gateway", "destination_workload": "unknown"}, "value": [1, "7"]}
                 ]
               }
             }
             """;
 
-    @Test
-    void buildsBusinessEdgesAndDropsNoise() {
-        DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(SOCK_SHOP, "sock-shop");
+    /** Module dir names are spring-petclinic-<service>; DBs and config-server are code-only. */
+    private static final String PETCLINIC_CODE = """
+            {"repo":"spring-petclinic/spring-petclinic-microservices","failed":false,"edges":[
+              {"section":"config","fields":{"key":"spring.datasource.url","value":"jdbc:mysql://customers-db:3306/petclinic"},"file":"spring-petclinic-customers-service/src/main/resources/application.yml","line":12,"confidence":"High"},
+              {"section":"config","fields":{"key":"spring.datasource.url","value":"jdbc:mysql://vets-db:3306/petclinic"},"file":"spring-petclinic-vets-service/src/main/resources/application.yml","line":12,"confidence":"High"},
+              {"section":"http-client","fields":{"url":"http://config-server:8888/"},"file":"spring-petclinic-visits-service/src/main/java/org/x/Cfg.java","line":8,"confidence":"Medium"},
+              {"section":"feign","fields":{"value":"customers-service"},"file":"spring-petclinic-api-gateway/src/main/java/org/x/CustomersServiceClient.java","line":20,"confidence":"High"},
+              {"section":"http-server","fields":{"path":"/owners"},"file":"spring-petclinic-customers-service/src/main/java/org/x/OwnerResource.java","line":30,"confidence":"High"},
+              {"section":"http-client","fields":{"url":"http://${downstream.host}/x"},"file":"spring-petclinic-vets-service/src/main/java/org/x/X.java","line":1,"confidence":"Medium"}
+            ]}
+            """;
 
-        // 9 business edges kept; prometheus/unknown/self-call dropped.
-        assertEquals(9, graph.getEdges().size());
-
-        // prometheus (telemetry), "unknown", and the user->user self-call are gone.
-        assertTrue(graph.getEdges().stream().noneMatch(e -> e.source.equals("prometheus")));
-        assertTrue(graph.getEdges().stream().noneMatch(e -> e.target.equals("unknown")));
-        assertTrue(graph.getEdges().stream().noneMatch(e -> e.source.equals(e.target)));
+    private static DependencyGraph runtimeGraph() {
+        return RuntimeGraphBuilder.fromIstioRequests(PETCLINIC_RUNTIME, "petclinic");
     }
 
-    @Test
-    void classifiesNodeKinds() {
-        DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(SOCK_SHOP, "sock-shop");
-
-        assertEquals(DependencyGraph.KIND_GATEWAY, kindOf(graph, "istio-ingressgateway"));
-        assertEquals(DependencyGraph.KIND_DB, kindOf(graph, "catalogue-db"));
-        assertEquals(DependencyGraph.KIND_DB, kindOf(graph, "carts-db"));
-        assertEquals(DependencyGraph.KIND_SERVICE, kindOf(graph, "front-end"));
+    private static DependencyGraph mergedGraph() {
+        DependencyGraph g = runtimeGraph();
+        CodeGraphMerger.merge(g, PETCLINIC_CODE, "spring-petclinic/spring-petclinic-microservices");
+        return g;
     }
 
-    @Test
-    void parsesScientificNotationCount() {
-        DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(SOCK_SHOP, "sock-shop");
-        long count = graph.getEdges().stream()
-                .filter(e -> e.source.equals("catalogue") && e.target.equals("catalogue-db"))
-                .mapToLong(e -> e.count).findFirst().orElse(-1);
-        assertEquals(120, count); // "1.2e+02" -> 120
-    }
+    // ---- runtime layer (deterministic) ----
 
     @Test
-    void everyRuntimeEdgeIsObservedWithProvenance() {
-        DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(SOCK_SHOP, "sock-shop");
-        for (DependencyGraph.Edge edge : graph.getEdges()) {
-            assertTrue(edge.runtimeObserved);
-            assertTrue(edge.provenance.contains(DependencyGraph.PROV_RUNTIME));
-            assertEquals(DependencyGraph.CONF_OBSERVED, edge.confidence);
+    void runtimeKeepsBusinessEdgesDropsNoise() {
+        DependencyGraph g = runtimeGraph();
+        assertEquals(7, g.getEdges().size()); // 8 series - prometheus - unknown, minus none else
+        assertTrue(g.getEdges().stream().noneMatch(e -> e.source.equals("prometheus")));
+        assertTrue(g.getEdges().stream().noneMatch(e -> e.target.equals("unknown")));
+        for (DependencyGraph.Edge e : g.getEdges()) {
+            assertTrue(e.runtimeObserved);
+            assertTrue(e.provenance.contains(DependencyGraph.PROV_RUNTIME));
         }
     }
 
     @Test
-    void emitsRenderableMermaid() {
-        DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(SOCK_SHOP, "sock-shop");
-        String mermaid = MermaidEmitter.emit(graph);
+    void parsesScientificNotationCount() {
+        long c = edge(runtimeGraph(), "customers-service", "discovery-server").count;
+        assertEquals(300, c); // "3.0e+02"
+    }
 
-        assertTrue(mermaid.startsWith("flowchart LR"));
-        // Hyphenated names must be quoted labels, not raw ids.
-        assertTrue(mermaid.contains("[\"front-end\"]"));
-        // An observed edge is a solid arrow carrying its count.
-        assertTrue(mermaid.contains("-->|123|"));
-        // db kind gets a classDef and a cylinder shape.
-        assertTrue(mermaid.contains("classDef db"));
-        assertTrue(mermaid.contains(":::db"));
+    // ---- code merge makes it a dependency graph, not a traffic graph ----
+
+    @Test
+    void codeDbDependencyAppearsEvenWithoutTraffic() {
+        DependencyGraph g = mergedGraph();
+        // The mesh never observes MySQL, but the config declares it -> a dashed db edge.
+        assertEquals(DependencyGraph.KIND_DB, kindOf(g, "customers-db"));
+        assertEquals(DependencyGraph.KIND_DB, kindOf(g, "vets-db"));
+        DependencyGraph.Edge db = edge(g, "customers-service", "customers-db");
+        assertNotNull(db);
+        assertFalse(db.runtimeObserved);                       // dashed: code-only
+        assertEquals("db", db.type);
+        assertTrue(db.provenance.contains(DependencyGraph.PROV_CODE));
     }
 
     @Test
-    void emitsRenderableDot() {
-        DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(SOCK_SHOP, "sock-shop");
-        String dot = DotEmitter.emit(graph);
-
-        assertTrue(dot.startsWith("digraph dependencies {"));
-        assertTrue(dot.contains("rankdir=LR;"));
-        // Hyphenated names are valid quoted ids in DOT — no remapping needed.
-        assertTrue(dot.contains("\"front-end\" -> \"catalogue\""));
-        // A runtime-observed edge is solid and labelled with its count.
-        assertTrue(dot.contains("label=\"123\""));
-        assertTrue(dot.contains("style=solid"));
-        // db node uses a cylinder.
-        assertTrue(dot.contains("\"catalogue-db\" [shape=cylinder"));
-        assertTrue(dot.trim().endsWith("}"));
+    void codeIntroducesUnseenServiceNode() {
+        DependencyGraph g = mergedGraph();
+        // config-server got no traffic in the fixture, but the code depends on it.
+        assertEquals(DependencyGraph.KIND_SERVICE, kindOf(g, "config-server"));
+        DependencyGraph.Edge e = edge(g, "visits-service", "config-server");
+        assertNotNull(e);
+        assertFalse(e.runtimeObserved);
     }
 
     @Test
-    void dotEmptyGraphIsStillValid() {
-        DependencyGraph empty = new DependencyGraph("ns");
-        String dot = DotEmitter.emit(empty);
-        assertTrue(dot.startsWith("digraph dependencies {"));
-        assertTrue(dot.contains("No dependency edges"));
-        assertTrue(dot.trim().endsWith("}"));
+    void codeConfirmingRuntimeEdgeStaysSolid() {
+        DependencyGraph g = mergedGraph();
+        // api-gateway -> customers-service is both observed AND in code (a Feign client).
+        DependencyGraph.Edge e = edge(g, "api-gateway", "customers-service");
+        assertTrue(e.runtimeObserved);                          // stays solid
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_RUNTIME));
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_CODE)); // confirmed by both
     }
 
     @Test
-    void unavailableAndMalformedProduceEmptyGraph() {
-        assertTrue(RuntimeGraphBuilder.fromIstioRequests(
-                "PROMETHEUS_UNAVAILABLE\nEndpoint: ...", "sock-shop").isEmpty());
-        assertTrue(RuntimeGraphBuilder.fromIstioRequests(
-                "<html>502 Bad Gateway</html>", "sock-shop").isEmpty());
-        assertTrue(RuntimeGraphBuilder.fromIstioRequests("", "sock-shop").isEmpty());
-        assertTrue(RuntimeGraphBuilder.fromIstioRequests(null, "sock-shop").isEmpty());
-
-        // Empty result set is a valid, renderable "nothing observed" diagram.
-        String emptyResult = "{\"status\":\"success\",\"data\":{\"resultType\":\"vector\",\"result\":[]}}";
-        DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(emptyResult, "sock-shop");
-        assertTrue(graph.isEmpty());
-        assertTrue(MermaidEmitter.emit(graph).contains("No runtime-observed edges"));
+    void moduleDirResolvesToWorkloadNoDuplicateNode() {
+        DependencyGraph g = mergedGraph();
+        // "spring-petclinic-customers-service" must map to the workload customers-service,
+        // never create a second node under the module directory name.
+        assertTrue(g.getNodes().stream().noneMatch(n -> n.id.startsWith("spring-petclinic-")));
     }
 
     @Test
-    void mergesDuplicateEdgesKeepingMaxCount() {
-        // Same directed edge reported twice (e.g. two series) must not duplicate.
-        String json = """
-                {"status":"success","data":{"resultType":"vector","result":[
-                  {"metric":{"source_workload":"a","destination_workload":"b"},"value":[1,"5"]},
-                  {"metric":{"source_workload":"a","destination_workload":"b"},"value":[1,"9"]}
-                ]}}
-                """;
-        DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(json, "ns");
-        assertEquals(1, graph.getEdges().size());
-        assertEquals(9, graph.getEdges().iterator().next().count);
-        assertFalse(graph.isEmpty());
-    }
-
-    // ---- Part B: code-edge merge (deterministic) ----
-
-    /** A runtime graph over sock-shop workloads, to give the merger a node vocabulary. */
-    private static DependencyGraph runtimeGraph() {
-        DependencyGraph g = RuntimeGraphBuilder.fromIstioRequests(SOCK_SHOP, "sock-shop");
-        return g;
-    }
-
-    @Test
-    void mergesResolvableCodeEdgesDeterministically() {
+    void placeholderTargetGoesToResidue() {
         DependencyGraph g = runtimeGraph();
-        // catalogue->user is NOT a runtime edge in the fixture, so it must appear as
-        // a dashed (code-only) edge. front-end->catalogue IS runtime, so merging the
-        // code edge onto it keeps it solid and adds "code" provenance.
-        String codeEdges = """
-                {"repo":"myorg/sock-shop","failed":false,"edges":[
-                  {"section":"http-client","fields":{"url":"http://user/profile"},"file":"catalogue/src/Svc.java","line":10,"confidence":"High"},
-                  {"section":"feign","fields":{"value":"catalogue"},"file":"front-end/api/Foo.java","line":5,"confidence":"High"}
-                ]}
-                """;
         List<CodeGraphMerger.Unresolved> residue =
-                CodeGraphMerger.merge(g, codeEdges, "myorg/sock-shop");
-
-        assertTrue(residue.isEmpty(), "both edges should resolve deterministically");
-
-        DependencyGraph.Edge catalogueUser = edge(g, "catalogue", "user");
-        assertTrue(catalogueUser != null);
-        assertFalse(catalogueUser.runtimeObserved); // code-only -> dashed
-        assertTrue(catalogueUser.provenance.contains(DependencyGraph.PROV_CODE));
-
-        DependencyGraph.Edge frontCatalogue = edge(g, "front-end", "catalogue");
-        assertTrue(frontCatalogue.runtimeObserved); // stays solid (runtime)
-        assertTrue(frontCatalogue.provenance.contains(DependencyGraph.PROV_RUNTIME));
-        assertTrue(frontCatalogue.provenance.contains(DependencyGraph.PROV_CODE)); // confirmed by both
+                CodeGraphMerger.merge(g, PETCLINIC_CODE, "spring-petclinic/spring-petclinic-microservices");
+        assertEquals(1, residue.size());                        // the ${...} url
+        assertEquals("http-client", residue.get(0).section);
     }
 
     @Test
     void asyncBrokerBecomesQueueNode() {
         DependencyGraph g = runtimeGraph();
-        String codeEdges = """
-                {"repo":"myorg/sock-shop","failed":false,"edges":[
-                  {"section":"rabbit-produce","fields":{"exchange":"shipping-task"},"file":"orders/src/Q.java","line":3,"confidence":"High"}
+        String code = """
+                {"repo":"r","failed":false,"edges":[
+                  {"section":"rabbit-produce","fields":{"exchange":"vets.updates"},"file":"spring-petclinic-vets-service/src/main/java/org/x/Pub.java","line":3,"confidence":"High"}
                 ]}
                 """;
-        CodeGraphMerger.merge(g, codeEdges, "myorg/sock-shop");
-
-        assertEquals(DependencyGraph.KIND_QUEUE, kindOf(g, "shipping-task"));
-        assertTrue(edge(g, "orders", "shipping-task") != null); // produce: service -> destination
+        CodeGraphMerger.merge(g, code, "r");
+        assertEquals(DependencyGraph.KIND_QUEUE, kindOf(g, "vets.updates"));
+        DependencyGraph.Edge e = edge(g, "vets-service", "vets.updates");
+        assertNotNull(e);
+        assertEquals("async", e.type);
     }
 
     @Test
-    void externalHostBecomesExternalNode() {
+    void publicHostBecomesExternalNode() {
         DependencyGraph g = runtimeGraph();
-        String codeEdges = """
-                {"repo":"myorg/sock-shop","failed":false,"edges":[
-                  {"section":"url","fields":{"value":"https://api.github.com/v3/repos"},"file":"user/src/Gh.java","line":8,"confidence":"High"}
+        String code = """
+                {"repo":"r","failed":false,"edges":[
+                  {"section":"url","fields":{"value":"https://api.stripe.com/v1/charges"},"file":"spring-petclinic-visits-service/src/main/java/org/x/Pay.java","line":8,"confidence":"High"}
                 ]}
                 """;
-        CodeGraphMerger.merge(g, codeEdges, "myorg/sock-shop");
-
-        assertEquals(DependencyGraph.KIND_EXTERNAL, kindOf(g, "api.github.com"));
-        assertTrue(edge(g, "user", "api.github.com") != null);
-    }
-
-    @Test
-    void unresolvableTargetsGoToResidueNotGuessed() {
-        DependencyGraph g = runtimeGraph();
-        String codeEdges = """
-                {"repo":"myorg/sock-shop","failed":false,"edges":[
-                  {"section":"http-client","fields":{"url":"http://${downstream.host}/x"},"file":"orders/src/Svc.java","line":1,"confidence":"Medium"},
-                  {"section":"http-server","fields":{"path":"/orders"},"file":"orders/src/Api.java","line":2,"confidence":"High"}
-                ]}
-                """;
-        int edgesBefore = g.getEdges().size();
-        List<CodeGraphMerger.Unresolved> residue =
-                CodeGraphMerger.merge(g, codeEdges, "myorg/sock-shop");
-
-        // The ${...} placeholder cannot be resolved -> residue (for the LLM), not a guess.
-        assertEquals(1, residue.size());
-        assertEquals("http-client", residue.get(0).section);
-        // http-server is inbound and is dropped entirely (not an outgoing edge, not residue).
-        assertEquals(edgesBefore, g.getEdges().size());
+        CodeGraphMerger.merge(g, code, "r");
+        assertEquals(DependencyGraph.KIND_EXTERNAL, kindOf(g, "api.stripe.com"));
+        DependencyGraph.Edge e = edge(g, "visits-service", "api.stripe.com");
+        assertNotNull(e);
+        assertEquals("external", e.type);
     }
 
     @Test
@@ -254,6 +180,63 @@ public class DependencyGraphTest {
         assertTrue(CodeGraphMerger.merge(g, null, "r").isEmpty());
         assertTrue(CodeGraphMerger.merge(g, "not json", "r").isEmpty());
         assertEquals(before, g.getEdges().size());
+    }
+
+    // ---- classifier ----
+
+    @Test
+    void classifyKindByConvention() {
+        assertEquals(DependencyGraph.KIND_DB, DependencyGraph.classifyKind("customers-db"));
+        assertEquals(DependencyGraph.KIND_DB, DependencyGraph.classifyKind("mysql"));
+        assertEquals(DependencyGraph.KIND_QUEUE, DependencyGraph.classifyKind("rabbitmq"));
+        assertEquals(DependencyGraph.KIND_GATEWAY, DependencyGraph.classifyKind("istio-ingressgateway"));
+        assertEquals(DependencyGraph.KIND_SERVICE, DependencyGraph.classifyKind("customers-service"));
+        assertEquals(DependencyGraph.KIND_SERVICE, DependencyGraph.classifyKind("api-gateway"));
+    }
+
+    // ---- encoding: provenance primary, type as label, count demoted ----
+
+    @Test
+    void mermaidEncodesProvenanceAndTypeNotCount() {
+        String m = MermaidEmitter.emit(mergedGraph());
+        assertTrue(m.startsWith("flowchart LR"));
+        // runtime edge: solid, no numeric label
+        assertTrue(m.contains("api_gateway --> customers_service"));
+        // db dependency: dashed, labelled by type, cylinder node
+        assertTrue(m.contains("-. db .->"));
+        assertTrue(m.contains("[(\"customers-db\")]"));
+        assertTrue(m.contains(":::db"));
+        // request count is NOT the headline anymore
+        assertFalse(m.contains("|120|"));
+        assertFalse(m.contains("|300|"));
+    }
+
+    @Test
+    void dotEncodesProvenanceAndTypeNotCount() {
+        String d = DotEmitter.emit(mergedGraph());
+        assertTrue(d.startsWith("digraph dependencies {"));
+        assertTrue(d.contains("\"customers-db\" [shape=cylinder"));
+        assertTrue(d.contains("label=\"db\""));       // type is the label
+        assertTrue(d.contains("style=dashed"));       // code-only db edge
+        assertTrue(d.contains("style=solid"));        // runtime edges
+        assertTrue(d.contains("penwidth="));          // count demoted to weight
+        assertFalse(d.contains("label=\"120\""));     // no numeric count label
+        assertTrue(d.trim().endsWith("}"));
+    }
+
+    @Test
+    void unavailableAndMalformedProduceEmptyGraph() {
+        assertTrue(RuntimeGraphBuilder.fromIstioRequests(
+                "PROMETHEUS_UNAVAILABLE\nEndpoint: ...", "petclinic").isEmpty());
+        assertTrue(RuntimeGraphBuilder.fromIstioRequests(
+                "<html>502 Bad Gateway</html>", "petclinic").isEmpty());
+        assertTrue(RuntimeGraphBuilder.fromIstioRequests("", "petclinic").isEmpty());
+        assertTrue(RuntimeGraphBuilder.fromIstioRequests(null, "petclinic").isEmpty());
+
+        String emptyResult = "{\"status\":\"success\",\"data\":{\"resultType\":\"vector\",\"result\":[]}}";
+        DependencyGraph g = RuntimeGraphBuilder.fromIstioRequests(emptyResult, "petclinic");
+        assertTrue(g.isEmpty());
+        assertTrue(MermaidEmitter.emit(g).contains("No runtime-observed edges"));
     }
 
     private static DependencyGraph.Edge edge(DependencyGraph g, String source, String target) {

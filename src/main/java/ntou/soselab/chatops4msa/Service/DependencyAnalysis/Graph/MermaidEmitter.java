@@ -30,7 +30,9 @@ public class MermaidEmitter {
     public static String emit(DependencyGraph graph) {
         StringBuilder sb = new StringBuilder();
         sb.append("flowchart LR\n");
-        sb.append("%% Microservice dependency graph — runtime-observed edges (Istio istio_requests_total)\n");
+        sb.append("%% Microservice dependency graph\n");
+        sb.append("%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only\n");
+        sb.append("%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]\n");
         if (graph.getNamespace() != null && !graph.getNamespace().isBlank()) {
             sb.append("%% namespace: ").append(graph.getNamespace()).append('\n');
         }
@@ -49,12 +51,19 @@ public class MermaidEmitter {
         }
 
         for (DependencyGraph.Edge edge : graph.getEdges()) {
-            String arrow = edge.runtimeObserved ? "-->" : "-.->";
-            String label = edge.count > 0 ? "|" + edge.count + "|" : "";
-            sb.append("  ")
-                    .append(ids.get(edge.source)).append(' ')
-                    .append(arrow).append(label).append(' ')
-                    .append(ids.get(edge.target)).append('\n');
+            // Provenance is the primary encoding (solid = observed, dashed = code/doc);
+            // the edge type is the label; the request count is deliberately NOT the
+            // headline, so the graph reads as dependencies, not as traffic volume.
+            String tag = typeTag(edge);
+            String src = ids.get(edge.source);
+            String tgt = ids.get(edge.target);
+            sb.append("  ").append(src).append(' ');
+            if (edge.runtimeObserved) {
+                sb.append("-->").append(tag.isEmpty() ? "" : "|" + tag + "|");
+            } else {
+                sb.append(tag.isEmpty() ? "-.->" : "-. " + tag + " .->");
+            }
+            sb.append(' ').append(tgt).append('\n');
         }
 
         appendClassDefs(sb, graph);
@@ -114,5 +123,17 @@ public class MermaidEmitter {
     /** Wrap a label in quotes so hyphens/dots in the name do not break Mermaid parsing. */
     private static String quote(String text) {
         return "\"" + text.replace("\"", "'") + "\"";
+    }
+
+    /** The edge-type label; empty for a plain synchronous call (the arrow already carries provenance). */
+    static String typeTag(DependencyGraph.Edge edge) {
+        if (edge.type == null) return "";
+        return switch (edge.type) {
+            case "db" -> "db";
+            case "async" -> "async";
+            case "external" -> "ext";
+            case "grpc" -> "grpc";
+            default -> "";
+        };
     }
 }

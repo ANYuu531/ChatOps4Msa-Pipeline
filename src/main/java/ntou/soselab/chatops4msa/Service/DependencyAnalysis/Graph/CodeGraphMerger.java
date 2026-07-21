@@ -102,28 +102,24 @@ public class CodeGraphMerger {
         // Inbound endpoints this service exposes are not an outgoing dependency.
         if ("http-server".equals(section)) return;
 
-        String source = serviceFromFile(file);
-        if (source == null) source = defaultSource;
+        String source = resolveSource(file);
 
         // --- asynchronous: the other endpoint is a broker destination (its own node) ---
         if (section.startsWith("kafka") || section.startsWith("rabbit")) {
-            String broker = brokerTarget(section, fields);
+            String broker = cleanToken(brokerTarget(section, fields));
             if (broker == null || source == null) {
-                unresolved.add(new Unresolved(section, source, broker, file, line));
+                unresolved.add(new Unresolved(section, source, brokerTarget(section, fields), file, line));
                 return;
             }
             graph.addNode(broker, DependencyGraph.KIND_QUEUE);
             boolean consume = section.endsWith("consume");
             // produce: service -> destination; consume: destination -> service.
-            String from = consume ? broker : source;
-            String to = consume ? source : broker;
-            addCodeEdge(from, to, "async", file, line);
+            addCodeEdge(consume ? broker : source, consume ? source : broker, "async", file, line);
             return;
         }
 
-        // --- synchronous: resolve the callee host/name onto a known workload ---
+        // --- synchronous: resolve the callee onto the graph vocabulary ---
         String rawTarget = syncTarget(section, fields);
-        String type = "grpc".equals(section) ? "grpc" : "sync-http";
         if (rawTarget == null || source == null) {
             unresolved.add(new Unresolved(section, source, rawTarget, file, line));
             return;
@@ -134,21 +130,40 @@ public class CodeGraphMerger {
             unresolved.add(new Unresolved(section, source, rawTarget, file, line));
             return;
         }
+
+        // A real external host: keep the whole domain as the node.
         if (isExternal(fullHost, graph.getNamespace())) {
             graph.addNode(fullHost, DependencyGraph.KIND_EXTERNAL);
             addCodeEdge(source, fullHost, "external", file, line);
             return;
         }
+
+        // In-cluster target. Prefer an existing workload; otherwise, since a
+        // dependency the mesh never observed (a DB, an un-exercised service) is
+        // still a real dependency, introduce the node from its own name.
         String node = matchNode(rawTarget);
-        if (node != null) {
-            addCodeEdge(source, node, type, file, line);
-        } else {
-            unresolved.add(new Unresolved(section, source, rawTarget, file, line));
+        if (node == null) {
+            String label = cleanLabel(fullHost);
+            if (!isPlausibleName(label)) {
+                unresolved.add(new Unresolved(section, source, rawTarget, file, line));
+                return;
+            }
+            node = label;
         }
+        String kind = DependencyGraph.classifyKind(node);
+        graph.addNode(node, kind);
+        addCodeEdge(source, node, edgeType(section, kind), file, line);
+    }
+
+    /** Maps a code section + resolved target kind to a graph edge type. */
+    private static String edgeType(String section, String targetKind) {
+        if (DependencyGraph.KIND_DB.equals(targetKind)) return "db";
+        if (DependencyGraph.KIND_QUEUE.equals(targetKind)) return "async";
+        return "grpc".equals(section) ? "grpc" : "sync-http";
     }
 
     private void addCodeEdge(String from, String to, String type, String file, int line) {
-        if (from.equals(to)) return;
+        if (from == null || to == null || from.equals(to)) return;
         graph.addNode(from, DependencyGraph.KIND_SERVICE);
         graph.addEdge(from, to, type,
                 DependencyGraph.PROV_CODE,
@@ -222,6 +237,7 @@ public class CodeGraphMerger {
     /** Lower-cased first DNS label with scheme/port/path and cluster suffixes stripped. */
     private static String clean(String raw) {
         String s = raw.trim().toLowerCase(Locale.ROOT);
+        if (s.startsWith("jdbc:")) s = s.substring(5);   // jdbc:mysql://host -> mysql://host
         s = s.replaceFirst("^[a-z][a-z0-9+.-]*://", ""); // scheme
         int slash = s.indexOf('/');
         if (slash >= 0) s = s.substring(0, slash);       // path
@@ -246,6 +262,7 @@ public class CodeGraphMerger {
      */
     private static String stripToHost(String raw) {
         String s = raw.trim().toLowerCase(Locale.ROOT);
+        if (s.startsWith("jdbc:")) s = s.substring(5);
         s = s.replaceFirst("^[a-z][a-z0-9+.-]*://", "");
         int slash = s.indexOf('/');
         if (slash >= 0) s = s.substring(0, slash);
@@ -274,15 +291,73 @@ public class CodeGraphMerger {
         return s.startsWith("http://") || s.startsWith("https://") || s.contains("://");
     }
 
+    /** A broker destination (topic/exchange/queue) name — dots kept, placeholders rejected. */
+    private static String cleanToken(String raw) {
+        if (raw == null) return null;
+        String s = raw.trim().toLowerCase(Locale.ROOT).replace("\"", "").replace("'", "").trim();
+        if (s.isEmpty() || s.contains("${") || s.contains("{{")) return null;
+        return s;
+    }
+
+    /** A host reduced to its single DNS label, or null when nothing usable remains. */
+    private static String cleanLabel(String raw) {
+        if (raw == null) return null;
+        String s = clean(raw);
+        return s.isEmpty() ? null : s;
+    }
+
+    /** A name safe to introduce as a node id: k8s-service-ish, not a bare number. */
+    private static boolean isPlausibleName(String s) {
+        if (s == null || s.length() < 2 || s.length() > 63) return false;
+        if (!s.matches("[a-z0-9]([a-z0-9-]*[a-z0-9])?")) return false;
+        return !s.matches("[0-9]+");
+    }
+
     // ---------- source attribution ----------
 
-    /** First path segment of a file, if it names a known service (monorepo layout). */
-    private String serviceFromFile(String file) {
+    /** Directory names that are never a service (so their files don't invent a source). */
+    private static final Set<String> SOURCE_STOP = Set.of(
+            "src", "lib", "libs", "pkg", "internal", "cmd", "app", "apps", "main",
+            "test", "tests", "vendor", "target", "build", "dist", "node_modules",
+            "common", "shared", "util", "utils", "core", "api", "web");
+
+    /**
+     * The calling service for a code edge. A dependency needs a real source: prefer
+     * an existing workload (from the file's module directory, or the repo name);
+     * only introduce a new source node when the directory clearly names a service
+     * the runtime graph simply never saw traffic for.
+     */
+    private String resolveSource(String file) {
+        String seg = firstPathSegment(file);
+        if (seg != null) {
+            String matched = matchNodeForSource(seg);
+            if (matched != null) return matched;
+            String label = cleanLabel(seg);
+            if (label != null && !SOURCE_STOP.contains(label) && isPlausibleName(label)) return label;
+        }
+        return defaultSource; // repo name matched a real workload, or null
+    }
+
+    private static String firstPathSegment(String file) {
         if (file == null || file.isBlank()) return null;
         String path = file.replace('\\', '/');
         int slash = path.indexOf('/');
-        if (slash <= 0) return null;
-        return matchNode(path.substring(0, slash));
+        return slash <= 0 ? null : path.substring(0, slash);
+    }
+
+    /**
+     * Like {@link #matchNode}, but also accepts a module directory whose name ends
+     * with a known workload — e.g. {@code spring-petclinic-customers-service}
+     * resolves to the workload {@code customers-service}.
+     */
+    private String matchNodeForSource(String seg) {
+        String matched = matchNode(seg);
+        if (matched != null) return matched;
+        String c = clean(seg);
+        for (String node : knownNodes) {
+            if (node.length() >= 3 && (c.endsWith("-" + node) || c.endsWith("_" + node))) return node;
+        }
+        return null;
     }
 
     private static String repoShortName(String repoName) {

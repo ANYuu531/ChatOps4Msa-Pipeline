@@ -1,8 +1,8 @@
 # ChatOps4Msa control-plane side.
 #
-# The Kubernetes cluster (k8s + Istio + the system under analysis, e.g. sock-shop
-# or train-ticket) runs on a SEPARATE machine on the same LAN. Nothing in this
-# file starts a cluster; this side only talks to one over the network.
+# The Kubernetes cluster (k8s + Istio + the system under analysis, e.g.
+# spring-petclinic-microservices) runs on a SEPARATE machine on the same LAN.
+# Nothing in this file starts a cluster; this side only talks to one over the network.
 # See docs/split-deployment.md.
 #
 # Everything not needed for a dependency-analysis run sits behind a compose

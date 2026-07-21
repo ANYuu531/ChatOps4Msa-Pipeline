@@ -33,14 +33,6 @@ public class RuntimeGraphBuilder {
             "zipkin", "loki", "tempo", "alertmanager",
             "node-exporter", "kube-state-metrics", "otel-collector");
 
-    /** Substrings that identify a datastore workload by convention (visual hint only). */
-    private static final String[] DB_HINTS = {
-            "-db", "database", "mongo", "mysql", "postgres", "postgresql",
-            "redis", "cassandra", "mariadb", "couch", "elasticsearch"};
-
-    /** Substrings that identify a message broker (visual hint only). */
-    private static final String[] QUEUE_HINTS = {"rabbitmq", "kafka", "nats", "activemq", "rabbit"};
-
     private RuntimeGraphBuilder() {
     }
 
@@ -83,8 +75,8 @@ public class RuntimeGraphBuilder {
 
             long count = parseCount(series.optJSONArray("value"));
 
-            graph.addNode(source, kindOf(source));
-            graph.addNode(target, kindOf(target));
+            graph.addNode(source, DependencyGraph.classifyKind(source));
+            graph.addNode(target, DependencyGraph.classifyKind(target));
             graph.addEdge(source, target,
                     "sync-http",
                     DependencyGraph.PROV_RUNTIME,
@@ -114,11 +106,4 @@ public class RuntimeGraphBuilder {
         }
     }
 
-    private static String kindOf(String workload) {
-        String name = workload.toLowerCase();
-        if (name.contains("ingressgateway")) return DependencyGraph.KIND_GATEWAY;
-        for (String hint : QUEUE_HINTS) if (name.contains(hint)) return DependencyGraph.KIND_QUEUE;
-        for (String hint : DB_HINTS) if (name.contains(hint)) return DependencyGraph.KIND_DB;
-        return DependencyGraph.KIND_SERVICE;
-    }
 }

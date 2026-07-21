@@ -68,19 +68,54 @@ public class DotEmitter {
 
     private static String edgeLine(DependencyGraph.Edge edge) {
         StringBuilder attrs = new StringBuilder();
-        if (edge.count > 0) attrs.append("label=\"").append(edge.count).append("\"");
+
+        // The type is the label (db / async / ext / grpc); a plain sync call gets none.
+        String tag = typeTag(edge);
+        if (!tag.isEmpty()) append(attrs, "label=\"" + tag + "\"");
+
+        // Colour by dependency type, so type is legible independent of provenance.
+        append(attrs, "color=\"" + typeColor(edge) + "\"");
+
         if (edge.runtimeObserved) {
-            // Observed edges are the ground truth: solid and darker.
             append(attrs, "style=solid");
-            append(attrs, "color=\"#333333\"");
-            append(attrs, "penwidth=1.4");
+            // The request count is demoted to line weight — present, but not the headline.
+            append(attrs, "penwidth=" + weight(edge.count));
         } else {
-            // Code/doc-only: real in the source but never seen on the wire — dashed.
+            // Declared in code/doc but never seen on the wire — dashed.
             append(attrs, "style=dashed");
-            append(attrs, "color=\"#999999\"");
+            append(attrs, "penwidth=1.0");
         }
         return "\"" + escape(edge.source) + "\" -> \"" + escape(edge.target) + "\" ["
                 + attrs + "];";
+    }
+
+    /** The edge-type label; empty for a plain synchronous call. */
+    private static String typeTag(DependencyGraph.Edge edge) {
+        if (edge.type == null) return "";
+        return switch (edge.type) {
+            case "db" -> "db";
+            case "async" -> "async";
+            case "external" -> "ext";
+            case "grpc" -> "grpc";
+            default -> "";
+        };
+    }
+
+    private static String typeColor(DependencyGraph.Edge edge) {
+        String type = edge.type == null ? "" : edge.type;
+        switch (type) {
+            case "db": return "#3a6ea5";
+            case "async": return "#b9791a";
+            case "external": return "#7a3fb0";
+            default: return edge.runtimeObserved ? "#333333" : "#9aa6b2";
+        }
+    }
+
+    /** Maps a request count to a line width in [1.2, 4.0] (log-scaled), so heavier edges read heavier. */
+    private static String weight(long count) {
+        if (count <= 0) return "1.2";
+        double w = 1.2 + Math.min(2.8, Math.log10(count + 1));
+        return String.format(java.util.Locale.ROOT, "%.1f", w);
     }
 
     private static void append(StringBuilder attrs, String attr) {
