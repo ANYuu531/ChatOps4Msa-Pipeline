@@ -1,0 +1,10 @@
+# Namespace for the analysis target. istio-injection=enabled is what makes every
+# pod get an Envoy sidecar — and the sidecar is the only reason Istio can observe
+# the service-to-service dependency edges. Without this label there are no runtime
+# edges at all.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: petclinic
+  labels:
+    istio-injection: enabled

@@ -1,0 +1,40 @@
+# Istio ingress: expose api-gateway (the Spring Cloud Gateway) at the mesh edge,
+# so traffic can be driven from outside — which is what makes Istio observe the
+# api-gateway -> {customers,vets,visits}-service edges. Without an entry point the
+# journey generator cannot reach the services and no runtime edges appear.
+#
+# The dependency analysis then uses  entry_url = http://<cluster-ip>/  (port 80 on
+# the ingress gateway routes here).
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: petclinic-gateway
+  namespace: petclinic
+spec:
+  selector:
+    istio: ingressgateway   # the default istio-system ingress gateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: petclinic
+  namespace: petclinic
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - petclinic-gateway
+  http:
+    - route:
+        - destination:
+            host: api-gateway.petclinic.svc.cluster.local
+            port:
+              number: 8080

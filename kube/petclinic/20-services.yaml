@@ -1,0 +1,192 @@
+# The business services. Apply AFTER config-server and discovery-server are Ready
+# (they fetch config from config-server and register with Eureka on startup).
+#
+# SPRING_PROFILES_ACTIVE=docker is what makes each service address config-server
+# and discovery-server by those Kubernetes Service names — the same profile the
+# upstream docker-compose uses. These are the workloads Istio observes, so the
+# Deployment names ARE the node names in the dependency graph
+# (api-gateway, customers-service, vets-service, visits-service).
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customers-service
+  namespace: petclinic
+  labels: { app: customers-service }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: customers-service }
+  template:
+    metadata:
+      labels: { app: customers-service, version: v1 }
+    spec:
+      containers:
+        - name: customers-service
+          image: springcommunity/spring-petclinic-customers-service:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: docker
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
+          resources:
+            requests: { memory: "320Mi", cpu: "100m" }
+            limits: { memory: "512Mi" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8081 }
+            initialDelaySeconds: 50
+            periodSeconds: 10
+            failureThreshold: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customers-service
+  namespace: petclinic
+  labels: { app: customers-service }
+spec:
+  selector: { app: customers-service }
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: visits-service
+  namespace: petclinic
+  labels: { app: visits-service }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: visits-service }
+  template:
+    metadata:
+      labels: { app: visits-service, version: v1 }
+    spec:
+      containers:
+        - name: visits-service
+          image: springcommunity/spring-petclinic-visits-service:latest
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: docker
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
+          resources:
+            requests: { memory: "320Mi", cpu: "100m" }
+            limits: { memory: "512Mi" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8082 }
+            initialDelaySeconds: 50
+            periodSeconds: 10
+            failureThreshold: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: visits-service
+  namespace: petclinic
+  labels: { app: visits-service }
+spec:
+  selector: { app: visits-service }
+  ports:
+    - name: http
+      port: 8082
+      targetPort: 8082
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vets-service
+  namespace: petclinic
+  labels: { app: vets-service }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: vets-service }
+  template:
+    metadata:
+      labels: { app: vets-service, version: v1 }
+    spec:
+      containers:
+        - name: vets-service
+          image: springcommunity/spring-petclinic-vets-service:latest
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: docker
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
+          resources:
+            requests: { memory: "320Mi", cpu: "100m" }
+            limits: { memory: "512Mi" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8083 }
+            initialDelaySeconds: 50
+            periodSeconds: 10
+            failureThreshold: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vets-service
+  namespace: petclinic
+  labels: { app: vets-service }
+spec:
+  selector: { app: vets-service }
+  ports:
+    - name: http
+      port: 8083
+      targetPort: 8083
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: petclinic
+  labels: { app: api-gateway }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: api-gateway }
+  template:
+    metadata:
+      labels: { app: api-gateway, version: v1 }
+    spec:
+      containers:
+        - name: api-gateway
+          image: springcommunity/spring-petclinic-api-gateway:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: docker
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
+          resources:
+            requests: { memory: "384Mi", cpu: "100m" }
+            limits: { memory: "640Mi" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8080 }
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: petclinic
+  labels: { app: api-gateway }
+spec:
+  selector: { app: api-gateway }
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
