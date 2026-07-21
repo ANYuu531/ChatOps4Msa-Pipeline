@@ -318,6 +318,13 @@ low_code:
               sum by(source_workload,destination_workload)(istio_requests_total{reporter="destination",destination_workload_namespace="${namespace}"})
             assign: istio_requests_raw
 
+        # Keep the raw JSON too: the dependency-graph visualization parses it
+        # deterministically (no LLM), so it must survive into the checkpoint
+        # alongside the LLM prose the report consumes.
+        - toolkit-depstate-put:
+            stage: traffic_raw
+            value: ${istio_requests_raw}
+
         - toolkit-llm-call:
             prompt: |
               ## Prometheus instant query result (istio_requests_total, namespace=${namespace})
@@ -513,6 +520,11 @@ low_code:
             promql: |
               sum by(source_workload,destination_workload)(istio_requests_total{reporter="destination",destination_workload_namespace="${namespace}"})
             assign: istio_requests_raw
+
+        # Refresh the raw JSON too, so the graph reflects the re-measured traffic.
+        - toolkit-depstate-put:
+            stage: traffic_raw
+            value: ${istio_requests_raw}
 
         - toolkit-llm-call:
             prompt: |

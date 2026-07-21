@@ -1,5 +1,8 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -69,6 +72,18 @@ public class EdgeLedger {
         String dedupKey() {
             return section + "|" + fields + "|" + file + "|" + line;
         }
+
+        /** Structured form, so the dependency-graph builder can consume edges without re-parsing the rendered text. */
+        JSONObject toJson() {
+            JSONObject fieldsJson = new JSONObject();
+            fields.forEach(fieldsJson::put);
+            return new JSONObject()
+                    .put("section", section)
+                    .put("fields", fieldsJson)
+                    .put("file", file)
+                    .put("line", line)
+                    .put("confidence", confidence);
+        }
     }
 
     private final List<Edge> edges = new ArrayList<>();
@@ -106,6 +121,23 @@ public class EdgeLedger {
 
     public void add(String section, Map<String, String> fields, String file, int line, String confidence) {
         add(new Edge(section, fields, file, line, confidence));
+    }
+
+    /**
+     * The edges as structured JSON: {@code {repo, failed, edges:[{section, fields,
+     * file, line, confidence}]}}. This is what the dependency-graph merge consumes,
+     * so code edges reach the graph as data — not by re-parsing the rendered
+     * markdown. A failed extraction yields an empty edge list (never throws).
+     */
+    public JSONObject toJson() {
+        JSONArray edgesJson = new JSONArray();
+        if (!failed) {
+            for (Edge edge : edges) edgesJson.put(edge.toJson());
+        }
+        return new JSONObject()
+                .put("repo", repo)
+                .put("failed", failed)
+                .put("edges", edgesJson);
     }
 
     /**

@@ -52,6 +52,9 @@ public class CodeToolkit extends ToolkitFunction {
         if (userId != null && !userId.isBlank()) {
             stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_EXTERNAL_HOSTS,
                     ExternalHost.toJson(result.externalHosts).toString());
+            // Structured code edges for the dependency-graph merge (Phase 2).
+            stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_CODE_EDGES,
+                    result.edgesJson);
         }
         return result.ledger;
     }

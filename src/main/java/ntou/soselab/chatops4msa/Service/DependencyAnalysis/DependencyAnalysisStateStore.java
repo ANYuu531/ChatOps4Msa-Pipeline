@@ -33,9 +33,22 @@ public class DependencyAnalysisStateStore {
     // report consumes MERGED_NOTES, K8S and TRAFFIC.
     public static final String STAGE_DOCS = "docs";
     public static final String STAGE_CODE = "code";
+    /**
+     * The code-extracted edges as structured JSON (EdgeLedger.toJson), kept
+     * alongside the rendered STAGE_CODE text so the dependency-graph merge consumes
+     * code edges as data instead of re-parsing markdown.
+     */
+    public static final String STAGE_CODE_EDGES = "code_edges";
     public static final String STAGE_MERGED_NOTES = "merged_notes";
     public static final String STAGE_K8S = "k8s";
     public static final String STAGE_TRAFFIC = "traffic";
+    /**
+     * The raw Istio Prometheus JSON for the internal mesh-to-mesh query, kept
+     * verbatim (unlike STAGE_TRAFFIC, which is the LLM's prose rendering of it).
+     * It is the deterministic source the dependency-graph visualization parses,
+     * so the graph never has to re-read LLM text.
+     */
+    public static final String STAGE_TRAFFIC_RAW = "traffic_raw";
     public static final String STAGE_EGRESS = "egress";
     public static final String STAGE_HEALTH = "health";
     /** The journey that was driven, and how it went — refined across resumes to close coverage gaps. */
