@@ -1,0 +1,198 @@
+diff --git a/src/k8s_mcp_server/__main__.py b/src/k8s_mcp_server/__main__.py
+index b666be0..441cc83 100644
+--- a/src/k8s_mcp_server/__main__.py
++++ b/src/k8s_mcp_server/__main__.py
+@@ -49,7 +49,7 @@ def main():
+ 
+         # For HTTP transports, bind to 0.0.0.0 inside Docker (required for port mapping)
+         if transport in ("sse", "streamable-http"):
+-            host = "0.0.0.0" if is_docker_environment() else "127.0.0.1"
++            host = "0.0.0.0"
+             mcp.settings.host = host
+             logger.info(f"HTTP server binding to {host}:{mcp.settings.port}")
+ 
+@@ -59,6 +59,11 @@ def main():
+     except KeyboardInterrupt:
+         logger.info("Keyboard interrupt received. Shutting down gracefully...")
+         sys.exit(0)
++    except Exception:
++        # Log the full traceback so a mid-run crash (previously a silent exit 255)
++        # is diagnosable instead of disappearing.
++        logger.exception("K8s MCP Server crashed with an unhandled exception")
++        sys.exit(1)
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/src/k8s_mcp_server/server.py b/src/k8s_mcp_server/server.py
+index 34eafa9..2baed25 100644
+--- a/src/k8s_mcp_server/server.py
++++ b/src/k8s_mcp_server/server.py
+@@ -7,12 +7,16 @@ and documentation.
+ 
+ import asyncio
+ import logging
++import os
+ import sys
++import tempfile
+ 
+ from mcp.server.fastmcp import Context, FastMCP
++from mcp.server.transport_security import TransportSecuritySettings
+ from mcp.types import Icon, ToolAnnotations
+ from pydantic import Field, ValidationError
+ from pydantic.fields import FieldInfo
++from dataclasses import asdict
+ 
+ from k8s_mcp_server import __version__
+ from k8s_mcp_server.cli_executor import (
+@@ -20,7 +24,7 @@ from k8s_mcp_server.cli_executor import (
+     execute_command,
+     get_command_help,
+ )
+-from k8s_mcp_server.config import DEFAULT_TIMEOUT, INSTRUCTIONS, SUPPORTED_CLI_TOOLS
++from k8s_mcp_server.config import DEFAULT_TIMEOUT, INSTRUCTIONS, SUPPORTED_CLI_TOOLS, MCP_TRANSPORT, is_docker_environment
+ from k8s_mcp_server.errors import (
+     CommandExecutionError,
+     K8sMCPError,
+@@ -70,10 +74,32 @@ def run_startup_checks() -> dict[str, bool]:
+ # Call the startup checks
+ cli_status = run_startup_checks()
+ 
++MCP_HOST = "0.0.0.0"
++
++TRANSPORT_SECURITY = TransportSecuritySettings(
++    enable_dns_rebinding_protection=True,
++    allowed_hosts=[
++        "localhost:*",
++        "127.0.0.1:*",
++        "k8s-mcp-server:*",
++        "k8s-mcp-server.default.svc:*",
++        "k8s-mcp-server.default.svc.cluster.local:*",
++    ],
++    allowed_origins=[
++        "http://localhost:*",
++        "http://127.0.0.1:*",
++        "http://k8s-mcp-server:*",
++        "http://k8s-mcp-server.default.svc:*",
++        "http://k8s-mcp-server.default.svc.cluster.local:*",
++    ],
++)
++
+ # Create the FastMCP server following FastMCP best practices
+ mcp = FastMCP(
+     name="K8s MCP Server",
+     instructions=INSTRUCTIONS,
++    host=MCP_HOST,
++    transport_security=TRANSPORT_SECURITY,
+ )
+ mcp._mcp_server.version = __version__
+ 
+@@ -128,14 +154,19 @@ async def _execute_tool_command(tool: str, command: str, timeout: int | None, ct
+     try:
+         result = await execute_command(command, timeout=actual_timeout)
+ 
+-        if result["status"] == "success":
++        if isinstance(result, CommandResult):
++            result_dict = asdict(result)
++        else:
++            result_dict = result
++
++        if result_dict["status"] == "success":
+             if ctx:
+                 await ctx.info(f"{tool} command executed successfully")
+         else:
+             if ctx:
+                 await ctx.warning(f"{tool} command failed")
+ 
+-        return result
++        return result_dict
+     except K8sMCPError as e:
+         logger.warning(f"{tool} command error ({e.code}): {e}")
+         if ctx:
+@@ -420,3 +451,62 @@ async def execute_argocd(
+         CommandResult containing output and status with structured error information
+     """
+     return await _execute_tool_command("argocd", command, timeout, ctx)
++
++
++@mcp.tool(
++    description="Apply an inline Kubernetes manifest (YAML) with `kubectl apply -f`.",
++    annotations=ToolAnnotations(title="Apply Manifest", destructiveHint=True, openWorldHint=True),
++    icons=_ICONS["kubectl"],
++)
++async def apply_manifest(
++    manifest: str = Field(description="Kubernetes manifest YAML to apply (may contain multiple '---' documents)"),
++    namespace: str | None = Field(description="Default namespace for resources that do not set one", default=None),
++    timeout: int | None = Field(description="Maximum execution time in seconds (default: 300)", default=None),
++    ctx: Context | None = None,
++) -> CommandResult:
++    """Apply an inline Kubernetes manifest with kubectl apply.
++
++    execute_kubectl only accepts a command string and cannot be fed a manifest
++    (no stdin/heredoc), so the manifest is written to a temporary file and applied
++    with `kubectl apply -f <file>`. This is what ChatOps4Msa uses to apply the
++    MESH_EXTERNAL ServiceEntry manifests it generates from code extraction.
++
++    The command still goes through the same validation, timeout and CommandResult
++    handling as execute_kubectl. `kubectl apply` is not a restricted command, so it
++    is permitted in both strict and permissive security modes.
++
++    Args:
++        manifest: The manifest YAML (one or more documents)
++        namespace: Optional default namespace for resources lacking one
++        timeout: Optional timeout in seconds
++        ctx: Optional MCP context for request tracking
++
++    Returns:
++        CommandResult containing output and status with structured error information
++    """
++    if not manifest or not manifest.strip():
++        raise CommandExecutionError("apply_manifest requires a non-empty manifest")
++
++    # shlex.split (used by validation) would choke on a real newline-containing
++    # namespace, and a namespace is a DNS-1123 label anyway, so reject anything
++    # that is not a plain token rather than smuggling it into the command line.
++    ns_flag = ""
++    if namespace and not isinstance(namespace, FieldInfo):
++        namespace = namespace.strip()
++        if namespace:
++            if not namespace.isascii() or any(c.isspace() for c in namespace):
++                raise CommandExecutionError(f"invalid namespace: {namespace!r}")
++            ns_flag = f"-n {namespace} "
++
++    # A file is required because kubectl needs -f <path>; the executor runs kubectl
++    # in this same process, so a temp file written here is readable by it.
++    tmp = tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False, encoding="utf-8")
++    try:
++        tmp.write(manifest)
++        tmp.close()
++        return await _execute_tool_command("kubectl", f"apply {ns_flag}-f {tmp.name}", timeout, ctx)
++    finally:
++        try:
++            os.unlink(tmp.name)
++        except OSError:
++            pass
+diff --git a/src/k8s_mcp_server/tools.py b/src/k8s_mcp_server/tools.py
+index e4686df..1ee1e22 100644
+--- a/src/k8s_mcp_server/tools.py
++++ b/src/k8s_mcp_server/tools.py
+@@ -96,14 +96,15 @@ class ErrorDetails(TypedDict, total=False):
+     details: ErrorDetailsNested  # Use the nested type here
+ 
+ 
+-class CommandResult(TypedDict):
++@dataclass
++class CommandResult:
+     """Type definition for command execution results following the specification."""
+ 
+-    status: Literal["success", "error"]
++    status: str
+     output: str
+-    exit_code: NotRequired[int]
+-    execution_time: NotRequired[float]
+-    error: NotRequired[ErrorDetails]
++    exit_code: int | None = None
++    execution_time: float | None = None
++    error: ErrorDetails | None = None
+ 
+ 
+ @dataclass
