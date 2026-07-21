@@ -20,16 +20,19 @@ public class SlashCommandListener extends ListenerAdapter {
     private final CapabilityOrchestrator orchestrator;
     private final CQLSubscriber cqlSubscriber;
     private final JDAService jdaService;
+    private final DependencyAnalysisRunner analysisRunner;
 
     @Lazy
     @Autowired
     public SlashCommandListener(CapabilityOrchestrator orchestrator,
                                 CQLSubscriber cqlSubscriber,
-                                JDAService jdaService) {
+                                JDAService jdaService,
+                                DependencyAnalysisRunner analysisRunner) {
 
         this.orchestrator = orchestrator;
         this.cqlSubscriber = cqlSubscriber;
         this.jdaService = jdaService;
+        this.analysisRunner = analysisRunner;
     }
 
     @Override
@@ -85,6 +88,16 @@ public class SlashCommandListener extends ListenerAdapter {
         System.out.println("[User Role] " + roleNameList);
         String userId = event.getUser().getId();  // 取出 Discord userId
         UserContextHolder.setUserId(userId);
+        // The long collection capabilities must not run on this event thread — they
+        // would block the bot for minutes. Run them in the background instead.
+        if (!optionMap.containsKey("subscribe")
+                && DependencyAnalysisRunner.isLongRunning(declaredFunctionName)) {
+            analysisRunner.run(userId, declaredFunctionName, () ->
+                    orchestrator.performTheCapability(declaredFunctionName, optionMap, roleNameList));
+            System.out.println("<<< end of current slash command event");
+            System.out.println();
+            return;
+        }
         // perform the capability
         try {
             if (optionMap.containsKey("subscribe")) {

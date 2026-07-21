@@ -36,6 +36,7 @@ public class ButtonListener extends ListenerAdapter {
     private final DependencyAnalysisStateStore stateStore;
     private final McpToolkit mcpToolkit;
     private final ExternalHostDetector externalHostDetector;
+    private final DependencyAnalysisRunner analysisRunner;
 
     @Lazy
     @Autowired
@@ -45,7 +46,8 @@ public class ButtonListener extends ListenerAdapter {
                           DependencyReportService dependencyReportService,
                           DependencyAnalysisStateStore stateStore,
                           McpToolkit mcpToolkit,
-                          ExternalHostDetector externalHostDetector) {
+                          ExternalHostDetector externalHostDetector,
+                          DependencyAnalysisRunner analysisRunner) {
 
         this.dialogueTracker = dialogueTracker;
         this.orchestrator = orchestrator;
@@ -54,6 +56,7 @@ public class ButtonListener extends ListenerAdapter {
         this.stateStore = stateStore;
         this.mcpToolkit = mcpToolkit;
         this.externalHostDetector = externalHostDetector;
+        this.analysisRunner = analysisRunner;
     }
 
     @Override
@@ -86,16 +89,11 @@ public class ButtonListener extends ListenerAdapter {
 
         // dependency-analysis decision buttons (handled before the NLP intent flow)
         if (DepstateToolkit.CONTINUE_BUTTON_ID.equals(buttonId)) {
-            try {
-                UserContextHolder.setUserId(testerId);
-                event.getHook().editOriginal("Generating report...").queue();
-                dependencyReportService.generateAndPost(testerId);
-            } catch (Exception e) {
-                e.printStackTrace();
-                jdaService.sendChatOpsChannelErrorMessage("[ERROR] failed to generate report: " + e.getLocalizedMessage());
-            } finally {
-                UserContextHolder.clear();
-            }
+            event.getHook().editOriginal("Generating report...").queue();
+            // The report is an LLM call plus graph rendering — well over Discord's 3s
+            // window, so run it off the event thread (the ack above flushes first).
+            analysisRunner.run(testerId, "generate-report", () ->
+                    dependencyReportService.generateAndPost(testerId));
             return;
         }
 
@@ -127,21 +125,16 @@ public class ButtonListener extends ListenerAdapter {
                         "The checkpoint has expired. Please re-run get-dependency-analysis.").queue();
                 return;
             }
-            try {
-                UserContextHolder.setUserId(testerId);
-                event.getHook().editOriginal("Resuming from the checkpoint...").queue();
-                // Runs the low-code resume capability, which owns the Prometheus
-                // property and re-posts the checkpoint buttons when it finishes.
-                orchestrator.performTheCapability(
-                        "resume-dependency-analysis",
-                        Map.of("namespace", state.namespace),
-                        roleNameList);
-            } catch (Exception e) {
-                e.printStackTrace();
-                jdaService.sendChatOpsChannelErrorMessage("[ERROR] failed to resume: " + e.getLocalizedMessage());
-            } finally {
-                UserContextHolder.clear();
-            }
+            event.getHook().editOriginal("Resuming from the checkpoint...").queue();
+            // Runs the low-code resume capability in the background (it owns the
+            // Prometheus property and re-posts the checkpoint buttons when it
+            // finishes). Off the event thread so the ack above flushes immediately.
+            String resumeNamespace = state.namespace;
+            analysisRunner.run(testerId, "resume-dependency-analysis", () ->
+                    orchestrator.performTheCapability(
+                            "resume-dependency-analysis",
+                            Map.of("namespace", resumeNamespace),
+                            roleNameList));
             return;
         }
 
@@ -150,50 +143,48 @@ public class ButtonListener extends ListenerAdapter {
         // on an explicit click: it re-renders the manifest from the checkpoint and
         // runs kubectl apply through the k8s MCP server.
         if (DepstateToolkit.APPLY_SERVICE_ENTRIES_BUTTON_ID.equals(buttonId)) {
-            try {
-                UserContextHolder.setUserId(testerId);
+            DependencyAnalysisStateStore.State state = stateStore.get(testerId);
+            if (state == null) {
+                event.getHook().editOriginal(
+                        "The checkpoint has expired. Please re-run get-dependency-analysis.").queue();
+                return;
+            }
 
-                DependencyAnalysisStateStore.State state = stateStore.get(testerId);
-                if (state == null) {
-                    event.getHook().editOriginal(
-                            "The checkpoint has expired. Please re-run get-dependency-analysis.").queue();
-                    return;
-                }
+            List<ExternalHost> hosts = ExternalHost.fromJson(
+                    stateStore.getStage(testerId, DependencyAnalysisStateStore.STAGE_EXTERNAL_HOSTS));
+            if (hosts.isEmpty()) {
+                event.getHook().editOriginal("No external hosts were found; nothing to apply.").queue();
+                return;
+            }
 
-                List<ExternalHost> hosts = ExternalHost.fromJson(
-                        stateStore.getStage(testerId, DependencyAnalysisStateStore.STAGE_EXTERNAL_HOSTS));
-                if (hosts.isEmpty()) {
-                    event.getHook().editOriginal("No external hosts were found; nothing to apply.").queue();
-                    return;
-                }
+            String manifest = externalHostDetector.renderServiceEntries(hosts, state.namespace);
+            String namespace = state.namespace;
+            event.getHook().editOriginal("Applying " + hosts.size()
+                    + " ServiceEntry manifest(s) to `" + namespace
+                    + "`, then re-measuring automatically...").queue();
 
-                String manifest = externalHostDetector.renderServiceEntries(hosts, state.namespace);
-                event.getHook().editOriginal("Applying " + hosts.size()
-                        + " ServiceEntry manifest(s) to `" + state.namespace + "`...").queue();
-
-                // The low-code flow already connected this session; reconnecting is
-                // idempotent (returns "already connected") and covers the case where
-                // it was dropped between collection and this click.
+            // Apply + re-measure run in the background: the ack above flushes, and the
+            // minutes-long re-measurement never blocks the bot. Applying alone changes
+            // nothing observable — Istio only sees connections made AFTER the
+            // ServiceEntry exists — so we immediately re-drive traffic and re-query
+            // egress (resume). That is what makes the external edge actually appear,
+            // with no separate manual Resume click.
+            analysisRunner.run(testerId, "apply-service-entries", () -> {
+                // Reconnect is idempotent; covers a drop between collection and click.
                 mcpToolkit.toolkitMcpConnect("k8s", "http://k8s-mcp-server:8000", "/mcp");
-
                 String toolArguments = new JSONObject()
                         .put("manifest", manifest)
-                        .put("namespace", state.namespace)
+                        .put("namespace", namespace)
                         .put("timeout", 30)
                         .toString();
                 String applyResult = mcpToolkit.toolkitMcpCallTool("k8s", "apply_manifest", toolArguments);
-
                 jdaService.sendChatOpsChannelMessage(
                         "**ServiceEntry apply result**\n"
-                                + "Drive traffic now so Istio can observe the external edges, then click **Resume**.\n\n"
+                                + "Re-measuring now (driving traffic + re-querying Istio)...\n\n"
                                 + applyResult);
-            } catch (Exception e) {
-                e.printStackTrace();
-                jdaService.sendChatOpsChannelErrorMessage(
-                        "[ERROR] failed to apply ServiceEntries: " + e.getLocalizedMessage());
-            } finally {
-                UserContextHolder.clear();
-            }
+                orchestrator.performTheCapability(
+                        "resume-dependency-analysis", Map.of("namespace", namespace), roleNameList);
+            });
             return;
         }
 
@@ -207,7 +198,16 @@ public class ButtonListener extends ListenerAdapter {
                 String intentName = intentAndEntity.getIntentName();
                 Map<String, String> entityMap = intentAndEntity.getEntities();
                 if ("Perform".equals(buttonId)) {
-                    orchestrator.performTheCapability(intentName, entityMap, roleNameList);
+                    if (DependencyAnalysisRunner.isLongRunning(intentName)) {
+                        // The collection capabilities run for minutes; run them off the
+                        // event thread so the bot stays responsive and the ack flushes.
+                        event.getHook().editOriginal("Started `" + intentName
+                                + "` in the background — I'll post progress here.").queue();
+                        analysisRunner.run(testerId, intentName, () ->
+                                orchestrator.performTheCapability(intentName, entityMap, roleNameList));
+                    } else {
+                        orchestrator.performTheCapability(intentName, entityMap, roleNameList);
+                    }
                 }
                 intentNameList.add(intentName);
             }
