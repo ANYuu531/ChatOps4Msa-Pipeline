@@ -127,22 +127,24 @@ public class DependencyReportService {
             String mermaid = MermaidEmitter.emit(graph);
             byte[] png = GraphvizRenderer.toPng(DotEmitter.emit(graph));
 
+            // Name the files after the repo so a graph is identifiable on its own.
+            String base = graphBaseName(state);
             if (png != null) {
                 jdaService.sendChatOpsChannelMessage(
-                        "## Dependency Graph (runtime-observed)\n"
-                                + "Solid arrows are edges Istio observed on the network; the number "
-                                + "on each arrow is the total request count. The `.mmd` source is "
-                                + "attached too (edit at https://mermaid.live).");
-                jdaService.sendChatOpsChannelFile("dependency-graph.png", new ByteArrayInputStream(png));
-                jdaService.sendChatOpsChannelFile("dependency-graph.mmd",
+                        "## Dependency Graph — `" + state.repoName + "`\n"
+                                + "Solid arrows are edges Istio observed at runtime; dashed arrows are "
+                                + "declared in code/doc but not observed. The `.mmd` source is attached "
+                                + "too (edit at https://mermaid.live).");
+                jdaService.sendChatOpsChannelFile(base + ".png", new ByteArrayInputStream(png));
+                jdaService.sendChatOpsChannelFile(base + ".mmd",
                         new ByteArrayInputStream(mermaid.getBytes(StandardCharsets.UTF_8)));
             } else {
                 jdaService.sendChatOpsChannelMessage(
-                        "## Dependency Graph (runtime-observed)\n"
+                        "## Dependency Graph — `" + state.repoName + "`\n"
                                 + "Paste the attached `.mmd` into https://mermaid.live (or a Markdown "
-                                + "file) to render it. Solid arrows are edges Istio observed on the "
-                                + "network; the number on each arrow is the total request count.");
-                jdaService.sendChatOpsChannelFile("dependency-graph.mmd",
+                                + "file) to render it. Solid arrows are edges Istio observed at runtime; "
+                                + "dashed arrows are declared in code/doc but not observed.");
+                jdaService.sendChatOpsChannelFile(base + ".mmd",
                         new ByteArrayInputStream(mermaid.getBytes(StandardCharsets.UTF_8)));
             }
         } catch (Exception e) {
@@ -222,6 +224,17 @@ public class DependencyReportService {
         graph.addEdge(source, targetId, type,
                 DependencyGraph.PROV_CODE, conf, false, 0, "code (LLM-aligned)");
         return true;
+    }
+
+    /** A file base name for the graph, keyed to the repo (e.g. "spring-petclinic-microservices-dependency-graph"). */
+    private static String graphBaseName(DependencyAnalysisStateStore.State state) {
+        String repo = state == null || state.repoName == null ? "" : state.repoName.trim();
+        int slash = repo.lastIndexOf('/');
+        if (slash >= 0 && slash < repo.length() - 1) repo = repo.substring(slash + 1);
+        repo = repo.toLowerCase(java.util.Locale.ROOT)
+                .replaceAll("[^a-z0-9._-]+", "-")
+                .replaceAll("(^-|-$)", "");
+        return (repo.isEmpty() ? "" : repo + "-") + "dependency-graph";
     }
 
     /** Extracts the first JSON array from an LLM response, tolerating markdown fences/prose. */

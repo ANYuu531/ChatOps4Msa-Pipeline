@@ -8,7 +8,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import net.dv8tion.jda.api.EmbedBuilder;
 import ntou.soselab.chatops4msa.Exception.ToolkitFunctionException;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisStateStore;
 import ntou.soselab.chatops4msa.Service.DiscordService.JDAService;
+import ntou.soselab.chatops4msa.Service.DiscordService.UserContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +21,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.List;
 
@@ -30,11 +33,14 @@ import java.util.List;
 public class DiscordToolkit extends ToolkitFunction {
     private final JDAService jdaService;
     private MathToolkit mathToolkit; // Inject MathToolkit
+    private final DependencyAnalysisStateStore stateStore;
 
     @Autowired
-    public DiscordToolkit(JDAService jdaService, MathToolkit mathToolkit) {
+    public DiscordToolkit(JDAService jdaService, MathToolkit mathToolkit,
+                          DependencyAnalysisStateStore stateStore) {
         this.jdaService = jdaService;
         this.mathToolkit = mathToolkit;
+        this.stateStore = stateStore;
     }
 
     /**
@@ -56,10 +62,62 @@ public class DiscordToolkit extends ToolkitFunction {
         if (text.length() <= 1000) {
             jdaService.sendChatOpsChannelMessage(text);
         } else {
-            // 改用傳送檔案方式
-            String filename = "pipeline.yaml";
+            // Long text is delivered as a file. Name it after its own heading (and
+            // the repo under analysis, when there is one) so a run's many outputs are
+            // told apart — instead of every one landing as "pipeline.yaml".
+            String filename = deriveFilename(text);
             InputStream input = new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
             jdaService.sendChatOpsChannelFile(filename, input);
+        }
+    }
+
+    /** e.g. "spring-petclinic-microservices-code-extraction-notes.md". */
+    private String deriveFilename(String text) {
+        String base = slugFromFirstLine(text);
+        if (base.isEmpty()) base = "message";
+        String repo = currentRepoSlug();
+        String ext = looksLikeRawYaml(text) ? ".yaml" : ".md";
+        return (repo.isEmpty() ? "" : repo + "-") + base + ext;
+    }
+
+    /** The first non-empty line, stripped of markdown/DEBUG noise, as a filename slug. */
+    private static String slugFromFirstLine(String text) {
+        for (String raw : text.split("\n", 16)) {
+            String line = raw.strip();
+            if (line.isEmpty()) continue;
+            line = line.replaceFirst("^#+\\s*", "");          // markdown heading
+            line = line.replaceFirst("(?i)^DEBUG:\\s*", "");  // debug prefix
+            line = line.replace("*", "");                     // bold markers
+            String slug = line.toLowerCase(Locale.ROOT)
+                    .replaceAll("[^a-z0-9]+", "-")
+                    .replaceAll("(^-|-$)", "");
+            if (slug.length() > 60) slug = slug.substring(0, 60).replaceAll("-$", "");
+            if (!slug.isEmpty()) return slug;
+        }
+        return "";
+    }
+
+    /** A bare k8s manifest (not one wrapped in a markdown ```yaml block). */
+    private static boolean looksLikeRawYaml(String text) {
+        String head = text.stripLeading();
+        return head.startsWith("apiVersion:") || head.startsWith("---\napiVersion:");
+    }
+
+    /** The short repo name of the current user's dependency-analysis run, or "". */
+    private String currentRepoSlug() {
+        try {
+            String userId = UserContextHolder.getUserId();
+            if (userId == null || userId.isBlank()) return "";
+            DependencyAnalysisStateStore.State state = stateStore.get(userId);
+            if (state == null || state.repoName == null || state.repoName.isBlank()) return "";
+            String repo = state.repoName.trim();
+            int slash = repo.lastIndexOf('/');
+            if (slash >= 0 && slash < repo.length() - 1) repo = repo.substring(slash + 1);
+            return repo.toLowerCase(Locale.ROOT)
+                    .replaceAll("[^a-z0-9._-]+", "-")
+                    .replaceAll("(^-|-$)", "");
+        } catch (Exception e) {
+            return "";
         }
     }
 
