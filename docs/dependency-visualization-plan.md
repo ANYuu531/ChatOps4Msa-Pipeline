@@ -76,32 +76,51 @@
 > 但要對 JSON 做嚴格 schema 驗證(參考 workflow 的 structured-output 做法)。
 > 建議:**MVP 用 runtime-only 確定性**,Phase 2 再加 code/doc 合併。
 
-### 3. 渲染 —— 自包含互動式 HTML
+### 3. 渲染 —— 一個模型,多個輸出器(emitter)
 
-- 用 **Cytoscape.js**(適合篩選/大圖;備選 vis-network / D3),**inline 進單一 HTML**,不吃外部 CDN。
-- 視覺編碼:
-  - 節點形狀/色:service(圓)、db(方/圓柱)、queue(菱形)、external(六角)。
-  - 邊**線型依 provenance**:runtime-observed=實線粗、code-only=虛線、doc-only=點線。
-  - 邊**顏色依 type**:sync(藍)、async(紫)、db(灰)、external(橘)。
-  - 邊寬/透明度依 confidence 或 request count。
-- **互動(這就是「邊太多」的解法)**:
-  - 篩選開關:依 provenance(runtime/code/doc)、依 type、依信心度門檻、依 request-count 門檻。
-  - 搜尋/highlight 某服務 + 其鄰居。
-  - Layout:依 namespace 分群;force-directed 或階層(fcose / dagre)。
-  - 點節點/邊 → 顯示 evidence(file:line、promql count)。
-  - 圖例。
+**關鍵設計**:標準圖 JSON 是唯一資料來源,render 只是把它「序列化」成不同格式。
+每個 emitter 都是純函式 `graphJson -> 某格式`,彼此獨立、可逐步加。老師的期待
+(先靜態/Mermaid,後互動前端)剛好對應難度由低到高的三個 emitter:
 
-### 4. 送到 Discord
+**Emitter 1 — Mermaid 語法(最低成本,老師的第一期待)**
+- 從 graph model 產 Mermaid `flowchart LR` 文字:`front-end -->|sync| catalogue` 之類。
+- 純字串轉換,**零基礎設施、零新依賴**。
+- Discord 送法:貼成 code block(```mermaid ... ```)。Discord 本身不渲染 Mermaid,
+  但老師可貼到 mermaid.live / GitHub / HackMD / 論文文件即渲染。
+- 視覺編碼(Mermaid 能做的範圍):
+  - `subgraph` 依 namespace 分群;節點文字標 kind。
+  - 邊 label 標 type(sync/async/db);線型 `-->` vs `-.->` 區分 provenance
+    (實線=runtime-observed、虛線=code/doc-only)。
+  - classDef 上色(runtime 邊 highlight)。
 
-- **方案 A(建議):用 app 的 HTTP server serve。**
-  加一個 `@RestController`(`GET /graph/{token}`)回傳該次分析的自包含 HTML;
-  分析結束時把 graph JSON 存起來(token 為 key,可放 `dep-state` 目錄),
-  在 Discord 貼網址 `http://192.168.100.150:8080/graph/<token>`。
-  - ⚠️ 這個網址只在 LAN 可達。要給老師/遠端看,之後比照現有 soselab.tw tunnel,
-    加一條 `anyu-chatops4msa-graph.soselab.tw`(見 [[split-deploy-machine-a]] 的 tunnel 收尾)。
-- **方案 B(可當補充):貼靜態圖片**(PNG/SVG)當 Discord 附件,Discord 內就能看縮圖預覽。
-  server 端 render 較費工(Java image 要裝 renderer,或 Graphviz DOT→SVG)。
-- 建議:**A 為主(互動)**,B 之後可加當 inline 預覽縮圖。
+**Emitter 2 — 靜態圖片(PNG/SVG,Discord 內直接看)**
+- 兩條路:
+  - **(a) Graphviz DOT → PNG**:graph model 產 DOT,`dot -Tpng` 渲染。
+    需在 chatops4msa 的 Docker image `apt install graphviz`(小)。**自包含、不外洩**。
+    Graphviz 的 layout 對這種圖品質好。
+  - **(b) Mermaid → 圖片**:把 Emitter 1 的 Mermaid 丟給渲染器出圖。
+    - 自包含:mermaid-cli(mmdc)但要 Node + headless chromium(重),不建議塞進 Java image。
+    - 外部服務:mermaid.ink / kroki.io(base64 塞進 URL,GET 回 PNG),Java 一個 HTTP call 就好。
+      ⚠️ **但這會把服務名/架構送到第三方**,實驗室/論文可接受再用;或自架 kroki container。
+- 建議靜態圖片走 **(a) Graphviz 自包含**,不外洩。
+- Discord 送法:當**附件**貼上,頻道內直接看到圖(比 Mermaid 文字更直觀)。
+
+**Emitter 3 — 互動前端(後期,「邊太多」的完整解)**
+- 用 **Cytoscape.js** inline 進單一自包含 HTML(不吃外部 CDN)。
+- 視覺編碼:節點形狀/色依 kind;邊線型依 provenance、顏色依 type、寬/透明度依 confidence/count。
+- **互動 = 篩選**:依 provenance / type / 信心度 / request-count 門檻開關;搜尋 highlight 某服務+鄰居;
+  依 namespace 分群 layout(fcose/dagre);點節點/邊看 evidence(file:line、promql count);圖例。
+- Discord 送法:見 §4 方案 A。
+
+### 4. 送到 Discord(依 emitter 不同)
+
+- **Mermaid(Emitter 1)**:直接貼 ```mermaid code block``` —— 零基礎設施。
+- **靜態圖片(Emitter 2)**:render 成 PNG 當**附件**貼上,頻道內直接看。
+- **互動 HTML(Emitter 3)**:用 app 的 HTTP server serve。
+  加 `@RestController`(`GET /graph/{token}`)回傳自包含 HTML;graph JSON 存 `dep-state`(token 為 key);
+  Discord 貼網址 `http://192.168.100.150:8080/graph/<token>`。
+  - ⚠️ 此網址只在 LAN 可達。給老師/遠端看要比照現有 soselab.tw tunnel,加一條
+    `anyu-chatops4msa-graph.soselab.tw`(見 [[split-deploy-machine-a]] 的 tunnel 收尾)。
 
 ### 5. 動到哪些地方
 
@@ -114,26 +133,37 @@
 
 ---
 
-## 分階段(MVP → 完整)
+## 分階段(依老師期待:先靜態/Mermaid,後互動前端)
 
-- **Phase 1(MVP,高價值小改動)**:runtime-only 圖。
-  確定性 parse Istio Prometheus 結果 → graph JSON → 加 `@RestController` serve 互動 HTML →
-  Discord 貼連結。這一版就能把「runtime 觀察到的邊」畫出來 —— 最想看、且最準。
-- **Phase 2**:合併 code + doc 邊(LLM emit JSON)、provenance 線型 + 篩選開關。
-- **Phase 3**:靜態圖片附件、tunnel 對外、點擊看 evidence、layout 打磨。
+**每一階段都吃同一個標準圖 JSON,只是換一個 emitter。所以模型只做一次,後面純加輸出格式。**
+
+- **Phase 1(MVP,老師的第一期待):Mermaid 語法。**
+  先做 **runtime-only** 的 graph model(確定性 parse Istio Prometheus 結果)→ Emitter 1 產 Mermaid →
+  Discord 貼 code block。零基礎設施、最快看到成果。老師可貼進 mermaid.live/文件即渲染。
+- **Phase 2:靜態圖片。** 加 Emitter 2(Graphviz DOT → PNG,image 裝 graphviz)→ Discord 貼附件,
+  頻道內直接看圖。同時把 code + doc 邊合併進 model(LLM emit JSON),邊帶 provenance 線型。
+- **Phase 3:互動前端。** 加 Emitter 3(Cytoscape.js @RestController serve HTML)+ 篩選/搜尋/點擊看
+  evidence + tunnel 對外。這才是「邊太多」的完整解。
+
+> 為什麼這個順序好:Phase 1 幾天內就有東西給老師看且風險最低;model 一旦建好,Mermaid→圖片→互動
+> 只是換 emitter,不用重做資料層。互動前端(原本我排 Phase 1)成本最高、擺最後最合理。
 
 ---
 
 ## 新對話開工前要決定的事
 
-1. **互動 HTML(要 URL/tunnel)vs 靜態圖片(Discord 內直接看,較簡單)?** → 建議互動。
-2. **graph JSON:確定性 parse vs LLM-emit?** → 建議 MVP runtime 用確定性,之後再加 LLM 補 code/doc。
-3. **給老師看的 hosting:先 LAN 就好,還是一開始就上 tunnel?**
-4. **圖表庫:Cytoscape.js(建議,篩選/大圖強)vs vis-network vs D3?**
+1. **Phase 1 的 model 範圍:runtime-only 先做,還是一次就 runtime+code+doc 合併?** → 建議 runtime-only 起步。
+2. **graph JSON:確定性 parse vs LLM-emit?** → 建議 MVP runtime 用確定性,Phase 2 再加 LLM 補 code/doc。
+3. **Phase 2 靜態圖片:Graphviz 自包含(建議,不外洩)vs Mermaid 外部渲染(mermaid.ink,會外洩架構)?**
+4. **Phase 3 圖表庫:Cytoscape.js(建議,篩選/大圖強)vs vis-network vs D3?** + hosting(LAN vs tunnel)。
 
 ## 起手第一步(給新對話)
 
-1. 確認 8080 controller 可行:加一個最小 `@RestController` 回 "hello",compose 起來後
-   `curl http://192.168.100.150:8080/hello` 通 → web 層 OK。
-2. 做 Phase 1 MVP:Istio 查詢結果 → graph JSON → Cytoscape HTML → 貼連結。
-3. 拿現在 sock-shop 那份跑過的分析當測資(runtime 邊已有:front-end→catalogue/carts/user)。
+1. 定義標準圖 JSON 的 Java model(node/edge POJO 或直接 JSON)。
+2. 做 **runtime-only** 建 model:確定性 parse Istio Prometheus 查詢結果
+   (`source_workload→destination_workload` + count)。
+3. 寫 **Emitter 1(Mermaid)**:model → `flowchart LR` 字串,接進「Generate report」流程,
+   Discord 多貼一則 ```mermaid``` code block。
+4. 拿現在 sock-shop 那份跑過的分析當測資(runtime 邊已有:front-end→catalogue/carts/user) —— 
+   先確認產出的 Mermaid 貼到 mermaid.live 畫得出來。
+5. (Phase 2 才)image 裝 graphviz + Emitter 2;(Phase 3 才)加 `@RestController` + Cytoscape。
