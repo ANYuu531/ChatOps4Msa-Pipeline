@@ -57,11 +57,28 @@ public class CodeGraphMerger {
     private final DependencyGraph graph;
     private final Set<String> knownNodes = new LinkedHashSet<>();
     private final String defaultSource; // resolved from the repo name, used when the file path does not identify a service
+    /** Services with persistence code (JPA/ORM markers) — used to tell a really-used DB from a declared one. */
+    private final Set<String> persistenceServices = new LinkedHashSet<>();
 
     private CodeGraphMerger(DependencyGraph graph, String repoName) {
         this.graph = graph;
         for (DependencyGraph.Node node : graph.getNodes()) knownNodes.add(node.id);
         this.defaultSource = matchNode(repoShortName(repoName));
+    }
+
+    /**
+     * First pass: which services have persistence code. A {@code jpa} edge is a
+     * marker (@Entity/@Table/@Repository) found in a service's source, so the
+     * service that owns the file "really uses" a database — enough to promote its
+     * datasource-declared db edge above a bare declaration.
+     */
+    private void collectPersistenceServices(JSONArray edges) {
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null || !"jpa".equals(edge.optString("section", ""))) continue;
+            String service = resolveSource(edge.optString("file", ""));
+            if (service != null) persistenceServices.add(service);
+        }
     }
 
     /**
@@ -85,6 +102,7 @@ public class CodeGraphMerger {
         }
 
         CodeGraphMerger merger = new CodeGraphMerger(graph, repoName);
+        merger.collectPersistenceServices(edges);
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
             if (edge != null) merger.mergeOne(edge, unresolved);
@@ -99,8 +117,10 @@ public class CodeGraphMerger {
         String file = edge.optString("file", "");
         int line = edge.optInt("line", 0);
 
-        // Inbound endpoints this service exposes are not an outgoing dependency.
-        if ("http-server".equals(section)) return;
+        // Inbound endpoints this service exposes are not an outgoing dependency;
+        // JPA markers are a persistence SIGNAL (handled in collectPersistenceServices),
+        // not an edge with a target of their own.
+        if ("http-server".equals(section) || "jpa".equals(section)) return;
 
         String source = resolveSource(file);
 
@@ -152,7 +172,13 @@ public class CodeGraphMerger {
         }
         String kind = DependencyGraph.classifyKind(node);
         graph.addNode(node, kind);
-        addCodeEdge(source, node, edgeType(section, kind), file, line);
+        // A db the service really uses (has persistence code) is documented; a db known
+        // only from a datasource URL, with no entity/repository code, is a bare
+        // declaration — kept but marked weakest so the graph does not overstate it.
+        String confidence = DependencyGraph.KIND_DB.equals(kind) && !persistenceServices.contains(source)
+                ? DependencyGraph.CONF_INFERRED
+                : DependencyGraph.CONF_DOCUMENTED;
+        addCodeEdge(source, node, edgeType(section, kind), file, line, confidence);
     }
 
     /** Maps a code section + resolved target kind to a graph edge type. */
@@ -163,11 +189,15 @@ public class CodeGraphMerger {
     }
 
     private void addCodeEdge(String from, String to, String type, String file, int line) {
+        addCodeEdge(from, to, type, file, line, DependencyGraph.CONF_DOCUMENTED);
+    }
+
+    private void addCodeEdge(String from, String to, String type, String file, int line, String confidence) {
         if (from == null || to == null || from.equals(to)) return;
         graph.addNode(from, DependencyGraph.KIND_SERVICE);
         graph.addEdge(from, to, type,
                 DependencyGraph.PROV_CODE,
-                DependencyGraph.CONF_DOCUMENTED,
+                confidence,
                 false, 0,
                 "code: " + file + (line > 0 ? ":" + line : ""));
     }

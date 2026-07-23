@@ -1,8 +1,11 @@
 package ntou.soselab.chatops4msa;
 
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CodeGraphMerger;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyzer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DocGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DotEmitter;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.K8sGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.MermaidEmitter;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.RuntimeGraphBuilder;
 import org.junit.jupiter.api.Test;
@@ -12,6 +15,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -55,6 +59,8 @@ public class DependencyGraphTest {
               {"section":"http-client","fields":{"url":"http://config-server:8888/"},"file":"spring-petclinic-visits-service/src/main/java/org/x/Cfg.java","line":8,"confidence":"Medium"},
               {"section":"feign","fields":{"value":"customers-service"},"file":"spring-petclinic-api-gateway/src/main/java/org/x/CustomersServiceClient.java","line":20,"confidence":"High"},
               {"section":"http-server","fields":{"path":"/owners"},"file":"spring-petclinic-customers-service/src/main/java/org/x/OwnerResource.java","line":30,"confidence":"High"},
+              {"section":"jpa","fields":{"marker":"Entity"},"file":"spring-petclinic-customers-service/src/main/java/org/x/Owner.java","line":20,"confidence":"High"},
+              {"section":"jpa","fields":{"marker":"Entity"},"file":"spring-petclinic-vets-service/src/main/java/org/x/Vet.java","line":15,"confidence":"High"},
               {"section":"http-client","fields":{"url":"http://${downstream.host}/x"},"file":"spring-petclinic-vets-service/src/main/java/org/x/X.java","line":1,"confidence":"Medium"}
             ]}
             """;
@@ -237,6 +243,213 @@ public class DependencyGraphTest {
         DependencyGraph g = RuntimeGraphBuilder.fromIstioRequests(emptyResult, "petclinic");
         assertTrue(g.isEmpty());
         assertTrue(MermaidEmitter.emit(g).contains("No runtime-observed edges"));
+    }
+
+    // ---- K8s deployment status (deterministic node enrichment) ----
+
+    /** Deployment inventory: api-gateway + the three services + discovery-server run; config-server does not. */
+    private static final String PETCLINIC_DEPLOYMENTS = """
+            api-gateway        2026-07-20T10:15:00Z  1  1  springcommunity/spring-petclinic-api-gateway:3.0
+            customers-service  2026-07-20T10:16:30Z  1  1  springcommunity/spring-petclinic-customers-service:3.0
+            vets-service       2026-07-20T10:16:45Z  1  1  springcommunity/spring-petclinic-vets-service:3.0
+            visits-service     2026-07-20T10:17:00Z  1  1  springcommunity/spring-petclinic-visits-service:3.0
+            discovery-server   2026-07-20T10:10:00Z  1  1  springcommunity/spring-petclinic-discovery-server:3.0
+            """;
+
+    private static DependencyGraph enrichedGraph() {
+        DependencyGraph g = mergedGraph();
+        K8sGraphBuilder.enrich(g, PETCLINIC_DEPLOYMENTS);
+        return g;
+    }
+
+    @Test
+    void k8sMarksDeployedNodeWithMetadata() {
+        DependencyGraph.Node n = node(enrichedGraph(), "customers-service");
+        assertEquals(Boolean.TRUE, n.deployed);
+        assertEquals("2026-07-20T10:16:30Z", n.deployedAt);
+        assertTrue(n.image.contains("customers-service"));
+        assertEquals("1/1", n.replicas);
+    }
+
+    @Test
+    void k8sMarksReferencedButUndeployedServiceNotDeployed() {
+        // config-server is depended on in code but is absent from the deployment inventory.
+        assertEquals(Boolean.FALSE, node(enrichedGraph(), "config-server").deployed);
+    }
+
+    @Test
+    void k8sDoesNotFalselyMarkDbOrExternalUndeployed() {
+        DependencyGraph g = enrichedGraph();
+        // An externally-managed DB is absent from Deployments; that is NOT "not deployed".
+        assertNull(node(g, "customers-db").deployed);
+        assertNull(node(g, "vets-db").deployed);
+    }
+
+    @Test
+    void k8sBlankOrUnparsableInputLeavesGraphUnenriched() {
+        DependencyGraph g = mergedGraph();
+        K8sGraphBuilder.enrich(g, "");
+        K8sGraphBuilder.enrich(g, null);
+        K8sGraphBuilder.enrich(g, "no data\n<html>502 Bad Gateway</html>");
+        for (DependencyGraph.Node n : g.getNodes()) assertNull(n.deployed);
+    }
+
+    @Test
+    void k8sParsesThroughTheRealMcpJsonEnvelope() {
+        // The k8s MCP server returns a CommandResult whose "output" is ONE JSON-escaped
+        // string (kubectl newlines become \n), which the MCP toolkit wraps in a Markdown
+        // envelope. enrich must see through the envelope + JSON + escaping. The \\n below
+        // are literal backslash-n in the stored value, exactly as the server emits them.
+        String out = "api-gateway  2026-07-20T10:15:00Z  1  1  reg/api-gateway:3.0"
+                + "\\ncustomers-service  2026-07-20T10:16:30Z  1  1  reg/customers-service:3.0"
+                + "\\nvets-service  2026-07-20T10:16:45Z  1  1  reg/vets-service:3.0"
+                + "\\nvisits-service  2026-07-20T10:17:00Z  1  1  reg/visits-service:3.0"
+                + "\\ndiscovery-server  2026-07-20T10:10:00Z  1  1  reg/discovery-server:3.0";
+        String envelope = "MCP tool result\n\nServer:\n`k8s`\n\nTool:\n`execute_kubectl`\n\n"
+                + "Arguments:\n```json\n{\n  \"command\" : \"get deployments -n petclinic -o "
+                + "custom-columns=NAME:.metadata.name,CREATED:.metadata.creationTimestamp,"
+                + "READY:.status.readyReplicas,REPLICAS:.spec.replicas,"
+                + "IMAGE:.spec.template.spec.containers[0].image --no-headers\",\n  \"timeout\" : 20\n}\n```\n\n"
+                + "Result:\n```text\n{\"status\": \"success\", \"output\": \"" + out + "\", \"exit_code\": 0}\n```\n";
+
+        DependencyGraph g = mergedGraph();
+        K8sGraphBuilder.enrich(g, envelope);
+        assertEquals(Boolean.TRUE, node(g, "customers-service").deployed);
+        assertEquals("2026-07-20T10:16:30Z", node(g, "customers-service").deployedAt);
+        assertTrue(node(g, "customers-service").image.contains("customers-service"));
+        assertEquals(Boolean.FALSE, node(g, "config-server").deployed); // absent from output
+        assertNull(node(g, "customers-db").deployed);                   // db not falsely marked
+    }
+
+    @Test
+    void notDeployedServiceRendersDashedInBothEmitters() {
+        DependencyGraph g = enrichedGraph();
+        String dot = DotEmitter.emit(g);
+        assertTrue(dot.contains("(not deployed)"));
+        assertTrue(dot.lines().anyMatch(l -> l.contains("\"config-server\"") && l.contains("dashed")));
+        String m = MermaidEmitter.emit(g);
+        assertTrue(m.contains("classDef notDeployed"));
+        assertTrue(m.contains("class config_server notDeployed"));
+    }
+
+    @Test
+    void deployedNodeShowsMetadataInLabels() {
+        DependencyGraph g = enrichedGraph();
+        // Deployment date surfaces in both the DOT label and the Mermaid label.
+        assertTrue(DotEmitter.emit(g).contains("2026-07-20"));
+        String m = MermaidEmitter.emit(g);
+        assertTrue(m.contains("<br/>"));
+        assertTrue(m.contains("2026-07-20"));
+    }
+
+    // ---- DB "really used" vs "declared" (JPA persistence signal + doc evidence) ----
+
+    @Test
+    void jpaMarkerMakesDbReallyUsedNotJustDeclared() {
+        DependencyGraph g = mergedGraph();
+        // customers-service has an @Entity -> its db is really used (documented tier),
+        // not the weakest declared-only tier.
+        assertEquals(DependencyGraph.CONF_DOCUMENTED,
+                edge(g, "customers-service", "customers-db").confidence);
+    }
+
+    @Test
+    void datasourceWithoutPersistenceCodeIsDeclaredOnly() {
+        // A service that declares a datasource but has NO entity/repository code: the
+        // db edge is the weakest tier, and renders dotted / "?" so it never reads as used.
+        DependencyGraph g = runtimeGraph();
+        String code = """
+                {"repo":"r","failed":false,"edges":[
+                  {"section":"config","fields":{"key":"spring.datasource.url","value":"jdbc:mysql://reporting-db:3306/r"},"file":"spring-petclinic-visits-service/src/main/resources/application.yml","line":9,"confidence":"High"}
+                ]}
+                """;
+        CodeGraphMerger.merge(g, code, "r");
+        DependencyGraph.Edge e = edge(g, "visits-service", "reporting-db");
+        assertNotNull(e);
+        assertEquals(DependencyGraph.CONF_INFERRED, e.confidence);
+        assertTrue(DotEmitter.emit(g).contains("style=dotted"));
+        assertTrue(MermaidEmitter.emit(g).contains("db?"));
+    }
+
+    @Test
+    void docMergerAddsDeepwikiEdgesWithEvidenceTiers() {
+        DependencyGraph g = mergedGraph();
+        String notes = """
+                {
+                  "synchronous_candidates": [
+                    {"source":"api-gateway","target":"admin-server","dependency_type":"application","configured":"yes","evidence_reference":"docs/arch.md"}
+                  ],
+                  "infrastructure_dependencies": [
+                    {"source_component":"vets-service","target":"vets-cache","dependency_type":"cache","configured":"no","evidence_reference":"wiki"}
+                  ]
+                }
+                """;
+        DocGraphMerger.merge(g, notes);
+        // configured application dependency -> documented sync edge, doc provenance
+        DependencyGraph.Edge sync = edge(g, "api-gateway", "admin-server");
+        assertNotNull(sync);
+        assertTrue(sync.provenance.contains(DependencyGraph.PROV_DOC));
+        assertEquals(DependencyGraph.CONF_DOCUMENTED, sync.confidence);
+        assertFalse(sync.runtimeObserved);
+        // documented-only cache -> db-typed, declared-only (weakest) tier
+        DependencyGraph.Edge cache = edge(g, "vets-service", "vets-cache");
+        assertNotNull(cache);
+        assertEquals("db", cache.type);
+        assertEquals(DependencyGraph.CONF_INFERRED, cache.confidence);
+    }
+
+    @Test
+    void docMergerIsNoOpOnMalformedOrEmpty() {
+        DependencyGraph g = mergedGraph();
+        int before = g.getEdges().size();
+        DocGraphMerger.merge(g, "");
+        DocGraphMerger.merge(g, null);
+        DocGraphMerger.merge(g, "not json at all");
+        DocGraphMerger.merge(g, "{}");
+        assertEquals(before, g.getEdges().size());
+    }
+
+    @Test
+    void docConfiguredDbPromotesADeclaredOnlyCodeEdge() {
+        // A db known only from a datasource URL (declared-only) is promoted to used
+        // when the docs say it is configured — the layers compose via max-confidence.
+        DependencyGraph g = runtimeGraph();
+        CodeGraphMerger.merge(g,
+                "{\"repo\":\"r\",\"failed\":false,\"edges\":[{\"section\":\"config\",\"fields\":{\"key\":\"spring.datasource.url\",\"value\":\"jdbc:mysql://orders-db:3306/o\"},\"file\":\"spring-petclinic-visits-service/x/application.yml\",\"line\":1,\"confidence\":\"High\"}]}",
+                "r");
+        assertEquals(DependencyGraph.CONF_INFERRED, edge(g, "visits-service", "orders-db").confidence);
+        DocGraphMerger.merge(g, """
+                {"infrastructure_dependencies":[
+                  {"source_component":"visits-service","target":"orders-db","dependency_type":"database","configured":"yes","evidence_reference":"cfg"}
+                ]}
+                """);
+        assertEquals(DependencyGraph.CONF_DOCUMENTED, edge(g, "visits-service", "orders-db").confidence);
+    }
+
+    // ---- runtime traffic coverage (deterministic) ----
+
+    @Test
+    void coverageCountsServiceSyncEdgesOnly() {
+        CoverageAnalyzer.Report r = CoverageAnalyzer.analyze(mergedGraph());
+        // 7 observed service/gateway sync edges + 1 dashed (visits->config-server);
+        // the customers-db / vets-db edges are db-type and excluded.
+        assertEquals(8, r.total);
+        assertEquals(7, r.observed);
+        assertEquals(88, r.percent());
+        assertTrue(r.uncovered.contains("visits-service -> config-server"));
+        assertFalse(r.uncovered.stream().anyMatch(s -> s.contains("customers-db")));
+    }
+
+    @Test
+    void coverageIsEmptyWhenNoServiceEdges() {
+        CoverageAnalyzer.Report r = CoverageAnalyzer.analyze(new DependencyGraph("ns"));
+        assertFalse(r.hasEdges());
+        assertEquals(0, r.percent());
+        assertTrue(r.uncovered.isEmpty());
+    }
+
+    private static DependencyGraph.Node node(DependencyGraph g, String id) {
+        return g.getNodes().stream().filter(n -> n.id.equals(id)).findFirst().orElse(null);
     }
 
     private static DependencyGraph.Edge edge(DependencyGraph g, String source, String target) {

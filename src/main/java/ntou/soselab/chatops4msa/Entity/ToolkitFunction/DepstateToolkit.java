@@ -3,6 +3,10 @@ package ntou.soselab.chatops4msa.Entity.ToolkitFunction;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ExternalHost;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisStateStore;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CodeGraphMerger;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyzer;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.RuntimeGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DiscordService.JDAService;
 import ntou.soselab.chatops4msa.Service.DiscordService.UserContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,6 +134,44 @@ public class DepstateToolkit extends ToolkitFunction {
 
         jdaService.sendChatOpsChannelMessageWithButtons(message, buttons);
         return "apply button posted";
+    }
+
+    /**
+     * The deterministic runtime coverage from the current checkpoint: builds the
+     * graph from the raw Istio traffic + structured code edges (no LLM), and returns
+     * the service→service synchronous edges the mesh has NOT yet observed — the
+     * concrete, non-LLM objective the resume loop drives toward ("these edges still
+     * have no traffic; make a journey that crosses them").
+     *
+     * Returns an empty string when there is nothing measurable yet (traffic not
+     * driven, or an old checkpoint without the raw stages), so the caller falls back
+     * to the LLM completeness check.
+     */
+    public String toolkitDepstateCoverage() {
+        String userId = requireUser();
+        if (userId == null) return "";
+        DependencyAnalysisStateStore.State state = stateStore.get(userId);
+        if (state == null) return "";
+
+        DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(
+                state.stage(DependencyAnalysisStateStore.STAGE_TRAFFIC_RAW), state.namespace);
+        CodeGraphMerger.merge(graph,
+                state.stage(DependencyAnalysisStateStore.STAGE_CODE_EDGES), state.repoName);
+
+        CoverageAnalyzer.Report coverage = CoverageAnalyzer.analyze(graph);
+        if (!coverage.hasEdges()) return "";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Deterministic runtime coverage: ").append(coverage.observed).append("/")
+                .append(coverage.total).append(" service-to-service edges observed (")
+                .append(coverage.percent()).append("%).\n");
+        if (coverage.uncovered.isEmpty()) {
+            sb.append("Every service-to-service edge has already been exercised by traffic.");
+        } else {
+            sb.append("Edges still WITHOUT runtime traffic — build a journey that crosses each:\n");
+            for (String edge : coverage.uncovered) sb.append("- ").append(edge).append('\n');
+        }
+        return sb.toString();
     }
 
     private String requireUser() {

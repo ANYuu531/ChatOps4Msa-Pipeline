@@ -3,9 +3,12 @@ package ntou.soselab.chatops4msa.Service.DependencyAnalysis;
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.DiscordToolkit;
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.LlmToolkit;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CodeGraphMerger;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyzer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DocGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DotEmitter;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphvizRenderer;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.K8sGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.MermaidEmitter;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.RuntimeGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DiscordService.JDAService;
@@ -117,6 +120,18 @@ public class DependencyReportService {
                     state.repoName);
             resolveResidueWithLlm(graph, residue);
 
+            // Merge documentation (DeepWiki) evidence as doc-provenance edges: the
+            // dependencies only the docs name (an externalised datasource, a
+            // documented association). Never runtime fact — dashed/dotted, and a
+            // db a service really uses (persistence code) outranks a doc-only one.
+            DocGraphMerger.merge(graph, state.stage(DependencyAnalysisStateStore.STAGE_MERGED_NOTES));
+
+            // Enrich the (now complete) node set with K8s deployment status, so a
+            // service referenced in code/docs but not running in the cluster renders
+            // greyed/dashed, and a live one carries its image/replicas/created date.
+            // Deterministic; a no-op on an old checkpoint without the raw k8s stage.
+            K8sGraphBuilder.enrich(graph, state.stage(DependencyAnalysisStateStore.STAGE_K8S_RAW));
+
             if (graph.isEmpty()) {
                 // No runtime edges and nothing resolvable from code (or an old
                 // checkpoint without the raw/code stages). The prose report already
@@ -133,8 +148,9 @@ public class DependencyReportService {
                 jdaService.sendChatOpsChannelMessage(
                         "## Dependency Graph — `" + state.repoName + "`\n"
                                 + "Solid arrows are edges Istio observed at runtime; dashed arrows are "
-                                + "declared in code/doc but not observed. The `.mmd` source is attached "
-                                + "too (edit at https://mermaid.live).");
+                                + "declared in code/doc but not observed. Greyed dashed nodes are referenced "
+                                + "but not deployed in the cluster; live nodes show image · replicas · created "
+                                + "date. The `.mmd` source is attached too (edit at https://mermaid.live).");
                 jdaService.sendChatOpsChannelFile(base + ".png", new ByteArrayInputStream(png));
                 jdaService.sendChatOpsChannelFile(base + ".mmd",
                         new ByteArrayInputStream(mermaid.getBytes(StandardCharsets.UTF_8)));
@@ -147,10 +163,37 @@ public class DependencyReportService {
                 jdaService.sendChatOpsChannelFile(base + ".mmd",
                         new ByteArrayInputStream(mermaid.getBytes(StandardCharsets.UTF_8)));
             }
+
+            postCoverage(graph, state.repoName);
         } catch (Exception e) {
             // The graph is a bonus view; never let it break the report delivery.
             System.out.println("[WARNING] could not post the dependency graph: " + e.getMessage());
         }
+    }
+
+    /**
+     * Posts the deterministic runtime traffic-coverage summary derived from the graph:
+     * of the service-to-service sync edges, how many the mesh actually observed, and
+     * which ones traffic never reached. The uncovered edges are exactly the dashed
+     * business edges — the concrete targets for driving more traffic and Resuming.
+     */
+    private void postCoverage(DependencyGraph graph, String repoName) {
+        CoverageAnalyzer.Report coverage = CoverageAnalyzer.analyze(graph);
+        if (!coverage.hasEdges()) return; // nothing measurable (e.g. no service→service edges)
+
+        StringBuilder msg = new StringBuilder();
+        msg.append("## Runtime Traffic Coverage — `").append(repoName).append("`\n")
+                .append("Istio observed **").append(coverage.observed).append(" / ")
+                .append(coverage.total).append("** business (service→service) edges — **")
+                .append(coverage.percent()).append("%** runtime coverage.\n");
+        if (coverage.uncovered.isEmpty()) {
+            msg.append("Every business edge was exercised by the driven traffic.");
+        } else {
+            msg.append("Uncovered edges (declared in code/doc, no traffic yet) — drive a journey "
+                    + "through these and Resume to close the gap:\n");
+            for (String edge : coverage.uncovered) msg.append("- `").append(edge).append("`\n");
+        }
+        jdaService.sendChatOpsChannelMessage(msg.toString());
     }
 
     /**

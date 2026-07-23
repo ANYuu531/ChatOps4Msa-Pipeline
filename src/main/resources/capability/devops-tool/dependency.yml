@@ -200,6 +200,21 @@ low_code:
               {"command":"get deployments -n ${namespace} -o custom-columns=NAME:.metadata.name,READY:.status.readyReplicas,REPLICAS:.status.replicas,IMAGES:.spec.template.spec.containers[*].image,LABELS:.metadata.labels --no-headers", "timeout": 20}
             assign: k8s_deployments
 
+        # A machine-readable deployments view for the dependency graph: exactly five
+        # single-token columns per line (name, creationTimestamp, ready, desired,
+        # first-container image) so K8sGraphBuilder can parse it deterministically and
+        # mark nodes deployed / not-deployed with their deployment metadata.
+        - toolkit-mcp-call-tool:
+            server_name: k8s
+            tool_name: execute_kubectl
+            tool_arguments: |
+              {"command":"get deployments -n ${namespace} -o custom-columns=NAME:.metadata.name,CREATED:.metadata.creationTimestamp,READY:.status.readyReplicas,REPLICAS:.spec.replicas,IMAGE:.spec.template.spec.containers[0].image --no-headers", "timeout": 20}
+            assign: k8s_deployments_graph
+
+        - toolkit-depstate-put:
+            stage: k8s_raw
+            value: ${k8s_deployments_graph}
+
         - toolkit-mcp-call-tool:
             server_name: k8s
             tool_name: execute_kubectl
@@ -468,11 +483,17 @@ low_code:
             stage: auth_hint
             assign: auth_hint
 
-        # The previous completeness check IS the list of edges still missing:
-        # it is what makes this round targeted rather than a blind repeat.
+        # The previous completeness check adds colour (which payloads 4xx'd, why): it
+        # is the LLM's reading of the gaps.
         - toolkit-depstate-get:
             stage: health
             assign: previous_health_check
+
+        # The AUTHORITATIVE objective: the exact service->service edges Istio has not
+        # yet observed, computed deterministically (no LLM) from the raw traffic vs the
+        # code edges. Empty until traffic has been driven at least once.
+        - toolkit-depstate-coverage:
+            assign: deterministic_coverage
 
         - toolkit-traffic-last-scenario:
             assign: previous_scenario
@@ -490,8 +511,12 @@ low_code:
               ${auth_hint}
 
               ## MISSING EDGES - this is the objective of this round
-              The completeness check below lists what is still NOT observed at runtime.
-              Build a journey that causes those specific edges to happen.
+              These service-to-service edges are STILL NOT observed at runtime,
+              computed deterministically from Istio vs the code. Build journeys that
+              cause exactly these edges to happen. This list is authoritative.
+              ${deterministic_coverage}
+
+              ## Completeness check (LLM reading of the gaps — payload/sequence hints)
               ${previous_health_check}
 
               ## The scenario already tried

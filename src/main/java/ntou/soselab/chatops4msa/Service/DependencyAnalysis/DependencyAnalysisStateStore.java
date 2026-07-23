@@ -41,6 +41,13 @@ public class DependencyAnalysisStateStore {
     public static final String STAGE_CODE_EDGES = "code_edges";
     public static final String STAGE_MERGED_NOTES = "merged_notes";
     public static final String STAGE_K8S = "k8s";
+    /**
+     * The raw Kubernetes Deployment inventory (one workload per line: name,
+     * creationTimestamp, ready, desired, image), kept verbatim so the dependency
+     * graph can mark nodes deployed / not-deployed and show deployment metadata
+     * deterministically, without re-reading the LLM's k8s prose (STAGE_K8S).
+     */
+    public static final String STAGE_K8S_RAW = "k8s_raw";
     public static final String STAGE_TRAFFIC = "traffic";
     /**
      * The raw Istio Prometheus JSON for the internal mesh-to-mesh query, kept

@@ -37,6 +37,7 @@ public class EdgeLedger {
         SECTION_TITLES.put("rabbit-consume", "Asynchronous - RabbitMQ consumers (queue -> service)");
         SECTION_TITLES.put("grpc", "Synchronous - gRPC stubs / clients");
         SECTION_TITLES.put("config", "Infrastructure / service-URL config keys");
+        SECTION_TITLES.put("jpa", "Persistence - JPA/ORM markers (entities / repositories: proves DB is really used)");
     }
 
     public static class Edge {

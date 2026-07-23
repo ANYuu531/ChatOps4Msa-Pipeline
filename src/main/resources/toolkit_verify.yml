@@ -151,5 +151,7 @@ toolkit-depstate-get:
   - stage
 toolkit-depstate-checkpoint:
   []
+toolkit-depstate-coverage:
+  []
 toolkit-depstate-apply-button:
   []

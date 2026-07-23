@@ -18,6 +18,9 @@ import java.util.Set;
  * Visual encoding used here (the subset Mermaid can express):
  * <ul>
  *   <li>node shape/colour by {@code kind} (service / db / queue / gateway / external)</li>
+ *   <li>a greyed, dashed node ({@code notDeployed} class) = a service referenced by
+ *       the graph but not deployed in the cluster; a live node's label carries its
+ *       deployment metadata (image · replicas · created date)</li>
  *   <li>edge label = runtime request count</li>
  *   <li>solid arrow = runtime-observed; dashed arrow = code/doc-only (Phase 2+)</li>
  * </ul>
@@ -55,6 +58,11 @@ public class MermaidEmitter {
             // the edge type is the label; the request count is deliberately NOT the
             // headline, so the graph reads as dependencies, not as traffic volume.
             String tag = typeTag(edge);
+            // Declared-only edges (config/doc, no usage evidence, not observed) are the
+            // weakest tier: flag them with "?" so a merely-declared db never reads as used.
+            boolean declaredOnly = !edge.runtimeObserved
+                    && DependencyGraph.CONF_INFERRED.equals(edge.confidence);
+            if (declaredOnly) tag = tag.isEmpty() ? "declared?" : tag + "?";
             String src = ids.get(edge.source);
             String tgt = ids.get(edge.target);
             sb.append("  ").append(src).append(' ');
@@ -67,11 +75,12 @@ public class MermaidEmitter {
         }
 
         appendClassDefs(sb, graph);
+        appendNotDeployed(sb, graph, ids);
         return sb.toString();
     }
 
     private static String nodeDeclaration(String id, DependencyGraph.Node node) {
-        String label = quote(node.id);
+        String label = quote(labelText(node));
         String shaped = switch (node.kind == null ? DependencyGraph.KIND_SERVICE : node.kind) {
             case DependencyGraph.KIND_DB -> id + "[(" + label + ")]";      // cylinder
             case DependencyGraph.KIND_QUEUE -> id + "{{" + label + "}}";   // hexagon
@@ -83,6 +92,48 @@ public class MermaidEmitter {
             shaped += ":::" + node.kind;
         }
         return shaped;
+    }
+
+    /** The node text: name, plus a second line of deployment status/metadata when known. */
+    private static String labelText(DependencyGraph.Node node) {
+        if (Boolean.FALSE.equals(node.deployed)) return node.id + "<br/>(not deployed)";
+        if (Boolean.TRUE.equals(node.deployed)) {
+            java.util.List<String> parts = new java.util.ArrayList<>();
+            String tag = imageTag(node.image);
+            if (tag != null) parts.add(tag);
+            if (node.replicas != null && !node.replicas.isBlank()) parts.add(node.replicas);
+            String day = dateOnly(node.deployedAt);
+            if (day != null) parts.add(day);
+            if (!parts.isEmpty()) return node.id + "<br/>" + String.join(" · ", parts);
+        }
+        return node.id;
+    }
+
+    /** Applies a greyed/dashed class to every service the cluster does not run. */
+    private static void appendNotDeployed(StringBuilder sb, DependencyGraph graph, Map<String, String> ids) {
+        java.util.List<String> undeployed = new java.util.ArrayList<>();
+        for (DependencyGraph.Node node : graph.getNodes()) {
+            if (Boolean.FALSE.equals(node.deployed)) undeployed.add(ids.get(node.id));
+        }
+        if (undeployed.isEmpty()) return;
+        sb.append("classDef notDeployed fill:#ececec,stroke:#c0392b,stroke-dasharray:4 3,color:#7f8c8d;\n");
+        sb.append("class ").append(String.join(",", undeployed)).append(" notDeployed\n");
+    }
+
+    /** The image without its registry/namespace prefix (e.g. ".../app:3.0" -> "app:3.0"). */
+    private static String imageTag(String image) {
+        if (image == null || image.isBlank() || "<none>".equals(image)) return null;
+        String s = image.trim();
+        int slash = s.lastIndexOf('/');
+        if (slash >= 0 && slash < s.length() - 1) s = s.substring(slash + 1);
+        return s;
+    }
+
+    /** The date part of an ISO-8601 instant (e.g. "2026-07-20T10:16:30Z" -> "2026-07-20"). */
+    private static String dateOnly(String iso) {
+        if (iso == null || iso.isBlank()) return null;
+        int t = iso.indexOf('T');
+        return t > 0 ? iso.substring(0, t) : iso;
     }
 
     /** Only emit a classDef for the kinds actually present, to keep the block tidy. */

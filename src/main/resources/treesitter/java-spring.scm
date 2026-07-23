@@ -152,3 +152,17 @@
          (string_literal (string_fragment) @rabbit-consume.queue)))))
  (#eq? @_ann "RabbitListener")
  (#any-of? @_k "queues" "queuesToDeclare"))
+
+; ---------- Persistence / JPA (a DB-USAGE signal, not a target) ----------
+; These markers prove the service actually has persistence code (entities /
+; repositories), which is what separates a database the service REALLY uses from
+; one that is merely declared by a datasource URL in config. The captured value is
+; NOT a target host — the FILE the marker is found in attributes it to a service,
+; and the graph merge then upgrades that service's datasource-declared db edge from
+; "declared" to "really used". @Entity/@Table are the reliable signal (every JPA
+; entity carries one); @Repository catches annotated Spring Data repositories.
+((marker_annotation name: (identifier) @jpa.marker)
+ (#any-of? @jpa.marker "Entity" "Table" "MappedSuperclass" "Embeddable" "Repository"))
+
+((annotation name: (identifier) @jpa.marker)
+ (#any-of? @jpa.marker "Entity" "Table" "MappedSuperclass" "Embeddable" "Repository"))
