@@ -139,6 +139,24 @@ public class DependencyGraphTest {
     }
 
     @Test
+    void undeployedServiceModuleDirStripsRepoPrefix() {
+        // genai-service has code but no running workload: its module dir cannot align to
+        // a runtime node, so the learned repo prefix is stripped and it reads as the
+        // service name, not the full module directory.
+        DependencyGraph g = runtimeGraph();
+        String code = """
+                {"repo":"spring-petclinic/spring-petclinic-microservices","failed":false,"edges":[
+                  {"section":"config","fields":{"key":"customers.url","value":"http://customers-service/"},"file":"spring-petclinic-customers-service/src/main/resources/application.yml","line":5,"confidence":"High"},
+                  {"section":"feign","fields":{"value":"vets-service"},"file":"spring-petclinic-genai-service/src/main/java/org/x/VetClient.java","line":10,"confidence":"High"}
+                ]}
+                """;
+        CodeGraphMerger.merge(g, code, "spring-petclinic/spring-petclinic-microservices");
+        assertNotNull(node(g, "genai-service"));
+        assertTrue(g.getNodes().stream().noneMatch(n -> n.id.startsWith("spring-petclinic-")));
+        assertNotNull(edge(g, "genai-service", "vets-service"));
+    }
+
+    @Test
     void placeholderTargetGoesToResidue() {
         DependencyGraph g = runtimeGraph();
         List<CodeGraphMerger.Unresolved> residue =

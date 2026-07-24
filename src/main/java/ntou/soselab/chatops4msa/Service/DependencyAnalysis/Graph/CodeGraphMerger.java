@@ -59,6 +59,8 @@ public class CodeGraphMerger {
     private final String defaultSource; // resolved from the repo name, used when the file path does not identify a service
     /** Services with persistence code (JPA/ORM markers) — used to tell a really-used DB from a declared one. */
     private final Set<String> persistenceServices = new LinkedHashSet<>();
+    /** Common module-directory prefix (e.g. "spring-petclinic") learned from dirs that resolved to workloads. */
+    private String modulePrefix;
 
     private CodeGraphMerger(DependencyGraph graph, String repoName) {
         this.graph = graph;
@@ -102,12 +104,41 @@ public class CodeGraphMerger {
         }
 
         CodeGraphMerger merger = new CodeGraphMerger(graph, repoName);
+        merger.learnModulePrefix(edges);
         merger.collectPersistenceServices(edges);
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
             if (edge != null) merger.mergeOne(edge, unresolved);
         }
         return unresolved;
+    }
+
+    /**
+     * Learns the common module-directory prefix from the dirs that DID resolve to a
+     * workload via the {@code -suffix} rule (e.g. {@code spring-petclinic-customers-service}
+     * → workload {@code customers-service} implies prefix {@code spring-petclinic}). It
+     * is then stripped from a module dir that has no workload (an undeployed service),
+     * so its source node reads {@code genai-service}, not {@code spring-petclinic-genai-service}.
+     */
+    private void learnModulePrefix(JSONArray edges) {
+        java.util.Map<String, Integer> counts = new java.util.HashMap<>();
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null) continue;
+            String seg = firstPathSegment(edge.optString("file", ""));
+            if (seg == null) continue;
+            String c = clean(seg);
+            for (String node : knownNodes) {
+                if (node.length() >= 3 && c.endsWith("-" + node)) {
+                    String prefix = c.substring(0, c.length() - node.length() - 1);
+                    if (!prefix.isBlank()) counts.merge(prefix, 1, Integer::sum);
+                    break;
+                }
+            }
+        }
+        modulePrefix = counts.entrySet().stream()
+                .max(java.util.Map.Entry.comparingByValue())
+                .map(java.util.Map.Entry::getKey).orElse(null);
     }
 
     /**
@@ -130,6 +161,7 @@ public class CodeGraphMerger {
             return Set.of();
         }
         CodeGraphMerger merger = new CodeGraphMerger(graph, repoName);
+        merger.learnModulePrefix(edges);
         merger.collectPersistenceServices(edges);
         return merger.persistenceServices;
     }
@@ -405,6 +437,12 @@ public class CodeGraphMerger {
             String matched = matchNodeForSource(seg);
             if (matched != null) return matched;
             String label = cleanLabel(seg);
+            // An undeployed service's module dir has no workload to align to; strip the
+            // learned repo prefix so it reads "genai-service", not the full module name.
+            if (label != null && modulePrefix != null && label.startsWith(modulePrefix + "-")) {
+                String stripped = label.substring(modulePrefix.length() + 1);
+                if (isPlausibleName(stripped) && !SOURCE_STOP.contains(stripped)) label = stripped;
+            }
             if (label != null && !SOURCE_STOP.contains(label) && isPlausibleName(label)) return label;
         }
         return defaultSource; // repo name matched a real workload, or null
