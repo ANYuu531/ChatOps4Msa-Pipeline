@@ -395,7 +395,8 @@ public class DependencyGraphTest {
         String notes = """
                 {
                   "synchronous_candidates": [
-                    {"source":"api-gateway","target":"admin-server","dependency_type":"application","configured":"yes","evidence_reference":"docs/arch.md"}
+                    {"source":"API Gateway","target":"Discovery Server","dependency_type":"application","configured":"yes","evidence_reference":"docs/arch.md"},
+                    {"source":"API Gateway","target":"Some Widget Registry","dependency_type":"application","configured":"yes"}
                   ],
                   "infrastructure_dependencies": [
                     {"source_component":"vets-service","target":"vets-cache","dependency_type":"cache","configured":"no","evidence_reference":"wiki"}
@@ -403,17 +404,33 @@ public class DependencyGraphTest {
                 }
                 """;
         DocGraphMerger.merge(g, notes);
-        // configured application dependency -> documented sync edge, doc provenance
-        DependencyGraph.Edge sync = edge(g, "api-gateway", "admin-server");
+        // configured application dependency onto an EXISTING workload -> documented, doc prov
+        DependencyGraph.Edge sync = edge(g, "api-gateway", "discovery-server");
         assertNotNull(sync);
         assertTrue(sync.provenance.contains(DependencyGraph.PROV_DOC));
         assertEquals(DependencyGraph.CONF_DOCUMENTED, sync.confidence);
         assertFalse(sync.runtimeObserved);
+        // a doc-only "service" that aligns to no known workload is NOT invented as a phantom
+        assertTrue(g.getNodes().stream().noneMatch(n -> n.id.contains("widget")));
         // documented-only cache -> db-typed, declared-only (weakest) tier
         DependencyGraph.Edge cache = edge(g, "vets-service", "vets-cache");
         assertNotNull(cache);
         assertEquals("db", cache.type);
         assertEquals(DependencyGraph.CONF_INFERRED, cache.confidence);
+    }
+
+    @Test
+    void docMergerDropsInProcessCacheLibraryAsDbNode() {
+        // caffeine is an in-process cache library, not a datastore — it must NOT be
+        // drawn as a db the service "uses" (that is exactly the overstated-db risk).
+        DependencyGraph g = mergedGraph();
+        DocGraphMerger.merge(g, """
+                {"infrastructure_dependencies":[
+                  {"source_component":"vets-service","target":"Caffeine","dependency_type":"cache","configured":"yes"}
+                ]}
+                """);
+        assertNull(node(g, "caffeine"));
+        assertNull(edge(g, "vets-service", "caffeine"));
     }
 
     @Test

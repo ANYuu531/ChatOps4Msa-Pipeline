@@ -156,12 +156,15 @@ public class DocGraphMerger {
             return null;
         }
 
-        // 3) A datastore / broker is a legitimate new node (mysql, hsqldb, redis, …).
-        //    Keep the simple lower-cased name — never camel-split "MySQL" into "my-sql".
+        // 3) A datastore / broker is a legitimate new node (mysql, hsqldb, redis, …):
+        //    a real dependency the runtime and code often miss. Keep the simple
+        //    lower-cased name — never camel-split "MySQL" into "my-sql". An in-process
+        //    cache LIBRARY (caffeine, ehcache, guava) is not a datastore node, so it is
+        //    dropped rather than drawn as a db the service "uses".
         String kind = forcedKind != null ? forcedKind : DependencyGraph.classifyKind(kebab(raw));
         if (DependencyGraph.KIND_DB.equals(kind) || DependencyGraph.KIND_QUEUE.equals(kind)) {
             String name = simplify(raw);
-            if (!isPlausibleLabel(name)) return null;
+            if (!isPlausibleLabel(name) || IN_PROCESS_CACHES.contains(name)) return null;
             String k = DependencyGraph.classifyKind(name);
             String finalKind = DependencyGraph.KIND_SERVICE.equals(k) ? kind : k;
             graph.addNode(name, finalKind);
@@ -169,13 +172,12 @@ public class DocGraphMerger {
             return name;
         }
 
-        // 4) A genuinely new documented service/gateway (e.g. admin-server): introduce
-        //    it kebab-cased. Infra/telemetry and bare generic tokens are dropped.
-        String name = kebab(raw);
-        if (isInfra(name) || isGeneric(name) || !isPlausibleLabel(name)) return null;
-        graph.addNode(name, DependencyGraph.classifyKind(name));
-        knownNodes.add(name);
-        return name;
+        // 4) A documented service/gateway that does NOT align to a known workload is
+        //    almost always an alias, a technology label ("Netflix Eureka"), or a
+        //    grouping ("All Services") — never a real new service. Introducing it just
+        //    litters the graph with phantom "(not deployed)" nodes. Doc edges enrich
+        //    known services and surface db/external; they do not invent service nodes.
+        return null;
     }
 
     /**
@@ -220,13 +222,9 @@ public class DocGraphMerger {
 
     // ---------- name normalisation ----------
 
-    /** Telemetry / platform components that are never a business dependency (mirrors RuntimeGraphBuilder). */
-    private static final Set<String> INFRA = Set.of(
-            "prometheus", "grafana", "jaeger", "kiali", "istiod", "zipkin",
-            "loki", "tempo", "alertmanager", "node-exporter", "kube-state-metrics", "otel-collector");
-    /** Bare generic tokens that name no specific workload. */
-    private static final Set<String> GENERIC = Set.of(
-            "client", "service", "api", "gateway", "server", "app", "web", "backend", "frontend");
+    /** In-process cache libraries — a datastore edge to one of these would overstate a real db. */
+    private static final Set<String> IN_PROCESS_CACHES = Set.of(
+            "caffeine", "ehcache", "guava", "guava-cache", "concurrentmapcache", "simplecache");
 
     /**
      * A display name reduced to a k8s-service-style id: camelCase and spaces become
@@ -264,14 +262,6 @@ public class DocGraphMerger {
         s = s.replace("\"", "").replace("'", "").trim();
         if (s.contains("${") || s.contains("{{")) return "";
         return s;
-    }
-
-    private static boolean isInfra(String name) {
-        return name != null && INFRA.contains(name);
-    }
-
-    private static boolean isGeneric(String name) {
-        return name != null && GENERIC.contains(name);
     }
 
     /** A k8s-service-ish label, not a bare number. */
