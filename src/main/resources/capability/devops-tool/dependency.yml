@@ -329,6 +329,18 @@ low_code:
             stage: traffic_raw
             value: ${istio_requests_raw}
 
+        # Deterministic runtime coverage after this first round — posted so the
+        # iteration's progress (what fraction of service->service edges the traffic
+        # actually reached, and which edges are still uncovered) is visible live in
+        # the channel, not only buried in the final report.
+        - toolkit-depstate-coverage:
+            assign: deterministic_coverage
+
+        - toolkit-discord-text:
+            text: |
+              ## Traffic iteration - coverage after round 1
+              ${deterministic_coverage}
+
         - toolkit-llm-call:
             prompt: |
               ## Prometheus instant query result (istio_requests_total, namespace=${namespace})
@@ -495,6 +507,12 @@ low_code:
         - toolkit-depstate-coverage:
             assign: deterministic_coverage
 
+        # Show the gap this supplement round is about to target, so the iteration is legible.
+        - toolkit-discord-text:
+            text: |
+              ## Traffic iteration - coverage BEFORE this supplement round (these edges are the target)
+              ${deterministic_coverage}
+
         - toolkit-traffic-last-scenario:
             assign: previous_scenario
 
@@ -558,6 +576,16 @@ low_code:
         - toolkit-depstate-put:
             stage: traffic_raw
             value: ${istio_requests_raw}
+
+        # Coverage AFTER this round — the delta against the "BEFORE" number above is the
+        # visible proof of whether this iteration actually closed any edges.
+        - toolkit-depstate-coverage:
+            assign: deterministic_coverage
+
+        - toolkit-discord-text:
+            text: |
+              ## Traffic iteration - coverage AFTER this supplement round
+              ${deterministic_coverage}
 
         - toolkit-llm-call:
             prompt: |

@@ -100,9 +100,15 @@ RULES:
 
 1. Items run IN ORDER and share state. A session cookie set by any response is
    carried automatically — you do not need to handle cookies yourself.
-2. `{{baseUrl}}` is bound to the entry URL by the runner. Write each `url.raw` as
-   `{{baseUrl}}/<path>` (and mirror it in `host`/`path` as shown). A bare relative
-   path like `/login` also resolves against the entry URL, but prefer `{{baseUrl}}`.
+2. `{{baseUrl}}` is bound to the entry URL — the INGRESS / API GATEWAY, not the
+   service. So a service's own endpoint path from the code extraction (e.g. `/owners`
+   on customers-service) is usually NOT reachable at `{{baseUrl}}/owners`: you MUST
+   prepend the gateway route prefix shown in the Istio routing / VirtualServices.
+   Example: if the gateway routes `/api/customer/**` to customers-service, the owners
+   endpoint is `{{baseUrl}}/api/customer/owners`, NOT `{{baseUrl}}/owners`. A request
+   that omits the prefix gets 404 and observes no edge. Build every `url.raw` as
+   `{{baseUrl}}/<gateway-prefix>/<service-path>` and mirror it in `host`/`path`. If
+   the routing shows no prefix for a service, use the service path directly.
 3. CAPTURE — how you chain a journey — MUST use exactly this shape, inside a `test`
    event, and NOTHING ELSE:
      pm.collectionVariables.set("VAR", pm.response.json()<access>)
@@ -110,11 +116,15 @@ RULES:
      pm.response.json().token          -> binds VAR to  body.token
      pm.response.json().data.id        -> binds VAR to  body.data.id
      pm.response.json()[0].id          -> binds VAR to  body[0].id
-   The runner reads only this form. Do NOT write assertions, loops, conditionals,
-   or any other JavaScript — it will be ignored, and a capture written any other
-   way will NOT bind. Later items reference the variable as {{VAR}} in the url,
-   headers, or body. Prefer capturing a real id over inventing one: an invented id
-   usually 404s and the downstream edge never happens.
+   The runner reads only this single-statement form. These are all IGNORED (the
+   variable stays UNBOUND), so never write them:
+     var o = pm.response.json()[0]; pm.collectionVariables.set("id", o.id)  // temp var
+     pm.test("ok", () => pm.collectionVariables.set("id", ...))             // wrapped
+     pm.collectionVariables.set("id", pm.response.json().find(x => ...).id) // logic
+   No assertions, loops, conditionals, temp variables, or any other JavaScript.
+   Later items reference the variable as {{VAR}} in the url, headers, or body. Prefer
+   capturing a real id over inventing one: an invented id usually 404s and the
+   downstream edge never happens.
 4. `description` on each request states which dependency edge the item is meant to
    reveal (e.g. "front-end -> orders -> payment"). Be honest; it is used to work
    out what is still missing.
@@ -139,3 +149,13 @@ RULES:
           "description": "CANNOT REACH: needs valid checkout payload / real card token" } }
     The runner does NOT send an UNREACHABLE item; it reports the gap to the user
     rather than hiding it behind a failed request.
+11. NEVER emit a URL with an empty path variable. If {{ownerId}} was never captured,
+    `{{baseUrl}}/api/customer/owners/{{ownerId}}` resolves to `.../owners/` and
+    `.../owners//pets` becomes `.../owners//pets` (a double slash) — both 404/405 and
+    observe nothing. So: put a LIST endpoint first and capture its id (rule 3) BEFORE
+    any detail or nested path that needs it. Only reference {{VAR}} in a later item
+    once an earlier item has captured it. If no id can be obtained (the list is empty,
+    needs auth you don't have, or the capture is not expressible in rule 3's form), do
+    NOT emit the dependent request — mark it UNREACHABLE (rule 10). A request whose
+    path still contains an unresolved `{{...}}` or an empty `//` segment is always
+    wrong; fix the ordering or drop it.
