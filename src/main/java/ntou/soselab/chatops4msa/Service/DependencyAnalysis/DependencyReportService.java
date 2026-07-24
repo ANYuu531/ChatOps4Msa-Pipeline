@@ -126,6 +126,13 @@ public class DependencyReportService {
             // db a service really uses (persistence code) outranks a doc-only one.
             DocGraphMerger.merge(graph, state.stage(DependencyAnalysisStateStore.STAGE_MERGED_NOTES));
 
+            // Promote any db a persistence-bearing service uses to "really used",
+            // whichever provenance the db edge came from. The datasource is often
+            // externalised (petclinic keeps it in the config-server), so its db edges
+            // are doc-derived — the JPA proof in the service source must still reach them.
+            CodeGraphMerger.promoteReallyUsedDbs(graph, CodeGraphMerger.persistenceServices(
+                    graph, state.stage(DependencyAnalysisStateStore.STAGE_CODE_EDGES), state.repoName));
+
             // Enrich the (now complete) node set with K8s deployment status, so a
             // service referenced in code/docs but not running in the cluster renders
             // greyed/dashed, and a live one carries its image/replicas/created date.

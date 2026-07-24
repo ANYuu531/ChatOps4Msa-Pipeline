@@ -410,6 +410,57 @@ public class DependencyGraphTest {
     }
 
     @Test
+    void persistenceCodePromotesADocOnlyDbToReallyUsed() {
+        // petclinic externalises its datasource, so the db edge is doc-only; the JPA
+        // proof in the service source must still promote it from declared to really-used.
+        DependencyGraph g = mergedGraph();
+        DocGraphMerger.merge(g, """
+                {"infrastructure_dependencies":[
+                  {"source_component":"spring-petclinic-customers-service","target":"HSQLDB","dependency_type":"database","configured":"unknown"}
+                ]}
+                """);
+        // doc-only + configured unknown -> starts declared-only (inferred)
+        assertEquals(DependencyGraph.CONF_INFERRED, edge(g, "customers-service", "hsqldb").confidence);
+        // the @Entity proof in customers-service promotes it to really-used
+        CodeGraphMerger.promoteReallyUsedDbs(g, CodeGraphMerger.persistenceServices(
+                g, PETCLINIC_CODE, "spring-petclinic/spring-petclinic-microservices"));
+        assertEquals(DependencyGraph.CONF_DOCUMENTED, edge(g, "customers-service", "hsqldb").confidence);
+    }
+
+    @Test
+    void docMergerAlignsDisplayNameAliasesInsteadOfDuplicating() {
+        // DeepWiki writes display names: "Customers Service", "CustomersServiceClient",
+        // "spring-petclinic-customers-service", "Grafana", "HSQLDB". These must align to
+        // the real workloads (or be dropped as infra), never create phantom nodes.
+        DependencyGraph g = mergedGraph();
+        String notes = """
+                {
+                  "synchronous_candidates": [
+                    {"source":"API Gateway","target":"CustomersServiceClient","dependency_type":"application","configured":"yes"},
+                    {"source":"Visits Service","target":"Grafana","dependency_type":"application","configured":"unknown"}
+                  ],
+                  "infrastructure_dependencies": [
+                    {"source_component":"spring-petclinic-customers-service","target":"HSQLDB","dependency_type":"database","configured":"yes"},
+                    {"source_component":"spring-petclinic-vets-service","target":"MySQL","dependency_type":"database","configured":"unknown"}
+                  ]
+                }
+                """;
+        DocGraphMerger.merge(g, notes);
+        // no phantom module-dir / feign-client / infra nodes
+        assertTrue(g.getNodes().stream().noneMatch(n -> n.id.startsWith("spring-petclinic-")));
+        assertTrue(g.getNodes().stream().noneMatch(n -> n.id.contains("client")));
+        assertTrue(g.getNodes().stream().noneMatch(n -> n.id.equals("grafana") || n.id.equals("prometheus")));
+        // the client alias resolved onto the real workload (edge already existed at runtime)
+        assertNotNull(edge(g, "api-gateway", "customers-service"));
+        // the module-dir source resolved, and the documented db appears as a real db node
+        DependencyGraph.Edge db = edge(g, "customers-service", "hsqldb");
+        assertNotNull(db);
+        assertEquals("db", db.type);
+        assertEquals(DependencyGraph.KIND_DB, kindOf(g, "hsqldb"));
+        assertNotNull(edge(g, "vets-service", "mysql"));
+    }
+
+    @Test
     void docConfiguredDbPromotesADeclaredOnlyCodeEdge() {
         // A db known only from a datasource URL (declared-only) is promoted to used
         // when the docs say it is configured — the layers compose via max-confidence.

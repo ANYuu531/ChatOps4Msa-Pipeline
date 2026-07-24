@@ -110,6 +110,48 @@ public class CodeGraphMerger {
         return unresolved;
     }
 
+    /**
+     * The services with persistence (JPA/ORM) code, resolved onto the graph
+     * vocabulary. Exposed so a db edge of ANY provenance — code or doc — can be
+     * promoted to "really used" when its source service is shown to actually
+     * persist. This matters when the datasource is externalised (petclinic keeps it
+     * in the config-server), so the db edges are doc-derived yet the persistence
+     * proof lives in the service source.
+     */
+    public static Set<String> persistenceServices(DependencyGraph graph, String codeEdgesJson, String repoName) {
+        if (graph == null || codeEdgesJson == null || codeEdgesJson.isBlank()) return Set.of();
+        JSONArray edges;
+        try {
+            JSONObject root = new JSONObject(codeEdgesJson);
+            if (root.optBoolean("failed", false)) return Set.of();
+            edges = root.optJSONArray("edges");
+            if (edges == null) return Set.of();
+        } catch (Exception e) {
+            return Set.of();
+        }
+        CodeGraphMerger merger = new CodeGraphMerger(graph, repoName);
+        merger.collectPersistenceServices(edges);
+        return merger.persistenceServices;
+    }
+
+    /**
+     * Promotes a declared-only ({@code inferred}) db edge to {@code documented} when
+     * its source service has persistence code — the deterministic proof that the
+     * database is really used, not merely declared. Applied after all merges so it
+     * reaches db edges of any provenance (code or doc). Runtime-observed and
+     * already-documented edges are left untouched.
+     */
+    public static void promoteReallyUsedDbs(DependencyGraph graph, Set<String> persistenceServices) {
+        if (graph == null || persistenceServices == null || persistenceServices.isEmpty()) return;
+        for (DependencyGraph.Edge edge : graph.getEdges()) {
+            if ("db".equals(edge.type) && !edge.runtimeObserved
+                    && DependencyGraph.CONF_INFERRED.equals(edge.confidence)
+                    && persistenceServices.contains(edge.source)) {
+                edge.confidence = DependencyGraph.CONF_DOCUMENTED;
+            }
+        }
+    }
+
     private void mergeOne(JSONObject edge, List<Unresolved> unresolved) {
         String section = edge.optString("section", "");
         JSONObject fields = edge.optJSONObject("fields");

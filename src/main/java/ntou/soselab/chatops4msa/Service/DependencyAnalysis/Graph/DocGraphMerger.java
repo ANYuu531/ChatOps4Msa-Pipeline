@@ -127,27 +127,76 @@ public class DocGraphMerger {
     }
 
     /**
-     * Resolves a documented name onto the graph vocabulary. Matches an existing node
-     * (case-insensitive, after stripping jdbc/scheme/port/path and k8s DNS suffixes);
-     * otherwise introduces a new node when the name is plausible, so a documented
-     * dependency the runtime and code never surfaced still appears. Returns null for
-     * a blank, placeholder, or implausible name (never invents a dependency).
+     * Resolves a documented name onto the graph vocabulary. DeepWiki writes
+     * display-name aliases — "Customers Service", "CustomersServiceClient",
+     * "spring-petclinic-customers-service" — so an existing workload must be matched
+     * through the same normalisation the code merger uses (kebab-casing, a {@code
+     * -client} suffix, a module-directory {@code -suffix}), or the graph sprouts
+     * duplicate phantom nodes. Only when nothing aligns AND the name is not a
+     * telemetry/infra component is a new node introduced, so a documented dependency
+     * the runtime and code never surfaced (a db, an external host, a genuinely new
+     * service) still appears; a blank, placeholder, generic, or infra name yields null.
      */
     private String resolveNode(String raw, String forcedKind) {
         if (raw == null || raw.isBlank()) return null;
         boolean external = DependencyGraph.KIND_EXTERNAL.equals(forcedKind);
-        String cleaned = external ? host(raw) : label(raw);
-        if (cleaned == null || cleaned.isEmpty()) return null;
 
-        for (String node : knownNodes) {
-            if (node.equalsIgnoreCase(cleaned)) return node;
+        // 1) Align to an existing workload before ever creating a node.
+        String aligned = alignToKnown(raw);
+        if (aligned != null) return aligned;
+
+        // 2) An external domain keeps its full host.
+        if (external) {
+            String h = host(raw);
+            if (isExternalHost(h)) {
+                graph.addNode(h, DependencyGraph.KIND_EXTERNAL);
+                knownNodes.add(h);
+                return h;
+            }
+            return null;
         }
-        if (!isPlausible(cleaned, external)) return null;
 
-        String kind = forcedKind != null ? forcedKind : DependencyGraph.classifyKind(cleaned);
-        graph.addNode(cleaned, kind);
-        knownNodes.add(cleaned);
-        return cleaned;
+        // 3) A datastore / broker is a legitimate new node (mysql, hsqldb, redis, …).
+        //    Keep the simple lower-cased name — never camel-split "MySQL" into "my-sql".
+        String kind = forcedKind != null ? forcedKind : DependencyGraph.classifyKind(kebab(raw));
+        if (DependencyGraph.KIND_DB.equals(kind) || DependencyGraph.KIND_QUEUE.equals(kind)) {
+            String name = simplify(raw);
+            if (!isPlausibleLabel(name)) return null;
+            String k = DependencyGraph.classifyKind(name);
+            String finalKind = DependencyGraph.KIND_SERVICE.equals(k) ? kind : k;
+            graph.addNode(name, finalKind);
+            knownNodes.add(name);
+            return name;
+        }
+
+        // 4) A genuinely new documented service/gateway (e.g. admin-server): introduce
+        //    it kebab-cased. Infra/telemetry and bare generic tokens are dropped.
+        String name = kebab(raw);
+        if (isInfra(name) || isGeneric(name) || !isPlausibleLabel(name)) return null;
+        graph.addNode(name, DependencyGraph.classifyKind(name));
+        knownNodes.add(name);
+        return name;
+    }
+
+    /**
+     * Matches a documented name to an existing node through kebab-casing, then a
+     * {@code -client} suffix strip, then a module-directory {@code -suffix} (so
+     * "spring-petclinic-customers-service" and "CustomersServiceClient" both reach
+     * "customers-service"). Returns null when nothing aligns.
+     */
+    private String alignToKnown(String raw) {
+        String c = kebab(raw);
+        if (c.isEmpty()) return null;
+        String stripped = c.replaceFirst("-?client$", "");
+        for (String candidate : stripped.equals(c) ? new String[]{c} : new String[]{c, stripped}) {
+            for (String node : knownNodes) {
+                if (node.equalsIgnoreCase(candidate)) return node;
+            }
+        }
+        for (String node : knownNodes) {
+            if (node.length() >= 3 && (c.endsWith("-" + node) || stripped.equals(node))) return node;
+        }
+        return null;
     }
 
     private static String edgeType(String depType, String target) {
@@ -169,46 +218,75 @@ public class DocGraphMerger {
         };
     }
 
-    // ---------- name normalisation (mirrors CodeGraphMerger's rules, doc inputs are cleaner) ----------
+    // ---------- name normalisation ----------
 
-    /** Single lower-cased DNS label, scheme/jdbc/port/path and cluster suffixes stripped. */
-    private static String label(String raw) {
-        String s = strip(raw);
-        int dot = s.indexOf('.');
-        if (dot > 0) s = s.substring(0, dot); // <svc>.<ns>.svc.cluster.local -> <svc>
+    /** Telemetry / platform components that are never a business dependency (mirrors RuntimeGraphBuilder). */
+    private static final Set<String> INFRA = Set.of(
+            "prometheus", "grafana", "jaeger", "kiali", "istiod", "zipkin",
+            "loki", "tempo", "alertmanager", "node-exporter", "kube-state-metrics", "otel-collector");
+    /** Bare generic tokens that name no specific workload. */
+    private static final Set<String> GENERIC = Set.of(
+            "client", "service", "api", "gateway", "server", "app", "web", "backend", "frontend");
+
+    /**
+     * A display name reduced to a k8s-service-style id: camelCase and spaces become
+     * hyphens ("Customers Service"/"CustomersService" -> "customers-service"), then
+     * lower-cased, with anything but {@code [a-z0-9-]} dropped. Used for matching and
+     * for introducing new service nodes.
+     */
+    private static String kebab(String raw) {
+        if (raw == null) return "";
+        String s = raw.trim().replaceAll("([a-z0-9])([A-Z])", "$1-$2").toLowerCase(Locale.ROOT);
+        s = s.replaceAll("[\\s_./]+", "-").replaceAll("[^a-z0-9-]", "");
+        s = s.replaceAll("-{2,}", "-").replaceAll("(^-|-$)", "");
         return s;
     }
 
-    /** Full host with dots preserved (for an external domain). */
-    private static String host(String raw) {
-        return strip(raw);
+    /** Lower-cased single label with jdbc/scheme/port/path stripped — never camel-split (so "MySQL" -> "mysql"). */
+    private static String simplify(String raw) {
+        String s = host(raw);
+        int dot = s.indexOf('.');
+        if (dot > 0) s = s.substring(0, dot); // <svc>.<ns>.svc.cluster.local -> <svc>
+        return s.replaceAll("[\\s]+", "-");
     }
 
-    private static String strip(String raw) {
+    /** Full host with dots preserved (for an external domain), scheme/port/path stripped. */
+    private static String host(String raw) {
         String s = raw.trim().toLowerCase(Locale.ROOT);
         if (s.startsWith("jdbc:")) s = s.substring(5);
-        s = s.replaceFirst("^[a-z][a-z0-9+.-]*://", ""); // scheme
+        s = s.replaceFirst("^[a-z][a-z0-9+.-]*://", "");
         int slash = s.indexOf('/');
-        if (slash >= 0) s = s.substring(0, slash);       // path
+        if (slash >= 0) s = s.substring(0, slash);
         int at = s.indexOf('@');
-        if (at >= 0) s = s.substring(at + 1);            // userinfo
+        if (at >= 0) s = s.substring(at + 1);
         int colon = s.indexOf(':');
-        if (colon >= 0) s = s.substring(0, colon);       // port
+        if (colon >= 0) s = s.substring(0, colon);
         s = s.replace("\"", "").replace("'", "").trim();
         if (s.contains("${") || s.contains("{{")) return "";
         return s;
     }
 
-    /** A k8s-service-ish label (or a dotted domain when external), not a bare number. */
-    private static boolean isPlausible(String s, boolean external) {
-        if (s == null) return false;
-        if (external) {
-            return s.contains(".") && s.length() >= 4 && s.length() <= 253
-                    && s.matches("[a-z0-9.-]+") && !s.matches("[0-9.]+");
-        }
-        if (s.length() < 2 || s.length() > 63) return false;
+    private static boolean isInfra(String name) {
+        return name != null && INFRA.contains(name);
+    }
+
+    private static boolean isGeneric(String name) {
+        return name != null && GENERIC.contains(name);
+    }
+
+    /** A k8s-service-ish label, not a bare number. */
+    private static boolean isPlausibleLabel(String s) {
+        if (s == null || s.length() < 2 || s.length() > 63) return false;
         if (!s.matches("[a-z0-9]([a-z0-9-]*[a-z0-9])?")) return false;
         return !s.matches("[0-9]+");
+    }
+
+    /** A real external host: a dotted domain that is not an in-cluster name or a raw IP. */
+    private static boolean isExternalHost(String host) {
+        if (host == null || !host.contains(".") || host.length() < 4 || host.length() > 253) return false;
+        if (!host.matches("[a-z0-9.-]+") || host.matches("[0-9.]+")) return false;
+        return !host.endsWith(".svc.cluster.local") && !host.endsWith(".cluster.local")
+                && !host.endsWith(".svc") && !host.endsWith(".local");
     }
 
     private static JSONObject parseObject(String text) {
