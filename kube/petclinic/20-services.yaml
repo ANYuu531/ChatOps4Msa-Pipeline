@@ -169,13 +169,6 @@ spec:
               value: docker
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
-            # The config-server's api-gateway config does not supply the Spring Cloud
-            # Gateway routes, so every /api/** request matches no route and the gateway
-            # 405s before reaching a backend. Inject the routes here (lb:// resolves via
-            # Eureka; StripPrefix=2 turns /api/customer/owners into /owners on the
-            # service) so the business edges can actually be exercised and observed.
-            - name: SPRING_APPLICATION_JSON
-              value: '{"spring":{"cloud":{"gateway":{"routes":[{"id":"customers","uri":"lb://customers-service","predicates":["Path=/api/customer/**"],"filters":["StripPrefix=2"]},{"id":"vets","uri":"lb://vets-service","predicates":["Path=/api/vet/**"],"filters":["StripPrefix=2"]},{"id":"visits","uri":"lb://visits-service","predicates":["Path=/api/visit/**"],"filters":["StripPrefix=2"]}]}}}}'
           resources:
             requests: { memory: "384Mi", cpu: "100m" }
             limits: { memory: "640Mi" }
