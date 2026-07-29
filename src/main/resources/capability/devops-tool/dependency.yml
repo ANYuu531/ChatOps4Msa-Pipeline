@@ -360,20 +360,24 @@ low_code:
 
         # ---- Egress: traffic LEAVING the mesh (external dependencies) ----
         # reporter="source" because an external host has no sidecar to report the
-        # call; destination_workload="unknown" marks a non-mesh callee.
+        # call. Filter on destination_app="unknown": an external callee has no app
+        # identity whether or not a ServiceEntry names it, whereas an in-mesh workload
+        # does. (Do NOT filter on destination_workload="unknown" — applying a
+        # ServiceEntry moves that label from "unknown" to the ServiceEntry's name, e.g.
+        # "github-com", which would silently drop the very edge we just attributed.)
         # Two queries: HTTP-level calls appear in istio_requests_total, but an
         # app-originated TLS call (plain https://) is an opaque TCP stream to Envoy
         # and appears ONLY in the TCP metric.
         - toolkit-prometheus-query:
             host_url: ${istio_prometheus_host_url}
             promql: |
-              sum by(source_workload,destination_service_name)(istio_requests_total{reporter="source",source_workload_namespace="${namespace}",destination_workload="unknown"})
+              sum by(source_workload,destination_service_name)(istio_requests_total{reporter="source",source_workload_namespace="${namespace}",destination_app="unknown"})
             assign: istio_egress_http_raw
 
         - toolkit-prometheus-query:
             host_url: ${istio_prometheus_host_url}
             promql: |
-              sum by(source_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="${namespace}",destination_workload="unknown"})
+              sum by(source_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="${namespace}",destination_app="unknown"})
             assign: istio_egress_tcp_raw
 
         # Keep the TCP egress raw JSON too: the dependency graph folds attributed
@@ -619,13 +623,13 @@ low_code:
         - toolkit-prometheus-query:
             host_url: ${istio_prometheus_host_url}
             promql: |
-              sum by(source_workload,destination_service_name)(istio_requests_total{reporter="source",source_workload_namespace="${namespace}",destination_workload="unknown"})
+              sum by(source_workload,destination_service_name)(istio_requests_total{reporter="source",source_workload_namespace="${namespace}",destination_app="unknown"})
             assign: istio_egress_http_raw
 
         - toolkit-prometheus-query:
             host_url: ${istio_prometheus_host_url}
             promql: |
-              sum by(source_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="${namespace}",destination_workload="unknown"})
+              sum by(source_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="${namespace}",destination_app="unknown"})
             assign: istio_egress_tcp_raw
 
         # Same as the initial run: keep the TCP egress raw for the deterministic graph.
