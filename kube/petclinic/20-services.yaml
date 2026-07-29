@@ -20,6 +20,10 @@ spec:
   template:
     metadata:
       labels: { app: customers-service, version: v1 }
+      annotations:
+        # Keep the Eureka control-plane port (8761) out of the mesh on the client side
+        # too — paired with discovery-server's excludeInboundPorts. See 10-config-discovery.yaml.
+        traffic.sidecar.istio.io/excludeOutboundPorts: "8761"
     spec:
       containers:
         - name: customers-service
@@ -31,6 +35,15 @@ spec:
               value: docker
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
+            # Register in Eureka by the Kubernetes Service name, NOT the pod IP.
+            # With prefer-ip-address=true the services advertised their pod IPs, so
+            # api-gateway's `lb://` resolution and the registry-fetch redirect dialed
+            # raw pod IPs — bypassing the Service VIP, so Istio dropped them to the
+            # passthrough cluster and returned 403 (empty registry -> /api/** 405/500).
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "false"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: customers-service
           resources:
             requests: { memory: "320Mi", cpu: "100m" }
             limits: { memory: "512Mi" }
@@ -66,6 +79,9 @@ spec:
   template:
     metadata:
       labels: { app: visits-service, version: v1 }
+      annotations:
+        # See customers-service: Eureka port out of the mesh on the client side.
+        traffic.sidecar.istio.io/excludeOutboundPorts: "8761"
     spec:
       containers:
         - name: visits-service
@@ -77,6 +93,11 @@ spec:
               value: docker
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
+            # See customers-service: register by Service name so mesh routing/mTLS works.
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "false"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: visits-service
           resources:
             requests: { memory: "320Mi", cpu: "100m" }
             limits: { memory: "512Mi" }
@@ -112,6 +133,9 @@ spec:
   template:
     metadata:
       labels: { app: vets-service, version: v1 }
+      annotations:
+        # See customers-service: Eureka port out of the mesh on the client side.
+        traffic.sidecar.istio.io/excludeOutboundPorts: "8761"
     spec:
       containers:
         - name: vets-service
@@ -123,6 +147,11 @@ spec:
               value: docker
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
+            # See customers-service: register by Service name so mesh routing/mTLS works.
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "false"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: vets-service
           resources:
             requests: { memory: "320Mi", cpu: "100m" }
             limits: { memory: "512Mi" }
@@ -158,6 +187,11 @@ spec:
   template:
     metadata:
       labels: { app: api-gateway, version: v1 }
+      annotations:
+        # See customers-service: Eureka port out of the mesh on the client side.
+        # api-gateway is the one that visibly breaks without this (it fans out to the
+        # business services via lb://, so an empty registry means every /api/** route 405s).
+        traffic.sidecar.istio.io/excludeOutboundPorts: "8761"
     spec:
       containers:
         - name: api-gateway
@@ -169,6 +203,11 @@ spec:
               value: docker
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
+            # See customers-service: register by Service name so mesh routing/mTLS works.
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "false"
+            - name: EUREKA_INSTANCE_HOSTNAME
+              value: api-gateway
           resources:
             requests: { memory: "384Mi", cpu: "100m" }
             limits: { memory: "640Mi" }
