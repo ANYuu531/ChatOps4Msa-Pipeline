@@ -636,6 +636,39 @@ public class DependencyGraphTest {
         assertNotNull(edge(g, "api-gateway", "genai-service"));
     }
 
+    // ---- compose depends_on -> control-plane edges ----
+
+    @Test
+    void composeDependsOnDrawsControlPlaneEdgesAndMergesWithRuntime() {
+        // Runtime observed only api-gateway->config-server this window (the other services'
+        // config fetches were not seen — e.g. config-server was restarted, resetting its
+        // inbound metrics). Compose still declares every service's dependency on it.
+        String runtime = """
+                {"status":"success","data":{"result":[
+                  {"metric":{"source_workload":"api-gateway","destination_workload":"config-server"},"value":[1,"20"]}
+                ]}}""";
+        String code = """
+                {"repo":"x/y","failed":false,"edges":[
+                  {"section":"compose-dependency","fields":{"source_service":"api-gateway","target_service":"config-server"},"file":"docker-compose.yml","line":-1},
+                  {"section":"compose-dependency","fields":{"source_service":"customers-service","target_service":"config-server"},"file":"docker-compose.yml","line":-1},
+                  {"section":"compose-dependency","fields":{"source_service":"customers-service","target_service":"discovery-server"},"file":"docker-compose.yml","line":-1}
+                ]}""";
+        DependencyGraph g = RuntimeGraphBuilder.fromIstioRequests(runtime, "petclinic");
+        CodeGraphMerger.merge(g, code, "x/y");
+
+        // observed AND declared -> solid, carries both provenance
+        DependencyGraph.Edge apiToCfg = edge(g, "api-gateway", "config-server");
+        assertNotNull(apiToCfg);
+        assertTrue(apiToCfg.runtimeObserved);
+        assertTrue(apiToCfg.provenance.contains(DependencyGraph.PROV_CODE));
+        // only compose knows this one -> present but dashed (config-server stays a hub
+        // even though its runtime metric for this fetch is missing)
+        DependencyGraph.Edge custToCfg = edge(g, "customers-service", "config-server");
+        assertNotNull(custToCfg);
+        assertFalse(custToCfg.runtimeObserved);
+        assertNotNull(edge(g, "customers-service", "discovery-server"));
+    }
+
     // ---- egress fold (runtime external edges from TCP telemetry) ----
 
     /** config-server opens TLS to github.com; the passthrough/unknown series are opaque noise. */
