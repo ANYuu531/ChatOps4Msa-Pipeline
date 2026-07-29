@@ -5,6 +5,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyze
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DocGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DotEmitter;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphNormalizer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.K8sGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.MermaidEmitter;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.RuntimeGraphBuilder;
@@ -570,6 +571,69 @@ public class DependencyGraphTest {
         assertFalse(r.hasEdges());
         assertEquals(0, r.percent());
         assertTrue(r.uncovered.isEmpty());
+    }
+
+    // ---- graph normalization (alias collapse + phantom drop) ----
+
+    @Test
+    void renameNodeMergesAliasEdgesOntoRealWorkload() {
+        DependencyGraph g = new DependencyGraph("ns");
+        g.addNode("api-gateway", DependencyGraph.KIND_SERVICE);
+        g.addNode("customers-service", DependencyGraph.KIND_SERVICE);
+        g.addNode("api-gateway-controller", DependencyGraph.KIND_SERVICE);
+        g.addEdge("api-gateway", "customers-service", "sync-http",
+                DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 10, "runtime");
+        g.addEdge("api-gateway-controller", "customers-service", "sync-http",
+                DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "code: X.java:3");
+
+        g.renameNode("api-gateway-controller", "api-gateway");
+
+        assertNull(node(g, "api-gateway-controller"));
+        DependencyGraph.Edge e = edge(g, "api-gateway", "customers-service");
+        assertNotNull(e);
+        assertTrue(e.runtimeObserved);                                   // stays solid
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_RUNTIME));
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_CODE));    // alias evidence folded in
+        assertEquals(1, g.getEdges().stream()
+                .filter(x -> x.source.equals("api-gateway") && x.target.equals("customers-service"))
+                .count());                                              // merged, not duplicated
+    }
+
+    @Test
+    void normalizeDropsPhantomsAndCollapsesAliasesButKeepsRealNodes() {
+        DependencyGraph g = new DependencyGraph("petclinic");
+        g.addNode("api-gateway", DependencyGraph.KIND_SERVICE).deployed = Boolean.TRUE;
+        g.addNode("customers-service", DependencyGraph.KIND_SERVICE).deployed = Boolean.TRUE;
+        g.addNode("discovery-server", DependencyGraph.KIND_SERVICE).deployed = Boolean.TRUE;
+        g.addNode("api-gateway-controller", DependencyGraph.KIND_SERVICE).deployed = Boolean.FALSE;
+        g.addNode("resilience4j", DependencyGraph.KIND_SERVICE).deployed = Boolean.FALSE;
+        g.addNode("all-services", DependencyGraph.KIND_SERVICE).deployed = Boolean.FALSE;
+        g.addNode("genai-service", DependencyGraph.KIND_SERVICE).deployed = Boolean.FALSE;
+
+        g.addEdge("api-gateway-controller", "customers-service", "sync-http",
+                DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, null);
+        g.addEdge("api-gateway", "resilience4j", "sync-http",
+                DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, null);
+        g.addEdge("all-services", "discovery-server", "sync-http",
+                DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, null);
+        g.addEdge("api-gateway", "genai-service", "sync-http",
+                DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, null);
+
+        GraphNormalizer.normalize(g);
+
+        // framework-lib and grouping pseudo-nodes gone, with their edges
+        assertNull(node(g, "resilience4j"));
+        assertNull(node(g, "all-services"));
+        assertTrue(g.getEdges().stream().noneMatch(e -> e.target.equals("resilience4j")));
+        assertTrue(g.getEdges().stream().noneMatch(e -> e.source.equals("all-services")));
+        // alias collapsed onto the real workload (edge preserved on the real node)
+        assertNull(node(g, "api-gateway-controller"));
+        assertNotNull(edge(g, "api-gateway", "customers-service"));
+        // real nodes untouched: a live service, control-plane, and a legit undeployed service
+        assertNotNull(node(g, "api-gateway"));
+        assertNotNull(node(g, "discovery-server"));
+        assertNotNull(node(g, "genai-service"));
+        assertNotNull(edge(g, "api-gateway", "genai-service"));
     }
 
     private static DependencyGraph.Node node(DependencyGraph g, String id) {

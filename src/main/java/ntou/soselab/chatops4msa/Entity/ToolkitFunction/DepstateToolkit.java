@@ -6,6 +6,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisSta
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CodeGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyzer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphNormalizer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.K8sGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.RuntimeGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DiscordService.JDAService;
@@ -163,6 +164,9 @@ public class DepstateToolkit extends ToolkitFunction {
         // objective — otherwise the loop chases traffic it can never send. Matches how
         // the report path builds the graph; a no-op when the k8s stage is absent.
         K8sGraphBuilder.enrich(graph, state.stage(DependencyAnalysisStateStore.STAGE_K8S_RAW));
+        // Same alias-collapse / phantom-drop the report path applies, so the resume
+        // objective is stated against real workloads, not build-time noise.
+        GraphNormalizer.normalize(graph);
 
         CoverageAnalyzer.Report coverage = CoverageAnalyzer.analyze(graph);
         if (!coverage.hasEdges()) return "";
