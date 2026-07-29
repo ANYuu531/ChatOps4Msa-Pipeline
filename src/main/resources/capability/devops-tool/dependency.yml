@@ -376,6 +376,13 @@ low_code:
               sum by(source_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="${namespace}",destination_workload="unknown"})
             assign: istio_egress_tcp_raw
 
+        # Keep the TCP egress raw JSON too: the dependency graph folds attributed
+        # external hosts (a ServiceEntry names them, e.g. github.com) in as
+        # runtime-observed edges deterministically, alongside the LLM prose below.
+        - toolkit-depstate-put:
+            stage: egress_raw
+            value: ${istio_egress_tcp_raw}
+
         - toolkit-llm-call:
             prompt: |
               ## Query 1 - HTTP egress (istio_requests_total, reporter=source, namespace=${namespace})
@@ -620,6 +627,13 @@ low_code:
             promql: |
               sum by(source_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="${namespace}",destination_workload="unknown"})
             assign: istio_egress_tcp_raw
+
+        # Same as the initial run: keep the TCP egress raw for the deterministic graph.
+        # After a ServiceEntry is applied and traffic re-driven, the once-opaque host is
+        # now attributed here, so the graph's external edge flips dashed -> solid.
+        - toolkit-depstate-put:
+            stage: egress_raw
+            value: ${istio_egress_tcp_raw}
 
         - toolkit-llm-call:
             prompt: |

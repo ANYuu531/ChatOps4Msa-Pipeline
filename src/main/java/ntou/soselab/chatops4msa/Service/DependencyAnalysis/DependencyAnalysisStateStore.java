@@ -57,6 +57,12 @@ public class DependencyAnalysisStateStore {
      */
     public static final String STAGE_TRAFFIC_RAW = "traffic_raw";
     public static final String STAGE_EGRESS = "egress";
+    /**
+     * Raw Prometheus JSON of the egress (external-dependency) query, kept alongside the
+     * {@link #STAGE_EGRESS} LLM prose so the dependency graph can fold attributed
+     * external edges (a ServiceEntry-named host like github.com) in deterministically.
+     */
+    public static final String STAGE_EGRESS_RAW = "egress_raw";
     public static final String STAGE_HEALTH = "health";
     /** The journey that was driven, and how it went — refined across resumes to close coverage gaps. */
     public static final String STAGE_TRAFFIC_SCENARIO = "traffic_scenario";
