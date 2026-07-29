@@ -1,0 +1,34 @@
+# Egress attribution for the one external dependency the code declares: the
+# config-server clones its config repo from github.com over HTTPS on startup (and
+# git-fetches it on every client config request). The app originates the TLS itself,
+# so with Istio's default ALLOW_ANY the traffic works but leaves the mesh as an
+# opaque PassthroughCluster connection — visible only in istio_tcp_* metrics with NO
+# hostname (the dependency pipeline reported it as "config-server -> (unidentified
+# external target), 197 connections opened").
+#
+# This ServiceEntry declares github.com:443 so Istio attributes those connections to
+# a named host, turning the unidentified egress into a real, labelled external edge.
+# It only ADDS attribution — outboundTrafficPolicy stays ALLOW_ANY, so nothing that
+# worked before is blocked.
+#
+#   kubectl apply -f 40-egress-serviceentry.yaml
+#   kubectl -n petclinic rollout restart deploy/config-server   # force a fresh clone so the attributed connection is made
+#
+# Evidence: spring-petclinic-config-server/src/main/resources/application.yml
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: github-com
+  namespace: petclinic
+  annotations:
+    chatops4msa.io/evidence: "spring-petclinic-config-server/src/main/resources/application.yml"
+spec:
+  hosts:
+    - github.com
+  ports:
+    - number: 443
+      name: https
+      protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS

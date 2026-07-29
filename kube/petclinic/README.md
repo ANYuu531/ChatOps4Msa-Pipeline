@@ -45,6 +45,11 @@ kubectl -n petclinic rollout status deploy/api-gateway --timeout=300s
 
 # 4. ingress
 kubectl apply -f 30-gateway.yaml
+
+# 5. egress attribution — name config-server's github.com pull so Istio can see it
+#    (without this it shows up only as an unidentified PassthroughCluster TCP edge)
+kubectl apply -f 40-egress-serviceentry.yaml
+kubectl -n petclinic rollout restart deploy/config-server   # fresh clone -> attributed connection
 ```
 
 ## Verify (the gate before running the analysis)
