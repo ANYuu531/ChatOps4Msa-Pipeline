@@ -114,6 +114,11 @@ public class DependencyReportService {
             String raw = state.stage(DependencyAnalysisStateStore.STAGE_TRAFFIC_RAW);
             DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(raw, state.namespace);
 
+            // Fold in runtime-observed EXTERNAL edges from the egress telemetry: an
+            // attributed external host (a ServiceEntry exists, e.g. github.com) merges
+            // onto the code-declared external edge and upgrades it from dashed to solid.
+            RuntimeGraphBuilder.mergeIstioEgress(graph, state.stage(DependencyAnalysisStateStore.STAGE_EGRESS_RAW));
+
             // Enrich with code edges: deterministic first, LLM only for the residue.
             List<CodeGraphMerger.Unresolved> residue = CodeGraphMerger.merge(
                     graph,

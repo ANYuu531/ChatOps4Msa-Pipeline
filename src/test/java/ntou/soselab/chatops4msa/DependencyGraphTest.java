@@ -636,6 +636,62 @@ public class DependencyGraphTest {
         assertNotNull(edge(g, "api-gateway", "genai-service"));
     }
 
+    // ---- egress fold (runtime external edges from TCP telemetry) ----
+
+    /** config-server opens TLS to github.com; the passthrough/unknown series are opaque noise. */
+    private static final String PETCLINIC_EGRESS_TCP = """
+            {
+              "status": "success",
+              "data": {
+                "resultType": "vector",
+                "result": [
+                  {"metric": {"source_workload": "config-server", "destination_service_name": "github.com"}, "value": [1, "197"]},
+                  {"metric": {"source_workload": "config-server", "destination_service_name": "unknown"}, "value": [1, "40"]},
+                  {"metric": {"source_workload": "config-server", "destination_service_name": "PassthroughCluster"}, "value": [1, "12"]}
+                ]
+              }
+            }
+            """;
+
+    @Test
+    void egressFoldsAttributedExternalHostAsRuntimeEdgeAndSkipsPassthrough() {
+        DependencyGraph g = new DependencyGraph("petclinic");
+        RuntimeGraphBuilder.mergeIstioEgress(g, PETCLINIC_EGRESS_TCP);
+
+        DependencyGraph.Edge e = edge(g, "config-server", "github.com");
+        assertNotNull(e);
+        assertTrue(e.runtimeObserved);
+        assertEquals("external", e.type);
+        assertEquals(DependencyGraph.KIND_EXTERNAL, node(g, "github.com").kind);
+        assertEquals(197, e.count);
+        // the opaque passthrough / unknown series are not drawn as edges
+        assertEquals(1, g.getEdges().size());
+        assertNull(node(g, "unknown"));
+        assertNull(node(g, "PassthroughCluster"));
+    }
+
+    @Test
+    void egressUpgradesCodeOnlyExternalEdgeToRuntimeObserved() {
+        // Start with the code-declared, dashed external edge (as the code extractor emits).
+        DependencyGraph g = new DependencyGraph("petclinic");
+        g.addNode("config-server", DependencyGraph.KIND_SERVICE);
+        g.addNode("github.com", DependencyGraph.KIND_EXTERNAL);
+        g.addEdge("config-server", "github.com", "external",
+                DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "code: application.yml");
+        assertFalse(edge(g, "config-server", "github.com").runtimeObserved);
+
+        RuntimeGraphBuilder.mergeIstioEgress(g, PETCLINIC_EGRESS_TCP);
+
+        DependencyGraph.Edge e = edge(g, "config-server", "github.com");
+        assertTrue(e.runtimeObserved);                                   // dashed -> solid
+        assertEquals(DependencyGraph.CONF_OBSERVED, e.confidence);       // observed outranks documented
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_CODE));
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_RUNTIME)); // confirmed by both
+        assertEquals(1, g.getEdges().stream()
+                .filter(x -> x.source.equals("config-server") && x.target.equals("github.com"))
+                .count());                                              // merged, not duplicated
+    }
+
     private static DependencyGraph.Node node(DependencyGraph g, String id) {
         return g.getNodes().stream().filter(n -> n.id.equals(id)).findFirst().orElse(null);
     }
