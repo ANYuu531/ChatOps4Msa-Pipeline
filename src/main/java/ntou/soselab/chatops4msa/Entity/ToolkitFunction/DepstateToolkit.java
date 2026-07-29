@@ -6,6 +6,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisSta
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CodeGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyzer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.K8sGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.RuntimeGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DiscordService.JDAService;
 import ntou.soselab.chatops4msa.Service.DiscordService.UserContextHolder;
@@ -157,6 +158,11 @@ public class DepstateToolkit extends ToolkitFunction {
                 state.stage(DependencyAnalysisStateStore.STAGE_TRAFFIC_RAW), state.namespace);
         CodeGraphMerger.merge(graph,
                 state.stage(DependencyAnalysisStateStore.STAGE_CODE_EDGES), state.repoName);
+        // Mark deployment status so CoverageAnalyzer can drop undeployed/phantom edges
+        // (a framework name, a doc alias, an undeployed service) from the resume
+        // objective — otherwise the loop chases traffic it can never send. Matches how
+        // the report path builds the graph; a no-op when the k8s stage is absent.
+        K8sGraphBuilder.enrich(graph, state.stage(DependencyAnalysisStateStore.STAGE_K8S_RAW));
 
         CoverageAnalyzer.Report coverage = CoverageAnalyzer.analyze(graph);
         if (!coverage.hasEdges()) return "";

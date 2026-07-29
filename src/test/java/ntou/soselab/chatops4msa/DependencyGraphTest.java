@@ -515,15 +515,53 @@ public class DependencyGraphTest {
     // ---- runtime traffic coverage (deterministic) ----
 
     @Test
-    void coverageCountsServiceSyncEdgesOnly() {
+    void coverageCountsDrivableBusinessEdgesOnly() {
         CoverageAnalyzer.Report r = CoverageAnalyzer.analyze(mergedGraph());
-        // 7 observed service/gateway sync edges + 1 dashed (visits->config-server);
-        // the customers-db / vets-db edges are db-type and excluded.
-        assertEquals(8, r.total);
-        assertEquals(7, r.observed);
-        assertEquals(88, r.percent());
-        assertTrue(r.uncovered.contains("visits-service -> config-server"));
+        // Drivable business sync edges: istio-ingressgateway->api-gateway and
+        // api-gateway->{customers,vets,visits} — all observed. The three ->discovery-server
+        // edges and visits->config-server are control-plane (excluded); the *-db edges are
+        // db-type (excluded). So coverage is a clean 4/4.
+        assertEquals(4, r.total);
+        assertEquals(4, r.observed);
+        assertEquals(100, r.percent());
+        assertTrue(r.uncovered.isEmpty());
+        assertFalse(r.uncovered.stream().anyMatch(s -> s.contains("discovery-server")));
+        assertFalse(r.uncovered.stream().anyMatch(s -> s.contains("config-server")));
         assertFalse(r.uncovered.stream().anyMatch(s -> s.contains("customers-db")));
+    }
+
+    @Test
+    void coverageExcludesControlPlanePhantomAndUndeployedEdges() {
+        DependencyGraph g = new DependencyGraph("petclinic");
+        g.addNode("api-gateway", DependencyGraph.KIND_SERVICE).deployed = Boolean.TRUE;
+        g.addNode("customers-service", DependencyGraph.KIND_SERVICE).deployed = Boolean.TRUE;
+        g.addNode("visits-service", DependencyGraph.KIND_SERVICE).deployed = Boolean.TRUE;
+        // control-plane: deployed, so ONLY the name filter can drop these
+        g.addNode("discovery-server", DependencyGraph.KIND_SERVICE).deployed = Boolean.TRUE;
+        g.addNode("config-server", DependencyGraph.KIND_SERVICE).deployed = Boolean.TRUE;
+        // a framework-library phantom and an undeployed real service: dropped by deployed=FALSE
+        g.addNode("resilience4j", DependencyGraph.KIND_SERVICE).deployed = Boolean.FALSE;
+        g.addNode("genai-service", DependencyGraph.KIND_SERVICE).deployed = Boolean.FALSE;
+
+        g.addEdge("api-gateway", "customers-service", "sync-http",
+                DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 12, null);   // covered
+        g.addEdge("api-gateway", "visits-service", "sync-http",
+                DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, null);     // uncovered, real
+        g.addEdge("customers-service", "discovery-server", "sync-http",
+                DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 5, null);     // control-plane
+        g.addEdge("visits-service", "config-server", "sync-http",
+                DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, null);     // control-plane
+        g.addEdge("api-gateway", "resilience4j", "sync-http",
+                DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, null);     // phantom lib
+        g.addEdge("api-gateway", "genai-service", "sync-http",
+                DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, null);     // undeployed
+
+        CoverageAnalyzer.Report r = CoverageAnalyzer.analyze(g);
+        // Only api-gateway->{customers-service, visits-service} are drivable business edges.
+        assertEquals(2, r.total);
+        assertEquals(1, r.observed);
+        assertEquals(50, r.percent());
+        assertEquals(List.of("api-gateway -> visits-service"), r.uncovered);
     }
 
     @Test
