@@ -41,9 +41,49 @@ public class ConfigExtractor {
                 } else {
                     Object loaded = new Yaml().load(Files.newBufferedReader(file, StandardCharsets.UTF_8));
                     flatten("", loaded, relative, ledger);
+                    // docker-compose declares each service's startup dependencies
+                    // (config-server, discovery-server, …) as depends_on — the one
+                    // structured place a "service -> control-plane" edge is stated when
+                    // the client-side URLs are externalised to a config repo.
+                    if (isCompose) extractComposeDependsOn(loaded, relative, ledger);
                 }
             } catch (Exception ignored) {
                 // unreadable or malformed config: not worth failing the analysis over
+            }
+        }
+    }
+
+    /**
+     * Emits a {@code compose-dependency} edge for every {@code services.<svc>.depends_on}
+     * entry: {@code source_service -> target_service}. Both the list form
+     * ({@code depends_on: [config-server, discovery-server]}) and the map/long form
+     * ({@code depends_on: {config-server: {condition: service_healthy}}}) are handled.
+     * This is what keeps config-server/discovery-server connected in the graph even when
+     * the runtime metrics for those fetches are momentarily absent (e.g. after a restart),
+     * since every service declares the dependency here.
+     */
+    private void extractComposeDependsOn(Object loaded, String relative, EdgeLedger ledger) {
+        if (!(loaded instanceof Map<?, ?> root)) return;
+        if (!(root.get("services") instanceof Map<?, ?> services)) return;
+
+        for (Map.Entry<?, ?> entry : services.entrySet()) {
+            String service = String.valueOf(entry.getKey()).trim();
+            if (service.isEmpty() || !(entry.getValue() instanceof Map<?, ?> config)) continue;
+            Object dependsOn = config.get("depends_on");
+
+            java.util.List<String> targets = new java.util.ArrayList<>();
+            if (dependsOn instanceof List<?> list) {
+                for (Object t : list) targets.add(String.valueOf(t).trim());
+            } else if (dependsOn instanceof Map<?, ?> map) {
+                for (Object k : map.keySet()) targets.add(String.valueOf(k).trim());
+            }
+
+            for (String target : targets) {
+                if (target.isEmpty() || target.equals(service)) continue;
+                Map<String, String> fields = new LinkedHashMap<>();
+                fields.put("source_service", service);
+                fields.put("target_service", target);
+                ledger.add("compose-dependency", fields, relative, -1, "High (docker-compose depends_on)");
             }
         }
     }

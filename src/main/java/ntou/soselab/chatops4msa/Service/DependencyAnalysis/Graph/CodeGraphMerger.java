@@ -196,6 +196,19 @@ public class CodeGraphMerger {
         // not an edge with a target of their own.
         if ("http-server".equals(section) || "jpa".equals(section)) return;
 
+        // docker-compose depends_on names BOTH endpoints explicitly (source_service ->
+        // target_service), so the source comes from the field, not the file's module.
+        // This is what draws service -> config-server / discovery-server even when the
+        // client-side URLs live in an externalised config repo the scan never sees.
+        if ("compose-dependency".equals(section)) {
+            String src = resolveComposeService(fields.optString("source_service", ""));
+            String tgt = resolveComposeService(fields.optString("target_service", ""));
+            if (src != null && tgt != null && !src.equals(tgt)) {
+                addCodeEdge(src, tgt, edgeType("", DependencyGraph.classifyKind(tgt)), file, line);
+            }
+            return;
+        }
+
         String source = resolveSource(file);
 
         // --- asynchronous: the other endpoint is a broker destination (its own node) ---
@@ -318,6 +331,19 @@ public class CodeGraphMerger {
     }
 
     // ---------- name normalisation ----------
+
+    /**
+     * Resolves a docker-compose service name onto the graph vocabulary: an existing
+     * workload if known, otherwise the cleaned name introduced as a new node — a service
+     * declared in compose but not observed at runtime (e.g. {@code tracing-server}) is a
+     * real dependency, drawn dashed. Null only for a blank or implausible name.
+     */
+    private String resolveComposeService(String raw) {
+        String node = matchNode(raw);
+        if (node != null) return node;
+        String label = cleanLabel(raw);
+        return (label != null && isPlausibleName(label) && !SOURCE_STOP.contains(label)) ? label : null;
+    }
 
     /** Resolve a host/name to a known workload id, or null. Deterministic only. */
     private String matchNode(String candidate) {
