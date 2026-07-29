@@ -7,6 +7,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyze
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DocGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DotEmitter;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphNormalizer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphvizRenderer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.K8sGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.MermaidEmitter;
@@ -138,6 +139,12 @@ public class DependencyReportService {
             // greyed/dashed, and a live one carries its image/replicas/created date.
             // Deterministic; a no-op on an old checkpoint without the raw k8s stage.
             K8sGraphBuilder.enrich(graph, state.stage(DependencyAnalysisStateStore.STAGE_K8S_RAW));
+
+            // Final clean-up: collapse code/doc aliases (api-gateway-controller -> api-gateway)
+            // and drop framework-library / grouping pseudo-nodes (resilience4j, jolokia,
+            // all-services, …) that are not real workloads. Runs after k8s enrichment so it
+            // only ever touches undeployed nodes, never a live service.
+            GraphNormalizer.normalize(graph);
 
             if (graph.isEmpty()) {
                 // No runtime edges and nothing resolvable from code (or an old
