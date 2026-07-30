@@ -44,6 +44,16 @@ grep -rl "LoadBalanced" --include="*.java" . | while read -r f; do
   perl -i -ne 'print unless /^\s*\@LoadBalanced\s*$/ or /import org\.springframework\.cloud\.client\.loadbalancer\.LoadBalanced;/' "$f"
 done
 
+echo "==> 3b/8 FallbackController: org.apache.http.HttpStatus came in transitively via eureka-client"
+# Removing eureka-client also removes the Apache HttpClient it dragged in, so switch
+# this one use (SC_SERVICE_UNAVAILABLE = 503) to Spring's own HttpStatus enum.
+grep -rl "org.apache.http.HttpStatus" --include="*.java" . | while read -r f; do
+  perl -i -pe '
+    s{import org\.apache\.http\.HttpStatus;}{import org.springframework.http.HttpStatus;};
+    s{HttpStatus\.SC_SERVICE_UNAVAILABLE}{HttpStatus.SERVICE_UNAVAILABLE}g;
+  ' "$f"
+done
+
 echo "==> 4/8  remove @EnableDiscoveryClient annotation + import from every service"
 grep -rl "EnableDiscoveryClient" --include="*.java" . | while read -r f; do
   perl -i -ne 'print unless /EnableDiscoveryClient/' "$f"

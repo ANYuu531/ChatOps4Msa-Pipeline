@@ -34,6 +34,7 @@ Removing Eureka *in the code* makes the two agree:
 | 2 | bare `http://<service>/` clients get explicit k8s ports | any `*.java` (api-gateway `CustomersServiceClient`/`VisitsServiceClient`, genai `AIDataProvider`) |
 | 3 | drop `@LoadBalanced` (no LB client without discovery) | any `*.java` (api-gateway `ApiGatewayApplication`, genai `AIBeanConfiguration`) |
 | 4 | drop `@EnableDiscoveryClient` + import | every service `*Application.java` |
+| 3b | `FallbackController` → Spring `HttpStatus` (its `org.apache.http` came transitively via eureka-client) | api-gateway `FallbackController.java` |
 | 5 | remove `spring-cloud-starter-netflix-eureka-client` | every service `pom.xml` |
 | 6 | delete the `discovery-server` module | parent `pom.xml` + module dir |
 | 7 | remove discovery-server service + its `depends_on` | `docker-compose.yml` |
