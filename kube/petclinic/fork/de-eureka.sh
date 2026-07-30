@@ -27,15 +27,22 @@ perl -i -pe '
   s{lb://genai-service}{http://genai-service:8084};
 ' "$GW_YML"
 
-echo "==> 2/8  api-gateway aggregation clients: add k8s ports (no more lb resolution)"
-perl -i -pe 's{http://customers-service/owners}{http://customers-service:8081/owners}' \
-  spring-petclinic-api-gateway/src/main/java/org/springframework/samples/petclinic/api/application/CustomersServiceClient.java
-perl -i -pe 's{http://visits-service/}{http://visits-service:8082/}' \
-  spring-petclinic-api-gateway/src/main/java/org/springframework/samples/petclinic/api/application/VisitsServiceClient.java
+echo "==> 2/8  service clients: add k8s ports to bare Service hostnames (no lb resolution left)"
+# Any @LoadBalanced client that dials http://<service>/ (no port) — the api-gateway
+# aggregation clients AND genai's AIDataProvider — needs the real k8s port now.
+grep -rl -e "http://customers-service/" -e "http://vets-service/" -e "http://visits-service/" \
+  --include="*.java" . | while read -r f; do
+  perl -i -pe '
+    s{http://customers-service/}{http://customers-service:8081/}g;
+    s{http://vets-service/}{http://vets-service:8083/}g;
+    s{http://visits-service/}{http://visits-service:8082/}g;
+  ' "$f"
+done
 
-echo "==> 3/8  drop @LoadBalanced (no load-balancer client without discovery)"
-perl -i -ne 'print unless /^\s*\@LoadBalanced\s*$/ or /import org\.springframework\.cloud\.client\.loadbalancer\.LoadBalanced;/' \
-  spring-petclinic-api-gateway/src/main/java/org/springframework/samples/petclinic/api/ApiGatewayApplication.java
+echo "==> 3/8  drop @LoadBalanced everywhere (no load-balancer client without discovery)"
+grep -rl "LoadBalanced" --include="*.java" . | while read -r f; do
+  perl -i -ne 'print unless /^\s*\@LoadBalanced\s*$/ or /import org\.springframework\.cloud\.client\.loadbalancer\.LoadBalanced;/' "$f"
+done
 
 echo "==> 4/8  remove @EnableDiscoveryClient annotation + import from every service"
 grep -rl "EnableDiscoveryClient" --include="*.java" . | while read -r f; do
