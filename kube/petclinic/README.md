@@ -21,7 +21,7 @@ Istio names each edge by workload, so the Deployment names ARE the node names:
 
 | workload | port | role | image |
 |---|---|---|---|
-| `config-server` | 8888 | Spring Cloud Config (clones config from GitHub) | upstream (Docker Hub) |
+| `config-server` | 8888 | Spring Cloud Config (clones config from GitHub) | **fork (local)** |
 | `api-gateway` | 8080 | Spring Cloud Gateway — the entry point | **fork (local)** |
 | `customers-service` | 8081 | business service | **fork (local)** |
 | `vets-service` | 8083 | business service | **fork (local)** |
@@ -36,11 +36,12 @@ k3s does **not** run pods from the Docker daemon's image store. A plain
 Build, then import each image into k3s' containerd:
 
 ```bash
-# in your fork checkout (after running fork/de-eureka.sh — see fork/README.md)
+# in your fork checkout (after running fork/de-eureka.sh — see fork/README.md).
+# Needs a JDK 17 (the v3.4.1 tree targets Java 17; older JDKs fail the enforcer).
 ./mvnw clean install -P buildDocker -Ddocker.image.prefix=petclinic-k8s -DskipTests
 
-# import the four app images into k3s' containerd (config-server stays upstream)
-for svc in api-gateway customers-service vets-service visits-service; do
+# import the five images this cluster runs into k3s' containerd
+for svc in config-server api-gateway customers-service vets-service visits-service; do
   docker save petclinic-k8s/spring-petclinic-$svc:latest \
     | sudo k3s ctr images import -
 done
@@ -112,9 +113,9 @@ auth_hint = none
 
 ## Notes
 
-- **config-server is unchanged from upstream** — the fork does not touch it, so
-  it is pulled from Docker Hub and still needs outbound internet to clone its
-  config from GitHub. Only the four app images are local/forked.
+- **config-server is code-unchanged** but is still built+imported locally from the
+  same v3.4.1 tree (imagePullPolicy: Never), so all five services are one version.
+  It still needs outbound internet at runtime to clone its config from GitHub.
 - **config repo is unchanged too.** Its leftover `eureka.*` properties (and the
   services' test-only `eureka.client.enabled: false`) are inert once the
   eureka-client dependency is gone — nothing binds them.

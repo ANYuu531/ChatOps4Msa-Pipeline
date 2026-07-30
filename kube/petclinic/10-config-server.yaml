@@ -12,8 +12,10 @@
 #
 # config-server clones its config from GitHub on startup, so the cluster machine
 # must have outbound internet. If it cannot reach GitHub it will not become Ready.
-# This image is UNCHANGED from upstream (the fork does not touch config-server),
-# so it is pulled from Docker Hub as usual — only the four app images are local.
+# The fork does not change config-server's code, but we still build+import it from
+# the SAME v3.4.1 tree as the app services (imagePullPolicy: Never) so every service
+# is one consistent version — no mixing with whatever springcommunity/*:latest is on
+# Docker Hub today.
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -31,7 +33,8 @@ spec:
     spec:
       containers:
         - name: config-server
-          image: springcommunity/spring-petclinic-config-server:latest
+          image: petclinic-k8s/spring-petclinic-config-server:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8888
           env:
