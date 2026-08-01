@@ -464,6 +464,45 @@ public class DependencyGraphTest {
     }
 
     @Test
+    void persistenceSignalIsNotJpaSpecific() {
+        // The "really used" proof is language-neutral: a Python service that emits a
+        // `persistence` marker (SQLAlchemy/Django) must promote its db exactly like a
+        // Java @Entity does. This exercises CodeGraphMerger.PERSISTENCE_SECTIONS rather
+        // than the old hardcoded "jpa" — the ORM interface generalisation.
+        DependencyGraph g = RuntimeGraphBuilder.fromIstioRequests("""
+                {"status":"success","data":{"resultType":"vector","result":[
+                  {"metric":{"source_workload":"istio-ingressgateway","destination_workload":"orders-service"},"value":[1,"10"]}
+                ]}}
+                """, "shop");
+        String code = """
+                {"repo":"acme/shop","failed":false,"edges":[
+                  {"section":"config","fields":{"key":"DATABASE_URL","value":"postgresql://orders-db:5432/orders"},"file":"orders-service/app/db.py","line":3,"confidence":"High"},
+                  {"section":"persistence","fields":{"model":"Order"},"file":"orders-service/app/models.py","line":11,"confidence":"High"}
+                ]}
+                """;
+        CodeGraphMerger.merge(g, code, "acme/shop");
+        DependencyGraph.Edge db = edge(g, "orders-service", "orders-db");
+        assertNotNull(db);
+        assertEquals("db", db.type);
+        // promoted to really-used (documented), not left as declared-only (inferred)
+        assertEquals(DependencyGraph.CONF_DOCUMENTED, db.confidence);
+    }
+
+    @Test
+    void persistenceMarkerAddsNoEdgeOfItsOwn() {
+        // A persistence marker is a signal, not a dependency edge — it has no target,
+        // so (like an http-server or jpa row) it must not add an edge to the graph.
+        DependencyGraph g = runtimeGraph();
+        int before = g.getEdges().size();
+        CodeGraphMerger.merge(g, """
+                {"repo":"r","failed":false,"edges":[
+                  {"section":"persistence","fields":{"model":"Owner"},"file":"customers-service/app/models.py","line":1,"confidence":"High"}
+                ]}
+                """, "r");
+        assertEquals(before, g.getEdges().size());
+    }
+
+    @Test
     void docMergerAlignsDisplayNameAliasesInsteadOfDuplicating() {
         // DeepWiki writes display names: "Customers Service", "CustomersServiceClient",
         // "spring-petclinic-customers-service", "Grafana", "HSQLDB". These must align to

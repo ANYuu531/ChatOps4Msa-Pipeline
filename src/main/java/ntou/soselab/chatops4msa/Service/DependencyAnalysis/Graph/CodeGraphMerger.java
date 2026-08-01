@@ -54,6 +54,19 @@ public class CodeGraphMerger {
         }
     }
 
+    /**
+     * Sections whose edges are persistence MARKERS (an entity / repository / model
+     * declaration), not edges with a target of their own. This is the language-neutral
+     * "does this service persist?" interface: each stack contributes its own ORM's
+     * markers through a .scm pattern that emits into one of these sections. Java/Spring
+     * uses {@code jpa} (@Entity/@Repository); every other stack emits into
+     * {@code persistence} (SQLAlchemy / Django / GORM / TypeORM / …). Because this set
+     * already accepts {@code persistence}, adding an ORM is a .scm change only — no Java
+     * edit. A marker promotes its owning service's datasource-declared db edge above a
+     * bare declaration ("really used", not merely declared).
+     */
+    private static final Set<String> PERSISTENCE_SECTIONS = Set.of("jpa", "persistence");
+
     private final DependencyGraph graph;
     private final Set<String> knownNodes = new LinkedHashSet<>();
     private final String defaultSource; // resolved from the repo name, used when the file path does not identify a service
@@ -69,15 +82,16 @@ public class CodeGraphMerger {
     }
 
     /**
-     * First pass: which services have persistence code. A {@code jpa} edge is a
-     * marker (@Entity/@Table/@Repository) found in a service's source, so the
-     * service that owns the file "really uses" a database — enough to promote its
-     * datasource-declared db edge above a bare declaration.
+     * First pass: which services have persistence code. A persistence-section edge is
+     * a marker (@Entity/@Table/@Repository in Java; a mapped model / __tablename__ /
+     * models.Model in Python; etc.) found in a service's source, so the service that
+     * owns the file "really uses" a database — enough to promote its datasource-declared
+     * db edge above a bare declaration. Language-neutral: see {@link #PERSISTENCE_SECTIONS}.
      */
     private void collectPersistenceServices(JSONArray edges) {
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
-            if (edge == null || !"jpa".equals(edge.optString("section", ""))) continue;
+            if (edge == null || !PERSISTENCE_SECTIONS.contains(edge.optString("section", ""))) continue;
             String service = resolveSource(edge.optString("file", ""));
             if (service != null) persistenceServices.add(service);
         }
@@ -192,9 +206,9 @@ public class CodeGraphMerger {
         int line = edge.optInt("line", 0);
 
         // Inbound endpoints this service exposes are not an outgoing dependency;
-        // JPA markers are a persistence SIGNAL (handled in collectPersistenceServices),
-        // not an edge with a target of their own.
-        if ("http-server".equals(section) || "jpa".equals(section)) return;
+        // persistence markers (jpa/persistence) are a SIGNAL (handled in
+        // collectPersistenceServices), not an edge with a target of their own.
+        if ("http-server".equals(section) || PERSISTENCE_SECTIONS.contains(section)) return;
 
         // docker-compose depends_on names BOTH endpoints explicitly (source_service ->
         // target_service), so the source comes from the field, not the file's module.

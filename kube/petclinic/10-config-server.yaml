@@ -1,0 +1,63 @@
+# The one platform service the app services still depend on at startup: Spring
+# Cloud Config. Apply this FIRST and wait for it to be Ready, then apply
+# 20-services.yaml — the app services fetch their config from config-server.
+#
+# There is NO discovery-server (Eureka) any more: this is the k8s-native fork
+# (see fork/README.md). Service-to-service calls go over Kubernetes Service DNS
+# (http://customers-service:8081 ...), so nothing needs a registry.
+#
+# The Service name MUST be exactly `config-server`: the app services run with
+# SPRING_PROFILES_ACTIVE=docker, whose config addresses it by that hostname
+# (resolved via Kubernetes DNS).
+#
+# config-server clones its config from GitHub on startup, so the cluster machine
+# must have outbound internet. If it cannot reach GitHub it will not become Ready.
+# The fork does not change config-server's code, but we still build+import it from
+# the SAME v3.4.1 tree as the app services (imagePullPolicy: Never) so every service
+# is one consistent version — no mixing with whatever springcommunity/*:latest is on
+# Docker Hub today.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-server
+  namespace: petclinic
+  labels: { app: config-server }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: config-server }
+  template:
+    metadata:
+      labels: { app: config-server, version: v1 }
+    spec:
+      containers:
+        - name: config-server
+          image: petclinic-k8s/spring-petclinic-config-server:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8888
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
+          resources:
+            requests: { memory: "320Mi", cpu: "100m" }
+            limits: { memory: "512Mi" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8888 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: config-server
+  namespace: petclinic
+  labels: { app: config-server }
+spec:
+  selector: { app: config-server }
+  ports:
+    - name: http
+      port: 8888
+      targetPort: 8888

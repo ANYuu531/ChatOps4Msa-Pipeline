@@ -34,3 +34,33 @@
  (#eq? @_o "os")
  (#eq? @_a "environ")
  (#eq? @_m "get"))
+
+; ---------- Persistence / ORM models (proves the service really uses a DB) ----------
+; The language-neutral persistence signal: a mapped model class is emitted into the
+; `persistence` section, exactly like Java's @Entity is emitted into `jpa` — the merger
+; treats both the same (CodeGraphMerger.PERSISTENCE_SECTIONS). Recall over precision:
+; any ONE of these markers is enough, and a stray match is inert unless the service also
+; declares a datasource (then the promotion it triggers is the correct one).
+
+; SQLAlchemy declarative / Django model via a bare base class:
+;   class User(Base):  /  class User(DeclarativeBase):  /  class User(Model):
+((class_definition
+   name: (identifier) @persistence.model
+   superclasses: (argument_list (identifier) @_base))
+ (#any-of? @_base "Base" "DeclarativeBase" "Model"))
+
+; Django (and dotted SQLAlchemy) via an attribute base class:
+;   class User(models.Model):  /  class User(orm.DeclarativeBase):
+((class_definition
+   name: (identifier) @persistence.model
+   superclasses: (argument_list (attribute attribute: (identifier) @_base)))
+ (#any-of? @_base "Model" "DeclarativeBase"))
+
+; SQLAlchemy model identified by its table mapping, regardless of how Base is named:
+;   class User(...): __tablename__ = "users"
+((class_definition
+   name: (identifier) @persistence.model
+   body: (block
+     (expression_statement
+       (assignment left: (identifier) @_attr))))
+ (#eq? @_attr "__tablename__"))

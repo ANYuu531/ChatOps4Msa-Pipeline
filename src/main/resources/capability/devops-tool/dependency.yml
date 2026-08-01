@@ -222,11 +222,19 @@ low_code:
               {"command":"get pods -n ${namespace} -o custom-columns=NAME:.metadata.name,READY:.status.containerStatuses[*].ready,STATUS:.status.phase,LABELS:.metadata.labels --no-headers", "timeout": 20}
             assign: k8s_pods
 
+        # Use -L (label column) rather than a custom-columns jsonpath for the
+        # kubernetes.io/service-name label. The MCP server shlex.split()s the command,
+        # which strips the backslash from an escaped-dot jsonpath (labels.kubernetes\.io/..)
+        # so kubectl received an UN-escaped path, resolved it as nested fields, and left
+        # the SERVICE column blank — which the LLM then reported as "service-name label
+        # missing" (it is not; the label is present). -L takes the label key as a plain
+        # token, so it survives shlex and needs no escaping. The default endpointslice
+        # table already carries the ENDPOINTS and PORTS columns.
         - toolkit-mcp-call-tool:
             server_name: k8s
             tool_name: execute_kubectl
             tool_arguments: |
-              {"command":"get endpointslices -n ${namespace} -o custom-columns=SERVICE:.metadata.labels.kubernetes\\.io/service-name,ENDPOINTS:.endpoints[*].addresses,PORTS:.ports[*].port --no-headers", "timeout": 20}
+              {"command":"get endpointslices -n ${namespace} -L kubernetes.io/service-name", "timeout": 20}
             assign: k8s_endpoint_slices
 
         - toolkit-mcp-call-tool:

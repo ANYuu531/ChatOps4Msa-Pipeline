@@ -39,6 +39,7 @@ public class EdgeLedger {
         SECTION_TITLES.put("config", "Infrastructure / service-URL config keys");
         SECTION_TITLES.put("compose-dependency", "Infrastructure - docker-compose depends_on (service -> config-server / discovery-server / …)");
         SECTION_TITLES.put("jpa", "Persistence - JPA/ORM markers (entities / repositories: proves DB is really used)");
+        SECTION_TITLES.put("persistence", "Persistence - ORM markers (SQLAlchemy / Django / …: proves DB is really used)");
     }
 
     public static class Edge {
