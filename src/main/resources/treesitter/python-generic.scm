@@ -64,3 +64,16 @@
      (expression_statement
        (assignment left: (identifier) @_attr))))
  (#eq? @_attr "__tablename__"))
+
+; SQLAlchemy Core / imperative mapping: Table('users', metadata, Column(...), ...)
+;   users = Table('users', MetaData(), Column('id', Integer), Column('name', String))
+; This is the non-declarative style (no Base / no __tablename__) — used e.g. by
+; Google Bank of Anthos. Requiring a Column(...) argument distinguishes a mapped
+; table from an unrelated Table(...) call (rich/prettytable), keeping precision.
+((call
+   function: (identifier) @_fn
+   arguments: (argument_list
+     . (string (string_content) @persistence.table)
+     (call function: (identifier) @_col)))
+ (#eq? @_fn "Table")
+ (#eq? @_col "Column"))
