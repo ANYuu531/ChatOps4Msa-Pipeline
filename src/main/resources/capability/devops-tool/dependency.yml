@@ -31,11 +31,20 @@ low_code:
         # Opens a fresh checkpoint, discarding any earlier one for this user.
         # Every collection stage below stores its result, so a pause can resume
         # from the breakpoint instead of re-running the whole analysis.
+        #
+        # Returns the analysis mode into ${analysis_mode}. With no namespace the run
+        # is "greenfield": the project is not deployed, so the orchestrator skips every
+        # cluster-bound step (k8s MCP, Istio Prometheus, traffic driving, apply button)
+        # and the dependency graph is built from code + docs alone.
         - toolkit-depstate-start:
             repo_name: ${repo_name}
             namespace: ${namespace}
             entry_url: ${entry_url}
             auth_hint: ${auth_hint}
+            assign: analysis_mode
+
+        - toolkit-discord-text:
+            text: "DEBUG: analysis mode = ${analysis_mode}"
 
         # ---- Source-code extraction ----
         # The stack is detected from the repository's build manifests after cloning.

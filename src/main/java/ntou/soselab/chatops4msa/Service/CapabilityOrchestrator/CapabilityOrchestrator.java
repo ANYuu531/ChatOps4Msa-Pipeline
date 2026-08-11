@@ -18,12 +18,29 @@ import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class CapabilityOrchestrator {
     private final Map<String, DeclaredFunction> capabilityMap;
     private final ApplicationContext appContext;
     private final String TOOLKIT_CLASSPATH;
+
+    /** Local variable, set by toolkit-depstate-start, that marks a greenfield run. */
+    private static final String ANALYSIS_MODE_VAR = "analysis_mode";
+    private static final String GREENFIELD_MODE = "greenfield";
+
+    /**
+     * Toolkit steps that require a live cluster and are therefore skipped in a
+     * greenfield run. The MCP toolkits are intentionally NOT listed here: they are
+     * shared with DeepWiki (documentation, no cluster), so only an MCP call whose
+     * server is "k8s" is cluster-bound — that is decided by argument in
+     * {@link #requiresLiveCluster}.
+     */
+    private static final Set<String> CLUSTER_TOOLKITS = Set.of(
+            "toolkit-prometheus-query",
+            "toolkit-traffic-run",
+            "toolkit-depstate-apply-button");
 
     @Autowired
     public CapabilityOrchestrator(CapabilityConfigLoader configLoader,
@@ -148,6 +165,22 @@ public class CapabilityOrchestrator {
             // update the local variable
             localVariableMap.putAll(subArgumentMap);
 
+            // Greenfield analysis (the caller gave no namespace): the project is not
+            // deployed, so every step that reaches for a live cluster — Kubernetes via
+            // the k8s MCP server, Istio's Prometheus, traffic driving, the
+            // apply-ServiceEntries button — is skipped. The static half (code + docs +
+            // the dependency graph built from them) still runs. The mode is set once by
+            // toolkit-depstate-start; a flow without it (any non-dependency capability)
+            // is never affected. Skipped-with-assign steps get "" so downstream ${refs}
+            // stay clean.
+            if (GREENFIELD_MODE.equals(localVariableMap.get(ANALYSIS_MODE_VAR))
+                    && requiresLiveCluster(invokedFunctionName, subArgumentMap)) {
+                System.out.println("------[Greenfield] skipped cluster step: " + invokedFunctionName);
+                String skippedAssign = invokedFunction.getAssign();
+                if (skippedAssign != null && !skippedAssign.isEmpty()) localVariableMap.put(skippedAssign, "");
+                continue;
+            }
+
             // custom-function or toolkit-function
             if (!invokedFunctionName.startsWith("toolkit")) {
 
@@ -257,6 +290,19 @@ public class CapabilityOrchestrator {
             e.printStackTrace();
             throw new ToolkitFunctionException(functionName + " > " + e.getClass().getName() + ": " + e.getCause());
         }
+    }
+
+    /**
+     * Whether a body step needs a running cluster (and so is skipped in greenfield).
+     * True for the always-cluster toolkits, and for an MCP step only when it targets
+     * the "k8s" server — an MCP step to "deepwiki" is documentation and still runs.
+     */
+    static boolean requiresLiveCluster(String invokedFunctionName, Map<String, String> subArgumentMap) {
+        if (CLUSTER_TOOLKITS.contains(invokedFunctionName)) return true;
+        if (invokedFunctionName.startsWith("toolkit-mcp-")) {
+            return "k8s".equals(subArgumentMap.get("server_name"));
+        }
+        return false;
     }
 
     /**

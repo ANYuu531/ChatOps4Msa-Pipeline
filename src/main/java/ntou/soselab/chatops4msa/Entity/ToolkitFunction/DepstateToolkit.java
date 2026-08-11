@@ -48,6 +48,12 @@ public class DepstateToolkit extends ToolkitFunction {
      *
      * entry_url and auth_hint are stored so that resuming can re-drive traffic
      * without asking the user for them again.
+     *
+     * @return the analysis mode: {@code "greenfield"} when no namespace was given
+     *         (the project is not deployed, so the cluster/runtime steps are skipped),
+     *         otherwise {@code "runtime"}. The low-code flow assigns this to
+     *         {@code analysis_mode}, which the orchestrator reads to gate the
+     *         cluster-bound steps.
      */
     public String toolkitDepstateStart(String repo_name, String namespace,
                                        String entry_url, String auth_hint) {
@@ -57,7 +63,14 @@ public class DepstateToolkit extends ToolkitFunction {
         stateStore.start(userId, repo_name, namespace);
         stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_ENTRY_URL, entry_url);
         stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_AUTH_HINT, auth_hint);
-        return "started";
+        return isGreenfield(namespace) ? "greenfield" : "runtime";
+    }
+
+    /** No namespace (blank / "none" / "greenfield") means the project is not deployed. */
+    static boolean isGreenfield(String namespace) {
+        if (namespace == null) return true;
+        String ns = namespace.trim();
+        return ns.isEmpty() || ns.equalsIgnoreCase("none") || ns.equalsIgnoreCase("greenfield");
     }
 
     /** Stores one collection stage. */
