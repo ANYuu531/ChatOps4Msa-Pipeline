@@ -4,9 +4,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -67,6 +69,14 @@ public class CodeGraphMerger {
      */
     private static final Set<String> PERSISTENCE_SECTIONS = Set.of("jpa", "persistence");
 
+    /**
+     * Sections that are a lookup signal, not a dependency edge: the repository's
+     * service inventory ({@code service-root}) and the env-var → host table
+     * ({@code env-address}). They seed the greenfield vocabulary and resolve
+     * indirected targets; they are never rendered as arrows.
+     */
+    private static final Set<String> META_SECTIONS = Set.of("service-root", "env-address");
+
     private final DependencyGraph graph;
     private final Set<String> knownNodes = new LinkedHashSet<>();
     private final String defaultSource; // resolved from the repo name, used when the file path does not identify a service
@@ -75,10 +85,73 @@ public class CodeGraphMerger {
     /** Common module-directory prefix (e.g. "spring-petclinic") learned from dirs that resolved to workloads. */
     private String modulePrefix;
 
+    /**
+     * Greenfield mode: no runtime graph supplied a vocabulary, so the service
+     * inventory scanned from the repo ({@code service-root}) is the only source of
+     * node names. In this mode the merger both seeds nodes from the inventory and
+     * attributes sources by matching a file to its service directory.
+     */
+    private final boolean greenfield;
+    /** service directory (relative path) -> service name, longest dir wins on lookup. */
+    private final Map<String, String> serviceDirs = new LinkedHashMap<>();
+    /** env var name -> resolved host, from k8s ConfigMap / .env ({@code env-address}). */
+    private final Map<String, String> envAddress = new LinkedHashMap<>();
+
     private CodeGraphMerger(DependencyGraph graph, String repoName) {
         this.graph = graph;
         for (DependencyGraph.Node node : graph.getNodes()) knownNodes.add(node.id);
+        this.greenfield = knownNodes.isEmpty();
         this.defaultSource = matchNode(repoShortName(repoName));
+    }
+
+    /**
+     * Reads the two meta-sections before any edge is merged: the service inventory
+     * (which, in greenfield, becomes the node vocabulary) and the env-var → host
+     * table (which resolves indirected targets like {@code TRANSACTIONS_API_ADDR}).
+     */
+    private void indexMeta(JSONArray edges) {
+        // Pass 1: the service inventory, so knownNodes is complete before env-address
+        // resolution below can prefer a host that is actually a known service.
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null || !"service-root".equals(edge.optString("section", ""))) continue;
+            JSONObject fields = edge.optJSONObject("fields");
+            if (fields == null) continue;
+            String dir = fields.optString("dir", "");
+            String name = clean(fields.optString("name", ""));
+            if (!dir.isBlank() && isPlausibleName(name)) {
+                serviceDirs.put(dir.replace('\\', '/'), name);
+                if (greenfield) knownNodes.add(name);
+            }
+        }
+
+        // Pass 2: the env -> host table. A repo may declare the same env var in more
+        // than one manifest (e.g. a monolith variant that points every API at one
+        // host); prefer the value whose host is a real service over one that is not,
+        // so the microservice wiring wins over the monolith's collapsed addresses.
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null || !"env-address".equals(edge.optString("section", ""))) continue;
+            JSONObject fields = edge.optJSONObject("fields");
+            if (fields == null) continue;
+            String name = fields.optString("name", "");
+            String host = clean(fields.optString("host", ""));
+            if (name.isBlank() || host.isEmpty()) continue;
+
+            String current = envAddress.get(name);
+            if (current == null
+                    || (matchNode(host) != null && matchNode(current) == null)) {
+                envAddress.put(name, host);
+            }
+        }
+
+        // In greenfield the inventory IS the graph's node set: add every service so
+        // even a service nobody calls still appears (an accurate, if isolated, node).
+        if (greenfield) {
+            for (String name : serviceDirs.values()) {
+                graph.addNode(name, DependencyGraph.classifyKind(name));
+            }
+        }
     }
 
     /**
@@ -118,6 +191,7 @@ public class CodeGraphMerger {
         }
 
         CodeGraphMerger merger = new CodeGraphMerger(graph, repoName);
+        merger.indexMeta(edges);
         merger.learnModulePrefix(edges);
         merger.collectPersistenceServices(edges);
         for (int i = 0; i < edges.length(); i++) {
@@ -175,6 +249,7 @@ public class CodeGraphMerger {
             return Set.of();
         }
         CodeGraphMerger merger = new CodeGraphMerger(graph, repoName);
+        merger.indexMeta(edges);
         merger.learnModulePrefix(edges);
         merger.collectPersistenceServices(edges);
         return merger.persistenceServices;
@@ -207,8 +282,11 @@ public class CodeGraphMerger {
 
         // Inbound endpoints this service exposes are not an outgoing dependency;
         // persistence markers (jpa/persistence) are a SIGNAL (handled in
-        // collectPersistenceServices), not an edge with a target of their own.
-        if ("http-server".equals(section) || PERSISTENCE_SECTIONS.contains(section)) return;
+        // collectPersistenceServices), not an edge with a target of their own;
+        // the meta-sections (service-root / env-address) are lookup tables consumed
+        // in indexMeta, never edges.
+        if ("http-server".equals(section) || PERSISTENCE_SECTIONS.contains(section)
+                || META_SECTIONS.contains(section)) return;
 
         // docker-compose depends_on names BOTH endpoints explicitly (source_service ->
         // target_service), so the source comes from the field, not the file's module.
@@ -224,6 +302,23 @@ public class CodeGraphMerger {
         }
 
         String source = resolveSource(file);
+
+        // A code-side config edge is a service reading an env var. When that env var
+        // resolves (via the k8s ConfigMap / .env table) to a host that is a known
+        // service, the read IS the dependency — this is how an env-indirected target
+        // (TRANSACTIONS_API_ADDR -> ledgerwriter) becomes a concrete edge with no
+        // runtime data. A bare env read that names no host is a signal, not an edge.
+        if ("config".equals(section) && fields.has("env")) {
+            String env = fields.optString("env", "");
+            String host = env.isBlank() ? null : envAddress.get(env);
+            if (host != null && source != null) {
+                String node = matchNode(host);
+                if (node != null && !node.equals(source)) {
+                    addCodeEdge(source, node, edgeType("", DependencyGraph.classifyKind(node)), file, line);
+                }
+            }
+            return;
+        }
 
         // --- asynchronous: the other endpoint is a broker destination (its own node) ---
         if (section.startsWith("kafka") || section.startsWith("rabbit")) {
@@ -244,6 +339,18 @@ public class CodeGraphMerger {
         if (rawTarget == null || source == null) {
             unresolved.add(new Unresolved(section, source, rawTarget, file, line));
             return;
+        }
+
+        // The host may be an env placeholder — http://${BALANCES_API_ADDR}/balances.
+        // stripToHost cannot resolve it, but the env -> host table can: this is what
+        // draws ledgerwriter -> balancereader with no runtime data.
+        String envHost = hostFromEnvPlaceholder(rawTarget);
+        if (envHost != null) {
+            String node = matchNode(envHost);
+            if (node != null && !node.equals(source)) {
+                addCodeEdge(source, node, edgeType(section, DependencyGraph.classifyKind(node)), file, line);
+                return;
+            }
         }
 
         String fullHost = stripToHost(rawTarget);
@@ -332,6 +439,36 @@ public class CodeGraphMerger {
                 return null;
             }
         }
+    }
+
+    /**
+     * The host an env-var placeholder resolves to via the {@code env-address} table,
+     * or null. Matches {@code ${NAME}} and {@code {{NAME}}} against the table
+     * case-insensitively, so a URL whose host is externalised to config
+     * ({@code http://${BALANCES_API_ADDR}/…}) still yields a concrete target.
+     */
+    private String hostFromEnvPlaceholder(String rawTarget) {
+        if (rawTarget == null || envAddress.isEmpty()) return null;
+        java.util.regex.Matcher m =
+                java.util.regex.Pattern.compile("\\$\\{([^}]+)}|\\{\\{([^}]+)}}").matcher(rawTarget);
+        if (!m.find()) return null;
+        String name = m.group(1) != null ? m.group(1) : m.group(2);
+        if (name == null) return null;
+        name = name.trim();
+        // Property paths like ${app.balances.url} are not an env key; take the last
+        // segment too, so ${BALANCES_API_ADDR} and ${env.BALANCES_API_ADDR} both hit.
+        String host = envLookup(name);
+        if (host == null && name.contains(".")) host = envLookup(name.substring(name.lastIndexOf('.') + 1));
+        return host;
+    }
+
+    private String envLookup(String name) {
+        String host = envAddress.get(name);
+        if (host != null) return host;
+        for (Map.Entry<String, String> e : envAddress.entrySet()) {
+            if (e.getKey().equalsIgnoreCase(name)) return e.getValue();
+        }
+        return null;
     }
 
     /** The broker destination (topic / exchange / queue) for an async section. */
@@ -472,6 +609,17 @@ public class CodeGraphMerger {
      * the runtime graph simply never saw traffic for.
      */
     private String resolveSource(String file) {
+        // Layout-aware first: the service is the deepest scanned service directory
+        // (service-root) that contains this file. This is what makes a nested repo
+        // (src/<group>/<service>/…) attribute to <service> instead of collapsing to
+        // the top path segment "src". Falls through to the flat-layout rule below.
+        String svc = serviceForFile(file);
+        if (svc != null) {
+            String matched = matchNodeForSource(svc);
+            if (matched != null) return matched;
+            if (greenfield && isPlausibleName(svc) && !SOURCE_STOP.contains(svc)) return svc;
+        }
+
         String seg = firstPathSegment(file);
         if (seg != null) {
             String matched = matchNodeForSource(seg);
@@ -486,6 +634,27 @@ public class CodeGraphMerger {
             if (label != null && !SOURCE_STOP.contains(label) && isPlausibleName(label)) return label;
         }
         return defaultSource; // repo name matched a real workload, or null
+    }
+
+    /**
+     * The service name of the deepest {@code service-root} directory that contains
+     * this file, or null if no scanned service directory does. "Deepest" so a file
+     * under {@code src/ledger/ledgerwriter/…} attributes to {@code ledgerwriter},
+     * not to an ancestor module that also carries a manifest.
+     */
+    private String serviceForFile(String file) {
+        if (file == null || file.isBlank() || serviceDirs.isEmpty()) return null;
+        String path = file.replace('\\', '/');
+        String best = null;
+        int bestLen = -1;
+        for (Map.Entry<String, String> entry : serviceDirs.entrySet()) {
+            String dir = entry.getKey();
+            if ((path.equals(dir) || path.startsWith(dir + "/")) && dir.length() > bestLen) {
+                best = entry.getValue();
+                bestLen = dir.length();
+            }
+        }
+        return best;
     }
 
     private static String firstPathSegment(String file) {

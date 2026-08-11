@@ -1,0 +1,24 @@
+%% Bank of Anthos — dependency graph produced STATICALLY (greenfield: no runtime data, no cluster, no ports).
+%% Nodes come from the repo's service inventory (service-root); edges come from the code's
+%% env-indirected call targets resolved through the k8s ConfigMap env->host table (env-address).
+%% All edges are dashed because there is no runtime layer to confirm them (code/config provenance only).
+%% (ui-tests is a UI e2e-test directory with a package.json — a minor false-positive service node.)
+flowchart LR
+  ui_tests["ui-tests"]
+  balancereader["balancereader"]
+  ledgerwriter["ledgerwriter"]
+  ledger_db[("ledger-db")]:::db
+  transactionhistory["transactionhistory"]
+  frontend["frontend"]
+  loadgenerator["loadgenerator"]
+  contacts["contacts"]
+  userservice["userservice"]
+  accounts_db[("accounts-db")]:::db
+  ledgermonolith["ledgermonolith"]
+  ledgerwriter -.-> balancereader
+  frontend -.-> ledgerwriter
+  frontend -.-> userservice
+  frontend -.-> balancereader
+  frontend -.-> transactionhistory
+  frontend -.-> contacts
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;

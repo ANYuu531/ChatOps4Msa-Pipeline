@@ -40,6 +40,8 @@ public class EdgeLedger {
         SECTION_TITLES.put("compose-dependency", "Infrastructure - docker-compose depends_on (service -> config-server / discovery-server / …)");
         SECTION_TITLES.put("jpa", "Persistence - JPA/ORM markers (entities / repositories: proves DB is really used)");
         SECTION_TITLES.put("persistence", "Persistence - ORM markers (SQLAlchemy / Django / …: proves DB is really used)");
+        SECTION_TITLES.put("service-root", "Inventory - service directories (dir -> name: greenfield node vocabulary)");
+        SECTION_TITLES.put("env-address", "Resolution - env var -> host (from k8s ConfigMap / .env: resolves indirected targets)");
     }
 
     public static class Edge {

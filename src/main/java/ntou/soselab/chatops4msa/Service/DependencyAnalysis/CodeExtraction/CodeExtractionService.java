@@ -41,18 +41,21 @@ public class CodeExtractionService {
     private final LlmCodeExtractor llmCodeExtractor;
     private final ConfigExtractor configExtractor;
     private final ExternalHostDetector externalHostDetector;
+    private final ServiceRootScanner serviceRootScanner;
 
     @Autowired
     public CodeExtractionService(StackDetector stackDetector,
                                  TreeSitterExtractor treeSitterExtractor,
                                  LlmCodeExtractor llmCodeExtractor,
                                  ConfigExtractor configExtractor,
-                                 ExternalHostDetector externalHostDetector) {
+                                 ExternalHostDetector externalHostDetector,
+                                 ServiceRootScanner serviceRootScanner) {
         this.stackDetector = stackDetector;
         this.treeSitterExtractor = treeSitterExtractor;
         this.llmCodeExtractor = llmCodeExtractor;
         this.configExtractor = configExtractor;
         this.externalHostDetector = externalHostDetector;
+        this.serviceRootScanner = serviceRootScanner;
     }
 
     /**
@@ -107,6 +110,15 @@ public class CodeExtractionService {
                 configExtractor.extract(root, ledger);
             } catch (Exception e) {
                 ledger.addWarning("config extraction failed: " + e.getMessage());
+            }
+
+            // The repository's service directories, so a greenfield graph (no runtime
+            // vocabulary) can still name its nodes and attribute code edges to a
+            // service regardless of the repo's module layout.
+            try {
+                serviceRootScanner.scan(root, ledger);
+            } catch (Exception e) {
+                ledger.addWarning("service-root scan failed: " + e.getMessage());
             }
 
             ledger.setStack(String.join("; ", stackDescriptions));

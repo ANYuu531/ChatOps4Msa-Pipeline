@@ -764,6 +764,82 @@ public class DependencyGraphTest {
                 .count());                                              // merged, not duplicated
     }
 
+    // ---- greenfield: a static-only graph with NO runtime layer ----
+
+    /**
+     * A Bank-of-Anthos-shaped fixture: a NESTED layout (src/&lt;group&gt;/&lt;service&gt;/…),
+     * env-indirected call targets, and the two meta-sections the extractor now emits —
+     * {@code service-root} (the inventory) and {@code env-address} (the k8s ConfigMap
+     * env → host table). There is deliberately no runtime graph: this is the greenfield
+     * case where the vocabulary can only come from the repo itself.
+     */
+    private static final String GREENFIELD_CODE = """
+            {"repo":"GoogleCloudPlatform/bank-of-anthos","failed":false,"edges":[
+              {"section":"service-root","fields":{"dir":"src/frontend","name":"frontend"},"file":"src/frontend/pom.xml","line":-1,"confidence":"High"},
+              {"section":"service-root","fields":{"dir":"src/ledger/ledgerwriter","name":"ledgerwriter"},"file":"src/ledger/ledgerwriter/pom.xml","line":-1,"confidence":"High"},
+              {"section":"service-root","fields":{"dir":"src/ledger/balancereader","name":"balancereader"},"file":"src/ledger/balancereader/pom.xml","line":-1,"confidence":"High"},
+              {"section":"service-root","fields":{"dir":"src/accounts/contacts","name":"contacts"},"file":"src/accounts/contacts/pyproject.toml","line":-1,"confidence":"High"},
+              {"section":"service-root","fields":{"dir":"src/accounts/accounts-db","name":"accounts-db"},"file":"src/accounts/accounts-db/Dockerfile","line":-1,"confidence":"High"},
+              {"section":"env-address","fields":{"name":"TRANSACTIONS_API_ADDR","host":"ledgerwriter"},"file":"kubernetes-manifests/config.yaml","line":-1,"confidence":"High"},
+              {"section":"env-address","fields":{"name":"BALANCES_API_ADDR","host":"balancereader"},"file":"kubernetes-manifests/config.yaml","line":-1,"confidence":"High"},
+              {"section":"env-address","fields":{"name":"CONTACTS_API_ADDR","host":"contacts"},"file":"kubernetes-manifests/config.yaml","line":-1,"confidence":"High"},
+              {"section":"config","fields":{"env":"TRANSACTIONS_API_ADDR"},"file":"src/frontend/frontend.py","line":663,"confidence":"High"},
+              {"section":"config","fields":{"env":"CONTACTS_API_ADDR"},"file":"src/frontend/frontend.py","line":673,"confidence":"High"},
+              {"section":"config","fields":{"env":"BANK_NAME"},"file":"src/frontend/frontend.py","line":161,"confidence":"High"},
+              {"section":"url","fields":{"value":"http://${BALANCES_API_ADDR}/balances"},"file":"src/ledger/ledgerwriter/src/main/java/anthos/LedgerWriterController.java","line":86,"confidence":"Medium (property indirection)"},
+              {"section":"http-server","fields":{"path":"/transactions"},"file":"src/ledger/ledgerwriter/src/main/java/anthos/LedgerWriterController.java","line":132,"confidence":"High"},
+              {"section":"jpa","fields":{"marker":"Entity"},"file":"src/ledger/balancereader/src/main/java/anthos/Transaction.java","line":37,"confidence":"High"}
+            ]}
+            """;
+
+    private static DependencyGraph greenfieldGraph() {
+        DependencyGraph g = new DependencyGraph(""); // no runtime layer
+        CodeGraphMerger.merge(g, GREENFIELD_CODE, "GoogleCloudPlatform/bank-of-anthos");
+        return g;
+    }
+
+    @Test
+    void greenfieldAttributesNestedLayoutToTheService() {
+        DependencyGraph g = greenfieldGraph();
+        // frontend/frontend.py reads TRANSACTIONS_API_ADDR -> ledgerwriter, and the
+        // source is the nested service dir (src/frontend), NOT the top segment "src".
+        DependencyGraph.Edge e = edge(g, "frontend", "ledgerwriter");
+        assertNotNull(e, "env-indirected call target must resolve with no runtime data");
+        assertEquals("sync-http", e.type);
+        assertFalse(e.runtimeObserved);                 // greenfield: code-only, dashed
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_CODE));
+
+        assertNotNull(edge(g, "frontend", "contacts"));
+    }
+
+    @Test
+    void greenfieldResolvesEnvPlaceholderInUrlLiteral() {
+        // http://${BALANCES_API_ADDR}/balances in ledgerwriter source -> balancereader.
+        assertNotNull(edge(greenfieldGraph(), "ledgerwriter", "balancereader"));
+    }
+
+    @Test
+    void greenfieldSeedsNodesFromInventoryAndTypesDb() {
+        DependencyGraph g = greenfieldGraph();
+        // Every scanned service directory becomes a node, even accounts-db (typed db).
+        assertNotNull(node(g, "frontend"));
+        assertNotNull(node(g, "balancereader"));
+        assertEquals(DependencyGraph.KIND_DB, kindOf(g, "accounts-db"));
+    }
+
+    @Test
+    void greenfieldDoesNotRenderMetaSectionsAsEdges() {
+        DependencyGraph g = greenfieldGraph();
+        // service-root / env-address are lookup tables, never arrows; a bare env read
+        // (BANK_NAME) that names no host is a signal, not an edge either.
+        assertTrue(g.getEdges().stream().noneMatch(e ->
+                e.target.equals("accounts-db") && e.source.equals("frontend")));
+        assertNull(edge(g, "frontend", "bank_name"));
+        // Exactly the three real call edges: frontend->ledgerwriter, frontend->contacts,
+        // ledgerwriter->balancereader.
+        assertEquals(3, g.getEdges().size());
+    }
+
     private static DependencyGraph.Node node(DependencyGraph g, String id) {
         return g.getNodes().stream().filter(n -> n.id.equals(id)).findFirst().orElse(null);
     }
