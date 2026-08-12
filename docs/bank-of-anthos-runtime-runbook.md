@@ -30,7 +30,7 @@ kubectl get gateway -A -o custom-columns=NS:.metadata.namespace,NAME:.metadata.n
 kubectl -n istio-system get svc istio-ingressgateway \
   -o custom-columns=TYPE:.spec.type,CLUSTERIP:.spec.clusterIP,PORTS:.spec.ports[*].nodePort
 # 記下 http(80)對應的 nodePort(例如 3xxxx),與節點 IP(192.168.100.106)
-#  => 之後 INGRESS = http://192.168.100.106:<nodePort>
+#  => 之後 INGRESS = http://192.168.100.106:31403
 ```
 
 ## 1. 建 namespace + 開 Istio 注入(runtime 觀測的前提)
@@ -115,7 +115,7 @@ VirtualService 以 `bankofanthos.local` 比對,所以**跑工具的那台機器*
 echo "192.168.100.106  bankofanthos.local" | sudo tee -a /etc/hosts
 
 # 驗證入口通(用步驟 0 記下的 nodePort)
-curl -s -o /dev/null -w "%{http_code}\n" http://bankofanthos.local:<nodePort>/
+curl -s -o /dev/null -w "%{http_code}\n" http://bankofanthos.local:31403/
 # 期望 200
 ```
 
@@ -126,7 +126,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://bankofanthos.local:<nodePort>/
 ```
 repo_name = GoogleCloudPlatform/bank-of-anthos
 namespace = bank-of-anthos          # 有值 → 走 runtime(非 greenfield)
-entry_url = http://bankofanthos.local:<nodePort>/
+entry_url = http://bankofanthos.local:31403/
 auth_hint = none
 ```
 
@@ -142,6 +142,33 @@ kubectl delete namespace bank-of-anthos
 kubectl delete -f boa-ingress.yaml --ignore-not-found
 # frontend 已是 ClusterIP,沒有 host-level 殘留;namespace 刪掉即清乾淨
 ```
+
+---
+
+## 實測踩到的兩個坑(2026-08-12,已驗證修法)
+
+### 坑 1:上次「撞 port」根因是 **Docker 容器佔 host 80/443,不是 k8s**
+`kubectl get svc` 只看得到 k8s 管的 host port;真正佔 80/443 的是直接跑在主機上的 **docker 容器**(`docker-proxy`),`kubectl` 完全看不到。要看主機層:
+
+```bash
+sudo ss -tlnp        # 或 sudo lsof -i -P -n | grep LISTEN
+# 本案例:0.0.0.0:80 / :443 都是 docker-proxy 佔著
+```
+
+BoA 上次用 `type: LoadBalancer` → k3s klipper 去搶 host port 80 → 撞到那個 docker 容器。
+**本 runbook 的做法(frontend ClusterIP + 走既有 istio-ingressgateway 的 NodePort 31403)本來就不碰任何 host port**(NodePort 走 iptables DNAT,不是 userspace listener),所以與 docker 的 80/443 完全無關、不會撞。
+
+### 坑 2:全服務 `1/2 CrashLoopBackOff` = **BoA 預設送 GCP Cloud Trace,離開 GCP 沒憑證會崩**
+Java(`StackdriverTraceAutoConfiguration` → `stackdriverSender`)和 Python(`CloudTraceSpanExporter`)都因 `Your default credentials were not found`(GCP ADC)在啟動初始化 tracing 時崩。`ENABLE_TRACING`/`ENABLE_METRICS` 是**寫死在各 deployment 內嵌 env=`"true"`**(不是 configmap,改 configmap 沒用)。修法:
+
+```bash
+kubectl set env deployment --all -n bank-of-anthos ENABLE_TRACING=false ENABLE_METRICS=false
+# 只動 6 個 app Deployment(DB 是 StatefulSet 不受影響),自動滾動重啟 → 全部 2/2 Running
+```
+
+與依賴分析無關:我們的觀測靠 **Istio sidecar 的 `istio_requests_total`**,不是 BoA 自己的 Stackdriver 追蹤,所以關掉毫無影響。
+
+> 已知環境值(本叢集):istio-ingressgateway http NodePort = **31403**,Prometheus = **30090**,無任何既有 Gateway(不撞)。
 
 ---
 
