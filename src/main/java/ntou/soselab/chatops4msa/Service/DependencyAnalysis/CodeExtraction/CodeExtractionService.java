@@ -28,11 +28,14 @@ public class CodeExtractionService {
         public final List<ExternalHost> externalHosts;
         /** The same edges as structured JSON, for the dependency-graph merge (see EdgeLedger.toJson). */
         public final String edgesJson;
+        /** The project's own example requests (load/e2e/API artefacts), for traffic generation; "" if none. */
+        public final String exampleRequests;
 
-        ExtractionResult(String ledger, List<ExternalHost> externalHosts, String edgesJson) {
+        ExtractionResult(String ledger, List<ExternalHost> externalHosts, String edgesJson, String exampleRequests) {
             this.ledger = ledger;
             this.externalHosts = externalHosts;
             this.edgesJson = edgesJson;
+            this.exampleRequests = exampleRequests == null ? "" : exampleRequests;
         }
     }
 
@@ -42,6 +45,7 @@ public class CodeExtractionService {
     private final ConfigExtractor configExtractor;
     private final ExternalHostDetector externalHostDetector;
     private final ServiceRootScanner serviceRootScanner;
+    private final ExampleRequestHarvester exampleRequestHarvester;
 
     @Autowired
     public CodeExtractionService(StackDetector stackDetector,
@@ -49,13 +53,15 @@ public class CodeExtractionService {
                                  LlmCodeExtractor llmCodeExtractor,
                                  ConfigExtractor configExtractor,
                                  ExternalHostDetector externalHostDetector,
-                                 ServiceRootScanner serviceRootScanner) {
+                                 ServiceRootScanner serviceRootScanner,
+                                 ExampleRequestHarvester exampleRequestHarvester) {
         this.stackDetector = stackDetector;
         this.treeSitterExtractor = treeSitterExtractor;
         this.llmCodeExtractor = llmCodeExtractor;
         this.configExtractor = configExtractor;
         this.externalHostDetector = externalHostDetector;
         this.serviceRootScanner = serviceRootScanner;
+        this.exampleRequestHarvester = exampleRequestHarvester;
     }
 
     /**
@@ -70,20 +76,20 @@ public class CodeExtractionService {
 
         if (repo == null || repo.isBlank()) {
             ledger.fail("no repository was provided");
-            return new ExtractionResult(ledger.render(), List.of(), ledger.toJson().toString());
+            return new ExtractionResult(ledger.render(), List.of(), ledger.toJson().toString(), "");
         }
 
         try (RepoWorkspace workspace = RepoWorkspace.clone(repo)) {
             if (!workspace.isCloned()) {
                 ledger.fail(workspace.getFailure());
-                return new ExtractionResult(ledger.render(), List.of(), ledger.toJson().toString());
+                return new ExtractionResult(ledger.render(), List.of(), ledger.toJson().toString(), "");
             }
             Path root = workspace.getRoot();
 
             List<DetectedStack> stacks = stackDetector.detect(root);
             if (stacks.isEmpty()) {
                 ledger.fail("no recognisable source code found in the repository");
-                return new ExtractionResult(ledger.render(), List.of(), ledger.toJson().toString());
+                return new ExtractionResult(ledger.render(), List.of(), ledger.toJson().toString(), "");
             }
 
             List<String> stackDescriptions = new ArrayList<>();
@@ -128,11 +134,21 @@ public class CodeExtractionService {
             // an unmeshed destination. They become ServiceEntry suggestions so the
             // mesh can then confirm these edges at runtime too.
             List<ExternalHost> externalHosts = externalHostDetector.detect(ledger);
-            return new ExtractionResult(ledger.render(), externalHosts, ledger.toJson().toString());
+
+            // The project's own load/e2e/API artefacts, so traffic generation can copy
+            // real write-path payloads instead of guessing them. Reuses this clone.
+            String exampleRequests;
+            try {
+                exampleRequests = exampleRequestHarvester.harvest(root);
+            } catch (Exception e) {
+                exampleRequests = "";
+            }
+            return new ExtractionResult(ledger.render(), externalHosts,
+                    ledger.toJson().toString(), exampleRequests);
 
         } catch (Exception e) {
             ledger.fail(e.getClass().getSimpleName() + ": " + e.getMessage());
-            return new ExtractionResult(ledger.render(), List.of(), ledger.toJson().toString());
+            return new ExtractionResult(ledger.render(), List.of(), ledger.toJson().toString(), "");
         }
     }
 }

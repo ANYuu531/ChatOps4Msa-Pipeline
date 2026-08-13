@@ -55,6 +55,10 @@ public class CodeToolkit extends ToolkitFunction {
             // Structured code edges for the dependency-graph merge (Phase 2).
             stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_CODE_EDGES,
                     result.edgesJson);
+            // The project's own example requests, so traffic generation (and a resume)
+            // can copy real write-path payloads instead of guessing them.
+            stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_EXAMPLE_REQUESTS,
+                    result.exampleRequests);
         }
         return result.ledger;
     }

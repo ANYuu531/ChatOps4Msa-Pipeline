@@ -301,6 +301,15 @@ low_code:
         # (orders -> payment only happens on a real checkout), so a journey is
         # generated from the API surface + routing + docs rather than smoke-testing
         # the front page. Anything the journey cannot reach becomes a reported gap.
+
+        # The project's own load/e2e/API artefacts, harvested during code extraction:
+        # they contain real, valid write-path payloads the generator can copy instead
+        # of guessing (which is what 4xx's a deposit/checkout). Empty when the repo
+        # ships none, in which case generation just proceeds without it.
+        - toolkit-depstate-get:
+            stage: example_requests
+            assign: example_requests
+
         - toolkit-llm-call:
             prompt: |
               ## Entry URL (all relative paths resolve against this)
@@ -317,6 +326,9 @@ low_code:
 
               ## Architecture summary from the documentation
               ${deepwiki_dependency_notes}
+
+              ## Example requests from the project's own load/e2e/API artefacts (copy real payloads from these)
+              ${example_requests}
             prompt_template: traffic_scenario_generation
             assign: traffic_scenario
 
@@ -511,6 +523,12 @@ low_code:
             stage: code
             assign: code_extraction_notes
 
+        # The project's own example requests, reused from the checkpoint (no re-clone),
+        # so this supplement round can still copy real write-path payloads.
+        - toolkit-depstate-get:
+            stage: example_requests
+            assign: example_requests
+
         - toolkit-depstate-get:
             stage: k8s
             assign: k8s_runtime_notes
@@ -573,6 +591,9 @@ low_code:
 
               ## API surface + dependency edges extracted from the source code
               ${code_extraction_notes}
+
+              ## Example requests from the project's own load/e2e/API artefacts (copy real payloads from these)
+              ${example_requests}
 
               ## Kubernetes / Istio routing
               ${k8s_runtime_notes}

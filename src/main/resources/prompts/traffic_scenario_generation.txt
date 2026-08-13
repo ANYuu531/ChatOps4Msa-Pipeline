@@ -26,8 +26,18 @@ You are given, in the user message:
 - the Kubernetes / Istio routing (which host reaches which service)
 - an architecture summary from the documentation
 - the entry URL (all relative paths are resolved against it)
+- OPTIONALLY: EXAMPLE REQUESTS harvested from the project's OWN load tests / e2e
+  tests / API specs — these build real, valid requests against this very system
 - OPTIONALLY: edges that are still MISSING after previous attempts, plus the
   collection that was already tried and its execution report
+
+EXAMPLE REQUESTS ARE YOUR BEST SOURCE OF PAYLOADS. A deep write path (a deposit, a
+checkout) only fires on a semantically valid body, and guessing the fields is the
+usual reason it 4xx's. When the example-requests section is present, COPY the exact
+field names, value shapes and endpoints it uses for that action instead of inventing
+them; adapt only the values you must (e.g. an amount). If it shows the request is
+form-encoded, emit a urlencoded body; if JSON, emit raw JSON. Only fall back to
+guessing when no example covers the action you need.
 
 IF MISSING EDGES ARE GIVEN, that is your objective. Do not regenerate a generic
 tour of the API. Work out which user action would cause each missing edge and

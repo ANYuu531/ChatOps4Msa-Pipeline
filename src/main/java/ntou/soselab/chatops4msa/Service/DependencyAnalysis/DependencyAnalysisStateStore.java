@@ -72,6 +72,12 @@ public class DependencyAnalysisStateStore {
     public static final String STAGE_AUTH_HINT = "auth_hint";
     /** JSON list of the external hosts found in the code; drives the ServiceEntry suggestions. */
     public static final String STAGE_EXTERNAL_HOSTS = "external_hosts";
+    /**
+     * The project's own example requests (load/e2e/API artefacts), harvested from the
+     * clone so traffic generation can copy real write-path payloads. Stored so a
+     * resume reuses them without cloning again.
+     */
+    public static final String STAGE_EXAMPLE_REQUESTS = "example_requests";
 
     public static class State {
         public String repoName = "";
