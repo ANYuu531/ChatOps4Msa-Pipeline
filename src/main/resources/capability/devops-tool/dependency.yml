@@ -710,7 +710,7 @@ low_code:
         - toolkit-llm-call:
             prompt: |
               ## Analysis mode (greenfield = static, no cluster; runtime = a namespace was given)
-              ${analysis_mode}
+              runtime
 
               ## Documentation + code dependency notes
               ${deepwiki_dependency_notes}
