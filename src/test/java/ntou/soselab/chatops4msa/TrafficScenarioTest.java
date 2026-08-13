@@ -143,6 +143,28 @@ public class TrafficScenarioTest {
     }
 
     @Test
+    void parsesUrlencodedFormBody() {
+        // A server-side-rendered form login: urlencoded body, {{vars}} preserved for
+        // the runner to substitute, content type defaulted, disabled pair skipped.
+        String collection = "{ \"item\": [\n"
+                + "  { \"name\": \"form login\", \"request\": {\n"
+                + "      \"method\": \"POST\",\n"
+                + "      \"url\": \"{{baseUrl}}/login\",\n"
+                + "      \"body\": { \"mode\": \"urlencoded\", \"urlencoded\": [\n"
+                + "        { \"key\": \"username\", \"value\": \"{{username}}\" },\n"
+                + "        { \"key\": \"password\", \"value\": \"{{password}}\" },\n"
+                + "        { \"key\": \"remember\", \"value\": \"1\", \"disabled\": true }\n"
+                + "      ] } } }\n"
+                + "] }";
+        TrafficScenario scenario = TrafficScenario.parse(collection);
+
+        TrafficScenario.Step login = scenario.steps.get(0);
+        assertEquals("username={{username}}&password={{password}}", login.body);
+        assertEquals("application/x-www-form-urlencoded", login.headers.get("Content-Type"));
+        assertTrue(scenario.warnings.isEmpty(), "urlencoded is now supported, not a warning");
+    }
+
+    @Test
     void rejectsCollectionWithNoItems() {
         assertThrows(IllegalArgumentException.class, () -> TrafficScenario.parse("{ \"item\": [] }"));
         assertThrows(IllegalArgumentException.class, () -> TrafficScenario.parse("not json"));

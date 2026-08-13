@@ -172,8 +172,6 @@ public class TrafficScenario {
 
         JSONObject body = request.optJSONObject("body");
         if (body != null) {
-            // Only raw bodies are driven; other modes (formdata, urlencoded, file)
-            // are not part of the supported subset.
             String mode = body.optString("mode", "raw");
             if ("raw".equals(mode)) {
                 Object raw = body.opt("raw");
@@ -183,7 +181,19 @@ public class TrafficScenario {
                             : String.valueOf(raw);
                     if (step.body.isBlank()) step.body = null;
                 }
+            } else if ("urlencoded".equals(mode)) {
+                // Form-encoded bodies: the shape a server-side-rendered app's form login
+                // (username=..&password=..) and its form POSTs (deposit/payment) use.
+                // We build key=value&... preserving {{vars}} for the runner to substitute
+                // (values are simple here, so no percent-encoding that would corrupt them),
+                // and default the content type unless the collection set one.
+                step.body = urlencodedBody(body.optJSONArray("urlencoded"));
+                if (step.body != null && step.headers.keySet().stream()
+                        .noneMatch(k -> k.equalsIgnoreCase("Content-Type"))) {
+                    step.headers.put("Content-Type", "application/x-www-form-urlencoded");
+                }
             } else {
+                // formdata (multipart) and file uploads remain out of the supported subset.
                 warnings.add("item " + (index + 1) + " uses body mode '" + mode
                         + "', which is not supported; sent with no body");
             }
@@ -191,6 +201,26 @@ public class TrafficScenario {
 
         parseCaptures(item, step, index, warnings);
         return step;
+    }
+
+    /**
+     * Joins a Postman {@code urlencoded} array ({@code [{key,value,disabled?}]}) into a
+     * {@code key=value&key=value} body. Disabled and empty-key pairs are skipped;
+     * {@code {{var}}} placeholders are kept verbatim so the runner substitutes them.
+     * Returns null when nothing usable remains (so no empty body is sent).
+     */
+    private static String urlencodedBody(JSONArray pairs) {
+        if (pairs == null) return null;
+        StringBuilder form = new StringBuilder();
+        for (int p = 0; p < pairs.length(); p++) {
+            JSONObject pair = pairs.optJSONObject(p);
+            if (pair == null || pair.optBoolean("disabled", false)) continue;
+            String key = pair.optString("key", "").trim();
+            if (key.isEmpty()) continue;
+            if (form.length() > 0) form.append('&');
+            form.append(key).append('=').append(pair.optString("value", ""));
+        }
+        return form.length() == 0 ? null : form.toString();
     }
 
     /**
