@@ -39,4 +39,19 @@ class GreenfieldGatingTest {
         assertFalse(CapabilityOrchestrator.requiresLiveCluster("toolkit-discord-text", Map.of()));
         assertFalse(CapabilityOrchestrator.requiresLiveCluster("toolkit-depstate-put", Map.of()));
     }
+
+    @Test
+    void runtimeSummaryLlmStepsAreGatedButDocsAndReportAreNot() {
+        // These LLM steps only summarise cluster/runtime evidence — skip them in
+        // greenfield so they cannot hallucinate a k8s/Istio inventory from empty input.
+        assertTrue(CapabilityOrchestrator.requiresLiveCluster(
+                "toolkit-llm-call", Map.of("prompt_template", "k8s_runtime_notes")));
+        assertTrue(CapabilityOrchestrator.requiresLiveCluster(
+                "toolkit-llm-call", Map.of("prompt_template", "istio_runtime_edges")));
+        assertTrue(CapabilityOrchestrator.requiresLiveCluster(
+                "toolkit-llm-call", Map.of("prompt_template", "istio_egress_edges")));
+        // Documentation/code summaries still run in greenfield.
+        assertFalse(CapabilityOrchestrator.requiresLiveCluster(
+                "toolkit-llm-call", Map.of("prompt_template", "deepwiki_dependency_notes")));
+    }
 }

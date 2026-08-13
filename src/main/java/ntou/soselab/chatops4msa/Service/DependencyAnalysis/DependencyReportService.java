@@ -56,6 +56,13 @@ public class DependencyReportService {
      * Generates and posts the report for the given user from the stored evidence.
      * UserContextHolder must already be set to this user (LlmToolkit needs it).
      */
+    /** No namespace (blank / "none" / "greenfield") means a static, no-cluster run. */
+    private static boolean isGreenfield(String namespace) {
+        if (namespace == null) return true;
+        String ns = namespace.trim();
+        return ns.isEmpty() || ns.equalsIgnoreCase("none") || ns.equalsIgnoreCase("greenfield");
+    }
+
     public void generateAndPost(String userId) {
         DependencyAnalysisStateStore.State state = stateStore.get(userId);
         if (state == null) {
@@ -65,7 +72,15 @@ public class DependencyReportService {
             return;
         }
 
-        String prompt = "## Documentation + code dependency notes\n"
+        // No namespace = greenfield: a static, code-and-docs-only run with no cluster.
+        // The runtime stages are empty by design; tell the report so it does not
+        // invent Kubernetes/Istio/pod/traffic facts that were never collected.
+        boolean greenfield = isGreenfield(state.namespace);
+        String mode = greenfield ? "greenfield" : "runtime";
+
+        String prompt = "## Analysis mode (greenfield = static, no cluster; runtime = a namespace was given)\n"
+                + mode + "\n\n"
+                + "## Documentation + code dependency notes\n"
                 + state.stage(DependencyAnalysisStateStore.STAGE_MERGED_NOTES) + "\n\n"
                 + "## Kubernetes / Istio runtime notes\n"
                 + state.stage(DependencyAnalysisStateStore.STAGE_K8S) + "\n\n"

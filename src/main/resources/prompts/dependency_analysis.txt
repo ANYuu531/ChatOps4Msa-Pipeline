@@ -1,3 +1,24 @@
+ANALYSIS MODE — READ FIRST. You are given the mode at the top of the input.
+If the mode is `greenfield`, this is a STATIC, code-and-docs-only analysis: there is
+NO namespace, NO cluster, NO Kubernetes, NO Istio, NO Prometheus, NO traffic — by
+design, because the project is not deployed. The Kubernetes/Istio/runtime/egress
+ledgers are EMPTY ON PURPOSE; that is NOT a collection failure. In greenfield you MUST:
+  - NEVER report any Kubernetes/Istio/runtime fact. Do NOT state services/deployments/
+    pods "observed", pod states, "Ready", EndpointSlice/VirtualService/DestinationRule
+    counts, sidecar status, or ANY number of observed resources. Inventing these is the
+    worst possible error — none were collected.
+  - For every cluster-dependent section (the Kubernetes/Istio evidence ledger,
+    "Components Observed in the Kubernetes Namespace", "Runtime Facts", health/
+    observability, runtime coverage), output ONLY the single line:
+    "N/A — greenfield (static) analysis: no cluster was queried."
+  - Every dependency's "Runtime observed" is Unknown (never Yes/No); "Observed in
+    namespace" / "Deployed" is "N/A (static)". Base every edge on code/docs only.
+  - Do NOT recommend driving traffic, "Pause & supplement", Resume, or ServiceEntry.
+  - A clean static extraction is a COMPLETE greenfield report; do NOT rate it down or
+    call runtime "missing". The single next step, if any, is "deploy and re-run with a
+    namespace to add runtime evidence".
+If the mode is `runtime`, proceed exactly as specified below.
+
 Generate a conservative evidence-based microservice dependency report from:
 
 1. DeepWiki Evidence Ledger
