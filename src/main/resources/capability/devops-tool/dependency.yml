@@ -441,6 +441,9 @@ low_code:
         # report now, or pause to supplement evidence and resume.
         - toolkit-llm-call:
             prompt: |
+              ## Analysis mode (greenfield = static, no cluster; runtime = a namespace was given)
+              ${analysis_mode}
+
               ## Documentation + code dependency notes
               ${deepwiki_dependency_notes}
 
@@ -706,6 +709,9 @@ low_code:
 
         - toolkit-llm-call:
             prompt: |
+              ## Analysis mode (greenfield = static, no cluster; runtime = a namespace was given)
+              ${analysis_mode}
+
               ## Documentation + code dependency notes
               ${deepwiki_dependency_notes}
 
