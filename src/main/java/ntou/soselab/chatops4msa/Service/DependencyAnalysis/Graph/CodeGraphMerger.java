@@ -96,6 +96,13 @@ public class CodeGraphMerger {
     private final Map<String, String> serviceDirs = new LinkedHashMap<>();
     /** env var name -> resolved host, from k8s ConfigMap / .env ({@code env-address}). */
     private final Map<String, String> envAddress = new LinkedHashMap<>();
+    /**
+     * Normalised service key -> node, for resolving a call whose host is a variable
+     * but whose URL PATH names the callee by convention (Spring: {@code
+     * /api/v1/orderservice/...} -> order-service). Keys are letters-only forms of the
+     * known service names, with and without a {@code ts-} prefix / {@code service} suffix.
+     */
+    private final Map<String, String> serviceKeys = new LinkedHashMap<>();
 
     private CodeGraphMerger(DependencyGraph graph, String repoName) {
         this.graph = graph;
@@ -152,6 +159,42 @@ public class CodeGraphMerger {
                 graph.addNode(name, DependencyGraph.classifyKind(name));
             }
         }
+
+        // Build the path -> service lookup from the final node vocabulary, so a
+        // path-encoded callee (see serviceKeys) can be resolved later.
+        for (String node : knownNodes) registerServiceKeys(node);
+    }
+
+    /** Registers the letters-only key variants of a service node for path resolution. */
+    private void registerServiceKeys(String node) {
+        String base = node.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+        if (base.length() < 3) return;
+        serviceKeys.putIfAbsent(base, node);                                  // tsorderservice
+        String noPrefix = base.startsWith("ts") ? base.substring(2) : base;   // orderservice
+        if (noPrefix.length() >= 3) serviceKeys.putIfAbsent(noPrefix, node);
+        for (String b : new String[]{base, noPrefix}) {
+            if (b.endsWith("service") && b.length() > 9) {                     // order / tsorder (len>9 avoids bare "service")
+                serviceKeys.putIfAbsent(b.substring(0, b.length() - 7), node);
+            }
+        }
+    }
+
+    /**
+     * The service a URL path names by convention, or null. Scans path segments in
+     * order (the service token is conventionally first, e.g. {@code
+     * /api/v1/orderservice/order}) and returns the first that matches a known
+     * service key. Used only as a fallback when the host cannot be resolved.
+     */
+    private String resolveServiceFromPath(String path) {
+        if (path == null || path.isEmpty() || serviceKeys.isEmpty()) return null;
+        for (String seg : path.split("/")) {
+            if (seg.isEmpty()) continue;
+            String key = seg.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+            if (key.length() < 3) continue;
+            String node = serviceKeys.get(key);
+            if (node != null) return node;
+        }
+        return null;
     }
 
     /**
@@ -335,8 +378,17 @@ public class CodeGraphMerger {
         }
 
         // --- synchronous: resolve the callee onto the graph vocabulary ---
+        // Fallback for a call whose host is a variable but whose URL path names the
+        // service by convention (/api/v1/orderservice/... -> order-service). Used only
+        // when the host cannot be resolved below, so a real literal host always wins.
+        String pathNode = (source == null) ? null : resolveServiceFromPath(fields.optString("path", ""));
+
         String rawTarget = syncTarget(section, fields);
         if (rawTarget == null || source == null) {
+            if (pathNode != null && !pathNode.equals(source)) {
+                addCodeEdge(source, pathNode, "sync-http", file, line);
+                return;
+            }
             unresolved.add(new Unresolved(section, source, rawTarget, file, line));
             return;
         }
@@ -355,6 +407,10 @@ public class CodeGraphMerger {
 
         String fullHost = stripToHost(rawTarget);
         if (fullHost.isEmpty()) {
+            if (pathNode != null && !pathNode.equals(source)) {
+                addCodeEdge(source, pathNode, "sync-http", file, line);
+                return;
+            }
             unresolved.add(new Unresolved(section, source, rawTarget, file, line));
             return;
         }
@@ -373,6 +429,10 @@ public class CodeGraphMerger {
         if (node == null) {
             String label = cleanLabel(fullHost);
             if (!isPlausibleName(label)) {
+                if (pathNode != null && !pathNode.equals(source)) {
+                    addCodeEdge(source, pathNode, "sync-http", file, line);
+                    return;
+                }
                 unresolved.add(new Unresolved(section, source, rawTarget, file, line));
                 return;
             }

@@ -1,0 +1,115 @@
+%% train-ticket 靜態(greenfield)依賴圖 · 47 服務 · 零 port
+%% 服務間邊經「路徑段→服務」解析(/api/v1/<x>service/... -> <x>-service);全為 code/doc 宣告(虛線),尚未有 runtime
+flowchart LR
+%% Microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  ts_contacts_service["ts-contacts-service"]
+  ts_admin_user_service["ts-admin-user-service"]
+  ts_notification_service["ts-notification-service"]
+  ts_cancel_service["ts-cancel-service"]
+  ts_config_service["ts-config-service"]
+  ts_assurance_service["ts-assurance-service"]
+  ts_order_other_service["ts-order-other-service"]
+  ts_route_service["ts-route-service"]
+  ts_price_service["ts-price-service"]
+  ts_preserve_service["ts-preserve-service"]
+  ts_news_service["ts-news-service"]
+  ts_avatar_service["ts-avatar-service"]
+  ts_ui_dashboard["ts-ui-dashboard"]
+  ts_security_service["ts-security-service"]
+  ts_consign_service["ts-consign-service"]
+  ts_train_service["ts-train-service"]
+  ts_order_service["ts-order-service"]
+  ts_ticket_office_service["ts-ticket-office-service"]
+  ts_verification_code_service["ts-verification-code-service"]
+  ts_food_service["ts-food-service"]
+  ts_station_food_service["ts-station-food-service"]
+  ts_rebook_service["ts-rebook-service"]
+  ts_train_food_service["ts-train-food-service"]
+  ts_admin_basic_info_service["ts-admin-basic-info-service"]
+  ts_food_delivery_service["ts-food-delivery-service"]
+  ts_consign_price_service["ts-consign-price-service"]
+  ts_wait_order_service["ts-wait-order-service"]
+  ts_basic_service["ts-basic-service"]
+  ts_preserve_other_service["ts-preserve-other-service"]
+  ts_common["ts-common"]
+  ts_station_service["ts-station-service"]
+  ts_auth_service["ts-auth-service"]
+  ts_user_service["ts-user-service"]
+  ts_route_plan_service["ts-route-plan-service"]
+  ts_gateway_service["ts-gateway-service"]
+  ts_payment_service["ts-payment-service"]
+  ts_inside_payment_service["ts-inside-payment-service"]
+  ts_ui_test["ts-ui-test"]
+  ms_monitoring_core["ms-monitoring-core"]
+  bin["bin"]
+  json2shiviz["json2shiviz"]
+  ts_voucher_service["ts-voucher-service"]
+  ts_delivery_service["ts-delivery-service"]
+  ts_seat_service["ts-seat-service"]
+  ts_execute_service["ts-execute-service"]
+  ts_travel_plan_service["ts-travel-plan-service"]
+  ts_travel2_service["ts-travel2-service"]
+  ts_travel_service["ts-travel-service"]
+  ts_admin_order_service["ts-admin-order-service"]
+  ts_admin_travel_service["ts-admin-travel-service"]
+  ts_admin_route_service["ts-admin-route-service"]
+  github_com[/"github.com"/]:::external
+  rest_service_external["rest-service-external"]
+  ts_cancel_service -.-> ts_notification_service
+  ts_cancel_service -.-> ts_order_service
+  ts_cancel_service -.-> ts_order_other_service
+  ts_order_other_service -.-> ts_station_service
+  ts_preserve_service -.-> ts_basic_service
+  ts_preserve_service -.-> ts_seat_service
+  ts_preserve_service -.-> ts_travel_service
+  ts_preserve_service -.-> ts_order_service
+  ts_preserve_service -.-> ts_food_service
+  ts_preserve_service -.-> ts_consign_service
+  ts_order_service -.-> ts_station_service
+  ts_food_service -.-> ts_station_food_service
+  ts_rebook_service -.-> ts_seat_service
+  ts_rebook_service -.-> ts_inside_payment_service
+  ts_admin_basic_info_service -.-> ts_contacts_service
+  ts_wait_order_service -.-> ts_preserve_service
+  ts_basic_service -.-> ts_station_service
+  ts_basic_service -.-> ts_train_service
+  ts_basic_service -.-> ts_route_service
+  ts_basic_service -.-> ts_price_service
+  ts_preserve_other_service -.-> ts_basic_service
+  ts_preserve_other_service -.-> ts_seat_service
+  ts_preserve_other_service -.-> ts_travel2_service
+  ts_preserve_other_service -.-> ts_order_other_service
+  ts_preserve_other_service -.-> ts_food_service
+  ts_preserve_other_service -.-> ts_consign_service
+  ts_common -. ext .-> github_com
+  ts_user_service -.-> ts_auth_service
+  ts_route_plan_service -.-> ts_travel_service
+  ts_route_plan_service -.-> ts_travel2_service
+  ts_inside_payment_service -.-> rest_service_external
+  ts_inside_payment_service -.-> ts_payment_service
+  ts_seat_service -.-> ts_order_service
+  ts_seat_service -.-> ts_order_other_service
+  ts_travel_plan_service -.-> ts_seat_service
+  ts_travel_plan_service -.-> ts_route_plan_service
+  ts_travel_plan_service -.-> ts_travel_service
+  ts_travel_plan_service -.-> ts_travel2_service
+  ts_travel2_service -.-> ts_basic_service
+  ts_travel2_service -.-> ts_seat_service
+  ts_travel_service -.-> ts_basic_service
+  ts_travel_service -.-> ts_seat_service
+  ts_admin_order_service -.-> ts_order_service
+  ts_admin_order_service -.-> ts_order_other_service
+  ts_admin_travel_service -.-> ts_travel_service
+  ts_admin_travel_service -.-> ts_travel2_service
+  ts_admin_travel_service -.-> ts_station_service
+  ts_admin_route_service -.-> ts_route_service
+  ts_admin_route_service -.-> ts_station_service
+  ts_voucher_service -.-> ts_order_service
+  ts_voucher_service -.-> ts_order_other_service
+  ts_voucher_service -. db .-> null
+classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
+
+=================================================
+

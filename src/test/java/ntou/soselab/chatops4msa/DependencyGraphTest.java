@@ -827,6 +827,35 @@ public class DependencyGraphTest {
         assertEquals(DependencyGraph.KIND_DB, kindOf(g, "accounts-db"));
     }
 
+    /**
+     * A train-ticket-shaped fixture: the call host is a variable, but the URL path
+     * names the callee by convention (/api/v1/&lt;svc&gt;service/…). Includes a
+     * multi-word service (station-food) to check the letters-only key match.
+     */
+    private static final String PATH_ENCODED_CODE = """
+            {"repo":"FudanSELab/train-ticket","failed":false,"edges":[
+              {"section":"service-root","fields":{"dir":"ts-preserve-service","name":"ts-preserve-service"},"file":"ts-preserve-service/pom.xml","line":-1,"confidence":"High"},
+              {"section":"service-root","fields":{"dir":"ts-order-service","name":"ts-order-service"},"file":"ts-order-service/pom.xml","line":-1,"confidence":"High"},
+              {"section":"service-root","fields":{"dir":"ts-food-service","name":"ts-food-service"},"file":"ts-food-service/pom.xml","line":-1,"confidence":"High"},
+              {"section":"service-root","fields":{"dir":"ts-station-food-service","name":"ts-station-food-service"},"file":"ts-station-food-service/pom.xml","line":-1,"confidence":"High"},
+              {"section":"http-client","fields":{"method":"exchange","path":"/api/v1/orderservice/order"},"file":"ts-preserve-service/src/main/java/preserve/service/PreserveServiceImpl.java","line":396,"confidence":"Medium (path only; host comes from a variable)"},
+              {"section":"http-client","fields":{"method":"exchange","path":"/api/v1/stationfoodservice/stationfoodstores"},"file":"ts-food-service/src/main/java/foodsearch/service/FoodServiceImpl.java","line":286,"confidence":"Medium (path only; host comes from a variable)"}
+            ]}
+            """;
+
+    @Test
+    void greenfieldResolvesPathEncodedCallTarget() {
+        DependencyGraph g = new DependencyGraph("");
+        CodeGraphMerger.merge(g, PATH_ENCODED_CODE, "FudanSELab/train-ticket");
+
+        // /api/v1/orderservice/... names order-service; the source is the calling module.
+        DependencyGraph.Edge e = edge(g, "ts-preserve-service", "ts-order-service");
+        assertNotNull(e, "a path-encoded target must resolve when the host is a variable");
+        assertEquals("sync-http", e.type);
+        // A multi-word service resolves too: stationfoodservice -> ts-station-food-service.
+        assertNotNull(edge(g, "ts-food-service", "ts-station-food-service"));
+    }
+
     @Test
     void greenfieldDoesNotRenderMetaSectionsAsEdges() {
         DependencyGraph g = greenfieldGraph();
