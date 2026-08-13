@@ -34,6 +34,40 @@ tour of the API. Work out which user action would cause each missing edge and
 build the journey that performs it. Read the previous execution report: if a step
 returned 4xx, your payload or your sequence was wrong — fix it, do not repeat it.
 
+FRONTEND SHAPE — decide this FIRST, from the Istio routing:
+The entry URL reaches exactly ONE service — the ingress / VirtualService target.
+Find it in the Kubernetes/Istio routing. EVERYTHING you send goes to that one
+service; the other services are reached only when IT calls them for you. There are
+two shapes, and they are driven completely differently:
+
+(A) API gateway / BFF — the entry service ROUTES by path prefix to backend services
+    (e.g. the routing shows /api/customer/** -> customers-service). Here you DO call
+    the backend endpoints, each prefixed with its gateway route (rule 2). Login
+    typically returns a JSON body with a token/id you capture (rule 3) and send as a
+    Bearer header. The example collection below is this shape.
+
+(B) Server-side-rendered web app — the entry service is an HTML application. Its own
+    routes are PAGES (/, /home, /login, /deposit, /payment), and it calls the backends
+    ITSELF, server-side, to render a page or handle a form submit. For this shape:
+    - Drive ITS PAGES, never the backend endpoints. A single GET of a page (e.g.
+      /home) makes the frontend fan out to several backends in one request — that is
+      exactly how you observe frontend->backend edges. The backend service endpoints
+      from the code extraction (e.g. /balances/{id}, /users, /contacts/<user>) live on
+      OTHER services and are NOT exposed at the ingress; sending them to {{baseUrl}}
+      only 404s and observes nothing.
+    - Auth is usually a FORM login: Content-Type application/x-www-form-urlencoded,
+      body `username={{username}}&password={{password}}`, and the reply is a 302 with
+      a Set-Cookie and NO JSON body. Do NOT try to capture a token or id from the
+      body — there is none, and the capture will silently leave {{VAR}} unbound,
+      breaking every later step. The cookie jar (rule 1) carries the session for you:
+      just log in, then request pages/forms in order.
+    - Form POSTs (/deposit, /payment, /signup) take form-encoded bodies, not JSON.
+
+Tell the two apart from the routing, not from the code: if the ingress routes to ONE
+service whose own routes look like pages (/, /home, /login) while the edges you want
+are on DIFFERENT services the routing does not expose, it is shape (B) — drive the
+pages. When in doubt, GET the app's pages before trying anything backend-shaped.
+
 OUTPUT
 Return ONLY a JSON object: a Postman Collection v2.1. No prose, no markdown fence.
 
@@ -100,10 +134,12 @@ RULES:
 
 1. Items run IN ORDER and share state. A session cookie set by any response is
    carried automatically — you do not need to handle cookies yourself.
-2. `{{baseUrl}}` is bound to the entry URL — the INGRESS / API GATEWAY, not the
-   service. So a service's own endpoint path from the code extraction (e.g. `/owners`
-   on customers-service) is usually NOT reachable at `{{baseUrl}}/owners`: you MUST
-   prepend the gateway route prefix shown in the Istio routing / VirtualServices.
+2. (Shape (A) — API gateway. For shape (B), do NOT call backend endpoints at all;
+   drive the frontend's pages as described above.) `{{baseUrl}}` is bound to the entry
+   URL — the INGRESS / API GATEWAY, not the service. So a service's own endpoint path
+   from the code extraction (e.g. `/owners` on customers-service) is usually NOT
+   reachable at `{{baseUrl}}/owners`: you MUST prepend the gateway route prefix shown
+   in the Istio routing / VirtualServices.
    Example: if the gateway routes `/api/customer/**` to customers-service, the owners
    endpoint is `{{baseUrl}}/api/customer/owners`, NOT `{{baseUrl}}/owners`. A request
    that omits the prefix gets 404 and observes no edge. Build every `url.raw` as
