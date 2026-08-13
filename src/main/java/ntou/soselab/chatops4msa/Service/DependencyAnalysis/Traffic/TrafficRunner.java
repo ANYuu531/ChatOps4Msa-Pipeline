@@ -54,6 +54,16 @@ public class TrafficRunner {
     private static final Duration TIMEOUT = Duration.ofSeconds(20);
     private static final int MAX_STEPS = 60;
     private static final int MAX_BODY_SNIPPET = 400;
+    /**
+     * How long to wait after driving traffic before the caller queries Prometheus.
+     * Istio's Prometheus scrapes on an interval (~15s) and Envoy flushes telemetry
+     * with a small lag, so the just-driven requests — the LATEST ones, which are
+     * usually the deepest edges — are not yet in istio_requests_total. Without this
+     * settle the caller queries too early and those edges are silently dropped from
+     * the graph (observed at runtime, but the snapshot missed them). Slightly longer
+     * than the default 15s scrape interval so one scrape is guaranteed to have run.
+     */
+    private static final Duration TELEMETRY_SETTLE = Duration.ofSeconds(20);
 
     public static class StepResult {
         public String name;
@@ -171,6 +181,14 @@ public class TrafficRunner {
                     if (result.error != null) report.transportErrors++;
                 }
             }
+        }
+
+        // Let Istio's telemetry catch up before the caller queries Prometheus, so the
+        // last (deepest) edges just exercised are not missed by an early scrape.
+        try {
+            Thread.sleep(TELEMETRY_SETTLE.toMillis());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
         return report;
     }
