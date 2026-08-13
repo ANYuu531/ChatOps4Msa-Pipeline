@@ -61,6 +61,9 @@ public class TrafficRunner {
         public String url;
         public int status;
         public String error;
+        /** A short snippet of the response body for a 4xx/5xx, so the next round can
+         *  read the actual validation error and fix the payload (whitespace-collapsed). */
+        public String responseSnippet;
         /** An UNREACHABLE: item — a declared gap, deliberately not sent. */
         public boolean unreachable;
         public final Map<String, String> captured = new LinkedHashMap<>();
@@ -103,6 +106,9 @@ public class TrafficRunner {
                 if (step.error != null) {
                     sb.append("    error: ").append(step.error).append('\n');
                 }
+                if (step.responseSnippet != null && !step.responseSnippet.isBlank()) {
+                    sb.append("    response: ").append(step.responseSnippet).append('\n');
+                }
                 if (!step.captured.isEmpty()) {
                     sb.append("    captured: ").append(step.captured.keySet()).append('\n');
                 }
@@ -114,6 +120,9 @@ public class TrafficRunner {
                     + "service that rejects the input before calling downstream produces no deeper edge.\n");
             sb.append("- A transport error means the request never arrived; that step produced no "
                     + "evidence at all.\n");
+            sb.append("- A `response:` line is a snippet of a 4xx/5xx body — it usually names the "
+                    + "missing/invalid field. Use it to CORRECT that request's payload next round, "
+                    + "not to drop the step.\n");
             sb.append("- A [GAP] step is an UNREACHABLE: marker the generator emitted on purpose; it "
                     + "was not sent. The edge it names still needs whatever it says is missing.\n");
             sb.append("- A step whose capture is missing means later steps depending on that variable "
@@ -224,6 +233,13 @@ public class TrafficRunner {
                     client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
             result.status = response.statusCode();
 
+            // A rejected request (4xx/5xx) usually explains WHY in its body ("amount is
+            // required", "invalid account"). Keep a short snippet so the coverage-refinement
+            // round can correct the payload instead of blindly retrying the same one.
+            if (result.status >= 400) {
+                result.responseSnippet = snippet(response.body());
+            }
+
             for (Map.Entry<String, String> capture : step.capture.entrySet()) {
                 try {
                     Object value = JsonPath.read(response.body(), capture.getValue());
@@ -261,5 +277,11 @@ public class TrafficRunner {
 
     private String truncate(String value) {
         return value.length() <= MAX_BODY_SNIPPET ? value : value.substring(0, MAX_BODY_SNIPPET) + "...";
+    }
+
+    /** A response body reduced to one compact, truncated line for the report; null if empty. */
+    private String snippet(String body) {
+        if (body == null || body.isBlank()) return null;
+        return truncate(body.replaceAll("\\s+", " ").trim());
     }
 }

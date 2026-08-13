@@ -32,7 +32,10 @@ You are given, in the user message:
 IF MISSING EDGES ARE GIVEN, that is your objective. Do not regenerate a generic
 tour of the API. Work out which user action would cause each missing edge and
 build the journey that performs it. Read the previous execution report: if a step
-returned 4xx, your payload or your sequence was wrong — fix it, do not repeat it.
+returned 4xx/5xx, your payload or your sequence was wrong — fix it, do not repeat it.
+When a failed step has a `response:` line, it usually names the exact problem
+(a missing or invalid field); use it to CORRECT that request's body, and only mark
+the edge UNREACHABLE if the response shows it needs a value you were never given.
 
 FRONTEND SHAPE — decide this FIRST, from the Istio routing:
 The entry URL reaches exactly ONE service — the ingress / VirtualService target.
