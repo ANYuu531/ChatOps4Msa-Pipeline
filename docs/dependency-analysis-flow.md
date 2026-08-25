@@ -1,4 +1,18 @@
-# 依賴分析：使用者下指令後，背後發生什麼
+# DepWeaver：使用者下指令後，背後發生什麼
+
+> **DepWeaver** — Multi-Evidence Dependency Weaver
+> 多證據融合的微服務相依圖建構：**確定性優先、LLM 只補殘餘**
+>
+> 名字裡的 *weave*（織）指的就是核心設計：runtime（Istio 觀測）、code（tree-sitter 抽取）、doc（DeepWiki）三種證據**織成同一張圖**，而不是三選一。工具產出的每一張圖、每一份報告都會帶這個名字（`DependencyGraph.TOOL_NAME`），所以圖離開 Discord 之後——貼進投影片、論文——還認得出來源。
+>
+> 本文的圖有固定編號，討論時直接叫編號：
+>
+> | 編號 | 圖名 | 位置 |
+> |---|---|---|
+> | **Fig.1** | 端到端流程總覽（Pipeline Overview） | 本文 |
+> | **Fig.2** | 證據合併鏈（Evidence Merge Chain） | 本文 |
+> | **Fig.3** | 分層相依圖（Layered Dependency Graph） | 工具輸出，`docs/train-ticket-greenfield-graph-layered.mmd` |
+> | **Fig.4** | 對話補值迴圈（Interactive Gap-Filling Loop） | Fig.1 裡「Provide values」那條分支 |
 
 這份文件畫出 `get dependency analysis` 從**使用者在 Discord 打一句話**，到**貼回一張依賴圖 + 覆蓋率 + 報告**的完整流程。內容對照實際程式碼與管線設定（`capability/devops-tool/dependency.yml`、`Service/DependencyAnalysis/*`、`Service/DiscordService/*`、`Service/NLPService/*`），不是示意。
 
@@ -10,7 +24,7 @@
 
 ---
 
-## 圖一：端到端總流程
+## Fig.1 · 端到端流程總覽（Pipeline Overview）
 
 ```mermaid
 flowchart TD
@@ -52,7 +66,7 @@ flowchart TD
 
     subgraph REPORT["出圖 + 報告 — DependencyReportService.generateAndPost"]
       direction TB
-      BUILD["建圖合併鏈 (見圖二)<br/>runtime + code + doc + k8s → 正規化"]
+      BUILD["建圖合併鏈 (見 Fig.2)<br/>runtime + code + doc + k8s → 正規化"]
       BUILD --> EMIT["MermaidEmitter → .mmd<br/>DotEmitter → Graphviz → PNG"]
       EMIT --> COVR["CoverageAnalyzer → 覆蓋率"]
       COVR --> TXT["LLM dependency_analysis<br/>→ 分層文字報告"]
@@ -68,7 +82,9 @@ flowchart TD
 
 ---
 
-## 圖二：建圖合併鏈（`postRuntimeGraph` 的核心）
+## Fig.2 · 證據合併鏈（Evidence Merge Chain）
+
+`postRuntimeGraph` 的核心。
 
 出圖時**確定性**把三來源疊起來，再正規化；LLM 只收殘餘。邊的線型反映信心層級。
 

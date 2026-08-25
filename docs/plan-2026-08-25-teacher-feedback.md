@@ -138,16 +138,15 @@ petclinic 圖上 `customers-service → mysql`、`vets-service → mysql`、`vis
 **老師的話**：幫流程圖取名字。
 **我的解讀**：兩層——① 這套**方法/工具**要有正式名字（論文、投影片、README 統一稱呼，不能一直講「我們的工具」）；② 每張**圖**要有固定圖名與編號（Fig.1/2/3），老師才好指「你第幾張圖」。
 
-### 工具名候選（待你/老師拍板）
+### 定案：**DepWeaver** — Multi-Evidence Dependency Weaver
 
-| 候選 | 全稱 | 說明 |
-|---|---|---|
-| **DepWeaver**（推薦） | Multi-Evidence Dependency Weaver | 「把 runtime / code / doc 三來源*織*成一張圖」，正好是核心設計，好記好唸 |
-| TriDep | Tri-Source Dependency Analyzer | 直白點出三來源，但少了「合成」的味道 |
-| MeshLens | — | 強調「透視 mesh」，但偏向 runtime，弱化了靜態那半 |
-| MEDGE | Multi-Evidence Dependency Graph Extraction | 學術縮寫式，正式但不好唸 |
+副標固定成一句：**「多證據融合的微服務相依圖建構——確定性優先、LLM 只補殘餘」**。
 
-副標建議固定成一句：**「多證據融合的微服務相依圖建構——確定性優先、LLM 只補殘餘」**。
+*weave*（織）講的就是核心設計：runtime / code / doc 三種證據**織成同一張圖**，不是三選一。
+（曾考慮過的其他候選：TriDep、MeshLens、MEDGE。）
+
+名字定義在 `DependencyGraph.TOOL_NAME` 一處，工具的每個產出都帶著它：Graphviz PNG 的標題、
+`.mmd` 檔頭、Discord 上的報告與覆蓋率標題——所以圖離開 Discord 之後還認得出來源。
 
 ### 圖名（先定，跟工具名無關）
 

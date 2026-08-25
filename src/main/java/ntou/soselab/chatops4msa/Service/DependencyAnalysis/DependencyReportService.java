@@ -193,7 +193,7 @@ public class DependencyReportService {
             String base = graphBaseName(state);
             if (png != null) {
                 jdaService.sendChatOpsChannelMessage(
-                        "## Dependency Graph — `" + state.repoName + "`\n"
+                        "## " + DependencyGraph.TOOL_NAME + " · Dependency Graph — `" + state.repoName + "`\n"
                                 + "Solid arrows are edges Istio observed at runtime; dashed arrows are "
                                 + "declared in code/doc but not observed. Greyed dashed nodes are referenced "
                                 + "but not deployed in the cluster; live nodes show image · replicas · created "
@@ -203,7 +203,7 @@ public class DependencyReportService {
                         new ByteArrayInputStream(mermaid.getBytes(StandardCharsets.UTF_8)));
             } else {
                 jdaService.sendChatOpsChannelMessage(
-                        "## Dependency Graph — `" + state.repoName + "`\n"
+                        "## " + DependencyGraph.TOOL_NAME + " · Dependency Graph — `" + state.repoName + "`\n"
                                 + "Paste the attached `.mmd` into https://mermaid.live (or a Markdown "
                                 + "file) to render it. Solid arrows are edges Istio observed at runtime; "
                                 + "dashed arrows are declared in code/doc but not observed.");
@@ -229,7 +229,8 @@ public class DependencyReportService {
         if (!coverage.hasEdges()) return; // nothing measurable (e.g. no service→service edges)
 
         StringBuilder msg = new StringBuilder();
-        msg.append("## Runtime Traffic Coverage — `").append(repoName).append("`\n")
+        msg.append("## ").append(DependencyGraph.TOOL_NAME)
+                .append(" · Runtime Traffic Coverage — `").append(repoName).append("`\n")
                 .append("Istio observed **").append(coverage.observed).append(" / ")
                 .append(coverage.total).append("** business (service→service) edges — **")
                 .append(coverage.percent()).append("%** runtime coverage.\n");

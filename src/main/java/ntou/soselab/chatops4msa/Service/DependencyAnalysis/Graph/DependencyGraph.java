@@ -34,6 +34,17 @@ import java.util.Set;
 public class DependencyGraph {
 
     /** How a node participates in the mesh. Drives the visual encoding (shape/colour). */
+    /**
+     * The tool's name, carried on everything it produces (the graph title, the Mermaid
+     * header, the report heading) so an artefact is identifiable away from the channel
+     * it was posted in — a paper figure, a slide, a file someone was sent.
+     *
+     * "Weaver" is the multi-evidence merge itself: runtime, code and documentation are
+     * woven into one graph rather than chosen between. Defined once here because the
+     * emitters, the report and the docs must all say the same word.
+     */
+    public static final String TOOL_NAME = "DepWeaver";
+
     public static final String KIND_SERVICE = "service";
     public static final String KIND_DB = "db";
     public static final String KIND_QUEUE = "queue";

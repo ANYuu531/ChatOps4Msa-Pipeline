@@ -32,10 +32,15 @@ public class DotEmitter {
         // Layered graphs read top-down (ingress at the top, data stores at the bottom);
         // without layers the previous left-to-right layout is kept.
         sb.append(layered ? "  rankdir=TB;\n" : "  rankdir=LR;\n");
+        // The rendered PNG travels on its own (a slide, a paper figure), so it carries
+        // the tool's name; the namespace is appended when there is one (a greenfield
+        // run has none, and must not claim a cluster it never looked at).
         sb.append("  graph [fontname=\"Helvetica\", labelloc=\"t\"");
+        String title = DependencyGraph.TOOL_NAME + " — dependency graph";
         if (graph.getNamespace() != null && !graph.getNamespace().isBlank()) {
-            sb.append(", label=\"namespace: ").append(escape(graph.getNamespace())).append("\"");
+            title += "  ·  namespace: " + graph.getNamespace();
         }
+        sb.append(", label=\"").append(escape(title)).append("\"");
         sb.append("];\n");
         sb.append("  node [fontname=\"Helvetica\", style=\"rounded,filled\", fillcolor=\"#f5f5f5\", color=\"#888888\"];\n");
         sb.append("  edge [fontname=\"Helvetica\", fontsize=10, color=\"#555555\"];\n");

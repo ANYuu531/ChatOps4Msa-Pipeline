@@ -36,7 +36,8 @@ public class MermaidEmitter {
         // Layered graphs read top-down; without layers the previous left-to-right
         // layout is kept, so an old checkpoint still renders the way it used to.
         sb.append(layered ? "flowchart TB\n" : "flowchart LR\n");
-        sb.append("%% Microservice dependency graph\n");
+        sb.append("%% ").append(DependencyGraph.TOOL_NAME)
+                .append(" — microservice dependency graph\n");
         sb.append("%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only\n");
         sb.append("%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]\n");
         if (graph.getNamespace() != null && !graph.getNamespace().isBlank()) {
