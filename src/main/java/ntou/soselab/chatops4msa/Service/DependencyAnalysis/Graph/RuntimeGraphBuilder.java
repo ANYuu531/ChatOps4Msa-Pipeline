@@ -159,6 +159,108 @@ public class RuntimeGraphBuilder {
         }
     }
 
+    /**
+     * Folds <b>in-mesh TCP</b> telemetry onto the graph — the runtime evidence for a
+     * dependency that is not HTTP, which in practice means <b>the database</b>.
+     *
+     * Why this is separate from {@link #fromIstioRequests}: Istio emits
+     * {@code istio_requests_total} only for protocols it parses (HTTP/gRPC). A MySQL
+     * or PostgreSQL connection is opaque TCP, so it appears exclusively in
+     * {@code istio_tcp_*} — which the pipeline previously queried only for egress
+     * ({@code destination_app="unknown"}, i.e. outside the mesh). An in-cluster
+     * database therefore had NO runtime evidence at all, and its edge could never be
+     * more than code-declared, however real it was.
+     *
+     * The query groups by workload and service name:
+     * <pre>
+     *   sum by(source_workload,destination_workload,destination_service_name)(
+     *     istio_tcp_connections_opened_total{reporter="source",
+     *       source_workload_namespace="&lt;ns&gt;"})
+     * </pre>
+     * {@code reporter="source"} on purpose: the caller's sidecar always reports, so
+     * this works whether or not the database pod itself is in the mesh — a database
+     * usually is NOT sidecar-injected, in which case {@code destination_workload} is
+     * {@code unknown} and the Service name is the only identity available.
+     *
+     * <p><b>What the count means.</b> It is connections opened, not queries. Clients
+     * pool connections, so the number reflects pool establishment (and is largely
+     * static afterwards) — it is evidence that this service really talks to that
+     * database, not a measure of how much. That also means the database must be
+     * running <em>before</em> the application pods start, or the pool is built before
+     * the sidecar can see it; see {@code kube/petclinic/README.md}.
+     *
+     * External hosts are skipped here: they have no destination workload and are
+     * already handled by {@link #mergeIstioEgress}, which attributes them by
+     * ServiceEntry. Double-counting them would give one edge two provenances.
+     *
+     * @param graph   the graph to enrich in place
+     * @param tcpJson raw Prometheus body of the in-mesh TCP query; a no-op when blank,
+     *                an UNAVAILABLE marker, or not parseable
+     */
+    public static void mergeIstioTcp(DependencyGraph graph, String tcpJson) {
+        if (graph == null || tcpJson == null || tcpJson.isBlank()) return;
+        if (tcpJson.stripLeading().startsWith("PROMETHEUS_UNAVAILABLE")) return;
+
+        JSONArray result;
+        try {
+            JSONObject root = new JSONObject(tcpJson);
+            if (!"success".equals(root.optString("status"))) return;
+            JSONObject data = root.optJSONObject("data");
+            if (data == null) return;
+            result = data.optJSONArray("result");
+            if (result == null) return;
+        } catch (Exception e) {
+            return;
+        }
+
+        for (int i = 0; i < result.length(); i++) {
+            JSONObject series = result.optJSONObject(i);
+            if (series == null) continue;
+            JSONObject metric = series.optJSONObject("metric");
+            if (metric == null) continue;
+
+            String source = metric.optString("source_workload", "").trim();
+            if (isNotBusiness(source)) continue;
+
+            // Prefer the workload (a meshed database); fall back to the Service name,
+            // which is all there is when the database has no sidecar.
+            String target = metric.optString("destination_workload", "").trim();
+            if (isNotBusiness(target)) {
+                target = shortServiceName(metric.optString("destination_service_name", "").trim());
+            }
+            if (isNotBusiness(target)) continue;
+            if (isAttributedExternalHost(target)) continue;   // mergeIstioEgress owns these
+            if (source.equalsIgnoreCase(target)) continue;
+
+            long count = parseCount(series.optJSONArray("value"));
+
+            String kind = DependencyGraph.classifyKind(target);
+            graph.addNode(source, DependencyGraph.classifyKind(source));
+            graph.addNode(target, kind);
+            // A TCP edge into something named like a datastore is the db edge the code
+            // extraction already declared, now confirmed on the wire; anything else is
+            // a plain non-HTTP call, kept as its own type so it is not mislabelled.
+            graph.addEdge(source, target,
+                    DependencyGraph.KIND_DB.equals(kind) ? "db" : "sync-tcp",
+                    DependencyGraph.PROV_RUNTIME,
+                    DependencyGraph.CONF_OBSERVED,
+                    true,
+                    count,
+                    "istio_tcp_connections_opened_total " + source + "->" + target
+                            + " = " + count + " connection(s)");
+        }
+    }
+
+    /** "accounts-db.boa.svc.cluster.local:5432" -> "accounts-db". */
+    private static String shortServiceName(String serviceName) {
+        if (serviceName == null || serviceName.isBlank()) return "";
+        String name = serviceName.trim();
+        int colon = name.indexOf(':');
+        if (colon > 0) name = name.substring(0, colon);
+        int dot = name.indexOf('.');
+        return dot > 0 ? name.substring(0, dot) : name;
+    }
+
     /** Service-name labels that mean "Istio could not attribute the external target". */
     private static final Set<String> EGRESS_UNATTRIBUTED = Set.of(
             "unknown", "passthroughcluster", "blackholecluster", "-");

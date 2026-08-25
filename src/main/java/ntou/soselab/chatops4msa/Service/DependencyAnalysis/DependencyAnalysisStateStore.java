@@ -56,6 +56,14 @@ public class DependencyAnalysisStateStore {
      * so the graph never has to re-read LLM text.
      */
     public static final String STAGE_TRAFFIC_RAW = "traffic_raw";
+    /**
+     * Raw Prometheus JSON of the in-mesh TCP query
+     * ({@code istio_tcp_connections_opened_total}, reporter=source), which is the ONLY
+     * runtime evidence for a non-HTTP dependency — in practice the database. Istio
+     * parses HTTP/gRPC into {@link #STAGE_TRAFFIC_RAW}; a MySQL/PostgreSQL connection
+     * is opaque TCP and appears nowhere else.
+     */
+    public static final String STAGE_TCP_RAW = "tcp_raw";
     public static final String STAGE_EGRESS = "egress";
     /**
      * Raw Prometheus JSON of the egress (external-dependency) query, kept alongside the

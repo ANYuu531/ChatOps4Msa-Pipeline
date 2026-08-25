@@ -869,6 +869,119 @@ public class DependencyGraphTest {
         assertEquals(3, g.getEdges().size());
     }
 
+    // ---- in-mesh TCP: the database edge Istio's HTTP metrics cannot carry ----
+
+    /**
+     * The TCP query's shape, covering the three cases that matter: a meshed database
+     * (workload known), an unmeshed one (workload "unknown", Service name is the only
+     * identity), an external host (owned by the egress merge), and a non-db TCP callee.
+     */
+    private static final String PETCLINIC_TCP = """
+            {
+              "status": "success",
+              "data": {
+                "resultType": "vector",
+                "result": [
+                  {"metric": {"source_workload": "customers-service", "destination_workload": "customers-db", "destination_service_name": "customers-db"}, "value": [1, "10"]},
+                  {"metric": {"source_workload": "vets-service", "destination_workload": "unknown", "destination_service_name": "vets-db.petclinic.svc.cluster.local:3306"}, "value": [1, "4"]},
+                  {"metric": {"source_workload": "config-server", "destination_workload": "unknown", "destination_service_name": "github.com"}, "value": [1, "197"]},
+                  {"metric": {"source_workload": "api-gateway", "destination_workload": "some-tcp-service", "destination_service_name": "some-tcp-service"}, "value": [1, "5"]},
+                  {"metric": {"source_workload": "prometheus", "destination_workload": "customers-db", "destination_service_name": "customers-db"}, "value": [1, "99"]}
+                ]
+              }
+            }
+            """;
+
+    @Test
+    void tcpMergeUpgradesTheCodeDeclaredDbEdgeToRuntimeObserved() {
+        DependencyGraph g = mergedGraph();
+        DependencyGraph.Edge before = edge(g, "customers-service", "customers-db");
+        assertFalse(before.runtimeObserved);   // code-declared only, until the mesh sees TCP
+
+        RuntimeGraphBuilder.mergeIstioTcp(g, PETCLINIC_TCP);
+
+        DependencyGraph.Edge after = edge(g, "customers-service", "customers-db");
+        assertTrue(after.runtimeObserved, "a TCP connection is the db edge's runtime evidence");
+        assertEquals("db", after.type, "merging must not relabel the existing db edge");
+        assertEquals(DependencyGraph.CONF_OBSERVED, after.confidence);
+        // Both provenances survive: the code declared it, the mesh confirmed it.
+        assertTrue(after.provenance.contains(DependencyGraph.PROV_CODE));
+        assertTrue(after.provenance.contains(DependencyGraph.PROV_RUNTIME));
+    }
+
+    @Test
+    void tcpMergeIdentifiesAnUnmeshedDbByItsServiceName() {
+        DependencyGraph g = mergedGraph();
+        RuntimeGraphBuilder.mergeIstioTcp(g, PETCLINIC_TCP);
+
+        // destination_workload was "unknown" (no sidecar on the db pod), so the FQDN:port
+        // service name is all there is — it must reduce to the same node the code edge used.
+        DependencyGraph.Edge e = edge(g, "vets-service", "vets-db");
+        assertNotNull(e, "an unmeshed database must still be identified, by Service name");
+        assertTrue(e.runtimeObserved);
+        assertEquals("db", e.type);
+    }
+
+    @Test
+    void tcpMergeLeavesExternalHostsToTheEgressMergeAndDropsInfra() {
+        DependencyGraph g = mergedGraph();
+        RuntimeGraphBuilder.mergeIstioTcp(g, PETCLINIC_TCP);
+
+        // github.com is an external host: mergeIstioEgress owns it (it attributes by
+        // ServiceEntry). Taking it here too would give one edge two provenances.
+        assertNull(edge(g, "config-server", "github.com"));
+        // Telemetry scraping the db is not a business dependency.
+        assertNull(edge(g, "prometheus", "customers-db"));
+        // A non-db TCP callee is still a real observed edge, just not labelled db.
+        assertEquals("sync-tcp", edge(g, "api-gateway", "some-tcp-service").type);
+    }
+
+    @Test
+    void tcpMergeIsANoOpOnUnavailableOrMalformedInput() {
+        DependencyGraph g = mergedGraph();
+        int before = g.getEdges().size();
+        RuntimeGraphBuilder.mergeIstioTcp(g, "PROMETHEUS_UNAVAILABLE\nEndpoint: ...");
+        RuntimeGraphBuilder.mergeIstioTcp(g, "<html>502</html>");
+        RuntimeGraphBuilder.mergeIstioTcp(g, "");
+        RuntimeGraphBuilder.mergeIstioTcp(g, null);
+        assertEquals(before, g.getEdges().size());
+    }
+
+    @Test
+    void dataLayerCoverageIsMeasuredSeparatelyFromTheBusinessRatio() {
+        DependencyGraph g = mergedGraph();
+        RuntimeGraphBuilder.mergeIstioTcp(g, PETCLINIC_TCP);
+        // Deploy the databases too: only a deployed datastore can have a connection.
+        K8sGraphBuilder.enrich(g, PETCLINIC_DEPLOYMENTS
+                + "customers-db  2026-07-20T10:00:00Z  1  1  mysql:8.0\n"
+                + "vets-db       2026-07-20T10:00:00Z  1  1  mysql:8.0\n");
+
+        CoverageAnalyzer.Report report = CoverageAnalyzer.analyze(g);
+
+        assertEquals(2, report.dbTotal);
+        assertEquals(2, report.dbObserved);
+        assertEquals(100, report.dbPercent());
+        // The business ratio must not have absorbed the db edges — that number means
+        // "of the drivable service→service surface, how much did traffic reach?".
+        assertTrue(report.uncovered.stream().noneMatch(e -> e.contains("-db")));
+        assertFalse(report.hasDbEdges() && report.total == 0);
+    }
+
+    @Test
+    void anUndeployedDatastoreIsNotCountedAgainstDataLayerCoverage() {
+        // petclinic's default: the db is declared in config but never deployed (in-memory
+        // HSQLDB). There is no connection to observe, so it must not cap the ratio.
+        DependencyGraph g = mergedGraph();
+        K8sGraphBuilder.enrich(g, PETCLINIC_DEPLOYMENTS);   // no db rows
+        for (DependencyGraph.Node n : g.getNodes()) {
+            if (DependencyGraph.KIND_DB.equals(n.kind)) n.deployed = Boolean.FALSE;
+        }
+
+        CoverageAnalyzer.Report report = CoverageAnalyzer.analyze(g);
+        assertEquals(0, report.dbTotal);
+        assertFalse(report.hasDbEdges());
+    }
+
     private static DependencyGraph.Node node(DependencyGraph g, String id) {
         return g.getNodes().stream().filter(n -> n.id.equals(id)).findFirst().orElse(null);
     }

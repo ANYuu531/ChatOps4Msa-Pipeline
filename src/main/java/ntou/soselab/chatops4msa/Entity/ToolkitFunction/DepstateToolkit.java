@@ -246,6 +246,10 @@ public class DepstateToolkit extends ToolkitFunction {
 
         DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(
                 state.stage(DependencyAnalysisStateStore.STAGE_TRAFFIC_RAW), state.namespace);
+        // Same in-mesh TCP evidence the report path folds in, so a database edge the
+        // mesh HAS seen is not reported back to the resume loop as a missing target.
+        RuntimeGraphBuilder.mergeIstioTcp(graph,
+                state.stage(DependencyAnalysisStateStore.STAGE_TCP_RAW));
         CodeGraphMerger.merge(graph,
                 state.stage(DependencyAnalysisStateStore.STAGE_CODE_EDGES), state.repoName);
         // Mark deployment status so CoverageAnalyzer can drop undeployed/phantom edges
@@ -269,6 +273,19 @@ public class DepstateToolkit extends ToolkitFunction {
         } else {
             sb.append("Edges still WITHOUT runtime traffic — build a journey that crosses each:\n");
             for (String edge : coverage.uncovered) sb.append("- ").append(edge).append('\n');
+        }
+
+        // Reported separately, and NOT part of the objective above: a db edge is not
+        // crossed by a journey directly — it is crossed when the service that owns it
+        // handles a request. Stating it here tells the next round which service's
+        // endpoints are worth exercising, without polluting the traffic target list.
+        if (coverage.hasDbEdges()) {
+            sb.append("\nData layer (measured separately, TCP): ").append(coverage.dbObserved)
+                    .append("/").append(coverage.dbTotal).append(" datastore edges observed (")
+                    .append(coverage.dbPercent()).append("%).\n");
+            for (String edge : coverage.dbUncovered) {
+                sb.append("- no connection seen yet: ").append(edge).append('\n');
+            }
         }
         return sb.toString();
     }

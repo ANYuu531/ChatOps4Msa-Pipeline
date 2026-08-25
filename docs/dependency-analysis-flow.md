@@ -32,7 +32,8 @@ flowchart TD
       end
       SRC --> TRAF["驅動流量<br/>LLM 依 API 面+路由+doc 產 journey<br/>→ toolkit-traffic-run (TrafficRunner)"]
       TRAF --> PROM["Prometheus 查詢<br/>istio_requests_total (reporter=destination)<br/>→ (stage: traffic_raw)"]
-      PROM --> COV1["確定性覆蓋率<br/>CoverageAnalyzer → 貼『round 1 覆蓋率』"]
+      PROM --> PROMT["Prometheus 查詢 (in-mesh TCP)<br/>istio_tcp_connections_opened_total (reporter=source)<br/>= DB 邊唯一的 runtime 證據<br/>→ (stage: tcp_raw)"]
+      PROMT --> COV1["確定性覆蓋率<br/>CoverageAnalyzer → 貼『round 1 覆蓋率』<br/>(業務邊 % + 另計的 Data layer %)"]
       COV1 --> EGR["Egress 查詢 (外部依賴)<br/>reporter=source, destination_app=unknown<br/>HTTP + TCP → (stage: egress_raw)"]
       EGR --> HEALTH["完整性檢查<br/>LLM dependency_health_check<br/>→ 缺哪些邊 (stage: health)"]
       HEALTH --> SE["toolkit-code-service-entries<br/>外部 host → ServiceEntry 建議"]
@@ -76,8 +77,10 @@ flowchart LR
     TR[("traffic_raw<br/>Istio JSON")] --> RB["RuntimeGraphBuilder<br/>fromIstioRequests<br/>= 骨架 (實線 runtime)"]
     ER[("egress_raw")] --> RB2["mergeIstioEgress<br/>已歸因外部 host 併入"]
     RB --> RB2
+    TCP[("tcp_raw<br/>Istio TCP JSON")] --> RB3["mergeIstioTcp<br/>DB 邊 (非 HTTP, 只在 TCP 層)<br/>→ 虛線 db 邊升級成實線"]
+    RB2 --> RB3
     CE[("code_edges")] --> CM["CodeGraphMerger.merge<br/>feign/http/url/kafka/db<br/>對齊節點, 對不上就建節點<br/>殘餘 → residue"]
-    RB2 --> CM
+    RB3 --> CM
     MN[("merged_notes<br/>DeepWiki JSON")] --> DM["DocGraphMerger.merge<br/>enrich 不 invent<br/>(對不上 workload 的服務丟棄)"]
     CM --> DM
     DM --> PR["promoteReallyUsedDbs<br/>persistence(jpa/SQLAlchemy/Django)<br/>→ DB 邊 inferred → documented"]
@@ -95,7 +98,7 @@ flowchart LR
 
 | 線型 | 意義 | 來源 |
 |---|---|---|
-| **實線** | runtime observed（最高信心） | Istio `istio_requests_total` 真的看到 |
+| **實線** | runtime observed（最高信心） | Istio `istio_requests_total` 真的看到；**DB 這種非 HTTP 的相依則是 `istio_tcp_connections_opened_total`**（Istio 只對 HTTP/gRPC 產 requests 指標，資料庫連線是不透明 TCP，只在這條看得到） |
 | **虛線 dashed** | code/doc 證實「真的用」（documented） | 有 repository/@Entity/持久化 code、或 doc configured |
 | **點線 dotted `?`** | 只宣告、未證實（inferred，最弱） | 只有 datasource URL / pom 宣告，無使用證據 |
 

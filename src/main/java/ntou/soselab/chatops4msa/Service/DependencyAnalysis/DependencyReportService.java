@@ -134,6 +134,12 @@ public class DependencyReportService {
             // onto the code-declared external edge and upgrades it from dashed to solid.
             RuntimeGraphBuilder.mergeIstioEgress(graph, state.stage(DependencyAnalysisStateStore.STAGE_EGRESS_RAW));
 
+            // Fold in runtime-observed IN-MESH TCP edges — in practice the database.
+            // Istio emits istio_requests_total only for HTTP/gRPC, so a MySQL/Postgres
+            // dependency is invisible above; without this it can never be more than a
+            // code-declared dashed edge, however real it is.
+            RuntimeGraphBuilder.mergeIstioTcp(graph, state.stage(DependencyAnalysisStateStore.STAGE_TCP_RAW));
+
             // Enrich with code edges: deterministic first, LLM only for the residue.
             List<CodeGraphMerger.Unresolved> residue = CodeGraphMerger.merge(
                     graph,
@@ -226,6 +232,22 @@ public class DependencyReportService {
             msg.append("Uncovered edges (declared in code/doc, no traffic yet) — drive a journey "
                     + "through these and Resume to close the gap:\n");
             for (String edge : coverage.uncovered) msg.append("- `").append(edge).append("`\n");
+        }
+
+        // The data layer, reported as its own number rather than mixed into the ratio
+        // above: a db connection is opaque TCP, observed through istio_tcp_* rather
+        // than by a journey crossing it, so the two are not the same measurement.
+        if (coverage.hasDbEdges()) {
+            msg.append("\n**Data layer** (separate measure — TCP connections, not requests): **")
+                    .append(coverage.dbObserved).append(" / ").append(coverage.dbTotal)
+                    .append("** datastore edges observed — **").append(coverage.dbPercent())
+                    .append("%**.\n");
+            if (!coverage.dbUncovered.isEmpty()) {
+                msg.append("Declared but no connection seen — the datastore is deployed, so either "
+                        + "nothing exercised that service, or its pods started before the database "
+                        + "was reachable (connection pools open once):\n");
+                for (String edge : coverage.dbUncovered) msg.append("- `").append(edge).append("`\n");
+            }
         }
         jdaService.sendChatOpsChannelMessage(msg.toString());
     }

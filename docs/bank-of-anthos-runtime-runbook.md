@@ -106,6 +106,27 @@ kubectl get pods -n bank-of-anthos -w
 # 若某服務 CrashLoop:多半是 jwt-key secret 沒建(回步驟 2)或 db 還沒好(再等)
 ```
 
+### 5b. 確認 DB 邊真的量得到(2026-08-25 新增)
+
+BoA 本來就有兩個真的資料庫(`accounts-db` / `ledger-db`,PostgreSQL StatefulSet),
+但 **Istio 只對 HTTP/gRPC 產 `istio_requests_total`**——PostgreSQL 連線是不透明 TCP,
+只會出現在 `istio_tcp_*`。所以 DB 邊要另外一條查詢才看得到(工具已經會自動查,
+這裡是人工確認資料源是活的):
+
+```bash
+# 兩個 db pod 是不是 2/2(有 sidecar)。就算沒有 sidecar 也還量得到——
+# 工具查的是 reporter="source"(呼叫端的 sidecar 報的),此時 destination_workload
+# 會是 unknown,改用 destination_service_name 認身分。
+kubectl get pods -n bank-of-anthos -l app=accounts-db -o wide
+
+# 這條就是 DB 邊的證據(工具用的是同一條)
+curl -s 'http://192.168.100.106:30090/api/v1/query?query=sum%20by(source_workload,destination_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="bank-of-anthos"})' | head -c 600
+# 期望看到 userservice/contacts -> accounts-db、ledgerwriter/balancereader/transactionhistory -> ledger-db
+```
+
+**注意連線池**:計數是「開了幾條連線」不是「查了幾次」,而且連線池在服務啟動時就建好。
+所以 **DB 一定要比應用先 Ready**;若是先跑起應用才有 DB,`rollout restart` 那些服務再量。
+
 ## 6. 讓工具打得到入口(Host 對應)
 
 VirtualService 以 `bankofanthos.local` 比對,所以**跑工具的那台機器**要能把該 host 解到 ingress:
@@ -134,6 +155,11 @@ auth_hint = none
 期望能看到的業務邊(對照靜態 probe 的結果):
 `frontend → ledgerwriter / balancereader / transactionhistory / contacts / userservice`、`ledgerwriter → balancereader`,
 外加 runtime 才有的 `istio-ingressgateway → frontend`。
+
+**外加 DB 邊(實線)**:`userservice/contacts → accounts-db`、
+`ledgerwriter/balancereader/transactionhistory → ledger-db`。這幾條以前只能是虛線
+(程式碼宣告),現在因為多查了 in-mesh TCP,會升級成 runtime 觀測到的實線。
+報告裡它們算成**獨立的一個「Data layer」覆蓋率**,不混進業務邊那個百分比。
 
 ## 8. 收掉(釋放資源/確保不殘留)
 

@@ -358,6 +358,27 @@ low_code:
             stage: traffic_raw
             value: ${istio_requests_raw}
 
+        # ---- In-mesh TCP: the DATABASE edge ----
+        # Istio only produces istio_requests_total for protocols it parses (HTTP/gRPC).
+        # A MySQL/PostgreSQL connection is opaque TCP, so a database dependency appears
+        # NOWHERE in the query above — which is why a db edge could previously only ever
+        # be code-declared (dashed), never runtime-observed.
+        # reporter="source": the caller's sidecar always reports, so this works whether
+        # or not the database pod is itself in the mesh (it usually is not, in which case
+        # destination_workload is "unknown" and the Service name is the only identity).
+        # destination_service_name is grouped for exactly that fallback.
+        # NOTE the count is connections opened, not queries: clients pool connections, so
+        # it is evidence THAT a service talks to that database, not how much.
+        - toolkit-prometheus-query:
+            host_url: ${istio_prometheus_host_url}
+            promql: |
+              sum by(source_workload,destination_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="${namespace}"})
+            assign: istio_tcp_raw
+
+        - toolkit-depstate-put:
+            stage: tcp_raw
+            value: ${istio_tcp_raw}
+
         # Deterministic runtime coverage after this first round — posted so the
         # iteration's progress (what fraction of service->service edges the traffic
         # actually reached, and which edges are still uncovered) is visible live in
@@ -643,6 +664,18 @@ low_code:
         - toolkit-depstate-put:
             stage: traffic_raw
             value: ${istio_requests_raw}
+
+        # Re-measure the in-mesh TCP (database) edges as well — see the same query in
+        # get-dependency-analysis for why HTTP metrics cannot carry them.
+        - toolkit-prometheus-query:
+            host_url: ${istio_prometheus_host_url}
+            promql: |
+              sum by(source_workload,destination_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="${namespace}"})
+            assign: istio_tcp_raw
+
+        - toolkit-depstate-put:
+            stage: tcp_raw
+            value: ${istio_tcp_raw}
 
         # Coverage AFTER this round — the delta against the "BEFORE" number above is the
         # visible proof of whether this iteration actually closed any edges.

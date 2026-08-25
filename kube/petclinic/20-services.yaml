@@ -37,8 +37,19 @@ spec:
           ports:
             - containerPort: 8081
           env:
+            # docker,mysql: the `mysql` profile is petclinic's own switch off the
+            # default in-memory HSQLDB onto a real database (15-mysql.yaml). Without
+            # a deployed db the service's db dependency can only ever be a dashed,
+            # code-declared edge — see 15-mysql.yaml for why that matters.
             - name: SPRING_PROFILES_ACTIVE
-              value: docker
+              value: docker,mysql
+            # petclinic's mysql profile reads these three (host:port, no jdbc: prefix).
+            - name: MYSQL_URL
+              value: mysql:3306
+            - name: MYSQL_USER
+              valueFrom: { secretKeyRef: { name: mysql-credentials, key: MYSQL_USER } }
+            - name: MYSQL_PASS
+              valueFrom: { secretKeyRef: { name: mysql-credentials, key: MYSQL_PASSWORD } }
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
           resources:
@@ -84,8 +95,19 @@ spec:
           ports:
             - containerPort: 8082
           env:
+            # docker,mysql: the `mysql` profile is petclinic's own switch off the
+            # default in-memory HSQLDB onto a real database (15-mysql.yaml). Without
+            # a deployed db the service's db dependency can only ever be a dashed,
+            # code-declared edge — see 15-mysql.yaml for why that matters.
             - name: SPRING_PROFILES_ACTIVE
-              value: docker
+              value: docker,mysql
+            # petclinic's mysql profile reads these three (host:port, no jdbc: prefix).
+            - name: MYSQL_URL
+              value: mysql:3306
+            - name: MYSQL_USER
+              valueFrom: { secretKeyRef: { name: mysql-credentials, key: MYSQL_USER } }
+            - name: MYSQL_PASS
+              valueFrom: { secretKeyRef: { name: mysql-credentials, key: MYSQL_PASSWORD } }
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
           resources:
@@ -131,8 +153,19 @@ spec:
           ports:
             - containerPort: 8083
           env:
+            # docker,mysql: the `mysql` profile is petclinic's own switch off the
+            # default in-memory HSQLDB onto a real database (15-mysql.yaml). Without
+            # a deployed db the service's db dependency can only ever be a dashed,
+            # code-declared edge — see 15-mysql.yaml for why that matters.
             - name: SPRING_PROFILES_ACTIVE
-              value: docker
+              value: docker,mysql
+            # petclinic's mysql profile reads these three (host:port, no jdbc: prefix).
+            - name: MYSQL_URL
+              value: mysql:3306
+            - name: MYSQL_USER
+              valueFrom: { secretKeyRef: { name: mysql-credentials, key: MYSQL_USER } }
+            - name: MYSQL_PASS
+              valueFrom: { secretKeyRef: { name: mysql-credentials, key: MYSQL_PASSWORD } }
             - name: JAVA_TOOL_OPTIONS
               value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC"
           resources:

@@ -1,0 +1,106 @@
+# MySQL for the analysis target — apply BEFORE 20-services.yaml.
+#
+# WHY THIS EXISTS. petclinic runs on in-memory HSQLDB by default, so no database is
+# deployed at all: every service's db dependency could only ever be *code-declared*
+# (a dashed edge from the datasource config), never confirmed at runtime. Deploying a
+# real MySQL inside the mesh is what makes `customers-service -> mysql` observable —
+# see docs/plan-2026-08-25-teacher-feedback.md (工作包 B).
+#
+# HOW IT IS OBSERVED. Istio only produces istio_requests_total for protocols it
+# parses (HTTP/gRPC). A MySQL connection is opaque TCP and appears ONLY in
+# istio_tcp_connections_opened_total, which the pipeline now queries in-mesh
+# (RuntimeGraphBuilder.mergeIstioTcp). Two things this depends on:
+#
+#   1. The Service port MUST be named `tcp-mysql` (or appProtocol: tcp). Istio infers
+#      the protocol from the port NAME; an unnamed port is treated as opaque TCP too,
+#      but naming it makes the intent explicit and keeps the metric labels stable.
+#   2. Connection POOLS open once. Hikari builds its pool at service startup, so the
+#      counter reflects pool establishment, not query volume — which is fine (it is
+#      evidence THAT the service talks to the db). But it means ordering matters:
+#      MySQL must be Ready BEFORE the app pods start, or their first pool is built
+#      against a dead host and retried in a way the sidecar may never attribute.
+#      Apply order: 10-config-server -> 15-mysql (wait Ready) -> 20-services.
+#      If the services were already running, restart them:
+#        kubectl rollout restart deploy -n petclinic customers-service vets-service visits-service
+#
+# STORAGE is an emptyDir on purpose: this is a disposable analysis target, not
+# production. A restart gives a clean schema, which is what we want between runs;
+# petclinic recreates its tables on startup.
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-credentials
+  namespace: petclinic
+type: Opaque
+stringData:
+  # petclinic's own conventional credentials (see its docker-compose): the services
+  # connect as this user, and MYSQL_ROOT_PASSWORD is what the image needs to boot.
+  MYSQL_USER: petclinic
+  MYSQL_PASSWORD: petclinic
+  MYSQL_ROOT_PASSWORD: petclinic
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: petclinic
+  labels: { app: mysql }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mysql }
+  template:
+    metadata:
+      labels: { app: mysql, version: v1 }
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - name: tcp-mysql
+              containerPort: 3306
+          env:
+            # MYSQL_DATABASE makes the image create the schema on first boot, so no
+            # init job is needed; the services' Hibernate/schema.sql fills the tables.
+            - name: MYSQL_DATABASE
+              value: petclinic
+            - name: MYSQL_USER
+              valueFrom: { secretKeyRef: { name: mysql-credentials, key: MYSQL_USER } }
+            - name: MYSQL_PASSWORD
+              valueFrom: { secretKeyRef: { name: mysql-credentials, key: MYSQL_PASSWORD } }
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: mysql-credentials, key: MYSQL_ROOT_PASSWORD } }
+          args:
+            # The services use the older auth plugin; without this a Connector/J
+            # handshake can fail with "Unable to load authentication plugin".
+            - --default-authentication-plugin=mysql_native_password
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          resources:
+            requests: { memory: "384Mi", cpu: "100m" }
+            limits: { memory: "768Mi" }
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD"]
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 30
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: petclinic
+  labels: { app: mysql }
+spec:
+  selector: { app: mysql }
+  ports:
+    # The port NAME is what Istio reads to decide the protocol — see the header.
+    - name: tcp-mysql
+      port: 3306
+      targetPort: 3306

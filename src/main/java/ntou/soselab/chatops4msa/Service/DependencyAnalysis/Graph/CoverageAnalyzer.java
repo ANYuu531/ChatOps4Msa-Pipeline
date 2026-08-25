@@ -19,10 +19,18 @@ import java.util.Map;
  * many are {@code runtimeObserved}.
  *
  * Only <b>service/gateway → service/gateway</b> synchronous (sync-http / grpc) edges
- * are counted. Edges into a database, a broker (async) or an external host are
+ * are counted in that ratio. Edges into a broker (async) or an external host are
  * excluded on purpose: those are not HTTP mesh edges Istio observes the same way, so
  * counting them as "uncovered traffic" would be misleading (the same reasoning that
  * keeps a declared-but-unobserved DB from being called a runtime failure).
+ *
+ * <p><b>The data layer is measured separately</b> ({@code dbTotal}/{@code dbObserved}),
+ * not folded into that percentage — the number would stop meaning "how much of the
+ * business surface did the traffic drive?", and would not be comparable with any
+ * earlier run. It became worth measuring at all once databases are deployed inside
+ * the mesh: a db connection is opaque TCP, so it is observable via
+ * {@code istio_tcp_*} (see {@link RuntimeGraphBuilder#mergeIstioTcp}) even though it
+ * never appears in {@code istio_requests_total}.
  *
  * <p>Beyond that, an edge only counts when it is a <em>drivable business</em> edge —
  * one where both endpoints could actually carry observable traffic:
@@ -56,11 +64,30 @@ public class CoverageAnalyzer {
         public final int observed;
         /** The uncovered edges as "source -> target", in graph order. */
         public final List<String> uncovered;
+        /**
+         * The data layer, reported SEPARATELY from the business ratio above.
+         *
+         * A db edge is not an HTTP mesh edge and is not driven by a journey, so folding
+         * it into the same percentage would change what that number means (and would
+         * have made every previous run's coverage incomparable). It is still worth
+         * measuring on its own: with a database actually deployed inside the mesh, its
+         * edges CAN be runtime-observed (via TCP), and "which declared datastores has
+         * the mesh really seen a connection to" is exactly the question the code-only
+         * db edge could never answer.
+         */
+        public final int dbTotal;
+        public final int dbObserved;
+        /** The declared-but-never-connected datastore edges, as "source -> target". */
+        public final List<String> dbUncovered;
 
-        Report(int total, int observed, List<String> uncovered) {
+        Report(int total, int observed, List<String> uncovered,
+               int dbTotal, int dbObserved, List<String> dbUncovered) {
             this.total = total;
             this.observed = observed;
             this.uncovered = uncovered;
+            this.dbTotal = dbTotal;
+            this.dbObserved = dbObserved;
+            this.dbUncovered = dbUncovered;
         }
 
         /** Whether there is any business sync edge to measure at all. */
@@ -72,6 +99,15 @@ public class CoverageAnalyzer {
         public int percent() {
             return total == 0 ? 0 : (int) Math.round(100.0 * observed / total);
         }
+
+        /** Whether the graph declares any datastore dependency at all. */
+        public boolean hasDbEdges() {
+            return dbTotal > 0;
+        }
+
+        public int dbPercent() {
+            return dbTotal == 0 ? 0 : (int) Math.round(100.0 * dbObserved / dbTotal);
+        }
     }
 
     private CoverageAnalyzer() {
@@ -79,20 +115,45 @@ public class CoverageAnalyzer {
 
     public static Report analyze(DependencyGraph graph) {
         List<String> uncovered = new ArrayList<>();
+        List<String> dbUncovered = new ArrayList<>();
         int total = 0;
         int observed = 0;
-        if (graph == null) return new Report(0, 0, uncovered);
+        int dbTotal = 0;
+        int dbObserved = 0;
+        if (graph == null) return new Report(0, 0, uncovered, 0, 0, dbUncovered);
 
         Map<String, DependencyGraph.Node> byId = new HashMap<>();
         for (DependencyGraph.Node node : graph.getNodes()) byId.put(node.id, node);
 
         for (DependencyGraph.Edge edge : graph.getEdges()) {
+            if (isDataStore(edge, byId)) {
+                dbTotal++;
+                if (edge.runtimeObserved) dbObserved++;
+                else dbUncovered.add(edge.source + " -> " + edge.target);
+                continue;
+            }
             if (!isBusinessSync(edge, byId)) continue;
             total++;
             if (edge.runtimeObserved) observed++;
             else uncovered.add(edge.source + " -> " + edge.target);
         }
-        return new Report(total, observed, uncovered);
+        return new Report(total, observed, uncovered, dbTotal, dbObserved, dbUncovered);
+    }
+
+    /**
+     * An edge into a deployed datastore. Counted only when the datastore is actually
+     * running: a db the cluster does not deploy (petclinic's in-memory HSQLDB, a
+     * datasource declared in config but never provisioned) can have no connection to
+     * observe, so counting it would permanently cap the ratio for a reason that is not
+     * a gap in the analysis.
+     */
+    private static boolean isDataStore(DependencyGraph.Edge edge, Map<String, DependencyGraph.Node> byId) {
+        DependencyGraph.Node target = byId.get(edge.target);
+        if (target == null || !DependencyGraph.KIND_DB.equals(target.kind)) return false;
+        if (Boolean.FALSE.equals(target.deployed)) return false;
+        DependencyGraph.Node source = byId.get(edge.source);
+        return source != null && isServiceOrGateway(source.kind)
+                && !Boolean.FALSE.equals(source.deployed);
     }
 
     /** A synchronous edge between two drivable business service/gateway workloads. */
