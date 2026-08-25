@@ -1,0 +1,190 @@
+<mxfile host="app.diagrams.net" agent="DepWeaver docs" version="24.7.17">
+  <diagram id="fig1-pipeline-overview" name="Fig.1 Pipeline Overview">
+    <mxGraphModel dx="1100" dy="1500" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== title ===== -->
+        <mxCell id="title" value="&lt;b&gt;DepWeaver&lt;/b&gt; · Fig.1 端到端流程總覽&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot; color=&quot;#666666&quot;&gt;多證據融合的微服務相依圖建構 — 確定性優先、LLM 只補殘餘&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=17;fontColor=#1f2a37;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="620" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== legend ===== -->
+        <mxCell id="legend" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fbfbfb;strokeColor=#cccccc;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="740" y="20" width="320" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="legendTitle" value="圖例" style="text;html=1;fontSize=12;fontStyle=1;align=left;" vertex="1" parent="1">
+          <mxGeometry x="752" y="26" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legendCode" value="〔程式碼〕我們自己寫的確定性邏輯" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="752" y="52" width="296" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="legendAi" value="〔AI〕LLM：讀/寫自然語言、語意理解" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="752" y="84" width="296" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="legendMix" value="混合：情境由 AI 產生，執行是程式碼" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;gradientColor=#e1d5e7;strokeColor=#6c8ebf;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="752" y="116" width="296" height="26" as="geometry" />
+        </mxCell>
+
+        <!-- ===== entry ===== -->
+        <mxCell id="user" value="使用者在 Discord 下指令&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;get dependency analysis · repo / namespace / entry_url&lt;/font&gt;" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="180" y="90" width="380" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="nlp" value="NLP 解析：意圖 → capability + 參數&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;LLMService · CapabilityGenerator&lt;/font&gt;&lt;br&gt;&lt;b&gt;〔AI〕&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="180" y="170" width="380" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ===== three sources ===== -->
+        <mxCell id="srcBox" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9aa6b2;dashed=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="270" width="660" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="srcLabel" value="① ~ ③ 三來源抽取（各自存進 checkpoint，貴的步驟 resume 不重跑）" style="text;html=1;fontSize=11;fontColor=#5b6770;align=left;" vertex="1" parent="1">
+          <mxGeometry x="50" y="272" width="640" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="code" value="① 靜態抽取&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;clone repo → tree-sitter&lt;br&gt;呼叫 / DB 使用 / endpoint / 服務根&lt;/font&gt;&lt;br&gt;&lt;b&gt;〔程式碼〕&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="55" y="300" width="200" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="doc" value="② 文件分析&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;DeepWiki 問 5 題&lt;br&gt;職責 / 同步 / 非同步 / 外部 / 入口&lt;/font&gt;&lt;br&gt;&lt;b&gt;〔AI〕&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="270" y="300" width="200" height="88" as="geometry" />
+        </mxCell>
+        <mxCell id="k8s" value="③ 叢集 / 路由&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;kubectl：Service / Deployment / Pod&lt;br&gt;Istio VirtualService · DestinationRule&lt;/font&gt;&lt;br&gt;&lt;b&gt;〔程式碼〕&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="485" y="300" width="200" height="88" as="geometry" />
+        </mxCell>
+
+        <!-- greenfield note -->
+        <mxCell id="greenfieldNote" value="&lt;b&gt;greenfield（沒給 namespace）&lt;/b&gt;&lt;br&gt;③④⑤ 整段被 orchestrator gate 掉：&lt;br&gt;不碰叢集、零 port，只剩 ①②⑥⑦ 純靜態出圖。&lt;br&gt;圖全是虛線＝誠實標示「只有宣告、未經 runtime 驗證」。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="740" y="300" width="320" height="88" as="geometry" />
+        </mxCell>
+
+        <!-- ===== traffic ===== -->
+        <mxCell id="traffic" value="④ 驅動流量（本條線的關鍵）&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Istio 是被動的：一條邊只有在請求真的跨過去時才會被記錄&lt;br&gt;情境＝LLM 產使用者旅程　·　執行＝TrafficRunner&lt;br&gt;補 payload：① 挖 repo 範例　② 4xx 回饋　③ 問人（見下）&lt;/font&gt;&lt;br&gt;&lt;b&gt;〔情境=AI · 執行=程式碼〕&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;gradientColor=#e1d5e7;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="180" y="440" width="380" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- ===== measure ===== -->
+        <mxCell id="measure" value="⑤ 量測（Prometheus）&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;istio_requests_total → HTTP/gRPC 邊&lt;br&gt;&lt;b&gt;istio_tcp_connections_opened_total → DB 邊&lt;/b&gt;（非 HTTP，只在 TCP 層看得到）&lt;br&gt;egress → 離開 mesh 的外部呼叫&lt;/font&gt;&lt;br&gt;&lt;b&gt;〔程式碼〕&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="180" y="580" width="380" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- ===== checkpoint decision ===== -->
+        <mxCell id="ckpt" value="checkpoint&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;暫停，貼按鈕&lt;/font&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="270" y="720" width="200" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ===== interactive branches (right column) ===== -->
+        <mxCell id="ask" value="&lt;b&gt;Provide values（Tier 3 · 對話問人）&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;只有在真的推不出來時才出現這顆按鈕。&lt;br&gt;Discord Modal 收值 → 存 checkpoint → 自動 resume。&lt;br&gt;等值的請求被扣住標 [WAIT]，不會半填就送出。&lt;/font&gt;&lt;br&gt;&lt;b&gt;〔程式碼〕&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=center;" vertex="1" parent="1">
+          <mxGeometry x="700" y="560" width="360" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="apply" value="Apply ServiceEntries&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;kubectl apply（唯一會改叢集的動作，只在點擊後執行）&lt;br&gt;之後 egress 邊才可被歸因&lt;/font&gt;&lt;br&gt;&lt;b&gt;〔程式碼〕&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="700" y="690" width="360" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="resume" value="resume：覆蓋率導向迴圈&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;用確定性覆蓋率算出「還沒被觀測到的邊」當目標，&lt;br&gt;只針對那些邊再導一輪；clone / DeepWiki 從 checkpoint 取回不重跑&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="700" y="800" width="360" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== report ===== -->
+        <mxCell id="build" value="⑥ 建圖合併　→ 細節見 &lt;b&gt;Fig.2&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;runtime 觀測 + 程式碼邊 + 文件邊 + 部署狀態 → 正規化 → 分層&lt;br&gt;7 步裡只有 1 步用 AI&lt;/font&gt;&lt;br&gt;&lt;b&gt;〔程式碼為主〕&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="180" y="870" width="380" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="out" value="⑦ 產出&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;分層依賴圖（PNG / .mmd）＋ 覆蓋率　&lt;b&gt;〔程式碼〕&lt;/b&gt;&lt;br&gt;文字報告　&lt;b&gt;〔AI〕&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;gradientColor=#e1d5e7;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="180" y="990" width="380" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="discord" value="貼回 Discord" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="255" y="1090" width="230" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===== checkpoint store ===== -->
+        <mxCell id="store" value="dep-state checkpoint&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;host volume，重啟不丟&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="740" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ===== edges ===== -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="user" target="nlp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="nlp" target="doc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="nlp" target="code">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;exitX=0.75;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="nlp" target="k8s">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="doc" target="traffic">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="code" target="traffic">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="k8s" target="traffic">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="traffic" target="measure">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="measure" target="ckpt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e10" value="Provide values" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ckpt" target="ask">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="Apply" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ckpt" target="apply">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" value="Resume（補流量）" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ckpt" target="resume">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ask" target="resume">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1080" y="680" />
+              <mxPoint x="1080" y="840" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="apply" target="resume">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" value="再導一輪（可多輪）" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#d79b00;endArrow=block;fontSize=10;fontColor=#a06800;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="resume" target="traffic">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="640" y="840" />
+              <mxPoint x="640" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e16" value="Generate report" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;fontSize=10;" edge="1" parent="1" source="ckpt" target="build">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="build" target="out">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="out" target="discord">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e19" value="持久化" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9aa6b2;endArrow=block;dashed=1;fontSize=10;fontColor=#5b6770;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.35;entryDx=0;entryDy=0;" edge="1" parent="1" source="ckpt" target="store">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" value="讀回（不重跑）" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9aa6b2;endArrow=block;dashed=1;fontSize=10;fontColor=#5b6770;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="store" target="build">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="130" y="910" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

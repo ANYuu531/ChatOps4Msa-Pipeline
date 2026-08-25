@@ -7,12 +7,16 @@
 >
 > 本文的圖有固定編號，討論時直接叫編號：
 >
-> | 編號 | 圖名 | 位置 |
-> |---|---|---|
-> | **Fig.1** | 端到端流程總覽（Pipeline Overview） | 本文 |
-> | **Fig.2** | 證據合併鏈（Evidence Merge Chain） | 本文 |
-> | **Fig.3** | 分層相依圖（Layered Dependency Graph） | 工具輸出，`docs/train-ticket-greenfield-graph-layered.mmd` |
-> | **Fig.4** | 對話補值迴圈（Interactive Gap-Filling Loop） | Fig.1 裡「Provide values」那條分支 |
+> | 編號 | 圖名 | 正式版（draw.io） | 本文（Mermaid） |
+> |---|---|---|---|
+> | **Fig.1** | 端到端流程總覽（Pipeline Overview） | `docs/diagrams/fig1-pipeline-overview.drawio` | ✔ |
+> | **Fig.2** | 證據合併鏈（Evidence Merge Chain） | `docs/diagrams/fig2-evidence-merge-chain.drawio` | ✔ |
+> | **Fig.3** | 分層相依圖（Layered Dependency Graph） | — 工具自動產出，不手畫 | `docs/train-ticket-greenfield-graph-layered.mmd` |
+> | **Fig.4** | 對話補值迴圈（Interactive Gap-Filling Loop） | Fig.1 裡「Provide values」那條分支 | ✔ |
+>
+> **兩個版本並存、職責不同**：draw.io 是**對外交付的正式圖**（排版可控、可匯出高解析度給投影片/論文）；下面的 Mermaid 是**跟著程式碼維護的活文件**（GitHub 直接渲染、可 grep、可 diff）。改流程時先改 Mermaid，交出去之前同步 draw.io。詳見 `docs/diagrams/README.md`。
+>
+> 注意界線：**只有這兩張說明用流程圖是 draw.io 手畫的**；Fig.3 那種依賴圖是程式即時生成的（一次可能 50 個節點、每次都不同），維持 Graphviz / Mermaid。
 
 這份文件畫出 `get dependency analysis` 從**使用者在 Discord 打一句話**，到**貼回一張依賴圖 + 覆蓋率 + 報告**的完整流程。內容對照實際程式碼與管線設定（`capability/devops-tool/dependency.yml`、`Service/DependencyAnalysis/*`、`Service/DiscordService/*`、`Service/NLPService/*`），不是示意。
 

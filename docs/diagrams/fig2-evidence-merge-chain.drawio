@@ -1,0 +1,167 @@
+<mxfile host="app.diagrams.net" agent="DepWeaver docs" version="24.7.17">
+  <diagram id="fig2-evidence-merge-chain" name="Fig.2 Evidence Merge Chain">
+    <mxGraphModel dx="1100" dy="1500" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== title ===== -->
+        <mxCell id="title" value="&lt;b&gt;DepWeaver&lt;/b&gt; · Fig.2 證據合併鏈&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot; color=&quot;#666666&quot;&gt;由強到弱一層層疊：runtime 觀測（實線）＞ code/doc 宣告（虛線）＞ 只宣告（點線）。8 步裡只有 1 步用 AI。&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=17;fontColor=#1f2a37;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="700" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== evidence inputs (left column) ===== -->
+        <mxCell id="inLabel" value="checkpoint 裡的原始證據" style="text;html=1;fontSize=11;fontColor=#5b6770;align=left;" vertex="1" parent="1">
+          <mxGeometry x="40" y="96" width="240" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="trafficRaw" value="traffic_raw&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;istio_requests_total&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="180" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="egressRaw" value="egress_raw&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;離開 mesh 的呼叫&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="212" width="180" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="tcpRaw" value="tcp_raw&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;istio_tcp_connections&lt;br&gt;_opened_total&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="304" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="codeEdges" value="code_edges&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;tree-sitter EdgeLedger&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="402" width="180" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="mergedNotes" value="merged_notes&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;DeepWiki 文件證據&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="494" width="180" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="k8sRaw" value="k8s_raw&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Deployment 清單&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#f5f5f5;strokeColor=#999999;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="40" y="586" width="180" height="64" as="geometry" />
+        </mxCell>
+
+        <!-- ===== merge chain (middle column) ===== -->
+        <mxCell id="s1" value="&lt;b&gt;1. runtime 骨架&lt;/b&gt;　fromIstioRequests&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;請求真的跨過去了 = 最強證據 → 實線。之後所有東西疊在這上面。&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="120" width="440" height="62" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s2" value="&lt;b&gt;2. 併 egress 邊&lt;/b&gt;　mergeIstioEgress&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;已被 ServiceEntry 歸因的外部 host 併進來（config-server → github.com）。&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="212" width="440" height="62" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s3" value="&lt;b&gt;3. 併 in-mesh TCP 邊（DB）&lt;/b&gt;　mergeIstioTcp&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Istio 只對 HTTP/gRPC 產 requests 指標；資料庫連線是不透明 TCP，&lt;br&gt;只在這裡看得到 → 原本只能是虛線的 db 邊，升級成實線。&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="304" width="440" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s4" value="&lt;b&gt;4. 併程式碼邊&lt;/b&gt;　CodeGraphMerger&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;runtime 也看到 → 合併；只有 code 宣告 → 加一條虛線。&lt;br&gt;host 是變數時用 env-address / 路徑段→服務 解出目標（確定性，非 AI）。&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="402" width="440" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s5" value="&lt;b&gt;5. 併文件邊 · 提升「真用」DB&lt;/b&gt;　DocGraphMerger + promoteReallyUsedDbs&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;文件只 enrich、不 invent。服務有 ORM 標記（jpa / SQLAlchemy / Django）→&lt;br&gt;db 邊從「只宣告」升級成「真的有用」。&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="494" width="440" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s6" value="&lt;b&gt;6. 標部署狀態&lt;/b&gt;　K8sGraphBuilder.enrich&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;宣告了、叢集其實沒在跑 → 灰底紅框虛線 (not deployed)。&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="586" width="440" height="62" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s7" value="&lt;b&gt;7. 正規化&lt;/b&gt;　GraphNormalizer&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;清掉框架 lib 造成的幽靈節點、合併別名（api-gateway-controller → api-gateway）。&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="678" width="440" height="62" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sLlm" value="&lt;b&gt;8. LLM 補殘餘&lt;/b&gt;　resolveResidueWithLlm　&lt;b&gt;〔AI — 全鏈唯一一步〕&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;只有確定性都解不掉的殘餘才丟給 LLM 猜，且嚴格驗證 source/target 存在。&lt;br&gt;能用規則解的絕不丟給 AI —— 圖才可重現、不亂猜。&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="770" width="440" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sLayer" value="&lt;b&gt;9. 分層&lt;/b&gt;　GraphLayerAssigner&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;入口 → 依呼叫深度的服務層（最長路徑）→ 資料層 → 外部 → 無相依。&lt;br&gt;環用 Tarjan SCC 縮點，同環同層（環裡本來就沒有「誰先誰後」）。&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="320" y="870" width="440" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="graph" value="&lt;b&gt;DependencyGraph&lt;/b&gt;（canonical model）" style="rounded=1;arcSize=30;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="380" y="970" width="320" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== outputs (right column) ===== -->
+        <mxCell id="outMmd" value="MermaidEmitter → .mmd&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;每層一個 subgraph&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="820" width="240" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="outPng" value="DotEmitter → Graphviz → PNG&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;rankdir=TB，每層一個 rank=same&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="890" width="240" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="outCov" value="CoverageAnalyzer → 覆蓋率&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;可驅動業務邊 %　+　另計的 Data layer %&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="820" y="960" width="240" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== confidence legend ===== -->
+        <mxCell id="confBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fbfbfb;strokeColor=#cccccc;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="820" y="120" width="240" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="confTitle" value="三層信心（線型）" style="text;html=1;fontSize=12;fontStyle=1;align=left;" vertex="1" parent="1">
+          <mxGeometry x="834" y="128" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="confNote" value="&lt;b&gt;實線&lt;/b&gt;　runtime observed&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;Istio 真的看到（HTTP 用 requests，&lt;br&gt;DB 用 TCP connections）&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;虛線&lt;/b&gt;　code/doc 證實「真的用」&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;有 ORM 標記 / repository / 持久化 code&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;點線 ?&lt;/b&gt;　只宣告、未證實&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;只有 datasource URL，無使用證據&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;addEdge 取 max：疊上去只會變強，不會變弱。&lt;/font&gt;" style="text;html=1;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="834" y="152" width="212" height="190" as="geometry" />
+        </mxCell>
+
+        <mxCell id="greenfieldNote" value="&lt;b&gt;greenfield 為什麼全是虛線&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px;&quot;&gt;沒有第 1～3 步的 runtime 骨架，所有邊都落在&lt;br&gt;第 4、5 步的 code/doc → 自然全虛線。&lt;br&gt;這是誠實的：它老實說「這些是宣告出來的，&lt;br&gt;還沒被 runtime 驗證過」。&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=8;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="820" y="380" width="240" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- ===== edges: inputs -> steps ===== -->
+        <mxCell id="i1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9aa6b2;endArrow=block;" edge="1" parent="1" source="trafficRaw" target="s1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9aa6b2;endArrow=block;" edge="1" parent="1" source="egressRaw" target="s2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9aa6b2;endArrow=block;" edge="1" parent="1" source="tcpRaw" target="s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9aa6b2;endArrow=block;" edge="1" parent="1" source="codeEdges" target="s4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9aa6b2;endArrow=block;" edge="1" parent="1" source="mergedNotes" target="s5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#9aa6b2;endArrow=block;" edge="1" parent="1" source="k8sRaw" target="s6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===== edges: the chain ===== -->
+        <mxCell id="c1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="s1" target="s2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="s2" target="s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="s3" target="s4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="s4" target="s5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="s5" target="s6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="s6" target="s7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="s7" target="sLlm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="sLlm" target="sLayer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;" edge="1" parent="1" source="sLayer" target="graph">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===== edges: outputs ===== -->
+        <mxCell id="o1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="graph" target="outMmd">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="o2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="graph" target="outPng">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="o3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#5b6770;endArrow=block;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="graph" target="outCov">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
