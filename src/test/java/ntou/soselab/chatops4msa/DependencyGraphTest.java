@@ -5,6 +5,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyze
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DocGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DotEmitter;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphLayerAssigner;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphNormalizer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.K8sGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.MermaidEmitter;
@@ -980,6 +981,117 @@ public class DependencyGraphTest {
         CoverageAnalyzer.Report report = CoverageAnalyzer.analyze(g);
         assertEquals(0, report.dbTotal);
         assertFalse(report.hasDbEdges());
+    }
+
+    // ---- layering (the graph reads as tiers, not as a hairball) ----
+
+    @Test
+    void layersRunIngressThenServicesByDepthThenDataStores() {
+        DependencyGraph g = mergedGraph();
+        RuntimeGraphBuilder.mergeIstioTcp(g, PETCLINIC_TCP);
+        GraphLayerAssigner.assign(g);
+
+        // ingress -> api-gateway -> the services -> their databases
+        assertEquals(0, node(g, "istio-ingressgateway").layer);
+        assertEquals(1, node(g, "api-gateway").layer);
+        assertEquals(2, node(g, "customers-service").layer);
+        assertEquals(2, node(g, "vets-service").layer);
+        // A datastore is always below the deepest service, never in the middle.
+        int deepestService = g.getNodes().stream()
+                .filter(n -> DependencyGraph.KIND_SERVICE.equals(n.kind))
+                .mapToInt(n -> n.layer).max().orElse(0);
+        assertTrue(node(g, "customers-db").layer > deepestService);
+        assertTrue(node(g, "vets-db").layer > deepestService);
+    }
+
+    @Test
+    void aServiceReachableBothDirectlyAndViaAChainSitsBelowTheChain() {
+        // gw -> a -> b and gw -> b. Shortest path would put b beside a and draw the
+        // a -> b arrow sideways; longest path puts it underneath, which is the point.
+        DependencyGraph g = new DependencyGraph("ns");
+        g.addNode("gw", DependencyGraph.KIND_GATEWAY);
+        for (String s : new String[]{"a", "b"}) g.addNode(s, DependencyGraph.KIND_SERVICE);
+        g.addEdge("gw", "a", "sync-http", DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 1, "x");
+        g.addEdge("gw", "b", "sync-http", DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 1, "x");
+        g.addEdge("a", "b", "sync-http", DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 1, "x");
+
+        GraphLayerAssigner.assign(g);
+
+        assertEquals(0, node(g, "gw").layer);
+        assertEquals(1, node(g, "a").layer);
+        assertEquals(2, node(g, "b").layer);
+    }
+
+    @Test
+    void aCycleDoesNotBreakLayeringAndItsMembersShareATier() {
+        // Services calling each other back is normal (train-ticket does it). Within a
+        // cycle there is no "before", so its members belong on the same tier.
+        DependencyGraph g = new DependencyGraph("ns");
+        g.addNode("gw", DependencyGraph.KIND_GATEWAY);
+        for (String s : new String[]{"a", "b", "c"}) g.addNode(s, DependencyGraph.KIND_SERVICE);
+        g.addEdge("gw", "a", "sync-http", DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 1, "x");
+        g.addEdge("a", "b", "sync-http", DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 1, "x");
+        g.addEdge("b", "c", "sync-http", DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 1, "x");
+        g.addEdge("c", "a", "sync-http", DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 1, "x");
+
+        GraphLayerAssigner.assign(g);
+
+        assertEquals(node(g, "a").layer, node(g, "b").layer);
+        assertEquals(node(g, "b").layer, node(g, "c").layer);
+        assertTrue(node(g, "a").layer > node(g, "gw").layer);
+    }
+
+    @Test
+    void aGraphThatIsEntirelyOneCycleStillGetsEveryNodeLayered() {
+        DependencyGraph g = new DependencyGraph("ns");
+        for (String s : new String[]{"a", "b"}) g.addNode(s, DependencyGraph.KIND_SERVICE);
+        g.addEdge("a", "b", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "x");
+        g.addEdge("b", "a", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "x");
+
+        GraphLayerAssigner.assign(g);
+
+        for (DependencyGraph.Node n : g.getNodes()) assertNotNull(n.layer);
+    }
+
+    @Test
+    void greenfieldWithNoGatewayUsesTheUncalledServiceAsTheEntry() {
+        // A static/greenfield graph has no ingress node at all — BoA's frontend is only
+        // an entry because nothing calls it.
+        DependencyGraph g = greenfieldGraph();
+        GraphLayerAssigner.assign(g);
+
+        assertEquals(0, node(g, "frontend").layer);
+        assertTrue(node(g, "ledgerwriter").layer > 0);
+        assertTrue(node(g, "balancereader").layer > node(g, "ledgerwriter").layer,
+                "frontend -> ledgerwriter -> balancereader must read as three tiers");
+    }
+
+    @Test
+    void layeredGraphEmitsTiersInBothEmitters() {
+        DependencyGraph g = mergedGraph();
+        RuntimeGraphBuilder.mergeIstioTcp(g, PETCLINIC_TCP);
+        GraphLayerAssigner.assign(g);
+
+        String dot = DotEmitter.emit(g);
+        assertTrue(dot.contains("rankdir=TB"), "a layered graph reads top-down");
+        assertTrue(dot.contains("rank=same"), "each tier is pinned to one rank");
+
+        String mermaid = MermaidEmitter.emit(g);
+        assertTrue(mermaid.startsWith("flowchart TB"));
+        assertTrue(mermaid.contains("subgraph layer0 [\"ingress\"]"));
+        assertTrue(mermaid.contains("[\"data stores\"]"));
+    }
+
+    @Test
+    void anUnlayeredGraphKeepsThePreviousFreeLayout() {
+        // An old checkpoint (or any caller that skips the assigner) must render exactly
+        // as it used to, rather than half-tiered.
+        DependencyGraph g = mergedGraph();
+
+        assertTrue(DotEmitter.emit(g).contains("rankdir=LR"));
+        assertFalse(DotEmitter.emit(g).contains("rank=same"));
+        assertTrue(MermaidEmitter.emit(g).startsWith("flowchart LR"));
+        assertFalse(MermaidEmitter.emit(g).contains("subgraph"));
     }
 
     private static DependencyGraph.Node node(DependencyGraph g, String id) {

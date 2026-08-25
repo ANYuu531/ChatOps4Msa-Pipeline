@@ -7,6 +7,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyze
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DocGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DotEmitter;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphLayerAssigner;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphNormalizer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphvizRenderer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.K8sGraphBuilder;
@@ -171,6 +172,12 @@ public class DependencyReportService {
             // all-services, …) that are not real workloads. Runs after k8s enrichment so it
             // only ever touches undeployed nodes, never a live service.
             GraphNormalizer.normalize(graph);
+
+            // Tier the nodes (ingress -> services by call depth -> data stores), so a
+            // graph the size of train-ticket's reads as a system instead of a hairball.
+            // After normalize on purpose: a phantom node would otherwise occupy a tier
+            // and push everything below it one level deeper.
+            GraphLayerAssigner.assign(graph);
 
             if (graph.isEmpty()) {
                 // No runtime edges and nothing resolvable from code (or an old

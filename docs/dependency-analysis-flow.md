@@ -87,7 +87,8 @@ flowchart LR
     PR --> KE["K8sGraphBuilder.enrich<br/>k8s_raw → deployed / not-deployed"]
     KE --> GN["GraphNormalizer.normalize<br/>清框架 lib 幽靈 / 別名 / 分組"]
     GN --> RES["resolveResidueWithLlm<br/>只有 residue 才問 LLM<br/>(嚴格驗證 source/target)"]
-    RES --> G[("DependencyGraph<br/>canonical model")]
+    RES --> LAY["GraphLayerAssigner.assign<br/>分層:入口 → 依呼叫深度 → 資料層/外部<br/>環用 SCC 縮點, 同環同層"]
+    LAY --> G[("DependencyGraph<br/>canonical model")]
 
     G --> ME["MermaidEmitter → .mmd"]
     G --> DE["DotEmitter → Graphviz → PNG"]
@@ -103,6 +104,20 @@ flowchart LR
 | **點線 dotted `?`** | 只宣告、未證實（inferred，最弱） | 只有 datasource URL / pom 宣告，無使用證據 |
 
 未部署節點（K8sGraphBuilder 判定）= 灰底紅框虛線標 `(not deployed)`。
+
+**分層（`GraphLayerAssigner`，確定性）**：出圖前把節點排成上下層——
+
+| 層 | 內容 | 怎麼決定 |
+|---|---|---|
+| 0 | ingress / 入口服務 | gateway 節點；greenfield 沒有 gateway，就用「沒有人呼叫它」的服務（BoA = frontend） |
+| 1..n | 業務服務 | 從入口算**最長路徑**深度。用最長不用最短：一個既被直接呼叫、又在鏈尾被呼叫的服務，要排在鏈的**下面**，否則箭頭會往回指、層次就讀不出來 |
+| n+1 | 資料層（db / queue） | 相依鏈的終點，永遠在最深的服務之下 |
+| n+2 | 外部 host | 再往下一層 |
+| 最後 | `no dependencies found` | 完全沒有邊的節點。不是入口，是「抽取沒抽到東西」——這層本身就是誠實的缺口清單 |
+
+**環是預期的、不是錯誤**：微服務互相呼叫很常見（train-ticket 就有），用 Tarjan SCC 縮點後再分層，同一個環的成員落在同一層——環裡本來就沒有「誰先誰後」。
+
+驗證（train-ticket 52 邊那張）：分層後 **51 條邊 100% 由上往下**（0 條向上、0 條同層穿越），入口層從 31 個節點縮到 12 個真入口，其餘 19 個沒有任何邊的節點被誠實地分到最後一層。對照圖：`docs/train-ticket-greenfield-graph-layered.mmd`。
 
 ---
 

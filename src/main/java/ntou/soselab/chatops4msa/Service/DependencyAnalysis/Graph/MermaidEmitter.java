@@ -32,7 +32,10 @@ public class MermaidEmitter {
 
     public static String emit(DependencyGraph graph) {
         StringBuilder sb = new StringBuilder();
-        sb.append("flowchart LR\n");
+        boolean layered = isLayered(graph);
+        // Layered graphs read top-down; without layers the previous left-to-right
+        // layout is kept, so an old checkpoint still renders the way it used to.
+        sb.append(layered ? "flowchart TB\n" : "flowchart LR\n");
         sb.append("%% Microservice dependency graph\n");
         sb.append("%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only\n");
         sb.append("%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]\n");
@@ -49,8 +52,12 @@ public class MermaidEmitter {
         // Stable, collision-free Mermaid ids; the human name stays in the label.
         Map<String, String> ids = assignIds(graph);
 
-        for (DependencyGraph.Node node : graph.getNodes()) {
-            sb.append("  ").append(nodeDeclaration(ids.get(node.id), node)).append('\n');
+        if (layered) {
+            appendTiers(sb, graph, ids);
+        } else {
+            for (DependencyGraph.Node node : graph.getNodes()) {
+                sb.append("  ").append(nodeDeclaration(ids.get(node.id), node)).append('\n');
+            }
         }
 
         for (DependencyGraph.Edge edge : graph.getEdges()) {
@@ -77,6 +84,71 @@ public class MermaidEmitter {
         appendClassDefs(sb, graph);
         appendNotDeployed(sb, graph, ids);
         return sb.toString();
+    }
+
+    /** Whether {@link GraphLayerAssigner} has run — every node carries a layer. */
+    private static boolean isLayered(DependencyGraph graph) {
+        if (graph.isEmpty()) return false;
+        for (DependencyGraph.Node node : graph.getNodes()) {
+            if (node.layer == null) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Declares the nodes grouped into one {@code subgraph} per tier, which is how
+     * Mermaid expresses layering. Unlike the DOT emitter's invisible ranks, the box is
+     * kept visible and titled: in Mermaid it is the only way to force the grouping, and
+     * a reader gets the tier's meaning ("data stores") for free.
+     */
+    private static void appendTiers(StringBuilder sb, DependencyGraph graph, Map<String, String> ids) {
+        java.util.SortedMap<Integer, java.util.List<DependencyGraph.Node>> tiers = new java.util.TreeMap<>();
+        for (DependencyGraph.Node node : graph.getNodes()) {
+            tiers.computeIfAbsent(node.layer, k -> new java.util.ArrayList<>()).add(node);
+        }
+
+        Set<String> connected = new HashSet<>();
+        for (DependencyGraph.Edge edge : graph.getEdges()) {
+            connected.add(edge.source);
+            connected.add(edge.target);
+        }
+
+        for (Map.Entry<Integer, java.util.List<DependencyGraph.Node>> tier : tiers.entrySet()) {
+            sb.append("  subgraph layer").append(tier.getKey())
+                    .append(" [\"").append(tierTitle(tier.getKey(), tier.getValue(), connected)).append("\"]\n");
+            sb.append("    direction LR\n");
+            for (DependencyGraph.Node node : tier.getValue()) {
+                sb.append("    ").append(nodeDeclaration(ids.get(node.id), node)).append('\n');
+            }
+            sb.append("  end\n");
+        }
+    }
+
+    /**
+     * Names a tier by what it holds, so the layering explains itself: the entry tier,
+     * the terminal tiers (data / external), and the service tiers in between numbered
+     * by call depth.
+     */
+    private static String tierTitle(int layer, java.util.List<DependencyGraph.Node> members,
+                                    Set<String> connected) {
+        boolean allDb = true;
+        boolean allExternal = true;
+        boolean anyGateway = false;
+        boolean allUnconnected = true;
+        for (DependencyGraph.Node node : members) {
+            String kind = node.kind == null ? DependencyGraph.KIND_SERVICE : node.kind;
+            if (!DependencyGraph.KIND_DB.equals(kind) && !DependencyGraph.KIND_QUEUE.equals(kind)) allDb = false;
+            if (!DependencyGraph.KIND_EXTERNAL.equals(kind)) allExternal = false;
+            if (DependencyGraph.KIND_GATEWAY.equals(kind)) anyGateway = true;
+            if (connected.contains(node.id)) allUnconnected = false;
+        }
+        // Named for what it is: these have no dependency in either direction, so calling
+        // them an entry tier would misrepresent the extraction's actual result.
+        if (allUnconnected) return "no dependencies found";
+        if (allExternal) return "external";
+        if (allDb) return "data stores";
+        if (layer == 0) return anyGateway ? "ingress" : "entry services";
+        return "services · depth " + layer;
     }
 
     private static String nodeDeclaration(String id, DependencyGraph.Node node) {

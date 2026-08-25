@@ -91,6 +91,13 @@ public class DependencyGraph {
         public String image;
         /** Replica health as "ready/desired" (e.g. "3/3"), when known. */
         public String replicas;
+        /**
+         * The tier this node is drawn in: 0 = ingress/entry, rising with call depth,
+         * with data stores and external hosts in the last tiers. {@code null} until
+         * {@link GraphLayerAssigner} has run (and on an old checkpoint), in which case
+         * the emitters fall back to their previous free layout.
+         */
+        public Integer layer;
 
         Node(String id, String kind, String namespace) {
             this.id = id;
@@ -107,6 +114,7 @@ public class DependencyGraph {
             if (deployedAt != null && !deployedAt.isBlank()) json.put("deployedAt", deployedAt);
             if (image != null && !image.isBlank()) json.put("image", image);
             if (replicas != null && !replicas.isBlank()) json.put("replicas", replicas);
+            if (layer != null) json.put("layer", layer);
             return json;
         }
     }

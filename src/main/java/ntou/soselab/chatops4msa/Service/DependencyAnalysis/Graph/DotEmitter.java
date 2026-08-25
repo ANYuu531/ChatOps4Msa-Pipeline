@@ -27,8 +27,11 @@ public class DotEmitter {
 
     public static String emit(DependencyGraph graph) {
         StringBuilder sb = new StringBuilder();
+        boolean layered = isLayered(graph);
         sb.append("digraph dependencies {\n");
-        sb.append("  rankdir=LR;\n");
+        // Layered graphs read top-down (ingress at the top, data stores at the bottom);
+        // without layers the previous left-to-right layout is kept.
+        sb.append(layered ? "  rankdir=TB;\n" : "  rankdir=LR;\n");
         sb.append("  graph [fontname=\"Helvetica\", labelloc=\"t\"");
         if (graph.getNamespace() != null && !graph.getNamespace().isBlank()) {
             sb.append(", label=\"namespace: ").append(escape(graph.getNamespace())).append("\"");
@@ -50,9 +53,42 @@ public class DotEmitter {
             sb.append("  ").append(edgeLine(edge)).append('\n');
         }
 
+        if (layered) appendRanks(sb, graph);
         appendLegend(sb, graph);
         sb.append("}\n");
         return sb.toString();
+    }
+
+    /** Whether {@link GraphLayerAssigner} has run — every node carries a layer. */
+    private static boolean isLayered(DependencyGraph graph) {
+        if (graph.isEmpty()) return false;
+        for (DependencyGraph.Node node : graph.getNodes()) {
+            if (node.layer == null) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Pins each tier to one rank, so the graph reads as "ingress on top, then services
+     * by call depth, then the data stores" instead of whatever the layout engine picks.
+     *
+     * {@code rank=same} rather than a cluster per tier on purpose: a cluster draws a box
+     * around each layer and forces the nodes inside it, which on a 50-edge graph makes
+     * the picture worse, not better. The invisible chain between the first node of each
+     * tier is what keeps the tiers themselves in order.
+     */
+    private static void appendRanks(StringBuilder sb, DependencyGraph graph) {
+        java.util.SortedMap<Integer, java.util.List<String>> tiers = new java.util.TreeMap<>();
+        for (DependencyGraph.Node node : graph.getNodes()) {
+            tiers.computeIfAbsent(node.layer, k -> new java.util.ArrayList<>()).add(node.id);
+        }
+        if (tiers.size() < 2) return;   // a single tier is not a layering
+
+        for (java.util.Map.Entry<Integer, java.util.List<String>> tier : tiers.entrySet()) {
+            sb.append("  { rank=same; ");
+            for (String id : tier.getValue()) sb.append('"').append(escape(id)).append("\"; ");
+            sb.append("}  // layer ").append(tier.getKey()).append('\n');
+        }
     }
 
     private static String nodeLine(DependencyGraph.Node node) {

@@ -1,0 +1,139 @@
+%% train-ticket 靜態(greenfield)依賴圖 · 分層版 · 對照 train-ticket-greenfield-graph.mmd
+%% 分層由 GraphLayerAssigner 產生:入口 → 依呼叫深度的服務層 → 資料層/外部 → 無相依
+%% 量化效果:51 條邊 100% 由上往下(0 條向上、0 條同層穿越),所以層次是真的、不是排版錯覺
+%% 最底層「no dependencies found」= 靜態抽取對這 19 個節點沒抽到任何邊
+%%   (其中 bin / json2shiviz / ts-ui-test / ms-monitoring-core 本來就不是服務;
+%%    但 ts-gateway-service 這種是真缺口 → 下一步該補的抽取目標)
+%% 註:本檔是把既有 .mmd 重新分層產生的對照圖;下次實際跑 pipeline 會直接輸出這個格式
+%% Microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    ts_cancel_service["ts-cancel-service"]
+    ts_rebook_service["ts-rebook-service"]
+    ts_admin_basic_info_service["ts-admin-basic-info-service"]
+    ts_wait_order_service["ts-wait-order-service"]
+    ts_preserve_other_service["ts-preserve-other-service"]
+    ts_common["ts-common"]
+    ts_user_service["ts-user-service"]
+    ts_voucher_service["ts-voucher-service"]
+    ts_travel_plan_service["ts-travel-plan-service"]
+    ts_admin_order_service["ts-admin-order-service"]
+    ts_admin_travel_service["ts-admin-travel-service"]
+    ts_admin_route_service["ts-admin-route-service"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    ts_contacts_service["ts-contacts-service"]
+    ts_notification_service["ts-notification-service"]
+    ts_preserve_service["ts-preserve-service"]
+    ts_auth_service["ts-auth-service"]
+    ts_route_plan_service["ts-route-plan-service"]
+    ts_inside_payment_service["ts-inside-payment-service"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    ts_consign_service["ts-consign-service"]
+    ts_food_service["ts-food-service"]
+    ts_payment_service["ts-payment-service"]
+    ts_travel2_service["ts-travel2-service"]
+    ts_travel_service["ts-travel-service"]
+    rest_service_external["rest-service-external"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    ts_station_food_service["ts-station-food-service"]
+    ts_basic_service["ts-basic-service"]
+    ts_seat_service["ts-seat-service"]
+  end
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    ts_order_other_service["ts-order-other-service"]
+    ts_route_service["ts-route-service"]
+    ts_price_service["ts-price-service"]
+    ts_train_service["ts-train-service"]
+    ts_order_service["ts-order-service"]
+  end
+  subgraph layer5 ["services · depth 5"]
+    direction LR
+    ts_station_service["ts-station-service"]
+  end
+  subgraph layer6 ["external"]
+    direction LR
+    github_com[/"github.com"/]:::external
+  end
+  subgraph layer7 ["no dependencies found"]
+    direction LR
+    ts_admin_user_service["ts-admin-user-service"]
+    ts_config_service["ts-config-service"]
+    ts_assurance_service["ts-assurance-service"]
+    ts_news_service["ts-news-service"]
+    ts_avatar_service["ts-avatar-service"]
+    ts_ui_dashboard["ts-ui-dashboard"]
+    ts_security_service["ts-security-service"]
+    ts_ticket_office_service["ts-ticket-office-service"]
+    ts_verification_code_service["ts-verification-code-service"]
+    ts_train_food_service["ts-train-food-service"]
+    ts_food_delivery_service["ts-food-delivery-service"]
+    ts_consign_price_service["ts-consign-price-service"]
+    ts_gateway_service["ts-gateway-service"]
+    ts_ui_test["ts-ui-test"]
+    ms_monitoring_core["ms-monitoring-core"]
+    bin["bin"]
+    json2shiviz["json2shiviz"]
+    ts_delivery_service["ts-delivery-service"]
+    ts_execute_service["ts-execute-service"]
+  end
+  ts_cancel_service -.-> ts_notification_service
+  ts_cancel_service -.-> ts_order_service
+  ts_cancel_service -.-> ts_order_other_service
+  ts_order_other_service -.-> ts_station_service
+  ts_preserve_service -.-> ts_basic_service
+  ts_preserve_service -.-> ts_seat_service
+  ts_preserve_service -.-> ts_travel_service
+  ts_preserve_service -.-> ts_order_service
+  ts_preserve_service -.-> ts_food_service
+  ts_preserve_service -.-> ts_consign_service
+  ts_order_service -.-> ts_station_service
+  ts_food_service -.-> ts_station_food_service
+  ts_rebook_service -.-> ts_seat_service
+  ts_rebook_service -.-> ts_inside_payment_service
+  ts_admin_basic_info_service -.-> ts_contacts_service
+  ts_wait_order_service -.-> ts_preserve_service
+  ts_basic_service -.-> ts_station_service
+  ts_basic_service -.-> ts_train_service
+  ts_basic_service -.-> ts_route_service
+  ts_basic_service -.-> ts_price_service
+  ts_preserve_other_service -.-> ts_basic_service
+  ts_preserve_other_service -.-> ts_seat_service
+  ts_preserve_other_service -.-> ts_travel2_service
+  ts_preserve_other_service -.-> ts_order_other_service
+  ts_preserve_other_service -.-> ts_food_service
+  ts_preserve_other_service -.-> ts_consign_service
+  ts_common -.-> github_com
+  ts_user_service -.-> ts_auth_service
+  ts_route_plan_service -.-> ts_travel_service
+  ts_route_plan_service -.-> ts_travel2_service
+  ts_inside_payment_service -.-> rest_service_external
+  ts_inside_payment_service -.-> ts_payment_service
+  ts_seat_service -.-> ts_order_service
+  ts_seat_service -.-> ts_order_other_service
+  ts_travel_plan_service -.-> ts_seat_service
+  ts_travel_plan_service -.-> ts_route_plan_service
+  ts_travel_plan_service -.-> ts_travel_service
+  ts_travel_plan_service -.-> ts_travel2_service
+  ts_travel2_service -.-> ts_basic_service
+  ts_travel2_service -.-> ts_seat_service
+  ts_travel_service -.-> ts_basic_service
+  ts_travel_service -.-> ts_seat_service
+  ts_admin_order_service -.-> ts_order_service
+  ts_admin_order_service -.-> ts_order_other_service
+  ts_admin_travel_service -.-> ts_travel_service
+  ts_admin_travel_service -.-> ts_travel2_service
+  ts_admin_travel_service -.-> ts_station_service
+  ts_admin_route_service -.-> ts_route_service
+  ts_admin_route_service -.-> ts_station_service
+  ts_voucher_service -.-> ts_order_service
+  ts_voucher_service -.-> ts_order_other_service
+classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
