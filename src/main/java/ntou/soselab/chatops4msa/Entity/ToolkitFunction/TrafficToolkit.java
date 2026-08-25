@@ -1,6 +1,7 @@
 package ntou.soselab.chatops4msa.Entity.ToolkitFunction;
 
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisStateStore;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Traffic.AskItem;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Traffic.TrafficRunner;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Traffic.TrafficScenario;
 import ntou.soselab.chatops4msa.Service.DiscordService.UserContextHolder;
@@ -63,15 +64,29 @@ public class TrafficToolkit extends ToolkitFunction {
             passes = 2;
         }
 
+        String userId = UserContextHolder.getUserId();
+        boolean haveUser = userId != null && !userId.isBlank();
+
+        // Tier 3: bind whatever the user has already answered in this run, so a value
+        // is asked for once and every later round just uses it. What is still
+        // unanswered stays an ask — the runner holds those requests back.
+        if (haveUser) {
+            scenario.applySuppliedValues(AskItem.valuesFromJson(
+                    stateStore.getStage(userId, DependencyAnalysisStateStore.STAGE_USER_VALUES)));
+        }
+
         TrafficRunner.RunReport report = trafficRunner.run(scenario, entry_url.trim(), passes);
         String rendered = report.render(entry_url.trim(), passes);
 
-        String userId = UserContextHolder.getUserId();
-        if (userId != null && !userId.isBlank()) {
+        if (haveUser) {
             // Kept so a resume can show what was already tried and refine it,
             // instead of regenerating the same ineffective journey.
             stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_TRAFFIC_SCENARIO, scenario_json);
             stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_TRAFFIC_REPORT, rendered);
+            // What the user is about to be asked for (empty when the generator needed
+            // nothing), which is what the ask button renders.
+            stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_PENDING_ASKS,
+                    AskItem.toJson(scenario.asks));
         }
         return rendered;
     }

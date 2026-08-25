@@ -5,6 +5,9 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 import ntou.soselab.chatops4msa.Entity.NLP.IntentAndEntity;
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.DepstateToolkit;
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.McpToolkit;
@@ -15,6 +18,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.Extern
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ExternalHostDetector;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisStateStore;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyReportService;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Traffic.AskItem;
 import org.json.JSONObject;
 import ntou.soselab.chatops4msa.Service.NLPService.DialogueTracker;
 import org.jetbrains.annotations.NotNull;
@@ -65,12 +69,22 @@ public class ButtonListener extends ListenerAdapter {
         System.out.println(">>> trigger button interaction event");
 
         System.out.println("[TIME] " + new Date());
-        event.deferReply().queue();
         User tester = event.getUser();
         String testerId = tester.getId();
         String testerName = tester.getName();
         String buttonId = event.getButton().getId();
         System.out.println("[DEBUG] " + testerName + " click " + buttonId);
+
+        // Tier 3 "Provide values": opens a form. A modal MUST be the first response to
+        // the interaction — after deferReply() it can no longer be opened — so this
+        // branch comes before the ack below and returns immediately. The button is
+        // deliberately left enabled: the user may reopen the form to correct a value.
+        if (DepstateToolkit.ASK_VALUES_BUTTON_ID.equals(buttonId)) {
+            openAskValuesModal(event, testerId);
+            return;
+        }
+
+        event.deferReply().queue();
 
         // disable the button
         List<MessageEmbed> originalEmbedList = event.getMessage().getEmbeds();
@@ -237,5 +251,50 @@ public class ButtonListener extends ListenerAdapter {
 
         System.out.println("<<< end of current button interaction event");
         System.out.println();
+    }
+
+    /**
+     * Builds the Tier 3 form from the pending asks in the checkpoint, one text input
+     * per value. Inputs are optional: the operator answers what they know, and an
+     * unanswered value simply stays pending rather than blocking the round.
+     *
+     * The answers are handled by {@link ModalListener}.
+     */
+    private void openAskValuesModal(ButtonInteractionEvent event, String testerId) {
+        List<AskItem> asks = AskItem.fromJson(
+                stateStore.getStage(testerId, DependencyAnalysisStateStore.STAGE_PENDING_ASKS));
+        if (asks.isEmpty()) {
+            event.reply("There are no values to fill in right now — "
+                    + "either they were already supplied, or the checkpoint has expired.")
+                    .setEphemeral(true).queue();
+            return;
+        }
+
+        Modal.Builder modal = Modal.create(
+                DepstateToolkit.ASK_VALUES_MODAL_ID, "Values the analysis needs");
+
+        int added = 0;
+        for (AskItem ask : asks) {
+            if (added++ >= DepstateToolkit.MAX_ASKS_PER_MODAL) break;
+            TextInput.Builder input = TextInput.create(ask.key, label(ask), TextInputStyle.SHORT)
+                    // Optional on purpose: a half-answered form is still progress, and
+                    // forcing a guess is exactly what Tier 3 exists to avoid.
+                    .setRequired(false)
+                    .setMaxLength(200);
+            if (!ask.example.isEmpty()) input.setPlaceholder(truncate(ask.example, 100));
+            modal.addActionRow(input.build());
+        }
+
+        event.replyModal(modal.build()).queue();
+    }
+
+    /** The input's label: the question, trimmed to Discord's 45-character limit. */
+    private String label(AskItem ask) {
+        String text = ask.question.isBlank() ? ask.key : ask.question;
+        return truncate(text, 45);
+    }
+
+    private String truncate(String text, int max) {
+        return text.length() <= max ? text : text.substring(0, max - 1) + "…";
     }
 }

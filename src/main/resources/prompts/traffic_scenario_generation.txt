@@ -30,6 +30,9 @@ You are given, in the user message:
   tests / API specs — these build real, valid requests against this very system
 - OPTIONALLY: edges that are still MISSING after previous attempts, plus the
   collection that was already tried and its execution report
+- OPTIONALLY: VALUES THE USER HAS ALREADY SUPPLIED, listed as variable names. Those
+  are already bound: write {{name}} and it resolves. Never ask for one again, and
+  never substitute a literal of your own for one.
 
 EXAMPLE REQUESTS ARE YOUR BEST SOURCE OF PAYLOADS. A deep write path (a deposit, a
 checkout) only fires on a semantically valid body, and guessing the fields is the
@@ -44,8 +47,13 @@ tour of the API. Work out which user action would cause each missing edge and
 build the journey that performs it. Read the previous execution report: if a step
 returned 4xx/5xx, your payload or your sequence was wrong — fix it, do not repeat it.
 When a failed step has a `response:` line, it usually names the exact problem
-(a missing or invalid field); use it to CORRECT that request's body, and only mark
-the edge UNREACHABLE if the response shows it needs a value you were never given.
+(a missing or invalid field); use it to CORRECT that request's body. If the response
+shows it needs a value you were never given, do not give up on the edge: ASK THE USER
+for that value (rule 10a) and keep the request.
+
+A [WAIT] step in the report is one whose value is already being asked of the user.
+It is not broken. Keep it exactly as it is — same request, same {{placeholder}} — and
+do not replace the placeholder with a guess; it is retried automatically once answered.
 
 FRONTEND SHAPE — decide this FIRST, from the Istio routing:
 The entry URL reaches exactly ONE service — the ingress / VirtualService target.
@@ -188,16 +196,38 @@ RULES:
    data (mass delete, account deletion, payment against a real gateway).
 9. Keep it under 25 items. Breadth of EDGES matters, not volume of requests — one
    request per edge is enough for Istio to record it.
-10. If you genuinely cannot construct a valid request for an edge (for example the
-    credentials are unknown, or the payload needs domain knowledge you were not
-    given), then OMIT that request. Do not emit a guess that will 4xx. Instead add
-    a final item whose `name` begins with `UNREACHABLE:` and whose `description`
-    says what is missing:
-      { "name": "UNREACHABLE: front-end -> orders -> payment",
-        "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/" },
-          "description": "CANNOT REACH: needs valid checkout payload / real card token" } }
-    The runner does NOT send an UNREACHABLE item; it reports the gap to the user
-    rather than hiding it behind a failed request.
+10. When you cannot construct a valid request for an edge, NEVER emit a guess that
+    will 4xx. You have two options, and choosing the right one matters:
+
+    (a) A HUMAN OPERATOR WOULD KNOW THE VALUE — an existing account number, a real
+        order/customer/tenant id, the login for this particular deployment. Then ASK
+        FOR IT. Declare it as a collection variable with an EMPTY value and a
+        description beginning `ASK: `, and write the request normally using {{key}}:
+          "variable": [
+            { "key": "account_num", "value": "",
+              "description": "ASK: an existing account number to deposit into | e.g. 1011226111" }
+          ]
+        Description format: `ASK: <one-line question> | e.g. <sample value>` (the
+        `| e.g. ...` part is optional). Say WHAT the value is, not why you failed.
+        The runner holds that request back rather than sending it half-filled, asks
+        the user, and retries it automatically once answered — so KEEP the request in
+        the collection; do not also mark its edge UNREACHABLE.
+        Ask for AT MOST 5 values, and only where the answer actually unblocks an edge.
+
+    (b) NO VALUE FROM A HUMAN WOULD HELP — the edge needs a real payment gateway, an
+        external system, an inbound webhook. Then omit the request and add a final
+        item whose `name` begins with `UNREACHABLE:` and whose `description` says what
+        is missing:
+          { "name": "UNREACHABLE: front-end -> orders -> payment",
+            "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/" },
+              "description": "CANNOT REACH: needs a real card token from the payment provider" } }
+        The runner does NOT send an UNREACHABLE item; it reports the gap to the user
+        rather than hiding it behind a failed request.
+
+    ASK IS A LAST RESORT, not a shortcut. Before asking, you MUST have exhausted:
+    the example requests (copy the payload), an earlier step's capture (rule 3), and
+    the previous response body (fix the field it names). Asking for something that was
+    already available wastes the operator's attention and is worse than not asking.
 11. NEVER emit a URL with an empty path variable. If {{ownerId}} was never captured,
     `{{baseUrl}}/api/customer/owners/{{ownerId}}` resolves to `.../owners/` and
     `.../owners//pets` becomes `.../owners//pets` (a double slash) — both 404/405 and
@@ -205,6 +235,7 @@ RULES:
     any detail or nested path that needs it. Only reference {{VAR}} in a later item
     once an earlier item has captured it. If no id can be obtained (the list is empty,
     needs auth you don't have, or the capture is not expressible in rule 3's form), do
-    NOT emit the dependent request — mark it UNREACHABLE (rule 10). A request whose
+    NOT emit the dependent request with a guessed id — ask for the id (rule 10a) if a
+    human would know one, otherwise mark it UNREACHABLE (rule 10b). A request whose
     path still contains an unresolved `{{...}}` or an empty `//` segment is always
     wrong; fix the ordering or drop it.

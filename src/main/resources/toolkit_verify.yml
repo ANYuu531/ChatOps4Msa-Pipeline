@@ -155,3 +155,7 @@ toolkit-depstate-coverage:
   []
 toolkit-depstate-apply-button:
   []
+toolkit-depstate-ask-button:
+  []
+toolkit-depstate-supplied-values:
+  []

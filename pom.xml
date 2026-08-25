@@ -51,6 +51,17 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <!-- android-json ships a cut-down org.json that SHADOWS the real
+                     org.json:json on the test classpath (its JSONObject has no
+                     keySet()). Production runs against the real one, so without this
+                     exclusion a test can fail — or worse, pass — on a different class
+                     than the code actually uses. -->
+                <exclusion>
+                    <groupId>com.vaadin.external.google</groupId>
+                    <artifactId>android-json</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.springframework/spring-context -->
         <dependency>

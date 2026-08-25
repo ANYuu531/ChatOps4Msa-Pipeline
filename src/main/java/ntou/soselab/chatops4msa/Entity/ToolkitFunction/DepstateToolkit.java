@@ -9,6 +9,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphNormalizer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.K8sGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.RuntimeGraphBuilder;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Traffic.AskItem;
 import ntou.soselab.chatops4msa.Service.DiscordService.JDAService;
 import ntou.soselab.chatops4msa.Service.DiscordService.UserContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,11 @@ public class DepstateToolkit extends ToolkitFunction {
     public static final String PAUSE_BUTTON_ID = "DepPause";
     public static final String RESUME_BUTTON_ID = "DepResume";
     public static final String APPLY_SERVICE_ENTRIES_BUTTON_ID = "DepApplyServiceEntries";
+    /** Opens the form that collects the values the traffic generator asked a human for. */
+    public static final String ASK_VALUES_BUTTON_ID = "DepProvideValues";
+    public static final String ASK_VALUES_MODAL_ID = "DepProvideValuesModal";
+    /** Discord allows at most five inputs in one modal; the rest are asked next round. */
+    public static final int MAX_ASKS_PER_MODAL = 5;
 
     private final DependencyAnalysisStateStore stateStore;
     private final JDAService jdaService;
@@ -149,6 +155,76 @@ public class DepstateToolkit extends ToolkitFunction {
 
         jdaService.sendChatOpsChannelMessageWithButtons(message, buttons);
         return "apply button posted";
+    }
+
+    /**
+     * Posts the "Provide missing values" button — Tier 3 of the payload strategy.
+     *
+     * The generator reaches this point only when a value is genuinely irreducible: the
+     * project's own example requests (Tier 1) and the 4xx feedback loop (Tier 2) could
+     * not produce it. Rather than degrade that edge to UNREACHABLE, the tool asks the
+     * operator, who usually knows it in one word (a real account number, a tenant id).
+     *
+     * Nothing is asked when the generator needed nothing, so the normal run is
+     * unchanged — this button only appears when a human is actually the bottleneck.
+     */
+    public String toolkitDepstateAskButton() {
+        String userId = requireUser();
+        if (userId == null) return "[ERROR] no user context; cannot post the ask button.";
+
+        List<AskItem> asks = AskItem.fromJson(
+                stateStore.getStage(userId, DependencyAnalysisStateStore.STAGE_PENDING_ASKS));
+        if (asks.isEmpty()) return "no values needed from the user.";
+
+        StringBuilder message = new StringBuilder();
+        message.append("**The traffic generator needs ").append(asks.size())
+                .append(" value(s) only you can give**\n")
+                .append("These could not be derived from the repository's own example requests, "
+                        + "and guessing them just 4xx's — which stops the journey before the deep "
+                        + "edge is ever crossed. The requests that need them were held back "
+                        + "(`[WAIT]` in the traffic report above), not sent half-filled.\n\n");
+        int shown = 0;
+        for (AskItem ask : asks) {
+            if (shown++ >= MAX_ASKS_PER_MODAL) break;
+            message.append("• `").append(ask.key).append("` — ").append(ask.question);
+            if (!ask.example.isEmpty()) message.append("  _(e.g. ").append(ask.example).append(")_");
+            message.append('\n');
+        }
+        if (asks.size() > MAX_ASKS_PER_MODAL) {
+            message.append("_(").append(asks.size() - MAX_ASKS_PER_MODAL)
+                    .append(" more will be asked in the next round — Discord allows five per form.)_\n");
+        }
+        message.append("\nClicking **Provide values** opens a form. Answer what you know and leave "
+                + "the rest blank; the analysis then re-drives traffic with them automatically.");
+
+        jdaService.sendChatOpsChannelMessageWithButtons(message.toString(),
+                List.of(Button.primary(ASK_VALUES_BUTTON_ID, "Provide values")));
+        return "ask button posted for " + asks.size() + " value(s)";
+    }
+
+    /**
+     * The values the user has already supplied, as variable names + what they were for
+     * — <b>never the values themselves</b>.
+     *
+     * This goes into the next generation prompt so the LLM references {{key}} instead
+     * of re-asking or inventing a replacement. The values are withheld on purpose: the
+     * model does not need them to write `{{account_num}}`, and keeping a credential out
+     * of the prompt entirely is stronger than trusting it not to echo one.
+     */
+    public String toolkitDepstateSuppliedValues() {
+        String userId = requireUser();
+        if (userId == null) return "";
+
+        java.util.Map<String, String> values = AskItem.valuesFromJson(
+                stateStore.getStage(userId, DependencyAnalysisStateStore.STAGE_USER_VALUES));
+        if (values.isEmpty()) return "";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("The user has supplied these values. They are already bound as collection "
+                + "variables: reference them as {{key}} and NEVER ask for them again, invent a "
+                + "replacement, or hard-code a literal in their place.\n");
+        for (String key : values.keySet()) sb.append("- {{").append(key).append("}}\n");
+        return sb.toString();
     }
 
     /**

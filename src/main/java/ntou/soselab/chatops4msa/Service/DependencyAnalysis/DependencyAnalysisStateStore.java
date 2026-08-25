@@ -78,6 +78,19 @@ public class DependencyAnalysisStateStore {
      * resume reuses them without cloning again.
      */
     public static final String STAGE_EXAMPLE_REQUESTS = "example_requests";
+    /**
+     * Tier 3 of the payload strategy: the values the traffic generator wants a HUMAN
+     * to supply (JSON list of {@code AskItem}), and the answers it has been given
+     * ({@code {key: value}}).
+     *
+     * These live in the checkpoint rather than in memory because asking is
+     * asynchronous — the analysis posts the question and stops; the user may answer
+     * minutes later, from a different thread, possibly after a restart. The answers
+     * persist for the whole run so a value is asked for once and reused by every
+     * later supplement round.
+     */
+    public static final String STAGE_PENDING_ASKS = "pending_asks";
+    public static final String STAGE_USER_VALUES = "user_values";
 
     public static class State {
         public String repoName = "";

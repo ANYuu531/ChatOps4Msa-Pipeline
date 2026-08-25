@@ -40,7 +40,11 @@ public class CapabilityOrchestrator {
     private static final Set<String> CLUSTER_TOOLKITS = Set.of(
             "toolkit-prometheus-query",
             "toolkit-traffic-run",
-            "toolkit-depstate-apply-button");
+            "toolkit-depstate-apply-button",
+            // Asking the user for a traffic value only makes sense when traffic can be
+            // driven at all: answering it triggers a resume, which is cluster-bound. In
+            // greenfield there is no traffic step, so there is nothing to ask about.
+            "toolkit-depstate-ask-button");
 
     /**
      * toolkit-llm-call prompt templates that SUMMARISE cluster/runtime evidence.

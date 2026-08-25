@@ -62,6 +62,13 @@ public class TrafficScenario {
     public final List<Step> steps = new ArrayList<>();
     /** Non-fatal problems noticed while parsing (skipped items, unsupported captures). */
     public final List<String> warnings = new ArrayList<>();
+    /**
+     * Values the generator could not produce and wants a human to supply (Tier 3).
+     * These are deliberately NOT in {@link #variables}: an ask with no answer must stay
+     * an unresolved {{placeholder}} so the runner refuses to send that request, rather
+     * than sending it with an empty value and reading the resulting 4xx as evidence.
+     */
+    public final List<AskItem> asks = new ArrayList<>();
 
     /** Marks an item as a reported gap rather than a request to send. */
     private static final String UNREACHABLE_PREFIX = "UNREACHABLE:";
@@ -104,7 +111,26 @@ public class TrafficScenario {
                 JSONObject entry = variable.optJSONObject(i);
                 if (entry == null) continue;
                 String key = entry.optString("key", "").trim();
-                if (!key.isEmpty()) scenario.variables.put(key, entry.optString("value", ""));
+                if (key.isEmpty()) continue;
+
+                // An empty value described "ASK: ..." is a request for a human value
+                // (see AskItem), not a variable with a blank default.
+                String value = entry.optString("value", "");
+                String description = entry.optString("description", "").trim();
+                if (value.isBlank()
+                        && description.toUpperCase().startsWith(AskItem.ASK_PREFIX)) {
+                    if (AskItem.isUsableKey(key)) {
+                        scenario.asks.add(AskItem.parse(key, description));
+                    } else {
+                        // Not a name we can put in a {{placeholder}} or a form input.
+                        // Surfaced rather than dropped silently: the edge it was for
+                        // will stay uncovered and the user should see why.
+                        scenario.warnings.add("the ASK: variable '" + key + "' has an unusable "
+                                + "name (letters, digits, _ . - only) and was ignored");
+                    }
+                } else {
+                    scenario.variables.put(key, value);
+                }
             }
         } else {
             JSONObject legacy = root.optJSONObject("variables");
@@ -137,6 +163,32 @@ public class TrafficScenario {
             throw new IllegalArgumentException("the collection contains no usable items");
         }
         return scenario;
+    }
+
+    /**
+     * Binds the values a human already supplied (from the checkpoint) and drops the
+     * asks they answer, so a value is asked for exactly once and every later round
+     * simply uses it. An answer for a variable that was never asked for is still
+     * bound — the generator may legitimately reuse the name in a new collection.
+     */
+    public void applySuppliedValues(Map<String, String> supplied) {
+        if (supplied == null || supplied.isEmpty()) return;
+        supplied.forEach((key, value) -> {
+            if (key != null && !key.isBlank() && value != null && !value.isBlank()) {
+                variables.put(key, value);
+            }
+        });
+        asks.removeIf(ask -> {
+            String value = supplied.get(ask.key);
+            return value != null && !value.isBlank();
+        });
+    }
+
+    /** The variable names still waiting on a human, so the runner can say so precisely. */
+    public java.util.Set<String> askKeys() {
+        java.util.Set<String> keys = new java.util.LinkedHashSet<>();
+        for (AskItem ask : asks) keys.add(ask.key);
+        return keys;
     }
 
     private static Step parseItem(JSONObject item, int index, List<String> warnings) {

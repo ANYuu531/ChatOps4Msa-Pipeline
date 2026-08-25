@@ -494,6 +494,12 @@ low_code:
         # (see ButtonListener). Applying is never automatic — it waits for the click.
         - toolkit-depstate-apply-button: {}
 
+        # Tier 3 — ask the human. Posts the "Provide values" button, but ONLY when the
+        # generator declared an ASK: variable it could not derive from the project's own
+        # example requests (Tier 1) or the 4xx feedback (Tier 2). Answering it re-drives
+        # traffic automatically (ModalListener), so those held-back requests get sent.
+        - toolkit-depstate-ask-button: {}
+
         # The final report is produced only when the user clicks "Generate report"
         # (ButtonListener -> DependencyReportService), from the stored checkpoint,
         # so nothing is collected twice.
@@ -568,6 +574,12 @@ low_code:
         - toolkit-traffic-last-report:
             assign: previous_traffic_report
 
+        # Tier 3: the variable NAMES the user has answered (never the values — the
+        # generator only needs to write {{name}}, and a credential must not enter a
+        # prompt at all). Empty until the user has supplied something.
+        - toolkit-depstate-supplied-values:
+            assign: supplied_values
+
         # ---- Generate a scenario aimed at what is still missing ----
         - toolkit-llm-call:
             prompt: |
@@ -591,6 +603,9 @@ low_code:
 
               ## How it went (fix what returned 4xx; do not repeat it unchanged)
               ${previous_traffic_report}
+
+              ## Values the user has already supplied (bound — use {{name}}, never ask again)
+              ${supplied_values}
 
               ## API surface + dependency edges extracted from the source code
               ${code_extraction_notes}
@@ -742,5 +757,10 @@ low_code:
               **Namespace:** `${namespace}`
 
               ${health_check}
+
+        # Tier 3 again: this round may have surfaced NEW values only a human can give
+        # (or the user may have left some blank last time). Posts nothing when the
+        # generator asked for nothing, so a self-sufficient run is unchanged.
+        - toolkit-depstate-ask-button: {}
 
         - toolkit-depstate-checkpoint: {}

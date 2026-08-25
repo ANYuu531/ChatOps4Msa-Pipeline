@@ -29,7 +29,8 @@ public class JDAService {
     public JDAService(Environment env,
                       SlashCommandListener slashCommandListener,
                       MessageListener messageListener,
-                      ButtonListener buttonListener) {
+                      ButtonListener buttonListener,
+                      ModalListener modalListener) {
 
         final String APP_TOKEN = env.getProperty("discord.application.token");
         try {
@@ -39,6 +40,7 @@ public class JDAService {
                     .addEventListeners(slashCommandListener)
                     .addEventListeners(messageListener)
                     .addEventListeners(buttonListener)
+                    .addEventListeners(modalListener)
                     .build()
                     .awaitReady();
 

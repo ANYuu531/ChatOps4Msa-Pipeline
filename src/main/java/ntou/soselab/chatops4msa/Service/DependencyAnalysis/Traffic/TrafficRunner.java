@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,6 +77,8 @@ public class TrafficRunner {
         public String responseSnippet;
         /** An UNREACHABLE: item — a declared gap, deliberately not sent. */
         public boolean unreachable;
+        /** Held back because a value asked of the user has not been answered yet. */
+        public boolean awaitingValue;
         public final Map<String, String> captured = new LinkedHashMap<>();
         public String exercises = "";
     }
@@ -86,6 +89,8 @@ public class TrafficRunner {
         public int transportErrors;
         /** Non-fatal parse problems (skipped items, unsupported captures) surfaced to the user. */
         public final List<String> warnings = new ArrayList<>();
+        /** Values still awaiting a human (Tier 3); the user is asked for these after the run. */
+        public final List<AskItem> pendingAsks = new ArrayList<>();
 
         /** A plain-text report; it is fed back to the LLM when refining coverage. */
         public String render(String baseUrl, int repeats) {
@@ -103,8 +108,20 @@ public class TrafficRunner {
                 sb.append('\n');
             }
 
+            // Listed so the next generation round knows these are being asked for and
+            // does not re-declare them (or fall back to guessing the same value).
+            if (!pendingAsks.isEmpty()) {
+                sb.append("Values requested from the user this round (do NOT ask again; "
+                        + "reference them as {{key}}):\n");
+                for (AskItem ask : pendingAsks) {
+                    sb.append("- {{").append(ask.key).append("}} — ").append(ask.question).append('\n');
+                }
+                sb.append('\n');
+            }
+
             for (StepResult step : steps) {
                 String label = step.unreachable ? "GAP"
+                        : step.awaitingValue ? "WAIT"
                         : step.error != null ? "ERROR" : String.valueOf(step.status);
                 sb.append("- [").append(label).append("] ").append(step.method).append(' ').append(step.url);
                 if (!step.name.isBlank()) sb.append("  (").append(step.name).append(')');
@@ -135,6 +152,9 @@ public class TrafficRunner {
                     + "not to drop the step.\n");
             sb.append("- A [GAP] step is an UNREACHABLE: marker the generator emitted on purpose; it "
                     + "was not sent. The edge it names still needs whatever it says is missing.\n");
+            sb.append("- A [WAIT] step needed a value that was asked of the user and is not answered "
+                    + "yet; it was not sent. Once the answer arrives the same request is retried, so "
+                    + "keep the step and do not replace its {{placeholder}} with a guess.\n");
             sb.append("- A step whose capture is missing means later steps depending on that variable "
                     + "were sent with an unresolved placeholder and probably failed.\n");
             return sb.toString();
@@ -166,17 +186,22 @@ public class TrafficRunner {
 
         RunReport report = new RunReport();
         report.warnings.addAll(scenario.warnings);
+        report.pendingAsks.addAll(scenario.asks);
+
+        // Variables still waiting on a human: a step that needs one is held back rather
+        // than sent with an unresolved placeholder (which would only ever 4xx).
+        Set<String> pending = scenario.askKeys();
 
         for (int pass = 0; pass < Math.max(1, repeats); pass++) {
             int stepCount = 0;
             for (TrafficScenario.Step step : scenario.steps) {
                 if (stepCount++ >= MAX_STEPS) break;
 
-                StepResult result = execute(client, step, base, variables);
+                StepResult result = execute(client, step, base, variables, pending);
                 // Only the first pass is reported; later passes just re-drive the traffic.
                 if (pass == 0) {
                     report.steps.add(result);
-                    if (result.unreachable) continue;
+                    if (result.unreachable || result.awaitingValue) continue;
                     report.executed++;
                     if (result.error != null) report.transportErrors++;
                 }
@@ -184,17 +209,22 @@ public class TrafficRunner {
         }
 
         // Let Istio's telemetry catch up before the caller queries Prometheus, so the
-        // last (deepest) edges just exercised are not missed by an early scrape.
-        try {
-            Thread.sleep(TELEMETRY_SETTLE.toMillis());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        // last (deepest) edges just exercised are not missed by an early scrape. There
+        // is nothing to wait for when nothing was sent — every step was a declared gap
+        // or is held back waiting on a user-supplied value.
+        if (report.executed > 0) {
+            try {
+                Thread.sleep(TELEMETRY_SETTLE.toMillis());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
         return report;
     }
 
     private StepResult execute(HttpClient client, TrafficScenario.Step step,
-                               String base, Map<String, String> variables) {
+                               String base, Map<String, String> variables,
+                               Set<String> pendingAskKeys) {
         StepResult result = new StepResult();
         result.name = step.name;
         result.method = step.method;
@@ -219,13 +249,36 @@ public class TrafficRunner {
         // generation, and "Illegal character in path" would not tell it anything.
         Matcher unresolved = VARIABLE.matcher(url);
         if (unresolved.find()) {
-            result.error = "not sent: the variable {{" + unresolved.group(1)
-                    + "}} was never captured by an earlier step";
+            String name = unresolved.group(1);
+            if (pendingAskKeys.contains(name)) {
+                // Not a defect in the journey: the value was asked of the user and has
+                // not come back yet. Distinguished from a failed capture so the next
+                // round keeps this step instead of "fixing" it into a guess.
+                result.awaitingValue = true;
+                result.error = "not sent: waiting for the user to supply {{" + name + "}}";
+            } else {
+                result.error = "not sent: the variable {{" + name
+                        + "}} was never captured by an earlier step";
+            }
             return result;
         }
 
         try {
             String body = step.body == null ? null : substitute(step.body, variables);
+
+            // Same rule for the body: a write path whose value is still pending must
+            // not be sent half-filled — it would 4xx and stop before the deep edge.
+            if (body != null) {
+                Matcher bodyUnresolved = VARIABLE.matcher(body);
+                while (bodyUnresolved.find()) {
+                    if (pendingAskKeys.contains(bodyUnresolved.group(1))) {
+                        result.awaitingValue = true;
+                        result.error = "not sent: waiting for the user to supply {{"
+                                + bodyUnresolved.group(1) + "}}";
+                        return result;
+                    }
+                }
+            }
 
             HttpRequest.Builder builder = HttpRequest.newBuilder()
                     .uri(URI.create(url))
