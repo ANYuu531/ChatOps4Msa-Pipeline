@@ -33,6 +33,24 @@ import java.util.stream.Stream;
 @Component
 public class ExampleRequestHarvester {
 
+    /**
+     * Turns Tier 1 off, so payload help falls through to the failure-feedback loop
+     * (Tier 2) and then to asking the operator (Tier 3).
+     *
+     * This exists for the controlled comparison the strategy needs to justify itself:
+     * the same project, same journey, with and without its own example requests —
+     * which shows what Tier 1 is actually worth, and exercises the tiers below it on a
+     * project that would otherwise never reach them. Default on; set
+     * {@code dependency.example-requests.enabled=false} to run the other arm.
+     */
+    private final boolean enabled;
+
+    public ExampleRequestHarvester(
+            @org.springframework.beans.factory.annotation.Value(
+                    "${dependency.example-requests.enabled:true}") boolean enabled) {
+        this.enabled = enabled;
+    }
+
     private static final int MAX_FILES = 12;
     private static final int MAX_FILE_BYTES = 8 * 1024;
     private static final int MAX_TOTAL_BYTES = 24 * 1024;
@@ -42,6 +60,14 @@ public class ExampleRequestHarvester {
      *         string when the repository ships none. Never throws.
      */
     public String harvest(Path root) {
+        // Same result as a project that ships no such artefacts, which is exactly what
+        // the comparison arm should look like to everything downstream.
+        if (!enabled) {
+            System.out.println("[DEBUG] example-request harvesting is disabled "
+                    + "(dependency.example-requests.enabled=false); Tier 1 payload help is off");
+            return "";
+        }
+
         List<Path> artefacts = new ArrayList<>();
         try (Stream<Path> stream = Files.walk(root)) {
             stream.filter(Files::isRegularFile)

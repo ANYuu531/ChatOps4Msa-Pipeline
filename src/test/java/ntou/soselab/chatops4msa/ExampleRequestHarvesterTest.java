@@ -35,7 +35,7 @@ public class ExampleRequestHarvesterTest {
         // Vendored code is ignored by the shared scanner rules.
         write(dir, "node_modules/some-loadtest/index.js", "http.post('/x')");
 
-        String harvested = new ExampleRequestHarvester().harvest(dir);
+        String harvested = new ExampleRequestHarvester(true).harvest(dir);
 
         assertTrue(harvested.contains("src/loadgenerator/locustfile.py"), "the load test is an example artefact");
         assertTrue(harvested.contains("/deposit"), "its real payload content is included for the generator to copy");
@@ -47,7 +47,19 @@ public class ExampleRequestHarvesterTest {
     @Test
     void yieldsEmptyStringWhenTheProjectShipsNoExamples(@TempDir Path dir) throws Exception {
         write(dir, "src/app/Main.java", "class Main {}");
-        assertTrue(new ExampleRequestHarvester().harvest(dir).isEmpty(),
+        assertTrue(new ExampleRequestHarvester(true).harvest(dir).isEmpty(),
                 "no load/e2e/API artefacts -> empty, so generation just proceeds without it");
+    }
+
+    @Test
+    void disabledYieldsNothingEvenWhenTheProjectShipsExamples(@TempDir Path dir) throws Exception {
+        // The comparison arm: Tier 1 off must look exactly like a project that ships no
+        // artefacts, so payload help falls through to the failure feedback and then to
+        // asking the operator.
+        write(dir, "src/loadgenerator/locustfile.py",
+                "self.client.post('/deposit', {'account_num': '1011226111', 'amount': '100'})");
+
+        assertTrue(new ExampleRequestHarvester(false).harvest(dir).isEmpty(),
+                "disabled must yield nothing, not a partial harvest");
     }
 }
