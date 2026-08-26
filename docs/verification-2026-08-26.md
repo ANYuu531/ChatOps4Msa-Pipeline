@@ -28,17 +28,38 @@ operation 名稱和 parameter** 有關。這次只改了 operation 的 *body*，
 
 **所以只要重新 build + 重啟。**
 
-### 0-2. 重建並重啟
+### 0-2. 取得程式碼（注意：不在 `main` 上）
+
+這次的改動在 **`feat/greenfield-static-dependency-graph`** 這個 branch，不是 `main`。
+如果機器 B 停在 `main`，`git pull` 會回「Already up to date」——**不是沒更新，是拉錯 branch**。
 
 ```bash
 # 機器 B
 cd <ChatOps4Msa-Pipeline>
+
+git branch --show-current          # 先看現在在哪
+git fetch origin
+git checkout feat/greenfield-static-dependency-graph
 git pull
 
+# 確認拿到了：最新一筆應該是 cd29ec4
+git log --oneline -1
+```
+
+> 這個 branch 上與本次驗證有關的是最新 9 筆（`3e0cdb6`…`cd29ec4`）：Tier 3 對話問人、
+> in-mesh TCP 的 DB 邊、圖分層、DepWeaver 命名、draw.io 圖、Tier 1 開關。
+
+### 0-3. 重建並重啟
+
+```bash
+# 機器 B
 docker compose up -d --build chatops4msa
 ```
 
-### 0-3. 確認起來了
+`--build` 不能省——不重編的話跑的還是舊 image，新的 `ModalListener`（A）和 TCP 查詢（B）
+都不會生效。
+
+### 0-4. 確認起來了
 
 ```bash
 # 機器 B
@@ -367,7 +388,7 @@ docker compose config | grep DEPENDENCY_EXAMPLE_REQUESTS_ENABLED
 | 服務卡 `ContainerCreating` | jwt-key secret 沒建 | 回步驟 1-4 |
 | TCP 查詢 `result` 空的 | app 比 DB 早啟動，連線池沒被歸因 | 步驟 1-10 的 `rollout restart` |
 | 圖上 db 邊還是虛線 | 同上，或報告是用舊 checkpoint 出的 | 先確認 1-10 的 curl 有東西，再重跑一次收集 |
-| 圖沒有分層 | 跑的是舊 image | 步驟 0-2 的 `--build` 沒帶到 |
+| 圖沒有分層 | 跑的是舊 image | 步驟 0-3 的 `--build` 沒帶到 |
 | 「Provide values」沒出現 | Tier 1 還開著 | 步驟 4 的 grep 沒看到 disabled 那行 |
 | bot 連不到 `bankofanthos.local` | 容器不吃主機 `/etc/hosts` | 見階段 2 的註記（`extra_hosts` 或直接用 IP） |
 
