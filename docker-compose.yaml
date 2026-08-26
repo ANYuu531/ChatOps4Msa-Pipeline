@@ -25,6 +25,12 @@ services:
     restart: unless-stopped
     environment:
       - TZ=Asia/Taipei
+      # Tier 1 of the traffic-payload strategy (harvesting the analysed project's own
+      # example requests). Defaults to on; pass false to run the comparison arm, where
+      # payload help falls through to the 4xx feedback loop and then to asking the
+      # operator:  DEPENDENCY_EXAMPLE_REQUESTS_ENABLED=false docker compose up -d
+      # Declared here because compose only forwards variables it is told about.
+      - DEPENDENCY_EXAMPLE_REQUESTS_ENABLED=${DEPENDENCY_EXAMPLE_REQUESTS_ENABLED:-true}
     volumes:
       - /etc/localtime:/etc/localtime:ro
       # k6 is launched as a sibling container through the host's Docker daemon.
