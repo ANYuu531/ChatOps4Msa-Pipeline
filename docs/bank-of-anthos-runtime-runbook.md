@@ -120,7 +120,8 @@ BoA 本來就有兩個真的資料庫(`accounts-db` / `ledger-db`,PostgreSQL Sta
 kubectl get pods -n bank-of-anthos -l app=accounts-db -o wide
 
 # 這條就是 DB 邊的證據(工具用的是同一條)
-curl -s 'http://192.168.100.106:30090/api/v1/query?query=sum%20by(source_workload,destination_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="bank-of-anthos"})' | head -c 600
+curl -s -G 'http://192.168.100.106:30090/api/v1/query' \
+  --data-urlencode 'query=sum by(source_workload,destination_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="bank-of-anthos"})' | head -c 600
 # 期望看到 userservice/contacts -> accounts-db、ledgerwriter/balancereader/transactionhistory -> ledger-db
 ```
 

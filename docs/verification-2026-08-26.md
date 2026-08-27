@@ -99,6 +99,53 @@ docker compose logs --tail=80 chatops4msa
 
 # 階段 1 · 機器 A：部署 Bank of Anthos
 
+### 1-0. 兩個前置檢查（做完可能整個階段 1 都不用做）
+
+**(a) kubectl 連得到嗎**
+
+```bash
+# 機器 A
+kubectl get nodes
+```
+
+如果報 `The connection to the server localhost:8080 was refused`，那是**沒有 kubeconfig**
+（kubectl 找不到 config 就退回預設的 `localhost:8080`，所以 port 才是 8080 不是 6443）。
+k3s 的 config 在 `/etc/rancher/k3s/k3s.yaml`，只有 root 讀得到：
+
+```bash
+# 機器 A
+mkdir -p ~/.kube
+sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+sudo chown $(id -u):$(id -g) ~/.kube/config
+chmod 600 ~/.kube/config
+kubectl get nodes
+```
+
+> 這份 config 的 `server:` 是 `https://127.0.0.1:6443`，**在機器 A 本機用是對的，不要改**。
+> 只有要給機器 B 的那份（`kube/config`）才需要換成 LAN IP。兩份不要搞混。
+
+**(b) BoA 是不是已經部署過了**
+
+```bash
+# 機器 A
+kubectl get pods -n bank-of-anthos
+kubectl get gateway,virtualservice -A
+kubectl -n bank-of-anthos get deploy frontend \
+  -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="ENABLE_TRACING")].value}{"\n"}'
+```
+
+**如果 8 個 pod 都 `2/2 Running`、`ENABLE_TRACING` 是 `false`** → 部署是好的，
+**跳過 1-1 ~ 1-9，直接做 1-10**。
+
+再多看一眼 pod 的 `AGE`：**兩個 db 要比 6 個 app「老」**（先起來），DB 邊才量得到。
+反過來的話（app 比 db 舊）就要 `rollout restart` 那幾個 app——理由見 1-7。
+
+**如果 Gateway 的 `HOSTS` 是 `["*"]`**（BoA 自帶的 `extras/istio/frontend-ingress.yaml`，
+不是本文 1-9 的專屬 host）→ 那也能用，而且更省事：`entry_url` 直接用
+`http://192.168.100.106:31403/`，**階段 2 整個跳過**（不用改 `/etc/hosts`）。
+唯一要確認的是**沒有別人也綁 `*`** 在同一個 ingressgateway:80（上面第二條指令看得到），
+否則兩邊會互搶路由。
+
 ### 1-1. 前置盤點
 
 ```bash
@@ -215,7 +262,8 @@ kubectl apply -f boa-ingress.yaml
 
 ```bash
 # 機器 A（或任何連得到 Prometheus 的機器）
-curl -s 'http://192.168.100.106:30090/api/v1/query?query=sum%20by(source_workload,destination_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="bank-of-anthos"})' | head -c 800
+curl -s -G 'http://192.168.100.106:30090/api/v1/query' \
+  --data-urlencode 'query=sum by(source_workload,destination_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="bank-of-anthos"})' | head -c 800
 ```
 
 **期望**：看到 `userservice` / `contacts` → `accounts-db`，
@@ -234,6 +282,10 @@ kubectl -n bank-of-anthos rollout status deploy/frontend --timeout=300s
 ---
 
 # 階段 2 · 機器 B：讓工具打得到入口
+
+> **Gateway 的 HOSTS 是 `["*"]` 的話，整段跳過**——任何 Host 都會路由到 frontend，
+> `entry_url` 直接用 `http://192.168.100.106:31403/` 就行（見 1-0(b)）。
+> 下面這段只在用了 1-9 那個專屬 host `bankofanthos.local` 時才需要。
 
 ```bash
 # 機器 B

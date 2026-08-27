@@ -112,7 +112,8 @@ curl -s 'http://192.168.100.106:30090/api/v1/query?query=sum%20by(source_workloa
 
 # the DB edges live in the TCP metric, NOT in istio_requests_total (Istio only parses
 # HTTP/gRPC). This is the query that proves customers/vets/visits -> mysql is observable:
-curl -s 'http://192.168.100.106:30090/api/v1/query?query=sum%20by(source_workload,destination_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="petclinic"})' | head -c 600
+curl -s -G 'http://192.168.100.106:30090/api/v1/query' \
+  --data-urlencode 'query=sum by(source_workload,destination_workload,destination_service_name)(istio_tcp_connections_opened_total{reporter="source",source_workload_namespace="petclinic"})' | head -c 600
 
 # and that the services really are on MySQL rather than the default in-memory HSQLDB
 kubectl -n petclinic exec deploy/mysql -c mysql -- \
