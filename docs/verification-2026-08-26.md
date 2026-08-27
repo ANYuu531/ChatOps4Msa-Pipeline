@@ -42,22 +42,44 @@ git fetch origin
 git checkout feat/greenfield-static-dependency-graph
 git pull
 
-# 確認拿到了：最新一筆應該是 cd29ec4
+# 確認拿到了
 git log --oneline -1
 ```
 
-> 這個 branch 上與本次驗證有關的是最新 9 筆（`3e0cdb6`…`cd29ec4`）：Tier 3 對話問人、
+> 這個 branch 上與本次驗證有關的是最新那幾筆（從 `3e0cdb6` 起）：Tier 3 對話問人、
 > in-mesh TCP 的 DB 邊、圖分層、DepWeaver 命名、draw.io 圖、Tier 1 開關。
 
-### 0-3. 重建並重啟
+### 0-3. 重建並重啟（**只**重編 chatops4msa）
 
 ```bash
 # 機器 B
-docker compose up -d --build chatops4msa
+docker compose build chatops4msa
+docker compose up -d --no-deps chatops4msa
 ```
 
-`--build` 不能省——不重編的話跑的還是舊 image，新的 `ModalListener`（A）和 TCP 查詢（B）
-都不會生效。
+必須重編——不然跑的還是舊 image，新的 `ModalListener`（A）和 TCP 查詢（B）都不會生效。
+
+> ### ⚠ 不要用 `docker compose up -d --build chatops4msa`
+>
+> Compose v2 的 `--build` 會把 **`depends_on` 的服務一起重編**，也就是連 `k8s-mcp-server`
+> 一起。那個 image 是從**另一個 repo 的 fork** build 的（`${K8S_MCP_SRC:-../k8s-mcp-server}`），
+> 它的 Dockerfile 會去 GitHub 抓 istio / argocd 這些 CLI：**要跑一個多小時**，而且很容易在
+> `curl` 掛掉（實測 `exit 92` = HTTP/2 framing error，抓 argocd 時斷掉），整個 build 就白費。
+>
+> 這次的改動**一行都沒動 k8s-mcp-server**，它的 image 和容器本來就在跑，
+> 所以用 `build chatops4msa` +`up --no-deps` 明確地只碰這一個。
+>
+> 先確認依賴都活著（兩者都該是 `Up`）：
+>
+> ```bash
+> docker compose ps
+> ```
+>
+> 只有在 `k8s-mcp-server` 或 `rabbitmq` **沒在跑**時才需要動它們：
+> `docker compose up -d rabbitmq k8s-mcp-server`（沿用既有 image，不重編）。
+> 真的必須重編 k8s-mcp-server 而又一直 `exit 92`，就到那個 fork 的
+> `deploy/docker/Dockerfile` 把 curl 改成 `curl -sSLf --http1.1 --retry 5 --retry-delay 3`
+> （`--http1.1` 繞開 framing 錯誤，`-f` 讓 404 當場失敗而不是把錯誤頁存成執行檔）。
 
 ### 0-4. 確認起來了
 
@@ -262,7 +284,7 @@ auth_hint = none
 
 ```bash
 # 機器 B
-DEPENDENCY_EXAMPLE_REQUESTS_ENABLED=false docker compose up -d chatops4msa
+DEPENDENCY_EXAMPLE_REQUESTS_ENABLED=false docker compose up -d --no-deps chatops4msa
 
 # 確認生效（沒有這行就是沒吃到，別往下做）
 docker compose logs --tail=200 chatops4msa | grep "example-request harvesting is disabled"
@@ -306,7 +328,7 @@ docker compose logs --tail=200 chatops4msa | grep "example-request harvesting is
 
 ```bash
 # 機器 B
-docker compose up -d chatops4msa      # 不帶那個變數 = 回到預設 true
+docker compose up -d --no-deps chatops4msa   # 不帶那個變數 = 回到預設 true
 ```
 
 ---
