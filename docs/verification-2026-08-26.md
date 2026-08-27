@@ -269,6 +269,13 @@ curl -s -G 'http://192.168.100.106:30090/api/v1/query' \
 **期望**：看到 `userservice` / `contacts` → `accounts-db`，
 `ledgerwriter` / `balancereader` / `transactionhistory` → `ledger-db`。
 
+> **數字會很大是正常的**（實測 BoA 是 8000+）。計數怎麼長取決於 client：Java/HikariCP 那種
+> 連線池在啟動時建好就幾乎不動；BoA 這種**每次查詢開新連線**的就會一直累加。
+> 兩者都只證明「這個服務真的會連那個資料庫」，**不能當流量讀**。
+>
+> 順帶：只有連線池那種才有「DB 必須比 app 先起來」的順序要求（1-7）。BoA 一直重連，
+> 所以就算順序反了也還是量得到。
+
 **如果 `result` 是空的**（服務都健康卻沒有 TCP 指標）→ 順序問題，重啟 app 再查：
 
 ```bash

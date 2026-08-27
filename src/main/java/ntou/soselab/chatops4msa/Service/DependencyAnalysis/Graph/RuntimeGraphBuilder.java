@@ -182,12 +182,17 @@ public class RuntimeGraphBuilder {
      * usually is NOT sidecar-injected, in which case {@code destination_workload} is
      * {@code unknown} and the Service name is the only identity available.
      *
-     * <p><b>What the count means.</b> It is connections opened, not queries. Clients
-     * pool connections, so the number reflects pool establishment (and is largely
-     * static afterwards) — it is evidence that this service really talks to that
-     * database, not a measure of how much. That also means the database must be
-     * running <em>before</em> the application pods start, or the pool is built before
-     * the sidecar can see it; see {@code kube/petclinic/README.md}.
+     * <p><b>What the count means.</b> It is connections opened, not queries — evidence
+     * that this service really talks to that database, never a measure of how much.
+     * How it grows depends entirely on the client: a pooling client (Java/HikariCP)
+     * establishes its pool at startup and the number then barely moves, whereas a
+     * client that connects per request keeps incrementing it (Bank of Anthos measured
+     * in the thousands within days). Do not read the magnitude as traffic.
+     *
+     * <p>The pooling case is the one with an ordering requirement: the database must be
+     * running <em>before</em> the application pods start, or the pool is established
+     * before the sidecar can attribute it and the edge never appears. See
+     * {@code kube/petclinic/README.md}.
      *
      * External hosts are skipped here: they have no destination workload and are
      * already handled by {@link #mergeIstioEgress}, which attributes them by
