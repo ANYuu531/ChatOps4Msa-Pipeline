@@ -134,29 +134,15 @@ public class DotEmitter {
     private static String deployMeta(DependencyGraph.Node node) {
         if (!Boolean.TRUE.equals(node.deployed)) return "";
         java.util.List<String> parts = new java.util.ArrayList<>();
-        String tag = imageTag(node.image);
-        if (tag != null) parts.add(tag);
+        String tag = NodeLabels.imageTag(node.image, node.id);
+        if (tag != null) parts.add(escape(tag));
         if (node.replicas != null && !node.replicas.isBlank()) parts.add(escape(node.replicas));
-        String day = dateOnly(node.deployedAt);
+        String day = NodeLabels.dateOnly(node.deployedAt);
         if (day != null) parts.add(day);
         return String.join("  ·  ", parts);
     }
 
-    /** The image without its registry/namespace prefix (e.g. ".../app:3.0" -> "app:3.0"). */
-    private static String imageTag(String image) {
-        if (image == null || image.isBlank() || "<none>".equals(image)) return null;
-        String s = image.trim();
-        int slash = s.lastIndexOf('/');
-        if (slash >= 0 && slash < s.length() - 1) s = s.substring(slash + 1);
-        return escape(s);
-    }
 
-    /** The date part of an ISO-8601 instant (e.g. "2026-07-20T10:16:30Z" -> "2026-07-20"). */
-    private static String dateOnly(String iso) {
-        if (iso == null || iso.isBlank()) return null;
-        int t = iso.indexOf('T');
-        return t > 0 ? iso.substring(0, t) : iso;
-    }
 
     private static String edgeLine(DependencyGraph.Edge edge) {
         StringBuilder attrs = new StringBuilder();

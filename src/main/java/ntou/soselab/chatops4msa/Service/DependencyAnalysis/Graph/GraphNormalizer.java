@@ -34,12 +34,26 @@ import java.util.Set;
  */
 public final class GraphNormalizer {
 
-    /** Framework / library / tech-label names that are never a deployable workload. */
+    /**
+     * Framework / library / tech-label names that are never a deployable workload.
+     *
+     * <p>Note what is NOT here: a datastore's own name ({@code postgres}, {@code mysql},
+     * {@code redis}). Those look like library names but are perfectly ordinary workload
+     * names — petclinic's database Deployment is literally called {@code mysql} — and a
+     * StatefulSet-backed database is not marked {@code deployed = TRUE} by
+     * {@link K8sGraphBuilder} (it only reads Deployments), so the guard below would not
+     * save it. Removing a node by engine name would delete real databases.
+     */
     private static final Set<String> LIBRARY_PHANTOMS = Set.of(
             "spring-cloud-gateway", "spring-cloud-config", "spring-cloud-loadbalancer",
             "netflix-eureka", "eureka-client", "resilience4j", "resilience4j-circuitbreaker",
             "hystrix", "ribbon", "feign", "openfeign", "jolokia", "spring-boot-actuator",
-            "actuator", "micrometer", "lombok", "mapstruct", "spring-boot", "spring-framework");
+            "actuator", "micrometer", "lombok", "mapstruct", "spring-boot", "spring-framework",
+            // Datastore CLIENT libraries. Unambiguous: nobody names a workload after the
+            // driver. Bank of Anthos surfaced `lettuce` (the Redis client) as a phantom
+            // service node with no edges at all.
+            "lettuce", "jedis", "redisson", "hikari", "hikaricp", "psycopg2", "psycopg",
+            "pymongo", "mongoose", "sequelize", "sqlalchemy", "jdbc", "odbc");
 
     /** Suffixes a display name adds over the real workload id (stripped to find the alias target). */
     private static final String[] ALIAS_SUFFIXES = {

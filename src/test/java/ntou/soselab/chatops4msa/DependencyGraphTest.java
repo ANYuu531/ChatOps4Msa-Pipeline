@@ -1094,6 +1094,86 @@ public class DependencyGraphTest {
         assertFalse(MermaidEmitter.emit(g).contains("subgraph"));
     }
 
+    // ---- node labels stay narrow (a wide label stretches its whole tier) ----
+
+    @Test
+    void theImageDigestIsNotRenderedIntoTheLabel() {
+        // A real Bank of Anthos run: the digest is 71 characters that say nothing the
+        // tag does not, and it stretched the whole graph to 5000px wide.
+        DependencyGraph g = new DependencyGraph("boa");
+        g.addNode("frontend", DependencyGraph.KIND_SERVICE);
+        g.addNode("userservice", DependencyGraph.KIND_SERVICE);
+        g.addEdge("frontend", "userservice", "sync-http", DependencyGraph.PROV_RUNTIME,
+                DependencyGraph.CONF_OBSERVED, true, 1, "x");
+        DependencyGraph.Node n = node(g, "frontend");
+        n.deployed = Boolean.TRUE;
+        n.image = "us-central1-docker.pkg.dev/bank-of-anthos-ci/bank-of-anthos/frontend"
+                + ":v0.6.10@sha256:076294ce717309f711743fa3b72a9809c7f156edf1c4fa58505fd9f436d65345";
+        n.replicas = "1/1";
+        n.deployedAt = "2026-08-12T09:00:00Z";
+
+        String dot = DotEmitter.emit(g);
+        String mermaid = MermaidEmitter.emit(g);
+
+        assertFalse(dot.contains("sha256"), "the digest must not reach the label");
+        assertFalse(mermaid.contains("sha256"));
+        assertFalse(dot.contains("us-central1-docker.pkg.dev"), "nor the registry prefix");
+        // The repo name repeats the node name, so only the tag is worth keeping.
+        assertTrue(dot.contains("v0.6.10"));
+        assertTrue(dot.contains("2026-08-12"));
+        assertFalse(dot.contains("frontend:v0.6.10"), "the name is already on the line above");
+    }
+
+    @Test
+    void animageWhoseNameDiffersFromTheWorkloadIsKeptInFull() {
+        // petclinic: workload api-gateway runs spring-petclinic-api-gateway — that
+        // difference is real information, unlike a repeated name.
+        DependencyGraph g = new DependencyGraph("petclinic");
+        g.addNode("api-gateway", DependencyGraph.KIND_SERVICE);
+        g.addNode("customers-service", DependencyGraph.KIND_SERVICE);
+        g.addEdge("api-gateway", "customers-service", "sync-http", DependencyGraph.PROV_RUNTIME,
+                DependencyGraph.CONF_OBSERVED, true, 1, "x");
+        DependencyGraph.Node n = node(g, "api-gateway");
+        n.deployed = Boolean.TRUE;
+        n.image = "petclinic-k8s/spring-petclinic-api-gateway:latest";
+
+        assertTrue(DotEmitter.emit(g).contains("spring-petclinic-api-gateway:latest"));
+    }
+
+    @Test
+    void aDatastoreClientLibraryIsNotAServiceNode() {
+        // Bank of Anthos surfaced `lettuce` (the Redis client) as an edgeless node.
+        DependencyGraph g = new DependencyGraph("boa");
+        g.addNode("lettuce", DependencyGraph.KIND_SERVICE);
+        g.addNode("accounts-db", DependencyGraph.KIND_DB);
+        g.addNode("userservice", DependencyGraph.KIND_SERVICE);
+        g.addEdge("userservice", "accounts-db", "db", DependencyGraph.PROV_CODE,
+                DependencyGraph.CONF_DOCUMENTED, false, 0, "x");
+
+        GraphNormalizer.normalize(g);
+
+        assertNull(node(g, "lettuce"));
+        // The database itself must survive — it is named like a library but is not one.
+        assertNotNull(node(g, "accounts-db"));
+    }
+
+    @Test
+    void aDatabaseWorkloadNamedAfterItsEngineIsNeverRemoved() {
+        // petclinic's database Deployment is literally called `mysql`, and a
+        // StatefulSet-backed one is not marked deployed=TRUE at all — so an
+        // engine-name blocklist would delete real databases.
+        DependencyGraph g = new DependencyGraph("petclinic");
+        g.addNode("mysql", DependencyGraph.KIND_DB);
+        g.addNode("postgres", DependencyGraph.KIND_DB);
+        g.addNode("redis", DependencyGraph.KIND_DB);
+
+        GraphNormalizer.normalize(g);
+
+        assertNotNull(node(g, "mysql"));
+        assertNotNull(node(g, "postgres"));
+        assertNotNull(node(g, "redis"));
+    }
+
     private static DependencyGraph.Node node(DependencyGraph g, String id) {
         return g.getNodes().stream().filter(n -> n.id.equals(id)).findFirst().orElse(null);
     }

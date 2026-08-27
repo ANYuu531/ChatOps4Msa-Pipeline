@@ -172,10 +172,10 @@ public class MermaidEmitter {
         if (Boolean.FALSE.equals(node.deployed)) return node.id + "<br/>(not deployed)";
         if (Boolean.TRUE.equals(node.deployed)) {
             java.util.List<String> parts = new java.util.ArrayList<>();
-            String tag = imageTag(node.image);
+            String tag = NodeLabels.imageTag(node.image, node.id);
             if (tag != null) parts.add(tag);
             if (node.replicas != null && !node.replicas.isBlank()) parts.add(node.replicas);
-            String day = dateOnly(node.deployedAt);
+            String day = NodeLabels.dateOnly(node.deployedAt);
             if (day != null) parts.add(day);
             if (!parts.isEmpty()) return node.id + "<br/>" + String.join(" · ", parts);
         }
@@ -193,21 +193,7 @@ public class MermaidEmitter {
         sb.append("class ").append(String.join(",", undeployed)).append(" notDeployed\n");
     }
 
-    /** The image without its registry/namespace prefix (e.g. ".../app:3.0" -> "app:3.0"). */
-    private static String imageTag(String image) {
-        if (image == null || image.isBlank() || "<none>".equals(image)) return null;
-        String s = image.trim();
-        int slash = s.lastIndexOf('/');
-        if (slash >= 0 && slash < s.length() - 1) s = s.substring(slash + 1);
-        return s;
-    }
 
-    /** The date part of an ISO-8601 instant (e.g. "2026-07-20T10:16:30Z" -> "2026-07-20"). */
-    private static String dateOnly(String iso) {
-        if (iso == null || iso.isBlank()) return null;
-        int t = iso.indexOf('T');
-        return t > 0 ? iso.substring(0, t) : iso;
-    }
 
     /** Only emit a classDef for the kinds actually present, to keep the block tidy. */
     private static void appendClassDefs(StringBuilder sb, DependencyGraph graph) {
