@@ -217,7 +217,26 @@ RULES:
     (b) NO VALUE FROM A HUMAN WOULD HELP — the edge needs a real payment gateway, an
         external system, an inbound webhook. Then omit the request and add a final
         item whose `name` begins with `UNREACHABLE:` and whose `description` says what
-        is missing:
+        is missing.
+
+        "IT IS AN INTERNAL SERVICE-TO-SERVICE EDGE" IS NOT A REASON. Almost every deep
+        edge is internal — that is what makes it deep. It is not triggered by calling
+        it directly; it is triggered by a business action that makes the caller need
+        the callee. A ledger service asks a balance service for the balance when, and
+        only when, it is asked to move money OUT of a local account: so the journey is
+        a transfer to SOMEONE ELSE, not a deposit and not a transfer to oneself.
+        Before declaring such an edge unreachable you must have (i) worked out which
+        action forces the call, and (ii) confirmed from the execution report that the
+        action actually SUCCEEDED — see the 200-is-not-success rule below.
+
+        A 200 DOES NOT PROVE THE ACTION SUCCEEDED. A server-side-rendered app answers a
+        rejected form with a redirect back to the page, which the runner follows, so a
+        failed transfer and a successful one look identical from the status code. If an
+        action returned 200 but the edge it should have caused still did not appear,
+        assume the action was REJECTED and work out what would make it valid — most
+        often a value that is wrong for this purpose (see the supplied-values note).
+
+        Example of the item, when it genuinely is unreachable:
           { "name": "UNREACHABLE: front-end -> orders -> payment",
             "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/" },
               "description": "CANNOT REACH: needs a real card token from the payment provider" } }

@@ -221,9 +221,19 @@ public class DepstateToolkit extends ToolkitFunction {
 
         StringBuilder sb = new StringBuilder();
         sb.append("The user has supplied these values. They are already bound as collection "
-                + "variables: reference them as {{key}} and NEVER ask for them again, invent a "
-                + "replacement, or hard-code a literal in their place.\n");
+                + "variables: reference them as {{key}} and do not invent a replacement or "
+                + "hard-code a literal in their place.\n");
         for (String key : values.keySet()) sb.append("- {{").append(key).append("}}\n");
+        // A supplied value can be wrong FOR THIS ROUND's objective — an account number
+        // that is the sender's own when the edge needs a transfer to someone else. The
+        // loop used to be stuck there: the value was bound, re-asking was forbidden, so
+        // the generator declared the edge UNREACHABLE rather than say what it needed.
+        sb.append("If the execution report shows a supplied value is itself the problem — the "
+                + "request keeps failing because of it, or it is semantically wrong for this "
+                + "round's objective — you MAY ask again, under a NEW variable name that says "
+                + "what is different (e.g. {{recipient_account}} rather than {{account_num}}), "
+                + "and state in the question why the previous value does not work. Do not "
+                + "silently reuse it and do not give up on the edge instead.\n");
         return sb.toString();
     }
 
