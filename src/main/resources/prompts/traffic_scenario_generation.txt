@@ -228,6 +228,19 @@ RULES:
     the example requests (copy the payload), an earlier step's capture (rule 3), and
     the previous response body (fix the field it names). Asking for something that was
     already available wastes the operator's attention and is worse than not asking.
+
+    (c) CREDENTIALS ARE THE ONE EXCEPTION, AND THEY COME AS A SET. Never invent a
+        password, token, API key or secret — a guessed one does not fail visibly, it
+        makes login return a page and then turns EVERY authenticated step into a 401
+        that looks like a payload problem but is not. So:
+          - If the auth hint does not already contain the credentials and the journey
+            needs to log in, ASK for them. Do not treat this as a last resort.
+          - Ask for the WHOLE set. If you ask for `username` you MUST also ask for
+            `password` in the same collection. Half a credential is useless: the
+            operator fills in the username, login still fails, and the round is wasted.
+          - Never put a literal password in `value`, and never reuse an example
+            password from the repository's test fixtures as if it were this
+            deployment's.
 11. NEVER emit a URL with an empty path variable. If {{ownerId}} was never captured,
     `{{baseUrl}}/api/customer/owners/{{ownerId}}` resolves to `.../owners/` and
     `.../owners//pets` becomes `.../owners//pets` (a double slash) — both 404/405 and

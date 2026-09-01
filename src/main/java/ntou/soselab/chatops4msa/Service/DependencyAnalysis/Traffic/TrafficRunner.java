@@ -150,6 +150,17 @@ public class TrafficRunner {
             sb.append("- A `response:` line is a snippet of a 4xx/5xx body — it usually names the "
                     + "missing/invalid field. Use it to CORRECT that request's payload next round, "
                     + "not to drop the step.\n");
+            sb.append("- A 401/403 on a step that comes AFTER a login step is NOT a payload "
+                    + "problem: the login did not actually succeed, so there is no session. Fix "
+                    + "the LOGIN (usually the credentials are wrong or were guessed — ask for "
+                    + "them), not the failing step. Every authenticated step stays 401 until "
+                    + "login works, so correcting their bodies changes nothing. Note a login "
+                    + "POST can return 200 and still have failed: a redirect to the login page "
+                    + "is followed automatically and looks the same as success.\n");
+            sb.append("- A 404 on a path taken from a BACKEND service's endpoint list means it "
+                    + "was sent to the wrong service. Behind a server-side-rendered frontend "
+                    + "those paths live on the backend, not at the ingress — drive the "
+                    + "frontend's own pages instead and let it call them for you.\n");
             sb.append("- A [GAP] step is an UNREACHABLE: marker the generator emitted on purpose; it "
                     + "was not sent. The edge it names still needs whatever it says is missing.\n");
             sb.append("- A [WAIT] step needed a value that was asked of the user and is not answered "
