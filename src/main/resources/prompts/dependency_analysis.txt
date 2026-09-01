@@ -210,6 +210,29 @@ Do not omit documented candidates merely because runtime evidence is absent.
 
 # 5. Infrastructure Dependencies
 
+START with every edge from the "Data-layer Edges Observed at Runtime (TCP)" input,
+one entry each, verbatim endpoints, "Runtime observed: Yes", Confidence: High. Those
+are measured facts about THIS cluster and must not be omitted, merged, or downgraded.
+Then add the declared-but-unobserved ones.
+
+<source> and <target> are the CONCRETE workload names this analysis saw
+(userservice, accounts-db). Never a grouping the documentation uses
+("Ledger Services", "Accounts Services", "Bank of Anthos") — a group is not a
+workload, and an edge between two groups cannot be verified, deployed or observed.
+Split it into the real per-service edges or leave it out.
+
+A LIBRARY IS NOT AN INFRASTRUCTURE DEPENDENCY. A service is BUILT WITH Micrometer,
+Log4j2, Lettuce, PyJWT, OpenTelemetry, a JDBC driver — it does not have a runtime
+dependency EDGE to them; they are compiled in. The dependency is to the SERVER those
+libraries talk to (the database, the cache), and only when this analysis found one.
+Listing libraries here contradicts the graph, which drops them as phantoms.
+
+Likewise, a cloud service the documentation offers as an ALTERNATIVE (Cloud SQL
+instead of the in-cluster database) or as the platform the project can run on
+(GKE, Anthos Service Mesh, Cloud Trace) is not a dependency of the deployment that
+was analysed. Mention it at most as a limitation on the real edge, never as its own
+entry.
+
 For each dependency:
 ### Infrastructure dependency: <source> -> <target>
 - Dependency type:
