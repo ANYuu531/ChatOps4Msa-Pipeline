@@ -460,6 +460,12 @@ low_code:
         # ---- Completeness / health check BEFORE the report ----
         # The gap list is shown first so the user can decide whether to generate the
         # report now, or pause to supplement evidence and resume.
+        # The database edges, computed deterministically from the TCP metric. Without
+        # this the health check and the report call every db edge "unknown" while the
+        # graph draws it solid — see DepstateToolkit.toolkitDepstateDataLayer.
+        - toolkit-depstate-data-layer:
+            assign: data_layer_ledger
+
         - toolkit-llm-call:
             prompt: |
               ## Analysis mode (greenfield = static, no cluster; runtime = a namespace was given)
@@ -482,6 +488,9 @@ low_code:
 
               ## Traffic that was actually driven (what was attempted, and how it went)
               ${traffic_report}
+
+              ## Data-layer edges observed at runtime (TCP — the HTTP ledger cannot carry these)
+              ${data_layer_ledger}
             prompt_template: dependency_health_check
             assign: health_check
 
@@ -755,6 +764,12 @@ low_code:
             namespace: ${namespace}
             assign: service_entry_manifest
 
+        # The database edges, computed deterministically from the TCP metric. Without
+        # this the health check and the report call every db edge "unknown" while the
+        # graph draws it solid — see DepstateToolkit.toolkitDepstateDataLayer.
+        - toolkit-depstate-data-layer:
+            assign: data_layer_ledger
+
         - toolkit-llm-call:
             prompt: |
               ## Analysis mode (greenfield = static, no cluster; runtime = a namespace was given)
@@ -777,6 +792,9 @@ low_code:
 
               ## Traffic that was actually driven (what was attempted, and how it went)
               ${traffic_report}
+
+              ## Data-layer edges observed at runtime (TCP — the HTTP ledger cannot carry these)
+              ${data_layer_ledger}
             prompt_template: dependency_health_check
             assign: health_check
 

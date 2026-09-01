@@ -88,7 +88,14 @@ public class DependencyReportService {
                 + "## Istio runtime-observed edge ledger (internal, mesh-to-mesh traffic)\n"
                 + state.stage(DependencyAnalysisStateStore.STAGE_TRAFFIC) + "\n\n"
                 + "## Istio egress edge ledger (external dependencies leaving the mesh)\n"
-                + state.stage(DependencyAnalysisStateStore.STAGE_EGRESS);
+                + state.stage(DependencyAnalysisStateStore.STAGE_EGRESS) + "\n\n"
+                // Without this the report calls every database edge "runtime observed:
+                // unknown" while the graph posted beside it draws that same edge solid —
+                // the two contradict each other and the reader cannot tell which is right.
+                // Neither ledger above can carry a db edge: Istio emits no HTTP metric for
+                // a non-HTTP protocol, and the egress one is scoped outside the mesh.
+                + "## Data-layer edges observed at runtime (TCP)\n"
+                + dataLayerLedger(state);
 
         String response = llmToolkit.toolkitLlmCall(prompt, "dependency_analysis");
 
@@ -109,6 +116,37 @@ public class DependencyReportService {
         postRuntimeGraph(state);
 
         stateStore.remove(userId);
+    }
+
+    /**
+     * The database edges the mesh has observed, as a deterministic ledger for the
+     * report's LLM step. Built straight from the TCP stage — no full graph merge — so
+     * it states a fact rather than handing the model raw Prometheus JSON to re-derive
+     * (which is how the previous report ended up disagreeing with its own graph).
+     *
+     * @return the ledger, or a line stating there is none (an empty section reads as
+     *         an omission and invites the model to fill it in).
+     */
+    private String dataLayerLedger(DependencyAnalysisStateStore.State state) {
+        DependencyGraph graph = new DependencyGraph(state.namespace);
+        RuntimeGraphBuilder.mergeIstioTcp(graph,
+                state.stage(DependencyAnalysisStateStore.STAGE_TCP_RAW));
+        if (graph.isEmpty()) {
+            return "No data-layer (TCP) edges were observed. In greenfield mode none are "
+                    + "collected at all; in a runtime run this means no database connection "
+                    + "was seen.\n";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Istio emits no istio_requests_total for a non-HTTP protocol, so a database "
+                + "dependency appears ONLY here, never in the HTTP ledger above. Every edge "
+                + "listed is CONFIRMED runtime-observed — do NOT report it as 'unknown':\n");
+        for (DependencyGraph.Edge edge : graph.getEdges()) {
+            sb.append("- ").append(edge.source).append(" -> ").append(edge.target)
+                    .append("  (").append(edge.count)
+                    .append(" TCP connections observed; a connection count, NOT a request count)\n");
+        }
+        return sb.toString();
     }
 
     /**

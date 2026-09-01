@@ -228,6 +228,42 @@ public class DepstateToolkit extends ToolkitFunction {
     }
 
     /**
+     * The data-layer edges the mesh has actually observed, as a short deterministic
+     * ledger for the LLM steps (the report and the completeness check).
+     *
+     * Why this exists: those steps read the HTTP ledger and the egress ledger, and
+     * neither can carry a database. Istio emits no {@code istio_requests_total} for a
+     * non-HTTP protocol, so without this the report says
+     * "userservice -> accounts-db: runtime observed: Unknown" while the graph beside
+     * it draws that very edge solid — the two disagree, and the reader is left to
+     * guess which is right. Computed here rather than handed over as raw Prometheus
+     * JSON so the model is given a conclusion to repeat, not data to re-derive.
+     */
+    public String toolkitDepstateDataLayer() {
+        String userId = requireUser();
+        if (userId == null) return "";
+        DependencyAnalysisStateStore.State state = stateStore.get(userId);
+        if (state == null) return "";
+
+        DependencyGraph graph = new DependencyGraph(state.namespace);
+        RuntimeGraphBuilder.mergeIstioTcp(graph,
+                state.stage(DependencyAnalysisStateStore.STAGE_TCP_RAW));
+        if (graph.isEmpty()) return "";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("These data-layer (database) edges ARE runtime-observed. Istio emits no "
+                + "istio_requests_total for a non-HTTP protocol, so they appear in the TCP "
+                + "metric instead of the HTTP ledger above — treat each as CONFIRMED at "
+                + "runtime, never as 'unknown':\n");
+        for (DependencyGraph.Edge edge : graph.getEdges()) {
+            sb.append("- ").append(edge.source).append(" -> ").append(edge.target)
+                    .append("  (").append(edge.count)
+                    .append(" TCP connections observed; a connection count, NOT a request count)\n");
+        }
+        return sb.toString();
+    }
+
+    /**
      * The deterministic runtime coverage from the current checkpoint: builds the
      * graph from the raw Istio traffic + structured code edges (no LLM), and returns
      * the service→service synchronous edges the mesh has NOT yet observed — the

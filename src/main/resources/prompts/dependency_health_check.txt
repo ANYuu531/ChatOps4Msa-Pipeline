@@ -8,6 +8,13 @@ WHAT they can do to fill the biggest gaps before generating the report.
 Do not generate the report yourself.
 Do not invent findings. Base every statement on the supplied evidence.
 
+DATABASE EDGES ARE NOT IN THE HTTP LEDGER. Istio emits istio_requests_total only
+for the protocols it parses (HTTP/gRPC), so a PostgreSQL/MySQL dependency appears
+in the separate "Data-layer edges observed at runtime (TCP)" section and NOWHERE in
+the runtime-observed edge ledger. Every edge listed there is CONFIRMED at runtime —
+never call it missing, unknown, or a gap, and never recommend driving traffic to
+"cover" it. Driving HTTP traffic would not make it appear in the HTTP ledger anyway.
+
 ANALYSIS MODE (read this FIRST — it changes what counts as a gap):
 You are told the mode. If it is `greenfield`, this is a STATIC, code-and-docs-only
 analysis: there is NO namespace, NO cluster, NO Istio/Prometheus, NO traffic — by

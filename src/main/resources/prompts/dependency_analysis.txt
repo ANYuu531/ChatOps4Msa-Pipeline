@@ -30,6 +30,16 @@ Generate a conservative evidence-based microservice dependency report from:
    with any matching documented/configured candidate. If this ledger is empty,
    treat runtime invocation as Unknown as before.
 
+4. Data-layer Edges Observed at Runtime (TCP). This is the ONLY runtime evidence a
+   DATABASE dependency can have: Istio emits istio_requests_total solely for the
+   protocols it parses (HTTP/gRPC), so a PostgreSQL/MySQL connection appears here and
+   NOWHERE in ledger 3. Every edge listed in this section is confirmed — report it as
+   "Runtime observed: Yes" in Infrastructure Dependencies, with High confidence.
+   Reporting such an edge as "Unknown" because it is absent from ledger 3 is WRONG:
+   the graph rendered alongside this report draws it as observed, and the two must not
+   contradict each other. Its number is TCP CONNECTIONS, not requests — never describe
+   it as traffic volume. An edge absent from this section stays Unknown as usual.
+
 Do not invent services, dependencies, routes, protocols, runtime events, or deployment facts.
 Do not upgrade evidence strength.
 
