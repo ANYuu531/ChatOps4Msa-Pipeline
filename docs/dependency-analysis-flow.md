@@ -1,7 +1,9 @@
 # DepWeaver：使用者下指令後，背後發生什麼
 
-> **DepWeaver** — Multi-Evidence Dependency Weaver
-> 多證據融合的微服務相依圖建構：**確定性優先、LLM 只補殘餘**
+> **DepWeaver** — 基於多源證據融合與對話式補值的微服務相依圖自動建構方法
+> A Multi-Evidence Fusion Approach to Automated Microservice Dependency Graph Construction with Conversational Gap-Filling
+>
+> 設計立場：**確定性優先、LLM 只補殘餘**
 >
 > 名字裡的 *weave*（織）指的就是核心設計：runtime（Istio 觀測）、code（tree-sitter 抽取）、doc（DeepWiki）三種證據**織成同一張圖**，而不是三選一。工具產出的每一張圖、每一份報告都會帶這個名字（`DependencyGraph.TOOL_NAME`），所以圖離開 Discord 之後——貼進投影片、論文——還認得出來源。
 >

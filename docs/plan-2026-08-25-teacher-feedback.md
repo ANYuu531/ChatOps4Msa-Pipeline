@@ -155,7 +155,10 @@ petclinic 圖上 `customers-service → mysql`、`vets-service → mysql`、`vis
 **老師的話**：幫流程圖取名字。
 **我的解讀**：兩層——① 這套**方法/工具**要有正式名字（論文、投影片、README 統一稱呼，不能一直講「我們的工具」）；② 每張**圖**要有固定圖名與編號（Fig.1/2/3），老師才好指「你第幾張圖」。
 
-### 定案：**DepWeaver** — Multi-Evidence Dependency Weaver
+### 定案：**DepWeaver**
+
+中文全名（論文用）：**基於多源證據融合與對話式補值的微服務相依圖自動建構方法**
+英文全名：A Multi-Evidence Fusion Approach to Automated Microservice Dependency Graph Construction with Conversational Gap-Filling
 
 副標固定成一句：**「多證據融合的微服務相依圖建構——確定性優先、LLM 只補殘餘」**。
 
