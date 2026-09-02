@@ -79,6 +79,10 @@ public class DependencyReportService {
         boolean greenfield = isGreenfield(state.namespace);
         String mode = greenfield ? "greenfield" : "runtime";
 
+        // Build the graph FIRST: it is the deterministic answer, and both the report's
+        // dependency section and the posted picture are derived from it.
+        DependencyGraph graph = buildGraph(state);
+
         String prompt = "## Analysis mode (greenfield = static, no cluster; runtime = a namespace was given)\n"
                 + mode + "\n\n"
                 + "## Documentation + code dependency notes\n"
@@ -101,7 +105,7 @@ public class DependencyReportService {
 
         String report = "## Microservice Dependency Analysis Report\n"
                 + "**Repository:** `" + state.repoName + "` | **Namespace:** `" + state.namespace + "`\n\n"
-                + response;
+                + spliceInfrastructureSection(response, graph);
         try {
             // toolkitDiscordText auto-sends as a file when the text is long,
             // matching how the report is delivered from the low-code flow.
@@ -113,9 +117,124 @@ public class DependencyReportService {
         // Alongside the prose report, post the dependency graph as Mermaid. It is
         // built deterministically from the raw Istio Prometheus JSON (no LLM), so
         // it is another, more scannable reading of the same runtime evidence.
-        postRuntimeGraph(state);
+        postRuntimeGraph(graph, state);
 
         stateStore.remove(userId);
+    }
+
+    /**
+     * Puts the generated section 5 into the model's report, where section 5 belongs.
+     *
+     * The prompt tells the model to skip it and go from 4 straight to 6, so the splice
+     * point is the "# 6." heading. If the model emitted its own section 5 anyway (they
+     * do drift), that text is dropped — a report must not contain two answers to the
+     * same question. With no recognisable heading the section is appended instead, so
+     * the facts are never lost to a formatting surprise.
+     */
+    static String spliceInfrastructureSection(String response, DependencyGraph graph) {
+        String section = infrastructureSection(graph);
+        if (response == null || response.isBlank()) return section;
+
+        java.util.regex.Matcher six = java.util.regex.Pattern
+                .compile("(?m)^#+\\s*6\\.").matcher(response);
+        if (!six.find()) return response + "\n\n" + section;
+
+        java.util.regex.Matcher five = java.util.regex.Pattern
+                .compile("(?m)^#+\\s*5\\.").matcher(response);
+        int cut = (five.find() && five.start() < six.start()) ? five.start() : six.start();
+        return response.substring(0, cut) + section + response.substring(six.start());
+    }
+
+    /**
+     * Section 5 of the report — the infrastructure dependencies — written by code
+     * rather than by the model.
+     *
+     * This section is pure fact: which workload depends on which datastore/broker/
+     * external host, whether the mesh observed it, and how strong the evidence is.
+     * The graph already holds all of it. Asking the model to restate it added nothing
+     * and produced, on consecutive runs of the same system, "runtime observed:
+     * unknown" for edges the graph drew solid, and then a list of build-time libraries
+     * (Micrometer, Log4j2) and cloud alternatives (Cloud SQL, GKE) that are not
+     * dependencies of the analysed deployment at all. Each time, tightening the prompt
+     * moved the failure rather than removing it.
+     *
+     * So the section is generated here and the model is told to skip it. That is the
+     * project's standing rule — deterministic first, the LLM only for what needs
+     * language — applied to the last place that was still ignoring it.
+     */
+    static String infrastructureSection(DependencyGraph graph) {
+        StringBuilder sb = new StringBuilder("# 5. Infrastructure Dependencies\n\n");
+        if (graph == null || graph.isEmpty()) {
+            sb.append("None resolved from the collected evidence.\n\n");
+            return sb.toString();
+        }
+
+        java.util.Map<String, DependencyGraph.Node> byId = new java.util.HashMap<>();
+        for (DependencyGraph.Node node : graph.getNodes()) byId.put(node.id, node);
+
+        List<DependencyGraph.Edge> infra = new java.util.ArrayList<>();
+        for (DependencyGraph.Edge edge : graph.getEdges()) {
+            DependencyGraph.Node target = byId.get(edge.target);
+            if (target == null) continue;
+            String kind = target.kind == null ? DependencyGraph.KIND_SERVICE : target.kind;
+            if (DependencyGraph.KIND_DB.equals(kind) || DependencyGraph.KIND_QUEUE.equals(kind)
+                    || DependencyGraph.KIND_EXTERNAL.equals(kind)) {
+                infra.add(edge);
+            }
+        }
+        if (infra.isEmpty()) {
+            sb.append("No datastore, broker or external dependency was found in the "
+                    + "collected evidence.\n\n");
+            return sb.toString();
+        }
+
+        // Observed first: those are the measurements, and they are what a reader
+        // checking the graph against the report will look for.
+        infra.sort((a, b) -> Boolean.compare(b.runtimeObserved, a.runtimeObserved));
+
+        for (DependencyGraph.Edge edge : infra) {
+            DependencyGraph.Node target = byId.get(edge.target);
+            String kind = target.kind;
+            sb.append("### Infrastructure dependency: ").append(edge.source)
+                    .append(" -> ").append(edge.target).append('\n');
+            sb.append("- Dependency type: ").append(
+                    DependencyGraph.KIND_DB.equals(kind) ? "database"
+                            : DependencyGraph.KIND_QUEUE.equals(kind) ? "message broker"
+                            : "external service").append('\n');
+            sb.append("- Evidence: ").append(String.join(", ", edge.provenance)).append('\n');
+            sb.append("- Runtime observed: ").append(edge.runtimeObserved ? "Yes" : "No").append('\n');
+            if (edge.runtimeObserved) {
+                // Named precisely: for a database this is connections, not requests.
+                sb.append("- Runtime evidence: ").append(edge.count).append(
+                        DependencyGraph.KIND_DB.equals(kind)
+                                ? " TCP connections observed (a connection count, not a request count)"
+                                : " observed by the mesh").append('\n');
+            }
+            sb.append("- Confidence: ").append(confidenceWord(edge)).append('\n');
+            sb.append("- Deployed: ").append(
+                    Boolean.TRUE.equals(target.deployed) ? "Yes"
+                            : Boolean.FALSE.equals(target.deployed) ? "No — referenced but not running"
+                            : "Not determined (externally managed, or a StatefulSet rather than a Deployment)")
+                    .append('\n');
+            if (!edge.evidence.isEmpty()) {
+                sb.append("- Evidence reference: ").append(edge.evidence.get(0)).append('\n');
+            }
+            sb.append('\n');
+        }
+
+        sb.append("_This section is generated deterministically from the dependency graph, "
+                + "not written by the language model, so it always agrees with the graph "
+                + "posted alongside this report._\n\n");
+        return sb.toString();
+    }
+
+    /** How the report should describe an edge's evidence strength. */
+    private static String confidenceWord(DependencyGraph.Edge edge) {
+        if (edge.runtimeObserved) return "High — confirmed at runtime";
+        if (DependencyGraph.CONF_DOCUMENTED.equals(edge.confidence)) {
+            return "Medium — declared in code/docs with usage evidence, not observed at runtime";
+        }
+        return "Low — declared only (configuration or documentation), no usage evidence";
     }
 
     /**
@@ -150,20 +269,15 @@ public class DependencyReportService {
     }
 
     /**
-     * Renders the dependency graph and posts it.
+     * Builds the fully-merged dependency graph from the checkpoint.
      *
-     * The backbone is built deterministically from the raw Istio Prometheus JSON
-     * (no LLM). The structured code edges are then merged on deterministically
-     * where their targets resolve onto known workloads; only the residue the
-     * deterministic pass cannot map is handed to the LLM for name alignment
-     * ("prefer not to use the LLM, only where necessary"). Runtime edges render
-     * solid; code/doc-only edges render dashed.
-     *
-     * It is rendered to a PNG via Graphviz so it is visible inline in the channel;
-     * if {@code dot} is unavailable the Mermaid source is attached instead (still
-     * renderable at mermaid.live). Either way the .mmd source is attached too.
+     * Split out so the report and the picture are produced from the SAME object. They
+     * used to be derived separately — the graph here, the report from raw stages via an
+     * LLM — and they contradicted each other: the graph drew userservice -> accounts-db
+     * solid while the report called it "runtime observed: unknown". One source, one
+     * answer.
      */
-    private void postRuntimeGraph(DependencyAnalysisStateStore.State state) {
+    private DependencyGraph buildGraph(DependencyAnalysisStateStore.State state) {
         try {
             String raw = state.stage(DependencyAnalysisStateStore.STAGE_TRAFFIC_RAW);
             DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(raw, state.namespace);
@@ -216,6 +330,30 @@ public class DependencyReportService {
             // After normalize on purpose: a phantom node would otherwise occupy a tier
             // and push everything below it one level deeper.
             GraphLayerAssigner.assign(graph);
+            return graph;
+        } catch (Exception e) {
+            System.out.println("[WARNING] could not build the dependency graph: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Renders the dependency graph and posts it.
+     *
+     * The backbone is built deterministically from the raw Istio Prometheus JSON
+     * (no LLM). The structured code edges are then merged on deterministically
+     * where their targets resolve onto known workloads; only the residue the
+     * deterministic pass cannot map is handed to the LLM for name alignment
+     * ("prefer not to use the LLM, only where necessary"). Runtime edges render
+     * solid; code/doc-only edges render dashed.
+     *
+     * It is rendered to a PNG via Graphviz so it is visible inline in the channel;
+     * if {@code dot} is unavailable the Mermaid source is attached instead (still
+     * renderable at mermaid.live). Either way the .mmd source is attached too.
+     */
+    private void postRuntimeGraph(DependencyGraph graph, DependencyAnalysisStateStore.State state) {
+        try {
+            if (graph == null) return;
 
             if (graph.isEmpty()) {
                 // No runtime edges and nothing resolvable from code (or an old
