@@ -1256,6 +1256,30 @@ public class DependencyGraphTest {
         assertTrue(r.uncovered.contains("a -> b"));
     }
 
+    @Test
+    void aProcessLocalCacheIsNotAMeasurableDatastore() {
+        // Bank of Anthos: balancereader keeps a Guava cache in-process. It has no
+        // network endpoint, so no connection to it can EVER be observed — counting it
+        // caps the ratio at 5/6 forever, and lists it under "no connection seen, the
+        // pods may have started too early", advising a restart that cannot help.
+        DependencyGraph g = new DependencyGraph("boa");
+        g.addNode("balancereader", DependencyGraph.KIND_SERVICE);
+        node(g, "balancereader").deployed = Boolean.TRUE;
+        g.addNode("ledger-db", DependencyGraph.KIND_DB);
+        g.addNode("in-memory-cache", DependencyGraph.KIND_DB);
+        g.addEdge("balancereader", "ledger-db", "db", DependencyGraph.PROV_RUNTIME,
+                DependencyGraph.CONF_OBSERVED, true, 2933, "x");
+        g.addEdge("balancereader", "in-memory-cache", "db", DependencyGraph.PROV_DOC,
+                DependencyGraph.CONF_DOCUMENTED, false, 0, "doc");
+
+        CoverageAnalyzer.Report r = CoverageAnalyzer.analyze(g);
+
+        assertEquals(1, r.dbTotal, "an in-process cache is not a measurable dependency");
+        assertEquals(100, r.dbPercent());
+        assertTrue(r.dbUncovered.isEmpty(),
+                "and must not be listed as a gap with an impossible remedy");
+    }
+
     private static DependencyGraph.Node node(DependencyGraph g, String id) {
         return g.getNodes().stream().filter(n -> n.id.equals(id)).findFirst().orElse(null);
     }

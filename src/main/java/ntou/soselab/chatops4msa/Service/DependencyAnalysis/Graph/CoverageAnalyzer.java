@@ -184,6 +184,7 @@ public class CoverageAnalyzer {
         DependencyGraph.Node target = byId.get(edge.target);
         if (target == null || !DependencyGraph.KIND_DB.equals(target.kind)) return false;
         if (Boolean.FALSE.equals(target.deployed)) return false;
+        if (isProcessLocal(edge.target)) return false;
         // Same rule as the business ratio: a datastore the docs merely name (a generic
         // "postgresql" beside the real ledger-db) is not a measurable dependency.
         if (!isEvidenced(edge)) return false;
@@ -245,6 +246,36 @@ public class CoverageAnalyzer {
             "discovery-server", "config-server", "spring-cloud-config", "spring-cloud-gateway",
             "netflix-eureka", "eureka", "tracing-server", "zipkin", "jaeger", "admin-server",
             "prometheus", "grafana", "jolokia", "resilience4j", "hystrix"};
+
+    /**
+     * A "datastore" that lives INSIDE the process — an in-memory cache, an embedded or
+     * local store. It has no network endpoint, so no connection to it can ever be
+     * observed, and counting it caps the ratio at something unreachable. Worse, it then
+     * appears under "declared but no connection seen — the pods may have started before
+     * the database was reachable", which prescribes a fix (restart, drive traffic) that
+     * cannot possibly work.
+     *
+     * This is the same rule the undeployed-endpoint exclusion already applies: an edge
+     * that traffic could never exercise does not belong in a traffic-coverage
+     * denominator. Bank of Anthos surfaced it as {@code balancereader -> in-memory-cache}
+     * (a Guava cache inside the service).
+     *
+     * Matched on the name saying so itself, which is weaker than it should be: the
+     * robust test is whether the node has a Kubernetes Service — a real datastore has a
+     * network identity, a process-local one does not. That needs the Service inventory
+     * kept as a structured stage, which it currently is not.
+     */
+    private static final String[] PROCESS_LOCAL = {
+            "in-memory", "inmemory", "in_memory", "embedded", "local-cache", "localcache"};
+
+    private static boolean isProcessLocal(String id) {
+        if (id == null || id.isBlank()) return false;
+        String n = id.toLowerCase(Locale.ROOT);
+        for (String hint : PROCESS_LOCAL) {
+            if (n.contains(hint)) return true;
+        }
+        return false;
+    }
 
     private static boolean isPlatformInfra(String id) {
         if (id == null || id.isBlank()) return false;
