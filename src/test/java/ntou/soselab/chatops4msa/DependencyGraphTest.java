@@ -1174,6 +1174,58 @@ public class DependencyGraphTest {
         assertNotNull(node(g, "redis"));
     }
 
+    @Test
+    void anEdgeTheDocsMerelyMentionDoesNotDiluteCoverage() {
+        // A real Bank of Anthos run: DeepWiki invented three userservice -> ledger
+        // edges and four edges to a generic "postgresql" duplicating the real ones.
+        // Coverage fell 7/7 -> 7/10 with nothing about the system having changed.
+        DependencyGraph g = new DependencyGraph("boa");
+        for (String s : new String[]{"frontend", "userservice", "ledgerwriter"}) {
+            g.addNode(s, DependencyGraph.KIND_SERVICE);
+            node(g, s).deployed = Boolean.TRUE;
+        }
+        g.addNode("ledger-db", DependencyGraph.KIND_DB);
+        g.addNode("postgresql", DependencyGraph.KIND_DB);
+
+        // Real, observed.
+        g.addEdge("frontend", "userservice", "sync-http", DependencyGraph.PROV_RUNTIME,
+                DependencyGraph.CONF_OBSERVED, true, 10, "x");
+        g.addEdge("ledgerwriter", "ledger-db", "db", DependencyGraph.PROV_RUNTIME,
+                DependencyGraph.CONF_OBSERVED, true, 99, "x");
+        // Merely mentioned by the docs — dotted in the graph, no usage evidence.
+        g.addEdge("userservice", "ledgerwriter", "sync-http", DependencyGraph.PROV_DOC,
+                DependencyGraph.CONF_INFERRED, false, 0, "doc");
+        g.addEdge("ledgerwriter", "postgresql", "db", DependencyGraph.PROV_DOC,
+                DependencyGraph.CONF_INFERRED, false, 0, "doc");
+
+        CoverageAnalyzer.Report r = CoverageAnalyzer.analyze(g);
+
+        assertEquals(1, r.total, "the invented edge must not enter the denominator");
+        assertEquals(1, r.observed);
+        assertEquals(100, r.percent());
+        assertEquals(1, r.dbTotal, "nor the duplicate generic datastore");
+        assertEquals(100, r.dbPercent());
+    }
+
+    @Test
+    void aDeclaredEdgeWithUsageEvidenceStillCounts() {
+        // documented (dashed) = code/doc proved it is really used, just not yet driven.
+        // That IS a coverage gap and must stay in the denominator.
+        DependencyGraph g = new DependencyGraph("ns");
+        for (String s : new String[]{"a", "b"}) {
+            g.addNode(s, DependencyGraph.KIND_SERVICE);
+            node(g, s).deployed = Boolean.TRUE;
+        }
+        g.addEdge("a", "b", "sync-http", DependencyGraph.PROV_CODE,
+                DependencyGraph.CONF_DOCUMENTED, false, 0, "feign client");
+
+        CoverageAnalyzer.Report r = CoverageAnalyzer.analyze(g);
+
+        assertEquals(1, r.total);
+        assertEquals(0, r.observed);
+        assertTrue(r.uncovered.contains("a -> b"));
+    }
+
     private static DependencyGraph.Node node(DependencyGraph g, String id) {
         return g.getNodes().stream().filter(n -> n.id.equals(id)).findFirst().orElse(null);
     }
