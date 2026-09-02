@@ -433,6 +433,22 @@ public class DependencyReportService {
                 for (String edge : coverage.dbUncovered) msg.append("- `").append(edge).append("`\n");
             }
         }
+
+        // The denominator's composition, stated. Excluding merely-mentioned edges keeps
+        // the score from being diluted by documentation prose — but the same tier is
+        // where a weak extraction lands, and a shrinking denominator flatters a run that
+        // found nothing. The reader is given both numbers rather than one of them.
+        if (coverage.mentionedOnly > 0) {
+            msg.append("\n_Not scored: ").append(coverage.mentionedOnly)
+                    .append(" edge(s) mentioned with no usage evidence — drawn dotted, "
+                            + "excluded from both ratios._");
+            if (coverage.isThinlyEvidenced()) {
+                msg.append("\n⚠️ Those outnumber the scored edges: the extraction produced "
+                        + "little hard evidence for this project, so this percentage rests "
+                        + "on a small surface.");
+            }
+            msg.append('\n');
+        }
         jdaService.sendChatOpsChannelMessage(msg.toString());
     }
 

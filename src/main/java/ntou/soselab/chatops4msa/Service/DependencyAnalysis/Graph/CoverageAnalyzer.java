@@ -89,15 +89,36 @@ public class CoverageAnalyzer {
         public final int dbObserved;
         /** The declared-but-never-connected datastore edges, as "source -> target". */
         public final List<String> dbUncovered;
+        /**
+         * How many edges were left OUT of both denominators for having no usage
+         * evidence (the dotted tier).
+         *
+         * Reported, never hidden. Excluding them is right when they are documentation
+         * noise, but the same tier is where a WEAK EXTRACTION lands: a language with no
+         * tree-sitter grammar falls back to the LLM reader, and its edges can all be
+         * inferred. Silently dropping them would shrink the denominator until the
+         * percentage flattered a run that had barely extracted anything. Stating the
+         * count lets a reader judge whether the score rests on a real surface.
+         */
+        public final int mentionedOnly;
 
         Report(int total, int observed, List<String> uncovered,
-               int dbTotal, int dbObserved, List<String> dbUncovered) {
+               int dbTotal, int dbObserved, List<String> dbUncovered, int mentionedOnly) {
             this.total = total;
             this.observed = observed;
             this.uncovered = uncovered;
             this.dbTotal = dbTotal;
             this.dbObserved = dbObserved;
             this.dbUncovered = dbUncovered;
+            this.mentionedOnly = mentionedOnly;
+        }
+
+        /**
+         * Whether the unscored edges outnumber the scored ones — the shape of a run
+         * whose extraction produced mostly guesses, where the percentage means little.
+         */
+        public boolean isThinlyEvidenced() {
+            return mentionedOnly > total + dbTotal;
         }
 
         /** Whether there is any business sync edge to measure at all. */
@@ -130,12 +151,14 @@ public class CoverageAnalyzer {
         int observed = 0;
         int dbTotal = 0;
         int dbObserved = 0;
-        if (graph == null) return new Report(0, 0, uncovered, 0, 0, dbUncovered);
+        int mentionedOnly = 0;
+        if (graph == null) return new Report(0, 0, uncovered, 0, 0, dbUncovered, 0);
 
         Map<String, DependencyGraph.Node> byId = new HashMap<>();
         for (DependencyGraph.Node node : graph.getNodes()) byId.put(node.id, node);
 
         for (DependencyGraph.Edge edge : graph.getEdges()) {
+            if (!isEvidenced(edge)) mentionedOnly++;
             if (isDataStore(edge, byId)) {
                 dbTotal++;
                 if (edge.runtimeObserved) dbObserved++;
@@ -147,7 +170,7 @@ public class CoverageAnalyzer {
             if (edge.runtimeObserved) observed++;
             else uncovered.add(edge.source + " -> " + edge.target);
         }
-        return new Report(total, observed, uncovered, dbTotal, dbObserved, dbUncovered);
+        return new Report(total, observed, uncovered, dbTotal, dbObserved, dbUncovered, mentionedOnly);
     }
 
     /**

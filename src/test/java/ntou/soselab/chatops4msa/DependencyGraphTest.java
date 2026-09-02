@@ -1205,6 +1205,36 @@ public class DependencyGraphTest {
         assertEquals(100, r.percent());
         assertEquals(1, r.dbTotal, "nor the duplicate generic datastore");
         assertEquals(100, r.dbPercent());
+        // Excluded, but counted and reported — the same tier is where a weak extraction
+        // lands, and a silently shrinking denominator would flatter such a run.
+        assertEquals(2, r.mentionedOnly);
+        assertFalse(r.isThinlyEvidenced(), "2 scored vs 2 unscored is not 'thin'");
+    }
+
+    @Test
+    void aRunWhoseEvidenceIsMostlyGuessesIsFlaggedAsThin() {
+        // The generalisation risk of excluding inferred edges: a language with no
+        // tree-sitter grammar falls back to the LLM reader, and its edges can ALL be
+        // inferred. The denominator then shrinks until the percentage means nothing —
+        // so the report has to say the surface is thin rather than print a proud number.
+        DependencyGraph g = new DependencyGraph("ns");
+        for (String s : new String[]{"a", "b", "c", "d"}) {
+            g.addNode(s, DependencyGraph.KIND_SERVICE);
+            node(g, s).deployed = Boolean.TRUE;
+        }
+        g.addEdge("a", "b", "sync-http", DependencyGraph.PROV_RUNTIME,
+                DependencyGraph.CONF_OBSERVED, true, 1, "x");
+        for (String[] pair : new String[][]{{"a", "c"}, {"a", "d"}, {"b", "c"}, {"b", "d"}}) {
+            g.addEdge(pair[0], pair[1], "sync-http", DependencyGraph.PROV_DOC,
+                    DependencyGraph.CONF_INFERRED, false, 0, "guessed");
+        }
+
+        CoverageAnalyzer.Report r = CoverageAnalyzer.analyze(g);
+
+        assertEquals(1, r.total);
+        assertEquals(100, r.percent(), "1/1 looks perfect...");
+        assertEquals(4, r.mentionedOnly);
+        assertTrue(r.isThinlyEvidenced(), "...but must be flagged: 4 unscored vs 1 scored");
     }
 
     @Test

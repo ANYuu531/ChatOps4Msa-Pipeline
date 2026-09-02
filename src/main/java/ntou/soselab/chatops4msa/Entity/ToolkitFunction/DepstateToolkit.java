@@ -333,6 +333,18 @@ public class DepstateToolkit extends ToolkitFunction {
                 sb.append("- no connection seen yet: ").append(edge).append('\n');
             }
         }
+        // Stated, not hidden: these are excluded from both ratios, and if they dominate
+        // the score is resting on very little.
+        if (coverage.mentionedOnly > 0) {
+            sb.append("\nNot scored: ").append(coverage.mentionedOnly)
+                    .append(" edge(s) are mentioned somewhere but have no usage evidence "
+                            + "(drawn dotted). Do NOT target these with traffic.");
+            if (coverage.isThinlyEvidenced()) {
+                sb.append(" NOTE: they outnumber the scored edges — the extraction found "
+                        + "little hard evidence, so treat the percentage with caution.");
+            }
+            sb.append('\n');
+        }
         return sb.toString();
     }
 
