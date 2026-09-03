@@ -45,6 +45,37 @@ def esc(t):
     return html.escape(t, quote=True)
 
 
+def grad_defs(nodes):
+    """One linearGradient per fill/gradient pair actually used.
+
+    Not decoration: the diagram encodes 〔程式碼〕 as blue and 〔AI〕 as purple, and a
+    step that is BOTH (traffic driving: the LLM writes the journey, our runner sends
+    it) is drawn as a blue-to-purple gradient. Flattening it to the base colour makes
+    that step indistinguishable from a pure-code one — including in the legend, where
+    the distinction is the whole point.
+    """
+    out, seen = [], {}
+    for n in nodes.values():
+        g = n["style"].get("gradientColor")
+        if not g:
+            continue
+        f = n["style"].get("fillColor", "#ffffff")
+        key = f + g
+        if key in seen:
+            continue
+        gid = "g%d" % len(seen)
+        seen[key] = gid
+        n["style"]["_grad"] = gid
+        out.append('<linearGradient id="%s" x1="0" y1="0" x2="1" y2="0">'
+                   '<stop offset="0" stop-color="%s"/><stop offset="1" stop-color="%s"/>'
+                   '</linearGradient>' % (gid, f, g))
+    for n in nodes.values():
+        g = n["style"].get("gradientColor")
+        if g:
+            n["style"]["_grad"] = seen[n["style"].get("fillColor", "#ffffff") + g]
+    return "".join(out)
+
+
 def render(path, out_path):
     root = ET.parse(path).getroot()
     model = root.find("diagram").find("mxGraphModel")
@@ -89,7 +120,7 @@ def render(path, out_path):
         f'width="100%" role="img" aria-label="DepWeaver 流程圖">',
         '<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
         'markerHeight="7" orient="auto-start-reverse">'
-        '<path d="M0,1 L9,5 L0,9 z" fill="#5b6770"/></marker></defs>',
+        '<path d="M0,1 L9,5 L0,9 z" fill="#5b6770"/></marker>' + grad_defs(nodes) + '</defs>',
         f'<rect width="{W:.0f}" height="{H:.0f}" fill="#ffffff"/>',
     ]
 
@@ -130,10 +161,18 @@ def render(path, out_path):
         for (px, py) in way:
             d.append(f"L {X(px)} {Y(prev[1])} L {X(px)} {Y(py)}")
             prev = (px, py)
-        # orthogonal finish
+        # Orthogonal finish. Which way to turn FIRST depends on the side the edge left
+        # from: leaving a node's left/right face and turning vertically first stacks
+        # every such edge onto one shared column (the three checkpoint branches came
+        # out as a T). Leave sideways -> go horizontal first, and vice versa.
+        left_right = st.get("exitX") in ("0", "1") or (
+            "exitX" not in st and abs(t["x"] - s["x"]) >= abs(t["y"] - s["y"]))
         if abs(prev[1] - y2) > 1 and abs(prev[0] - x2) > 1:
             if way:
                 d.append(f"L {X(x2)} {Y(prev[1])} L {X(x2)} {Y(y2)}")
+            elif left_right:
+                midx = (prev[0] + x2) / 2
+                d.append(f"L {X(midx)} {Y(prev[1])} L {X(midx)} {Y(y2)} L {X(x2)} {Y(y2)}")
             else:
                 midy = (prev[1] + y2) / 2
                 d.append(f"L {X(prev[0])} {Y(midy)} L {X(x2)} {Y(midy)} L {X(x2)} {Y(y2)}")
@@ -180,11 +219,9 @@ def render(path, out_path):
                        f'fill="{fill}" stroke="{stroke}" stroke-width="1.2"/>')
         elif not is_text:
             rx = 8 if st.get("rounded") == "1" else 0
-            grad = ""
-            if st.get("gradientColor"):
-                grad = ""  # flat fill is close enough at this size
+            paint = f'url(#{st["_grad"]})' if st.get("_grad") else fill
             svg.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{rx}" '
-                       f'fill="{fill}" stroke="{stroke}" stroke-width="1.2"{dash}{grad}/>')
+                       f'fill="{paint}" stroke="{stroke}" stroke-width="1.2"{dash}/>')
 
         lines = label_lines(n["value"])
         if not lines:

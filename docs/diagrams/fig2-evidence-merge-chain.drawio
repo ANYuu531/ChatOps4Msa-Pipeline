@@ -6,7 +6,7 @@
         <mxCell id="1" parent="0" />
 
         <!-- ===== title ===== -->
-        <mxCell id="title" value="&lt;b&gt;DepWeaver&lt;/b&gt; · Fig.2 證據合併鏈&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot; color=&quot;#666666&quot;&gt;由強到弱一層層疊：runtime 觀測（實線）＞ code/doc 宣告（虛線）＞ 只宣告（點線）。8 步裡只有 1 步用 AI。&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=17;fontColor=#1f2a37;" vertex="1" parent="1">
+        <mxCell id="title" value="&lt;b&gt;DepWeaver&lt;/b&gt; · 圖二　證據合併鏈&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot; color=&quot;#666666&quot;&gt;Fig.2　Evidence Merge Chain&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot; color=&quot;#666666&quot;&gt;由強到弱一層層疊：runtime 觀測（實線）＞ code/doc 宣告（虛線）＞ 只宣告（點線）。九步裡只有一步用 AI。&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=17;fontColor=#1f2a37;" vertex="1" parent="1">
           <mxGeometry x="40" y="20" width="700" height="50" as="geometry" />
         </mxCell>
 

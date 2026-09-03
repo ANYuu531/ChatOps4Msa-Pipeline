@@ -6,7 +6,7 @@
         <mxCell id="1" parent="0" />
 
         <!-- ===== title ===== -->
-        <mxCell id="title" value="&lt;b&gt;DepWeaver&lt;/b&gt; · Fig.1 端到端流程總覽&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot; color=&quot;#666666&quot;&gt;多證據融合的微服務相依圖建構 — 確定性優先、LLM 只補殘餘&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=17;fontColor=#1f2a37;" vertex="1" parent="1">
+        <mxCell id="title" value="&lt;b&gt;DepWeaver&lt;/b&gt; · 圖一　端到端流程總覽&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot; color=&quot;#666666&quot;&gt;Fig.1　Pipeline Overview&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 11px;&quot; color=&quot;#666666&quot;&gt;基於多源證據融合與對話式補值的微服務相依圖自動建構方法&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=17;fontColor=#1f2a37;" vertex="1" parent="1">
           <mxGeometry x="40" y="20" width="620" height="50" as="geometry" />
         </mxCell>
 
