@@ -71,6 +71,12 @@ def render(path, out_path):
 
     xs = [n["x"] for n in nodes.values()] + [n["x"] + n["w"] for n in nodes.values()]
     ys = [n["y"] for n in nodes.values()] + [n["y"] + n["h"] for n in nodes.values()]
+    # Edge waypoints too: a route that swings out past every node (Draw.io does this
+    # to keep a long feedback line clear of the boxes) would otherwise be cropped.
+    for e in edges:
+        for (px, py) in e["pts"]:
+            xs.append(px)
+            ys.append(py)
     pad = 16
     minx, miny = min(xs) - pad, min(ys) - pad
     W, H = max(xs) - minx + pad, max(ys) - miny + pad
