@@ -1,0 +1,118 @@
+digraph dependencies {
+  rankdir=TB;
+  graph [fontname="Helvetica", labelloc="t", label="DepWeaver — dependency graph"];
+  node [fontname="Helvetica", style="rounded,filled", fillcolor="#f5f5f5", color="#888888"];
+  edge [fontname="Helvetica", fontsize=10, color="#555555"];
+  "ts-cancel-service" [shape=box, fillcolor="#f5f5f5", label="ts-cancel-service"];
+  "ts-rebook-service" [shape=box, fillcolor="#f5f5f5", label="ts-rebook-service"];
+  "ts-admin-basic-info-service" [shape=box, fillcolor="#f5f5f5", label="ts-admin-basic-info-service"];
+  "ts-wait-order-service" [shape=box, fillcolor="#f5f5f5", label="ts-wait-order-service"];
+  "ts-preserve-other-service" [shape=box, fillcolor="#f5f5f5", label="ts-preserve-other-service"];
+  "ts-common" [shape=box, fillcolor="#f5f5f5", label="ts-common"];
+  "ts-user-service" [shape=box, fillcolor="#f5f5f5", label="ts-user-service"];
+  "ts-voucher-service" [shape=box, fillcolor="#f5f5f5", label="ts-voucher-service"];
+  "ts-travel-plan-service" [shape=box, fillcolor="#f5f5f5", label="ts-travel-plan-service"];
+  "ts-admin-order-service" [shape=box, fillcolor="#f5f5f5", label="ts-admin-order-service"];
+  "ts-admin-travel-service" [shape=box, fillcolor="#f5f5f5", label="ts-admin-travel-service"];
+  "ts-admin-route-service" [shape=box, fillcolor="#f5f5f5", label="ts-admin-route-service"];
+  "ts-contacts-service" [shape=box, fillcolor="#f5f5f5", label="ts-contacts-service"];
+  "ts-notification-service" [shape=box, fillcolor="#f5f5f5", label="ts-notification-service"];
+  "ts-preserve-service" [shape=box, fillcolor="#f5f5f5", label="ts-preserve-service"];
+  "ts-auth-service" [shape=box, fillcolor="#f5f5f5", label="ts-auth-service"];
+  "ts-route-plan-service" [shape=box, fillcolor="#f5f5f5", label="ts-route-plan-service"];
+  "ts-inside-payment-service" [shape=box, fillcolor="#f5f5f5", label="ts-inside-payment-service"];
+  "ts-consign-service" [shape=box, fillcolor="#f5f5f5", label="ts-consign-service"];
+  "ts-food-service" [shape=box, fillcolor="#f5f5f5", label="ts-food-service"];
+  "ts-payment-service" [shape=box, fillcolor="#f5f5f5", label="ts-payment-service"];
+  "ts-travel2-service" [shape=box, fillcolor="#f5f5f5", label="ts-travel2-service"];
+  "ts-travel-service" [shape=box, fillcolor="#f5f5f5", label="ts-travel-service"];
+  "rest-service-external" [shape=box, fillcolor="#f5f5f5", label="rest-service-external"];
+  "ts-station-food-service" [shape=box, fillcolor="#f5f5f5", label="ts-station-food-service"];
+  "ts-basic-service" [shape=box, fillcolor="#f5f5f5", label="ts-basic-service"];
+  "ts-seat-service" [shape=box, fillcolor="#f5f5f5", label="ts-seat-service"];
+  "ts-order-other-service" [shape=box, fillcolor="#f5f5f5", label="ts-order-other-service"];
+  "ts-route-service" [shape=box, fillcolor="#f5f5f5", label="ts-route-service"];
+  "ts-price-service" [shape=box, fillcolor="#f5f5f5", label="ts-price-service"];
+  "ts-train-service" [shape=box, fillcolor="#f5f5f5", label="ts-train-service"];
+  "ts-order-service" [shape=box, fillcolor="#f5f5f5", label="ts-order-service"];
+  "ts-station-service" [shape=box, fillcolor="#f5f5f5", label="ts-station-service"];
+  "github.com" [shape=parallelogram, fillcolor="#f3e8ff", label="github.com"];
+  "ts-admin-user-service" [shape=box, fillcolor="#f5f5f5", label="ts-admin-user-service"];
+  "ts-config-service" [shape=box, fillcolor="#f5f5f5", label="ts-config-service"];
+  "ts-assurance-service" [shape=box, fillcolor="#f5f5f5", label="ts-assurance-service"];
+  "ts-news-service" [shape=box, fillcolor="#f5f5f5", label="ts-news-service"];
+  "ts-avatar-service" [shape=box, fillcolor="#f5f5f5", label="ts-avatar-service"];
+  "ts-ui-dashboard" [shape=box, fillcolor="#f5f5f5", label="ts-ui-dashboard"];
+  "ts-security-service" [shape=box, fillcolor="#f5f5f5", label="ts-security-service"];
+  "ts-ticket-office-service" [shape=box, fillcolor="#f5f5f5", label="ts-ticket-office-service"];
+  "ts-verification-code-service" [shape=box, fillcolor="#f5f5f5", label="ts-verification-code-service"];
+  "ts-train-food-service" [shape=box, fillcolor="#f5f5f5", label="ts-train-food-service"];
+  "ts-food-delivery-service" [shape=box, fillcolor="#f5f5f5", label="ts-food-delivery-service"];
+  "ts-consign-price-service" [shape=box, fillcolor="#f5f5f5", label="ts-consign-price-service"];
+  "ts-gateway-service" [shape=box, fillcolor="#f5f5f5", label="ts-gateway-service"];
+  "ts-ui-test" [shape=box, fillcolor="#f5f5f5", label="ts-ui-test"];
+  "ms-monitoring-core" [shape=box, fillcolor="#f5f5f5", label="ms-monitoring-core"];
+  "bin" [shape=box, fillcolor="#f5f5f5", label="bin"];
+  "json2shiviz" [shape=box, fillcolor="#f5f5f5", label="json2shiviz"];
+  "ts-delivery-service" [shape=box, fillcolor="#f5f5f5", label="ts-delivery-service"];
+  "ts-execute-service" [shape=box, fillcolor="#f5f5f5", label="ts-execute-service"];
+  "ts-cancel-service" -> "ts-notification-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-cancel-service" -> "ts-order-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-cancel-service" -> "ts-order-other-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-order-other-service" -> "ts-station-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-service" -> "ts-basic-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-service" -> "ts-seat-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-service" -> "ts-travel-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-service" -> "ts-order-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-service" -> "ts-food-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-service" -> "ts-consign-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-order-service" -> "ts-station-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-food-service" -> "ts-station-food-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-rebook-service" -> "ts-seat-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-rebook-service" -> "ts-inside-payment-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-admin-basic-info-service" -> "ts-contacts-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-wait-order-service" -> "ts-preserve-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-basic-service" -> "ts-station-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-basic-service" -> "ts-train-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-basic-service" -> "ts-route-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-basic-service" -> "ts-price-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-other-service" -> "ts-basic-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-other-service" -> "ts-seat-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-other-service" -> "ts-travel2-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-other-service" -> "ts-order-other-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-other-service" -> "ts-food-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-preserve-other-service" -> "ts-consign-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-common" -> "github.com" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-user-service" -> "ts-auth-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-route-plan-service" -> "ts-travel-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-route-plan-service" -> "ts-travel2-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-inside-payment-service" -> "rest-service-external" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-inside-payment-service" -> "ts-payment-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-seat-service" -> "ts-order-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-seat-service" -> "ts-order-other-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-travel-plan-service" -> "ts-seat-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-travel-plan-service" -> "ts-route-plan-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-travel-plan-service" -> "ts-travel-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-travel-plan-service" -> "ts-travel2-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-travel2-service" -> "ts-basic-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-travel2-service" -> "ts-seat-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-travel-service" -> "ts-basic-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-travel-service" -> "ts-seat-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-admin-order-service" -> "ts-order-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-admin-order-service" -> "ts-order-other-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-admin-travel-service" -> "ts-travel-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-admin-travel-service" -> "ts-travel2-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-admin-travel-service" -> "ts-station-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-admin-route-service" -> "ts-route-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-admin-route-service" -> "ts-station-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-voucher-service" -> "ts-order-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  "ts-voucher-service" -> "ts-order-other-service" [color="#9aa6b2", style=dashed, penwidth=1.0];
+  { rank=same; "ts-cancel-service"; "ts-rebook-service"; "ts-admin-basic-info-service"; "ts-wait-order-service"; "ts-preserve-other-service"; "ts-common"; "ts-user-service"; "ts-voucher-service"; "ts-travel-plan-service"; "ts-admin-order-service"; "ts-admin-travel-service"; "ts-admin-route-service"; }  // layer 0
+  { rank=same; "ts-contacts-service"; "ts-notification-service"; "ts-preserve-service"; "ts-auth-service"; "ts-route-plan-service"; "ts-inside-payment-service"; }  // layer 1
+  { rank=same; "ts-consign-service"; "ts-food-service"; "ts-payment-service"; "ts-travel2-service"; "ts-travel-service"; "rest-service-external"; }  // layer 2
+  { rank=same; "ts-station-food-service"; "ts-basic-service"; "ts-seat-service"; }  // layer 3
+  { rank=same; "ts-order-other-service"; "ts-route-service"; "ts-price-service"; "ts-train-service"; "ts-order-service"; }  // layer 4
+  { rank=same; "ts-station-service"; }  // layer 5
+  { rank=same; "github.com"; }  // layer 6
+  { rank=same; "ts-admin-user-service"; "ts-config-service"; "ts-assurance-service"; "ts-news-service"; "ts-avatar-service"; "ts-ui-dashboard"; "ts-security-service"; "ts-ticket-office-service"; "ts-verification-code-service"; "ts-train-food-service"; "ts-food-delivery-service"; "ts-consign-price-service"; "ts-gateway-service"; "ts-ui-test"; "ms-monitoring-core"; "bin"; "json2shiviz"; "ts-delivery-service"; "ts-execute-service"; }  // layer 7
+}

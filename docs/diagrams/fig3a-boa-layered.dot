@@ -1,0 +1,34 @@
+digraph dependencies {
+  rankdir=TB;
+  graph [fontname="Helvetica", labelloc="t", label="DepWeaver — dependency graph  ·  namespace: bank-of-anthos"];
+  node [fontname="Helvetica", style="rounded,filled", fillcolor="#f5f5f5", color="#888888"];
+  edge [fontname="Helvetica", fontsize=10, color="#555555"];
+  "istio-ingressgateway" [shape=ellipse, fillcolor="#e9f9ec", label="istio-ingressgateway"];
+  "frontend" [shape=box, fillcolor="#f5f5f5", label="frontend\nv0.6.10  ·  1/1  ·  2026-08-12"];
+  "userservice" [shape=box, fillcolor="#f5f5f5", label="userservice\nv0.6.10  ·  1/1  ·  2026-08-12"];
+  "transactionhistory" [shape=box, fillcolor="#f5f5f5", label="transactionhistory\nv0.6.10  ·  1/1  ·  2026-08-12"];
+  "contacts" [shape=box, fillcolor="#f5f5f5", label="contacts\nv0.6.10  ·  1/1  ·  2026-08-12"];
+  "ledgerwriter" [shape=box, fillcolor="#f5f5f5", label="ledgerwriter\nv0.6.10  ·  1/1  ·  2026-08-12"];
+  "balancereader" [shape=box, fillcolor="#f5f5f5", label="balancereader\nv0.6.10  ·  1/1  ·  2026-08-12"];
+  "ledger-db" [shape=cylinder, fillcolor="#e8f0ff", label="ledger-db"];
+  "accounts-db" [shape=cylinder, fillcolor="#e8f0ff", label="accounts-db"];
+  "postgresql" [shape=cylinder, fillcolor="#e8f0ff", label="postgresql"];
+  "istio-ingressgateway" -> "frontend" [color="#333333", style=solid, penwidth=1.5];
+  "frontend" -> "balancereader" [color="#333333", style=solid, penwidth=1.5];
+  "frontend" -> "userservice" [color="#333333", style=solid, penwidth=1.5];
+  "frontend" -> "transactionhistory" [color="#333333", style=solid, penwidth=1.5];
+  "frontend" -> "contacts" [color="#333333", style=solid, penwidth=1.5];
+  "frontend" -> "ledgerwriter" [color="#333333", style=solid, penwidth=1.5];
+  "ledgerwriter" -> "balancereader" [color="#333333", style=solid, penwidth=1.5];
+  "transactionhistory" -> "ledger-db" [label="db", color="#3a6ea5", style=solid, penwidth=1.5];
+  "ledgerwriter" -> "ledger-db" [label="db", color="#3a6ea5", style=solid, penwidth=1.5];
+  "balancereader" -> "ledger-db" [label="db", color="#3a6ea5", style=solid, penwidth=1.5];
+  "userservice" -> "accounts-db" [label="db", color="#3a6ea5", style=solid, penwidth=1.5];
+  "contacts" -> "accounts-db" [label="db", color="#3a6ea5", style=solid, penwidth=1.5];
+  { rank=same; "istio-ingressgateway"; }  // layer 0
+  { rank=same; "frontend"; }  // layer 1
+  { rank=same; "userservice"; "transactionhistory"; "contacts"; "ledgerwriter"; }  // layer 2
+  { rank=same; "balancereader"; }  // layer 3
+  { rank=same; "ledger-db"; "accounts-db"; }  // layer 4
+  { rank=same; "postgresql"; }  // layer 5
+}
