@@ -25,7 +25,21 @@
 
 ## 匯出（投影片 / 論文用）
 
-repo 裡只放 `.drawio` 原始檔，**沒有預先匯出的 PNG/SVG** —— 產生它們需要 draw.io 本身，而這台開發機沒有裝。你在任一上述環境開啟後：
+repo 裡除了 `.drawio` 原始檔，另有兩份 **SVG**（`fig1-pipeline-overview.svg`、
+`fig2-evidence-merge-chain.svg`），由 `drawio2svg.py` 從同一份 `.drawio` 直接轉出，
+**不需要安裝 draw.io**：
+
+```bash
+python3 docs/diagrams/drawio2svg.py \
+  docs/diagrams/fig1-pipeline-overview.drawio \
+  docs/diagrams/fig1-pipeline-overview.svg
+```
+
+它不是通用的 mxGraph 轉換器，只涵蓋這兩張圖用到的圖形與樣式——目的是讓簡報和文件裡
+的圖**直接來自那份會被編輯的原始檔**，而不是另外重畫一份會走樣的。改完 `.drawio`
+記得重跑一次。
+
+要 PNG（或要 draw.io 官方渲染的精確版本）仍然得用 draw.io 本身。在任一上述環境開啟後：
 
 - **投影片**：File → Export as → PNG，勾 **Transparent Background**、Zoom 200%（投影機上才不糊）。
 - **論文**：File → Export as → SVG（向量，放大不失真）或 PDF。

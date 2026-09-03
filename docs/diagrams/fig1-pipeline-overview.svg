@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1052 1142" width="100%" role="img" aria-label="DepWeaver 流程圖">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#5b6770"/></marker></defs>
+<rect width="1052" height="1142" fill="#ffffff"/>
+<path d="M 346.0 136.0 L 346.0 166.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 346.0 226.0 L 346.0 296.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 251.0 226.0 L 251.0 261.0 L 131.0 261.0 L 131.0 296.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 441.0 226.0 L 441.0 283.0 L 461.0 283.0 L 461.0 340.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 346.0 384.0 L 346.0 436.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 131.0 384.0 L 131.0 410.0 L 346.0 410.0 L 346.0 436.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 461.0 340.0 L 461.0 413.0 L 536.0 413.0 L 536.0 486.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 346.0 536.0 L 346.0 576.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 346.0 676.0 L 346.0 716.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 446.0 761.0 L 446.0 683.5 L 676.0 683.5 L 676.0 606.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="514.6" y="675.5" width="92.8" height="15" fill="#ffffff" opacity=".9"/>
+<text x="561.0" y="686.5" font-size="10" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Provide values</text>
+<path d="M 446.0 761.0 L 446.0 743.5 L 676.0 743.5 L 676.0 726.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="542.5" y="735.5" width="37.0" height="15" fill="#ffffff" opacity=".9"/>
+<text x="561.0" y="746.5" font-size="10" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Apply</text>
+<path d="M 446.0 761.0 L 446.0 798.5 L 676.0 798.5 L 676.0 836.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="523.9" y="790.5" width="74.2" height="15" fill="#ffffff" opacity=".9"/>
+<text x="561.0" y="801.5" font-size="10" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Resume（補流量）</text>
+<path d="M 856.0 656.0 L 1056.0 656.0 L 1056.0 676.0 L 1056.0 676.0 L 1056.0 836.0 L 1036.0 836.0" fill="none" stroke="#5b6770" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M 856.0 766.0 L 856.0 796.0" fill="none" stroke="#5b6770" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M 676.0 836.0 L 616.0 836.0 L 616.0 836.0 L 616.0 836.0 L 616.0 486.0 L 536.0 486.0" fill="none" stroke="#d79b00" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="575.1" y="653.0" width="61.8" height="15" fill="#ffffff" opacity=".9"/>
+<text x="606.0" y="664.0" font-size="10" fill="#a06800" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">再導一輪（可多輪）</text>
+<path d="M 346.0 806.0 L 346.0 866.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="296.5" y="828.0" width="99.0" height="15" fill="#ffffff" opacity=".9"/>
+<text x="346.0" y="839.0" font-size="10" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Generate report</text>
+<path d="M 346.0 946.0 L 346.0 986.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 346.0 1056.0 L 346.0 1086.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 246.0 761.0 L 246.0 762.5 L 196.0 762.5 L 196.0 764.0" fill="none" stroke="#9aa6b2" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<rect x="208.7" y="754.5" width="24.6" height="15" fill="#ffffff" opacity=".9"/>
+<text x="221.0" y="765.5" font-size="10" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">持久化</text>
+<path d="M 106.0 816.0 L 106.0 816.0 L 106.0 906.0 L 156.0 906.0" fill="none" stroke="#9aa6b2" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<rect x="106.3" y="853.0" width="49.4" height="15" fill="#ffffff" opacity=".9"/>
+<text x="131.0" y="864.0" font-size="10" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">讀回（不重跑）</text>
+<rect x="16.0" y="16.0" width="620.0" height="50.0" rx="0" fill="#f5f5f5" stroke="#888888" stroke-width="1.2"/>
+<text x="24.0" y="40.7" font-size="17.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">DepWeaver · Fig.1 端到端流程總覽</text>
+<text x="24.0" y="65.3" font-size="10" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">多證據融合的微服務相依圖建構 — 確定性優先、LLM 只補殘餘</text>
+<rect x="716.0" y="16.0" width="320.0" height="150.0" rx="8" fill="#fbfbfb" stroke="#cccccc" stroke-width="1.2" stroke-dasharray="5 4"/>
+<rect x="728.0" y="22.0" width="100.0" height="20.0" rx="0" fill="#f5f5f5" stroke="#888888" stroke-width="1.2"/>
+<text x="736.0" y="35.3" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">圖例</text>
+<rect x="728.0" y="48.0" width="296.0" height="26.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="736.0" y="64.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">〔程式碼〕我們自己寫的確定性邏輯</text>
+<rect x="728.0" y="80.0" width="296.0" height="26.0" rx="8" fill="#e1d5e7" stroke="#9673a6" stroke-width="1.2"/>
+<text x="736.0" y="96.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">〔AI〕LLM：讀/寫自然語言、語意理解</text>
+<rect x="728.0" y="112.0" width="296.0" height="26.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="736.0" y="128.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">混合：情境由 AI 產生，執行是程式碼</text>
+<rect x="156.0" y="86.0" width="380.0" height="50.0" rx="8" fill="#f5f5f5" stroke="#666666" stroke-width="1.2"/>
+<text x="346.0" y="109.3" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">使用者在 Discord 下指令</text>
+<text x="346.0" y="126.7" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">get dependency analysis · repo / namespace / entry_url</text>
+<rect x="156.0" y="166.0" width="380.0" height="60.0" rx="8" fill="#e1d5e7" stroke="#9673a6" stroke-width="1.2"/>
+<text x="346.0" y="185.6" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">NLP 解析：意圖 → capability + 參數</text>
+<text x="346.0" y="203.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">LLMService · CapabilityGenerator</text>
+<text x="346.0" y="216.0" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">〔AI〕</text>
+<rect x="16.0" y="266.0" width="660.0" height="130.0" rx="0" fill="none" stroke="#9aa6b2" stroke-width="1.2" stroke-dasharray="5 4"/>
+<rect x="26.0" y="268.0" width="640.0" height="20.0" rx="0" fill="#f5f5f5" stroke="#888888" stroke-width="1.2"/>
+<text x="34.0" y="281.0" font-size="11.0" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">① ~ ③ 三來源抽取（各自存進 checkpoint，貴的步驟 resume 不重跑）</text>
+<rect x="31.0" y="296.0" width="200.0" height="88.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="131.0" y="320.9" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">① 靜態抽取</text>
+<text x="131.0" y="338.3" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">clone repo → tree-sitter</text>
+<text x="131.0" y="351.3" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">呼叫 / DB 使用 / endpoint / 服務根</text>
+<text x="131.0" y="368.7" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">〔程式碼〕</text>
+<rect x="246.0" y="296.0" width="200.0" height="88.0" rx="8" fill="#e1d5e7" stroke="#9673a6" stroke-width="1.2"/>
+<text x="346.0" y="320.9" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">② 文件分析</text>
+<text x="346.0" y="338.3" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">DeepWiki 問 5 題</text>
+<text x="346.0" y="351.3" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">職責 / 同步 / 非同步 / 外部 / 入口</text>
+<text x="346.0" y="368.7" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">〔AI〕</text>
+<rect x="461.0" y="296.0" width="200.0" height="88.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="561.0" y="320.9" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">③ 叢集 / 路由</text>
+<text x="561.0" y="338.3" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">kubectl：Service / Deployment / Pod</text>
+<text x="561.0" y="351.3" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Istio VirtualService · DestinationRule</text>
+<text x="561.0" y="368.7" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">〔程式碼〕</text>
+<rect x="716.0" y="296.0" width="320.0" height="88.0" rx="8" fill="#fff2cc" stroke="#d6b656" stroke-width="1.2"/>
+<text x="724.0" y="313.0" font-size="11.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">greenfield（沒給 namespace）</text>
+<text x="724.0" y="328.9" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">③④⑤ 整段被 orchestrator gate 掉：</text>
+<text x="724.0" y="344.9" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">不碰叢集、零 port，只剩 ①②⑥⑦ 純靜態出圖。</text>
+<text x="724.0" y="360.8" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">圖全是虛線＝誠實標示「只有宣告、未經 runtime 驗證」。</text>
+<rect x="156.0" y="436.0" width="380.0" height="100.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="346.0" y="458.2" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">④ 驅動流量（本條線的關鍵）</text>
+<text x="346.0" y="475.6" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Istio 是被動的：一條邊只有在請求真的跨過去時才會被記錄</text>
+<text x="346.0" y="488.6" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">情境＝LLM 產使用者旅程　·　執行＝TrafficRunner</text>
+<text x="346.0" y="506.0" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">補 payload：① 挖 repo 範例　② 4xx 回饋　③ 問人（見下）</text>
+<text x="346.0" y="523.4" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">〔情境=AI · 執行=程式碼〕</text>
+<rect x="156.0" y="576.0" width="380.0" height="100.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="346.0" y="598.2" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">⑤ 量測（Prometheus）</text>
+<text x="346.0" y="615.6" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">istio_requests_total → HTTP/gRPC 邊</text>
+<text x="346.0" y="628.6" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">istio_tcp_connections_opened_total → DB 邊（非 HTTP，只在 TCP 層看得到）</text>
+<text x="346.0" y="646.0" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">egress → 離開 mesh 的外部呼叫</text>
+<text x="346.0" y="663.4" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">〔程式碼〕</text>
+<path d="M 346.0 716.0 L 446.0 761.0 L 346.0 806.0 L 246.0 761.0 z" fill="#ffe6cc" stroke="#d79b00" stroke-width="1.2"/>
+<text x="346.0" y="759.3" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">checkpoint</text>
+<text x="346.0" y="776.7" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">暫停，貼按鈕</text>
+<rect x="676.0" y="556.0" width="360.0" height="100.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="856.0" y="578.2" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Provide values（Tier 3 · 對話問人）</text>
+<text x="856.0" y="595.6" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">只有在真的推不出來時才出現這顆按鈕。</text>
+<text x="856.0" y="608.6" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Discord Modal 收值 → 存 checkpoint → 自動 resume。</text>
+<text x="856.0" y="626.0" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">等值的請求被扣住標 [WAIT]，不會半填就送出。</text>
+<text x="856.0" y="643.4" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">〔程式碼〕</text>
+<rect x="676.0" y="686.0" width="360.0" height="80.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="856.0" y="706.9" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Apply ServiceEntries</text>
+<text x="856.0" y="724.3" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">kubectl apply（唯一會改叢集的動作，只在點擊後執行）</text>
+<text x="856.0" y="737.3" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">之後 egress 邊才可被歸因</text>
+<text x="856.0" y="754.7" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">〔程式碼〕</text>
+<rect x="676.0" y="796.0" width="360.0" height="80.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="856.0" y="825.6" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">resume：覆蓋率導向迴圈</text>
+<text x="856.0" y="843.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">用確定性覆蓋率算出「還沒被觀測到的邊」當目標，</text>
+<text x="856.0" y="856.0" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">只針對那些邊再導一輪；clone / DeepWiki 從 checkpoint 取回不重跑</text>
+<rect x="156.0" y="866.0" width="380.0" height="80.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="346.0" y="886.9" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">⑥ 建圖合併　→ 細節見 Fig.2</text>
+<text x="346.0" y="904.3" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">runtime 觀測 + 程式碼邊 + 文件邊 + 部署狀態 → 正規化 → 分層</text>
+<text x="346.0" y="917.3" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">7 步裡只有 1 步用 AI</text>
+<text x="346.0" y="934.7" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">〔程式碼為主〕</text>
+<rect x="156.0" y="986.0" width="380.0" height="70.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="346.0" y="1010.6" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">⑦ 產出</text>
+<text x="346.0" y="1028.0" font-size="10" font-weight="700" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">分層依賴圖（PNG / .mmd）＋ 覆蓋率　〔程式碼〕</text>
+<text x="346.0" y="1041.0" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">文字報告　〔AI〕</text>
+<rect x="231.0" y="1086.0" width="230.0" height="40.0" rx="8" fill="#f5f5f5" stroke="#666666" stroke-width="1.2"/>
+<text x="346.0" y="1109.3" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">貼回 Discord</text>
+<path d="M 16.0 744.0 a 90.0 8 0 0 1 180.0 0 v 64.0 a 90.0 8 0 0 1 -180.0 0 z" fill="#f5f5f5" stroke="#999999" stroke-width="1.2"/><path d="M 16.0 744.0 a 90.0 8 0 0 0 180.0 0" fill="none" stroke="#999999" stroke-width="1.2"/>
+<text x="106.0" y="774.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">dep-state checkpoint</text>
+<text x="106.0" y="790.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">host volume，重啟不丟</text>
+</svg>

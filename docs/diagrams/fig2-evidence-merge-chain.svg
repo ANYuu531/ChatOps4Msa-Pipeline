@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1052 1032" width="100%" role="img" aria-label="DepWeaver 流程圖">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#5b6770"/></marker></defs>
+<rect width="1052" height="1032" fill="#ffffff"/>
+<path d="M 196.0 148.0 L 296.0 147.0" fill="none" stroke="#9aa6b2" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 196.0 240.0 L 296.0 239.0" fill="none" stroke="#9aa6b2" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 196.0 335.0 L 296.0 335.0" fill="none" stroke="#9aa6b2" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 196.0 430.0 L 196.0 431.5 L 296.0 431.5 L 296.0 433.0" fill="none" stroke="#9aa6b2" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 196.0 522.0 L 196.0 523.5 L 296.0 523.5 L 296.0 525.0" fill="none" stroke="#9aa6b2" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 196.0 614.0 L 296.0 613.0" fill="none" stroke="#9aa6b2" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 516.0 178.0 L 516.0 208.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 516.0 270.0 L 516.0 300.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 516.0 370.0 L 516.0 398.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 516.0 468.0 L 516.0 490.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 516.0 560.0 L 516.0 582.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 516.0 644.0 L 516.0 674.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 516.0 736.0 L 516.0 766.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 516.0 836.0 L 516.0 866.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 516.0 936.0 L 516.0 966.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 676.0 991.0 L 676.0 916.0 L 796.0 916.0 L 796.0 841.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 676.0 991.0 L 676.0 951.0 L 796.0 951.0 L 796.0 911.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<path d="M 676.0 991.0 L 676.0 986.0 L 796.0 986.0 L 796.0 981.0" fill="none" stroke="#5b6770" stroke-width="1.4" marker-end="url(#a)"/>
+<rect x="16.0" y="16.0" width="700.0" height="50.0" rx="0" fill="#f5f5f5" stroke="#888888" stroke-width="1.2"/>
+<text x="24.0" y="40.7" font-size="17.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">DepWeaver · Fig.2 證據合併鏈</text>
+<text x="24.0" y="65.3" font-size="10" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">由強到弱一層層疊：runtime 觀測（實線）＞ code/doc 宣告（虛線）＞ 只宣告（點線）。8 步裡只有 1 步用 AI。</text>
+<rect x="16.0" y="92.0" width="240.0" height="20.0" rx="0" fill="#f5f5f5" stroke="#888888" stroke-width="1.2"/>
+<text x="24.0" y="105.0" font-size="11.0" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">checkpoint 裡的原始證據</text>
+<path d="M 16.0 124.0 a 90.0 8 0 0 1 180.0 0 v 48.0 a 90.0 8 0 0 1 -180.0 0 z" fill="#f5f5f5" stroke="#999999" stroke-width="1.2"/><path d="M 16.0 124.0 a 90.0 8 0 0 0 180.0 0" fill="none" stroke="#999999" stroke-width="1.2"/>
+<text x="106.0" y="146.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">traffic_raw</text>
+<text x="106.0" y="162.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">istio_requests_total</text>
+<path d="M 16.0 216.0 a 90.0 8 0 0 1 180.0 0 v 48.0 a 90.0 8 0 0 1 -180.0 0 z" fill="#f5f5f5" stroke="#999999" stroke-width="1.2"/><path d="M 16.0 216.0 a 90.0 8 0 0 0 180.0 0" fill="none" stroke="#999999" stroke-width="1.2"/>
+<text x="106.0" y="238.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">egress_raw</text>
+<text x="106.0" y="254.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">離開 mesh 的呼叫</text>
+<path d="M 16.0 308.0 a 90.0 8 0 0 1 180.0 0 v 54.0 a 90.0 8 0 0 1 -180.0 0 z" fill="#f5f5f5" stroke="#999999" stroke-width="1.2"/><path d="M 16.0 308.0 a 90.0 8 0 0 0 180.0 0" fill="none" stroke="#999999" stroke-width="1.2"/>
+<text x="106.0" y="325.1" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">tcp_raw</text>
+<text x="106.0" y="341.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">istio_tcp_connections</text>
+<text x="106.0" y="354.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">_opened_total</text>
+<path d="M 16.0 406.0 a 90.0 8 0 0 1 180.0 0 v 48.0 a 90.0 8 0 0 1 -180.0 0 z" fill="#f5f5f5" stroke="#999999" stroke-width="1.2"/><path d="M 16.0 406.0 a 90.0 8 0 0 0 180.0 0" fill="none" stroke="#999999" stroke-width="1.2"/>
+<text x="106.0" y="428.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">code_edges</text>
+<text x="106.0" y="444.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">tree-sitter EdgeLedger</text>
+<path d="M 16.0 498.0 a 90.0 8 0 0 1 180.0 0 v 48.0 a 90.0 8 0 0 1 -180.0 0 z" fill="#f5f5f5" stroke="#999999" stroke-width="1.2"/><path d="M 16.0 498.0 a 90.0 8 0 0 0 180.0 0" fill="none" stroke="#999999" stroke-width="1.2"/>
+<text x="106.0" y="520.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">merged_notes</text>
+<text x="106.0" y="536.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">DeepWiki 文件證據</text>
+<path d="M 16.0 590.0 a 90.0 8 0 0 1 180.0 0 v 48.0 a 90.0 8 0 0 1 -180.0 0 z" fill="#f5f5f5" stroke="#999999" stroke-width="1.2"/><path d="M 16.0 590.0 a 90.0 8 0 0 0 180.0 0" fill="none" stroke="#999999" stroke-width="1.2"/>
+<text x="106.0" y="612.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">k8s_raw</text>
+<text x="106.0" y="628.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">Deployment 清單</text>
+<rect x="296.0" y="116.0" width="440.0" height="62.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="306.0" y="145.3" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">1. runtime 骨架　fromIstioRequests</text>
+<text x="306.0" y="162.7" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">請求真的跨過去了 = 最強證據 → 實線。之後所有東西疊在這上面。</text>
+<rect x="296.0" y="208.0" width="440.0" height="62.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="306.0" y="237.3" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">2. 併 egress 邊　mergeIstioEgress</text>
+<text x="306.0" y="254.7" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">已被 ServiceEntry 歸因的外部 host 併進來（config-server → github.com）。</text>
+<rect x="296.0" y="300.0" width="440.0" height="70.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="306.0" y="324.6" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">3. 併 in-mesh TCP 邊（DB）　mergeIstioTcp</text>
+<text x="306.0" y="342.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">Istio 只對 HTTP/gRPC 產 requests 指標；資料庫連線是不透明 TCP，</text>
+<text x="306.0" y="355.0" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">只在這裡看得到 → 原本只能是虛線的 db 邊，升級成實線。</text>
+<rect x="296.0" y="398.0" width="440.0" height="70.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="306.0" y="422.6" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">4. 併程式碼邊　CodeGraphMerger</text>
+<text x="306.0" y="440.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">runtime 也看到 → 合併；只有 code 宣告 → 加一條虛線。</text>
+<text x="306.0" y="453.0" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">host 是變數時用 env-address / 路徑段→服務 解出目標（確定性，非 AI）。</text>
+<rect x="296.0" y="490.0" width="440.0" height="70.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="306.0" y="514.6" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">5. 併文件邊 · 提升「真用」DB　DocGraphMerger + promoteReallyUsedDbs</text>
+<text x="306.0" y="532.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">文件只 enrich、不 invent。服務有 ORM 標記（jpa / SQLAlchemy / Django）→</text>
+<text x="306.0" y="545.0" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">db 邊從「只宣告」升級成「真的有用」。</text>
+<rect x="296.0" y="582.0" width="440.0" height="62.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="306.0" y="611.3" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">6. 標部署狀態　K8sGraphBuilder.enrich</text>
+<text x="306.0" y="628.7" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">宣告了、叢集其實沒在跑 → 灰底紅框虛線 (not deployed)。</text>
+<rect x="296.0" y="674.0" width="440.0" height="62.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="306.0" y="703.3" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">7. 正規化　GraphNormalizer</text>
+<text x="306.0" y="720.7" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">清掉框架 lib 造成的幽靈節點、合併別名（api-gateway-controller → api-gateway）。</text>
+<rect x="296.0" y="766.0" width="440.0" height="70.0" rx="8" fill="#e1d5e7" stroke="#9673a6" stroke-width="1.2"/>
+<text x="306.0" y="790.6" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">8. LLM 補殘餘　resolveResidueWithLlm　〔AI — 全鏈唯一一步〕</text>
+<text x="306.0" y="808.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">只有確定性都解不掉的殘餘才丟給 LLM 猜，且嚴格驗證 source/target 存在。</text>
+<text x="306.0" y="821.0" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">能用規則解的絕不丟給 AI —— 圖才可重現、不亂猜。</text>
+<rect x="296.0" y="866.0" width="440.0" height="70.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="306.0" y="890.6" font-size="12.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">9. 分層　GraphLayerAssigner</text>
+<text x="306.0" y="908.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">入口 → 依呼叫深度的服務層（最長路徑）→ 資料層 → 外部 → 無相依。</text>
+<text x="306.0" y="921.0" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">環用 Tarjan SCC 縮點，同環同層（環裡本來就沒有「誰先誰後」）。</text>
+<rect x="356.0" y="966.0" width="320.0" height="50.0" rx="8" fill="#d5e8d4" stroke="#82b366" stroke-width="1.2"/>
+<text x="516.0" y="994.6" font-size="13.0" font-weight="700" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">DependencyGraph（canonical model）</text>
+<rect x="796.0" y="816.0" width="240.0" height="50.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="916.0" y="839.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">MermaidEmitter → .mmd</text>
+<text x="916.0" y="855.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">每層一個 subgraph</text>
+<rect x="796.0" y="886.0" width="240.0" height="50.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="916.0" y="909.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">DotEmitter → Graphviz → PNG</text>
+<text x="916.0" y="925.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">rankdir=TB，每層一個 rank=same</text>
+<rect x="796.0" y="956.0" width="240.0" height="50.0" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.2"/>
+<text x="916.0" y="979.0" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">CoverageAnalyzer → 覆蓋率</text>
+<text x="916.0" y="995.0" font-size="10" font-weight="400" fill="#5b6770" text-anchor="middle" font-family="Helvetica, Arial, sans-serif">可驅動業務邊 %　+　另計的 Data layer %</text>
+<rect x="796.0" y="116.0" width="240.0" height="230.0" rx="8" fill="#fbfbfb" stroke="#cccccc" stroke-width="1.2" stroke-dasharray="5 4"/>
+<rect x="810.0" y="124.0" width="200.0" height="20.0" rx="0" fill="#f5f5f5" stroke="#888888" stroke-width="1.2"/>
+<text x="818.0" y="137.3" font-size="12.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">三層信心（線型）</text>
+<rect x="810.0" y="148.0" width="212.0" height="190.0" rx="0" fill="#f5f5f5" stroke="#888888" stroke-width="1.2"/>
+<text x="818.0" y="165.0" font-size="11.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">實線　runtime observed</text>
+<text x="818.0" y="180.9" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">Istio 真的看到（HTTP 用 requests，</text>
+<text x="818.0" y="193.9" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">DB 用 TCP connections）</text>
+<text x="818.0" y="209.9" font-size="11.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">虛線　code/doc 證實「真的用」</text>
+<text x="818.0" y="225.8" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">有 ORM 標記 / repository / 持久化 code</text>
+<text x="818.0" y="238.8" font-size="11.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">點線 ?　只宣告、未證實</text>
+<text x="818.0" y="254.8" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">只有 datasource URL，無使用證據</text>
+<text x="818.0" y="267.8" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">addEdge 取 max：疊上去只會變強，不會變弱。</text>
+<rect x="796.0" y="376.0" width="240.0" height="100.0" rx="8" fill="#fff2cc" stroke="#d6b656" stroke-width="1.2"/>
+<text x="804.0" y="393.0" font-size="11.0" font-weight="700" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">greenfield 為什麼全是虛線</text>
+<text x="804.0" y="408.9" font-size="10" font-weight="400" fill="#5b6770" text-anchor="start" font-family="Helvetica, Arial, sans-serif">沒有第 1～3 步的 runtime 骨架，所有邊都落在</text>
+<text x="804.0" y="421.9" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">第 4、5 步的 code/doc → 自然全虛線。</text>
+<text x="804.0" y="437.9" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">這是誠實的：它老實說「這些是宣告出來的，</text>
+<text x="804.0" y="453.8" font-size="11.0" font-weight="400" fill="#1f2a37" text-anchor="start" font-family="Helvetica, Arial, sans-serif">還沒被 runtime 驗證過」。</text>
+</svg>
