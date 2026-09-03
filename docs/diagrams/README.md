@@ -35,6 +35,12 @@ dot -Tpng -Gdpi=180 docs/diagrams/fig3a-boa-layered.dot -o docs/diagrams/fig3a-b
 
 `.dot` 檔跟 PNG 一起放在這裡，要重產隨時可以。
 
+**注意：這幾張的線粗不帶資訊。** `DotEmitter` 平常會把 runtime 連線數映射成線寬
+（`penwidth`，log 縮放 1.2–4.0），但這幾張是從 `.mmd` 反推重建的，而 `.mmd` 不記連線數，
+所以重建時一律填 1、**線粗是齊的**。Discord 上直接跑出來的圖才有真實的粗細差異。
+確切的連線數（例如 `8187 TCP connections observed`）從頭到尾只印在**報告第 5 節**，
+圖上任何時候都不會出現這個數字。
+
 **關於 fig3b 少掉的 19 個節點**：Graphviz 的 `rank=same` 會把同一層排在同一條水平線
 上、不換行，train-ticket 光「無相依」那層就有 19 個節點，整張圖被撐到 7657px 寬，中間
 有邊的部分完全看不到。所以 fig3b 只畫有邊的 34 個，**完整版保留成 fig3c**。任何地方用

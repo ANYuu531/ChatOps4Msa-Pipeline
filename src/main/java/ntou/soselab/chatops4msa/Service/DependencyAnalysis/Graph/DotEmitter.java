@@ -17,7 +17,10 @@ package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph;
  *       metadata (image · replicas · created date)</li>
  *   <li><b>solid</b> edge = runtime-observed; <b>dashed grey</b> edge = code/doc-only
  *       (not seen on the wire) — this is the provenance line-style the plan calls for</li>
- *   <li>edge label = runtime request count (when observed)</li>
+ *   <li>edge label = dependency type ({@code db}, {@code async}, …); the runtime
+ *       request count is <b>not</b> printed — it is carried by line width instead, so
+ *       a heavy edge reads heavy without a number competing with the type label. The
+ *       exact count lives in the report's edge ledger.</li>
  * </ul>
  */
 public class DotEmitter {
