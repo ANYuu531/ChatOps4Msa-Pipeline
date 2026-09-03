@@ -8,6 +8,7 @@
 %% Microservice dependency graph
 %% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+flowchart TB
   subgraph layer0 ["entry services"]
     direction LR
     ts_cancel_service["ts-cancel-service"]

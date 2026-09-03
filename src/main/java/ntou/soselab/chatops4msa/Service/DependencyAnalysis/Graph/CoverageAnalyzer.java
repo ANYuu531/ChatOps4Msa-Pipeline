@@ -94,11 +94,15 @@ public class CoverageAnalyzer {
          * evidence (the dotted tier).
          *
          * Reported, never hidden. Excluding them is right when they are documentation
-         * noise, but the same tier is where a WEAK EXTRACTION lands: a language with no
-         * tree-sitter grammar falls back to the LLM reader, and its edges can all be
-         * inferred. Silently dropping them would shrink the denominator until the
-         * percentage flattered a run that had barely extracted anything. Stating the
-         * count lets a reader judge whether the score rests on a real surface.
+         * noise, but the count is what tells a reader whether the score rests on a real
+         * surface. The failure mode to watch is a THIN extraction: if the code tier
+         * found almost nothing — a language whose sources the LLM reader skimmed
+         * poorly, a repo whose call sites are all dynamic — while the documentation
+         * tier talked at length, the denominator shrinks to a handful of edges and a
+         * high percentage covers almost none of the system. (Note the code tier itself
+         * is not the risk: an LLM-read edge lands in the same EdgeLedger as a
+         * tree-sitter one and is scored identically — see CodeGraphMerger, which marks
+         * code edges documented.)
          */
         public final int mentionedOnly;
 
@@ -214,6 +218,11 @@ public class CoverageAnalyzer {
      * ledger-db/accounts-db ones. Coverage fell from 7/7 to 7/10 with nothing about the
      * system or the traffic having changed. A number that a paragraph of prose can
      * dilute is not measuring what it claims to measure.
+     *
+     * Note what this does NOT exclude: an edge the code extraction found but traffic
+     * never crossed is {@code documented}, counts in full, and is exactly the gap the
+     * ratio exists to show. That is why the score is not trivially 100% — Bank of
+     * Anthos sat at 5/7 until the missing journey was driven.
      *
      * An observed edge always counts, whatever its confidence field says — it happened.
      */
