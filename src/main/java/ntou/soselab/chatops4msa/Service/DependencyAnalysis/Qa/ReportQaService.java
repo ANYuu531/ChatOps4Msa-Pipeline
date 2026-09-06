@@ -76,7 +76,9 @@ public class ReportQaService {
     private final ReportArchiveStore store;
     private final LLMService llmService;
     private final JDAService jdaService;
+    private final GraphQueryPlanner planner;
     private final boolean embeddingsEnabled;
+    private final boolean plannerEnabled;
     private final int topK;
     private final String promptTemplate;
 
@@ -91,12 +93,16 @@ public class ReportQaService {
     public ReportQaService(ReportArchiveStore store,
                            LLMService llmService,
                            @Lazy JDAService jdaService,
+                           GraphQueryPlanner planner,
                            @Value("${dependency.qa.embeddings:true}") boolean embeddingsEnabled,
+                           @Value("${dependency.qa.query-planner:true}") boolean plannerEnabled,
                            @Value("${dependency.qa.top-k:8}") int topK) {
         this.store = store;
         this.llmService = llmService;
         this.jdaService = jdaService;
+        this.planner = planner;
         this.embeddingsEnabled = embeddingsEnabled;
+        this.plannerEnabled = plannerEnabled;
         this.topK = topK;
         this.promptTemplate = loadPrompt();
     }
@@ -248,7 +254,16 @@ public class ReportQaService {
             List<double[]> v = llmService.embed(List.of(question));
             if (v != null && v.size() == 1) questionVector = v.get(0);
         }
-        String context = buildContext(archive, graph, question, questionVector, topK);
+
+        // NL -> graph query -> deterministic execution: the structured answer for
+        // questions that name no node ("which edges were never exercised?") or ask
+        // for a traversal ("what breaks if X goes down?"). Additive to the grounding.
+        String queryResults = "";
+        if (plannerEnabled) {
+            List<GraphQuery> queries = planner.plan(graph, question);
+            queryResults = GraphQueryEngine.execute(graph, queries);
+        }
+        String context = buildContext(archive, graph, question, questionVector, topK, queryResults);
 
         JSONArray messages = new JSONArray();
         messages.put(new JSONObject().put("role", "system").put("content", promptTemplate + "\n\n# CONTEXT\n\n" + context));
@@ -271,6 +286,15 @@ public class ReportQaService {
      */
     static String buildContext(ReportArchive archive, DependencyGraph graph, String question,
                                double[] questionVector, int topK) {
+        return buildContext(archive, graph, question, questionVector, topK, "");
+    }
+
+    /**
+     * @param queryResults the executed graph-query plan (Markdown), or empty when the
+     *                     planner chose no query or is disabled
+     */
+    static String buildContext(ReportArchive archive, DependencyGraph graph, String question,
+                               double[] questionVector, int topK, String queryResults) {
         StringBuilder sb = new StringBuilder();
         sb.append("## Report\n");
         sb.append("- Tool: ").append(DependencyGraph.TOOL_NAME).append('\n');
@@ -280,6 +304,10 @@ public class ReportQaService {
         sb.append("- Generated: ").append(DateTimeFormatter.ISO_INSTANT.format(archive.createdAt)).append("\n\n");
 
         sb.append("# 1. GRAPH FACTS (computed from the dependency graph; authoritative)\n\n");
+        if (queryResults != null && !queryResults.isBlank()) {
+            sb.append("## Query results (graph queries selected for this question, executed by code)\n\n");
+            sb.append(queryResults).append('\n');
+        }
         sb.append(GraphGrounding.ground(graph, question)).append('\n');
 
         sb.append("# 2. RUNTIME COVERAGE (computed; authoritative)\n\n");

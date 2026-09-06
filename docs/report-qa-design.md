@@ -88,6 +88,28 @@ thread 開頭會貼幾個**用真實節點名**組出來的範例問題（挑 de
 - **全圖摘要**：節點數依 kind、邊數依三層信心、未部署清單、零邊節點清單、tier 列表，以及
   **由 tier 反推的啟動／部署順序**（最深層先）。這一條就是 8/14 講的 `deploy-order()`。
 
+### 2.4b 查詢層：NL → 圖查詢 DSL → 確定性執行（`GraphQuery` / `GraphQueryPlanner` / `GraphQueryEngine`）
+
+這是 8/14 的 A2 設計本體。Grounding 只對「問句點名的節點」有效；沒點名節點的問題
+（「哪些邊沒被流量跑到？」「什麼順序部署？」「有哪些外部依賴？」）與需要遍歷的問題
+（「userservice 掛了誰受影響？」）由這一層回答：
+
+1. **Planner**（`graph_query_plan.txt`，一次小的 LLM 呼叫）：給模型算子目錄 + 這張圖的節點 id，
+   要它只輸出 JSON 計畫 `[{"op": ..., "args": [...]}]`，最多 3 條，答不到的輸出 `[]`。
+2. **驗證**（`GraphQuery.parse`）：算子必須在目錄內、arity 要對、節點參數必須解析到圖上真實 id
+   （精確 → 不分大小寫 → `GraphGrounding` 的寬鬆拼法，且**只允許唯一解**）。不合法的整條丟掉。
+   模型最壞只能「選錯查詢」，不可能「說錯事實」。
+3. **執行**（`GraphQueryEngine`）：全部是查表或遍歷，結果以 Markdown 放進 context 的 GRAPH FACTS 最前面。
+   `uncovered` 直接呼叫 `CoverageAnalyzer.analyze`，`deploy-order` 用 `GraphLayerAssigner` 同一套 tier，
+   所以 thread 裡的回答不可能和頻道貼的覆蓋率、圖矛盾。
+
+算子目錄：`dependencies-of(X)`、`dependents-of(X)`、`impact-of(X)`、`startup-needs(X)`、`path(X,Y)`、
+`edges-of-type(sync-http|db|async|external)`、`db-users`、`observed-edges`、`unobserved-edges`、`uncovered`、
+`mentioned-only`、`undeployed`、`deploy-order`、`externals`、`async`。
+
+Planner 失敗（沒 key、網路、輸出垃圾）→ 空計畫，退回只有 grounding + passages 的模式。
+可用 `dependency.qa.query-planner=false` 關掉。
+
 ### 2.5 Prompt 的約束（`report_qa.txt`）
 
 只准用 CONTEXT；權威序 graph facts > coverage > passages（passages 是 LLM 寫的報告文字，會飄）；
@@ -106,7 +128,11 @@ thread 開頭會貼幾個**用真實節點名**組出來的範例問題（挑 de
 | `application*.properties` | `dependency.qa.dir/ttl-days/embeddings/top-k`、`openai.api.embedding-model` |
 | `docker-compose.yaml` | 掛 `./dep-reports:/app/dep-reports` |
 
-## 4. 測試（33 條，全過；全套 151 run，僅 `McpToolkitCallToolTest` 因需 docker 內 `k8s-mcp-server` 而失敗，與此無關）
+## 4. 測試（46 條，全過；全套僅 `McpToolkitCallToolTest` 因需 docker 內 `k8s-mcp-server` 而失敗，與此無關）
+
+- `GraphQueryTest`：計畫解析與驗證（未知節點／未知算子／arity 錯／重複／別名正規化全丟掉）、寬鬆拼法只允許唯一解、
+  每個算子的執行結果、`uncovered` 與 CoverageAnalyzer 同數字、`deploy-order` 無 tier 時現算、查詢結果排在 GRAPH FACTS 最前
+- `GraphQueryPlannerTest`：system prompt 含全部算子與節點 id、空圖／空問句不打 LLM
 
 - `ReportChunkerTest`：標題路徑、重設 sub、超長切分不漏行、無標題前言
 - `ChunkRetrieverTest`：連字號 id 整體+拆開、CJK bigram、中文問句命中英文段、無命中回空、RRF 融合、預算
@@ -122,20 +148,21 @@ thread 開頭會貼幾個**用真實節點名**組出來的範例問題（挑 de
 3. 跑一次分析 → Generate report → 應看到報告、圖、覆蓋率之後多一則「💬 Ask DepWeaver…」且下面掛著 thread，
    thread 內有範例問題。
 4. 在 thread 內問（中英皆可），例如：
-   - `ledgerwriter 什麼時候會呼叫 balancereader？證據是什麼？`
-   - `Which edges were declared but never observed at runtime?`
-   - `改 userservice 會影響誰？`
-   - `部署順序建議？`
+   - `ledgerwriter 什麼時候會呼叫 balancereader？證據是什麼？`（grounding：直接邊 + notes 的 file:line）
+   - `Which edges were declared but never observed at runtime?`（planner → `unobserved-edges` / `uncovered`）
+   - `改 userservice 會影響誰？`（planner → `impact-of(userservice)`）
+   - `部署順序建議？`（planner → `deploy-order`）
+   - `有哪些外部依賴？`（planner → `externals`）
    - 故意問不存在的服務（`paymentservice 依賴誰？`）→ 應回「圖上沒有這個節點」並列出相近 id，不編造。
 5. log 會印 `[DEBUG] report Q&A from <user> on <repo>: <question>` 與 embeddings 的 `[Used Token]`；
    若 embeddings 打不到會印 `retrieval is lexical only`，功能仍可用。
 
 ## 6. 已知界線與下一步
 
-- **這一版是「一次 LLM 呼叫」的 GraphRAG**：grounding 靠節點偵測 + 事實表把大部分依賴問題的答案直接鋪出來。
-  8/14 設計裡「NL → 圖查詢 DSL → 執行器」那個**多一步 LLM 產結構化查詢**的版本還沒做；目前 impact／startup-needs／
-  deploy-order 都是「事實表順帶附上」而非「按問題選算子」。若問題沒點名任何節點（例如「哪些服務只被文件提到？」），
-  只能靠摘要與 passages 回答。下一步：加一個小型查詢層（LLM 產 `{op, args}` → 確定性執行）。
-- 節點偵測是字串比對，同義詞（「前端」→ frontend）抓不到；prompt 要求模型遇到未命中就列相近 id。
+- 每個問題兩次 LLM 呼叫（planner 小、answer 大）加一次 embedding。planner 選錯算子時答案會少一塊事實，
+  但 grounding 與 passages 仍在，且模型被禁止編造；要驗證的是 planner 對中文問句的選擇率，真環境跑幾輪看 log 的
+  `[DEBUG] graph query plan:`。
+- 節點偵測是字串比對，同義詞（「前端」→ frontend）抓不到；planner 那一步模型看得到 id 清單，通常能對上，
+  對不上時 prompt 要求列相近 id。
 - archive 不存 raw Prometheus JSON 與 Tier 3 使用者填的值；問「某條邊的 Prometheus 原始資料」答不出，這是刻意的。
 - thread 訊息不經 prompt-injection 檢查（原主頻道有）；Q&A 的 system prompt 已把範圍鎖在報告，且它不會觸發任何動作。
