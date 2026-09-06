@@ -1,6 +1,7 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Qa;
 
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -38,12 +39,21 @@ public class ReportArchiveStore {
     private volatile Instant lastScan = Instant.EPOCH;
     private static final Duration SCAN_INTERVAL = Duration.ofMinutes(1);
 
+    /**
+     * The Spring constructor. {@code @Autowired} is REQUIRED here: with two public
+     * constructors and no annotation, Spring looks for a no-arg constructor, finds
+     * none, and the whole context fails to start — while the JDA bot, already
+     * connected from inside JDAService's constructor, keeps answering "processing…"
+     * to a dead application.
+     */
+    @Autowired
     public ReportArchiveStore(
             @Value("${dependency.qa.dir:./dep-reports}") String directory,
             @Value("${dependency.qa.ttl-days:7}") long ttlDays) {
         this(Path.of(directory), Duration.ofDays(ttlDays));
     }
 
+    /** For tests and direct use. */
     public ReportArchiveStore(Path directory, Duration ttl) {
         this.directory = directory;
         this.ttl = ttl;
