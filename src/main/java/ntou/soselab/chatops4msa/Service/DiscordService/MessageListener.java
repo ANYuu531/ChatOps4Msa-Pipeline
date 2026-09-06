@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Qa.ReportQaService;
 import ntou.soselab.chatops4msa.Service.NLPService.DialogueTracker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -19,19 +20,31 @@ public class MessageListener extends ListenerAdapter {
     private final String GUILD_ID;
     private final String CHATOPS_CHANNEL_ID;
     private final DialogueTracker dialogueTracker;
+    private final ReportQaService reportQaService;
 
     @Lazy
     @Autowired
-    public MessageListener(Environment env, DialogueTracker dialogueTracker) {
+    public MessageListener(Environment env, DialogueTracker dialogueTracker, ReportQaService reportQaService) {
         this.BOT_ID = env.getProperty("discord.application.id");
         this.GUILD_ID = env.getProperty("discord.guild.id");
         this.CHATOPS_CHANNEL_ID = env.getProperty("discord.channel.chatops.id");
         this.dialogueTracker = dialogueTracker;
+        this.reportQaService = reportQaService;
     }
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) return;
+
+        // A message in a report's Q&A thread is a question about that report: no
+        // mention needed, and it bypasses the intent flow (which ends in a Perform
+        // button — right for an action, wrong for a question). Answered off-thread.
+        if (isReportQaQuestion(event)) {
+            System.out.println(">>> report Q&A question in thread " + event.getChannel().getId());
+            reportQaService.ask(event.getChannel().getId(), event.getAuthor().getId(),
+                    event.getAuthor().getName(), event.getMessage().getContentRaw().trim());
+            return;
+        }
 
         if (shouldReply(event)) {
 
@@ -72,6 +85,14 @@ public class MessageListener extends ListenerAdapter {
                 System.out.println();
             }
         }
+    }
+
+    /** A human message inside a thread the report Q&amp;A opened, in our guild. */
+    private boolean isReportQaQuestion(MessageReceivedEvent event) {
+        if (!event.isFromGuild()) return false;
+        if (!event.getGuild().getId().equals(GUILD_ID)) return false;
+        if (!event.getChannelType().isThread()) return false;
+        return reportQaService.isQaThread(event.getChannel().getId());
     }
 
     /**

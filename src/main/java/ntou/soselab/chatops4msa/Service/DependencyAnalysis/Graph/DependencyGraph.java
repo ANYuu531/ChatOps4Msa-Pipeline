@@ -272,6 +272,62 @@ public class DependencyGraph {
         return edges.isEmpty();
     }
 
+    /**
+     * Rebuilds a graph from its {@link #toJson()} form.
+     *
+     * The report Q&amp;A keeps the graph in a per-report archive long after the
+     * checkpoint that produced it is gone, so the graph must be able to come back from
+     * its own JSON rather than be re-derived from raw stages. Every field the emitters
+     * and the grounding read (kind, deployed, image, replicas, layer, provenance,
+     * confidence, observed, count, evidence) round-trips; unknown keys are ignored.
+     *
+     * @return the graph; an empty graph for {@code null} or malformed input rather than
+     *         an exception, since an old or partial archive must still answer questions
+     *         from its text.
+     */
+    public static DependencyGraph fromJson(JSONObject json) {
+        if (json == null) return new DependencyGraph("");
+        DependencyGraph graph = new DependencyGraph(json.optString("namespace", ""));
+        JSONArray nodes = json.optJSONArray("nodes");
+        if (nodes != null) {
+            for (int i = 0; i < nodes.length(); i++) {
+                JSONObject n = nodes.optJSONObject(i);
+                if (n == null || n.optString("id", "").isBlank()) continue;
+                Node node = graph.addNode(n.getString("id"), n.optString("kind", KIND_SERVICE));
+                if (n.has("deployed")) node.deployed = n.optBoolean("deployed");
+                if (n.has("deployedAt")) node.deployedAt = n.optString("deployedAt");
+                if (n.has("image")) node.image = n.optString("image");
+                if (n.has("replicas")) node.replicas = n.optString("replicas");
+                if (n.has("layer")) node.layer = n.optInt("layer");
+            }
+        }
+        JSONArray edges = json.optJSONArray("edges");
+        if (edges != null) {
+            for (int i = 0; i < edges.length(); i++) {
+                JSONObject e = edges.optJSONObject(i);
+                if (e == null) continue;
+                String source = e.optString("source", "");
+                String target = e.optString("target", "");
+                if (source.isBlank() || target.isBlank()) continue;
+                graph.addNode(source, KIND_SERVICE);
+                graph.addNode(target, KIND_SERVICE);
+                Edge edge = graph.addEdge(source, target, e.optString("type", "sync-http"), null,
+                        e.optString("confidence", CONF_INFERRED), e.optBoolean("runtimeObserved", false),
+                        e.optLong("count", 0), null);
+                JSONArray prov = e.optJSONArray("provenance");
+                if (prov != null) for (int p = 0; p < prov.length(); p++) edge.provenance.add(prov.optString(p));
+                JSONArray ev = e.optJSONArray("evidence");
+                if (ev != null) {
+                    for (int v = 0; v < ev.length(); v++) {
+                        String s = ev.optString(v);
+                        if (!s.isBlank() && !edge.evidence.contains(s)) edge.evidence.add(s);
+                    }
+                }
+            }
+        }
+        return graph;
+    }
+
     /** The Canonical Graph JSON — the shape the later phases (DOT, Cytoscape) reuse. */
     public JSONObject toJson() {
         JSONArray nodesJson = new JSONArray();

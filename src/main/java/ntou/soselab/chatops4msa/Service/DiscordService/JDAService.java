@@ -4,8 +4,10 @@ import jakarta.annotation.PostConstruct;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.FileUpload;
@@ -108,6 +110,38 @@ public class JDAService {
 
     public void sendChatOpsChannelMessageWithButtons(String message, List<Button> buttons) {
         chatOpsChannel.sendMessage(message).setActionRow(buttons).queue();
+    }
+
+    /**
+     * Posts a message and opens a public thread under it, for the report Q&amp;A.
+     *
+     * Synchronous ({@code complete()}) because the thread id is needed to register the
+     * thread before anyone can type in it. Needs the bot's "Create Public Threads" and
+     * "Send Messages in Threads" permissions.
+     *
+     * @return the thread id, or {@code null} when the message or the thread could not be
+     *         created (missing permission, channel type without threads)
+     */
+    public String sendChatOpsChannelMessageAndOpenThread(String message, String threadName) {
+        try {
+            Message posted = chatOpsChannel.sendMessage(message).complete();
+            ThreadChannel thread = posted.createThreadChannel(threadName).complete();
+            return thread.getId();
+        } catch (Exception e) {
+            System.out.println("[WARNING] could not open a thread: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /** Posts into a thread by id; silently ignores an unknown or archived thread. */
+    public void sendThreadMessage(String threadId, String message) {
+        if (threadId == null || message == null || message.isBlank()) return;
+        ThreadChannel thread = jda.getThreadChannelById(threadId);
+        if (thread == null) {
+            System.out.println("[WARNING] thread not found: " + threadId);
+            return;
+        }
+        thread.sendMessage(message).queue();
     }
 
     public void sendChatOpsChannelFile(String filename, InputStream inputStream) {

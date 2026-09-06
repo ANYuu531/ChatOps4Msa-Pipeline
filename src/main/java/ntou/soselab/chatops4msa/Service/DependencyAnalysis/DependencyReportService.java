@@ -13,6 +13,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphvizRendere
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.K8sGraphBuilder;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.MermaidEmitter;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.RuntimeGraphBuilder;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Qa.ReportQaService;
 import ntou.soselab.chatops4msa.Service.DiscordService.JDAService;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -41,16 +42,19 @@ public class DependencyReportService {
     private final LlmToolkit llmToolkit;
     private final DiscordToolkit discordToolkit;
     private final JDAService jdaService;
+    private final ReportQaService reportQaService;
 
     @Autowired
     public DependencyReportService(DependencyAnalysisStateStore stateStore,
                                    LlmToolkit llmToolkit,
                                    DiscordToolkit discordToolkit,
-                                   @Lazy JDAService jdaService) {
+                                   @Lazy JDAService jdaService,
+                                   ReportQaService reportQaService) {
         this.stateStore = stateStore;
         this.llmToolkit = llmToolkit;
         this.discordToolkit = discordToolkit;
         this.jdaService = jdaService;
+        this.reportQaService = reportQaService;
     }
 
     /**
@@ -117,7 +121,11 @@ public class DependencyReportService {
         // Alongside the prose report, post the dependency graph as Mermaid. It is
         // built deterministically from the raw Istio Prometheus JSON (no LLM), so
         // it is another, more scannable reading of the same runtime evidence.
-        postRuntimeGraph(graph, state);
+        String coverage = postRuntimeGraph(graph, state);
+
+        // Open the "ask the report" thread BEFORE the checkpoint goes: the archive it
+        // builds takes the evidence notes from the state. It never throws.
+        reportQaService.openQaThread(userId, state, mode, report, graph, coverage);
 
         stateStore.remove(userId);
     }
@@ -350,16 +358,20 @@ public class DependencyReportService {
      * It is rendered to a PNG via Graphviz so it is visible inline in the channel;
      * if {@code dot} is unavailable the Mermaid source is attached instead (still
      * renderable at mermaid.live). Either way the .mmd source is attached too.
+     *
+     * @return the coverage message that was posted, or {@code null} when there was
+     *         nothing to measure or the graph could not be posted — the Q&amp;A archive
+     *         keeps it as an authoritative source
      */
-    private void postRuntimeGraph(DependencyGraph graph, DependencyAnalysisStateStore.State state) {
+    private String postRuntimeGraph(DependencyGraph graph, DependencyAnalysisStateStore.State state) {
         try {
-            if (graph == null) return;
+            if (graph == null) return null;
 
             if (graph.isEmpty()) {
                 // No runtime edges and nothing resolvable from code (or an old
                 // checkpoint without the raw/code stages). The prose report already
                 // covers this, so stay quiet rather than post an empty graph.
-                return;
+                return null;
             }
 
             String mermaid = MermaidEmitter.emit(graph);
@@ -387,22 +399,27 @@ public class DependencyReportService {
                         new ByteArrayInputStream(mermaid.getBytes(StandardCharsets.UTF_8)));
             }
 
-            postCoverage(graph, state.repoName);
+            String coverage = coverageMessage(graph, state.repoName);
+            if (coverage != null) jdaService.sendChatOpsChannelMessage(coverage);
+            return coverage;
         } catch (Exception e) {
             // The graph is a bonus view; never let it break the report delivery.
             System.out.println("[WARNING] could not post the dependency graph: " + e.getMessage());
+            return null;
         }
     }
 
     /**
-     * Posts the deterministic runtime traffic-coverage summary derived from the graph:
+     * The deterministic runtime traffic-coverage summary derived from the graph:
      * of the service-to-service sync edges, how many the mesh actually observed, and
      * which ones traffic never reached. The uncovered edges are exactly the dashed
      * business edges — the concrete targets for driving more traffic and Resuming.
+     *
+     * @return the message, or {@code null} when nothing is measurable (no service→service edges)
      */
-    private void postCoverage(DependencyGraph graph, String repoName) {
+    static String coverageMessage(DependencyGraph graph, String repoName) {
         CoverageAnalyzer.Report coverage = CoverageAnalyzer.analyze(graph);
-        if (!coverage.hasEdges()) return; // nothing measurable (e.g. no service→service edges)
+        if (!coverage.hasEdges()) return null;
 
         StringBuilder msg = new StringBuilder();
         msg.append("## ").append(DependencyGraph.TOOL_NAME)
@@ -449,7 +466,7 @@ public class DependencyReportService {
             }
             msg.append('\n');
         }
-        jdaService.sendChatOpsChannelMessage(msg.toString());
+        return msg.toString();
     }
 
     /**

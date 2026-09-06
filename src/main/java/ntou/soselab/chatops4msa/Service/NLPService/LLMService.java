@@ -25,6 +25,8 @@ public class LLMService {
     private final String OPENAI_API_URL;
     private final String OPENAI_API_KEY;
     private final String OPENAI_API_MODEL;
+    private final String EMBEDDING_MODEL;
+    private final String EMBEDDING_URL;
 
     private final String PROMPT_INJECTION_DETECTION_FILE;
     private final String END_OF_TOPIC_FILE;
@@ -39,6 +41,12 @@ public class LLMService {
         this.OPENAI_API_URL = env.getProperty("openai.api.url");
         this.OPENAI_API_KEY = env.getProperty("openai.api.key");
         this.OPENAI_API_MODEL = env.getProperty("openai.api.model");
+        this.EMBEDDING_MODEL = env.getProperty("openai.api.embedding-model", "text-embedding-3-small");
+        String embeddingUrl = env.getProperty("openai.api.embedding-url");
+        if (embeddingUrl == null || embeddingUrl.isBlank()) {
+            embeddingUrl = OPENAI_API_URL == null ? "" : OPENAI_API_URL.replace("/chat/completions", "/embeddings");
+        }
+        this.EMBEDDING_URL = embeddingUrl;
 
         this.PROMPT_INJECTION_DETECTION_FILE = loadSystemPrompt(env.getProperty("prompts.prompt_injection_detection.file"));
         this.END_OF_TOPIC_FILE = loadSystemPrompt(env.getProperty("prompts.end_of_topic.file"));
@@ -258,6 +266,76 @@ public class LLMService {
         }
         return completionString;
     }
+    /**
+     * Embeds texts with the OpenAI embeddings endpoint, for the report Q&amp;A's semantic
+     * retrieval.
+     *
+     * The endpoint is derived from the chat URL ({@code .../chat/completions} →
+     * {@code .../embeddings}) unless {@code openai.api.embedding-url} is set, so a
+     * proxy or compatible server that serves both keeps working with one setting.
+     *
+     * @return one vector per input, in order; {@code null} on any failure (no key, network,
+     *         an endpoint that does not serve embeddings) — the caller then retrieves
+     *         lexically, which is a degradation rather than an error.
+     */
+    public List<double[]> embed(List<String> texts) {
+        if (texts == null || texts.isEmpty()) return List.of();
+        if (OPENAI_API_KEY == null || OPENAI_API_KEY.isBlank()) return null;
+        try {
+            List<double[]> out = new java.util.ArrayList<>();
+            for (int from = 0; from < texts.size(); from += EMBED_BATCH) {
+                List<String> batch = texts.subList(from, Math.min(texts.size(), from + EMBED_BATCH));
+                List<double[]> vectors = embedBatch(batch);
+                if (vectors == null) return null;
+                out.addAll(vectors);
+            }
+            return out;
+        } catch (Exception e) {
+            System.out.println("[WARNING] embeddings call failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private static final int EMBED_BATCH = 64;
+
+    private List<double[]> embedBatch(List<String> batch) {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + OPENAI_API_KEY);
+
+        JSONArray input = new JSONArray();
+        for (String t : batch) input.put(t == null || t.isBlank() ? " " : t);
+        JSONObject body = new JSONObject()
+                .put("model", EMBEDDING_MODEL)
+                .put("input", input);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                EMBEDDING_URL, HttpMethod.POST, new HttpEntity<>(body.toString(), headers), String.class);
+        JSONObject json = new JSONObject(response.getBody());
+        JSONArray data = json.optJSONArray("data");
+        if (data == null || data.length() != batch.size()) return null;
+
+        double[][] vectors = new double[batch.size()][];
+        for (int i = 0; i < data.length(); i++) {
+            JSONObject item = data.getJSONObject(i);
+            int index = item.optInt("index", i);
+            JSONArray values = item.getJSONArray("embedding");
+            double[] v = new double[values.length()];
+            for (int k = 0; k < values.length(); k++) v[k] = values.getDouble(k);
+            if (index >= 0 && index < vectors.length) vectors[index] = v;
+        }
+        List<double[]> out = new java.util.ArrayList<>();
+        for (double[] v : vectors) {
+            if (v == null) return null;
+            out.add(v);
+        }
+        if (json.has("usage")) {
+            System.out.println("[Used Token] embeddings " + json.getJSONObject("usage").optInt("total_tokens", 0));
+        }
+        return out;
+    }
+
     private String loadSystemPrompt(String promptFile) {
         ClassPathResource resource = new ClassPathResource(promptFile);
         byte[] bytes;
