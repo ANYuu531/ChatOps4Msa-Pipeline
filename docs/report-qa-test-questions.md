@@ -98,6 +98,28 @@
 | 同一人再跑第二個專案 | 開第二條 thread，兩邊各自回答各自的報告 |
 | thread 過 7 天再問 | 回「archive 已過期，請重跑分析」 |
 
+## train-ticket 版（greenfield，53 節點，測大圖）
+
+跑法：主頻道呼叫分析，repo 給 `FudanSELab/train-ticket`，namespace 留空。clone 很大、DeepWiki 五題，比 BoA 慢幾分鐘；
+runtime 模式單機跑不動（47 個 JVM），所以 train-ticket 只驗 greenfield。要驗的是**大圖**：閉包長、部署順序 53 節點、答案超過 Discord 2000 字要切、`ts-` 前綴的名字偵測。
+
+| # | 問題 | 驗什麼 | 預期 |
+|---|---|---|---|
+| 1 | `ts-preserve-service 依賴哪些服務？` | 事實表 + 路由 dependencies-of | basic、seat、travel、order、food、consign 六個 |
+| 2 | `誰會呼叫 ts-station-service？` | 路由 dependents-of（方向詞規則） | order、order-other、basic、admin-travel、admin-route |
+| 3 | `如果 ts-station-service 掛了會影響誰？` | impact-of 大閉包 | 一大串（preserve、travel、cancel…）；要分 depth 講，不能只列前幾個就說完 |
+| 4 | `建議的部署順序是什麼？` | deploy-order 53 節點、答案切段 | station/train/route/price 這些底層先、preserve/admin 這類入口最後；訊息可能分兩則 |
+| 5 | `訂票流程會經過哪些服務？` | LLM planner（沒點名節點） | preserve → basic → station/train/route/price、seat、order；不能編出圖上沒有的服務 |
+| 6 | `order service 依賴誰？` | 別名：去 `ts-` 前綴與 `-service` 後綴 | 要對到 `ts-order-service`（不是 order-other、admin-order、wait-order），答 ts-station-service |
+| 7 | `ts-preserve-service 怎麼連到 ts-station-service？` | path | 兩跳：經 basic 或經 order |
+| 8 | `有沒有外部依賴？` | externals | ts-common → github.com（若圖上有） |
+| 9 | `有沒有訊息佇列？` | async | 圖上有 rabbitmq 就列，沒有就說沒有 |
+| 10 | `哪些邊只被文件提到？` | mentioned-only | 列點線邊並說明不計分；沒有就說沒有 |
+| 11 | `ts-gateway-service 依賴誰？` | 節點存在但零邊（抽取缺口） | 要老實說圖上這個節點沒有任何邊、抽取沒抓到 gateway 路由，不能編 |
+| 12 | `這個系統用 Kafka 嗎？` | 不能編造 | 圖上沒有 Kafka 節點就說沒有證據；有 rabbitmq 要區分開 |
+
+看 log 同樣抓 `graph query plan`。大圖特別留意：第 3、4 題回答有沒有被截斷或分段亂掉；第 6 題有沒有對錯節點。
+
 ## 記錄格式建議
 
 每題記三欄：問題／查詢層選的算子（從 log 抄）／回答有沒有錯。錯的分兩種：**編造**（最嚴重）與**漏答**（context 裡有但沒講）。
