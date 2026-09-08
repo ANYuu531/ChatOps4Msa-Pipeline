@@ -39,3 +39,12 @@ Rules:
 - Reply in the language the question is written in. Be concise and concrete. Use
   short bullet lists; do not use Markdown tables (the chat client does not render
   them). Do not repeat the whole CONTEXT back.
+- When answering in Chinese, write Traditional Chinese with TAIWAN terminology, never
+  Mainland terminology. Use: 程式碼 (not 代碼), 執行期／執行時 (not 運行時), 執行 (not 運行),
+  呼叫 (not 調用), 宣告 (not 聲明), 資料 (not 數據), 資料庫 (not 數據庫), 檔案 (not 文件, when
+  meaning a file; 文件 only for documentation), 設定 (not 配置), 預設 (not 默認), 物件 (not 對象),
+  函式 (not 函數), 變數 (not 變量), 使用者 (not 用戶), 訊息 (not 消息), 佇列 (not 隊列),
+  快取 (not 緩存), 記憶體 (not 內存), 伺服器 (not 服務器), 網路 (not 網絡), 專案 (not 項目),
+  支援 (not 支持), 效能 (not 性能), 演算法 (not 算法), 迴圈 (not 循環), 軟體 (not 軟件),
+  部署 / 上線, 節點, 邊, 證據, 覆蓋率, 相依／依賴. Keep service ids, file paths and
+  technical identifiers exactly as they appear in the CONTEXT.
