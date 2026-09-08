@@ -73,6 +73,26 @@ public class GraphGroundingTest {
     }
 
     @Test
+    void roleWordsNameTheNodeTheyDenote() {
+        DependencyGraph g = boa();
+        assertEquals(List.of("frontend"), ids(GraphGrounding.mentionedNodes("前端依賴誰？", g)));
+        assertEquals(List.of("frontend"), ids(GraphGrounding.mentionedNodes("what does the front-end call?", g)));
+        assertEquals(List.of("istio-ingressgateway"), ids(GraphGrounding.mentionedNodes("入口是哪個服務？", g)));
+        assertEquals(List.of("istio-ingressgateway"), ids(GraphGrounding.mentionedNodes("who sits behind the gateway?", g)));
+        // A literal id wins over a role word for the same node, and the order follows the question.
+        assertEquals(List.of("userservice", "frontend"), ids(GraphGrounding.mentionedNodes("userservice 和前端", g)));
+    }
+
+    @Test
+    void groundAddsFactSheetsForNodesThePlanNamed() {
+        DependencyGraph g = boa();
+        String ctx = GraphGrounding.ground(g, "what does the login service depend on?", List.of("userservice"));
+        assertTrue(ctx.contains("## Node: userservice"));
+        assertFalse(ctx.contains("The question names no node"));
+        assertTrue(GraphGrounding.ground(g, "x", List.of("not-a-node")).contains("The question names no node"));
+    }
+
+    @Test
     void mentionsComeBackInQuestionOrderMostSpecificFirstOnTies() {
         DependencyGraph g = boa();
         List<String> named = ids(GraphGrounding.mentionedNodes("does ledgerwriter reach balancereader, and frontend?", g));

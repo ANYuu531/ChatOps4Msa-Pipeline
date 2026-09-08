@@ -79,6 +79,7 @@ public class ReportQaService {
     private final GraphQueryPlanner planner;
     private final boolean embeddingsEnabled;
     private final boolean plannerEnabled;
+    private final boolean injectionCheck;
     private final int topK;
     private final String promptTemplate;
 
@@ -96,6 +97,7 @@ public class ReportQaService {
                            GraphQueryPlanner planner,
                            @Value("${dependency.qa.embeddings:true}") boolean embeddingsEnabled,
                            @Value("${dependency.qa.query-planner:true}") boolean plannerEnabled,
+                           @Value("${dependency.qa.injection-check:true}") boolean injectionCheck,
                            @Value("${dependency.qa.top-k:8}") int topK) {
         this.store = store;
         this.llmService = llmService;
@@ -103,6 +105,7 @@ public class ReportQaService {
         this.planner = planner;
         this.embeddingsEnabled = embeddingsEnabled;
         this.plannerEnabled = plannerEnabled;
+        this.injectionCheck = injectionCheck;
         this.topK = topK;
         this.promptTemplate = loadPrompt();
     }
@@ -235,6 +238,17 @@ public class ReportQaService {
                     return;
                 }
                 System.out.println("[DEBUG] report Q&A from " + userName + " on " + archive.repoName + ": " + question);
+
+                // The same gate the main channel applies. A thread question cannot
+                // trigger an action, but it can try to rewrite the answering rules;
+                // the prompt refuses that too — this is the belt to that brace.
+                if (injectionCheck && llmService.isPromptInjection(question)) {
+                    jdaService.sendThreadMessage(threadId,
+                            "That reads as an instruction rather than a question about the report, "
+                                    + "so I will not act on it. Ask about a service, an edge, the coverage, "
+                                    + "or the report's limitations.");
+                    return;
+                }
                 // Two workers may serve two threads at once; two questions in the SAME
                 // thread are answered one after the other so the shared history stays
                 // a conversation and the archive file is not written by both at once.
@@ -263,13 +277,27 @@ public class ReportQaService {
 
         // NL -> graph query -> deterministic execution: the structured answer for
         // questions that name no node ("which edges were never exercised?") or ask
-        // for a traversal ("what breaks if X goes down?"). Additive to the grounding.
-        String queryResults = "";
-        if (plannerEnabled) {
-            List<GraphQuery> queries = planner.plan(graph, question);
-            queryResults = GraphQueryEngine.execute(graph, queries);
+        // for a traversal ("what breaks if X goes down?"). Rules first — a recognised
+        // question shape must not depend on the model, and skipping the call is a
+        // second saved — the model planner only for what the rules do not know, and
+        // only when a fact sheet alone cannot answer.
+        List<DependencyGraph.Node> mentioned = GraphGrounding.mentionedNodes(question, graph);
+        List<GraphQuery> queries = RulePlanner.plan(question, mentioned, graph);
+        String planSource = "rules";
+        if (queries.isEmpty() && plannerEnabled && RulePlanner.needsLlmPlanner(question, mentioned)) {
+            queries = planner.plan(graph, question);
+            planSource = "llm";
         }
-        String context = buildContext(archive, graph, question, questionVector, topK, queryResults);
+        System.out.println("[DEBUG] graph query plan (" + planSource + "): " + queries);
+        String queryResults = GraphQueryEngine.execute(graph, queries);
+
+        // Nodes the plan named that the question did not spell (the model mapped
+        // "the login service" to userservice): their fact sheets are wanted too.
+        java.util.Set<String> planned = new java.util.LinkedHashSet<>();
+        for (GraphQuery q : queries) {
+            if (!"edges-of-type".equals(q.op)) planned.addAll(q.args);
+        }
+        String context = buildContext(archive, graph, question, questionVector, topK, queryResults, planned);
 
         JSONArray messages = new JSONArray();
         messages.put(new JSONObject().put("role", "system").put("content", promptTemplate + "\n\n# CONTEXT\n\n" + context));
@@ -301,6 +329,13 @@ public class ReportQaService {
      */
     static String buildContext(ReportArchive archive, DependencyGraph graph, String question,
                                double[] questionVector, int topK, String queryResults) {
+        return buildContext(archive, graph, question, questionVector, topK, queryResults, List.of());
+    }
+
+    /** @param extraNodeIds nodes named by the query plan but not spelled in the question */
+    static String buildContext(ReportArchive archive, DependencyGraph graph, String question,
+                               double[] questionVector, int topK, String queryResults,
+                               java.util.Collection<String> extraNodeIds) {
         StringBuilder sb = new StringBuilder();
         sb.append("## Report\n");
         sb.append("- Tool: ").append(DependencyGraph.TOOL_NAME).append('\n');
@@ -314,7 +349,7 @@ public class ReportQaService {
             sb.append("## Query results (graph queries selected for this question, executed by code)\n\n");
             sb.append(queryResults).append('\n');
         }
-        sb.append(GraphGrounding.ground(graph, question)).append('\n');
+        sb.append(GraphGrounding.ground(graph, question, extraNodeIds)).append('\n');
 
         sb.append("# 2. RUNTIME COVERAGE (computed; authoritative)\n\n");
         sb.append(archive.coverage.isBlank()

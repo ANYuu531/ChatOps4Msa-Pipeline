@@ -187,7 +187,7 @@ public class LLMService {
     }
 
     private String callAPI(JSONArray promptMessages) {
-        RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = newRestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -227,7 +227,7 @@ public class LLMService {
         return completionString;
     }
     public String callAPIFromOutside(JSONArray promptMessages) {
-        RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = newRestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -299,7 +299,7 @@ public class LLMService {
     private static final int EMBED_BATCH = 64;
 
     private List<double[]> embedBatch(List<String> batch) {
-        RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = newRestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + OPENAI_API_KEY);
@@ -334,6 +334,20 @@ public class LLMService {
             System.out.println("[Used Token] embeddings " + json.getJSONObject("usage").optInt("total_tokens", 0));
         }
         return out;
+    }
+
+    /**
+     * A client with timeouts. Without them a stalled OpenAI connection held the caller
+     * forever: on the deployment machine the bot said "processing..." and never came
+     * back, with nothing in the log. The read timeout is generous because the
+     * dependency report is one long completion; the connect timeout is not.
+     */
+    private static RestTemplate newRestTemplate() {
+        org.springframework.http.client.SimpleClientHttpRequestFactory factory =
+                new org.springframework.http.client.SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(15_000);
+        factory.setReadTimeout(180_000);
+        return new RestTemplate(factory);
     }
 
     private String loadSystemPrompt(String promptFile) {

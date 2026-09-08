@@ -4,6 +4,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -51,11 +52,28 @@ public final class GraphGrounding {
 
     /** Everything the graph can say about the question, as one Markdown block. */
     public static String ground(DependencyGraph graph, String question) {
+        return ground(graph, question, List.of());
+    }
+
+    /**
+     * @param extraNodeIds nodes resolved by another route (the query planner's
+     *                     arguments), whose fact sheets are wanted even though the
+     *                     question did not spell their id — e.g. the model mapped
+     *                     "the login service" onto {@code userservice}
+     */
+    public static String ground(DependencyGraph graph, String question, Collection<String> extraNodeIds) {
         if (graph == null) return "No dependency graph is available for this report.\n";
         StringBuilder sb = new StringBuilder();
         sb.append(summary(graph));
 
-        List<DependencyGraph.Node> named = mentionedNodes(question, graph);
+        List<DependencyGraph.Node> named = new ArrayList<>(mentionedNodes(question, graph));
+        if (extraNodeIds != null) {
+            for (String id : extraNodeIds) {
+                for (DependencyGraph.Node n : graph.getNodes()) {
+                    if (n.id.equals(id) && !named.contains(n)) named.add(n);
+                }
+            }
+        }
         if (named.isEmpty()) {
             sb.append("\nThe question names no node of this graph. Node ids, for reference: ")
                     .append(String.join(", ", ids(graph.getNodes()))).append("\n");
@@ -96,6 +114,18 @@ public final class GraphGrounding {
             }
             if (best >= 0) firstAt.put(node, best);
         }
+        // Role words: "前端" / "the gateway" name a node by what it is, not by its id.
+        for (Map.Entry<Pattern, Pattern> synonym : SYNONYMS.entrySet()) {
+            java.util.regex.Matcher m = synonym.getKey().matcher(q);
+            if (!m.find()) continue;
+            for (DependencyGraph.Node node : graph.getNodes()) {
+                if (firstAt.containsKey(node)) continue;
+                boolean byId = synonym.getValue().matcher(node.id.toLowerCase(Locale.ROOT)).find();
+                boolean byKind = synonym == GATEWAY_ENTRY && DependencyGraph.KIND_GATEWAY.equals(node.kind);
+                if (byId || byKind) firstAt.put(node, m.start());
+            }
+        }
+
         List<Map.Entry<DependencyGraph.Node, Integer>> entries = new ArrayList<>(firstAt.entrySet());
         entries.sort((a, b) -> {
             int byPos = Integer.compare(a.getValue(), b.getValue());
@@ -104,6 +134,24 @@ public final class GraphGrounding {
         });
         for (Map.Entry<DependencyGraph.Node, Integer> e : entries) out.add(e.getKey());
         return out;
+    }
+
+    /**
+     * Role words → the ids they usually denote. Kept to the two roles every system has
+     * and every reader names in their own language; anything more specific is the
+     * model planner's job, since it sees the id list.
+     */
+    private static final Map<Pattern, Pattern> SYNONYMS = new LinkedHashMap<>();
+    private static final Map.Entry<Pattern, Pattern> GATEWAY_ENTRY;
+
+    static {
+        SYNONYMS.put(Pattern.compile("前端|front[- ]?end(?!s)|the ui\\b|網頁", Pattern.CASE_INSENSITIVE),
+                Pattern.compile("^(frontend|front-end|web|ui|www)$|frontend"));
+        Pattern gatewayWord = Pattern.compile("閘道|入口|gateway|ingress|api ?gw\\b", Pattern.CASE_INSENSITIVE);
+        SYNONYMS.put(gatewayWord, Pattern.compile("gateway|ingress"));
+        Map.Entry<Pattern, Pattern> gw = null;
+        for (Map.Entry<Pattern, Pattern> e : SYNONYMS.entrySet()) if (e.getKey() == gatewayWord) gw = e;
+        GATEWAY_ENTRY = gw;
     }
 
     static Set<String> aliases(String id) {

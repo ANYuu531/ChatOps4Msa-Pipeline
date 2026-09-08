@@ -186,7 +186,7 @@
     <div class="flow">
       <div class="step code"><span class="k">1</span><b>判定是不是問答 thread</b><span class="who">程式碼</span><p>thread id 對 archive 索引；不是就走原本流程。</p></div>
       <div class="step code"><span class="k">2</span><b>偵測節點、產事實表</b><span class="who">程式碼</span><p>問句裡的服務名 → 進出邊、證據等級、連線數、傳遞閉包、層級。</p></div>
-      <div class="step ai"><span class="k">3</span><b>NL → 圖查詢</b><span class="who">LLM（小）</span><p>只准輸出 JSON 計畫，最多 3 條；參數經程式驗證，對不上圖就丟掉。</p></div>
+      <div class="step mix"><span class="k">3</span><b>NL → 圖查詢</b><span class="who">規則先、LLM 後</span><p>常見問法（影響、順序、沒跑到…）由規則直接對應算子；規則沒中且需要時才呼叫 LLM，只准輸出 JSON 計畫，參數經程式驗證。</p></div>
       <div class="step code"><span class="k">4</span><b>執行圖查詢</b><span class="who">程式碼</span><p>15 個算子：impact-of、uncovered、deploy-order…全是查表與 BFS。</p></div>
       <div class="step mix"><span class="k">5</span><b>檢索報告段落</b><span class="who">程式碼 + embedding API</span><p>BM25 ∪ embedding cosine → RRF 融合 → 取前 8 段。</p></div>
       <div class="step ai"><span class="k">6</span><b>講人話</b><span class="who">LLM（大）</span><p>只拿到上面的 context 與最近 6 輪對話；沒有的就說沒有。</p></div>
@@ -244,7 +244,7 @@
       <tr><th>項目</th><th>值</th><th>說明</th></tr>
       <tr><td>archive 保留</td><td class="num">7 天</td><td><code>dependency.qa.ttl-days</code>；過期後 thread 提問會回「已過期，請重跑分析」。存檔案，bot 重啟不丟。</td></tr>
       <tr><td>對話記憶</td><td class="num">餵 6 輪 · 存 40 則</td><td>模型每次看最近 6 輪問答；archive 最多留 40 則，再舊的丟。</td></tr>
-      <tr><td>一題耗時</td><td class="num">約 5–15 秒</td><td>1 次 embedding + 1 次 planner 小呼叫 + 1 次回答大呼叫。目前 HTTP 呼叫沒設 timeout，OpenAI 卡住會一直等（既有問題，主頻道也一樣）。</td></tr>
+      <tr><td>一題耗時</td><td class="num">約 4–12 秒</td><td>1 次 injection 檢查小呼叫 + 1 次 embedding + 1 次回答大呼叫；規則沒認出問法時多 1 次 planner 小呼叫。HTTP 呼叫設 timeout：連線 15 秒、讀取 180 秒，卡住會回錯誤而不是永遠等。</td></tr>
       <tr><td>context 上限</td><td class="num">段落 24k 字 · 前 8 段</td><td>事實表另計；gpt-4.1-mini 的 context 夠大，實務上不會撞到。</td></tr>
       <tr><td>Discord thread 封存</td><td class="num">依伺服器設定（預設 24 小時閒置）</td><td>封存只是收起來，任何人再貼訊息會自動打開，archive 仍在。</td></tr>
       <tr><td>每題成本</td><td class="num">很低</td><td>embedding 整份 archive 約數萬 token，一次性；每題兩次呼叫，context 約 6–15k token。</td></tr>
@@ -279,7 +279,8 @@
     <div class="pc">
       <div class="item"><span class="tag good">不編造</span><div><h3>事實由程式碼算，模型只講人話</h3><p>節點名經驗證、查詢由程式執行、prompt 禁止升級證據等級；問不存在的服務會回「圖上沒有」並列相近 id。</p></div></div>
       <div class="item"><span class="tag good">同源</span><div><h3>答案和圖、覆蓋率不會互相矛盾</h3><p>未覆蓋邊用同一個 CoverageAnalyzer，部署順序用同一套分層。上次那個「報告說 unknown、圖畫實線」的病不會在 thread 重演。</p></div></div>
-      <div class="item"><span class="tag good">可測</span><div><h3>確定性的部分有 47 條測試</h3><p>切段、檢索、節點偵測、事實表、15 個算子、archive 往返、Spring 接線。LLM 只剩措辭那一層要人工驗。</p></div></div>
+      <div class="item"><span class="tag good">可測</span><div><h3>確定性的部分有 56 條測試</h3><p>切段、檢索、節點偵測與角色詞、事實表、規則 planner、15 個算子、archive 往返、Spring 接線。LLM 只剩措辭那一層要人工驗。</p></div></div>
+      <div class="item"><span class="tag good">防護</span><div><h3>thread 問題也過 prompt-injection 檢查，LLM 呼叫有 timeout</h3><p>和主頻道同一道閘；prompt 另規定使用者訊息永遠是問題不是指令。卡住會在 180 秒內回錯誤，不再無聲等待。</p></div></div>
       <div class="item"><span class="tag good">好用</span><div><h3>不用按鈕、不用 @bot、中英皆可、能追問、重啟不丟</h3><p>問題黏在報告底下，一個人多份報告各自成 thread。</p></div></div>
       <div class="item"><span class="tag good">接軌</span><div><h3>這就是 8/14 提的 A2 設計落地</h3><p>NL → 圖查詢 DSL → 確定性執行 → LLM 講結果；<code>deploy-order</code> 就是接到部署生成那條線的點。</p></div></div>
     </div>
@@ -293,14 +294,13 @@
   <div class="body">
     <h2>缺點與界線（誠實版）</h2>
     <div class="pc">
-      <div class="item"><span class="tag warn">選錯查詢</span><div><h3>planner 可能挑錯算子，答案就少一塊事實</h3><p>不會說錯，但可能漏答。要拿真環境的 log 統計中文問句的選擇率；planner 可用設定關掉。</p></div></div>
-      <div class="item"><span class="tag warn">同義詞</span><div><h3>節點偵測是字串比對，「前端」對不到 frontend</h3><p>planner 那一步模型看得到 id 清單，通常補得回來；純靠事實表那一路抓不到。</p></div></div>
-      <div class="item"><span class="tag warn">證據上限</span><div><h3>只能答報告收到的證據</h3><p>不存 raw Prometheus、不存 Tier 3 填的值；QPS、版本號、報告沒收的東西答不出，它會直說。</p></div></div>
-      <div class="item"><span class="tag warn">成本與延遲</span><div><h3>每題兩次 LLM 呼叫加一次 embedding</h3><p>比單次呼叫慢、貴一點；embedding 依賴 OpenAI，掛了退回純 BM25 但語意檢索變弱。</p></div></div>
-      <div class="item"><span class="tag warn">安全</span><div><h3>thread 訊息沒過 prompt-injection 檢查</h3><p>主頻道有、thread 沒有。目前 Q&amp;A 不觸發任何動作、範圍鎖在報告，風險低，但要補。</p></div></div>
-      <div class="item"><span class="tag warn">未真環境驗證</span><div><h3>單元測試全過，真環境還沒跑完整輪</h3><p>第一次部署撞到 Spring 接線 bug（已修）。下一步就是拿 BoA 跑測試問題集。</p></div></div>
+      <div class="item"><span class="tag warn">漏答</span><div><h3>規則沒涵蓋的問法仍靠 LLM 選查詢，選錯就少一塊事實</h3><p>常見問法（影響、順序、沒跑到、資料庫、外部、佇列…）已改由規則確定性對應，中英皆可；規則沒中才問模型。不會說錯，但可能漏答。要用真環境 log 統計規則命中率。</p></div></div>
+      <div class="item"><span class="tag warn">別名有限</span><div><h3>只認「前端／閘道」這類角色詞，其餘同義詞靠 planner 看 id 清單對上</h3><p>planner 解出的 id 會回饋給事實表，所以「登入服務」對到 userservice 之後也有事實表；但沒有專案專屬的別名表。</p></div></div>
+      <div class="item"><span class="tag warn">證據上限</span><div><h3>只能答報告收到的證據（刻意不改）</h3><p>不存 raw Prometheus、不存 Tier 3 填的值；QPS、版本號、報告沒收的東西答不出，它會直說。要答就得擴充分析階段收什麼，不是讓問答猜。</p></div></div>
+      <div class="item"><span class="tag warn">成本</span><div><h3>每題兩到三次 LLM 呼叫加一次 embedding</h3><p>injection 檢查與回答固定兩次，planner 只在規則沒中時多一次；embedding 依賴 OpenAI，掛了退回純 BM25 但語意檢索變弱。</p></div></div>
+      <div class="item"><span class="tag warn">未真環境驗證</span><div><h3>單元測試 56 條全過，真環境還沒跑完整輪</h3><p>第一次部署撞到 Spring 接線 bug（已修）。下一步就是拿 BoA 跑測試問題集。</p></div></div>
     </div>
-    <div class="notes"><b>講稿</b>　缺點第一條是設計上的取捨：把「想」限制在選查詢，代價是選錯就漏答。我認為漏答比編造好，這是刻意的。</div>
+    <div class="notes"><b>講稿</b>　原本列了六條，做掉兩條：thread 訊息現在也過主頻道那個 injection 檢查，HTTP 呼叫也補了 timeout。第一條是設計上的取捨：把「想」限制在選查詢，代價是選錯就漏答。我認為漏答比編造好，這是刻意的；規則層就是把最常見的問法從「想」變成「查表」。</div>
   </div>
   <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span></span></div>
 </section>
@@ -321,9 +321,8 @@
       <div class="card">
         <h3>下一步</h3>
         <ul>
-          <li>真環境跑完一輪，統計 planner 對中文問句的選擇率。</li>
-          <li>thread 訊息補 prompt-injection 檢查；LLM 呼叫補 timeout。</li>
-          <li>同義詞：讓事實表那一路也能用 planner 解出的 id。</li>
+          <li>真環境跑完一輪，從 log 的 <code>graph query plan (rules|llm)</code> 統計規則命中率與 LLM 選擇正確率。</li>
+          <li>規則沒中的問法收集起來，補進規則或算子。</li>
           <li>把 <code>deploy-order</code> 接到 DeployPlanner，讓「對話」真的走到部署生成。</li>
         </ul>
       </div>
