@@ -155,8 +155,15 @@ public final class GraphQueryEngine {
             touched.put(e.target, true);
         }
         TreeMap<Integer, List<String>> tiers = new TreeMap<>();
+        List<String> externals = new ArrayList<>();
         for (DependencyGraph.Node n : graph.getNodes()) {
             if (n.layer == null || !touched.containsKey(n.id)) continue;
+            // An external host (github.com) is not something this team deploys: it is
+            // assumed reachable, not scheduled first.
+            if (DependencyGraph.KIND_EXTERNAL.equals(n.kind)) {
+                externals.add(n.id);
+                continue;
+            }
             tiers.computeIfAbsent(n.layer, k -> new ArrayList<>()).add(n.id);
         }
         if (tiers.isEmpty()) return "- no order can be derived: the graph has no edges\n";
@@ -166,6 +173,10 @@ public final class GraphQueryEngine {
         for (Map.Entry<Integer, List<String>> t : tiers.descendingMap().entrySet()) {
             sb.append("- step ").append(step++).append(" (tier ").append(t.getKey()).append("): ")
                     .append(String.join(", ", t.getValue())).append('\n');
+        }
+        if (!externals.isEmpty()) {
+            sb.append("- external hosts are not deployed here and are assumed reachable: ")
+                    .append(String.join(", ", externals)).append('\n');
         }
         sb.append("- derived from call depth in the graph; it is an ordering of hard dependencies, not a measured start-up time\n");
         return sb.toString();

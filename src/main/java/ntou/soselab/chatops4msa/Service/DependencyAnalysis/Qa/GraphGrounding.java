@@ -314,18 +314,20 @@ public final class GraphGrounding {
         }
 
         TreeMap<Integer, List<String>> tiers = new TreeMap<>();
+        TreeMap<Integer, List<String>> deployable = new TreeMap<>();
         for (DependencyGraph.Node n : graph.getNodes()) {
             if (n.layer == null || !touched.contains(n.id)) continue;
             tiers.computeIfAbsent(n.layer, k -> new ArrayList<>()).add(n.id);
+            if (!DependencyGraph.KIND_EXTERNAL.equals(n.kind)) deployable.computeIfAbsent(n.layer, k -> new ArrayList<>()).add(n.id);
         }
         if (!tiers.isEmpty()) {
             sb.append("- Tiers (0 = entry; each tier calls the ones below it):\n");
             for (Map.Entry<Integer, List<String>> t : tiers.entrySet()) {
                 sb.append("  - tier ").append(t.getKey()).append(": ").append(String.join(", ", t.getValue())).append('\n');
             }
-            sb.append("- Implied start-up / deployment order (deepest tier first, so every service finds what it calls already running): ");
+            sb.append("- Implied start-up / deployment order (deepest tier first, so every service finds what it calls already running; external hosts are assumed reachable and left out): ");
             boolean first = true;
-            for (Map.Entry<Integer, List<String>> t : tiers.descendingMap().entrySet()) {
+            for (Map.Entry<Integer, List<String>> t : deployable.descendingMap().entrySet()) {
                 if (!first) sb.append(" → ");
                 sb.append('[').append(String.join(", ", t.getValue())).append(']');
                 first = false;

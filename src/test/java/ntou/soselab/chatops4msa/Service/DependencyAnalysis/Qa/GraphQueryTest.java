@@ -183,6 +183,9 @@ public class GraphQueryTest {
         int entry = order.indexOf("istio-ingressgateway");
         assertTrue(dbs >= 0 && entry >= 0 && dbs < entry, "data stores start before the entry point:\n" + order);
         assertFalse(order.contains("(unknown operator)"));
+        // github.com is called by frontend, but nobody deploys github.com.
+        assertFalse(order.contains("step") && order.matches("(?s).*step \\d+ \\(tier \\d+\\): [^\\n]*github\\.com.*"), order);
+        assertTrue(order.contains("external hosts are not deployed here and are assumed reachable: github.com"), order);
     }
 
     @Test
