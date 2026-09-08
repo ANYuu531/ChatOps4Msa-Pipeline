@@ -114,9 +114,10 @@ Planner 失敗（沒 key、網路、輸出垃圾）→ 空計畫，退回只有 
 （`dependencies-of`、`dependents-of`、`impact-of`、`startup-needs`、`path`、`uncovered`(→ uncovered + unobserved-edges)、`observed-edges`、
 `db-users`、`deploy-order`、`undeployed`、`externals`、`async`、`mentioned-only`，以及 `about-report`：問報告本身、不查圖也不呼叫 planner）。
 啟動後把例句 embed 一次；問句的向量本來就為了段落檢索算了，直接對每句例句算 cosine，取最高分的意圖。
-**信心判定**：最高分 ≥ `threshold`（預設 0.55）且領先第二名 ≥ `margin`（0.03），或最高分 ≥ `high`（0.72）。信心不足 → LLM planner。
+**信心判定**：最高分 ≥ `threshold`（預設 0.60）且領先第二名 ≥ `margin`（0.05），或最高分 ≥ `high`（0.85）。信心不足 → LLM planner。
+（2026-09-08 第一輪 12 題實測：例句原句 0.97–1.00，換句話說 0.64–0.73，沒有對應意圖的問題 0.38–0.50；唯一一次「有把握但選錯」是 0.65 領先 0.10，門檻擋不住，靠修例句解決。）
 需要節點的意圖若問句沒點名節點，也視為不確定交給 planner（它看得到 id 清單，能把「登入服務」對成 userservice）。
-**唯一的規則**是否定詞：「沒／未／never／not」讓 `observed-edges` 變 `uncovered`，因為兩者在向量空間靠得很近、意思相反。
+**只剩兩條規則**，都是向量模型會忽略的功能詞：否定詞「沒／未／never／not」讓 `observed-edges` 變 `uncovered`；方向詞「誰依賴／who calls」是 `dependents-of`、「依賴誰／depend on」是 `dependencies-of`，因為「X 依賴誰」和「誰依賴 X」只差語序，實測向量分不清。
 為什麼換掉 regex：第一次真環境四題就有兩題是 regex 沒列到的說法；例句會泛化，加意圖是加句子不是加正規表達式。
 log 印 `graph query plan (router <intent> <score> (next <intent> <score>)): [...]` 或 `(llm, router ... unsure)`。
 **校準**：`SemanticRouterCalibrationTest` 用 33 句不在例句裡的問法對真實 embedding 模型跑，印出每句的最高分／第二名與正確率，

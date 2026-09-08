@@ -84,7 +84,7 @@ public final class SemanticRouter {
 
     public static final List<Intent> INTENTS = List.of(
             new Intent("dependencies-of", 1, List.of("dependencies-of"), false,
-                    "X 依賴哪些服務？", "X 會呼叫誰？", "X 用到了什麼？", "X 的下游有哪些？", "X 需要連到哪些東西？",
+                    "X 依賴哪些服務？", "X 依賴誰？", "X 會呼叫誰？", "X 用到了什麼？", "X 的下游有哪些？", "X 需要連到哪些東西？", "X 靠哪些服務運作？",
                     "what does X depend on?", "what does X call?", "which services does X use?", "what is downstream of X?"),
             new Intent("dependents-of", 1, List.of("dependents-of"), false,
                     "誰依賴 X？", "誰會呼叫 X？", "X 的上游是誰？", "哪些服務會用到 X？", "X 被誰呼叫？",
@@ -99,8 +99,8 @@ public final class SemanticRouter {
                     "X 怎麼連到 Y？", "X 到 Y 的路徑是什麼？", "X 會不會呼叫 Y？", "X 跟 Y 之間怎麼走？", "從 X 到 Y 要經過誰？",
                     "how does X reach Y?", "does X call Y?", "is there a path from X to Y?", "how are X and Y connected?"),
             new Intent("uncovered", 0, List.of("uncovered", "unobserved-edges"), false,
-                    "哪些邊沒跑到？", "哪些邊沒有被流量覆蓋？", "哪些邊是宣告了但沒觀測到的？", "覆蓋率是多少？", "還有哪些呼叫沒被驅動到？", "流量沒經過哪些邊？",
-                    "which edges were never observed at runtime?", "what was not exercised by traffic?", "what is the runtime coverage?", "which declared edges have no traffic?"),
+                    "哪些邊沒跑到？", "哪些邊沒有被流量覆蓋？", "哪些邊是宣告了但沒觀測到的？", "哪些邊是程式碼有宣告但流量沒跑到的？", "有宣告但沒有流量經過的呼叫有哪些？", "覆蓋率是多少？", "還有哪些呼叫沒被驅動到？", "流量沒經過哪些邊？",
+                    "which edges were never observed at runtime?", "what was not exercised by traffic?", "what is the runtime coverage?", "which declared edges have no traffic?", "which declared calls never got traffic?"),
             new Intent("observed-edges", 0, List.of("observed-edges"), false,
                     "哪些邊有被觀測到？", "哪幾條是 runtime 觀測到的？", "實線的邊有哪些？", "Istio 真的看到哪些呼叫？", "有流量的邊是哪些？",
                     "which edges did Istio actually observe?", "what was seen at runtime?", "which calls have runtime evidence?", "list the observed edges"),
@@ -111,7 +111,7 @@ public final class SemanticRouter {
                     "建議的部署順序是什麼？", "應該先部署哪個服務？", "啟動順序怎麼排？", "照這張圖要怎麼排上線順序？", "先起哪些、後起哪些？",
                     "what order should we deploy in?", "what is the start-up order?", "what should be brought up first?", "deployment sequence?"),
             new Intent("undeployed", 0, List.of("undeployed"), false,
-                    "哪些服務沒部署？", "有引用但沒在跑的服務有哪些？", "叢集裡缺了哪些服務？", "哪些是宣告了但沒上線的？",
+                    "哪些服務沒部署？", "有引用但沒在跑的服務有哪些？", "叢集裡缺了哪些服務？", "哪些服務在叢集裡沒有對應的 Deployment？", "哪些 workload 沒有在跑？",
                     "which services are not deployed?", "what is referenced but missing from the cluster?", "which workloads are not running?"),
             new Intent("externals", 0, List.of("externals"), false,
                     "有哪些外部依賴？", "有沒有呼叫第三方服務？", "會連到 mesh 外面的有哪些？", "外部主機有哪些？",
@@ -131,10 +131,21 @@ public final class SemanticRouter {
     private static final Pattern NEGATION = Pattern.compile(
             "沒|未|不曾|從未|never|not\\b|n't|without|no traffic|no runtime", Pattern.CASE_INSENSITIVE);
 
-    static final double DEFAULT_THRESHOLD = 0.55;
-    static final double DEFAULT_MARGIN = 0.03;
+    /** "who calls X", "誰依賴 X": the named node is the target. */
+    private static final Pattern UPSTREAM = Pattern.compile(
+            "^\\s*誰|哪些?(服務|人|元件)?(會)?(依賴|呼叫|用到|使用|靠)|被誰|上游|who (calls|depends|uses|talks|relies)|(calls|uses|depends on|relies on) [a-z0-9_.-]+\\s*\\?*$|upstream|callers of");
+    /** "X depends on who", "X 依賴誰": the named node is the source. */
+    private static final Pattern DOWNSTREAM = Pattern.compile(
+            "依賴(哪|誰|什麼)|呼叫(哪|誰|什麼)|用到(哪|誰|什麼)|靠(哪|誰|什麼)|下游|depend(s)? on\\s*(what|which|who)?\\s*\\?*$|what does .* (call|use|depend|need)|downstream|dependencies of");
+
+    // From the first real run (2026-09-08, 12 questions): exact examples score 0.97–1.00,
+    // good paraphrases 0.64–0.73, questions with no matching intent 0.38–0.50. The one
+    // confident wrong route scored 0.65 with a 0.10 lead, so the threshold alone could
+    // not have caught it; the examples were fixed and the margin widened.
+    static final double DEFAULT_THRESHOLD = 0.60;
+    static final double DEFAULT_MARGIN = 0.05;
     /** Above this the runner-up margin is not required: the match is unambiguous on its own. */
-    static final double DEFAULT_HIGH = 0.72;
+    static final double DEFAULT_HIGH = 0.85;
 
     private final Embedder embedder;
     private final double threshold;
@@ -208,9 +219,17 @@ public final class SemanticRouter {
             return new Decision("none", 0, "none", 0, false, List.of(), false);
         }
 
-        // The one rule: a negated "observed" is "not observed".
+        // Two rules for the function words embeddings underweight.
+        // 1. A negated "observed" is "not observed".
         if ("observed-edges".equals(best) && question != null && NEGATION.matcher(question).find()) {
             best = "uncovered";
+        }
+        // 2. Direction: "誰依賴 X" and "X 依賴誰" differ only in word order, and the
+        //    vectors do not reliably tell them apart. The question form does.
+        if (("dependencies-of".equals(best) || "dependents-of".equals(best)) && question != null) {
+            String q = question.toLowerCase(Locale.ROOT);
+            if (UPSTREAM.matcher(q).find()) best = "dependents-of";
+            else if (DOWNSTREAM.matcher(q).find()) best = "dependencies-of";
         }
 
         boolean confident = bestScore >= high || (bestScore >= threshold && bestScore - secondScore >= margin);

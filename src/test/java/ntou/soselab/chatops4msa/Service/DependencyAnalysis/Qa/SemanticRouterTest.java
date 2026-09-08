@@ -72,6 +72,18 @@ public class SemanticRouterTest {
     }
 
     @Test
+    void directionWordsDecideBetweenDependenciesAndDependents() {
+        SemanticRouter router = new SemanticRouter(FAKE, 0.3, 0.0, 0.9);
+        // Word overlap alone cannot tell these apart; the question form must.
+        assertEquals("dependencies-of", route(router, "frontend 依賴誰？").intent);
+        assertEquals("dependencies-of", route(router, "前端依賴誰？").intent);
+        assertEquals("dependents-of", route(router, "誰依賴 frontend？").intent);
+        assertEquals("dependents-of", route(router, "who calls frontend?").intent);
+        assertEquals("dependencies-of", route(router, "what does frontend depend on?").intent);
+        assertEquals("dependents-of", route(router, "哪些服務會呼叫 userservice？").intent);
+    }
+
+    @Test
     void nodeIntentWithoutANamedNodeIsNotConfident() {
         SemanticRouter router = new SemanticRouter(FAKE, 0.3, 0.0, 0.9);
         SemanticRouter.Decision d = route(router, "如果登入服務掛了會影響誰？");

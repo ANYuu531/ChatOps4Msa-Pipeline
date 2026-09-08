@@ -294,11 +294,11 @@
   <div class="body">
     <h2>缺點與界線（誠實版）</h2>
     <div class="pc">
-      <div class="item"><span class="tag warn">漏答</span><div><h3>路由不確定的問法仍靠 LLM 選查詢，選錯就少一塊事實</h3><p>意圖用例句的向量相似度判定，不是關鍵字窮舉：換個說法、換語言都能對上，加意圖只是加例句。門檻要用真實問句校準；不確定才問模型。不會說錯，但可能漏答。</p></div></div>
+      <div class="item"><span class="tag warn">漏答</span><div><h3>路由不確定的問法仍靠 LLM 選查詢，選錯就少一塊事實</h3><p>意圖用例句的向量相似度判定，不是關鍵字窮舉：換個說法、換語言都能對上，加意圖只是加例句。第一輪 12 題實測：4 題路由有把握且對、6 題交給模型也對、1 題路由選錯（例句誤導，已修）。不會說錯，但可能漏答。</p></div></div>
       <div class="item"><span class="tag warn">別名有限</span><div><h3>只認「前端／閘道」這類角色詞，其餘同義詞靠 planner 看 id 清單對上</h3><p>planner 解出的 id 會回饋給事實表，所以「登入服務」對到 userservice 之後也有事實表；但沒有專案專屬的別名表。</p></div></div>
       <div class="item"><span class="tag warn">證據上限</span><div><h3>只能答報告收到的證據（刻意不改）</h3><p>不存 raw Prometheus、不存 Tier 3 填的值；QPS、版本號、報告沒收的東西答不出，它會直說。要答就得擴充分析階段收什麼，不是讓問答猜。</p></div></div>
       <div class="item"><span class="tag warn">成本</span><div><h3>每題兩到三次 LLM 呼叫加一次 embedding</h3><p>injection 檢查與回答固定兩次，planner 只在規則沒中時多一次；embedding 依賴 OpenAI，掛了退回純 BM25 但語意檢索變弱。</p></div></div>
-      <div class="item"><span class="tag warn">未真環境驗證</span><div><h3>單元測試 66 條全過，真環境還沒跑完整輪</h3><p>第一次部署撞到 Spring 接線 bug（已修）。下一步就是拿 BoA 跑測試問題集。</p></div></div>
+      <div class="item"><span class="tag warn">只驗過 greenfield</span><div><h3>單元測試 67 條全過；真環境 greenfield 12 題零編造，runtime 模式待機器 A 回來</h3><p>第一次部署撞到 Spring 接線 bug（已修）；greenfield 曾把「未量測」講成 0% 覆蓋率（已修）。</p></div></div>
     </div>
     <div class="notes"><b>講稿</b>　原本列了六條，做掉兩條：thread 訊息現在也過主頻道那個 injection 檢查，HTTP 呼叫也補了 timeout。第一條是設計上的取捨：把「想」限制在選查詢，代價是選錯就漏答。我認為漏答比編造好，這是刻意的；規則層就是把最常見的問法從「想」變成「查表」。</div>
   </div>
