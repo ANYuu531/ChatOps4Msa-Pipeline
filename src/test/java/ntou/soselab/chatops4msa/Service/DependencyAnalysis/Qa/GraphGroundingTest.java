@@ -188,7 +188,7 @@ public class GraphGroundingTest {
         g.addNode("b", DependencyGraph.KIND_SERVICE);
         g.addEdge("a", "b", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "x");
         assertTrue(GraphGrounding.summary(g).contains("## Graph summary (greenfield: static, no cluster)"));
-        assertTrue(GraphGrounding.factSheet(g, node(g, "a")).contains("not determined (greenfield run"));
+        assertTrue(GraphGrounding.factSheet(g, node(g, "a")).contains("unknown — greenfield (static) run, no cluster was queried"));
     }
 
     @Test

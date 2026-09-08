@@ -151,6 +151,27 @@ public class GraphQueryTest {
     }
 
     @Test
+    void greenfieldNeverPresentsCoverageOrDeploymentAsMeasured() {
+        DependencyGraph g = new DependencyGraph("");
+        for (String s : List.of("frontend", "userservice", "accounts-db")) g.addNode(s, DependencyGraph.classifyKind(s));
+        g.addEdge("frontend", "userservice", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "code");
+        g.addEdge("userservice", "accounts-db", "db", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "code");
+
+        String uncovered = GraphQueryEngine.execute(g, new GraphQuery("uncovered", List.of()));
+        assertTrue(uncovered.startsWith("Coverage was NOT measured"), uncovered);
+        assertFalse(uncovered.contains("%"), "no percentage for a run that measured nothing");
+        assertTrue(uncovered.contains("- declared, unverified: frontend -> userservice"));
+        assertTrue(uncovered.contains("- declared datastore edge, unverified: userservice -> accounts-db"));
+
+        String undeployed = GraphQueryEngine.execute(g, new GraphQuery("undeployed", List.of()));
+        assertTrue(undeployed.contains("greenfield (static) run, no cluster was queried"));
+
+        String sheet = GraphGrounding.factSheet(g, g.getNodes().iterator().next());
+        assertTrue(sheet.contains("- Deployed: unknown — greenfield (static) run, no cluster was queried"));
+        assertFalse(sheet.contains("StatefulSet"), "no guessing at reasons a static run cannot know");
+    }
+
+    @Test
     void undeployedAndDeployOrder() {
         assertTrue(run("undeployed").contains("- ts-order-service (service): referenced in code/docs, not running"));
 

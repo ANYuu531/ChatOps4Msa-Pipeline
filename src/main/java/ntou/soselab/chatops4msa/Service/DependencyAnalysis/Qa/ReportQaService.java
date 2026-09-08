@@ -352,9 +352,16 @@ public class ReportQaService {
         sb.append(GraphGrounding.ground(graph, question, extraNodeIds)).append('\n');
 
         sb.append("# 2. RUNTIME COVERAGE (computed; authoritative)\n\n");
-        sb.append(archive.coverage.isBlank()
-                ? "Not measured (greenfield run, or no service-to-service edges to score).\n\n"
-                : archive.coverage + "\n\n");
+        if ("greenfield".equals(archive.mode) || archive.namespace.isBlank()) {
+            // The channel's coverage message exists for a static run too (0 of N), but
+            // handing the model "0%" invites it to report a measurement that never happened.
+            sb.append("NOT MEASURED: greenfield (static) run — no cluster, no traffic driven, nothing observed. "
+                    + "Every edge is declared-only. Do not present any coverage percentage as a result.\n\n");
+        } else {
+            sb.append(archive.coverage.isBlank()
+                    ? "Not measured (no service-to-service edges to score).\n\n"
+                    : archive.coverage + "\n\n");
+        }
 
         sb.append("# 3. RETRIEVED PASSAGES (report + evidence notes, selected for this question)\n\n");
         List<TextChunk> hits = ChunkRetriever.retrieve(archive.chunks, question, questionVector, topK, PASSAGE_BUDGET_CHARS);

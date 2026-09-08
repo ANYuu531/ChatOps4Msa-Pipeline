@@ -107,6 +107,15 @@ public final class GraphQueryEngine {
         CoverageAnalyzer.Report r = CoverageAnalyzer.analyze(graph);
         if (!r.hasEdges()) return "- coverage is not measurable: no scoreable service -> service edge (greenfield, or nothing extracted)\n";
         StringBuilder sb = new StringBuilder();
+        if (isGreenfield(graph)) {
+            // Nothing was driven and nothing was measured; "0%" would read as a result.
+            sb.append("Coverage was NOT measured: this is a greenfield (static) run with no cluster and no traffic. ")
+                    .append("Every edge below is declared in code/docs and unverified; they are the targets a runtime run would try to exercise:\n");
+            for (String e : r.uncovered) sb.append("- declared, unverified: ").append(e).append('\n');
+            if (r.hasDbEdges()) for (String e : r.dbUncovered) sb.append("- declared datastore edge, unverified: ").append(e).append('\n');
+            if (r.mentionedOnly > 0) sb.append("- not counted: ").append(r.mentionedOnly).append(" mentioned-only edge(s)\n");
+            return sb.toString();
+        }
         sb.append("Business edges observed ").append(r.observed).append(" / ").append(r.total).append(" (").append(r.percent()).append("%).\n");
         if (r.uncovered.isEmpty()) sb.append("- every scoreable business edge was exercised\n");
         else for (String e : r.uncovered) sb.append("- uncovered: ").append(e).append('\n');
@@ -129,9 +138,10 @@ public final class GraphQueryEngine {
         if (n > 0) return n + " node(s):\n" + sb;
         boolean anyKnown = false;
         for (DependencyGraph.Node node : graph.getNodes()) if (node.deployed != null) anyKnown = true;
-        return anyKnown
-                ? "- every referenced workload is deployed\n"
-                : "- deployment state was not determined for any node (greenfield run: no cluster was queried)\n";
+        if (isGreenfield(graph) || !anyKnown) {
+            return "- deployment state is unknown for every node: greenfield (static) run, no cluster was queried\n";
+        }
+        return "- every referenced workload is deployed\n";
     }
 
     private static String deployOrder(DependencyGraph graph) {
@@ -159,6 +169,12 @@ public final class GraphQueryEngine {
         }
         sb.append("- derived from call depth in the graph; it is an ordering of hard dependencies, not a measured start-up time\n");
         return sb.toString();
+    }
+
+    /** No namespace = a static run: no cluster was queried, nothing was observed. */
+    static boolean isGreenfield(DependencyGraph graph) {
+        String ns = graph.getNamespace();
+        return ns == null || ns.isBlank() || ns.equalsIgnoreCase("none") || ns.equalsIgnoreCase("greenfield");
     }
 
     private static boolean isKind(DependencyGraph graph, String id, String kind) {

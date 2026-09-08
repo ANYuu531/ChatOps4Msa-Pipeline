@@ -50,8 +50,7 @@ public class GraphQueryPlanner {
             String response = llmService.callAPIFromOutside(messages);
             List<GraphQuery> queries = GraphQuery.parse(response, graph);
             if (queries.size() > MAX_QUERIES) queries = new ArrayList<>(queries.subList(0, MAX_QUERIES));
-            System.out.println("[DEBUG] graph query plan: " + queries);
-            return queries;
+            return queries; // the caller logs the plan together with its source (rules|llm)
         } catch (Exception e) {
             System.out.println("[WARNING] graph query planning skipped: " + e.getMessage());
             return List.of();

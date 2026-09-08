@@ -185,7 +185,7 @@ public final class GraphGrounding {
         StringBuilder sb = new StringBuilder();
         sb.append("## Node: ").append(node.id).append('\n');
         sb.append("- Kind: ").append(kindWord(node.kind)).append('\n');
-        sb.append("- Deployed: ").append(deployedWord(node)).append('\n');
+        sb.append("- Deployed: ").append(deployedWord(graph, node)).append('\n');
         if (node.image != null && !node.image.isBlank()) sb.append("- Image: ").append(node.image).append('\n');
         if (node.replicas != null && !node.replicas.isBlank()) sb.append("- Replicas (ready/desired): ").append(node.replicas).append('\n');
         if (node.deployedAt != null && !node.deployedAt.isBlank()) sb.append("- Created: ").append(node.deployedAt).append('\n');
@@ -417,9 +417,11 @@ public final class GraphGrounding {
         return "service";
     }
 
-    private static String deployedWord(DependencyGraph.Node node) {
+    private static String deployedWord(DependencyGraph graph, DependencyGraph.Node node) {
         if (Boolean.TRUE.equals(node.deployed)) return "yes (a matching Deployment is running)";
         if (Boolean.FALSE.equals(node.deployed)) return "NO — referenced in code/docs but not running in the cluster";
-        return "not determined (greenfield run, externally managed, or a StatefulSet rather than a Deployment)";
+        // Unknown means two different things, and the reader should not be left to guess which.
+        if (GraphQueryEngine.isGreenfield(graph)) return "unknown — greenfield (static) run, no cluster was queried";
+        return "not determined (externally managed, or a StatefulSet rather than a Deployment)";
     }
 }

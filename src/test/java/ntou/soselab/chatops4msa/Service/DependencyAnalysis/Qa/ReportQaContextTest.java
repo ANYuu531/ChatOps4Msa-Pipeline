@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -75,7 +76,12 @@ public class ReportQaContextTest {
         a.coverage = "";
         String ctx = ReportQaService.buildContext(a, new DependencyGraph(""), "what is here?", null, 4);
         assertTrue(ctx.contains("- Namespace: (none — greenfield, static analysis)"));
-        assertTrue(ctx.contains("Not measured (greenfield run, or no service-to-service edges to score)."));
+        assertTrue(ctx.contains("NOT MEASURED: greenfield (static) run"));
+
+        // Even when the channel posted a "0 / 7" message for the static run, the model is not shown it.
+        a.coverage = "Istio observed **0 / 7** business edges — **0%** runtime coverage.";
+        String ctx2 = ReportQaService.buildContext(a, new DependencyGraph(""), "what is here?", null, 4);
+        assertFalse(ctx2.contains("0 / 7"));
     }
 
     @Test
