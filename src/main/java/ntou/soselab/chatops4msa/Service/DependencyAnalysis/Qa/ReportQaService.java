@@ -235,8 +235,14 @@ public class ReportQaService {
                     return;
                 }
                 System.out.println("[DEBUG] report Q&A from " + userName + " on " + archive.repoName + ": " + question);
-                String answer = answer(archive, question);
-                store.save(archive);
+                // Two workers may serve two threads at once; two questions in the SAME
+                // thread are answered one after the other so the shared history stays
+                // a conversation and the archive file is not written by both at once.
+                String answer;
+                synchronized (archive) {
+                    answer = answer(archive, question);
+                    store.save(archive);
+                }
                 for (String piece : splitForDiscord(answer)) jdaService.sendThreadMessage(threadId, piece);
             } catch (Exception e) {
                 e.printStackTrace();

@@ -1,0 +1,366 @@
+<title>DepWeaver Report Q&amp;A</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f4f6f8;
+    --paper: #ffffff;
+    --ink: #1c2330;
+    --ink-2: #4b5567;
+    --muted: #7c8599;
+    --line: #d8dde6;
+    --code: #2f5fb3;        /* 程式碼（沿用 Fig.1 的藍） */
+    --code-soft: #e3ebf8;
+    --ai: #7b4fb0;          /* LLM（沿用 Fig.1 的紫） */
+    --ai-soft: #ece4f6;
+    --mix: linear-gradient(90deg, #2f5fb3, #7b4fb0);
+    --good: #2f7a5a;
+    --good-soft: #e1f0e8;
+    --warn: #b8791f;
+    --warn-soft: #f7ecd9;
+    --shadow: 0 1px 2px rgba(28,35,48,.06), 0 8px 24px rgba(28,35,48,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #12161d; --paper: #1a1f28; --ink: #e8ebf1; --ink-2: #b4bccb; --muted: #8791a3; --line: #2c3442;
+      --code: #7ea3ea; --code-soft: #1f2c44; --ai: #b593e3; --ai-soft: #2c2340;
+      --mix: linear-gradient(90deg, #7ea3ea, #b593e3);
+      --good: #7fc7a4; --good-soft: #1c3128; --warn: #e2b062; --warn-soft: #3a2d17;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #12161d; --paper: #1a1f28; --ink: #e8ebf1; --ink-2: #b4bccb; --muted: #8791a3; --line: #2c3442;
+    --code: #7ea3ea; --code-soft: #1f2c44; --ai: #b593e3; --ai-soft: #2c2340;
+    --mix: linear-gradient(90deg, #7ea3ea, #b593e3);
+    --good: #7fc7a4; --good-soft: #1c3128; --warn: #e2b062; --warn-soft: #3a2d17;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    font-size: 17px; line-height: 1.6;
+  }
+  code, .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; }
+  h1, h2 { font-family: "Noto Serif TC", "PingFang TC", serif; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2rem, 4.2vw, 3.4rem); line-height: 1.15; font-weight: 700; }
+  h2 { font-size: clamp(1.5rem, 2.6vw, 2.1rem); line-height: 1.25; font-weight: 700; }
+  h3 { margin: 0 0 .4rem; font-size: 1.02rem; font-weight: 700; }
+  p { margin: 0; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li + li { margin-top: .35em; }
+
+  .slide {
+    min-height: 100vh; scroll-snap-align: start;
+    display: grid; grid-template-rows: auto 1fr auto;
+    padding: clamp(24px, 4vw, 56px) clamp(24px, 6vw, 96px);
+    max-width: 1280px; margin: 0 auto;
+  }
+  .eyebrow {
+    display: flex; align-items: center; gap: .8rem;
+    font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 500;
+  }
+  .eyebrow .n { font-family: "JetBrains Mono", monospace; color: var(--ink-2); }
+  .eyebrow .rule { flex: 1; height: 1px; background: var(--line); }
+  .body { display: grid; align-content: center; gap: 1.4rem; padding: 1.6rem 0; }
+  .foot { display: flex; justify-content: space-between; font-size: .78rem; color: var(--muted); }
+
+  .lede { font-size: 1.12rem; color: var(--ink-2); max-width: 60ch; }
+  .cols { display: grid; gap: 1.2rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); align-items: start; }
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 1.1rem 1.2rem; box-shadow: var(--shadow); }
+  .card.plain { box-shadow: none; }
+  .tag { display: inline-block; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; padding: .15em .55em; border-radius: 4px; font-weight: 700; }
+  .tag.code { background: var(--code-soft); color: var(--code); }
+  .tag.ai { background: var(--ai-soft); color: var(--ai); }
+  .tag.mix { background: var(--mix); color: #fff; }
+  .tag.good { background: var(--good-soft); color: var(--good); }
+  .tag.warn { background: var(--warn-soft); color: var(--warn); }
+
+  /* cover */
+  .cover .body { gap: 2rem; }
+  .cover .brand { font-family: "JetBrains Mono", monospace; color: var(--code); font-weight: 500; letter-spacing: .06em; }
+  .legend { display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: .9rem; color: var(--ink-2); }
+  .legend span::before { content: ""; display: inline-block; width: .8em; height: .8em; border-radius: 2px; margin-right: .4em; vertical-align: -.05em; }
+  .legend .l-code::before { background: var(--code); } .legend .l-ai::before { background: var(--ai); } .legend .l-mix::before { background: var(--mix); }
+
+  /* flow */
+  .flow { display: grid; grid-template-columns: repeat(6, 1fr); gap: .6rem; align-items: stretch; }
+  .step { border-radius: 10px; padding: .85rem .9rem; border: 2px solid var(--line); background: var(--paper); font-size: .9rem; display: grid; gap: .35rem; align-content: start; position: relative; }
+  .step.code { border-color: var(--code); } .step.ai { border-color: var(--ai); }
+  .step.mix { border-image: var(--mix) 1; border-radius: 0; }
+  .step .k { font-family: "JetBrains Mono", monospace; font-size: .74rem; color: var(--muted); }
+  .step b { font-size: .98rem; }
+  .step .who { font-size: .76rem; font-weight: 700; }
+  .step.code .who { color: var(--code); } .step.ai .who { color: var(--ai); } .step.mix .who { background: var(--mix); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .step:not(:last-child)::after { content: "→"; position: absolute; right: -.75rem; top: 45%; color: var(--muted); font-size: 1rem; z-index: 1; }
+  .authority { display: grid; grid-template-columns: auto 1fr; gap: .4rem 1rem; font-size: .95rem; align-items: baseline; }
+  .authority .rank { font-family: "JetBrains Mono", monospace; color: var(--muted); }
+  @media (max-width: 980px) { .flow { grid-template-columns: repeat(3, 1fr); } .step:not(:last-child)::after { display: none; } }
+  @media (max-width: 560px) { .flow { grid-template-columns: 1fr; } }
+
+  /* tables */
+  .tbl { width: 100%; border-collapse: collapse; font-size: .95rem; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .tbl th, .tbl td { text-align: left; padding: .6rem .9rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .tbl th { font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl td:first-child { font-weight: 500; white-space: nowrap; }
+  .tbl .num { font-variant-numeric: tabular-nums; font-family: "JetBrains Mono", monospace; font-size: .88em; }
+  .scroll { overflow-x: auto; }
+
+  /* example exchange */
+  .chat { display: grid; gap: .6rem; font-size: .92rem; }
+  .msg { padding: .7rem .9rem; border-radius: 10px; max-width: 62ch; }
+  .msg.q { background: var(--code-soft); justify-self: end; }
+  .msg.a { background: var(--paper); border: 1px solid var(--line); }
+  .msg .from { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: .2rem; }
+  .plan { font-family: "JetBrains Mono", monospace; font-size: .8rem; color: var(--ai); background: var(--ai-soft); padding: .5rem .8rem; border-radius: 8px; }
+
+  /* pros / cons */
+  .pc { display: grid; gap: .8rem; }
+  .pc .item { display: grid; grid-template-columns: auto 1fr; gap: .8rem; align-items: start; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: .8rem 1rem; }
+  .pc .item .tag { margin-top: .2rem; }
+  .pc .item p { font-size: .95rem; color: var(--ink-2); }
+
+  /* notes */
+  .notes { display: none; margin-top: .6rem; border-left: 3px solid var(--ai); padding: .6rem .9rem; background: var(--paper); color: var(--ink-2); font-size: .9rem; border-radius: 0 8px 8px 0; }
+  .notes b { color: var(--ai); }
+  body.show-notes .notes { display: block; }
+  .hud { position: fixed; right: 14px; bottom: 12px; display: flex; gap: .5rem; font-size: .76rem; z-index: 5; }
+  .hud button { font: inherit; border: 1px solid var(--line); background: var(--paper); color: var(--ink-2); border-radius: 6px; padding: .3em .7em; cursor: pointer; }
+  .hud button:focus-visible { outline: 2px solid var(--code); outline-offset: 2px; }
+  @media print { html { scroll-snap-type: none; } .slide { min-height: auto; page-break-after: always; } .hud { display: none; } .notes { display: block; } }
+</style>
+
+<section class="slide cover" id="s1">
+  <div class="eyebrow"><span class="n">01 / 10</span><span class="rule"></span><span>週進度會議 · 2026 / 09</span></div>
+  <div class="body">
+    <p class="brand">DepWeaver · Report Q&amp;A</p>
+    <h1>報告產生之後，可以直接問它</h1>
+    <p class="lede">回應老師的反饋「報告產生後讓使用者可以對話詢問細節（可用 RAG）」。這份簡報講三件事：問答是怎麼做到的、哪些是程式碼哪些是 LLM；有什麼時間與人數限制；優點與缺點。</p>
+    <div class="legend"><span class="l-code">程式碼（確定性）</span><span class="l-ai">LLM</span><span class="l-mix">混合</span></div>
+    <div class="notes"><b>講稿</b>　老師上次說報告產出後要能對話問細節，可以用 RAG。這禮拜做完了，先講它怎麼運作，再講限制，最後講我自己覺得的優缺點。顏色跟之前流程圖一樣：藍是程式碼、紫是 LLM。</div>
+  </div>
+  <div class="foot"><span>feat/greenfield-static-dependency-graph</span><span>按 N 顯示講稿</span></div>
+</section>
+
+<section class="slide" id="s2">
+  <div class="eyebrow"><span class="n">02 / 10</span><span class="rule"></span><span>問題</span></div>
+  <div class="body">
+    <h2>報告的答案都在證據裡，但散在三個地方，而且產完就消失</h2>
+    <div class="cols">
+      <div class="card"><h3>checkpoint 產完報告就刪</h3><p>報告貼出後 checkpoint 隨即清掉，事後沒有東西可以查。要問，就得另外留一份「報告的殘留物」。</p></div>
+      <div class="card"><h3>原本的對話入口是 intent 分類</h3><p>@bot → 分類成 capability → 按 Perform。一個「動作」按一次合理，一個「問題」按一次不合理。</p></div>
+      <div class="card"><h3>沒有檢索基礎</h3><p>repo 內只有關鍵字比對，沒有任何 embedding／向量。老師說的 RAG 要從零建。</p></div>
+    </div>
+    <p class="lede">讀者會問的是「ledgerwriter 什麼時候叫 balancereader」「哪些邊沒被流量跑到」「改 userservice 會影響誰」，答案分別在報告文字、覆蓋率、圖上。</p>
+    <div class="notes"><b>講稿</b>　三個阻礙都是現況造成的，不是 RAG 本身難。第一個最關鍵：報告產完 checkpoint 就刪，所以第一件事是在刪之前另存一份給問答用的知識庫。</div>
+  </div>
+  <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span></span></div>
+</section>
+
+<section class="slide" id="s3">
+  <div class="eyebrow"><span class="n">03 / 10</span><span class="rule"></span><span>使用方式</span></div>
+  <div class="body">
+    <h2>報告底下自動開一條 thread，在裡面打字就是問</h2>
+    <div class="cols">
+      <div class="card plain"><span class="tag code">程式碼</span><h3 style="margin-top:.5rem">1 · Generate report</h3><p>報告、圖、覆蓋率照常貼出。刪 checkpoint 前，多存一份 archive：報告全文、graph JSON、覆蓋率、證據 notes。</p></div>
+      <div class="card plain"><span class="tag code">程式碼</span><h3 style="margin-top:.5rem">2 · 開 thread</h3><p>bot 貼「💬 Ask DepWeaver about this report」並在下面開 public thread，thread 名 <code>Ask DepWeaver · repo</code>，開頭附幾個用真實節點名組的範例問題。</p></div>
+      <div class="card plain"><span class="tag mix">混合</span><h3 style="margin-top:.5rem">3 · 問與答</h3><p>thread 內任何訊息都是問題，不用 @bot、不用按鈕，中英文都行，可以連續追問。答案是一則 Discord 訊息。</p></div>
+    </div>
+    <div class="chat">
+      <div class="msg q"><span class="from">使用者</span>改 userservice 會影響誰？</div>
+      <div class="msg a"><span class="from">DepWeaver</span>直接呼叫 userservice 的只有 frontend（runtime 觀測到，6 requests）；再往上是 istio-ingressgateway。userservice 自己依賴 accounts-db（8187 TCP 連線，是連線數不是請求數）。所以 userservice 異常時受影響的是登入與首頁載入這條路徑。</div>
+    </div>
+    <div class="notes"><b>講稿</b>　為什麼用 thread 不加一個 capability：問題天然黏在它的報告底下，一個人跑兩個專案就是兩條 thread，各答各的；多輪追問有自然邊界；不用按鈕。</div>
+  </div>
+  <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span></span></div>
+</section>
+
+<section class="slide" id="s4">
+  <div class="eyebrow"><span class="n">04 / 10</span><span class="rule"></span><span>① 流程 · 哪些是程式碼、哪些是 LLM</span></div>
+  <div class="body">
+    <h2>一個問題走六步，只有兩步是 LLM</h2>
+    <div class="flow">
+      <div class="step code"><span class="k">1</span><b>判定是不是問答 thread</b><span class="who">程式碼</span><p>thread id 對 archive 索引；不是就走原本流程。</p></div>
+      <div class="step code"><span class="k">2</span><b>偵測節點、產事實表</b><span class="who">程式碼</span><p>問句裡的服務名 → 進出邊、證據等級、連線數、傳遞閉包、層級。</p></div>
+      <div class="step ai"><span class="k">3</span><b>NL → 圖查詢</b><span class="who">LLM（小）</span><p>只准輸出 JSON 計畫，最多 3 條；參數經程式驗證，對不上圖就丟掉。</p></div>
+      <div class="step code"><span class="k">4</span><b>執行圖查詢</b><span class="who">程式碼</span><p>15 個算子：impact-of、uncovered、deploy-order…全是查表與 BFS。</p></div>
+      <div class="step mix"><span class="k">5</span><b>檢索報告段落</b><span class="who">程式碼 + embedding API</span><p>BM25 ∪ embedding cosine → RRF 融合 → 取前 8 段。</p></div>
+      <div class="step ai"><span class="k">6</span><b>講人話</b><span class="who">LLM（大）</span><p>只拿到上面的 context 與最近 6 輪對話；沒有的就說沒有。</p></div>
+    </div>
+    <div class="card">
+      <h3>給 LLM 的 context 有權威順序</h3>
+      <div class="authority">
+        <span class="rank">1</span><span><b>圖上的事實</b>（步驟 2、4，程式碼算的）— 最高，段落與它衝突時以它為準</span>
+        <span class="rank">2</span><span><b>覆蓋率</b>（程式碼算的）</span>
+        <span class="rank">3</span><span><b>檢索到的段落</b>（報告文字是 LLM 寫的，會飄，只拿來補措辭、角色、限制）</span>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　重點一句話：<b>事實由程式碼算，LLM 只負責理解問題和講人話。</b> 這跟上次把報告第 5 節、覆蓋率分母從 LLM 手上拿走是同一條原則。步驟 3 是唯一讓 LLM「想」的地方，但它最壞只能選錯查詢，不可能說錯事實，因為它說的每個節點名都要通過驗證，執行的是程式。</div>
+  </div>
+  <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span></span></div>
+</section>
+
+<section class="slide" id="s5">
+  <div class="eyebrow"><span class="n">05 / 10</span><span class="rule"></span><span>① 流程 · 兩層 RAG</span></div>
+  <div class="body">
+    <h2>老師說的 RAG，這裡做成兩路：文字 RAG 與 GraphRAG</h2>
+    <div class="cols">
+      <div class="card">
+        <span class="tag code">文字 RAG · 步驟 5</span>
+        <ul style="margin-top:.6rem">
+          <li><b>切段</b>：報告與證據 notes 依 Markdown 標題切，每段帶標題路徑（<code>report › 4. Sync Candidates › frontend -&gt; userservice</code>），超過 1800 字再拆。</li>
+          <li><b>BM25</b>：永遠有。連字號 id 整個與拆開都索引（<code>accounts-db</code> → <code>accounts</code>、<code>db</code>）；中文用單字 + bigram，所以<b>中文問句能命中英文報告</b>。</li>
+          <li><b>Embedding</b>：OpenAI <code>text-embedding-3-small</code>，archive 建立時整批算一次存檔；提問只 embed 問句。失敗就退回純 BM25。</li>
+          <li><b>融合</b>：Reciprocal Rank Fusion，不必校準 BM25 分數與 cosine。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="tag ai">GraphRAG · 步驟 2–4</span>
+        <ul style="margin-top:.6rem">
+          <li><b>事實表</b>（不經 LLM）：問句點名的節點 → 每條邊一行：<code>a -&gt; b [db]; confidence=documented; runtime observed: YES (8187 TCP connections)</code>。</li>
+          <li><b>查詢 DSL</b>：LLM 產 <code>[{"op":"impact-of","args":["userservice"]}]</code>；算子固定 15 個，節點參數必須解析到圖上唯一 id。</li>
+          <li><b>同源</b>：<code>uncovered</code> 直接呼叫 CoverageAnalyzer，<code>deploy-order</code> 用畫圖的同一套分層，所以 thread 的答案<b>不可能和頻道貼的覆蓋率、圖矛盾</b>。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="chat">
+      <div class="msg q"><span class="from">使用者</span>哪些邊是程式碼有宣告但流量沒跑到的？</div>
+      <div class="plan">[DEBUG] graph query plan: [uncovered(), unobserved-edges()]</div>
+    </div>
+    <div class="notes"><b>講稿</b>　為什麼不只做向量 RAG：依賴問題多半是圖上的查詢，「誰依賴誰」用向量比對找段落是繞遠路，而且段落是 LLM 寫的報告，有可能飄。所以圖那一路直接查結構，文字那一路補措辭與 file:line。兩路都是「先找證據、再讓模型只依證據回答」，符合 RAG 的定義。</div>
+  </div>
+  <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span></span></div>
+</section>
+
+<section class="slide" id="s6">
+  <div class="eyebrow"><span class="n">06 / 10</span><span class="rule"></span><span>② 限制 · 時間</span></div>
+  <div class="body">
+    <h2>時間上的限制</h2>
+    <div class="scroll"><table class="tbl">
+      <tr><th>項目</th><th>值</th><th>說明</th></tr>
+      <tr><td>archive 保留</td><td class="num">7 天</td><td><code>dependency.qa.ttl-days</code>；過期後 thread 提問會回「已過期，請重跑分析」。存檔案，bot 重啟不丟。</td></tr>
+      <tr><td>對話記憶</td><td class="num">餵 6 輪 · 存 40 則</td><td>模型每次看最近 6 輪問答；archive 最多留 40 則，再舊的丟。</td></tr>
+      <tr><td>一題耗時</td><td class="num">約 5–15 秒</td><td>1 次 embedding + 1 次 planner 小呼叫 + 1 次回答大呼叫。目前 HTTP 呼叫沒設 timeout，OpenAI 卡住會一直等（既有問題，主頻道也一樣）。</td></tr>
+      <tr><td>context 上限</td><td class="num">段落 24k 字 · 前 8 段</td><td>事實表另計；gpt-4.1-mini 的 context 夠大，實務上不會撞到。</td></tr>
+      <tr><td>Discord thread 封存</td><td class="num">依伺服器設定（預設 24 小時閒置）</td><td>封存只是收起來，任何人再貼訊息會自動打開，archive 仍在。</td></tr>
+      <tr><td>每題成本</td><td class="num">很低</td><td>embedding 整份 archive 約數萬 token，一次性；每題兩次呼叫，context 約 6–15k token。</td></tr>
+    </table></div>
+    <div class="notes"><b>講稿</b>　7 天是我定的，考量是「夠準備一次 meeting、又不會拿舊圖回答已經改掉的系統」。可調。timeout 那條是誠實講：不是新功能引入的，但這次順便注意到了。</div>
+  </div>
+  <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span></span></div>
+</section>
+
+<section class="slide" id="s7">
+  <div class="eyebrow"><span class="n">07 / 10</span><span class="rule"></span><span>② 限制 · 人數與並行</span></div>
+  <div class="body">
+    <h2>可以幾個人同時問</h2>
+    <div class="scroll"><table class="tbl">
+      <tr><th>情境</th><th>行為</th></tr>
+      <tr><td>誰能問</td><td>thread 裡的<b>任何伺服器成員</b>都能問，不限跑分析的那個人。整條 thread 共用一份對話歷史，像一場共同的討論。</td></tr>
+      <tr><td>不同 thread 同時問</td><td><b>2 題並行</b>（固定 2 條 worker），第 3 題起排隊，不會掉。</td></tr>
+      <tr><td>同一 thread 同時問</td><td>依序回答，確保歷史是一段連貫對話、檔案不會被同時寫。</td></tr>
+      <tr><td>一個人多份報告</td><td>每份報告一條 thread、一個 archive，互不干擾。</td></tr>
+      <tr><td>問答 vs 分析</td><td>各自獨立的執行緒：問問題不會卡住正在跑的分析，分析也不會擋問答。</td></tr>
+      <tr><td>主頻道 @bot 問同樣的話</td><td>走舊的 intent 流程，不會當成問答。問答只在 thread。</td></tr>
+    </table></div>
+    <div class="notes"><b>講稿</b>　「2 條 worker」是刻意保守的：每題背後是兩次 LLM 呼叫，開太多只是把等待從我們這邊搬到 OpenAI 的 rate limit。研究室規模足夠，要放大改一個數字。</div>
+  </div>
+  <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span></span></div>
+</section>
+
+<section class="slide" id="s8">
+  <div class="eyebrow"><span class="n">08 / 10</span><span class="rule"></span><span>③ 優缺點 · 優點</span></div>
+  <div class="body">
+    <h2>優點</h2>
+    <div class="pc">
+      <div class="item"><span class="tag good">不編造</span><div><h3>事實由程式碼算，模型只講人話</h3><p>節點名經驗證、查詢由程式執行、prompt 禁止升級證據等級；問不存在的服務會回「圖上沒有」並列相近 id。</p></div></div>
+      <div class="item"><span class="tag good">同源</span><div><h3>答案和圖、覆蓋率不會互相矛盾</h3><p>未覆蓋邊用同一個 CoverageAnalyzer，部署順序用同一套分層。上次那個「報告說 unknown、圖畫實線」的病不會在 thread 重演。</p></div></div>
+      <div class="item"><span class="tag good">可測</span><div><h3>確定性的部分有 47 條測試</h3><p>切段、檢索、節點偵測、事實表、15 個算子、archive 往返、Spring 接線。LLM 只剩措辭那一層要人工驗。</p></div></div>
+      <div class="item"><span class="tag good">好用</span><div><h3>不用按鈕、不用 @bot、中英皆可、能追問、重啟不丟</h3><p>問題黏在報告底下，一個人多份報告各自成 thread。</p></div></div>
+      <div class="item"><span class="tag good">接軌</span><div><h3>這就是 8/14 提的 A2 設計落地</h3><p>NL → 圖查詢 DSL → 確定性執行 → LLM 講結果；<code>deploy-order</code> 就是接到部署生成那條線的點。</p></div></div>
+    </div>
+    <div class="notes"><b>講稿</b>　最想強調的是「不編造」和「同源」，這兩點延續上次報告的結論：能用規則算的不問模型。</div>
+  </div>
+  <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span></span></div>
+</section>
+
+<section class="slide" id="s9">
+  <div class="eyebrow"><span class="n">09 / 10</span><span class="rule"></span><span>③ 優缺點 · 缺點與界線</span></div>
+  <div class="body">
+    <h2>缺點與界線（誠實版）</h2>
+    <div class="pc">
+      <div class="item"><span class="tag warn">選錯查詢</span><div><h3>planner 可能挑錯算子，答案就少一塊事實</h3><p>不會說錯，但可能漏答。要拿真環境的 log 統計中文問句的選擇率；planner 可用設定關掉。</p></div></div>
+      <div class="item"><span class="tag warn">同義詞</span><div><h3>節點偵測是字串比對，「前端」對不到 frontend</h3><p>planner 那一步模型看得到 id 清單，通常補得回來；純靠事實表那一路抓不到。</p></div></div>
+      <div class="item"><span class="tag warn">證據上限</span><div><h3>只能答報告收到的證據</h3><p>不存 raw Prometheus、不存 Tier 3 填的值；QPS、版本號、報告沒收的東西答不出，它會直說。</p></div></div>
+      <div class="item"><span class="tag warn">成本與延遲</span><div><h3>每題兩次 LLM 呼叫加一次 embedding</h3><p>比單次呼叫慢、貴一點；embedding 依賴 OpenAI，掛了退回純 BM25 但語意檢索變弱。</p></div></div>
+      <div class="item"><span class="tag warn">安全</span><div><h3>thread 訊息沒過 prompt-injection 檢查</h3><p>主頻道有、thread 沒有。目前 Q&amp;A 不觸發任何動作、範圍鎖在報告，風險低，但要補。</p></div></div>
+      <div class="item"><span class="tag warn">未真環境驗證</span><div><h3>單元測試全過，真環境還沒跑完整輪</h3><p>第一次部署撞到 Spring 接線 bug（已修）。下一步就是拿 BoA 跑測試問題集。</p></div></div>
+    </div>
+    <div class="notes"><b>講稿</b>　缺點第一條是設計上的取捨：把「想」限制在選查詢，代價是選錯就漏答。我認為漏答比編造好，這是刻意的。</div>
+  </div>
+  <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span></span></div>
+</section>
+
+<section class="slide" id="s10">
+  <div class="eyebrow"><span class="n">10 / 10</span><span class="rule"></span><span>驗證與下一步</span></div>
+  <div class="body">
+    <h2>怎麼驗、接下來做什麼</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>驗證計畫</h3>
+        <ul>
+          <li>用 BoA runtime 跑出報告，照 <code>docs/report-qa-test-questions.md</code> 七組問題逐題問。</li>
+          <li>每題記三欄：問題／log 裡選的算子／答案對錯。錯分兩種：<b>編造</b>（最嚴重）與<b>漏答</b>。</li>
+          <li>最重要的一組是「不能編造」：問不存在的服務、問 QPS、問資料庫版本。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>下一步</h3>
+        <ul>
+          <li>真環境跑完一輪，統計 planner 對中文問句的選擇率。</li>
+          <li>thread 訊息補 prompt-injection 檢查；LLM 呼叫補 timeout。</li>
+          <li>同義詞：讓事實表那一路也能用 planner 解出的 id。</li>
+          <li>把 <code>deploy-order</code> 接到 DeployPlanner，讓「對話」真的走到部署生成。</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lede">一句話總結：報告產完不再是終點。讀者可以在它底下追問，而追問的答案來自同一張圖、同一份證據，程式碼負責事實，模型負責把它講清楚。</p>
+    <div class="notes"><b>講稿</b>　結尾回到老師的問題：可用 RAG，我們做了，而且做成兩路。請老師看一下算子清單有沒有想加的問法，那是最容易擴充的地方。</div>
+  </div>
+  <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span>docs/report-qa-design.md</span></div>
+</section>
+
+<div class="hud">
+  <button type="button" id="notesBtn" aria-pressed="false">講稿 (N)</button>
+  <button type="button" id="printBtn">列印 / PDF</button>
+</div>
+
+<script>
+  (function () {
+    var body = document.body;
+    var btn = document.getElementById('notesBtn');
+    function toggleNotes() {
+      body.classList.toggle('show-notes');
+      btn.setAttribute('aria-pressed', body.classList.contains('show-notes') ? 'true' : 'false');
+    }
+    btn.addEventListener('click', toggleNotes);
+    document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    function current() {
+      var y = window.scrollY + window.innerHeight / 2, best = 0;
+      slides.forEach(function (s, i) { if (s.offsetTop <= y) best = i; });
+      return best;
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.target && /input|textarea/i.test(e.target.tagName)) return;
+      if (e.key === 'n' || e.key === 'N') { toggleNotes(); return; }
+      var i = current();
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); if (slides[i + 1]) slides[i + 1].scrollIntoView(); }
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); if (slides[i - 1]) slides[i - 1].scrollIntoView(); }
+    });
+  })();
+</script>
