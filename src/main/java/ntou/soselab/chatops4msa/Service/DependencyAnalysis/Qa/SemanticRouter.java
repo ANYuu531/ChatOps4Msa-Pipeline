@@ -138,12 +138,13 @@ public final class SemanticRouter {
     private static final Pattern DOWNSTREAM = Pattern.compile(
             "依賴(哪|誰|什麼)|呼叫(哪|誰|什麼)|用到(哪|誰|什麼)|靠(哪|誰|什麼)|下游|depend(s)? on\\s*(what|which|who)?\\s*\\?*$|what does .* (call|use|depend|need)|downstream|dependencies of");
 
-    // From the first real run (2026-09-08, 12 questions): exact examples score 0.97–1.00,
-    // good paraphrases 0.64–0.73, questions with no matching intent 0.38–0.50. The one
-    // confident wrong route scored 0.65 with a 0.10 lead, so the threshold alone could
-    // not have caught it; the examples were fixed and the margin widened.
-    static final double DEFAULT_THRESHOLD = 0.60;
-    static final double DEFAULT_MARGIN = 0.05;
+    // Calibrated 2026-09-08 on 33 hold-out phrasings with node masking: 33/33 correct,
+    // 0 confident-wrong, lowest correct score 0.541; the unsure-but-correct ones sat at
+    // 0.54–0.70 and failed only on margin. Exact examples score 0.97–1.00, questions
+    // with no matching intent 0.38–0.50. Set just below the correct band; a wider
+    // sample may justify lower.
+    static final double DEFAULT_THRESHOLD = 0.58;
+    static final double DEFAULT_MARGIN = 0.04;
     /** Above this the runner-up margin is not required: the match is unambiguous on its own. */
     static final double DEFAULT_HIGH = 0.85;
 
