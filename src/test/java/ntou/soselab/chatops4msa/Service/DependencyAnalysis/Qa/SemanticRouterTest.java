@@ -84,6 +84,32 @@ public class SemanticRouterTest {
     }
 
     @Test
+    void namedNodesAreMaskedToThePlaceholdersTheExamplesUse() {
+        DependencyGraph g = graph();
+        g.addNode("accounts-db", DependencyGraph.KIND_DB);
+        g.addNode("istio-ingressgateway", DependencyGraph.KIND_GATEWAY);
+        List<DependencyGraph.Node> named = GraphGrounding.mentionedNodes("frontend 到 accounts-db 中間經過哪些服務", g);
+        assertEquals("X 到 Y 中間經過哪些服務", GraphGrounding.maskMentions("frontend 到 accounts-db 中間經過哪些服務", named));
+        assertEquals("X 依賴誰？", GraphGrounding.maskMentions("前端依賴誰？", GraphGrounding.mentionedNodes("前端依賴誰？", g)));
+        assertEquals("who sits behind the X?", GraphGrounding.maskMentions("who sits behind the Gateway?",
+                GraphGrounding.mentionedNodes("who sits behind the Gateway?", g)));
+        assertEquals("plain", GraphGrounding.maskMentions("plain", List.of()));
+    }
+
+    @Test
+    void routeQuestionEmbedsTheMaskedFormAndMatchesThePlaceholderExamples() {
+        SemanticRouter router = new SemanticRouter(FAKE, 0.3, 0.0, 0.9);
+        DependencyGraph g = graph();
+        String q = "frontend 依賴哪些服務？";
+        List<DependencyGraph.Node> named = GraphGrounding.mentionedNodes(q, g);
+        // The raw vector would be diluted by the id; the masked one is an exact example.
+        SemanticRouter.Decision d = router.routeQuestion(q, vec(q), named);
+        assertEquals("dependencies-of", d.intent);
+        assertTrue(d.score > 0.99, d.toString());
+        assertEquals(List.of("dependencies-of(frontend)"), d.queries.stream().map(GraphQuery::toString).toList());
+    }
+
+    @Test
     void nodeIntentWithoutANamedNodeIsNotConfident() {
         SemanticRouter router = new SemanticRouter(FAKE, 0.3, 0.0, 0.9);
         SemanticRouter.Decision d = route(router, "如果登入服務掛了會影響誰？");

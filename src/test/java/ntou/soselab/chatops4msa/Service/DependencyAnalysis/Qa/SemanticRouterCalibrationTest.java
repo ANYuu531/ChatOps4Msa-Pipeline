@@ -1,5 +1,6 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Qa;
 
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
 import ntou.soselab.chatops4msa.Service.NLPService.EmbeddingClient;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -85,6 +86,14 @@ public class SemanticRouterCalibrationTest {
         SemanticRouter router = new SemanticRouter(client::embed);
         assertTrue(router.ensureIndexed(), "could not embed the examples");
 
+        // The Bank of Anthos node set, so the hold-out questions are masked the way
+        // production masks them (frontend 依賴誰 → X 依賴誰) before routing.
+        DependencyGraph graph = new DependencyGraph("bank-of-anthos");
+        for (String id : List.of("frontend", "userservice", "contacts", "ledgerwriter", "balancereader",
+                "transactionhistory", "accounts-db", "ledger-db", "istio-ingressgateway")) {
+            graph.addNode(id, DependencyGraph.classifyKind(id));
+        }
+
         List<String> questions = new ArrayList<>(HOLDOUT.keySet());
         List<double[]> vectors = client.embed(questions);
         assertTrue(vectors != null && vectors.size() == questions.size(), "could not embed the hold-out set");
@@ -96,7 +105,7 @@ public class SemanticRouterCalibrationTest {
         for (int i = 0; i < questions.size(); i++) {
             String q = questions.get(i);
             String expected = HOLDOUT.get(q);
-            SemanticRouter.Decision d = router.route(vectors.get(i), q, List.of());
+            SemanticRouter.Decision d = router.routeQuestion(q, vectors.get(i), GraphGrounding.mentionedNodes(q, graph));
             boolean ok = List.of(expected.split("\\|")).contains(d.intent);
             if (ok) {
                 correct++;

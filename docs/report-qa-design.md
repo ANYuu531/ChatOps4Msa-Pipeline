@@ -114,6 +114,9 @@ Planner 失敗（沒 key、網路、輸出垃圾）→ 空計畫，退回只有 
 （`dependencies-of`、`dependents-of`、`impact-of`、`startup-needs`、`path`、`uncovered`(→ uncovered + unobserved-edges)、`observed-edges`、
 `db-users`、`deploy-order`、`undeployed`、`externals`、`async`、`mentioned-only`，以及 `about-report`：問報告本身、不查圖也不呼叫 planner）。
 啟動後把例句 embed 一次；問句的向量本來就為了段落檢索算了，直接對每句例句算 cosine，取最高分的意圖。
+**路由前先遮名**（`GraphGrounding.maskMentions`）：問句裡偵測到的服務名換成 X／Y／Z（「frontend 依賴誰」→「X 依賴誰」），
+再 embed 一次拿路由用的向量。第一次校準（33 句 hold-out）顯示有服務名的問句分數普遍被名字拉低 0.1–0.2、錯的幾乎都是這類，
+沒服務名的意圖則幾乎全對；遮名讓問句和例句同形。代價是多一次 embedding（不是 chat），只在問句真的有服務名時才發生。
 **信心判定**：最高分 ≥ `threshold`（預設 0.60）且領先第二名 ≥ `margin`（0.05），或最高分 ≥ `high`（0.85）。信心不足 → LLM planner。
 （2026-09-08 第一輪 12 題實測：例句原句 0.97–1.00，換句話說 0.64–0.73，沒有對應意圖的問題 0.38–0.50；唯一一次「有把握但選錯」是 0.65 領先 0.10，門檻擋不住，靠修例句解決。）
 需要節點的意圖若問句沒點名節點，也視為不確定交給 planner（它看得到 id 清單，能把「登入服務」對成 userservice）。

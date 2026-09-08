@@ -100,9 +100,9 @@ public class ReportQaService {
                            @Value("${dependency.qa.query-planner:true}") boolean plannerEnabled,
                            @Value("${dependency.qa.injection-check:true}") boolean injectionCheck,
                            @Value("${dependency.qa.top-k:8}") int topK,
-                           @Value("${dependency.qa.router.threshold:0.55}") double routerThreshold,
-                           @Value("${dependency.qa.router.margin:0.03}") double routerMargin,
-                           @Value("${dependency.qa.router.high:0.72}") double routerHigh) {
+                           @Value("${dependency.qa.router.threshold:0.60}") double routerThreshold,
+                           @Value("${dependency.qa.router.margin:0.05}") double routerMargin,
+                           @Value("${dependency.qa.router.high:0.85}") double routerHigh) {
         this.store = store;
         this.llmService = llmService;
         this.jdaService = jdaService;
@@ -287,7 +287,7 @@ public class ReportQaService {
         // by meaning, at no extra call; the model planner takes over only when the
         // router is not confident, and not at all for questions about the report itself.
         List<DependencyGraph.Node> mentioned = GraphGrounding.mentionedNodes(question, graph);
-        SemanticRouter.Decision routed = questionVector == null ? null : router.route(questionVector, question, mentioned);
+        SemanticRouter.Decision routed = questionVector == null ? null : router.routeQuestion(question, questionVector, mentioned);
         List<GraphQuery> queries = List.of();
         String planSource;
         if (routed != null && routed.confident) {

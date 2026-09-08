@@ -85,25 +85,25 @@ public final class SemanticRouter {
     public static final List<Intent> INTENTS = List.of(
             new Intent("dependencies-of", 1, List.of("dependencies-of"), false,
                     "X 依賴哪些服務？", "X 依賴誰？", "X 會呼叫誰？", "X 用到了什麼？", "X 的下游有哪些？", "X 需要連到哪些東西？", "X 靠哪些服務運作？",
-                    "what does X depend on?", "what does X call?", "which services does X use?", "what is downstream of X?"),
+                    "what does X depend on?", "what does X call?", "which services does X use?", "what is downstream of X?", "what services does X talk to?", "which services does X go to?"),
             new Intent("dependents-of", 1, List.of("dependents-of"), false,
-                    "誰依賴 X？", "誰會呼叫 X？", "X 的上游是誰？", "哪些服務會用到 X？", "X 被誰呼叫？",
-                    "who depends on X?", "who calls X?", "which services use X?", "what is upstream of X?"),
+                    "誰依賴 X？", "誰會呼叫 X？", "X 的上游是誰？", "哪些服務會用到 X？", "X 被誰呼叫？", "誰在用 X？",
+                    "who depends on X?", "who calls X?", "which services use X?", "what is upstream of X?", "which components call X?", "what calls into X?"),
             new Intent("impact-of", 1, List.of("impact-of"), false,
                     "如果 X 掛了會影響誰？", "改了 X 會波及哪些服務？", "X 故障的影響範圍有多大？", "X 停掉之後哪些功能會壞？", "X 出問題誰會受影響？",
-                    "what breaks if X goes down?", "who is affected if X fails?", "what is the blast radius of X?", "impact of changing X?"),
+                    "what breaks if X goes down?", "who is affected if X fails?", "what is the blast radius of X?", "impact of changing X?", "if X is unavailable, what stops working?"),
             new Intent("startup-needs", 1, List.of("startup-needs"), false,
                     "X 要能運作，前面得先起哪些服務？", "X 啟動前需要哪些東西在跑？", "X 的前置依賴是什麼？", "要讓 X 正常，哪些服務必須先好？",
                     "what must be running before X works?", "what does X need to start?", "prerequisites for X?", "what has to be up for X?"),
             new Intent("path", 2, List.of("path"), false,
                     "X 怎麼連到 Y？", "X 到 Y 的路徑是什麼？", "X 會不會呼叫 Y？", "X 跟 Y 之間怎麼走？", "從 X 到 Y 要經過誰？",
-                    "how does X reach Y?", "does X call Y?", "is there a path from X to Y?", "how are X and Y connected?"),
+                    "how does X reach Y?", "does X call Y?", "is there a path from X to Y?", "how are X and Y connected?", "can requests from X reach Y?", "which services sit between X and Y?"),
             new Intent("uncovered", 0, List.of("uncovered", "unobserved-edges"), false,
                     "哪些邊沒跑到？", "哪些邊沒有被流量覆蓋？", "哪些邊是宣告了但沒觀測到的？", "哪些邊是程式碼有宣告但流量沒跑到的？", "有宣告但沒有流量經過的呼叫有哪些？", "覆蓋率是多少？", "還有哪些呼叫沒被驅動到？", "流量沒經過哪些邊？",
                     "which edges were never observed at runtime?", "what was not exercised by traffic?", "what is the runtime coverage?", "which declared edges have no traffic?", "which declared calls never got traffic?"),
             new Intent("observed-edges", 0, List.of("observed-edges"), false,
                     "哪些邊有被觀測到？", "哪幾條是 runtime 觀測到的？", "實線的邊有哪些？", "Istio 真的看到哪些呼叫？", "有流量的邊是哪些？",
-                    "which edges did Istio actually observe?", "what was seen at runtime?", "which calls have runtime evidence?", "list the observed edges"),
+                    "which edges did Istio actually observe?", "what was seen at runtime?", "which calls have runtime evidence?", "list the observed edges", "which dependencies were confirmed by real traffic?"),
             new Intent("db-users", 0, List.of("db-users"), false,
                     "哪些服務有用到資料庫？", "誰會連資料庫？", "資料庫的依賴有哪些？", "哪些服務會寫入 DB？", "資料層的邊有哪些？",
                     "which services use a database?", "who talks to the db?", "what are the datastore dependencies?", "which services persist data?"),
@@ -117,7 +117,7 @@ public final class SemanticRouter {
                     "有哪些外部依賴？", "有沒有呼叫第三方服務？", "會連到 mesh 外面的有哪些？", "外部主機有哪些？",
                     "what are the external dependencies?", "does it call any third-party API?", "which external hosts are called?"),
             new Intent("async", 0, List.of("async"), false,
-                    "有沒有訊息佇列？", "非同步的邊有哪些？", "有用 Kafka 或 RabbitMQ 嗎？", "誰在發事件、誰在收？",
+                    "有沒有訊息佇列？", "非同步的邊有哪些？", "有用 Kafka 或 RabbitMQ 嗎？", "誰在發事件、誰在收？", "有沒有透過 queue 溝通的服務？", "服務之間有用佇列傳訊息嗎？",
                     "is there a message broker?", "what asynchronous communication is there?", "any queues or events?", "who publishes and who consumes?"),
             new Intent("mentioned-only", 0, List.of("mentioned-only"), false,
                     "哪些邊只被文件提到？", "只有文件說、沒有程式證據的邊有哪些？", "點線的邊是哪些？", "哪些依賴沒有使用證據？",
@@ -193,6 +193,25 @@ public final class SemanticRouter {
             if (s > out.get(name)) out.put(name, s);
         }
         return out;
+    }
+
+    /**
+     * Routes a question, masking the named nodes first so the vector is compared in
+     * the same form as the examples ("frontend 依賴誰" → "X 依賴誰"). The raw vector
+     * — the one retrieval computed — is reused when nothing needed masking.
+     *
+     * @param rawVector the embedding of the question as typed; may be null
+     */
+    public Decision routeQuestion(String question, double[] rawVector, List<DependencyGraph.Node> mentioned) {
+        double[] vector = rawVector;
+        if (question != null && mentioned != null && !mentioned.isEmpty() && embedder != null) {
+            String masked = GraphGrounding.maskMentions(question, mentioned);
+            if (!masked.equals(question)) {
+                List<double[]> v = embedder.embed(List.of(masked));
+                if (v != null && v.size() == 1) vector = v.get(0);
+            }
+        }
+        return route(vector, question, mentioned);
     }
 
     /**

@@ -154,6 +154,32 @@ public final class GraphGrounding {
         GATEWAY_ENTRY = gw;
     }
 
+    /**
+     * Replaces each named node with the placeholder the router's examples use
+     * ({@code X}, {@code Y}, {@code Z}), so "frontend 依賴誰" is compared as "X 依賴誰".
+     *
+     * Calibration showed why: a real id in the question adds a direction of its own to
+     * the vector and pulled every node-bearing question 0.1–0.2 below the placeholder
+     * examples, while the id-free intents scored fine. The ids are already known from
+     * {@link #mentionedNodes}, so masking costs one more embedding of a short string.
+     */
+    public static String maskMentions(String question, List<DependencyGraph.Node> mentioned) {
+        if (question == null || mentioned == null || mentioned.isEmpty()) return question;
+        String[] placeholders = {" X ", " Y ", " Z "};
+        String out = question;
+        for (int i = 0; i < mentioned.size() && i < placeholders.length; i++) {
+            DependencyGraph.Node node = mentioned.get(i);
+            for (String alias : aliases(node.id)) out = boundary(alias).matcher(out).replaceAll(placeholders[i]);
+            for (Map.Entry<Pattern, Pattern> synonym : SYNONYMS.entrySet()) {
+                boolean byId = synonym.getValue().matcher(node.id.toLowerCase(Locale.ROOT)).find();
+                boolean byKind = synonym == GATEWAY_ENTRY && DependencyGraph.KIND_GATEWAY.equals(node.kind);
+                if (byId || byKind) out = synonym.getKey().matcher(out).replaceAll(placeholders[i]);
+            }
+        }
+        // Spaced like the examples ("X 依賴誰？"), with no space left before punctuation.
+        return out.replaceAll("\\s+", " ").replaceAll("\\s+([?？!！,，.。:：;；])", "$1").trim();
+    }
+
     static Set<String> aliases(String id) {
         Set<String> out = new LinkedHashSet<>();
         String lower = id.toLowerCase(Locale.ROOT);
@@ -175,7 +201,7 @@ public final class GraphGrounding {
     }
 
     private static Pattern boundary(String alias) {
-        return Pattern.compile("(?<![A-Za-z0-9])" + Pattern.quote(alias) + "(?![A-Za-z0-9])");
+        return Pattern.compile("(?<![A-Za-z0-9])" + Pattern.quote(alias) + "(?![A-Za-z0-9])", Pattern.CASE_INSENSITIVE);
     }
 
     // ---------- fact sheets ----------
