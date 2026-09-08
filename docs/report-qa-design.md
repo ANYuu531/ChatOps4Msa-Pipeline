@@ -152,7 +152,7 @@ log 印 `graph query plan (router <intent> <score> (next <intent> <score>)): [..
 | `application*.properties` | `dependency.qa.dir/ttl-days/embeddings/top-k`、`openai.api.embedding-model` |
 | `docker-compose.yaml` | 掛 `./dep-reports:/app/dep-reports` |
 
-## 4. 測試（66 條，全過；全套僅 `McpToolkitCallToolTest` 因需 docker 內 `k8s-mcp-server` 而失敗，與此無關）
+## 4. 測試（70 條，全過；全套僅 `McpToolkitCallToolTest` 因需 docker 內 `k8s-mcp-server` 而失敗，與此無關）
 
 - `SemanticRouterTest`：用假 embedder（詞袋向量）驗決策邏輯——例句命中、零 arity 展開、否定詞翻轉、缺節點不算確定、path 要兩節點、about-report 跳過 planner、門檻與 margin、embedder 不可用永不路由
 - `SemanticRouterCalibrationTest`：對真實模型跑 hold-out 問句（預設 skip，`-Dqa.calibrate=true` 才跑），斷言「確定但錯」為 0
