@@ -76,6 +76,19 @@ public class RulePlannerTest {
     }
 
     @Test
+    void phrasingsFromTheFirstRealRunAreRules() {
+        // Both went to the model planner on 2026-09-08; the first should be a rule,
+        // the second should spend no call at all.
+        assertEquals(List.of("observed-edges()"), plan("哪幾條是 runtime 觀測到的"));
+        assertEquals(List.of("uncovered()", "unobserved-edges()"), plan("哪些邊沒跑到"));
+        DependencyGraph g = graph();
+        String meta = "這份報告有查過叢集嗎？";
+        assertTrue(RulePlanner.plan(meta, List.of(), g).isEmpty());
+        assertFalse(RulePlanner.needsLlmPlanner(meta, List.of()));
+        assertFalse(RulePlanner.needsLlmPlanner("What are the limitations of this report?", List.of()));
+    }
+
+    @Test
     void dbRuleDoesNotFireWhenANodeIsNamed() {
         assertTrue(plan("userservice 用哪個資料庫？").isEmpty(), "the fact sheet lists its db edge");
     }

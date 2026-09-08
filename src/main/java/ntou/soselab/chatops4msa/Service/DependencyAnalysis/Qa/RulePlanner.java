@@ -31,7 +31,11 @@ public final class RulePlanner {
     private static final Pattern ORDER = p("(部署|啟動|上線|deploy\\w*|start ?up|boot\\w*|bring ?up).*(順序|order|sequence|first)|(順序|order|sequence).*(部署|啟動|上線|deploy|start)|deploy first|先部署(哪|什麼)");
     private static final Pattern PATH = p("怎麼(連|到|叫|呼叫|打|走|找到)|路徑|經過|path|reach|route|how does .*(call|get|talk|reach)|hop|link between|之間");
     private static final Pattern UNCOVERED = p("沒(有)?(被)?(跑|觀測|覆蓋|驅動|看)|未(被)?(觀測|覆蓋|驅動)|覆蓋率|coverage|uncovered|not (yet )?(observed|exercised|covered|seen|hit)|never (observed|exercised|hit)|declared but|only declared|virtual|虛線|dashed");
-    private static final Pattern OBSERVED = p("(有|已|真的)(被)?觀測|實線|solid|observed (edge|at runtime|by istio)|runtime.?observed|actually (saw|observed|called)|istio (saw|observed)");
+    // Checked only after UNCOVERED, so "沒觀測到" / "never observed" never lands here.
+    private static final Pattern OBSERVED = p("觀測|觀察|實線|solid|observed|runtime.?(saw|seen)|actually (saw|called)|istio (saw|seen)|有跑到|有流量");
+
+    /** Questions about the report itself, not the graph: a query plan has nothing to add. */
+    private static final Pattern META = p("這份報告|報告(有|是|裡|的|中|本身)|限制|limitation|collection status|查過|有沒有查|was .* queried|report('s| is| was| say| itself)|confidence summary|誰寫|who wrote|section \\d");
     private static final Pattern DB = p("資料庫|database|\\bdbs?\\b|datastore|persist|postgres|mysql|mongo|redis|儲存");
     private static final Pattern UNDEPLOYED = p("沒(有)?部署|未部署|not deployed|undeployed|not running|missing from the cluster|isn'?t running|沒在跑");
     private static final Pattern EXTERNAL = p("外部|external|third.?party|第三方|outside the (mesh|cluster)|internet");
@@ -97,8 +101,10 @@ public final class RulePlanner {
      */
     public static boolean needsLlmPlanner(String question, List<DependencyGraph.Node> mentioned) {
         if (question == null || question.isBlank()) return false;
+        String q = question.toLowerCase(Locale.ROOT);
+        if (META.matcher(q).find()) return false; // answered from the report text, not the graph
         if (mentioned == null || mentioned.isEmpty()) return true;
-        return NEEDS_SET.matcher(question.toLowerCase(Locale.ROOT)).find();
+        return NEEDS_SET.matcher(q).find();
     }
 
     private static void add(List<GraphQuery> out, String op, String... args) {
