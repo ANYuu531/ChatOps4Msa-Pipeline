@@ -110,12 +110,17 @@ thread 開頭會貼幾個**用真實節點名**組出來的範例問題（挑 de
 Planner 失敗（沒 key、網路、輸出垃圾）→ 空計畫，退回只有 grounding + passages 的模式。
 可用 `dependency.qa.query-planner=false` 關掉。
 
-**規則層在前（`RulePlanner`，2026-09-08 補）**：常見問法直接對應算子，不經模型——
-影響／掛了 → `impact-of(X)`；先起／前置 → `startup-needs(X)`；部署順序 → `deploy-order`；兩節點 + 怎麼連／呼叫 → `path(X,Y)`；
-沒跑到／未觀測／覆蓋率 → `uncovered` + `unobserved-edges`；資料庫（沒點名節點時）→ `db-users`；沒部署 → `undeployed`；
-外部 → `externals`；佇列 → `async`；只被提到 → `mentioned-only`。中英皆可。規則有中就**不呼叫** LLM planner；
-規則沒中時，只有「問句沒點名節點」或「問的是集合／數量（哪些、which、all…）」才呼叫；點名一個節點的簡單問題由事實表直接答，省一次呼叫。
-log 印 `graph query plan (rules|llm): [...]`，真環境可據此統計命中率。
+**語意路由在前（`SemanticRouter`，2026-09-08 取代原本的 regex 規則）**：每個意圖一張卡——對應的算子、arity、十來句中英例句
+（`dependencies-of`、`dependents-of`、`impact-of`、`startup-needs`、`path`、`uncovered`(→ uncovered + unobserved-edges)、`observed-edges`、
+`db-users`、`deploy-order`、`undeployed`、`externals`、`async`、`mentioned-only`，以及 `about-report`：問報告本身、不查圖也不呼叫 planner）。
+啟動後把例句 embed 一次；問句的向量本來就為了段落檢索算了，直接對每句例句算 cosine，取最高分的意圖。
+**信心判定**：最高分 ≥ `threshold`（預設 0.55）且領先第二名 ≥ `margin`（0.03），或最高分 ≥ `high`（0.72）。信心不足 → LLM planner。
+需要節點的意圖若問句沒點名節點，也視為不確定交給 planner（它看得到 id 清單，能把「登入服務」對成 userservice）。
+**唯一的規則**是否定詞：「沒／未／never／not」讓 `observed-edges` 變 `uncovered`，因為兩者在向量空間靠得很近、意思相反。
+為什麼換掉 regex：第一次真環境四題就有兩題是 regex 沒列到的說法；例句會泛化，加意圖是加句子不是加正規表達式。
+log 印 `graph query plan (router <intent> <score> (next <intent> <score>)): [...]` 或 `(llm, router ... unsure)`。
+**校準**：`SemanticRouterCalibrationTest` 用 33 句不在例句裡的問法對真實 embedding 模型跑，印出每句的最高分／第二名與正確率，
+門檻由此決定；要有額度的 key，指令見第 5 節。
 
 **同義詞**：`GraphGrounding.mentionedNodes` 認兩組角色詞——「前端／front-end／網頁」→ id 含 frontend 的節點、「閘道／入口／gateway／ingress」→ gateway 類節點。
 其餘同義詞交給 LLM planner（它看得到 id 清單）；**planner 解出的節點 id 會回饋給事實表**（`ground(graph, question, extraNodeIds)`），
@@ -142,9 +147,10 @@ log 印 `graph query plan (rules|llm): [...]`，真環境可據此統計命中�
 | `application*.properties` | `dependency.qa.dir/ttl-days/embeddings/top-k`、`openai.api.embedding-model` |
 | `docker-compose.yaml` | 掛 `./dep-reports:/app/dep-reports` |
 
-## 4. 測試（56 條，全過；全套僅 `McpToolkitCallToolTest` 因需 docker 內 `k8s-mcp-server` 而失敗，與此無關）
+## 4. 測試（66 條，全過；全套僅 `McpToolkitCallToolTest` 因需 docker 內 `k8s-mcp-server` 而失敗，與此無關）
 
-- `RulePlannerTest`：中英問法各對應算子、兩節點問路徑、點名單一節點的簡單問題不產查詢也不呼叫 LLM、資料庫規則在有點名時不觸發、上限 4 條
+- `SemanticRouterTest`：用假 embedder（詞袋向量）驗決策邏輯——例句命中、零 arity 展開、否定詞翻轉、缺節點不算確定、path 要兩節點、about-report 跳過 planner、門檻與 margin、embedder 不可用永不路由
+- `SemanticRouterCalibrationTest`：對真實模型跑 hold-out 問句（預設 skip，`-Dqa.calibrate=true` 才跑），斷言「確定但錯」為 0
 - `GraphGroundingTest` 新增：角色詞「前端／閘道」對應節點、planner 解出的 id 進事實表
 - `QaBeanWiringTest`：Spring 能從標了 `@Autowired` 的建構子建 `ReportArchiveStore`（第一次部署撞到的 bug）
 
@@ -173,7 +179,15 @@ log 印 `graph query plan (rules|llm): [...]`，真環境可據此統計命中�
    - `有哪些外部依賴？`（planner → `externals`）
    - 故意問不存在的服務（`paymentservice 依賴誰？`）→ 應回「圖上沒有這個節點」並列出相近 id，不編造。
 5. log 會印 `[DEBUG] report Q&A from <user> on <repo>: <question>` 與 embeddings 的 `[Used Token]`；
-   若 embeddings 打不到會印 `retrieval is lexical only`，功能仍可用。
+   若 embeddings 打不到會印 `retrieval is lexical only`，功能仍可用（此時語意路由也不會啟動，全部交給 LLM planner）。
+6. **校準語意路由**（在有額度 key 的機器上，例如機器 B，用 build 用的 maven 映像檔跑）：
+   ```
+   docker run --rm -v "$PWD":/build -w /build maven:3.9-eclipse-temurin-17 \
+     mvn -q -Dqa.calibrate=true -Dtest=SemanticRouterCalibrationTest -Dsurefire.failIfNoSpecifiedTests=false test 2>&1 \
+     | grep -E "^question|ok$|WRONG|unsure|^accuracy"
+   ```
+   看最後一行 `accuracy … lowest correct score … highest wrong score`：threshold 要落在「最低的正確分數」與「最高的錯誤分數」之間；
+   改 `dependency.qa.router.threshold/margin/high` 即可，不用重編。
 
 ## 6. 已知界線與下一步
 

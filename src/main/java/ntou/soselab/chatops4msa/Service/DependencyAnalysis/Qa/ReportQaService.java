@@ -77,6 +77,7 @@ public class ReportQaService {
     private final LLMService llmService;
     private final JDAService jdaService;
     private final GraphQueryPlanner planner;
+    private final SemanticRouter router;
     private final boolean embeddingsEnabled;
     private final boolean plannerEnabled;
     private final boolean injectionCheck;
@@ -98,11 +99,15 @@ public class ReportQaService {
                            @Value("${dependency.qa.embeddings:true}") boolean embeddingsEnabled,
                            @Value("${dependency.qa.query-planner:true}") boolean plannerEnabled,
                            @Value("${dependency.qa.injection-check:true}") boolean injectionCheck,
-                           @Value("${dependency.qa.top-k:8}") int topK) {
+                           @Value("${dependency.qa.top-k:8}") int topK,
+                           @Value("${dependency.qa.router.threshold:0.55}") double routerThreshold,
+                           @Value("${dependency.qa.router.margin:0.03}") double routerMargin,
+                           @Value("${dependency.qa.router.high:0.72}") double routerHigh) {
         this.store = store;
         this.llmService = llmService;
         this.jdaService = jdaService;
         this.planner = planner;
+        this.router = new SemanticRouter(llmService::embed, routerThreshold, routerMargin, routerHigh);
         this.embeddingsEnabled = embeddingsEnabled;
         this.plannerEnabled = plannerEnabled;
         this.injectionCheck = injectionCheck;
@@ -269,24 +274,30 @@ public class ReportQaService {
     String answer(ReportArchive archive, String question) {
         DependencyGraph graph = DependencyGraph.fromJson(archive.graphJson);
 
+        // One vector serves both the passage retriever and the semantic router.
         double[] questionVector = null;
-        if (embeddingsEnabled && archive.hasEmbeddings()) {
+        if (embeddingsEnabled) {
             List<double[]> v = llmService.embed(List.of(question));
             if (v != null && v.size() == 1) questionVector = v.get(0);
         }
 
         // NL -> graph query -> deterministic execution: the structured answer for
         // questions that name no node ("which edges were never exercised?") or ask
-        // for a traversal ("what breaks if X goes down?"). Rules first — a recognised
-        // question shape must not depend on the model, and skipping the call is a
-        // second saved — the model planner only for what the rules do not know, and
-        // only when a fact sheet alone cannot answer.
+        // for a traversal ("what breaks if X goes down?"). The semantic router decides
+        // by meaning, at no extra call; the model planner takes over only when the
+        // router is not confident, and not at all for questions about the report itself.
         List<DependencyGraph.Node> mentioned = GraphGrounding.mentionedNodes(question, graph);
-        List<GraphQuery> queries = RulePlanner.plan(question, mentioned, graph);
-        String planSource = "rules";
-        if (queries.isEmpty() && plannerEnabled && RulePlanner.needsLlmPlanner(question, mentioned)) {
+        SemanticRouter.Decision routed = questionVector == null ? null : router.route(questionVector, question, mentioned);
+        List<GraphQuery> queries = List.of();
+        String planSource;
+        if (routed != null && routed.confident) {
+            queries = routed.queries;
+            planSource = "router " + routed;
+        } else if (plannerEnabled && !(routed != null && routed.skipLlm)) {
             queries = planner.plan(graph, question);
-            planSource = "llm";
+            planSource = "llm" + (routed == null ? "" : ", router " + routed);
+        } else {
+            planSource = "none" + (routed == null ? "" : ", router " + routed);
         }
         System.out.println("[DEBUG] graph query plan (" + planSource + "): " + queries);
         String queryResults = GraphQueryEngine.execute(graph, queries);

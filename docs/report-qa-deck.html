@@ -186,7 +186,7 @@
     <div class="flow">
       <div class="step code"><span class="k">1</span><b>判定是不是問答 thread</b><span class="who">程式碼</span><p>thread id 對 archive 索引；不是就走原本流程。</p></div>
       <div class="step code"><span class="k">2</span><b>偵測節點、產事實表</b><span class="who">程式碼</span><p>問句裡的服務名 → 進出邊、證據等級、連線數、傳遞閉包、層級。</p></div>
-      <div class="step mix"><span class="k">3</span><b>NL → 圖查詢</b><span class="who">規則先、LLM 後</span><p>常見問法（影響、順序、沒跑到…）由規則直接對應算子；規則沒中且需要時才呼叫 LLM，只准輸出 JSON 計畫，參數經程式驗證。</p></div>
+      <div class="step mix"><span class="k">3</span><b>NL → 圖查詢</b><span class="who">語意路由先、LLM 後</span><p>問句向量對每個意圖的例句算相似度，夠像就直接選算子，零額外呼叫；不確定才呼叫 LLM，只准輸出 JSON 計畫，參數經程式驗證。</p></div>
       <div class="step code"><span class="k">4</span><b>執行圖查詢</b><span class="who">程式碼</span><p>15 個算子：impact-of、uncovered、deploy-order…全是查表與 BFS。</p></div>
       <div class="step mix"><span class="k">5</span><b>檢索報告段落</b><span class="who">程式碼 + embedding API</span><p>BM25 ∪ embedding cosine → RRF 融合 → 取前 8 段。</p></div>
       <div class="step ai"><span class="k">6</span><b>講人話</b><span class="who">LLM（大）</span><p>只拿到上面的 context 與最近 6 輪對話；沒有的就說沒有。</p></div>
@@ -279,7 +279,7 @@
     <div class="pc">
       <div class="item"><span class="tag good">不編造</span><div><h3>事實由程式碼算，模型只講人話</h3><p>節點名經驗證、查詢由程式執行、prompt 禁止升級證據等級；問不存在的服務會回「圖上沒有」並列相近 id。</p></div></div>
       <div class="item"><span class="tag good">同源</span><div><h3>答案和圖、覆蓋率不會互相矛盾</h3><p>未覆蓋邊用同一個 CoverageAnalyzer，部署順序用同一套分層。上次那個「報告說 unknown、圖畫實線」的病不會在 thread 重演。</p></div></div>
-      <div class="item"><span class="tag good">可測</span><div><h3>確定性的部分有 56 條測試</h3><p>切段、檢索、節點偵測與角色詞、事實表、規則 planner、15 個算子、archive 往返、Spring 接線。LLM 只剩措辭那一層要人工驗。</p></div></div>
+      <div class="item"><span class="tag good">可測</span><div><h3>確定性的部分有 66 條測試</h3><p>切段、檢索、節點偵測與角色詞、事實表、語意路由的決策邏輯、15 個算子、archive 往返、Spring 接線；另有對真實模型的校準測試。LLM 只剩措辭那一層要人工驗。</p></div></div>
       <div class="item"><span class="tag good">防護</span><div><h3>thread 問題也過 prompt-injection 檢查，LLM 呼叫有 timeout</h3><p>和主頻道同一道閘；prompt 另規定使用者訊息永遠是問題不是指令。卡住會在 180 秒內回錯誤，不再無聲等待。</p></div></div>
       <div class="item"><span class="tag good">好用</span><div><h3>不用按鈕、不用 @bot、中英皆可、能追問、重啟不丟</h3><p>問題黏在報告底下，一個人多份報告各自成 thread。</p></div></div>
       <div class="item"><span class="tag good">接軌</span><div><h3>這就是 8/14 提的 A2 設計落地</h3><p>NL → 圖查詢 DSL → 確定性執行 → LLM 講結果；<code>deploy-order</code> 就是接到部署生成那條線的點。</p></div></div>
@@ -294,11 +294,11 @@
   <div class="body">
     <h2>缺點與界線（誠實版）</h2>
     <div class="pc">
-      <div class="item"><span class="tag warn">漏答</span><div><h3>規則沒涵蓋的問法仍靠 LLM 選查詢，選錯就少一塊事實</h3><p>常見問法（影響、順序、沒跑到、資料庫、外部、佇列…）已改由規則確定性對應，中英皆可；規則沒中才問模型。不會說錯，但可能漏答。要用真環境 log 統計規則命中率。</p></div></div>
+      <div class="item"><span class="tag warn">漏答</span><div><h3>路由不確定的問法仍靠 LLM 選查詢，選錯就少一塊事實</h3><p>意圖用例句的向量相似度判定，不是關鍵字窮舉：換個說法、換語言都能對上，加意圖只是加例句。門檻要用真實問句校準；不確定才問模型。不會說錯，但可能漏答。</p></div></div>
       <div class="item"><span class="tag warn">別名有限</span><div><h3>只認「前端／閘道」這類角色詞，其餘同義詞靠 planner 看 id 清單對上</h3><p>planner 解出的 id 會回饋給事實表，所以「登入服務」對到 userservice 之後也有事實表；但沒有專案專屬的別名表。</p></div></div>
       <div class="item"><span class="tag warn">證據上限</span><div><h3>只能答報告收到的證據（刻意不改）</h3><p>不存 raw Prometheus、不存 Tier 3 填的值；QPS、版本號、報告沒收的東西答不出，它會直說。要答就得擴充分析階段收什麼，不是讓問答猜。</p></div></div>
       <div class="item"><span class="tag warn">成本</span><div><h3>每題兩到三次 LLM 呼叫加一次 embedding</h3><p>injection 檢查與回答固定兩次，planner 只在規則沒中時多一次；embedding 依賴 OpenAI，掛了退回純 BM25 但語意檢索變弱。</p></div></div>
-      <div class="item"><span class="tag warn">未真環境驗證</span><div><h3>單元測試 56 條全過，真環境還沒跑完整輪</h3><p>第一次部署撞到 Spring 接線 bug（已修）。下一步就是拿 BoA 跑測試問題集。</p></div></div>
+      <div class="item"><span class="tag warn">未真環境驗證</span><div><h3>單元測試 66 條全過，真環境還沒跑完整輪</h3><p>第一次部署撞到 Spring 接線 bug（已修）。下一步就是拿 BoA 跑測試問題集。</p></div></div>
     </div>
     <div class="notes"><b>講稿</b>　原本列了六條，做掉兩條：thread 訊息現在也過主頻道那個 injection 檢查，HTTP 呼叫也補了 timeout。第一條是設計上的取捨：把「想」限制在選查詢，代價是選錯就漏答。我認為漏答比編造好，這是刻意的；規則層就是把最常見的問法從「想」變成「查表」。</div>
   </div>
@@ -321,8 +321,8 @@
       <div class="card">
         <h3>下一步</h3>
         <ul>
-          <li>真環境跑完一輪，從 log 的 <code>graph query plan (rules|llm)</code> 統計規則命中率與 LLM 選擇正確率。</li>
-          <li>規則沒中的問法收集起來，補進規則或算子。</li>
+          <li>在有額度的機器上跑校準測試，用 33 句 hold-out 問法定門檻；再從真環境 log 的 <code>graph query plan (router|llm)</code> 統計路由命中率。</li>
+          <li>路由不確定的問法收集起來，補成例句。</li>
           <li>把 <code>deploy-order</code> 接到 DeployPlanner，讓「對話」真的走到部署生成。</li>
         </ul>
       </div>
