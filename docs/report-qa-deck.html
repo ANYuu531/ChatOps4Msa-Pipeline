@@ -135,7 +135,7 @@
 </style>
 
 <section class="slide cover" id="s1">
-  <div class="eyebrow"><span class="n">01 / 10</span><span class="rule"></span><span>週進度會議 · 2026 / 09</span></div>
+  <div class="eyebrow"><span class="n">01 / 12</span><span class="rule"></span><span>週進度會議 · 2026 / 09</span></div>
   <div class="body">
     <p class="brand">DepWeaver · Report Q&amp;A</p>
     <h1>報告產生之後，可以直接問它</h1>
@@ -147,7 +147,7 @@
 </section>
 
 <section class="slide" id="s2">
-  <div class="eyebrow"><span class="n">02 / 10</span><span class="rule"></span><span>問題</span></div>
+  <div class="eyebrow"><span class="n">02 / 12</span><span class="rule"></span><span>問題</span></div>
   <div class="body">
     <h2>報告的答案都在證據裡，但散在三個地方，而且產完就消失</h2>
     <div class="cols">
@@ -162,7 +162,7 @@
 </section>
 
 <section class="slide" id="s3">
-  <div class="eyebrow"><span class="n">03 / 10</span><span class="rule"></span><span>使用方式</span></div>
+  <div class="eyebrow"><span class="n">03 / 12</span><span class="rule"></span><span>使用方式</span></div>
   <div class="body">
     <h2>報告底下自動開一條 thread，在裡面打字就是問</h2>
     <div class="cols">
@@ -180,7 +180,7 @@
 </section>
 
 <section class="slide" id="s4">
-  <div class="eyebrow"><span class="n">04 / 10</span><span class="rule"></span><span>① 流程 · 哪些是程式碼、哪些是 LLM</span></div>
+  <div class="eyebrow"><span class="n">04 / 12</span><span class="rule"></span><span>① 流程 · 哪些是程式碼、哪些是 LLM</span></div>
   <div class="body">
     <h2>一個問題走六步，只有兩步是 LLM</h2>
     <div class="flow">
@@ -205,7 +205,7 @@
 </section>
 
 <section class="slide" id="s5">
-  <div class="eyebrow"><span class="n">05 / 10</span><span class="rule"></span><span>① 流程 · 兩層 RAG</span></div>
+  <div class="eyebrow"><span class="n">05 / 12</span><span class="rule"></span><span>① 流程 · 兩層 RAG</span></div>
   <div class="body">
     <h2>老師說的 RAG，這裡做成兩路：文字 RAG 與 GraphRAG</h2>
     <div class="cols">
@@ -237,7 +237,7 @@
 </section>
 
 <section class="slide" id="s6">
-  <div class="eyebrow"><span class="n">06 / 10</span><span class="rule"></span><span>② 限制 · 時間</span></div>
+  <div class="eyebrow"><span class="n">06 / 12</span><span class="rule"></span><span>② 限制 · 時間</span></div>
   <div class="body">
     <h2>時間上的限制</h2>
     <div class="scroll"><table class="tbl">
@@ -255,7 +255,7 @@
 </section>
 
 <section class="slide" id="s7">
-  <div class="eyebrow"><span class="n">07 / 10</span><span class="rule"></span><span>② 限制 · 人數與並行</span></div>
+  <div class="eyebrow"><span class="n">07 / 12</span><span class="rule"></span><span>② 限制 · 人數與並行</span></div>
   <div class="body">
     <h2>可以幾個人同時問</h2>
     <div class="scroll"><table class="tbl">
@@ -273,7 +273,7 @@
 </section>
 
 <section class="slide" id="s8">
-  <div class="eyebrow"><span class="n">08 / 10</span><span class="rule"></span><span>③ 優缺點 · 優點</span></div>
+  <div class="eyebrow"><span class="n">08 / 12</span><span class="rule"></span><span>③ 優缺點 · 優點</span></div>
   <div class="body">
     <h2>優點</h2>
     <div class="pc">
@@ -290,7 +290,7 @@
 </section>
 
 <section class="slide" id="s9">
-  <div class="eyebrow"><span class="n">09 / 10</span><span class="rule"></span><span>③ 優缺點 · 缺點與界線</span></div>
+  <div class="eyebrow"><span class="n">09 / 12</span><span class="rule"></span><span>③ 優缺點 · 缺點與界線</span></div>
   <div class="body">
     <h2>缺點與界線（誠實版）</h2>
     <div class="pc">
@@ -306,7 +306,45 @@
 </section>
 
 <section class="slide" id="s10">
-  <div class="eyebrow"><span class="n">10 / 10</span><span class="rule"></span><span>驗證與下一步</span></div>
+  <div class="eyebrow"><span class="n">10 / 12</span><span class="rule"></span><span>改進歷程</span></div>
+  <div class="body">
+    <h2>三天三個版本：每一版都是被真環境逼出來的</h2>
+    <div class="cols">
+      <div class="card plain"><span class="tag code">v1 · 關鍵字規則</span><h3 style="margin-top:.5rem">regex 對算子</h3><p>「影響」→ impact-of、「順序」→ deploy-order。第一輪 BoA 12 題就有 2 句是規則沒列到的說法，全靠 LLM 接。<b>窮舉，換個講法就漏。</b></p></div>
+      <div class="card plain"><span class="tag mix">v2 · 語意路由</span><h3 style="margin-top:.5rem">例句向量比對</h3><p>每個意圖十來句中英例句，問句向量算 cosine。第一次校準 33 句對 23 句，但<b>帶服務名的問句分數普遍低 0.1–0.2</b>，錯的幾乎都是這類。</p></div>
+      <div class="card plain"><span class="tag mix">v3 · 遮名 + 校準</span><h3 style="margin-top:.5rem">服務名先換成 X / Y</h3><p>「frontend 依賴誰」→「X 依賴誰」再比對，和例句同形。第二次校準 33 句全對、有把握但錯 0；門檻依實測分數定 0.58 / 0.04 / 0.85。</p></div>
+    </div>
+    <div class="pc">
+      <div class="item"><span class="tag good">同步修掉</span><div><h3>真環境逼出的其他修正</h3><p>Spring 多建構子未標 @Autowired 導致 bot 假活（第一次部署）；greenfield 把「未量測」講成覆蓋率 0%；「未部署」多猜 StatefulSet；部署順序把 github.com 排第一；同一 thread 兩題並發寫同一檔；thread 補 injection 檢查、LLM 呼叫補 timeout；中文回答改台灣用語。</p></div></div>
+    </div>
+    <div class="notes"><b>講稿</b>　想強調的是方法論：不是一次設計好，而是每輪真環境跑完把錯的變成規則或例句。v1 到 v2 是換方法，v2 到 v3 是校準數據告訴我病在哪——帶名字的問句分數低，所以遮名。這跟上次報告七個 bug 的精神一樣：真系統才逼得出來。</div>
+  </div>
+  <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span></span></div>
+</section>
+
+<section class="slide" id="s11">
+  <div class="eyebrow"><span class="n">11 / 12</span><span class="rule"></span><span>成果進步</span></div>
+  <div class="body">
+    <h2>數字：路由命中翻倍、錯誤歸零、零編造從頭到尾</h2>
+    <div class="scroll"><table class="tbl">
+      <tr><th>指標</th><th>v1 關鍵字規則</th><th>v2 語意路由</th><th>v3 遮名 + 校準</th></tr>
+      <tr><td>校準 33 句 hold-out 正確</td><td class="num">—</td><td class="num">23 / 33</td><td class="num">33 / 33</td></tr>
+      <tr><td>校準：有把握但錯</td><td class="num">—</td><td class="num">2</td><td class="num">0</td></tr>
+      <tr><td>校準：有把握且對</td><td class="num">—</td><td class="num">18</td><td class="num">22</td></tr>
+      <tr><td>BoA 12 題：路由有把握且對</td><td class="num">4</td><td class="num">—</td><td class="num">8</td></tr>
+      <tr><td>BoA 12 題：路由有把握但錯</td><td class="num">1</td><td class="num">—</td><td class="num">0</td></tr>
+      <tr><td>BoA 12 題：交給 LLM planner</td><td class="num">7</td><td class="num">—</td><td class="num">5（皆該交）</td></tr>
+      <tr><td>train-ticket 12 題（53 節點）</td><td class="num">—</td><td class="num">—</td><td class="num">路由 10 對、LLM 2 對、0 錯</td></tr>
+      <tr><td>編造的答案（三輪 36 題）</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>
+    </table></div>
+    <p class="lede">帶服務名的同一句，v2 到 v3 的分數：「frontend 依賴誰」0.56 → 0.98、「誰在用 balancereader」0.36 → 0.96、「frontend 到 ledger-db 中間經過哪些服務」0.59（錯）→ 0.65（對）。</p>
+    <div class="notes"><b>講稿</b>　三個數字最重要：33/33、有把握但錯 0、編造 0。第一個是泛化能力，第二個是安全（選錯查詢會漏答，但仍不會說錯事實），第三個是整套設計的底線。誠實補一句：33 句裡有 5 句後來被加進例句，真 hold-out 是 28 句，下次校準會換一批。</div>
+  </div>
+  <div class="foot"><span>DepWeaver · Report Q&amp;A</span><span></span></div>
+</section>
+
+<section class="slide" id="s12">
+  <div class="eyebrow"><span class="n">12 / 12</span><span class="rule"></span><span>驗證與下一步</span></div>
   <div class="body">
     <h2>怎麼驗、接下來做什麼</h2>
     <div class="cols">
