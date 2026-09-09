@@ -172,7 +172,7 @@
         <p class="sub"><span class="tag code">文字 RAG</span>　步驟 5</p>
         <ul>
           <li><span class="k">切段</span>：報告與證據 notes 依 Markdown 標題切，每段帶標題路徑，超過 1800 字再拆</li>
-          <li><span class="k">BM25</span>：永遠有。連字號 id 整個與拆開都索引（<span class="id">accounts-db</span> → accounts、db）；中文用單字＋bigram，<span class="k">中文問句能命中英文報告</span></li>
+          <li><span class="k">BM25</span>：永遠有。連字號 id 整個與拆開都索引（<span class="id">accounts-db</span> → accounts、db）；中文切成單字＋bigram（相鄰兩字：資料庫 → 資料、料庫），不用斷詞器也能對上中文段落</li>
           <li><span class="k">Embedding</span>：text-embedding-3-small，archive 建立時整批算一次；提問只 embed 問句。失敗退回純 BM25</li>
           <li><span class="k">融合</span>：Reciprocal Rank Fusion，不必校準兩種分數</li>
         </ul>
@@ -200,19 +200,23 @@
       <p class="sec">事實表怎麼產（程式碼，零 LLM）</p>
       <p class="sub">① 偵測問句點名的節點</p>
       <ul>
-        <li>每個節點 id 展開成幾種拼法：<span class="id">accounts-db</span>、accounts db、accountsdb；去 <code>ts-</code> 前綴／<code>-service</code> 後綴的核心名（<span class="id">ts-order-service</span> → order）</li>
-        <li>邊界只看 ASCII 字母數字，所以「請問frontend依賴誰」抓得到，frontends 不算</li>
-        <li>角色詞：「前端」→ id 含 frontend 的節點、「閘道／入口」→ gateway 類節點</li>
+        <li>id 展開成幾種拼法：<span class="id">accounts-db</span>、accounts db、accountsdb；去 <code>ts-</code>／<code>-service</code> 的核心名（<span class="id">ts-order-service</span> → order）</li>
+        <li>邊界只看 ASCII 字母數字：「請問frontend依賴誰」抓得到，frontends 不算；角色詞「前端」「閘道／入口」也認</li>
       </ul>
       <p class="sub">② 每個點名的節點一份事實表</p>
       <ul>
         <li>kind、deployed、image／replicas、tier</li>
-        <li>outgoing／incoming 每條邊一行：型別、信心、來源、有無觀測、次數、證據</li>
-        <li>兩個方向的傳遞閉包（BFS）：它壞了誰受影響、它要跑起來誰得先在</li>
+        <li>進出邊每條一行：型別、信心、來源、有無觀測、次數、證據；兩個方向的傳遞閉包：它壞了誰受影響、它要跑起來誰得先在</li>
         <li>點名兩個節點 → 直接邊，否則最短路徑，否則明講不可達</li>
       </ul>
       <p class="sub">③ 全圖摘要永遠附上</p>
       <ul><li>節點數依 kind、邊數依三層信心、未部署清單、零邊節點、tier 表與反推的啟動順序</li></ul>
+      <p class="sub">怎麼算：全是迴圈與查表，零 LLM</p>
+      <ul>
+        <li>進出邊＝掃所有邊比對 source／target；閉包與最短路徑＝BFS</li>
+        <li>摘要＝掃節點依 kind 計數、掃邊依三級信心計數；tier 用產圖時 GraphLayerAssigner 存進節點的 layer，<span class="k">和圖上分層同一份</span></li>
+        <li>同一張圖問一百次，結果一模一樣</li>
+      </ul>
     </div>
     <div>
       <p class="sub">實際餵給模型的一段</p>
@@ -261,7 +265,7 @@
         <li>方向：「誰依賴／who calls」是 dependents-of、「依賴誰／depend on」是 dependencies-of</li>
       </ul>
     </div>
-    <div>
+    <div style="font-size:14.5px">
       <p class="sub">走一次：「前端依賴誰？」</p>
       <table style="font-size:14px">
         <tr><th style="width:30%">步驟</th><th>結果</th></tr>
@@ -273,13 +277,19 @@
         <tr><td>產出查詢</td><td><code>dependencies-of(frontend)</code></td></tr>
       </table>
       <p class="sub">為什麼不是 regex</p>
-      <ul style="font-size:16px">
+      <ul style="font-size:14px">
         <li>regex 是窮舉：第一輪 12 題就有 2 句沒列到</li>
         <li>例句會泛化：換句話、換語言都對得上；加意圖是加句子</li>
         <li>用的是檢索本來就算好的向量，<span class="k">零額外呼叫</span>（遮名時多一次 embedding，不是 chat）</li>
       </ul>
-      <p class="sub">為什麼要遮名</p>
-      <ul style="font-size:16px"><li>第一次校準：帶服務名的問句分數普遍低 0.1–0.2，名字本身在向量裡佔了方向；遮掉之後 33 句全對</li></ul>
+      <p class="sub">門檻怎麼定：校準看出三個分數帶</p>
+      <table style="font-size:13.5px">
+        <tr><th>情況</th><th class="c">分數</th><th>對應的條件</th></tr>
+        <tr><td>問句幾乎就是某句例句</td><td class="c">0.97–1.00</td><td>≥ 0.85 免看第二名</td></tr>
+        <tr><td>換句話說、意思對</td><td class="c">0.54–0.73</td><td>≥ 0.58 且領先 ≥ 0.04（打平就交 LLM）</td></tr>
+        <tr><td>圖上沒有對應意圖</td><td class="c">0.38–0.50</td><td>低於 0.58 → 沒把握</td></tr>
+      </table>
+      <p style="font-size:14px;margin-top:6px">樣本 33 句，刻意偏保守：門檻太高只是多問一次 LLM，太低才會「有把握地選錯」。遮名後 33 句全對、有把握但錯 0。</p>
     </div>
     <div class="notes"><b>講稿</b>　老師可能問「這不就是分類器？」——是，是一個不用訓練的分類器：類別的定義就是例句，改例句就改行為，錯了可以看是哪句例句害的。</div>
   </div>

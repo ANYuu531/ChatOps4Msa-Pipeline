@@ -239,7 +239,7 @@ textbox(s, L, TOP, FULL, Inches(0.5), [("sec", "老師說的 RAG，做成兩路"
 tag(s, L, Inches(1.55), "文字 RAG", "code"); textbox(s, L + Inches(1.6), Inches(1.5), Inches(2), Inches(0.4), [("sub", "步驟 5")])
 textbox(s, L, Inches(2.0), COL, Inches(4.5), [
     ("b", "**切段**：報告與證據 notes 依 Markdown 標題切，每段帶標題路徑，超過 1800 字再拆"),
-    ("b", "**BM25**：永遠有。連字號 id 整個與拆開都索引（{accounts-db} → accounts、db）；中文用單字＋bigram，**中文問句能命中英文報告**"),
+    ("b", "**BM25**：永遠有。連字號 id 整個與拆開都索引（{accounts-db} → accounts、db）；中文切成單字＋bigram（相鄰兩字：資料庫 → 資料、料庫），不用斷詞器也能對上中文段落"),
     ("b", "**Embedding**：text-embedding-3-small，archive 建立時整批算一次；提問只 embed 問句。失敗退回純 BM25"),
     ("b", "**融合**：Reciprocal Rank Fusion，不必校準兩種分數")], size=13)
 tag(s, RIGHT, Inches(1.55), "GraphRAG", "ai"); textbox(s, RIGHT + Inches(1.6), Inches(1.5), Inches(2), Inches(0.4), [("sub", "步驟 2–4")])
@@ -255,16 +255,18 @@ s = prs.slides.add_slide(BLANK); frame(s, "[碩論] 報告問答", 5, 6)
 textbox(s, L, TOP, COL + Inches(0.3), Inches(5.9), [
     ("sec", "事實表怎麼產（程式碼，零 LLM）"),
     ("sub", "① 偵測問句點名的節點"),
-    ("b", "每個節點 id 展開成幾種拼法：{accounts-db}、accounts db、accountsdb；去 `ts-` 前綴／`-service` 後綴的核心名（{ts-order-service} → order）"),
-    ("b", "邊界只看 ASCII 字母數字，所以「請問frontend依賴誰」抓得到，frontends 不算"),
-    ("b", "角色詞：「前端」→ id 含 frontend 的節點、「閘道／入口」→ gateway 類節點"),
+    ("b", "id 展開成幾種拼法：{accounts-db}、accounts db、accountsdb；去 `ts-`／`-service` 的核心名（{ts-order-service} → order）"),
+    ("b", "邊界只看 ASCII 字母數字：「請問frontend依賴誰」抓得到，frontends 不算；角色詞「前端」「閘道／入口」也認"),
     ("sub", "② 每個點名的節點一份事實表"),
     ("b", "kind、deployed、image／replicas、tier"),
-    ("b", "outgoing／incoming 每條邊一行：型別、信心、來源、有無觀測、次數、證據"),
-    ("b", "兩個方向的傳遞閉包（BFS）：它壞了誰受影響、它要跑起來誰得先在"),
+    ("b", "進出邊每條一行：型別、信心、來源、有無觀測、次數、證據；兩個方向的傳遞閉包：它壞了誰受影響、它要跑起來誰得先在"),
     ("b", "點名兩個節點 → 直接邊，否則最短路徑，否則明講不可達"),
     ("sub", "③ 全圖摘要永遠附上"),
-    ("b", "節點數依 kind、邊數依三層信心、未部署清單、零邊節點、tier 表與反推的啟動順序")], size=12.5)
+    ("b", "節點數依 kind、邊數依三層信心、未部署清單、零邊節點、tier 表與反推的啟動順序"),
+    ("sub", "怎麼算：全是迴圈與查表，零 LLM"),
+    ("b", "進出邊＝掃所有邊比對 source／target；閉包與最短路徑＝BFS"),
+    ("b", "摘要＝掃節點依 kind 計數、掃邊依三級信心計數；tier 用產圖時存進節點的 layer，**和圖上分層同一份**"),
+    ("b", "同一張圖問一百次，結果一模一樣")], size=11.5)
 textbox(s, RIGHT + Inches(0.3), TOP, COL - Inches(0.3), Inches(0.4), [("sub", "實際餵給模型的一段")])
 codebox(s, RIGHT + Inches(0.3), Inches(1.4), COL - Inches(0.3), Inches(3.9), """## Node: userservice
 - Kind: service
@@ -305,13 +307,17 @@ table(s, RIGHT, Inches(1.4), COL, [
     ["步驟", "結果"], ["偵測節點", "角色詞「前端」→ {frontend}"], ["遮名", "「X 依賴誰？」"],
     ["embed 後比對", "dependencies-of {1.00}（例句原句）、dependents-of 0.86"], ["方向規則", "「依賴誰」→ 維持 dependencies-of"],
     ["信心", "1.00 ≥ 0.85 → 有把握，不呼叫 LLM"], ["產出查詢", "`dependencies-of(frontend)`"]], widths=[30, 70], size=12)
-textbox(s, RIGHT, Inches(4.15), COL, Inches(2.6), [
+textbox(s, RIGHT, Inches(4.0), COL, Inches(1.6), [
     ("sub", "為什麼不是 regex"),
     ("b", "regex 是窮舉：第一輪 12 題就有 2 句沒列到"),
     ("b", "例句會泛化：換句話、換語言都對得上；加意圖是加句子"),
     ("b", "用的是檢索本來就算好的向量，**零額外呼叫**（遮名時多一次 embedding，不是 chat）"),
-    ("sub", "為什麼要遮名"),
-    ("b", "第一次校準：帶服務名的問句分數普遍低 0.1–0.2；遮掉之後 33 句全對")], size=12)
+    ("b", "遮名的理由：第一次校準帶服務名的問句分數普遍低 0.1–0.2；遮掉之後 33 句全對")], size=11.5)
+table(s, RIGHT, Inches(5.55), COL, [
+    ["門檻怎麼定：三個分數帶", "分數", "對應的條件"],
+    ["問句幾乎就是某句例句", "0.97–1.00", "≥ 0.85 免看第二名"],
+    ["換句話說、意思對", "0.54–0.73", "≥ 0.58 且領先 ≥ 0.04（打平就交 LLM）"],
+    ["圖上沒有對應意圖", "0.38–0.50", "低於 0.58 → 沒把握（保守：多問 LLM 比選錯好）"]], widths=[34, 18, 48], size=10.5, center_cols=(1,))
 notes(s, "老師可能問「這不就是分類器？」——是，是一個不用訓練的分類器：類別的定義就是例句，改例句就改行為，錯了可以看是哪句例句害的。")
 
 # ---------- 8 ----------
