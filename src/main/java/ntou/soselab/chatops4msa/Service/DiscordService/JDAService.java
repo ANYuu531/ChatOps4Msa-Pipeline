@@ -144,6 +144,27 @@ public class JDAService {
         thread.sendMessage(message).queue();
     }
 
+    /**
+     * Posts one message with attachments into a thread, so a caption and the picture it
+     * describes arrive together rather than interleaved with other queued messages.
+     *
+     * @param files filename → content, in attachment order
+     */
+    public void sendThreadFiles(String threadId, String caption, java.util.Map<String, byte[]> files) {
+        if (threadId == null || files == null || files.isEmpty()) return;
+        ThreadChannel thread = jda.getThreadChannelById(threadId);
+        if (thread == null) {
+            System.out.println("[WARNING] thread not found: " + threadId);
+            return;
+        }
+        List<FileUpload> uploads = new java.util.ArrayList<>();
+        for (java.util.Map.Entry<String, byte[]> f : files.entrySet()) {
+            uploads.add(FileUpload.fromData(f.getValue(), f.getKey()));
+        }
+        if (caption == null || caption.isBlank()) thread.sendFiles(uploads).queue();
+        else thread.sendMessage(caption).addFiles(uploads).queue();
+    }
+
     public void sendChatOpsChannelFile(String filename, InputStream inputStream) {
         TextChannel channel = jda.getTextChannelById(CHATOPS_CHANNEL_ID);
         if (channel != null) {

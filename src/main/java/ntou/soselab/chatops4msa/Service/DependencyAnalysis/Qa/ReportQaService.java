@@ -2,6 +2,10 @@ package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Qa;
 
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisStateStore;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DotEmitter;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphvizRenderer;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.MermaidEmitter;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.SubgraphExtractor;
 import ntou.soselab.chatops4msa.Service.DiscordService.JDAService;
 import ntou.soselab.chatops4msa.Service.NLPService.LLMService;
 import org.json.JSONArray;
@@ -59,6 +63,10 @@ public class ReportQaService {
     private static final int HISTORY_TURNS = 6;
     private static final int HISTORY_KEEP = 40;
     private static final int PASSAGE_BUDGET_CHARS = 24000;
+    /** Passages shown to the planner: enough to find the one that describes a flow. */
+    private static final int PLANNER_HINT_PASSAGES = 3;
+    /** Pictures per answer; a plan holds at most three queries, and two pictures already compete. */
+    private static final int MAX_PICTURES = 2;
 
     /** The evidence stages worth archiving, label → checkpoint key. Raw JSON stages are not: the graph already holds them. */
     private static final Map<String, String> EVIDENCE_STAGES = new java.util.LinkedHashMap<>();
@@ -219,6 +227,7 @@ public class ReportQaService {
             sb.append("- Which edges were declared but never observed at runtime, and why might that be?\n");
         }
         sb.append("- 哪些服務有用到資料庫？證據是什麼？\n");
+        sb.append("- 畫出結帳流程相關的服務 / draw the part of the graph around `").append(x).append("`\n");
         sb.append("- What start-up / deployment order does the graph imply?\n");
         sb.append("- What are the limitations of this report?\n");
         return sb.toString();
@@ -257,12 +266,13 @@ public class ReportQaService {
                 // Two workers may serve two threads at once; two questions in the SAME
                 // thread are answered one after the other so the shared history stays
                 // a conversation and the archive file is not written by both at once.
-                String answer;
+                Answer answer;
                 synchronized (archive) {
-                    answer = answer(archive, question);
+                    answer = respond(archive, question);
                     store.save(archive);
                 }
-                for (String piece : splitForDiscord(answer)) jdaService.sendThreadMessage(threadId, piece);
+                for (String piece : splitForDiscord(answer.text)) jdaService.sendThreadMessage(threadId, piece);
+                postPartialGraphs(threadId, archive, answer);
             } catch (Exception e) {
                 e.printStackTrace();
                 jdaService.sendThreadMessage(threadId, "```ml\n[ERROR] could not answer: " + e.getMessage() + "```");
@@ -270,8 +280,25 @@ public class ReportQaService {
         });
     }
 
+    /** The reply text, and what it was computed from — the plan decides whether a picture follows. */
+    static final class Answer {
+        final String text;
+        final DependencyGraph graph;
+        final List<GraphQuery> queries;
+
+        Answer(String text, DependencyGraph graph, List<GraphQuery> queries) {
+            this.text = text;
+            this.graph = graph;
+            this.queries = queries;
+        }
+    }
+
     /** One question against one archive: builds the grounded context, calls the model, records the turn. */
     String answer(ReportArchive archive, String question) {
+        return respond(archive, question).text;
+    }
+
+    Answer respond(ReportArchive archive, String question) {
         DependencyGraph graph = DependencyGraph.fromJson(archive.graphJson);
 
         // One vector serves both the passage retriever and the semantic router.
@@ -294,7 +321,7 @@ public class ReportQaService {
             queries = routed.queries;
             planSource = "router " + routed;
         } else if (plannerEnabled && !(routed != null && routed.skipLlm)) {
-            queries = planner.plan(graph, question);
+            queries = planner.plan(graph, question, plannerHints(archive, question, questionVector));
             planSource = "llm" + (routed == null ? "" : ", router " + routed);
         } else {
             planSource = "none" + (routed == null ? "" : ", router " + routed);
@@ -322,7 +349,59 @@ public class ReportQaService {
         archive.history.add(new JSONObject().put("role", "user").put("content", question));
         archive.history.add(new JSONObject().put("role", "assistant").put("content", reply));
         while (archive.history.size() > HISTORY_KEEP) archive.history.remove(0);
-        return reply;
+        return new Answer(reply, graph, queries);
+    }
+
+    /** The few passages most relevant to the question, for the planner to pick a flow's services from. */
+    static String plannerHints(ReportArchive archive, String question, double[] questionVector) {
+        StringBuilder sb = new StringBuilder();
+        for (TextChunk hit : ChunkRetriever.retrieve(archive.chunks, question, questionVector, PLANNER_HINT_PASSAGES, GraphQueryPlanner.HINT_CHARS)) {
+            sb.append(hit.render()).append("\n\n");
+        }
+        return sb.toString();
+    }
+
+    // ---------- partial graphs ----------
+
+    /** Posts a picture for each subgraph the plan ran. Never throws: the text answer is already out. */
+    private void postPartialGraphs(String threadId, ReportArchive archive, Answer answer) {
+        int posted = 0;
+        for (GraphQuery q : answer.queries) {
+            if (!"subgraph".equals(q.op) || posted == MAX_PICTURES) continue;
+            try {
+                SubgraphExtractor.Result slice = SubgraphExtractor.extract(answer.graph, q.args);
+                if (slice.isEmpty()) continue;
+                jdaService.sendThreadFiles(threadId, partialGraphCaption(slice), partialGraphFiles(slice, archive.repoName));
+                posted++;
+            } catch (Exception e) {
+                System.out.println("[WARNING] partial graph not posted: " + e.getMessage());
+            }
+        }
+    }
+
+    /** PNG when Graphviz is available, and the Mermaid source either way — the same pair the full graph gets. */
+    static Map<String, byte[]> partialGraphFiles(SubgraphExtractor.Result slice, String repoName) {
+        String base = "partial-" + String.join("-", slice.seeds.subList(0, Math.min(3, slice.seeds.size())))
+                .replaceAll("[^A-Za-z0-9._-]", "_");
+        String title = DependencyGraph.TOOL_NAME + " — partial graph · " + truncate(shortRepo(repoName), 40);
+        Map<String, byte[]> files = new java.util.LinkedHashMap<>();
+        byte[] png = GraphvizRenderer.toPng(DotEmitter.emit(slice.graph, title, new java.util.HashSet<>(slice.seeds)));
+        if (png != null) files.put(base + ".png", png);
+        files.put(base + ".mmd", MermaidEmitter.emit(slice.graph).getBytes(StandardCharsets.UTF_8));
+        return files;
+    }
+
+    static String partialGraphCaption(SubgraphExtractor.Result slice) {
+        StringBuilder sb = new StringBuilder("🧩 **Partial graph** — seeds (orange outline): ");
+        for (int i = 0; i < slice.seeds.size(); i++) sb.append(i == 0 ? "" : ", ").append('`').append(slice.seeds.get(i)).append('`');
+        sb.append("\n").append(slice.connectors.size()).append(" node(s) on paths between seeds, ")
+                .append(slice.neighbours.size()).append(" one-hop neighbour(s); edges are the full graph's own. ")
+                .append("Solid = observed at runtime · dashed = code/doc · dotted = declared only.");
+        if (!slice.omitted.isEmpty()) {
+            sb.append("\n_").append(slice.omitted.size()).append(" more neighbour(s) left out to stay within ")
+                    .append(SubgraphExtractor.MAX_NODES).append(" nodes._");
+        }
+        return sb.toString();
     }
 
     /**

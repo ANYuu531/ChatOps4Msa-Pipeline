@@ -29,6 +29,16 @@ public class DotEmitter {
     }
 
     public static String emit(DependencyGraph graph) {
+        return emit(graph, null, java.util.Set.of());
+    }
+
+    /**
+     * @param title     the caption, or {@code null} for the full graph's default
+     * @param highlight node ids drawn with a heavy orange outline — the seeds of a
+     *                  partial graph, so a reader sees what was asked for and what
+     *                  was added around it
+     */
+    public static String emit(DependencyGraph graph, String title, java.util.Set<String> highlight) {
         StringBuilder sb = new StringBuilder();
         boolean layered = isLayered(graph);
         sb.append("digraph dependencies {\n");
@@ -39,7 +49,7 @@ public class DotEmitter {
         // the tool's name; the namespace is appended when there is one (a greenfield
         // run has none, and must not claim a cluster it never looked at).
         sb.append("  graph [fontname=\"Helvetica\", labelloc=\"t\"");
-        String title = DependencyGraph.TOOL_NAME + " — dependency graph";
+        if (title == null) title = DependencyGraph.TOOL_NAME + " — dependency graph";
         if (graph.getNamespace() != null && !graph.getNamespace().isBlank()) {
             title += "  ·  namespace: " + graph.getNamespace();
         }
@@ -55,7 +65,7 @@ public class DotEmitter {
         }
 
         for (DependencyGraph.Node node : graph.getNodes()) {
-            sb.append("  ").append(nodeLine(node)).append('\n');
+            sb.append("  ").append(nodeLine(node, highlight != null && highlight.contains(node.id))).append('\n');
         }
         for (DependencyGraph.Edge edge : graph.getEdges()) {
             sb.append("  ").append(edgeLine(edge)).append('\n');
@@ -99,7 +109,7 @@ public class DotEmitter {
         }
     }
 
-    private static String nodeLine(DependencyGraph.Node node) {
+    private static String nodeLine(DependencyGraph.Node node, boolean highlighted) {
         String kind = node.kind == null ? DependencyGraph.KIND_SERVICE : node.kind;
         String shape;
         String fill;
@@ -120,6 +130,11 @@ public class DotEmitter {
                     .append(", style=\"rounded,filled,dashed\"");
         } else {
             attrs.append(", fillcolor=\"").append(fill).append("\"");
+        }
+        if (highlighted) {
+            // Outline only: fill and dash still carry kind and deployment state.
+            attrs.append(", penwidth=2.6");
+            if (!notDeployed) attrs.append(", color=\"#d35400\"");
         }
         attrs.append(", label=\"").append(nodeLabel(node, notDeployed)).append("\"");
         return "\"" + escape(node.id) + "\" [" + attrs + "];";

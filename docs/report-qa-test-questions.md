@@ -98,6 +98,19 @@
 | 同一人再跑第二個專案 | 開第二條 thread，兩邊各自回答各自的報告 |
 | thread 過 7 天再問 | 回「archive 已過期，請重跑分析」 |
 
+## 8. 部分圖（2026-09-14 新增）
+
+看 log 的 `graph query plan`，以及回答後有沒有多一則附 PNG + `.mmd` 的訊息（起點橘色粗框）。
+
+| 問題 | 驗什麼 | 預期 |
+|---|---|---|
+| `只畫 ledgerwriter 和 balancereader 那一塊的圖` | 路由 `subgraph`（有點名） | `(router subgraph …)`、不呼叫 planner；圖含兩者、ledger-db 等 store、frontend 這類呼叫者 |
+| `畫出轉帳流程相關的服務` | planner 選起點 + 段落提示 | `(llm, router subgraph … unsure)` → `subgraph(frontend, ledgerwriter, balancereader, …)`；回答要說起點是推論的 |
+| `draw the login flow` | 英文、planner | 起點含 userservice；圖上有 accounts-db |
+| `畫出 paymentservice 相關的圖` | 不存在的起點 | 不出圖，回「圖上沒有」並列相近 id |
+| 接著追問 `把 contacts 也加進去` | 追問修正起點 | 新一張圖多了 contacts |
+| train-ticket：`畫出訂票流程相關的節點` | 大圖、上限 20 | 圖 ≤ 20 節點；caption 寫出略掉幾個鄰居 |
+
 ## train-ticket 版（greenfield，53 節點，測大圖）
 
 跑法：主頻道呼叫分析，repo 給 `FudanSELab/train-ticket`，namespace 留空。clone 很大、DeepWiki 五題，比 BoA 慢幾分鐘；

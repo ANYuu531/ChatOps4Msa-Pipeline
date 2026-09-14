@@ -42,10 +42,21 @@ public class GraphQueryPlanner {
 
     /** The validated plan for the question; empty when none applies or the call fails. */
     public List<GraphQuery> plan(DependencyGraph graph, String question) {
+        return plan(graph, question, "");
+    }
+
+    /**
+     * @param hints report passages retrieved for the question. A business flow
+     *              ("checkout") is not in the graph, but the documentation notes often
+     *              say which services a flow goes through; with them the seeds of a
+     *              {@code subgraph} rest on the report's evidence rather than on how
+     *              the service names sound.
+     */
+    public List<GraphQuery> plan(DependencyGraph graph, String question, String hints) {
         if (graph == null || graph.getNodes().isEmpty() || question == null || question.isBlank()) return List.of();
         try {
             JSONArray messages = new JSONArray();
-            messages.put(new JSONObject().put("role", "system").put("content", systemPrompt(graph)));
+            messages.put(new JSONObject().put("role", "system").put("content", systemPrompt(graph, hints)));
             messages.put(new JSONObject().put("role", "user").put("content", question));
             String response = llmService.callAPIFromOutside(messages);
             List<GraphQuery> queries = GraphQuery.parse(response, graph);
@@ -59,18 +70,33 @@ public class GraphQueryPlanner {
 
     /** The template with the catalogue and this graph's node ids filled in. */
     String systemPrompt(DependencyGraph graph) {
+        return systemPrompt(graph, "");
+    }
+
+    String systemPrompt(DependencyGraph graph, String hints) {
         StringBuilder ops = new StringBuilder();
         for (Map.Entry<String, Integer> op : GraphQuery.OPS.entrySet()) {
+            int arity = op.getValue();
             ops.append("- ").append(op.getKey()).append(" — ").append(describe(op.getKey()))
-                    .append(op.getValue() == 0 ? " (no args)" : " (" + op.getValue() + " arg" + (op.getValue() > 1 ? "s" : "") + ")")
+                    .append(arity == GraphQuery.VARIADIC ? " (1 to " + GraphQuery.MAX_SEEDS + " args)"
+                            : arity == 0 ? " (no args)" : " (" + arity + " arg" + (arity > 1 ? "s" : "") + ")")
                     .append('\n');
         }
         List<String> ids = new ArrayList<>();
         for (DependencyGraph.Node n : graph.getNodes()) ids.add(n.id + " [" + n.kind + "]");
+        String excerpt = hints == null || hints.isBlank() ? "(none retrieved)" : truncate(hints, HINT_CHARS);
         return template
                 .replace("<OPERATORS>", ops.toString())
                 .replace("<NODES>", String.join(", ", ids))
-                .replace("<MAX>", String.valueOf(MAX_QUERIES));
+                .replace("<MAX>", String.valueOf(MAX_QUERIES))
+                .replace("<HINTS>", excerpt);
+    }
+
+    /** Enough for the passages that name a flow's services; the planner call stays small. */
+    static final int HINT_CHARS = 4000;
+
+    private static String truncate(String s, int max) {
+        return s.length() <= max ? s : s.substring(0, max) + "\n…";
     }
 
     private static String describe(String op) {
@@ -90,6 +116,7 @@ public class GraphQueryPlanner {
             case "deploy-order": return "start-up / deployment order implied by the graph";
             case "externals": return "external hosts and who calls them";
             case "async": return "message-broker relationships";
+            case "subgraph": return "draw the part of the graph around the given nodes (a flow, a feature, a named group); code adds the paths between them and their one-hop neighbours";
             default: return "";
         }
     }

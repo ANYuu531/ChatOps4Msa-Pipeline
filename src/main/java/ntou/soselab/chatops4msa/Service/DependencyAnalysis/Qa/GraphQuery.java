@@ -24,6 +24,11 @@ public final class GraphQuery {
     /** The catalogue: operator → number of arguments (node ids, except {@code edges-of-type}). */
     public static final Map<String, Integer> OPS = new java.util.LinkedHashMap<>();
 
+    /** Arity marker for an operator taking 1..{@link #MAX_SEEDS} node ids. */
+    public static final int VARIADIC = -1;
+    /** Seeds of one partial graph: a flow is a handful of services, not the system. */
+    public static final int MAX_SEEDS = 8;
+
     static {
         OPS.put("dependencies-of", 1);   // direct outgoing edges of X
         OPS.put("dependents-of", 1);     // direct incoming edges of X
@@ -40,6 +45,7 @@ public final class GraphQuery {
         OPS.put("deploy-order", 0);      // start-up order implied by the tiers
         OPS.put("externals", 0);         // external hosts and who calls them
         OPS.put("async", 0);             // broker relationships
+        OPS.put("subgraph", VARIADIC);   // the part of the graph around 1..MAX_SEEDS nodes, drawn as a picture
     }
 
     static final List<String> EDGE_TYPES = List.of("sync-http", "db", "async", "external");
@@ -92,6 +98,7 @@ public final class GraphQuery {
         List<String> args = new ArrayList<>();
         if (rawArgs != null) for (int i = 0; i < rawArgs.length(); i++) args.add(rawArgs.optString(i, "").trim());
         args.removeIf(String::isBlank);
+        if (arity == VARIADIC) return seeds(op, args, graph);
         if (args.size() != arity) return null;
 
         List<String> resolved = new ArrayList<>();
@@ -102,6 +109,21 @@ public final class GraphQuery {
         }
         if ("path".equals(op) && resolved.get(0).equals(resolved.get(1))) return null;
         return new GraphQuery(op, resolved);
+    }
+
+    /**
+     * A seed list is validated per seed rather than all-or-nothing: the model naming
+     * seven real services and one it made up still describes the flow, and the made-up
+     * one is dropped here, before anything is drawn. No seed left means no query.
+     */
+    private static GraphQuery seeds(String op, List<String> args, DependencyGraph graph) {
+        List<String> resolved = new ArrayList<>();
+        for (String arg : args) {
+            String id = resolveNode(arg, graph);
+            if (id != null && !resolved.contains(id)) resolved.add(id);
+            if (resolved.size() == MAX_SEEDS) break;
+        }
+        return resolved.isEmpty() ? null : new GraphQuery(op, resolved);
     }
 
     private static String edgeType(String arg) {

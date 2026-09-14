@@ -122,6 +122,11 @@ public final class SemanticRouter {
             new Intent("mentioned-only", 0, List.of("mentioned-only"), false,
                     "哪些邊只被文件提到？", "只有文件說、沒有程式證據的邊有哪些？", "點線的邊是哪些？", "哪些依賴沒有使用證據？",
                     "which edges are mentioned only?", "which edges have no usage evidence?", "what is documented but not evidenced in code?"),
+            // Without a named node (a flow: "結帳流程") this is never confident, and the
+            // model planner picks the seeds from the ids and the report's passages.
+            new Intent("subgraph", GraphQuery.VARIADIC, List.of("subgraph"), false,
+                    "畫出 X 相關的部分圖", "只畫 X 和 Y 那一塊的圖", "幫我畫 X 周邊的節點", "把 X 附近的依賴圖畫出來", "畫出結帳流程相關的服務", "某個流程會經過哪些服務？畫給我看", "登入流程牽涉到哪些節點？",
+                    "draw the part of the graph around X", "show only X and Y in a picture", "draw the checkout flow", "which services are involved in the order flow? draw them", "show me a subgraph of X and its neighbours"),
             new Intent("about-report", 0, List.of(), true,
                     "這份報告有查過叢集嗎？", "這份報告的限制是什麼？", "報告是怎麼產生的？", "收集狀態如何？", "報告和圖有沒有矛盾？", "第 5 節是誰寫的？", "這是 greenfield 還是 runtime？",
                     "what are the limitations of this report?", "was the cluster queried?", "what is the collection status?", "how was this report produced?", "are there conflicts in the report?")
@@ -221,7 +226,18 @@ public final class SemanticRouter {
      * @param mentioned      the nodes the question names, for the arguments
      */
     public Decision route(double[] questionVector, String question, List<DependencyGraph.Node> mentioned) {
-        Map<String, Double> scores = scores(questionVector);
+        return decide(scores(questionVector), question, mentioned, threshold, margin, high);
+    }
+
+    /**
+     * Everything {@link #route} does once the per-intent scores exist: pick best and
+     * runner-up, apply the two rules, test confidence, expand the queries. Static and
+     * pure so the threshold sweep can replay one set of scores under many (T, M, H)
+     * without re-embedding — and, being the very code production runs, cannot drift
+     * from it.
+     */
+    static Decision decide(Map<String, Double> scores, String question, List<DependencyGraph.Node> mentioned,
+                           double threshold, double margin, double high) {
         String best = null, second = null;
         double bestScore = Double.NEGATIVE_INFINITY, secondScore = Double.NEGATIVE_INFINITY;
         for (Map.Entry<String, Double> e : scores.entrySet()) {
@@ -264,6 +280,11 @@ public final class SemanticRouter {
                     for (String op : intent.ops) queries.add(new GraphQuery(op, List.of(named.get(i).id)));
                 }
                 if (named.isEmpty()) confident = false; // the model planner can still resolve the node
+            } else if (intent.arity == GraphQuery.VARIADIC) {
+                List<String> ids = new ArrayList<>();
+                for (int i = 0; i < named.size() && i < GraphQuery.MAX_SEEDS; i++) ids.add(named.get(i).id);
+                if (ids.isEmpty()) confident = false;
+                else for (String op : intent.ops) queries.add(new GraphQuery(op, ids));
             } else {
                 if (named.size() >= 2) queries.add(new GraphQuery("path", List.of(named.get(0).id, named.get(1).id)));
                 else confident = false;

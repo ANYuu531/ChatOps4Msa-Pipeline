@@ -3,6 +3,7 @@ package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Qa;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyzer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphLayerAssigner;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.SubgraphExtractor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,8 +54,42 @@ public final class GraphQueryEngine {
             case "deploy-order": return deployOrder(graph);
             case "externals": return edges(graph, e -> isKind(graph, e.target, DependencyGraph.KIND_EXTERNAL), "no external host in the graph");
             case "async": return edges(graph, e -> isKind(graph, e.target, DependencyGraph.KIND_QUEUE) || "async".equals(e.type), "no broker relationship in the graph");
+            case "subgraph": return subgraph(graph, q.args);
             default: return "(unknown operator)\n";
         }
+    }
+
+    /**
+     * The partial graph as text, for the model to describe the picture the thread
+     * receives beside the answer. Why each node is in it is stated, because the seeds
+     * are a selection made for this question and the rest follows from rules — the
+     * reader should be able to tell the two apart and ask for a different selection.
+     */
+    private static String subgraph(DependencyGraph graph, List<String> seeds) {
+        SubgraphExtractor.Result r = SubgraphExtractor.extract(graph, seeds);
+        if (r.isEmpty()) return "- none of the requested nodes is in the graph\n";
+        StringBuilder sb = new StringBuilder();
+        sb.append("Partial graph of ").append(r.graph.getNodes().size()).append(" node(s) and ")
+                .append(r.graph.getEdges().size()).append(" edge(s); the tool attaches it to the thread as a picture.\n");
+        sb.append("- seeds, selected for this question (the graph stores no flow labels): ")
+                .append(String.join(", ", r.seeds)).append('\n');
+        if (!r.connectors.isEmpty()) {
+            sb.append("- added because they lie on a path between seeds: ").append(String.join(", ", r.connectors)).append('\n');
+        }
+        if (!r.neighbours.isEmpty()) {
+            sb.append("- added as one-hop neighbours of a seed: ").append(String.join(", ", r.neighbours)).append('\n');
+        }
+        if (!r.omitted.isEmpty()) {
+            sb.append("- left out to keep the picture within ").append(SubgraphExtractor.MAX_NODES)
+                    .append(" nodes: ").append(String.join(", ", r.omitted)).append('\n');
+        }
+        if (r.graph.getEdges().isEmpty()) {
+            sb.append("- no edge: the seeds are connected neither to each other nor to any neighbour\n");
+            return sb.toString();
+        }
+        sb.append("Edges in the partial graph:\n");
+        for (DependencyGraph.Edge e : r.graph.getEdges()) sb.append("- ").append(GraphGrounding.edgeLine(r.graph, e)).append('\n');
+        return sb.toString();
     }
 
     private interface EdgeFilter {
