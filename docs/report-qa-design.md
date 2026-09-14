@@ -75,7 +75,7 @@ thread 開頭會貼幾個**用真實節點名**組出來的範例問題（挑 de
   推導或 `openai.api.embedding-url` 指定）。archive 建立時整批算一次存起來；提問時只 embed 問句。
   任何失敗都退回純 BM25，是降級不是錯誤。
 - **融合**：Reciprocal Rank Fusion（k=60），不需要校準 BM25 分數與 cosine；沒向量時等於純 BM25。
-- 預設 top-k 8、passages 總量 24k 字。
+- 預設 top-k 16（2026-09-14 消融實驗後由 8 調整，見 `docs/threshold-design.md` 第 4 節）、passages 總量 24k 字。
 
 ### 2.4 Grounding（`GraphGrounding`）
 
