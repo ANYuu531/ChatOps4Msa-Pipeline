@@ -62,9 +62,17 @@ public class SubgraphExtractorTest {
         assertEquals(List.of("orders"), r.connectors);
         // shipping's queue is its data; the gateway is front-end's caller.
         assertTrue(nodes.containsAll(List.of("rabbitmq", "istio-ingressgateway")), nodes.toString());
-        // front-end's other callees are one-hop context too, but catalogue-db is two hops away.
+        // Several seeds are a flow: front-end's other callees are the rest of the shop, not context.
+        assertFalse(nodes.contains("catalogue"), nodes.toString());
         assertFalse(nodes.contains("catalogue-db"), nodes.toString());
         assertFalse(nodes.contains("queue-master"), nodes.toString());
+    }
+
+    @Test
+    void aSingleSeedAlsoShowsTheServicesItCalls() {
+        List<String> nodes = ids(SubgraphExtractor.extract(sockShop(), List.of("front-end")).graph);
+        assertTrue(nodes.containsAll(List.of("istio-ingressgateway", "orders", "catalogue", "carts")), nodes.toString());
+        assertFalse(nodes.contains("payment"), "two hops from the seed: " + nodes);
     }
 
     @Test
@@ -105,9 +113,9 @@ public class SubgraphExtractorTest {
             g.addNode("svc-" + i, DependencyGraph.KIND_SERVICE);
             g.addEdge("hub", "svc-" + i, "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "x");
         }
-        SubgraphExtractor.Result r = SubgraphExtractor.extract(g, List.of("hub", "svc-29"));
+        SubgraphExtractor.Result r = SubgraphExtractor.extract(g, List.of("hub"));
         assertEquals(SubgraphExtractor.MAX_NODES, r.graph.getNodes().size());
-        assertTrue(ids(r.graph).containsAll(List.of("hub", "svc-29")));
+        assertTrue(ids(r.graph).contains("hub"));
         assertEquals(30 - (SubgraphExtractor.MAX_NODES - 1), r.omitted.size());
     }
 

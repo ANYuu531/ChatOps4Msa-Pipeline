@@ -26,9 +26,10 @@ import java.util.Set;
  *       two seeds at opposite ends of a large graph do not drag the graph in.</li>
  *   <li><b>Neighbours</b> — one hop around each seed, in priority order: the data
  *       stores, queues and external hosts a seed uses (a flow's state lives there), then
- *       the callers of a seed (how the flow is entered), then the other services a seed
- *       calls. Added while the slice stays within {@link #MAX_NODES}; what does not fit
- *       is counted and reported, never silently dropped.</li>
+ *       the callers of a seed (how the flow is entered), then — only for a single seed —
+ *       the other services it calls. Added while the slice stays within
+ *       {@link #MAX_NODES}; what does not fit is counted and reported, never silently
+ *       dropped.</li>
  * </ol>
  * The edges are induced: every edge of the original graph whose two ends are both kept,
  * with its type, provenance, confidence, observed flag, count and evidence unchanged. A
@@ -102,8 +103,13 @@ public final class SubgraphExtractor {
         }
 
         // Neighbours, highest value first, so the cap cuts the least informative ones.
+        // The other services a seed calls are context only for "the part around X".
+        // With several seeds they are a flow, and the entry service's callees are the
+        // rest of the system: Bank of Anthos's login flow (frontend, userservice) drew
+        // every service, because frontend calls all of them.
         List<String> neighbours = new ArrayList<>();
-        for (int pass = 0; pass < 3; pass++) {
+        int passes = seeds.size() == 1 ? 3 : 2;
+        for (int pass = 0; pass < passes; pass++) {
             for (String seed : seeds) {
                 for (DependencyGraph.Edge e : graph.getEdges()) {
                     String other;

@@ -45,6 +45,12 @@ public final class ReportArchive {
     public final List<TextChunk> chunks = new ArrayList<>();
     /** The Q&amp;A so far, as {role, content} messages, oldest first. */
     public final List<JSONObject> history = new ArrayList<>();
+    /**
+     * The graph queries the last question ran, e.g. {@code [subgraph(frontend, contacts)]}.
+     * Kept apart from the history because a follow-up ("add contacts too") edits that
+     * plan, and the planner — which does not see the conversation — needs it verbatim.
+     */
+    public String lastPlan = "";
 
     public boolean hasEmbeddings() {
         for (TextChunk c : chunks) if (c.embedding != null) return true;
@@ -69,7 +75,8 @@ public final class ReportArchive {
                 .put("coverage", coverage)
                 .put("evidence", ev)
                 .put("chunks", chunkArray)
-                .put("history", new JSONArray(history));
+                .put("history", new JSONArray(history))
+                .put("lastPlan", lastPlan);
     }
 
     public static ReportArchive fromJson(JSONObject json) {
@@ -105,6 +112,7 @@ public final class ReportArchive {
                 if (m != null) a.history.add(m);
             }
         }
+        a.lastPlan = json.optString("lastPlan", "");
         return a;
     }
 }

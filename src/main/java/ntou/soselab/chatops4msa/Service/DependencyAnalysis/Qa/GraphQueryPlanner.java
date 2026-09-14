@@ -53,10 +53,20 @@ public class GraphQueryPlanner {
      *              the service names sound.
      */
     public List<GraphQuery> plan(DependencyGraph graph, String question, String hints) {
+        return plan(graph, question, hints, "");
+    }
+
+    /**
+     * @param previous the thread's previous question and the queries it ran, or empty.
+     *                 The planner does not see the conversation, and "add contacts too"
+     *                 is meaningless without the seeds it adds to: the first real run
+     *                 re-guessed the seeds instead, and added a service nobody asked for.
+     */
+    public List<GraphQuery> plan(DependencyGraph graph, String question, String hints, String previous) {
         if (graph == null || graph.getNodes().isEmpty() || question == null || question.isBlank()) return List.of();
         try {
             JSONArray messages = new JSONArray();
-            messages.put(new JSONObject().put("role", "system").put("content", systemPrompt(graph, hints)));
+            messages.put(new JSONObject().put("role", "system").put("content", systemPrompt(graph, hints, previous)));
             messages.put(new JSONObject().put("role", "user").put("content", question));
             String response = llmService.callAPIFromOutside(messages);
             List<GraphQuery> queries = GraphQuery.parse(response, graph);
@@ -74,6 +84,10 @@ public class GraphQueryPlanner {
     }
 
     String systemPrompt(DependencyGraph graph, String hints) {
+        return systemPrompt(graph, hints, "");
+    }
+
+    String systemPrompt(DependencyGraph graph, String hints, String previous) {
         StringBuilder ops = new StringBuilder();
         for (Map.Entry<String, Integer> op : GraphQuery.OPS.entrySet()) {
             int arity = op.getValue();
@@ -89,7 +103,8 @@ public class GraphQueryPlanner {
                 .replace("<OPERATORS>", ops.toString())
                 .replace("<NODES>", String.join(", ", ids))
                 .replace("<MAX>", String.valueOf(MAX_QUERIES))
-                .replace("<HINTS>", excerpt);
+                .replace("<HINTS>", excerpt)
+                .replace("<PREVIOUS>", previous == null || previous.isBlank() ? "(none: this is the first question)" : truncate(previous, HINT_CHARS));
     }
 
     /** Enough for the passages that name a flow's services; the planner call stays small. */

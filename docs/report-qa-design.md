@@ -159,6 +159,10 @@ log 印 `graph query plan (router <intent> <score> (next <intent> <score>)): [..
    - 回答貼完後，`postPartialGraphs` 用 `DotEmitter.emit(slice, title, seeds)` 產 PNG（起點橘色粗框）加 `.mmd`，
      透過 `JDAService.sendThreadFiles` 以「一則訊息附檔」貼進 thread；每題最多 2 張圖。沒有 `dot` 時只附 `.mmd`。
 
+**2026-09-14 第一次真環境（BoA runtime）後的兩個修正**
+- **多個起點時，不加「起點呼叫的其他服務」**：「登入流程」選出 frontend、userservice，但 frontend 呼叫所有服務，一跳鄰居把整張 BoA 圖都帶進來，部分圖等於全圖。現在這類鄰居只在單一起點（「畫 X 周邊」）時加入；多個起點視為流程，只留起點、起點間路徑、store／queue／外部主機與呼叫者。
+- **追問改得動上一張圖**：「把 contacts 也加進去」時 planner 看不到對話，只能重猜起點，結果多了沒人要的 userservice。現在 archive 存 `lastPlan`，planner 會拿到上一題問句與它跑的查詢，prompt 規定追問時「上一輪起點 ± 點名的節點，其他不動」；上一輪是部分圖時，路由即使有把握選 `subgraph` 也交給 planner 判斷是修改還是新請求。
+
 **界線**：起點選錯，圖就偏，但圖上的每條邊仍然是真的；使用者看得到起點清單（caption 與回答都有），可以直接說「加上 carts」追問修正。
 runtime 模式下更準的做法是用 Postman collection 裡「checkout」那組請求實際跑到的邊當起點，列為下一步。
 

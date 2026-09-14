@@ -317,11 +317,16 @@ public class ReportQaService {
         SemanticRouter.Decision routed = questionVector == null ? null : router.routeQuestion(question, questionVector, mentioned);
         List<GraphQuery> queries = List.of();
         String planSource;
-        if (routed != null && routed.confident) {
+        // Right after a partial graph, a confident subgraph route may be an edit of it
+        // ("加上 contacts" names one node and would draw contacts alone); only the
+        // planner, which is shown the previous seeds, can tell an edit from a new request.
+        boolean mayEditPartialGraph = routed != null && routed.confident && "subgraph".equals(routed.intent)
+                && archive.lastPlan.contains("subgraph(");
+        if (routed != null && routed.confident && !mayEditPartialGraph) {
             queries = routed.queries;
             planSource = "router " + routed;
         } else if (plannerEnabled && !(routed != null && routed.skipLlm)) {
-            queries = planner.plan(graph, question, plannerHints(archive, question, questionVector));
+            queries = planner.plan(graph, question, plannerHints(archive, question, questionVector), previousTurn(archive));
             planSource = "llm" + (routed == null ? "" : ", router " + routed);
         } else {
             planSource = "none" + (routed == null ? "" : ", router " + routed);
@@ -349,7 +354,22 @@ public class ReportQaService {
         archive.history.add(new JSONObject().put("role", "user").put("content", question));
         archive.history.add(new JSONObject().put("role", "assistant").put("content", reply));
         while (archive.history.size() > HISTORY_KEEP) archive.history.remove(0);
+        archive.lastPlan = queries.toString();
         return new Answer(reply, graph, queries);
+    }
+
+    /** The previous question and the queries it ran, for the planner; empty on the first question. */
+    static String previousTurn(ReportArchive archive) {
+        String lastQuestion = "";
+        for (int i = archive.history.size() - 1; i >= 0; i--) {
+            JSONObject m = archive.history.get(i);
+            if ("user".equals(m.optString("role"))) {
+                lastQuestion = m.optString("content", "");
+                break;
+            }
+        }
+        if (lastQuestion.isBlank()) return "";
+        return "question: " + lastQuestion + "\nqueries: " + (archive.lastPlan.isBlank() ? "[]" : archive.lastPlan);
     }
 
     /** The few passages most relevant to the question, for the planner to pick a flow's services from. */

@@ -56,8 +56,8 @@ public class PartialGraphQaTest {
         assertTrue(out.contains("on a path between seeds: orders"), out);
         assertTrue(out.contains("front-end -> orders"), out);
         assertTrue(out.contains("orders -> payment"), out);
-        // catalogue is a one-hop callee of the seed front-end, so it is context, not a seed.
-        assertTrue(out.contains("one-hop neighbours of a seed:") && out.contains("catalogue"), out);
+        // Two seeds are a flow: front-end's unrelated callee catalogue stays out.
+        assertFalse(out.contains("catalogue"), out);
     }
 
     @Test
@@ -68,6 +68,24 @@ public class PartialGraphQaTest {
         assertTrue(prompt.contains("(1 to " + GraphQuery.MAX_SEEDS + " args)"), prompt);
         assertTrue(prompt.contains("Checkout goes through orders"), prompt);
         assertTrue(planner.systemPrompt(shop()).contains("(none retrieved)"));
+    }
+
+    @Test
+    void aFollowUpShowsThePlannerThePreviousSeedsAndSurvivesTheArchive() {
+        ReportArchive archive = new ReportArchive();
+        assertEquals("", ReportQaService.previousTurn(archive));
+
+        archive.history.add(new org.json.JSONObject().put("role", "user").put("content", "畫出轉帳流程相關的服務"));
+        archive.history.add(new org.json.JSONObject().put("role", "assistant").put("content", "…"));
+        archive.lastPlan = "[subgraph(front-end, orders, payment)]";
+        String previous = ReportQaService.previousTurn(archive);
+        assertTrue(previous.contains("畫出轉帳流程相關的服務") && previous.contains("subgraph(front-end, orders, payment)"), previous);
+
+        String prompt = new GraphQueryPlanner(null).systemPrompt(shop(), "", previous);
+        assertTrue(prompt.contains("queries: [subgraph(front-end, orders, payment)]"), prompt);
+        assertTrue(new GraphQueryPlanner(null).systemPrompt(shop()).contains("(none: this is the first question)"));
+
+        assertEquals(archive.lastPlan, ReportArchive.fromJson(archive.toJson()).lastPlan);
     }
 
     @Test
