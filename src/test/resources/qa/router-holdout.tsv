@@ -1,0 +1,107 @@
+# Semantic-router hold-out set (2026-09-14). Columns: project, question, expected intents (| separated), note.
+# Every sentence is NEW: none is a router example or one of the 33 phrasings of SemanticRouterCalibrationTest (RouterHoldoutDatasetTest checks this).
+# expected "none": the graph cannot answer it; correct iff the router is NOT confident.
+# expected "subgraph": the intent being added separately; while it does not exist in SemanticRouter.INTENTS the row is scored like "none".
+project	question	expected	note
+bank-of-anthos	ledgerwriter 往下會連到哪些元件？	dependencies-of	
+sock-shop	orders 會對哪些服務發出請求？	dependencies-of	
+train-ticket	ts-preserve-service 送出的呼叫都落在哪些服務？	dependencies-of	
+bank-of-anthos	list everything frontend sends requests to	dependencies-of	
+sock-shop	which backends does front-end rely on?	dependencies-of	front-end is both an id and a role word
+train-ticket	what are the outgoing calls of ts-travel-service?	dependencies-of	
+bank-of-anthos	balancereader 的請求是從哪些服務來的？	dependents-of	
+sock-shop	有哪些服務會去呼叫 payment？	dependents-of	
+train-ticket	ts-station-service 是被哪些服務呼叫的？	dependents-of	
+bank-of-anthos	name the services that send requests into userservice	dependents-of	
+sock-shop	who are the consumers of the catalogue API?	dependents-of	
+train-ticket	which services end up calling ts-order-service?	dependents-of	
+bank-of-anthos	accounts-db 當機的話，前端哪些功能會受牽連？	impact-of	names two nodes (accounts-db, and frontend via 前端)
+sock-shop	carts 如果升級改壞了，連帶會壞掉哪些服務？	impact-of	
+train-ticket	ts-basic-service 一旦無法回應，會拖垮哪些服務？	impact-of	
+bank-of-anthos	if ledger-db went offline, which services would feel it?	impact-of	
+sock-shop	what is the fallout of a user service outage?	impact-of	"user" is a sock-shop node id
+train-ticket	how far does a failure in ts-seat-service propagate?	impact-of	
+bank-of-anthos	balancereader 開起來之前，哪些依賴要先就緒？	startup-needs	
+sock-shop	shipping 要能正常啟動，事先得具備什麼？	startup-needs	
+train-ticket	ts-security-service 上線前必須先確認哪些服務可用？	startup-needs	
+bank-of-anthos	before starting transactionhistory, what needs to be healthy?	startup-needs	
+sock-shop	what does queue-master require to be available at boot?	startup-needs	
+train-ticket	for ts-rebook-service to come up cleanly, which services must already be up?	startup-needs	
+bank-of-anthos	從 istio-ingressgateway 進來的請求要怎樣才會走到 accounts-db？	path	
+sock-shop	front-end 和 shipping 之間隔了幾個服務？	path	
+train-ticket	ts-cancel-service 有沒有辦法間接呼叫到 ts-station-service？	path	
+bank-of-anthos	trace the hops between contacts and accounts-db	path	
+sock-shop	is orders connected to payment, directly or through something else?	path	
+train-ticket	what chain of calls leads from ts-preserve-service to ts-price-service?	path	
+bank-of-anthos	這次導流量後還有幾條宣告的邊是空的？	uncovered	
+sock-shop	覆蓋率算出來幾趴？	uncovered	
+train-ticket	有哪些依賴關係目前還缺流量佐證？	uncovered	
+bank-of-anthos	which dependencies are still waiting for a request to cross them?	uncovered	
+sock-shop	what share of the declared edges did the load test actually hit?	uncovered	
+train-ticket	give me the edges no request has touched yet	uncovered	
+bank-of-anthos	Istio 監測到有請求經過的依賴是哪幾條？	observed-edges	
+sock-shop	列出實際跑流量時真的有發生的呼叫	observed-edges	
+train-ticket	有哪些依賴是經過實測確認存在的？	observed-edges	
+bank-of-anthos	show the edges backed by live mesh telemetry	observed-edges	
+sock-shop	which calls did the service mesh record during the run?	observed-edges	
+train-ticket	which of the arrows are solid, i.e. verified at runtime?	observed-edges	
+bank-of-anthos	哪幾個服務背後有掛資料庫？	db-users	
+sock-shop	有哪些服務是直接連 MongoDB 或 MySQL 的？	db-users	
+train-ticket	哪些微服務有自己的資料表？	db-users	
+bank-of-anthos	which services open connections to accounts-db or ledger-db?	db-users	names two db nodes; the intent takes no argument
+sock-shop	list the services that keep state in a database	db-users	
+train-ticket	where does data get persisted, and by which services?	db-users	
+bank-of-anthos	要從零把整套系統架起來，順序該怎麼安排？	deploy-order	
+sock-shop	上 k8s 的時候哪些服務應該排在最後部署？	deploy-order	
+train-ticket	按依賴關係，服務要分幾批依序上線？	deploy-order	
+bank-of-anthos	give me a rollout sequence that respects the dependencies	deploy-order	
+sock-shop	in which order should the manifests be applied?	deploy-order	
+train-ticket	what's a safe bring-up sequence for all the services?	deploy-order	
+bank-of-anthos	圖上有、但叢集裡根本沒跑起來的是哪些？	undeployed	
+sock-shop	有沒有服務被引用了卻沒有 Pod？	undeployed	
+train-ticket	程式碼裡提到但實際沒部署上去的元件有哪些？	undeployed	
+bank-of-anthos	are there services the graph knows about that have no running deployment?	undeployed	
+sock-shop	what is missing from the namespace compared to the code?	undeployed	
+train-ticket	which components exist in the repo but were never deployed?	undeployed	
+bank-of-anthos	系統有沒有對叢集外的網址發請求？	externals	
+sock-shop	付款會不會打到外部的金流 API？	externals	
+train-ticket	有沒有需要開 ServiceEntry 才能連的外部服務？	externals	
+bank-of-anthos	does anything leave the cluster to reach an internet host?	externals	
+sock-shop	list the third-party endpoints the system relies on	externals	
+train-ticket	which calls go out to hosts outside the mesh?	externals	
+bank-of-anthos	服務之間有沒有用 pub/sub 在傳事件？	async	
+sock-shop	誰把訊息丟進 rabbitmq、誰從裡面拿？	async	names the rabbitmq node
+train-ticket	有哪些溝通是非同步、不等回應的？	async	
+bank-of-anthos	do any services talk through a queue instead of HTTP?	async	
+sock-shop	how does queue-master get its work, via a broker?	async	
+train-ticket	which services emit or listen for events?	async	
+bank-of-anthos	哪些邊只有 DeepWiki 說有、程式碼找不到？	mentioned-only	
+sock-shop	那些用點線畫的依賴代表什麼、有幾條？	mentioned-only	
+train-ticket	有沒有依賴是純粹文件推測出來、沒有實證的？	mentioned-only	
+bank-of-anthos	which edges come only from the documentation layer?	mentioned-only	
+sock-shop	show me the dotted, unconfirmed edges	mentioned-only	
+train-ticket	are any dependencies based on docs alone rather than code?	mentioned-only	
+bank-of-anthos	這份報告是用哪些資料來源寫出來的？	about-report	
+sock-shop	報告裡哪個收集步驟失敗了？	about-report	
+train-ticket	這次分析是靜態分析還是有跑叢集？	about-report	
+bank-of-anthos	what caveats should I keep in mind when reading this report?	about-report	
+sock-shop	did this analysis actually drive traffic against a live cluster?	about-report	
+train-ticket	which parts of this report were written by the LLM and which by code?	about-report	
+bank-of-anthos	frontend 平均回應時間是多少毫秒？	none	latency is not in the graph
+bank-of-anthos	what programming language is ledgerwriter written in?	none	
+sock-shop	carts 的 CPU 使用率高不高？	none	
+sock-shop	how do I scale orders to five replicas?	none	an operation, not a question about the report
+train-ticket	幫我寫一個訂票的單元測試	none	
+train-ticket	what license is this project released under?	none	
+bank-of-anthos	今天天氣如何？	none	off-topic
+sock-shop	explain what a microservice is	none	off-topic
+train-ticket	ts-auth-service 的 JWT 金鑰多久輪替一次？	none	
+bank-of-anthos	can you translate the report into Japanese?	none	
+sock-shop	結帳時會碰到哪些服務？畫成圖給我	subgraph	business flow; not on the graph as such
+sock-shop	give me a picture of only orders, payment and what connects them	subgraph	
+bank-of-anthos	只把跟轉帳有關的服務畫成一張小圖	subgraph	
+bank-of-anthos	render ledgerwriter together with everything one hop away as a small graph	subgraph	
+train-ticket	把訂票流程相關的節點抽出來畫一張圖	subgraph	
+train-ticket	show me a diagram of just ts-preserve-service, ts-seat-service and ts-order-service	subgraph	names three nodes
+sock-shop	只看 carts 附近兩層的依賴圖	subgraph	
+train-ticket	can you crop the dependency graph to the payment flow?	subgraph	"payment" resolves to ts-payment-service
