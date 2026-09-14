@@ -1,17 +1,18 @@
-# EXAMPLE ROWS ONLY — the heading substrings below are guesses from the report prompt's section layout (prompts/dependency_analysis.txt), NOT verified labels. 要依實際 archive 的 heading 修正：跑一次 ChunkRetrieverTopKAblationTest 會輸出 target/qa-calibration/archive-headings.txt，照它改；比對的是「source › title」的子字串（不分大小寫），| 分隔多個相關段落。
+# Labels for the Bank of Anthos GREENFIELD archive (dep-reports/…-1788872505120.json, 80 chunks), set 2026-09-14 from its archive-headings.txt BEFORE looking at per-question ranks. 比對的是「source › title」的子字串（不分大小寫），| 分隔多個相關段落。
+# Limits: the eleven "docs+code notes" chunks (52–62) carry no title and cannot be labelled by heading, so questions answered there are under-credited; a greenfield archive has no traffic or k8s stage, so questions about those were replaced (traffic steps → loadgenerator) or point at the report's "not observed" sections.
 question	relevant_heading_substrings
-ledgerwriter 什麼時候會呼叫 balancereader？	Candidate: ledgerwriter -> balancereader
-Which edges were declared but never observed at runtime?	runtime coverage|8. Runtime Facts
+ledgerwriter 什麼時候會呼叫 balancereader？	Component: ledgerwriter|Resolution - env var|Synchronous - absolute URL
+Which edges were declared but never observed at runtime?	runtime coverage|8. Runtime Facts|Runtime Invocation Confidence
 這份報告的主要限制是什麼？	9. Unresolved Candidates and Unknowns|Overall Report Confidence
 Collection status 裡哪個來源失敗或只拿到一部分？	1. Collection Status
 報告跟圖有沒有矛盾的地方？	10. Conflicts and Inconsistencies
-哪些服務有用到資料庫？證據是什麼？	5. Infrastructure Dependencies
+哪些服務有用到資料庫？證據是什麼？	5. Infrastructure Dependencies|Persistence -
 userservice 在系統裡負責什麼？	Component: userservice
-frontend 在叢集裡有幾個 replica？	Kubernetes component: frontend|kubernetes/istio notes
-有沒有訊息佇列或非同步通訊？	6. Asynchronous Communication
-which service calls contacts, and what is the evidence?	Candidate: frontend -> contacts
-流量腳本跑了哪些步驟、哪些失敗？	traffic run report
-are there health-check or observability relations between services?	7. Health Checks and Observability Relations
-transactionhistory 連的是哪個資料庫？	Infrastructure dependency: transactionhistory
+frontend 在叢集裡有幾個 replica？	3. Components Observed in the Kubernetes Namespace|Kubernetes Inventory Confidence
+有沒有訊息佇列或非同步通訊？	6. Asynchronous Communication|Asynchronous Workflow Confidence
+which service calls contacts, and what is the evidence?	Candidate: frontend -> contacts|Component: contacts
+loadgenerator 是做什麼的？會打哪些服務？	Component: loadgenerator
+are there health-check or observability relations between services?	7. Health Checks and Observability Relations|Component: blackbox-exporter|health check
+transactionhistory 連的是哪個資料庫？	Component: transactionhistory|Component: ledger-db
 how confident is the runtime invocation evidence?	Runtime Invocation Confidence
-程式碼抽取找到哪些 HTTP 呼叫點？	code extraction
+程式碼抽取找到哪些 HTTP 呼叫點？	code extraction › 1. Inbound|code extraction › 2. Synchronous

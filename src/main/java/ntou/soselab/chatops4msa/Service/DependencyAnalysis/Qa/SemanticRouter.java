@@ -143,15 +143,16 @@ public final class SemanticRouter {
     private static final Pattern DOWNSTREAM = Pattern.compile(
             "依賴(哪|誰|什麼)|呼叫(哪|誰|什麼)|用到(哪|誰|什麼)|靠(哪|誰|什麼)|下游|depend(s)? on\\s*(what|which|who)?\\s*\\?*$|what does .* (call|use|depend|need)|downstream|dependencies of");
 
-    // Calibrated 2026-09-08 on 33 hold-out phrasings with node masking: 33/33 correct,
-    // 0 confident-wrong, lowest correct score 0.541; the unsure-but-correct ones sat at
-    // 0.54–0.70 and failed only on margin. Exact examples score 0.97–1.00, questions
-    // with no matching intent 0.38–0.50. Set just below the correct band; a wider
-    // sample may justify lower.
-    static final double DEFAULT_THRESHOLD = 0.58;
-    static final double DEFAULT_MARGIN = 0.04;
+    // Selected 2026-09-14 by SemanticRouterThresholdSweepTest's coded rule (zero confident-
+    // wrong, then maximum coverage) over 102 new hold-out questions from three projects.
+    // The previous 0.58/0.04/0.85 was confidently wrong on 10 of them. Correct and wrong
+    // top-1 scores overlap (medians 0.64 / 0.59), so the lead over the runner-up is what
+    // separates them: a lower threshold with a wider margin. Coverage 46% → 30%; see
+    // docs/threshold-design.md §3.6. Re-select on a fresh hold-out after changing examples.
+    static final double DEFAULT_THRESHOLD = 0.51;
+    static final double DEFAULT_MARGIN = 0.10;
     /** Above this the runner-up margin is not required: the match is unambiguous on its own. */
-    static final double DEFAULT_HIGH = 0.85;
+    static final double DEFAULT_HIGH = 0.80;
 
     private final Embedder embedder;
     private final double threshold;

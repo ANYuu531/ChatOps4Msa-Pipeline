@@ -108,9 +108,9 @@ public class ReportQaService {
                            @Value("${dependency.qa.query-planner:true}") boolean plannerEnabled,
                            @Value("${dependency.qa.injection-check:true}") boolean injectionCheck,
                            @Value("${dependency.qa.top-k:8}") int topK,
-                           @Value("${dependency.qa.router.threshold:0.58}") double routerThreshold,
-                           @Value("${dependency.qa.router.margin:0.04}") double routerMargin,
-                           @Value("${dependency.qa.router.high:0.85}") double routerHigh) {
+                           @Value("${dependency.qa.router.threshold:0.51}") double routerThreshold,
+                           @Value("${dependency.qa.router.margin:0.10}") double routerMargin,
+                           @Value("${dependency.qa.router.high:0.80}") double routerHigh) {
         this.store = store;
         this.llmService = llmService;
         this.jdaService = jdaService;
