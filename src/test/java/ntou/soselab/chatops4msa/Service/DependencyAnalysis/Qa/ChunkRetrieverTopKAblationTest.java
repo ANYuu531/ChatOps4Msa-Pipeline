@@ -50,6 +50,8 @@ public class ChunkRetrieverTopKAblationTest {
     static final double KNEE_GAIN_PER_PASSAGE = 0.01;
     /** A k whose average context costs more than this share of the passage budget is not taken. */
     static final double BUDGET_SHARE_CEILING = 0.75;
+    /** Share of the best affordable recall a k has to reach to be enough. */
+    static final double RECALL_SHARE_OF_PLATEAU = 0.95;
 
     enum Mode { BM25, EMBEDDING, RRF }
 
@@ -57,23 +59,40 @@ public class ChunkRetrieverTopKAblationTest {
     }
 
     /**
-     * Choosing k from the RRF curve, written before the numbers are read (the old rule —
-     * "95% of the maximum recall" — is meaningless once the grid reaches the corpus size,
-     * where recall is 1 by construction).
+     * Choosing k from the RRF curve.
      *
-     * <p>Take the smallest k whose marginal recall per extra passage has fallen below
-     * {@link #KNEE_GAIN_PER_PASSAGE} — the knee, past which passages stop paying for
-     * themselves — among the k whose average context stays within
-     * {@link #BUDGET_SHARE_CEILING} of the passage budget. If every k on the grid is still
-     * climbing, take the largest k inside the budget and say the curve had not flattened.
+     * <p><b>Rule history — the first two were written before their run and both failed on
+     * the data, so they are kept here rather than quietly replaced.</b>
+     * <ol>
+     *   <li>2026-09-14: "the smallest k reaching 95% of the maximum recall". Meaningless
+     *       once the grid reaches the corpus size, where recall is 1 by construction: it
+     *       says "put the whole report in the prompt".</li>
+     *   <li>2026-09-18: the knee — the smallest k whose marginal recall per extra passage
+     *       falls below {@link #KNEE_GAIN_PER_PASSAGE}. On the real curve (15 labelled
+     *       questions, 80 passages) the marginal gain is not monotone: it dips to 0.006
+     *       between k=4 and k=6 and climbs back to 0.037 between 10 and 12. The rule stops
+     *       in the first dip and returns k=4, which has recall 0.544 where k=16 has 0.807.
+     *       A per-step derivative is too noisy at this sample size.</li>
+     *   <li>2026-09-19, in force: <b>the smallest k whose recall reaches
+     *       {@link #RECALL_SHARE_OF_PLATEAU} of the best recall that fits the budget</b>,
+     *       where affordable means average context within {@link #BUDGET_SHARE_CEILING} of
+     *       the passage budget. Recall is non-decreasing in k, so this is immune to dips,
+     *       and the budget ceiling — declared before the run — keeps the degenerate answer
+     *       out: the plateau is the best affordable recall, not the whole corpus.</li>
+     * </ol>
+     * <b>Version 3 was written after seeing the curve.</b> It is not an in-sample fit of a
+     * number (it has no free parameter tuned on these 15 questions), but it was chosen
+     * knowing the shape of this archive's curve, and the honest check is to re-run it on a
+     * second archive from a different project. The marginal gains stay in the report as a
+     * diagnostic, because they are what shows the curve is bumpy.
      */
     static int selectK(List<Point> curve, int budget) {
-        List<Point> affordable = curve.stream().filter(p -> p.contextChars() <= BUDGET_SHARE_CEILING * budget).toList();
+        List<Point> affordable = curve.stream().filter(p -> p.contextChars() <= BUDGET_SHARE_CEILING * budget)
+                .sorted(java.util.Comparator.comparingInt(Point::k)).toList();
         if (affordable.isEmpty()) return curve.isEmpty() ? 0 : curve.get(0).k();
-        for (int i = 1; i < affordable.size(); i++) {
-            Point prev = affordable.get(i - 1), cur = affordable.get(i);
-            double gainPerPassage = (cur.recall() - prev.recall()) / (cur.k() - prev.k());
-            if (gainPerPassage < KNEE_GAIN_PER_PASSAGE) return prev.k();
+        double plateau = affordable.stream().mapToDouble(Point::recall).max().orElse(0);
+        for (Point p : affordable) {
+            if (p.recall() >= RECALL_SHARE_OF_PLATEAU * plateau) return p.k();
         }
         return affordable.get(affordable.size() - 1).k();
     }
@@ -228,12 +247,13 @@ public class ChunkRetrieverTopKAblationTest {
         if (!rrfCurve.isEmpty()) {
             int chosen = selectK(rrfCurve, budget);
             md.append("\n## Chosen k\n\n");
-            md.append("Rule (written before the run): the smallest k whose marginal recall per extra passage falls below ")
-                    .append(KNEE_GAIN_PER_PASSAGE).append(", among the k whose average context stays within ")
-                    .append((int) (BUDGET_SHARE_CEILING * 100)).append("% of the ").append(budget)
-                    .append("-character passage budget.\n\n");
-            md.append("**k = ").append(chosen).append("** (production currently uses ")
-                    .append(CalibrationSupport.applicationProperties().getProperty("dependency.qa.top-k", "?")).append(").\n\n");
+            md.append("Rule v3 (see selectK's comment for the two it replaced and why): among the k whose average ")
+                    .append("context stays within ").append((int) (BUDGET_SHARE_CEILING * 100)).append("% of the ")
+                    .append(budget).append("-character passage budget, the smallest k reaching ")
+                    .append((int) (RECALL_SHARE_OF_PLATEAU * 100)).append("% of the best recall that budget allows.\n\n");
+            md.append("**k = ").append(chosen).append("** (production: ")
+                    .append(CalibrationSupport.applicationProperties().getProperty("dependency.qa.top-k",
+                            "not set in application.properties — the code default applies")).append(").\n\n");
             md.append("| k | Recall@k | gain per extra passage | avg context chars |\n|---|---|---|---|\n");
             for (int i = 0; i < rrfCurve.size(); i++) {
                 Point point = rrfCurve.get(i);
@@ -293,20 +313,29 @@ public class ChunkRetrieverTopKAblationTest {
     }
 
     @Test
-    void theKRuleStopsAtTheKneeAndInsideTheBudget() {
+    void theKRuleTakesTheCheapestKThatIsCloseToTheBestTheBudgetAllows() {
         int budget = 24000;
-        // Climbs steeply to 8, then flattens: 8 -> 16 gains 0.02 over eight passages.
+        // Climbs to 0.70 at k=8 and barely moves after: 0.95 * 0.72 = 0.684, reached at 8.
         List<Point> knee = List.of(new Point(2, 0.40, 1400), new Point(4, 0.55, 2900),
                 new Point(8, 0.70, 6400), new Point(16, 0.72, 14400), new Point(32, 0.74, 20000));
         assertEquals(8, selectK(knee, budget));
 
-        // Still climbing everywhere, but k=32 already costs more than 75% of the budget.
+        // Still climbing everywhere, and k=32 costs more than 75% of the budget: the
+        // plateau is k=16's 0.60, and nothing cheaper reaches 0.57.
         List<Point> climbing = List.of(new Point(8, 0.30, 6400), new Point(16, 0.60, 14400),
                 new Point(32, 0.90, 22000));
         assertEquals(16, selectK(climbing, budget));
 
         // A curve that is flat from the start takes the first point, not the cheapest lie.
         assertEquals(2, selectK(List.of(new Point(2, 0.80, 1400), new Point(4, 0.80, 2900)), budget));
+
+        // Regression: the real 2026-09-19 RRF curve, where the previous rule's per-step
+        // derivative dipped at k=6 and returned k=4 (recall 0.544 against k=16's 0.807).
+        List<Point> real = List.of(new Point(2, 0.478, 1399), new Point(4, 0.544, 2955),
+                new Point(6, 0.556, 4692), new Point(8, 0.605, 6447), new Point(10, 0.627, 8563),
+                new Point(12, 0.702, 10549), new Point(16, 0.807, 14421), new Point(20, 0.818, 18707),
+                new Point(24, 0.884, 20936), new Point(28, 0.917, 22539), new Point(80, 0.917, 26231));
+        assertEquals(16, selectK(real, budget), "the affordable plateau is k=16's 0.807");
     }
 
     @Test
