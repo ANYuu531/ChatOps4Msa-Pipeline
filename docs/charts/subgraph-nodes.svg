@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="400" viewBox="0 0 720 400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+<rect width="720" height="400" fill="#ffffff"/>
+<text x="72" y="26" font-size="15" font-weight="600" fill="#1c1c1c">Node cap: how often a slice gets cut</text>
+<text x="72" y="44" font-size="11.5" fill="#6f6f6f">242 seed sets over 10 documented flows</text>
+<line x1="72" y1="344.0" x2="588" y2="344.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="62" y="348.0" font-size="11" fill="#6f6f6f" text-anchor="end">0%</text>
+<line x1="72" y1="286.4" x2="588" y2="286.4" stroke="#e8e8e6" stroke-width="1"/>
+<text x="62" y="290.4" font-size="11" fill="#6f6f6f" text-anchor="end">20%</text>
+<line x1="72" y1="228.8" x2="588" y2="228.8" stroke="#e8e8e6" stroke-width="1"/>
+<text x="62" y="232.8" font-size="11" fill="#6f6f6f" text-anchor="end">40%</text>
+<line x1="72" y1="171.2" x2="588" y2="171.2" stroke="#e8e8e6" stroke-width="1"/>
+<text x="62" y="175.2" font-size="11" fill="#6f6f6f" text-anchor="end">60%</text>
+<line x1="72" y1="113.6" x2="588" y2="113.6" stroke="#e8e8e6" stroke-width="1"/>
+<text x="62" y="117.6" font-size="11" fill="#6f6f6f" text-anchor="end">80%</text>
+<line x1="72" y1="56.0" x2="588" y2="56.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="62" y="60.0" font-size="11" fill="#6f6f6f" text-anchor="end">100%</text>
+<line x1="132.7" y1="344" x2="132.7" y2="348" stroke="#b9b9b5" stroke-width="1"/>
+<text x="132.7" y="362.0" font-size="11" fill="#6f6f6f" text-anchor="middle">10</text>
+<line x1="284.5" y1="344" x2="284.5" y2="348" stroke="#b9b9b5" stroke-width="1"/>
+<text x="284.5" y="362.0" font-size="11" fill="#6f6f6f" text-anchor="middle">20</text>
+<line x1="436.2" y1="344" x2="436.2" y2="348" stroke="#b9b9b5" stroke-width="1"/>
+<text x="436.2" y="362.0" font-size="11" fill="#6f6f6f" text-anchor="middle">30</text>
+<line x1="588.0" y1="344" x2="588.0" y2="348" stroke="#b9b9b5" stroke-width="1"/>
+<text x="588.0" y="362.0" font-size="11" fill="#6f6f6f" text-anchor="middle">40</text>
+<line x1="72" y1="344" x2="588" y2="344" stroke="#b9b9b5" stroke-width="1"/>
+<line x1="72" y1="84.8" x2="588" y2="84.8" stroke="#b9b9b5" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="584" y="78.8" font-size="11" fill="#6f6f6f" text-anchor="end">90% rule</text>
+<line x1="284.5" y1="56" x2="284.5" y2="344" stroke="#b9b9b5" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="289.5" y="68.0" font-size="11" fill="#6f6f6f">readability ceiling (Ghoniem 2005)</text>
+<path d="M72.0,239.3 L102.4,159.5 L132.7,114.3 L163.1,94.1 L208.6,69.1 L284.5,57.2 L360.4,56.0 L436.2,56.0 L588.0,56.0" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="72.0" cy="239.3" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="102.4" cy="159.5" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="132.7" cy="114.3" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="163.1" cy="94.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="208.6" cy="69.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="284.5" cy="57.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="360.4" cy="56.0" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="436.2" cy="56.0" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="588.0" cy="56.0" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<text x="598.0" y="60.0" font-size="11.5" fill="#1c1c1c">slices left whole</text>
+<text x="330" y="390" font-size="11.5" fill="#6f6f6f" text-anchor="middle">node cap</text>
+<text transform="translate(18,200) rotate(-90)" font-size="11.5" fill="#6f6f6f" text-anchor="middle">slices drawn in full</text>
+</svg>

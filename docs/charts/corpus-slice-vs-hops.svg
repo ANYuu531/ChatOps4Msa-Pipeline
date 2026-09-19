@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="400" viewBox="0 0 720 400" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+<rect width="720" height="400" fill="#ffffff"/>
+<text x="72" y="26" font-size="15" font-weight="600" fill="#1c1c1c">What a bigger hop limit costs the picture: nothing measurable</text>
+<text x="72" y="44" font-size="11.5" fill="#6f6f6f">p90 nodes in the slice of a two-service question, same 22 graphs</text>
+<line x1="72" y1="344.0" x2="588" y2="344.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="62" y="348.0" font-size="11" fill="#6f6f6f" text-anchor="end">0</text>
+<line x1="72" y1="272.0" x2="588" y2="272.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="62" y="276.0" font-size="11" fill="#6f6f6f" text-anchor="end">5</text>
+<line x1="72" y1="200.0" x2="588" y2="200.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="62" y="204.0" font-size="11" fill="#6f6f6f" text-anchor="end">10</text>
+<line x1="72" y1="128.0" x2="588" y2="128.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="62" y="132.0" font-size="11" fill="#6f6f6f" text-anchor="end">15</text>
+<line x1="72" y1="56.0" x2="588" y2="56.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="62" y="60.0" font-size="11" fill="#6f6f6f" text-anchor="end">20</text>
+<line x1="72.0" y1="344" x2="72.0" y2="348" stroke="#b9b9b5" stroke-width="1"/>
+<text x="72.0" y="362.0" font-size="11" fill="#6f6f6f" text-anchor="middle">1</text>
+<line x1="118.9" y1="344" x2="118.9" y2="348" stroke="#b9b9b5" stroke-width="1"/>
+<text x="118.9" y="362.0" font-size="11" fill="#6f6f6f" text-anchor="middle">2</text>
+<line x1="165.8" y1="344" x2="165.8" y2="348" stroke="#b9b9b5" stroke-width="1"/>
+<text x="165.8" y="362.0" font-size="11" fill="#6f6f6f" text-anchor="middle">3</text>
+<line x1="212.7" y1="344" x2="212.7" y2="348" stroke="#b9b9b5" stroke-width="1"/>
+<text x="212.7" y="362.0" font-size="11" fill="#6f6f6f" text-anchor="middle">4</text>
+<line x1="306.5" y1="344" x2="306.5" y2="348" stroke="#b9b9b5" stroke-width="1"/>
+<text x="306.5" y="362.0" font-size="11" fill="#6f6f6f" text-anchor="middle">6</text>
+<line x1="400.4" y1="344" x2="400.4" y2="348" stroke="#b9b9b5" stroke-width="1"/>
+<text x="400.4" y="362.0" font-size="11" fill="#6f6f6f" text-anchor="middle">8</text>
+<line x1="588.0" y1="344" x2="588.0" y2="348" stroke="#b9b9b5" stroke-width="1"/>
+<text x="588.0" y="362.0" font-size="11" fill="#6f6f6f" text-anchor="middle">12</text>
+<line x1="72" y1="344" x2="588" y2="344" stroke="#b9b9b5" stroke-width="1"/>
+<line x1="72" y1="56.0" x2="588" y2="56.0" stroke="#b9b9b5" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="584" y="50.0" font-size="11" fill="#6f6f6f" text-anchor="end">readability ceiling (Ghoniem 2005)</text>
+<path d="M72.0,171.2 L118.9,171.2 L165.8,171.2 L212.7,171.2 L259.6,171.2 L306.5,171.2 L400.4,171.2 L588.0,171.2" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="72.0" cy="171.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="118.9" cy="171.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="165.8" cy="171.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="212.7" cy="171.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="259.6" cy="171.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="306.5" cy="171.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="400.4" cy="171.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<circle cx="588.0" cy="171.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"/>
+<text x="598.0" y="175.2" font-size="11.5" fill="#1c1c1c">p90 slice size</text>
+<text x="330" y="390" font-size="11.5" fill="#6f6f6f" text-anchor="middle">hop limit</text>
+<text transform="translate(18,200) rotate(-90)" font-size="11.5" fill="#6f6f6f" text-anchor="middle">nodes in the slice</text>
+</svg>
