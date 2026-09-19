@@ -1,0 +1,19 @@
+# Business flows a reader would ask for a picture of ("draw the booking flow"), used by
+# SubgraphLimitsExperimentTest to justify the two partial-graph limits.
+#
+# members  = the services the flow touches, per the project's own documentation, kept to
+#            ids that exist in the graph file of that project.
+# seeds    = what a question would realistically name (the extractor is given only these).
+# source   = where the membership comes from.
+#
+# project	flow	members	seeds	source
+bank-of-anthos	login	frontend|userservice|accounts-db	frontend|userservice	BoA README: "Authentication: Frontend -> User-Service"; user-service manages accounts in accounts-db
+bank-of-anthos	transfer	frontend|contacts|ledgerwriter|ledger-db|balancereader	ledgerwriter	BoA README: "Deposits/Transfers: Frontend -> Ledger-Writer -> Ledger-DB"; balance-reader caches balances; contacts feeds the Send Payment / Deposit dropdown
+bank-of-anthos	history	frontend|transactionhistory|ledger-db	frontend|transactionhistory	BoA README: "View History: Frontend -> Transaction-History -> Ledger-DB"
+train-ticket	preserve	ts-preserve-service|ts-basic-service|ts-seat-service|ts-travel-service|ts-order-service|ts-food-service|ts-consign-service|ts-station-service|ts-train-service|ts-route-service|ts-price-service|ts-station-food-service	ts-preserve-service|ts-order-service	train-ticket README scenario "Ticket Reservation"; members are ts-preserve-service's declared calls and what those in turn declare
+train-ticket	cancel	ts-cancel-service|ts-notification-service|ts-order-service|ts-order-other-service|ts-station-service	ts-cancel-service	train-ticket README scenario "Ticket Cancellation"
+train-ticket	rebook	ts-rebook-service|ts-seat-service|ts-inside-payment-service|ts-payment-service|rest-service-external|ts-order-service|ts-order-other-service	ts-rebook-service|ts-payment-service	train-ticket README scenario "Ticket Reboking"
+train-ticket	travel-plan	ts-travel-plan-service|ts-seat-service|ts-route-plan-service|ts-travel-service|ts-travel2-service|ts-basic-service|ts-order-service|ts-order-other-service	ts-travel-plan-service	train-ticket route/travel planning services
+train-ticket	preserve-other	ts-preserve-other-service|ts-basic-service|ts-seat-service|ts-travel2-service|ts-order-other-service|ts-food-service|ts-consign-service	ts-preserve-other-service|ts-consign-service	train-ticket README scenario "Ticket Reservation" (the other-seat variant)
+train-ticket	auth	ts-user-service|ts-auth-service	ts-user-service	train-ticket user/auth services
+train-ticket	admin-order	ts-admin-order-service|ts-order-service|ts-order-other-service|ts-station-service	ts-admin-order-service	train-ticket admin scenarios

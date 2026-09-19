@@ -73,6 +73,16 @@ public final class SubgraphExtractor {
     }
 
     public static Result extract(DependencyGraph graph, Collection<String> seedIds) {
+        return extract(graph, seedIds, MAX_NODES, MAX_PATH_HOPS);
+    }
+
+    /**
+     * The same slice with the two limits given rather than taken from the constants, so an
+     * experiment can sweep them over real graphs ({@code SubgraphLimitsExperimentTest}) and
+     * production keeps one code path. Callers in production use {@link #extract(DependencyGraph,
+     * Collection)}; nothing but the experiment passes other values.
+     */
+    public static Result extract(DependencyGraph graph, Collection<String> seedIds, int maxNodes, int maxPathHops) {
         Map<String, DependencyGraph.Node> byId = new HashMap<>();
         for (DependencyGraph.Node n : graph.getNodes()) byId.put(n.id, n);
 
@@ -89,11 +99,11 @@ public final class SubgraphExtractor {
         for (String a : seeds) {
             for (String b : seeds) {
                 if (a.equals(b)) continue;
-                List<String> path = shortestPath(graph, a, b, MAX_PATH_HOPS);
+                List<String> path = shortestPath(graph, a, b, maxPathHops);
                 if (path == null) continue;
                 List<String> fresh = new ArrayList<>();
                 for (String id : path) if (!keep.contains(id)) fresh.add(id);
-                if (keep.size() + fresh.size() > MAX_NODES) {
+                if (keep.size() + fresh.size() > maxNodes) {
                     omitted.addAll(fresh);
                     continue;
                 }
@@ -117,7 +127,7 @@ public final class SubgraphExtractor {
                     else if (pass == 1) other = e.target.equals(seed) ? e.source : null;
                     else other = e.source.equals(seed) && !isTerminal(byId.get(e.target)) ? e.target : null;
                     if (other == null || keep.contains(other)) continue;
-                    if (keep.size() >= MAX_NODES) {
+                    if (keep.size() >= maxNodes) {
                         omitted.add(other);
                         continue;
                     }
