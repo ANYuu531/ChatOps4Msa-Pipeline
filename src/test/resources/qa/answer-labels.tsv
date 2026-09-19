@@ -1,0 +1,31 @@
+# Questions whose answer is a set of nodes, so it can be scored by code instead of by taste.
+# The gold answer is what the graph query engine returns for `gold_op(gold_args)` — the
+# deterministic answer DepWeaver would give. Used by PureLlmBaselineTest to compare
+# "pure LLM reading the report" against the grounded pipeline.
+#
+# Note the asymmetry this creates and keep it in the write-up: arm C is given the result
+# of exactly this query, so it should win on these questions. What the comparison measures
+# is how far the ungrounded arms fall short of an answer the graph can settle, and what
+# they name that does not exist.
+#
+# project	question	gold_op	gold_args	note
+bank-of-anthos	frontend 會呼叫哪些服務？	dependencies-of	frontend	direct callees
+bank-of-anthos	Which services call ledgerwriter?	dependents-of	ledgerwriter	direct callers
+bank-of-anthos	如果 accounts-db 掛掉，哪些服務會受影響？	impact-of	accounts-db	transitive dependents
+bank-of-anthos	What has to be running before frontend can serve a request?	startup-needs	frontend	transitive dependencies
+bank-of-anthos	哪些服務會直接存取資料庫？	db-users
+bank-of-anthos	Which dependencies were never confirmed by runtime traffic?	unobserved-edges
+bank-of-anthos	圖上有哪些節點其實沒有部署起來？	undeployed
+bank-of-anthos	List every external host this system talks to.	externals
+bank-of-anthos	部署順序應該怎麼排？	deploy-order
+bank-of-anthos	transactionhistory 和 ledger-db 之間有沒有關係？	path	transactionhistory|ledger-db	both directions
+train-ticket	ts-preserve-service 會呼叫哪些服務？	dependencies-of	ts-preserve-service	direct callees
+train-ticket	Which services call ts-seat-service?	dependents-of	ts-seat-service	direct callers
+train-ticket	ts-basic-service 掛掉會影響哪些服務？	impact-of	ts-basic-service	transitive dependents
+train-ticket	What must be running before ts-preserve-service works?	startup-needs	ts-preserve-service	transitive dependencies
+train-ticket	哪些服務直接用到資料庫？	db-users
+train-ticket	Which dependencies have no runtime evidence?	unobserved-edges
+train-ticket	這個系統會連到哪些外部主機？	externals
+train-ticket	List the deployment order the dependencies imply.	deploy-order
+train-ticket	ts-travel-plan-service 到 ts-basic-service 之間走哪條路？	path	ts-travel-plan-service|ts-basic-service	both directions
+train-ticket	哪些依賴只有文件提到、沒有使用證據？	mentioned-only
