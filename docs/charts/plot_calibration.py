@@ -281,6 +281,9 @@ def corpus_charts(rows, out_dir):
 def baseline_chart(rows, out_dir):
     by_arm = defaultdict(list)
     for r in rows:
+        # Questions whose graph answer is "nothing" are read by hand, not averaged.
+        if str(r.get("negative", "")).lower() == "true":
+            continue
         by_arm[r["arm"]].append(r)
     order = ["report-only", "rag", "depweaver"]
     arms = [a for a in order if a in by_arm] or list(by_arm)

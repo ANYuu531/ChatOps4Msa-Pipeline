@@ -69,6 +69,8 @@ public class PureLlmBaselineTest {
     static boolean statesAnAbsence(String line) {
         String l = line.toLowerCase(Locale.ROOT).strip();
         return l.startsWith("- no ") || l.startsWith("no ")
+                // The echo of the query itself spells its arguments: "Query: path(a, b)".
+                || l.startsWith("query:")
                 || l.contains("needs nothing else to start")
                 || l.contains("nothing transitively depends")
                 || l.contains("is not measurable")
@@ -86,19 +88,20 @@ public class PureLlmBaselineTest {
     }
 
     /**
-     * @param negative        the graph's answer is "nothing" — scored as right or wrong,
-     *                        not with precision and recall
+     * @param negative        the graph's answer is "nothing". Counting names cannot judge
+     *                        these: "they are unrelated — ledgerwriter and balancereader
+     *                        are the ones that use ledger-db" names two services and is
+     *                        both correct and useful, while a list of eleven services
+     *                        under "I cannot tell" names eleven and is neither. They are
+     *                        left out of the averages and read by hand in the detail.
+     * @param namedBeyond     services named that the question did not itself spell — the
+     *                        number to look at on a negative question, not a verdict
      * @param offGraph        service-shaped names the graph does not have
      * @param offGraphAndDocs of those, the ones not in the report either: the closest this
      *                        harness gets to "made it up"
      */
     record Score(double precision, double recall, double f1, int offGraph, int offGraphAndDocs,
-                 int named, boolean negative) {
-
-        /** A negative question is answered correctly by naming no node of the graph. */
-        boolean correctNegative() {
-            return negative && named == 0;
-        }
+                 int named, int namedBeyond, boolean negative) {
     }
 
     /** The node ids the graph has that this text names, matched on word boundaries. */
@@ -160,7 +163,9 @@ public class PureLlmBaselineTest {
         Set<String> offGraph = offGraphNames(answer, ids, question);
         String haystack = report == null ? "" : report.toLowerCase(Locale.ROOT);
         long offDocs = offGraph.stream().filter(n -> !haystack.contains(n)).count();
-        return new Score(precision, recall, f1, offGraph.size(), (int) offDocs, named.size(), negative);
+        String asked = question == null ? "" : question.toLowerCase(Locale.ROOT);
+        long beyond = named.stream().filter(n -> !asked.contains(n.toLowerCase(Locale.ROOT))).count();
+        return new Score(precision, recall, f1, offGraph.size(), (int) offDocs, named.size(), (int) beyond, negative);
     }
 
     @Test
@@ -204,7 +209,7 @@ public class PureLlmBaselineTest {
         md.append("- report given to arm 1: ").append(report.length()).append(" of ").append(archive.report.length()).append(" characters\n\n");
 
         StringBuilder csv = new StringBuilder(CalibrationSupport.csvRow("question", "arm", "gold", "named",
-                "hit_precision", "recall", "f1", "off_graph", "off_graph_and_docs", "negative", "answer_chars"));
+                "named_beyond_question", "hit_precision", "recall", "f1", "off_graph", "off_graph_and_docs", "negative", "answer_chars"));
         StringBuilder detail = new StringBuilder();
         Map<String, List<Score>> byArm = new java.util.LinkedHashMap<>();
 
@@ -213,7 +218,9 @@ public class PureLlmBaselineTest {
             List<String> args = row.length > 3 && !row[3].isBlank() ? List.of(row[3].trim().split("\\|")) : List.of();
             GraphQuery goldQuery = GraphQuery.parse(new org.json.JSONArray()
                     .put(new JSONObject().put("op", row[2].trim()).put("args", args)).toString(), graph).get(0);
-            String goldResult = GraphQueryEngine.execute(graph, List.of(goldQuery));
+            // The single-query form: the list form prepends "Query: path(a, b)", whose echo
+            // of the arguments would land in the gold set as if it were the answer.
+            String goldResult = GraphQueryEngine.execute(graph, goldQuery);
             Set<String> gold = goldFrom(goldResult, ids);
 
             double[] vector = cache.embed(List.of(question)) == null ? null : cache.embed(List.of(question)).get(0);
@@ -257,11 +264,12 @@ public class PureLlmBaselineTest {
             for (Map.Entry<String, String> a : answers.entrySet()) {
                 Score s = score(a.getValue(), gold, ids, question, archive.report);
                 byArm.computeIfAbsent(a.getKey(), k -> new ArrayList<>()).add(s);
-                csv.append(CalibrationSupport.csvRow(question, a.getKey(), gold.size(), s.named(), s.precision(),
-                        s.recall(), s.f1(), s.offGraph(), s.offGraphAndDocs(), s.negative(), a.getValue().length()));
+                csv.append(CalibrationSupport.csvRow(question, a.getKey(), gold.size(), s.named(), s.namedBeyond(),
+                        s.precision(), s.recall(), s.f1(), s.offGraph(), s.offGraphAndDocs(), s.negative(), a.getValue().length()));
                 detail.append("**").append(a.getKey()).append("** — ")
                         .append(s.negative()
-                                ? "negative question: " + (s.correctNegative() ? "correct (named no service)" : "wrong (named " + s.named() + ")")
+                                ? "the graph answers \"nothing\" here — judge by reading: this answer names "
+                                  + s.namedBeyond() + " service(s) the question did not"
                                 : String.format(Locale.ROOT, "P %.2f, R %.2f", s.precision(), s.recall()))
                         .append(", off-graph names ").append(s.offGraph())
                         .append(" (not in the report either: ").append(s.offGraphAndDocs()).append(")\n\n> ")
@@ -271,18 +279,23 @@ public class PureLlmBaselineTest {
 
         long positives = byArm.values().stream().findFirst().map(s -> s.stream().filter(x -> !x.negative()).count()).orElse(0L);
         long negatives = byArm.values().stream().findFirst().map(s -> s.stream().filter(Score::negative).count()).orElse(0L);
-        md.append("Scored on the ").append(positives).append(" questions whose graph answer names at least one node; the ")
-                .append(negatives).append(" whose answer is \"nothing\" are in the last column, where the right answer is to name no service.\n\n");
-        md.append("| arm | precision | recall | F1 | off-graph names / question | of those, not in the report | \"nothing\" questions right |\n");
+        md.append("Precision, recall and F1 are over the ").append(positives)
+                .append(" questions whose graph answer names at least one node. The ").append(negatives)
+                .append(" whose graph answer is \"nothing\" are **not** scored automatically — counting names cannot tell a useful ")
+                .append("\"they are unrelated, X and Y are the ones that use it\" from a list of everything — they are read by hand in the detail below; ")
+                .append("the last column is how many services each arm named there beyond the ones the question itself spells.\n\n");
+        md.append("| arm | precision | recall | F1 | off-graph names / question | of those, not in the report | names beyond the question, \"nothing\" questions |\n");
         md.append("|---|---|---|---|---|---|---|\n");
         for (Map.Entry<String, List<Score>> e : byArm.entrySet()) {
             List<Score> s = e.getValue();
-            long negRight = s.stream().filter(Score::correctNegative).count();
-            md.append(String.format(Locale.ROOT, "| %s | %.3f | %.3f | %.3f | %.2f | %.2f | %d/%d |%n", e.getKey(),
-                    mean(s, Score::precision), mean(s, Score::recall), mean(s, Score::f1),
+            List<Score> pos = s.stream().filter(x -> !x.negative()).toList();
+            String negBeyond = s.stream().filter(Score::negative).map(x -> String.valueOf(x.namedBeyond()))
+                    .reduce((a, b) -> a + ", " + b).orElse("—");
+            md.append(String.format(Locale.ROOT, "| %s | %.3f | %.3f | %.3f | %.2f | %.2f | %s |%n", e.getKey(),
+                    mean(pos, Score::precision), mean(pos, Score::recall), mean(pos, Score::f1),
                     s.stream().mapToInt(Score::offGraph).average().orElse(0),
                     s.stream().mapToInt(Score::offGraphAndDocs).average().orElse(0),
-                    negRight, negatives));
+                    negBeyond));
         }
         md.append("\n- chat calls: ").append(chat.calls()).append(" (").append(chat.promptTokens())
                 .append(" prompt + ").append(chat.completionTokens()).append(" completion tokens)\n");
@@ -339,12 +352,14 @@ public class PureLlmBaselineTest {
     }
 
     @Test
-    void aQueryThatAnswersNothingProducesAnEmptyGoldAndIsScoredRightOrWrong() {
-        List<String> ids = List.of("frontend", "userservice", "transactionhistory", "ledger-db");
+    void aQueryThatAnswersNothingProducesAnEmptyGoldAndIsReadByHand() {
+        List<String> ids = List.of("frontend", "userservice", "transactionhistory", "ledger-db", "ledgerwriter");
 
         // The engine spells both ids while saying they are unrelated; the gold must be empty.
         String noPath = "- no directed path between transactionhistory and ledger-db in either direction\n";
         assertEquals(Set.of(), goldFrom(noPath, ids));
+        String withEcho = "Query: path(transactionhistory, ledger-db)\n- no directed path between them\n";
+        assertEquals(Set.of(), goldFrom(withEcho, ids), "the query echo is not an answer");
         String noExternals = "- no external host is called by any service\n";
         assertEquals(Set.of(), goldFrom(noExternals, ids));
         String half = "- no directed path transactionhistory -> ledger-db\n- ledger-db -> frontend (1 hop(s))\n";
@@ -352,13 +367,16 @@ public class PureLlmBaselineTest {
 
         Set<String> gold = goldFrom(noPath, ids);
         String q = "transactionhistory 和 ledger-db 之間有沒有關係？";
-        Score right = score("圖上兩者之間沒有任何路徑。", gold, ids, q, "");
-        assertTrue(right.negative());
-        assertTrue(right.correctNegative());
-        assertTrue(Double.isNaN(right.precision()), "a negative question has no precision to report");
+        Score bare = score("圖上兩者之間沒有任何路徑。", gold, ids, q, "");
+        assertTrue(bare.negative());
+        assertTrue(Double.isNaN(bare.precision()), "a negative question has no precision to report");
+        assertEquals(0, bare.namedBeyond(), "the two subjects are the question's own words");
 
-        Score wrong = score("它透過 userservice 連到 ledger-db。", gold, ids, q, "");
-        assertFalse(wrong.correctNegative(), "naming services is the wrong answer to \"nothing\"");
+        // Naming the services that DO use ledger-db is useful, not wrong: the count says
+        // one name went beyond the question, and a reader decides what that is worth.
+        Score helpful = score("沒有關係；用 ledger-db 的是 ledgerwriter。", gold, ids, q, "");
+        assertEquals(1, helpful.namedBeyond());
+        assertFalse(Double.isNaN(helpful.offGraph() * 1.0));
     }
 
     @Test

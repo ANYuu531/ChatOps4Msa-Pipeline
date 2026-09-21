@@ -606,8 +606,8 @@ python3 docs/charts/plot_calibration.py          # 讀 target/qa-calibration/*.c
 
 **第一輪（2026-09-19）跑出來之後修掉的三個評分瑕疵**——原始數字不可用，是評分程式的錯不是系統的錯：
 
-1. **圖的答案是「沒有」的題目**（例如 BoA greenfield 沒有任何外部主機）gold 是空集合，結果三組都被算成 precision 0、recall NaN——**答對反而 0 分**。改法：這類題目改成**答對／答錯**計分（沒點名任何服務＝對），並在總表單獨一欄，不混進 precision／recall 的平均。
-2. **gold 被「否定句」污染**：引擎回「no directed path between transactionhistory and ledger-db」時，原本的抽取把這兩個 id 當成答案，於是只要複誦問句裡的名字就能拿到 recall 1.00。改法：先丟掉陳述「不存在」的行（`- no …`、`needs nothing else to start`、`was not measured`…）再抽節點名（`goldFrom()`，有離線測試釘住）。
+1. **圖的答案是「沒有」的題目**（例如 BoA greenfield 沒有任何外部主機）gold 是空集合，結果三組都被算成 precision 0、recall NaN——**答對反而 0 分**。改法：這類題目**不自動計分**，逐題列出讓人判讀，總表只報「點名了幾個問句沒提到的服務」。（中間曾改成「沒點名任何服務＝對」，但那也不對：回答「兩者沒關係，用 ledger-db 的是 ledgerwriter 和 balancereader」點名了服務，卻是正確而且有用的答案。）
+2. **gold 被「否定句」與「查詢回音」污染**：引擎回「no directed path between transactionhistory and ledger-db」時，原本的抽取把這兩個 id 當成答案，於是只要複誦問句裡的名字就能拿到 recall 1.00。改法：先丟掉陳述「不存在」的行（`- no …`、`needs nothing else to start`、`was not measured`…）再抽節點名（`goldFrom()`，有離線測試釘住）。**第一次修不完全**：`execute()` 還會加一行 `Query: path(a, b)` 把參數再寫一次，9/21 那輪就是被這行騙到；現在改用單一查詢的 `execute(graph, q)`，並且連 `Query:` 開頭的行也一併丟掉。
 3. **「編造名字」誤判**：`deploy-order` 這種查詢運算子名、以及問句自己就寫了的名字，都被當成編造的服務名。改法：扣掉 DSL 詞彙與問句本身的字，並把指標拆成兩個——**off-graph**（像服務名但圖上沒有）與 **off-graph 且報告裡也沒有**（最接近「憑空捏造」的訊號；像 `cloud-sql-proxy` 這種報告裡講過但不是節點的，只算前者）。
 
 指標仍是近似值：抓 `a-b` 形式的小寫詞，英文連字詞可能漏抓或誤抓，所以只看比例、不當成謊言計數。
@@ -616,15 +616,38 @@ python3 docs/charts/plot_calibration.py          # 讀 target/qa-calibration/*.c
 
 depweaver 組拿到的正是「標準答案那條查詢」的執行結果，所以它在這批題目上本來就該贏。這個實驗量的是：**在圖能一槌定音的問題上，沒有接地的兩組差多遠、以及它們會講出什麼圖上不存在的東西**。它不能證明 depweaver 在「報告怎麼寫的」這類純文字題上也比較好——那類題目 depweaver 沒有優勢，而且目前沒有標註。
 
-### 9.4 結果
+### 9.4 結果（2026-09-21 機器 B）
 
-第一輪已在 2026-09-19 於機器 B 跑過，但如 9.2 所述，評分程式有三個瑕疵，**數字作廢**；修正後待重跑（步驟 7.5）。曲線圖：`docs/charts/baseline-arms.svg`。
+- archive：`dep-reports/824657585331372043-1788872505120.json`（BoA，greenfield，報告全文 16 275 字，arm 1 完整看得到）
+- 模型 `gpt-4.1-mini`，temperature 0；10 題 × 3 組 = 31 次 chat 呼叫（多的那次是 planner），約 125 k prompt token
+- 逐題原始輸出：`docs/experiments/2026-09-21/pure-llm-baseline.md`、`.csv`
 
-第一輪逐題輸出仍留有可用的質性觀察，重跑後再確認：
+**可自動評分的 7 題**（圖的答案至少有一個節點）
 
-- **`deploy-order`（部署順序）**：depweaver P 1.00／R 1.00，rag 0.80／0.89，report-only 0.89／0.89。三組都排得出合理順序，但只有 depweaver 的分層與圖一致；另外兩組多列了 `cloud-sql-proxy`、`loadgenerator`、`blackbox-exporter` 這些報告裡提過、但不在依賴圖裡的東西。
-- **`externals`（外部主機）**：三組都正確回答「沒有」，但 rag 那組順手列了 GKE、Cloud SQL、Cloud Trace 等雲端服務——不算錯，卻是圖上沒有的東西。
-- **`path(transactionhistory, ledger-db)`**：三組都說「沒有直接關係」，而這其實暴露的是**這份 greenfield archive 的圖少了一條邊**——BoA 的 transactionhistory 實際上會讀 ledger-db，8/25 的 runtime 驗證也量到資料層 5/5。也就是說，這一題的「標準答案」忠實反映了圖，而圖是錯的。**這正是 9.3 那段偏袒說明的反面：當圖錯時，接地反而讓錯誤講得更有自信。**這一點要寫進論文的威脅效度。
+| 組別 | precision | recall | F1 | off-graph 名字／題 | 其中報告也沒有 |
+|---|---|---|---|---|---|
+| report-only（純 LLM 讀報告） | 0.984 | 0.825 | 0.888 | 0.50 | 0.00 |
+| rag（只有檢索段落） | 0.961 | 0.948 | 0.951 | 0.40 | **0.10** |
+| **depweaver（接地）** | **1.000** | **1.000** | **1.000** | **0.20** | 0.00 |
+
+> 這張表是用同一次執行的逐題 CSV 重新彙總的（`path` 那題依 9.2 的修正改列為「圖答『沒有』」的題目），**沒有重跑模型**。`pure-llm-baseline.md` 裡的總表是修正前的版本，下次重跑就會一致。
+
+**圖答「沒有」的 3 題**（不自動計分，看內容判斷；括號是點名了幾個問句沒提到的服務）
+
+| 題目 | report-only | rag | depweaver |
+|---|---|---|---|
+| 哪些節點沒部署起來？（greenfield，答案是「狀態全未知」） | 正確，只說未知（0） | **列了 11 個服務**（11） | 正確，只說未知（0） |
+| 有哪些外部主機？（圖上沒有 external 節點） | 正確說沒有（0） | 說沒有，但**多列了 GKE、Cloud SQL、Cloud Trace 等**（10），其中 1 個名字報告裡也沒有 | 正確說沒有（0） |
+| transactionhistory 和 ledger-db 有關係嗎？ | 說沒有，並補上 ledgerwriter／balancereader（2） | 同上（2） | 同上，並說明兩者都沒有 runtime 證據（2） |
+
+**解讀**
+
+1. **接地組在可計分的 7 題上全對（P=R=F1=1.000）。** 但這正是 9.3 講的內建偏袒——它拿到的就是標準答案那條查詢的結果。這個數字的意義不是「depweaver 很強」，而是「**確定性查詢的結果被模型忠實轉述了**」：模型沒有在有正確事實的情況下講錯話。
+2. **純 LLM 的失分幾乎都在 recall（0.825），不在 precision（0.984）。** 它講的東西幾乎都對，但**少講**：例如「誰呼叫 ledgerwriter」只答出一半、「哪些服務直接存取資料庫」7 個只講 6 個。讀報告時漏看一段，答案就少一塊，而且讀者看不出少了。這是「沒有接地」在實務上最危險的形態——不是胡說，是**不完整而語氣肯定**。
+3. **RAG 補回了 recall（0.948），卻在「答案是沒有」的題目上壞得最明顯。** 檢索到一堆相關段落之後，它傾向把看到的服務全部列出來：沒有叢集資料時列 11 個服務、沒有外部主機時列出 GKE／Cloud SQL／Cloud Trace。這些不是幻覺（報告裡多半提過），但**回答的不是問題**，而且 0.10／題的 off-graph 名字連報告裡都找不到。
+4. **「答案是沒有」正是接地最划算的地方。** 圖能明確回答「沒有這種節點」「兩者之間沒有路徑」，模型就不會為了填滿答案而列清單。三組在這 3 題的差距比 7 題的 F1 差距更能說明問題。
+5. **最重要的一個反例：`path(transactionhistory, ledger-db)` 三組都答「沒有關係」，而這是錯的。** BoA 的 transactionhistory 實際上會讀 ledger-db（8/25 的 runtime 驗證量到資料層 5/5），是這份 **greenfield archive 的靜態抽取漏了這條邊**。標準答案忠實反映了圖，而圖是錯的。**當圖錯時，接地不會救你，反而讓錯誤講得更有自信**——depweaver 那組還特地補了一句「transactionhistory 沒有任何對外依賴」。這要寫進論文的威脅效度，也是「證據分級」這條線的支撐：圖上那條邊若存在也只會是 `documented`（虛線），讀者至少看得出它沒有被量測過；而真正的問題是**連虛線都沒有**——靜態抽取在 greenfield 模式下漏抽，覆蓋率的分母就看不見它。
+6. **樣本小。** 10 題、一個專案、一份 archive、一個模型；7 題的 F1 差距（1.000 對 0.951 對 0.888）不做統計檢定。要強化，最省的是把題目擴到 train-ticket 的 archive 再跑一次。
 
 ### 9.5 抽圖層（第二輪，尚未實作）
 
