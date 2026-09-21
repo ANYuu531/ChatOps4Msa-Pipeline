@@ -1,0 +1,31 @@
+question,arm,gold,named,hit_precision,recall,f1,off_graph,off_graph_and_docs,negative,answer_chars
+frontend 會呼叫哪些服務？,report-only,6,6,1.000,1.000,1.000,0,0,false,147
+frontend 會呼叫哪些服務？,rag,6,6,1.000,1.000,1.000,0,0,false,147
+frontend 會呼叫哪些服務？,depweaver,6,6,1.000,1.000,1.000,0,0,false,210
+Which services call ledgerwriter?,report-only,2,1,1.000,0.500,0.667,1,0,false,355
+Which services call ledgerwriter?,rag,2,2,1.000,1.000,1.000,0,0,false,193
+Which services call ledgerwriter?,depweaver,2,2,1.000,1.000,1.000,0,0,false,400
+如果 accounts-db 掛掉，哪些服務會受影響？,report-only,4,3,1.000,0.750,0.857,0,0,false,199
+如果 accounts-db 掛掉，哪些服務會受影響？,rag,4,3,1.000,0.750,0.857,0,0,false,304
+如果 accounts-db 掛掉，哪些服務會受影響？,depweaver,4,4,1.000,1.000,1.000,0,0,false,210
+What has to be running before frontend can serve a request?,report-only,9,8,1.000,0.889,0.941,0,0,false,801
+What has to be running before frontend can serve a request?,rag,9,9,1.000,1.000,1.000,0,0,false,750
+What has to be running before frontend can serve a request?,depweaver,9,9,1.000,1.000,1.000,0,0,false,796
+哪些服務會直接存取資料庫？,report-only,7,6,1.000,0.857,0.923,0,0,false,223
+哪些服務會直接存取資料庫？,rag,7,7,1.000,1.000,1.000,0,0,false,323
+哪些服務會直接存取資料庫？,depweaver,7,7,1.000,1.000,1.000,1,0,false,320
+Which dependencies were never confirmed by runtime traffic?,report-only,9,8,1.000,0.889,0.941,2,0,false,619
+Which dependencies were never confirmed by runtime traffic?,rag,9,9,1.000,1.000,1.000,2,0,false,674
+Which dependencies were never confirmed by runtime traffic?,depweaver,9,9,1.000,1.000,1.000,1,0,false,1006
+圖上有哪些節點其實沒有部署起來？,report-only,0,0,,,,0,0,true,215
+圖上有哪些節點其實沒有部署起來？,rag,0,11,,,,0,0,true,457
+圖上有哪些節點其實沒有部署起來？,depweaver,0,0,,,,0,0,true,190
+List every external host this system talks to.,report-only,0,0,,,,0,0,true,332
+List every external host this system talks to.,rag,0,10,,,,2,1,true,784
+List every external host this system talks to.,depweaver,0,0,,,,0,0,true,186
+部署順序應該怎麼排？,report-only,9,9,0.889,0.889,0.889,2,0,false,807
+部署順序應該怎麼排？,rag,9,11,0.727,0.889,0.800,0,0,false,617
+部署順序應該怎麼排？,depweaver,9,9,1.000,1.000,1.000,0,0,false,238
+transactionhistory 和 ledger-db 之間有沒有關係？,report-only,2,4,0.500,1.000,0.667,0,0,false,212
+transactionhistory 和 ledger-db 之間有沒有關係？,rag,2,4,0.500,1.000,0.667,0,0,false,311
+transactionhistory 和 ledger-db 之間有沒有關係？,depweaver,2,4,0.500,1.000,0.667,0,0,false,318
