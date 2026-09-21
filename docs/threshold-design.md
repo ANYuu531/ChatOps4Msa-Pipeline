@@ -602,7 +602,15 @@ python3 docs/charts/plot_calibration.py          # 讀 target/qa-calibration/*.c
 
 ### 9.2 怎麼評分（不靠人判斷、不靠 LLM 當裁判）
 
-`src/test/resources/qa/answer-labels.tsv` 的每一題都是**答案為一組節點**的問題（誰呼叫 X、X 掛掉影響誰、哪些服務用資料庫、哪些邊沒有 runtime 證據……），標準答案就是圖查詢引擎對該題標註查詢的輸出。評分程式從回答文字裡抓出圖上存在的節點 id，算 precision／recall／F1，另外數「像服務名但圖上沒有」的名字當作**編造率**（近似值：抓 `a-b` 形式的小寫詞，會誤抓英文連字詞，因此只當比例看，不當成謊言計數）。
+`src/test/resources/qa/answer-labels.tsv` 的每一題都是**答案為一組節點**的問題（誰呼叫 X、X 掛掉影響誰、哪些服務用資料庫、哪些邊沒有 runtime 證據……），標準答案就是圖查詢引擎對該題標註查詢的輸出。評分程式從回答文字裡抓出圖上存在的節點 id，算 precision／recall／F1。
+
+**第一輪（2026-09-19）跑出來之後修掉的三個評分瑕疵**——原始數字不可用，是評分程式的錯不是系統的錯：
+
+1. **圖的答案是「沒有」的題目**（例如 BoA greenfield 沒有任何外部主機）gold 是空集合，結果三組都被算成 precision 0、recall NaN——**答對反而 0 分**。改法：這類題目改成**答對／答錯**計分（沒點名任何服務＝對），並在總表單獨一欄，不混進 precision／recall 的平均。
+2. **gold 被「否定句」污染**：引擎回「no directed path between transactionhistory and ledger-db」時，原本的抽取把這兩個 id 當成答案，於是只要複誦問句裡的名字就能拿到 recall 1.00。改法：先丟掉陳述「不存在」的行（`- no …`、`needs nothing else to start`、`was not measured`…）再抽節點名（`goldFrom()`，有離線測試釘住）。
+3. **「編造名字」誤判**：`deploy-order` 這種查詢運算子名、以及問句自己就寫了的名字，都被當成編造的服務名。改法：扣掉 DSL 詞彙與問句本身的字，並把指標拆成兩個——**off-graph**（像服務名但圖上沒有）與 **off-graph 且報告裡也沒有**（最接近「憑空捏造」的訊號；像 `cloud-sql-proxy` 這種報告裡講過但不是節點的，只算前者）。
+
+指標仍是近似值：抓 `a-b` 形式的小寫詞，英文連字詞可能漏抓或誤抓，所以只看比例、不當成謊言計數。
 
 ### 9.3 這個比較內建的偏袒，要寫在結果旁邊
 
@@ -610,7 +618,13 @@ depweaver 組拿到的正是「標準答案那條查詢」的執行結果，所�
 
 ### 9.4 結果
 
-待機器 B 跑（步驟 7.5）。曲線圖：`docs/charts/baseline-arms.svg`。
+第一輪已在 2026-09-19 於機器 B 跑過，但如 9.2 所述，評分程式有三個瑕疵，**數字作廢**；修正後待重跑（步驟 7.5）。曲線圖：`docs/charts/baseline-arms.svg`。
+
+第一輪逐題輸出仍留有可用的質性觀察，重跑後再確認：
+
+- **`deploy-order`（部署順序）**：depweaver P 1.00／R 1.00，rag 0.80／0.89，report-only 0.89／0.89。三組都排得出合理順序，但只有 depweaver 的分層與圖一致；另外兩組多列了 `cloud-sql-proxy`、`loadgenerator`、`blackbox-exporter` 這些報告裡提過、但不在依賴圖裡的東西。
+- **`externals`（外部主機）**：三組都正確回答「沒有」，但 rag 那組順手列了 GKE、Cloud SQL、Cloud Trace 等雲端服務——不算錯，卻是圖上沒有的東西。
+- **`path(transactionhistory, ledger-db)`**：三組都說「沒有直接關係」，而這其實暴露的是**這份 greenfield archive 的圖少了一條邊**——BoA 的 transactionhistory 實際上會讀 ledger-db，8/25 的 runtime 驗證也量到資料層 5/5。也就是說，這一題的「標準答案」忠實反映了圖，而圖是錯的。**這正是 9.3 那段偏袒說明的反面：當圖錯時，接地反而讓錯誤講得更有自信。**這一點要寫進論文的威脅效度。
 
 ### 9.5 抽圖層（第二輪，尚未實作）
 

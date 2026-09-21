@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -58,7 +59,46 @@ public class PureLlmBaselineTest {
     /** A service-ish name: two or more lowercase segments joined by dashes. */
     static final Pattern SERVICE_SHAPED = Pattern.compile("\\b[a-z][a-z0-9]*(?:-[a-z0-9]+)+\\b");
 
-    record Score(double precision, double recall, double f1, int invented, int named) {
+    /**
+     * A line of a query result that states an <em>absence</em>. Such a line still spells
+     * the node ids of the question ("no directed path between transactionhistory and
+     * ledger-db"), so reading the gold answer off the raw text would make "there is no
+     * relation" look like the two-node answer — and an arm could score full recall by
+     * echoing the question. These lines are dropped before the gold set is read.
+     */
+    static boolean statesAnAbsence(String line) {
+        String l = line.toLowerCase(Locale.ROOT).strip();
+        return l.startsWith("- no ") || l.startsWith("no ")
+                || l.contains("needs nothing else to start")
+                || l.contains("nothing transitively depends")
+                || l.contains("is not measurable")
+                || l.contains("was not measured")
+                || l.contains("deployment state is unknown");
+    }
+
+    /** The gold node set: what the query engine answers, minus what it says is absent. */
+    static Set<String> goldFrom(String queryResult, Collection<String> ids) {
+        StringBuilder kept = new StringBuilder();
+        for (String line : (queryResult == null ? "" : queryResult).split("\n")) {
+            if (!statesAnAbsence(line)) kept.append(line).append('\n');
+        }
+        return namedNodes(kept.toString(), ids);
+    }
+
+    /**
+     * @param negative        the graph's answer is "nothing" — scored as right or wrong,
+     *                        not with precision and recall
+     * @param offGraph        service-shaped names the graph does not have
+     * @param offGraphAndDocs of those, the ones not in the report either: the closest this
+     *                        harness gets to "made it up"
+     */
+    record Score(double precision, double recall, double f1, int offGraph, int offGraphAndDocs,
+                 int named, boolean negative) {
+
+        /** A negative question is answered correctly by naming no node of the graph. */
+        boolean correctNegative() {
+            return negative && named == 0;
+        }
     }
 
     /** The node ids the graph has that this text names, matched on word boundaries. */
@@ -82,32 +122,45 @@ public class PureLlmBaselineTest {
         return out;
     }
 
+    /** The query DSL's own vocabulary: an answer quoting `deploy-order()` names no service. */
+    static final Set<String> DSL_WORDS = new LinkedHashSet<>(List.of(
+            "sync-http", "edges-of-type", "db-users", "observed-edges", "unobserved-edges",
+            "mentioned-only", "deploy-order", "dependencies-of", "dependents-of", "impact-of",
+            "startup-needs", "graph-facts", "bank-of-anthos", "train-ticket", "sock-shop",
+            "e-mail", "end-to-end", "read-only", "well-known", "up-to-date", "so-called"));
+
     /**
-     * Service-shaped names in the text that no node of the graph has. An approximation:
-     * it cannot see an invented name that happens to look like prose, and it counts a
-     * hyphenated English phrase as a name. Reported as a rate, never as a count of lies.
+     * Service-shaped names in the text that no node of the graph has, minus the query
+     * DSL's own words and anything the question itself spelled. An approximation: it
+     * cannot see an invented name that reads like prose, and a hyphenated English phrase
+     * can still slip through — reported as a rate, never as a count of lies.
      */
-    static Set<String> inventedNames(String text, Collection<String> ids) {
+    static Set<String> offGraphNames(String text, Collection<String> ids, String question) {
         Set<String> out = new LinkedHashSet<>();
-        Set<String> known = new LinkedHashSet<>();
+        Set<String> known = new LinkedHashSet<>(DSL_WORDS);
         for (String id : ids) known.add(id.toLowerCase(Locale.ROOT));
+        String asked = question == null ? "" : question.toLowerCase(Locale.ROOT);
         Matcher m = SERVICE_SHAPED.matcher(text == null ? "" : text.toLowerCase(Locale.ROOT));
         while (m.find()) {
             String token = m.group();
-            if (!known.contains(token)) out.add(token);
+            if (!known.contains(token) && !asked.contains(token)) out.add(token);
         }
         return out;
     }
 
-    static Score score(String answer, Set<String> gold, Collection<String> ids) {
+    static Score score(String answer, Set<String> gold, Collection<String> ids, String question, String report) {
         Set<String> named = namedNodes(answer, ids);
         Set<String> hit = new LinkedHashSet<>(named);
         hit.retainAll(gold);
-        double precision = named.isEmpty() ? 0 : (double) hit.size() / named.size();
-        double recall = gold.isEmpty() ? Double.NaN : (double) hit.size() / gold.size();
-        double f1 = precision + recall == 0 || Double.isNaN(recall) ? (gold.isEmpty() ? Double.NaN : 0)
+        boolean negative = gold.isEmpty();
+        double precision = negative ? Double.NaN : named.isEmpty() ? 0 : (double) hit.size() / named.size();
+        double recall = negative ? Double.NaN : (double) hit.size() / gold.size();
+        double f1 = negative || precision + recall == 0 ? (negative ? Double.NaN : 0)
                 : 2 * precision * recall / (precision + recall);
-        return new Score(precision, recall, f1, inventedNames(answer, ids).size(), named.size());
+        Set<String> offGraph = offGraphNames(answer, ids, question);
+        String haystack = report == null ? "" : report.toLowerCase(Locale.ROOT);
+        long offDocs = offGraph.stream().filter(n -> !haystack.contains(n)).count();
+        return new Score(precision, recall, f1, offGraph.size(), (int) offDocs, named.size(), negative);
     }
 
     @Test
@@ -150,7 +203,8 @@ public class PureLlmBaselineTest {
         md.append("- gold answers: the graph query engine's own result for the labelled query\n");
         md.append("- report given to arm 1: ").append(report.length()).append(" of ").append(archive.report.length()).append(" characters\n\n");
 
-        StringBuilder csv = new StringBuilder(CalibrationSupport.csvRow("question", "arm", "gold", "named", "hit_precision", "recall", "f1", "invented", "answer_chars"));
+        StringBuilder csv = new StringBuilder(CalibrationSupport.csvRow("question", "arm", "gold", "named",
+                "hit_precision", "recall", "f1", "off_graph", "off_graph_and_docs", "negative", "answer_chars"));
         StringBuilder detail = new StringBuilder();
         Map<String, List<Score>> byArm = new java.util.LinkedHashMap<>();
 
@@ -159,7 +213,8 @@ public class PureLlmBaselineTest {
             List<String> args = row.length > 3 && !row[3].isBlank() ? List.of(row[3].trim().split("\\|")) : List.of();
             GraphQuery goldQuery = GraphQuery.parse(new org.json.JSONArray()
                     .put(new JSONObject().put("op", row[2].trim()).put("args", args)).toString(), graph).get(0);
-            Set<String> gold = namedNodes(GraphQueryEngine.execute(graph, List.of(goldQuery)), ids);
+            String goldResult = GraphQueryEngine.execute(graph, List.of(goldQuery));
+            Set<String> gold = goldFrom(goldResult, ids);
 
             double[] vector = cache.embed(List.of(question)) == null ? null : cache.embed(List.of(question)).get(0);
             List<TextChunk> passages = ChunkRetriever.retrieve(archive.chunks, question, vector, topK, 24000);
@@ -196,25 +251,38 @@ public class PureLlmBaselineTest {
             answers.put("depweaver", chat.ask(qaPrompt + "\n\n# CONTEXT\n\n" + context, question));
 
             detail.append("### ").append(question).append("\n\n");
-            detail.append("- gold (").append(row[2].trim()).append("): ").append(gold).append('\n');
+            detail.append("- gold (").append(row[2].trim()).append("): ")
+                    .append(gold.isEmpty() ? "(none — the graph's answer is \"nothing\"; scored right/wrong)" : gold).append('\n');
             detail.append("- plan: ").append(planSource).append(" → ").append(queries).append("\n\n");
             for (Map.Entry<String, String> a : answers.entrySet()) {
-                Score s = score(a.getValue(), gold, ids);
+                Score s = score(a.getValue(), gold, ids, question, archive.report);
                 byArm.computeIfAbsent(a.getKey(), k -> new ArrayList<>()).add(s);
-                csv.append(CalibrationSupport.csvRow(question, a.getKey(), gold.size(), s.named(), s.precision(), s.recall(), s.f1(), s.invented(), a.getValue().length()));
-                detail.append("**").append(a.getKey()).append("** — P ").append(String.format(Locale.ROOT, "%.2f", s.precision()))
-                        .append(", R ").append(String.format(Locale.ROOT, "%.2f", s.recall()))
-                        .append(", invented ").append(s.invented()).append("\n\n> ")
+                csv.append(CalibrationSupport.csvRow(question, a.getKey(), gold.size(), s.named(), s.precision(),
+                        s.recall(), s.f1(), s.offGraph(), s.offGraphAndDocs(), s.negative(), a.getValue().length()));
+                detail.append("**").append(a.getKey()).append("** — ")
+                        .append(s.negative()
+                                ? "negative question: " + (s.correctNegative() ? "correct (named no service)" : "wrong (named " + s.named() + ")")
+                                : String.format(Locale.ROOT, "P %.2f, R %.2f", s.precision(), s.recall()))
+                        .append(", off-graph names ").append(s.offGraph())
+                        .append(" (not in the report either: ").append(s.offGraphAndDocs()).append(")\n\n> ")
                         .append(a.getValue().replace("\n", "\n> ")).append("\n\n");
             }
         }
 
-        md.append("| arm | precision | recall | F1 | avg invented names | questions |\n|---|---|---|---|---|---|\n");
+        long positives = byArm.values().stream().findFirst().map(s -> s.stream().filter(x -> !x.negative()).count()).orElse(0L);
+        long negatives = byArm.values().stream().findFirst().map(s -> s.stream().filter(Score::negative).count()).orElse(0L);
+        md.append("Scored on the ").append(positives).append(" questions whose graph answer names at least one node; the ")
+                .append(negatives).append(" whose answer is \"nothing\" are in the last column, where the right answer is to name no service.\n\n");
+        md.append("| arm | precision | recall | F1 | off-graph names / question | of those, not in the report | \"nothing\" questions right |\n");
+        md.append("|---|---|---|---|---|---|---|\n");
         for (Map.Entry<String, List<Score>> e : byArm.entrySet()) {
             List<Score> s = e.getValue();
-            md.append(String.format(Locale.ROOT, "| %s | %.3f | %.3f | %.3f | %.2f | %d |%n", e.getKey(),
+            long negRight = s.stream().filter(Score::correctNegative).count();
+            md.append(String.format(Locale.ROOT, "| %s | %.3f | %.3f | %.3f | %.2f | %.2f | %d/%d |%n", e.getKey(),
                     mean(s, Score::precision), mean(s, Score::recall), mean(s, Score::f1),
-                    s.stream().mapToInt(Score::invented).average().orElse(0), s.size()));
+                    s.stream().mapToInt(Score::offGraph).average().orElse(0),
+                    s.stream().mapToInt(Score::offGraphAndDocs).average().orElse(0),
+                    negRight, negatives));
         }
         md.append("\n- chat calls: ").append(chat.calls()).append(" (").append(chat.promptTokens())
                 .append(" prompt + ").append(chat.completionTokens()).append(" completion tokens)\n");
@@ -233,27 +301,64 @@ public class PureLlmBaselineTest {
     // ---------- offline: the scoring ----------
 
     @Test
-    void scoringCountsTheNodesNamedAndTheOnesInvented() {
+    void scoringCountsTheNodesNamedAndTheOnesOffTheGraph() {
         List<String> ids = List.of("frontend", "userservice", "accounts-db", "ledger-db");
         Set<String> gold = Set.of("userservice", "accounts-db");
+        String q = "what does frontend call?";
+        String report = "the deployment uses a cloud-sql-proxy sidecar";
 
-        Score perfect = score("It calls userservice, which reads accounts-db.", gold, ids);
+        Score perfect = score("It calls userservice, which reads accounts-db.", gold, ids, q, report);
         assertEquals(1.0, perfect.precision(), 1e-9);
         assertEquals(1.0, perfect.recall(), 1e-9);
-        assertEquals(0, perfect.invented());
+        assertEquals(0, perfect.offGraph());
 
-        Score half = score("frontend and userservice", gold, ids);
+        Score half = score("frontend and userservice", gold, ids, q, report);
         assertEquals(0.5, half.precision(), 1e-9);
         assertEquals(0.5, half.recall(), 1e-9);
 
-        Score made_up = score("It calls the auth-service and the payment-gateway.", gold, ids);
-        assertEquals(0.0, made_up.precision(), 1e-9);
-        assertEquals(2, made_up.invented());
+        // Off the graph, and the report does not mention them either: the strongest signal.
+        Score madeUp = score("It calls the auth-service and the payment-gateway.", gold, ids, q, report);
+        assertEquals(0.0, madeUp.precision(), 1e-9);
+        assertEquals(2, madeUp.offGraph());
+        assertEquals(2, madeUp.offGraphAndDocs());
+
+        // Off the graph but in the report: real, just not a node. Counted apart.
+        Score fromDocs = score("It goes through the cloud-sql-proxy.", gold, ids, q, report);
+        assertEquals(1, fromDocs.offGraph());
+        assertEquals(0, fromDocs.offGraphAndDocs());
+
+        // The query DSL's own words are not service names.
+        assertEquals(Set.of(), offGraphNames("per deploy-order(), start db-users first", ids, q));
+        // Neither is something the question itself spelled.
+        assertEquals(Set.of(), offGraphNames("the order-service you asked about", ids, "tell me about order-service"));
 
         // A substring is not a mention: "accounts-database" is not accounts-db.
         assertEquals(Set.of(), namedNodes("it writes to accounts-database", ids));
         // Nor is a node id inside a longer word.
         assertEquals(Set.of("frontend"), namedNodes("the frontend, not the frontend-v2", ids));
+    }
+
+    @Test
+    void aQueryThatAnswersNothingProducesAnEmptyGoldAndIsScoredRightOrWrong() {
+        List<String> ids = List.of("frontend", "userservice", "transactionhistory", "ledger-db");
+
+        // The engine spells both ids while saying they are unrelated; the gold must be empty.
+        String noPath = "- no directed path between transactionhistory and ledger-db in either direction\n";
+        assertEquals(Set.of(), goldFrom(noPath, ids));
+        String noExternals = "- no external host is called by any service\n";
+        assertEquals(Set.of(), goldFrom(noExternals, ids));
+        String half = "- no directed path transactionhistory -> ledger-db\n- ledger-db -> frontend (1 hop(s))\n";
+        assertEquals(Set.of("ledger-db", "frontend"), goldFrom(half, ids));
+
+        Set<String> gold = goldFrom(noPath, ids);
+        String q = "transactionhistory 和 ledger-db 之間有沒有關係？";
+        Score right = score("圖上兩者之間沒有任何路徑。", gold, ids, q, "");
+        assertTrue(right.negative());
+        assertTrue(right.correctNegative());
+        assertTrue(Double.isNaN(right.precision()), "a negative question has no precision to report");
+
+        Score wrong = score("它透過 userservice 連到 ledger-db。", gold, ids, q, "");
+        assertFalse(wrong.correctNegative(), "naming services is the wrong answer to \"nothing\"");
     }
 
     @Test
