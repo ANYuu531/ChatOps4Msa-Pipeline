@@ -75,7 +75,7 @@ public class CodeGraphMerger {
      * ({@code env-address}). They seed the greenfield vocabulary and resolve
      * indirected targets; they are never rendered as arrows.
      */
-    private static final Set<String> META_SECTIONS = Set.of("service-root", "env-address");
+    private static final Set<String> META_SECTIONS = Set.of("service-root", "env-address", "workload-env");
 
     private final DependencyGraph graph;
     private final Set<String> knownNodes = new LinkedHashSet<>();
@@ -96,6 +96,8 @@ public class CodeGraphMerger {
     private final Map<String, String> serviceDirs = new LinkedHashMap<>();
     /** env var name -> resolved host, from k8s ConfigMap / .env ({@code env-address}). */
     private final Map<String, String> envAddress = new LinkedHashMap<>();
+    /** ConfigMap name -> the address-shaped hosts it carries, for joining a workload's envFrom. */
+    private final Map<String, Set<String>> configMapHosts = new LinkedHashMap<>();
     /**
      * Normalised service key -> node, for resolving a call whose host is a variable
      * but whose URL PATH names the callee by convention (Spring: {@code
@@ -150,6 +152,8 @@ public class CodeGraphMerger {
                     || (matchNode(host) != null && matchNode(current) == null)) {
                 envAddress.put(name, host);
             }
+            String configMap = fields.optString("configmap", "");
+            if (!configMap.isBlank()) configMapHosts.computeIfAbsent(configMap, k -> new LinkedHashSet<>()).add(host);
         }
 
         // In greenfield the inventory IS the graph's node set: add every service so
@@ -241,7 +245,61 @@ public class CodeGraphMerger {
             JSONObject edge = edges.optJSONObject(i);
             if (edge != null) merger.mergeOne(edge, unresolved);
         }
+        merger.mergeWorkloadWiring(edges);
         return unresolved;
+    }
+
+    /**
+     * Data-store edges from the deployment wiring: a workload whose manifest injects a
+     * ConfigMap ({@code envFrom}) or a literal address that resolves to a data store
+     * gets a {@code db} edge to it.
+     *
+     * <p>Why this exists: Bank of Anthos's ledger services read {@code ledger-db} through
+     * {@code SPRING_DATASOURCE_URL}, which Spring Boot binds without a line of code, so
+     * the config-read rule above never fires — the env→host table knew the host and the
+     * JPA markers proved the service persists, and still no edge was drawn. The static
+     * graph shipped with no data layer at all; a doc-derived edge happened to cover four
+     * of the five services and transactionhistory was simply missing (2026-09-21).
+     *
+     * <p>Only data-store and broker hosts are taken. A ConfigMap of service addresses
+     * ({@code *_API_ADDR}) is injected into workloads that never call most of them, so
+     * service-kind hosts stay with the code layer, which sees the actual reads. With
+     * persistence code the edge is {@code documented}; without it, {@code inferred} — a
+     * datasource a service is handed but never touches is a declaration, not a use.
+     */
+    private void mergeWorkloadWiring(JSONArray edges) {
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null || !"workload-env".equals(edge.optString("section", ""))) continue;
+            JSONObject fields = edge.optJSONObject("fields");
+            if (fields == null) continue;
+            String source = matchNode(fields.optString("workload", ""));
+            if (source == null) continue;
+
+            Set<String> hosts = new LinkedHashSet<>();
+            String configMap = fields.optString("configmap", "");
+            if (!configMap.isBlank()) hosts.addAll(configMapHosts.getOrDefault(configMap, Set.of()));
+            String literal = fields.optString("host", "");
+            if (!literal.isBlank()) hosts.add(literal);
+
+            String file = edge.optString("file", "");
+            for (String host : hosts) {
+                String node = matchNode(host);
+                if (node == null) {
+                    String label = cleanLabel(host);
+                    if (label == null || !isPlausibleName(label)) continue;
+                    node = label;
+                }
+                if (node.equals(source)) continue;
+                String kind = DependencyGraph.classifyKind(node);
+                if (!DependencyGraph.KIND_DB.equals(kind) && !DependencyGraph.KIND_QUEUE.equals(kind)) continue;
+                graph.addNode(node, kind);
+                String confidence = DependencyGraph.KIND_DB.equals(kind) && !persistenceServices.contains(source)
+                        ? DependencyGraph.CONF_INFERRED
+                        : DependencyGraph.CONF_DOCUMENTED;
+                addCodeEdge(source, node, edgeType("", kind), file, -1, confidence);
+            }
+        }
     }
 
     /**

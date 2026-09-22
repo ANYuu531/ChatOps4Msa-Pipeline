@@ -647,6 +647,8 @@ depweaver 組拿到的正是「標準答案那條查詢」的執行結果，所�
 3. **RAG 補回了 recall（0.948），卻在「答案是沒有」的題目上壞得最明顯。** 檢索到一堆相關段落之後，它傾向把看到的服務全部列出來：沒有叢集資料時列 11 個服務、沒有外部主機時列出 GKE／Cloud SQL／Cloud Trace。這些不是幻覺（報告裡多半提過），但**回答的不是問題**，而且 0.10／題的 off-graph 名字連報告裡都找不到。
 4. **「答案是沒有」正是接地最划算的地方。** 圖能明確回答「沒有這種節點」「兩者之間沒有路徑」，模型就不會為了填滿答案而列清單。三組在這 3 題的差距比 7 題的 F1 差距更能說明問題。
 5. **最重要的一個反例：`path(transactionhistory, ledger-db)` 三組都答「沒有關係」，而這是錯的。** BoA 的 transactionhistory 實際上會讀 ledger-db（8/25 的 runtime 驗證量到資料層 5/5），是這份 **greenfield archive 的靜態抽取漏了這條邊**。標準答案忠實反映了圖，而圖是錯的。**當圖錯時，接地不會救你，反而讓錯誤講得更有自信**——depweaver 那組還特地補了一句「transactionhistory 沒有任何對外依賴」。這要寫進論文的威脅效度，也是「證據分級」這條線的支撐：圖上那條邊若存在也只會是 `documented`（虛線），讀者至少看得出它沒有被量測過；而真正的問題是**連虛線都沒有**——靜態抽取在 greenfield 模式下漏抽，覆蓋率的分母就看不見它。
+
+   **根因與修正（2026-09-22）**：用離線的 `StaticExtractionProbeTest` 對 BoA 重跑純靜態抽取，發現問題比「漏一條」大——**程式碼層對 BoA 一條 DB 邊都畫不出來**，archive 裡的 6 條 DB 邊全部來自 DeepWiki 文件層（含兩條指向泛稱 `postgresql` 的幻覺邊），文件沒提到 transactionhistory，圖就沒有它。原因：合併器只在「程式碼裡有讀該環境變數」時才把 `env→host` 表的對應變成邊，而 Spring Boot 對 `SPRING_DATASOURCE_URL` 是隱式綁定，程式碼裡沒有那一行；JPA 標記（Repository/Entity/Table 三個都抓到了）只用來「升級」既有的邊，本身不產生邊。缺的那塊資訊在 Deployment 裡：`envFrom: configMapRef: ledger-db-config`。修正是新增 `workload-env` 這一節（哪個 workload 注入哪個 ConfigMap／字面位址），合併器把「注入的 ConfigMap 裡有資料庫位址 ＋ 該服務有持久化程式碼」畫成 `documented` 的 db 邊（沒有持久化程式碼則 `inferred`；服務位址一律不畫，因為被注入位址不等於有呼叫）。修正後純靜態的 BoA 圖從 6 條邊變成 11 條：**多出來的 5 條 db 邊與 runtime 驗證的資料層 5/5 完全一致**，且沒有 `postgresql` 幻覺邊。測試：`DependencyGraphTest.injectedDatasource*`、`CodeExtractionTest.k8sManifestsRecordWhoIsInjectedWhat`。**這份 archive 是修正前產的，要重新跑 greenfield 分析才會有這條邊**；純 AI 對照組也要在新 archive 上重跑一次，看這一題三組是否都翻正。
 6. **樣本小。** 10 題、一個專案、一份 archive、一個模型；7 題的 F1 差距（1.000 對 0.951 對 0.888）不做統計檢定。要強化，最省的是把題目擴到 train-ticket 的 archive 再跑一次。
 
 ### 9.5 抽圖層（第二輪，尚未實作）

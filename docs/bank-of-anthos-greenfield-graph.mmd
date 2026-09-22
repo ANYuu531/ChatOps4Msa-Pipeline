@@ -1,7 +1,12 @@
 %% Bank of Anthos — dependency graph produced STATICALLY (greenfield: no runtime data, no cluster, no ports).
-%% Nodes come from the repo's service inventory (service-root); edges come from the code's
+%% Nodes come from the repo's service inventory (service-root). Service edges come from the code's
 %% env-indirected call targets resolved through the k8s ConfigMap env->host table (env-address).
+%% Data-store edges come from the deployment wiring (workload-env, 2026-09-22): a Deployment that
+%% injects a ConfigMap carrying a datasource address (envFrom: ledger-db-config -> SPRING_DATASOURCE_URL)
+%% plus persistence code in the service (JPA / SQLAlchemy markers). Spring Boot reads that variable
+%% without a line of code, so before this rule the static graph had NO data layer at all.
 %% All edges are dashed because there is no runtime layer to confirm them (code/config provenance only).
+%% The five db edges are exactly the data layer the runtime run of 2026-08-25 measured at 5/5.
 %% (ui-tests is a UI e2e-test directory with a package.json — a minor false-positive service node.)
 flowchart LR
   ui_tests["ui-tests"]
@@ -21,4 +26,9 @@ flowchart LR
   frontend -.-> balancereader
   frontend -.-> transactionhistory
   frontend -.-> contacts
+  ledgerwriter -. db .-> ledger_db
+  transactionhistory -. db .-> ledger_db
+  balancereader -. db .-> ledger_db
+  contacts -. db .-> accounts_db
+  userservice -. db .-> accounts_db
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;

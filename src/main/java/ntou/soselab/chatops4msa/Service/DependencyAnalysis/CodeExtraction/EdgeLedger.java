@@ -42,6 +42,7 @@ public class EdgeLedger {
         SECTION_TITLES.put("persistence", "Persistence - ORM markers (SQLAlchemy / Django / …: proves DB is really used)");
         SECTION_TITLES.put("service-root", "Inventory - service directories (dir -> name: greenfield node vocabulary)");
         SECTION_TITLES.put("env-address", "Resolution - env var -> host (from k8s ConfigMap / .env: resolves indirected targets)");
+        SECTION_TITLES.put("workload-env", "Wiring - workload -> injected ConfigMap / host (k8s envFrom / configMapKeyRef: who receives which env)");
     }
 
     public static class Edge {

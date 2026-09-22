@@ -73,10 +73,11 @@ public class ConfigExtractor {
                 if (!(doc instanceof Map<?, ?> root)) continue;
                 if (root.get("apiVersion") == null || root.get("kind") == null) continue; // not a k8s object
                 String kind = String.valueOf(root.get("kind"));
+                String name = metadataName(root);
 
                 if ("ConfigMap".equals(kind) && root.get("data") instanceof Map<?, ?> data) {
                     for (Map.Entry<?, ?> e : data.entrySet()) {
-                        recordEnvAddress(String.valueOf(e.getKey()), String.valueOf(e.getValue()), relative, ledger);
+                        recordEnvAddress(String.valueOf(e.getKey()), String.valueOf(e.getValue()), name, relative, ledger);
                     }
                 } else {
                     // Deployment / StatefulSet / Pod: containers[*].env[*] with a literal value.
@@ -85,21 +86,45 @@ public class ConfigExtractor {
                         Object k = pair.get("name");
                         Object v = pair.get("value"); // valueFrom (configMapKeyRef) has no literal here
                         if (k != null && v != null) {
-                            recordEnvAddress(String.valueOf(k), String.valueOf(v), relative, ledger);
+                            recordEnvAddress(String.valueOf(k), String.valueOf(v), null, relative, ledger);
+                            String host = addressHost(String.valueOf(v));
+                            if (name != null && host != null) recordWorkloadEnv(name, null, host, relative, ledger);
+                        } else if (k != null && pair.get("valueFrom") instanceof Map<?, ?> from
+                                && from.get("configMapKeyRef") instanceof Map<?, ?> ref && ref.get("name") != null) {
+                            if (name != null) recordWorkloadEnv(name, String.valueOf(ref.get("name")), null, relative, ledger);
                         }
+                    }
+                    // envFrom: the whole ConfigMap is injected — this is the wiring that says
+                    // WHICH workload receives SPRING_DATASOURCE_URL, which no code line reads.
+                    for (String configMap : containerEnvFromConfigMaps(root)) {
+                        if (name != null) recordWorkloadEnv(name, configMap, null, relative, ledger);
                     }
                 }
             }
         }
     }
 
-    /** Every {@code spec.template.spec.containers[].env} entry of a workload object, flattened. */
-    private List<Object> containerEnvEntries(Map<?, ?> root) {
-        List<Object> out = new java.util.ArrayList<>();
+    /** {@code metadata.name} of a k8s object, or null. */
+    private static String metadataName(Map<?, ?> root) {
+        Object metadata = root.get("metadata");
+        Object name = (metadata instanceof Map<?, ?> m) ? m.get("name") : null;
+        return name == null || String.valueOf(name).isBlank() ? null : String.valueOf(name).trim();
+    }
+
+    /** The pod spec of a workload object: {@code spec.template.spec}, or {@code spec} for a bare Pod. */
+    private static Map<?, ?> podSpec(Map<?, ?> root) {
         Object spec = root.get("spec");
+        if ("Pod".equals(String.valueOf(root.get("kind")))) return spec instanceof Map<?, ?> s ? s : null;
         Object template = (spec instanceof Map<?, ?> s) ? s.get("template") : null;
         Object podSpec = (template instanceof Map<?, ?> t) ? t.get("spec") : null;
-        Object containers = (podSpec instanceof Map<?, ?> ps) ? ps.get("containers") : null;
+        return podSpec instanceof Map<?, ?> ps ? ps : null;
+    }
+
+    /** Every {@code containers[].env} entry of a workload object, flattened. */
+    private List<Object> containerEnvEntries(Map<?, ?> root) {
+        List<Object> out = new java.util.ArrayList<>();
+        Map<?, ?> podSpec = podSpec(root);
+        Object containers = podSpec == null ? null : podSpec.get("containers");
         if (containers instanceof List<?> list) {
             for (Object c : list) {
                 if (c instanceof Map<?, ?> container && container.get("env") instanceof List<?> envs) {
@@ -110,25 +135,69 @@ public class ConfigExtractor {
         return out;
     }
 
+    /** Every {@code containers[].envFrom[].configMapRef.name} of a workload object. */
+    private List<String> containerEnvFromConfigMaps(Map<?, ?> root) {
+        List<String> out = new java.util.ArrayList<>();
+        Map<?, ?> podSpec = podSpec(root);
+        Object containers = podSpec == null ? null : podSpec.get("containers");
+        if (!(containers instanceof List<?> list)) return out;
+        for (Object c : list) {
+            if (!(c instanceof Map<?, ?> container) || !(container.get("envFrom") instanceof List<?> froms)) continue;
+            for (Object f : froms) {
+                if (f instanceof Map<?, ?> from && from.get("configMapRef") instanceof Map<?, ?> ref && ref.get("name") != null) {
+                    out.add(String.valueOf(ref.get("name")).trim());
+                }
+            }
+        }
+        return out;
+    }
+
     /**
      * Records an {@code env-address} entry when the value is an address (a
      * {@code host:port} or a URL) and its host is a plausible name. Non-address
-     * values (a bank name, a log level, a boolean) are ignored.
+     * values (a bank name, a log level, a boolean) are ignored. When the value comes
+     * from a ConfigMap, the ConfigMap's name rides along so a workload's
+     * {@code envFrom} can be joined back to the hosts it receives.
      */
-    private void recordEnvAddress(String key, String value, String relative, EdgeLedger ledger) {
+    private void recordEnvAddress(String key, String value, String configMap, String relative, EdgeLedger ledger) {
         if (key == null || value == null) return;
         key = key.trim();
         value = value.trim();
         if (key.isEmpty() || value.isEmpty()) return;
-        boolean addressShaped = value.contains("://") || value.matches("[^\\s/]+:\\d{2,5}(/.*)?");
-        if (!addressShaped) return;
-        String host = hostOf(value);
+        String host = addressHost(value);
         if (host == null) return;
 
         Map<String, String> fields = new LinkedHashMap<>();
         fields.put("name", key);
         fields.put("host", host);
+        if (configMap != null) fields.put("configmap", configMap);
         ledger.add("env-address", fields, relative, -1, "High (k8s manifest)");
+    }
+
+    /**
+     * The host of a value that is an address (a URL or {@code host:port}), or null for
+     * anything else — {@code "true"}, {@code "v0"}, a log level. A bare word is a valid
+     * DNS label, so the shape check has to come before the host extraction.
+     */
+    private static String addressHost(String value) {
+        String v = value == null ? "" : value.trim();
+        boolean addressShaped = v.contains("://") || v.matches("[^\\s/]+:\\d{2,5}(/.*)?");
+        return addressShaped ? hostOf(v) : null;
+    }
+
+    /**
+     * Records a {@code workload-env} entry: which workload receives which ConfigMap
+     * ({@code envFrom} / {@code configMapKeyRef}) or which literal host. This is the
+     * deterministic answer to "does transactionhistory get SPRING_DATASOURCE_URL?"
+     * when no line of its code reads the variable (Spring Boot binds it implicitly).
+     */
+    private void recordWorkloadEnv(String workload, String configMap, String host, String relative, EdgeLedger ledger) {
+        Map<String, String> fields = new LinkedHashMap<>();
+        fields.put("workload", workload);
+        if (configMap != null && !configMap.isBlank()) fields.put("configmap", configMap.trim());
+        if (host != null && !host.isBlank()) fields.put("host", host.trim());
+        if (fields.size() < 2) return;
+        ledger.add("workload-env", fields, relative, -1, "High (k8s manifest)");
     }
 
     /** The DNS-label host of an address value, or null if it is a placeholder / not a name. */

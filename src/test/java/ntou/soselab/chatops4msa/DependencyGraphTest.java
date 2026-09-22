@@ -210,6 +210,62 @@ public class DependencyGraphTest {
 
     // ---- classifier ----
 
+    // ---- deployment wiring: the db edge no line of code reads ----
+
+    /** Bank of Anthos, static: the inventory, the ConfigMap table, and who injects what. */
+    private static final String BOA_WIRING = """
+            {"repo":"GoogleCloudPlatform/bank-of-anthos","failed":false,"edges":[
+              {"section":"service-root","fields":{"dir":"src/ledger/transactionhistory","name":"transactionhistory"},"file":"src/ledger/transactionhistory/Dockerfile","line":-1,"confidence":"High"},
+              {"section":"service-root","fields":{"dir":"src/ledger/balancereader","name":"balancereader"},"file":"src/ledger/balancereader/Dockerfile","line":-1,"confidence":"High"},
+              {"section":"service-root","fields":{"dir":"src/frontend","name":"frontend"},"file":"src/frontend/Dockerfile","line":-1,"confidence":"High"},
+              {"section":"service-root","fields":{"dir":"src/ledger/ledger-db","name":"ledger-db"},"file":"src/ledger/ledger-db/Dockerfile","line":-1,"confidence":"High"},
+              {"section":"env-address","fields":{"name":"SPRING_DATASOURCE_URL","host":"ledger-db","configmap":"ledger-db-config"},"file":"kubernetes-manifests/ledger-db.yaml","line":-1,"confidence":"High (k8s manifest)"},
+              {"section":"env-address","fields":{"name":"HISTORY_API_ADDR","host":"transactionhistory","configmap":"service-api-config"},"file":"kubernetes-manifests/config.yaml","line":-1,"confidence":"High (k8s manifest)"},
+              {"section":"workload-env","fields":{"workload":"transactionhistory","configmap":"ledger-db-config"},"file":"kubernetes-manifests/transaction-history.yaml","line":-1,"confidence":"High (k8s manifest)"},
+              {"section":"workload-env","fields":{"workload":"balancereader","configmap":"ledger-db-config"},"file":"kubernetes-manifests/balance-reader.yaml","line":-1,"confidence":"High (k8s manifest)"},
+              {"section":"workload-env","fields":{"workload":"frontend","configmap":"service-api-config"},"file":"kubernetes-manifests/frontend.yaml","line":-1,"confidence":"High (k8s manifest)"},
+              {"section":"jpa","fields":{"marker":"Repository"},"file":"src/ledger/transactionhistory/src/main/java/x/TransactionRepository.java","line":28,"confidence":"High"}
+            ]}
+            """;
+
+    @Test
+    void injectedDatasourceDrawsTheDbEdgeSpringBootReadsImplicitly() {
+        // transactionhistory never reads SPRING_DATASOURCE_URL in code — Spring Boot binds
+        // it — so the config-read rule cannot fire. The Deployment's envFrom says it gets
+        // ledger-db-config, the ConfigMap says that is ledger-db, and the JPA marker says
+        // it persists: a documented db edge, with the manifest as evidence.
+        DependencyGraph g = new DependencyGraph("");
+        CodeGraphMerger.merge(g, BOA_WIRING, "GoogleCloudPlatform/bank-of-anthos");
+        DependencyGraph.Edge e = edge(g, "transactionhistory", "ledger-db");
+        assertNotNull(e, "the edge the 2026-09-21 comparison found missing");
+        assertEquals("db", e.type);
+        assertEquals(DependencyGraph.CONF_DOCUMENTED, e.confidence);
+        assertFalse(e.runtimeObserved);
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_CODE));
+        assertTrue(e.evidence.stream().anyMatch(s -> s.contains("transaction-history.yaml")));
+    }
+
+    @Test
+    void injectedDatasourceWithoutPersistenceCodeIsOnlyInferred() {
+        // balancereader gets the same ConfigMap but this ledger has no JPA marker for it:
+        // handed a datasource is a declaration, not a use — dotted, out of the denominator.
+        DependencyGraph g = new DependencyGraph("");
+        CodeGraphMerger.merge(g, BOA_WIRING, "GoogleCloudPlatform/bank-of-anthos");
+        DependencyGraph.Edge e = edge(g, "balancereader", "ledger-db");
+        assertNotNull(e);
+        assertEquals(DependencyGraph.CONF_INFERRED, e.confidence);
+    }
+
+    @Test
+    void injectedServiceAddressesDrawNoEdgeFromWiringAlone() {
+        // frontend is injected the whole service-api-config, which names every service.
+        // Being handed an address is not a call; those edges belong to the code layer.
+        DependencyGraph g = new DependencyGraph("");
+        CodeGraphMerger.merge(g, BOA_WIRING, "GoogleCloudPlatform/bank-of-anthos");
+        assertNull(edge(g, "frontend", "transactionhistory"));
+        assertTrue(g.getEdges().stream().noneMatch(e -> e.source.equals("frontend")));
+    }
+
     @Test
     void classifyKindByConvention() {
         assertEquals(DependencyGraph.KIND_DB, DependencyGraph.classifyKind("customers-db"));
