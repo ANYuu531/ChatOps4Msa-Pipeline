@@ -294,6 +294,32 @@ public class DependencyGraphTest {
     }
 
     @Test
+    void theWikisSpellingOfARealNodeIsMergedAndAStoreNeverDependsOnItsEngine() {
+        // The greenfield run of 2026-09-23: the code layer drew userservice -> accounts-db,
+        // the wiki drew userservice -> accountsdb and accounts-db -> postgresql. Three db
+        // nodes for one database, and a database "depending on" its engine.
+        DependencyGraph g = new DependencyGraph("");
+        g.addNode("userservice", DependencyGraph.KIND_SERVICE);
+        g.addNode("accounts-db", DependencyGraph.KIND_DB);
+        g.addEdge("userservice", "accounts-db", "db", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "code: userservice.yaml");
+        g.addNode("accountsdb", DependencyGraph.KIND_DB).docIntroduced = true;
+        g.addNode("postgresql", DependencyGraph.KIND_DB).docIntroduced = true;
+        g.addEdge("userservice", "accountsdb", "db", DependencyGraph.PROV_DOC, DependencyGraph.CONF_INFERRED, false, 0, "wiki");
+        g.addEdge("accounts-db", "postgresql", "db", DependencyGraph.PROV_DOC, DependencyGraph.CONF_INFERRED, false, 0, "wiki");
+
+        GraphNormalizer.normalize(g);
+
+        assertNull(node(g, "accountsdb"), "the wiki's spelling folds onto the real node");
+        assertNull(node(g, "postgresql"), "an engine name with nothing left pointing at it is gone");
+        DependencyGraph.Edge e = edge(g, "userservice", "accounts-db");
+        assertNotNull(e);
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_CODE));
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_DOC), "the doc evidence lands on the real edge");
+        assertEquals(DependencyGraph.CONF_DOCUMENTED, e.confidence, "merging never weakens the edge");
+        assertEquals(1, g.getEdges().size());
+    }
+
+    @Test
     void classifyKindByConvention() {
         assertEquals(DependencyGraph.KIND_DB, DependencyGraph.classifyKind("customers-db"));
         assertEquals(DependencyGraph.KIND_DB, DependencyGraph.classifyKind("mysql"));

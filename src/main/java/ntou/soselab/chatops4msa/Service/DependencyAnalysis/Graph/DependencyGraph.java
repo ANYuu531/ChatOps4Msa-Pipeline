@@ -232,6 +232,16 @@ public class DependencyGraph {
         return 0;
     }
 
+    /** The node with this id, or null. */
+    public Node findNode(String id) {
+        return id == null ? null : nodes.get(id);
+    }
+
+    /** Removes the (source, target) edge. A no-op when there is none. */
+    public void removeEdge(String source, String target) {
+        if (source != null && target != null) edges.remove(source + " " + target);
+    }
+
     /** Removes a node and every edge incident to it. A no-op when the id is absent. */
     public void removeNode(String id) {
         if (id == null || nodes.remove(id) == null) return;

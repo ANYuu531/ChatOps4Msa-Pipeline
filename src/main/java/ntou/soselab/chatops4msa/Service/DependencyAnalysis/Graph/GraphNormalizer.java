@@ -90,6 +90,33 @@ public final class GraphNormalizer {
         // asked what is not deployed (2026-09-22). Origin is the test, not topology: a
         // StatefulSet database is never marked deployed and may have no edge yet, but it
         // came from code or traffic, not from the wiki, and it stays.
+        // The wiki's spelling of a node the code or the cluster already knows: Bank of
+        // Anthos's docs drew userservice -> accountsdb beside the code's
+        // userservice -> accounts-db, and the graph carried two databases for one
+        // (2026-09-23). Same letters, punctuation aside, means the same node; the doc
+        // edges fold onto the real one and keep their evidence there.
+        Map<String, String> canonical = new LinkedHashMap<>();
+        for (DependencyGraph.Node n : graph.getNodes()) {
+            if (!n.docIntroduced) canonical.putIfAbsent(lettersOnly(n.id), n.id);
+        }
+        for (DependencyGraph.Node n : new ArrayList<>(graph.getNodes())) {
+            if (!n.docIntroduced || Boolean.TRUE.equals(n.deployed)) continue;
+            String real = canonical.get(lettersOnly(n.id));
+            if (real != null && !real.equals(n.id)) graph.renameNode(n.id, real);
+        }
+
+        // A data store does not depend on a data store. "accounts-db -> postgresql" is the
+        // wiki naming the engine a database runs on, not a call; dropping the edge leaves
+        // the engine node with nothing pointing at it, and the pass below removes it.
+        for (DependencyGraph.Edge e : new ArrayList<>(graph.getEdges())) {
+            DependencyGraph.Node s = graph.findNode(e.source);
+            DependencyGraph.Node t = graph.findNode(e.target);
+            if (s == null || t == null || e.runtimeObserved) continue;
+            if (DependencyGraph.KIND_DB.equals(s.kind) && DependencyGraph.KIND_DB.equals(t.kind) && t.docIntroduced) {
+                graph.removeEdge(e.source, e.target);
+            }
+        }
+
         java.util.Set<String> touched = new java.util.HashSet<>();
         for (DependencyGraph.Edge edge : graph.getEdges()) {
             touched.add(edge.source);
@@ -98,6 +125,11 @@ public final class GraphNormalizer {
         for (DependencyGraph.Node n : new ArrayList<>(graph.getNodes())) {
             if (n.docIntroduced && !Boolean.TRUE.equals(n.deployed) && !touched.contains(n.id)) graph.removeNode(n.id);
         }
+    }
+
+    /** {@code accounts-db}, {@code accountsdb} and {@code Accounts_DB} are one spelling here. */
+    private static String lettersOnly(String id) {
+        return id.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 
     /** A documentation shorthand for "all services", not a node. */
