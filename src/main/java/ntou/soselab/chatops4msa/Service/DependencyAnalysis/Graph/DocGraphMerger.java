@@ -53,6 +53,12 @@ public class DocGraphMerger {
         JSONObject root = parseObject(mergedNotesJson);
         if (root == null) return;
 
+        // Which nodes the runtime, k8s and code layers already knew: anything that
+        // exists only after this merge was the wiki's word alone, and GraphNormalizer
+        // drops it again if no edge ends up holding it in place.
+        Set<String> known = new java.util.HashSet<>();
+        for (DependencyGraph.Node n : graph.getNodes()) known.add(n.id);
+
         DocGraphMerger merger = new DocGraphMerger(graph);
         try {
             merger.mergeSynchronous(root.optJSONArray("synchronous_candidates"));
@@ -62,6 +68,9 @@ public class DocGraphMerger {
             // Doc edges are additive colour on top of the deterministic graph; never
             // let a malformed ledger break the graph that is already built.
             System.out.println("[WARNING] doc-edge merge skipped: " + e.getMessage());
+        }
+        for (DependencyGraph.Node n : graph.getNodes()) {
+            if (!known.contains(n.id)) n.docIntroduced = true;
         }
     }
 

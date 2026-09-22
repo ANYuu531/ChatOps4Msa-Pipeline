@@ -267,6 +267,33 @@ public class DependencyGraphTest {
     }
 
     @Test
+    void aDocOnlyConceptWithNoEdgeIsDroppedARealDatabaseIsNot() {
+        // "caching" and a generic "postgresql" came from the wiki, have no edge and are not
+        // running — gone. The doc-introduced genai-service stays: an edge references it.
+        DependencyGraph g = new DependencyGraph("bank-of-anthos");
+        g.addNode("frontend", DependencyGraph.KIND_SERVICE).deployed = true;
+        DependencyGraph.Node genai = g.addNode("genai-service", DependencyGraph.KIND_SERVICE);
+        genai.deployed = false;
+        genai.docIntroduced = true;
+        DependencyGraph.Node caching = g.addNode("caching", DependencyGraph.KIND_SERVICE);
+        caching.deployed = false;
+        caching.docIntroduced = true;
+        g.addNode("postgresql", DependencyGraph.KIND_DB).docIntroduced = true;
+        // mysql is a StatefulSet database: never deployed=TRUE, no edge yet in this
+        // fixture, but it came from code — the wiki did not invent it.
+        g.addNode("mysql", DependencyGraph.KIND_DB);
+        g.addEdge("frontend", "genai-service", "sync-http", DependencyGraph.PROV_DOC, DependencyGraph.CONF_INFERRED, false, 0, "wiki");
+
+        GraphNormalizer.normalize(g);
+
+        assertNull(node(g, "caching"));
+        assertNull(node(g, "postgresql"));
+        assertNotNull(node(g, "genai-service"));
+        assertNotNull(node(g, "mysql"));
+        assertNotNull(node(g, "frontend"));
+    }
+
+    @Test
     void classifyKindByConvention() {
         assertEquals(DependencyGraph.KIND_DB, DependencyGraph.classifyKind("customers-db"));
         assertEquals(DependencyGraph.KIND_DB, DependencyGraph.classifyKind("mysql"));

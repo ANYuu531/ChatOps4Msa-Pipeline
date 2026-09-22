@@ -651,6 +651,27 @@ depweaver 組拿到的正是「標準答案那條查詢」的執行結果，所�
    **根因與修正（2026-09-22）**：用離線的 `StaticExtractionProbeTest` 對 BoA 重跑純靜態抽取，發現問題比「漏一條」大——**程式碼層對 BoA 一條 DB 邊都畫不出來**，archive 裡的 6 條 DB 邊全部來自 DeepWiki 文件層（含兩條指向泛稱 `postgresql` 的幻覺邊），文件沒提到 transactionhistory，圖就沒有它。原因：合併器只在「程式碼裡有讀該環境變數」時才把 `env→host` 表的對應變成邊，而 Spring Boot 對 `SPRING_DATASOURCE_URL` 是隱式綁定，程式碼裡沒有那一行；JPA 標記（Repository/Entity/Table 三個都抓到了）只用來「升級」既有的邊，本身不產生邊。缺的那塊資訊在 Deployment 裡：`envFrom: configMapRef: ledger-db-config`。修正是新增 `workload-env` 這一節（哪個 workload 注入哪個 ConfigMap／字面位址），合併器把「注入的 ConfigMap 裡有資料庫位址 ＋ 該服務有持久化程式碼」畫成 `documented` 的 db 邊（沒有持久化程式碼則 `inferred`；服務位址一律不畫，因為被注入位址不等於有呼叫）。修正後純靜態的 BoA 圖從 6 條邊變成 11 條：**多出來的 5 條 db 邊與 runtime 驗證的資料層 5/5 完全一致**，且沒有 `postgresql` 幻覺邊。測試：`DependencyGraphTest.injectedDatasource*`、`CodeExtractionTest.k8sManifestsRecordWhoIsInjectedWhat`。**這份 archive 是修正前產的，要重新跑 greenfield 分析才會有這條邊**；純 AI 對照組也要在新 archive 上重跑一次，看這一題三組是否都翻正。
 6. **樣本小。** 10 題、一個專案、一份 archive、一個模型；7 題的 F1 差距（1.000 對 0.951 對 0.888）不做統計檢定。要強化，最省的是把題目擴到 train-ticket 的 archive 再跑一次。
 
+### 9.4b 第二輪：同一批題目、BoA 的 **runtime** archive（2026-09-22 機器 B）
+
+- archive：`dep-reports/824657585331372043-1790044430313.json`（BoA，**runtime**，namespace `bank-of-anthos`，報告 19 775 字）；原始輸出在 `docs/experiments/2026-09-22/`
+- 這一輪本來是要驗證 9.4 第 5 點的靜態修正，但機器 B 跑的是 runtime 分析而不是 greenfield：transactionhistory→ledger-db 這條邊是 **Istio 的 TCP 觀測**（5 191 條連線）畫出來的，不是新的 `workload-env` 規則。**靜態修正的端到端驗證仍待一次 greenfield 跑**；這一輪當作第二個資料點。
+
+| 組別 | precision | recall | F1 | off-graph 名字／題 | 圖與報告都沒有 | 「答案是沒有」的 3 題點名了幾個服務 |
+|---|---|---|---|---|---|---|
+| report-only | 0.984 | 0.943 | 0.956 | 0.20 | 0.00 | 8、8、0 |
+| rag | 0.982 | 0.885 | 0.925 | 0.50 | 0.30 | 0、8、0 |
+| **depweaver** | **1.000** | **1.000** | **1.000** | 0.10 | 0.00 | 0、**3**、0 |
+
+（可計分 7 題；「答案是沒有」的 3 題依序是：沒有 runtime 證據的邊、未部署的節點、外部主機。）
+
+**和第一輪比，哪些站得住、哪些變了**
+
+1. **接地組仍然 7 題全對；`path` 那題三組全部翻正**——但翻正的原因是圖對了（runtime 觀測到那條邊），不是模型變聰明。這正好把 9.4 第 5 點的論點補完整：**同一個問題、同一批模型，圖錯三組全錯、圖對三組全對；決定答案品質的是圖，不是 LLM。**
+2. **純 LLM 讀 runtime 報告比讀 greenfield 報告好得多**（recall 0.825 → 0.943）：runtime 報告有明確的「TCP 5191 次」這種句子，模型不容易漏。它仍然在**傳遞閉包**上失手（accounts-db 掛掉影響誰：5 個只答 3 個）——多跳推理正是圖查詢的價值所在，也符合 GraphRAG 文獻的觀察（多跳題圖勝、單段落題不一定）。
+3. **RAG 這輪反而退步**（recall 0.885），且「圖與報告都沒有」的名字 0.30／題——細看多半是**評分的近似誤差**而不是幻覺：`populate-accounts-db`／`populate-ledger-db` 是 BoA 真實的初始化 Job（在證據附錄裡，敘事報告沒提），`traffic-driven` 是被連字號規則誤抓的英文片語。評分程式已改成拿「敘事報告＋所有段落」當比對範圍、並擴充停用詞；**這一欄以本節的數字為準前要重算**。
+4. **「未部署的節點」這題暴露一個真問題：接地組點名了 3 個幽靈節點。** runtime 圖裡有 `postgresql`、`in-memory-cache`、`caching` 三個節點，**沒有任何邊**——它們是 DeepWiki 文件層帶進來的概念詞，不是工作負載；`GraphNormalizer` 的 `LIBRARY_PHANTOMS` 名單抓得到 `lettuce` 這種函式庫，抓不到這種「概念名詞」。模型忠實地把它們講出來（還很誠實地說「沒有邊、但不代表沒部署」），問題在圖。這是下一個要修的：**文件層引入、沒有任何邊、也沒有部署證據的節點，不該留在圖上**（greenfield 的 inventory 節點如 loadgenerator 沒有邊但有 Dockerfile 證據，要保留）。
+5. 另外兩組在「未部署」這題都答成了反面——列出 8 個**已部署**的服務——而且 RAG 補了一句圖上沒有依據的「loadgenerator 可能沒部署」。這是第一輪就看到的型態（答案是「沒有」時，沒有接地的模型傾向填清單），第二輪重現。
+
 ### 9.5 抽圖層（第二輪，尚未實作）
 
 「純 AI 抽依賴圖」對照 DepWeaver 的抽取管線：同一個 repo，A 組把原始碼（或檔案清單＋摘錄）餵給 LLM，直接要它輸出服務與邊；B 組跑現行的 tree-sitter ＋ 設定解析 ＋ 文件層。以 BoA（真實架構已知、runtime 驗證過 7/7 業務邊 + 5/5 資料層邊）與 train-ticket 官方架構文件為 ground truth，比邊的 precision／recall。要先定兩件事：①ground truth 的邊清單要逐條寫下來並標出處；②A 組的預算（讀幾個檔、幾 KB）必須說明，否則比較不公平。這一輪的成本明顯較高（大量長 prompt），排在問答層之後。

@@ -109,6 +109,14 @@ public class DependencyGraph {
          * the emitters fall back to their previous free layout.
          */
         public Integer layer;
+        /**
+         * True when the documentation layer created this node and no other layer knew
+         * it — a concept the wiki named ("caching", a generic "postgresql"). Set by
+         * {@link DocGraphMerger}; read by {@link GraphNormalizer}, which drops such a
+         * node once nothing connects to it. Not persisted: it only matters within the
+         * merge pass that produced it.
+         */
+        public boolean docIntroduced;
 
         Node(String id, String kind, String namespace) {
             this.id = id;

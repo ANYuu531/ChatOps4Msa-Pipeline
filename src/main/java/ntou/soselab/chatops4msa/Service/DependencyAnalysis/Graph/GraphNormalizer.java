@@ -81,6 +81,23 @@ public final class GraphNormalizer {
             String target = aliasTarget(id, deployed);
             if (target != null) graph.renameNode(id, target);
         }
+
+        // A concept the documentation named — "caching", "in-memory-cache", a generic
+        // "postgresql" — arrives as a node, and once its doc edge is gone (aliased away,
+        // or attached to a grouping node removed above) it sits on the graph with no
+        // edge and no deployment. Bank of Anthos's runtime graph carried three of them,
+        // and the report thread duly listed them as "nodes with no dependencies" when
+        // asked what is not deployed (2026-09-22). Origin is the test, not topology: a
+        // StatefulSet database is never marked deployed and may have no edge yet, but it
+        // came from code or traffic, not from the wiki, and it stays.
+        java.util.Set<String> touched = new java.util.HashSet<>();
+        for (DependencyGraph.Edge edge : graph.getEdges()) {
+            touched.add(edge.source);
+            touched.add(edge.target);
+        }
+        for (DependencyGraph.Node n : new ArrayList<>(graph.getNodes())) {
+            if (n.docIntroduced && !Boolean.TRUE.equals(n.deployed) && !touched.contains(n.id)) graph.removeNode(n.id);
+        }
     }
 
     /** A documentation shorthand for "all services", not a node. */

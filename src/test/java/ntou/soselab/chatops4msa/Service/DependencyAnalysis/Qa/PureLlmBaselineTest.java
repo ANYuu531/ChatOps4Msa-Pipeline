@@ -97,8 +97,9 @@ public class PureLlmBaselineTest {
      * @param namedBeyond     services named that the question did not itself spell — the
      *                        number to look at on a negative question, not a verdict
      * @param offGraph        service-shaped names the graph does not have
-     * @param offGraphAndDocs of those, the ones not in the report either: the closest this
-     *                        harness gets to "made it up"
+     * @param offGraphAndDocs of those, the ones that appear nowhere the arms could read —
+     *                        neither the narrative report nor any archived passage: the
+     *                        closest this harness gets to "made it up"
      */
     record Score(double precision, double recall, double f1, int offGraph, int offGraphAndDocs,
                  int named, int namedBeyond, boolean negative) {
@@ -130,7 +131,9 @@ public class PureLlmBaselineTest {
             "sync-http", "edges-of-type", "db-users", "observed-edges", "unobserved-edges",
             "mentioned-only", "deploy-order", "dependencies-of", "dependents-of", "impact-of",
             "startup-needs", "graph-facts", "bank-of-anthos", "train-ticket", "sock-shop",
-            "e-mail", "end-to-end", "read-only", "well-known", "up-to-date", "so-called"));
+            "e-mail", "end-to-end", "read-only", "well-known", "up-to-date", "so-called",
+            "traffic-driven", "real-time", "run-time", "service-to-service", "in-cluster", "in-mesh",
+            "docker-compose", "pom-xml", "k8s-manifests", "kubernetes-manifests"));
 
     /**
      * Service-shaped names in the text that no node of the graph has, minus the query
@@ -245,6 +248,11 @@ public class PureLlmBaselineTest {
             Set<String> plannedNodes = new LinkedHashSet<>();
             for (GraphQuery q : queries) if (!"edges-of-type".equals(q.op)) plannedNodes.addAll(q.args);
             String context = ReportQaService.buildContext(archive, graph, question, vector, topK, queryResults, plannedNodes);
+            // What the arms can actually see: the narrative report AND every archived
+            // passage (evidence tables, k8s inventories) — a name from the evidence appendix
+            // is not invented just because the narrative never used it.
+            StringBuilder visible = new StringBuilder(archive.report);
+            for (TextChunk c : archive.chunks) visible.append('\n').append(c.text);
 
             Map<String, String> answers = new java.util.LinkedHashMap<>();
             answers.put("report-only", chat.ask(
@@ -262,7 +270,7 @@ public class PureLlmBaselineTest {
                     .append(gold.isEmpty() ? "(none — the graph's answer is \"nothing\"; scored right/wrong)" : gold).append('\n');
             detail.append("- plan: ").append(planSource).append(" → ").append(queries).append("\n\n");
             for (Map.Entry<String, String> a : answers.entrySet()) {
-                Score s = score(a.getValue(), gold, ids, question, archive.report);
+                Score s = score(a.getValue(), gold, ids, question, visible.toString());
                 byArm.computeIfAbsent(a.getKey(), k -> new ArrayList<>()).add(s);
                 csv.append(CalibrationSupport.csvRow(question, a.getKey(), gold.size(), s.named(), s.namedBeyond(),
                         s.precision(), s.recall(), s.f1(), s.offGraph(), s.offGraphAndDocs(), s.negative(), a.getValue().length()));
