@@ -119,5 +119,33 @@ public class PartialGraphQaTest {
 
         String caption = ReportQaService.partialGraphCaption(slice);
         assertTrue(caption.contains("`orders`, `payment`"), caption);
+        assertFalse(ReportQaService.partialGraphTitle(slice, "shop").contains("of"),
+                "nothing was cut, so the title says nothing about a limit");
+    }
+
+    /**
+     * The node cap is a safety valve, so the reader has to be able to see when it fired —
+     * in the picture itself, because that is what gets copied out of the thread, and by
+     * name, so the missing neighbours can be asked for.
+     */
+    @Test
+    void aCutSliceSaysSoOnThePictureAndNamesWhatIsMissing() {
+        DependencyGraph g = new DependencyGraph("wide");
+        g.addNode("hub", DependencyGraph.KIND_SERVICE);
+        for (int i = 0; i < 30; i++) {
+            g.addNode("svc-" + i, DependencyGraph.KIND_SERVICE);
+            g.addEdge("hub", "svc-" + i, "sync-http", DependencyGraph.PROV_CODE,
+                    DependencyGraph.CONF_DOCUMENTED, false, 0, "x");
+        }
+        SubgraphExtractor.Result slice = SubgraphExtractor.extract(g, List.of("hub"));
+        int total = slice.graph.getNodes().size() + slice.omitted.size();
+
+        String title = ReportQaService.partialGraphTitle(slice, "wide/wide");
+        assertTrue(title.contains(SubgraphExtractor.MAX_NODES + " of " + total + " nodes shown"), title);
+        assertTrue(title.contains("limit " + SubgraphExtractor.MAX_NODES), title);
+
+        String caption = ReportQaService.partialGraphCaption(slice);
+        assertTrue(caption.contains(SubgraphExtractor.MAX_NODES + " of " + total + " nodes drawn"), caption);
+        assertTrue(caption.contains(slice.omitted.get(0)), "the first omitted node is named: " + caption);
     }
 }

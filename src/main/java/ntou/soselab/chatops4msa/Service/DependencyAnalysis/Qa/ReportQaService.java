@@ -403,12 +403,25 @@ public class ReportQaService {
     static Map<String, byte[]> partialGraphFiles(SubgraphExtractor.Result slice, String repoName) {
         String base = "partial-" + String.join("-", slice.seeds.subList(0, Math.min(3, slice.seeds.size())))
                 .replaceAll("[^A-Za-z0-9._-]", "_");
-        String title = DependencyGraph.TOOL_NAME + " — partial graph · " + truncate(shortRepo(repoName), 40);
+        String title = partialGraphTitle(slice, repoName);
         Map<String, byte[]> files = new java.util.LinkedHashMap<>();
         byte[] png = GraphvizRenderer.toPng(DotEmitter.emit(slice.graph, title, new java.util.HashSet<>(slice.seeds)));
         if (png != null) files.put(base + ".png", png);
         files.put(base + ".mmd", MermaidEmitter.emit(slice.graph).getBytes(StandardCharsets.UTF_8));
         return files;
+    }
+
+    /**
+     * The picture's own title. The truncation belongs here, not only in the message beside
+     * it: the picture is what gets copied into a slide or a thesis, where the caption does
+     * not follow it, and a reader who cannot see that a slice is cut reads it as the whole.
+     */
+    static String partialGraphTitle(SubgraphExtractor.Result slice, String repoName) {
+        String title = DependencyGraph.TOOL_NAME + " — partial graph · " + truncate(shortRepo(repoName), 40);
+        if (slice.omitted.isEmpty()) return title;
+        int shown = slice.graph.getNodes().size();
+        return title + " · " + shown + " of " + (shown + slice.omitted.size())
+                + " nodes shown, limit " + SubgraphExtractor.MAX_NODES;
     }
 
     static String partialGraphCaption(SubgraphExtractor.Result slice) {
@@ -418,8 +431,13 @@ public class ReportQaService {
                 .append(slice.neighbours.size()).append(" one-hop neighbour(s); edges are the full graph's own. ")
                 .append("Solid = observed at runtime · dashed = code/doc · dotted = declared only.");
         if (!slice.omitted.isEmpty()) {
-            sb.append("\n_").append(slice.omitted.size()).append(" more neighbour(s) left out to stay within ")
-                    .append(SubgraphExtractor.MAX_NODES).append(" nodes._");
+            // Name what was cut, not just how much: a reader who can see which neighbours
+            // are missing can ask for them; a bare count reads as "nothing important".
+            int shown = slice.graph.getNodes().size();
+            sb.append("\n_Cut to fit: ").append(shown).append(" of ").append(shown + slice.omitted.size())
+                    .append(" nodes drawn (limit ").append(SubgraphExtractor.MAX_NODES).append("). Left out: ")
+                    .append(String.join(", ", slice.omitted.subList(0, Math.min(5, slice.omitted.size()))))
+                    .append(slice.omitted.size() > 5 ? ", …" : "").append("._");
         }
         return sb.toString();
     }
