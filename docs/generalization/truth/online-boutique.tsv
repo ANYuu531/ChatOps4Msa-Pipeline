@@ -1,16 +1,16 @@
-frontend	adservice	business	README docs/img/architecture-diagram.png（frontend → ad）
-frontend	recommendationservice	business	架構圖
-frontend	productcatalogservice	business	架構圖
-frontend	cartservice	business	架構圖
-frontend	shippingservice	business	架構圖
-frontend	currencyservice	business	架構圖
-frontend	checkoutservice	business	架構圖
-checkoutservice	productcatalogservice	business	架構圖
-checkoutservice	cartservice	business	架構圖
-checkoutservice	shippingservice	business	架構圖
-checkoutservice	currencyservice	business	架構圖
-checkoutservice	paymentservice	business	架構圖
-checkoutservice	emailservice	business	架構圖
-recommendationservice	productcatalogservice	business	架構圖 + src/recommendationservice/recommendation_server.py:131
-cartservice	redis-cart	data	架構圖（cart → Redis cache）+ kubernetes-manifests/cartservice.yaml REDIS_ADDR
-loadgenerator	frontend	control	架構圖（loadgenerator → frontend）
+frontend	adservice	business	src/frontend/main.go:138 mustMapEnv(&svc.adSvcAddr, "AD_SERVICE_ADDR")；值在 kubernetes-manifests/frontend.yaml:82 value: "adservice:9555"
+frontend	recommendationservice	business	src/frontend/main.go:135 RECOMMENDATION_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:76 value: "recommendationservice:8080"
+frontend	productcatalogservice	business	src/frontend/main.go:132 PRODUCT_CATALOG_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:70 value: "productcatalogservice:3550"
+frontend	cartservice	business	src/frontend/main.go:134 CART_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:74 value: "cartservice:7070"
+frontend	shippingservice	business	src/frontend/main.go:137 SHIPPING_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:78 value: "shippingservice:50051"
+frontend	currencyservice	business	src/frontend/main.go:133 CURRENCY_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:72 value: "currencyservice:7000"
+frontend	checkoutservice	business	src/frontend/main.go:136 CHECKOUT_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:80 value: "checkoutservice:5050"
+checkoutservice	productcatalogservice	business	src/checkoutservice/main.go:112 PRODUCT_CATALOG_SERVICE_ADDR；kubernetes-manifests/checkoutservice.yaml:57
+checkoutservice	cartservice	business	src/checkoutservice/main.go:113 CART_SERVICE_ADDR；kubernetes-manifests/checkoutservice.yaml:67
+checkoutservice	shippingservice	business	src/checkoutservice/main.go:111 SHIPPING_SERVICE_ADDR；kubernetes-manifests/checkoutservice.yaml:59
+checkoutservice	currencyservice	business	src/checkoutservice/main.go:114 CURRENCY_SERVICE_ADDR；kubernetes-manifests/checkoutservice.yaml:65
+checkoutservice	paymentservice	business	src/checkoutservice/main.go:116 PAYMENT_SERVICE_ADDR；kubernetes-manifests/checkoutservice.yaml:61
+checkoutservice	emailservice	business	src/checkoutservice/main.go:115 EMAIL_SERVICE_ADDR；kubernetes-manifests/checkoutservice.yaml:63
+recommendationservice	productcatalogservice	business	src/recommendationservice/recommendation_server.py:131；kubernetes-manifests/recommendationservice.yaml:60 PRODUCT_CATALOG_SERVICE_ADDR
+cartservice	redis-cart	data	kubernetes-manifests/cartservice.yaml:50 REDIS_ADDR，值 "redis-cart:6379"
+loadgenerator	frontend	control	kubernetes-manifests/loadgenerator.yaml:82 FRONTEND_ADDR，值 "frontend:80"（locust 的 --host 由它組成，不在 locustfile.py 裡）

@@ -18,9 +18,9 @@
 
 1. **工具的泛化結果不再只靠作者的標註**：在一份**完全不是我們寫的**參考邊集上（第三方發表的 7 個專案、95 條邊），工具畫到 **91 條＝0.96**，漏的 4 條逐條可解釋（2 條是 repo 演進、2 條是已知邊界）。這個數字可以單獨拿去報告，因為標準答案不是我給的。
 2. **作者標註目前沒有發現偏差，但只驗過一個專案**：唯一兩邊都有的 `robot-shop`，第三方的 12 條邊**全部**落在作者 truth 的 21 條裡，漏標 0、矛盾 0（§1.7）。作者多標的 9 條是第三方方法看不到的東西（程式碼呼叫、外部主機、nginx 路由），每條都有打得開的出處。**樣本 1，所以是「沒發現偏差」不是「證明沒有偏差」。**
-3. **七個專案跑完，獨立標註者一條邊都沒有推翻**：40 條「只有標註者有」的邊逐條裁決後，是命名問題（22 條，其中 ewolff-k8s 那 5 條讓 Jaccard 變成 0.00 純粹是模組名 vs 部署名）、部署變體（5 條其實在 truth 裡，比對程式的 bug，已修）、標註者的判斷錯誤（13 條：把 H2 in-memory 當外部資料庫、把宣告未使用的常數當呼叫、**三條方向反轉**）。**沒有一條是作者漏標。** 一致度從 0.00 到 0.92，而數字本身不是產出（§3.5）。
+3. **七個專案跑完，獨立標註者一條邊都沒有推翻**：40 條「只有標註者有」的邊逐條裁決後，是命名問題（22 條，其中 ewolff-k8s 那 5 條讓 Jaccard 變成 0.00 純粹是模組名 vs 部署名）、部署變體（5 條其實在 truth 裡，比對程式的 bug，已修）、標註者的判斷錯誤（14 條：把 H2 in-memory 與不存在的 mongodb 當成資料庫、把宣告未使用的常數當呼叫、**三條方向反轉**）。**沒有一條是作者漏標。** 一致度從 0.00 到 0.92，而數字本身不是產出（§3.5）。
 4. **但它精準指出了 truth 裡最難複驗的兩組（17%）**：online-boutique 的 9 條出處是**一張 PNG 架構圖**——純文字的第三方無法複驗，而標註者從 README 文字推的結果有 3 條方向是反的；TeaStore 的 7 條出處是 **enum 常數的引用次數**，可複驗但要先讀懂 registry 分派機制。這兩組的證據性質與其他 76 條不同，論文要分開講（§3.6）。這是這個方法真正的價值：它不推翻邊，它指出哪些出處撐不起第三方複驗。
-5. **作者標註的地位降級、並且可被別人檢查**：不再稱它為 ground truth／標準答案，改稱「參考邊集」，指標改稱「一致度」；每一條出處都必須是第三方**打得開**、而且**內容真的在裡面**的 `路徑:行`，由 `TruthEvidenceResolvesTest` 斷言（92／92）。三道檢查累計抓到 **3 條寫錯的出處 ＋ 3 條不精確的出處**，而**沒有一條是邊本身錯**——這個對比本身就是結論的一部分：作者對「有哪些依賴」的判斷站得住，對「證據在哪一行」的紀錄則需要程式看著。
+5. **作者標註的地位降級、並且可被別人檢查**：不再稱它為 ground truth／標準答案，改稱「參考邊集」，指標改稱「一致度」；每一條出處都必須是第三方**打得開**、而且**內容真的在裡面**的 `路徑:行`，由 `TruthEvidenceResolvesTest` 斷言（**113／113**）。三道檢查累計抓到 **3 條寫錯的出處 ＋ 3 條不精確的出處**，而**沒有一條是邊本身錯**——這個對比本身就是結論的一部分：作者對「有哪些依賴」的判斷站得住，對「證據在哪一行」的紀錄則需要程式看著。
 
 附帶的收穫：這一輪對照當場逼出工具的 **3 個真缺陷**（§1.6），修完既有七個專案零回歸。
 
@@ -163,7 +163,7 @@ account-service   account-mongodb   data   shared/account-service.yml
 | teastore | 2 | **2** | 另有 7 條出處是 `Service.PERSISTENCE` 這種 enum 常數，不是檔案位址（就是工具畫不出來的那組） |
 | online-boutique | 2 | **2** | 其餘出處是 README 段落與 manifest 名 |
 | bank-of-anthos | 12 | **12** | — |
-| **合計** | **92** | **92** | 由 `TruthEvidenceResolvesTest` 斷言，不是人數的 |
+| **合計** | **92** | **92** | 由 `TruthEvidenceResolvesTest` 斷言，不是人數的（第二標註者那一輪之後補到 **113／113**，見 §3.8） |
 
 **這道檢查抓到兩條真的寫錯的出處**——這正是它存在的理由：
 
@@ -287,7 +287,7 @@ account-service   account-mongodb   data   shared/account-service.yml
 
 材料修正對 piggymetrics 的效果正如預期（0.29 → 0.69）。但**一致度本身不是這一節的產出**——逐條裁決才是，而裁決的結論是：
 
-> **40 條「只有標註者有」的邊裡，沒有一條是作者漏標的。** 它們分成命名問題（22 條）、部署變體（5 條，其實在 truth 裡）、以及標註者的判斷錯誤（13 條）。而 40 條「只有作者有」的邊裡，**有兩組指出了 truth 真正的弱點**（§3.6）。
+> **40 條「只有標註者有」的邊裡，沒有一條是作者漏標的。** 它們分成命名問題（22 條）、部署變體（5 條，其實在 truth 裡）、以及標註者的判斷錯誤（14 條）。而 40 條「只有作者有」的邊裡，**有兩組指出了 truth 真正的弱點**（§3.6）。
 
 **A. 命名問題（22 條）——最大的一類，而且映射了工具自己犯過的錯**
 
@@ -305,15 +305,14 @@ ewolff-k8s 的 0.00 因此是**假象**：五條邊**完全相同**，一條都�
 
 TeaStore 的 `teastore-* → teastore-kieker-rabbitmq` 五條**在 truth 裡**，標成 `variant`（只有 Kieker 追蹤變體才有的邊）。比對程式為了計分把 variant 整批排除，結果標註者標了它們就被算成「只有標註者有」。已修：現在單獨列成「標註者也標了、作者標為部署變體」一節，不計分也不算分歧。**修正後 TeaStore 的分歧只剩 1 條**（一個自環 `kieker-rabbitmq → kieker-rabbitmq`，標註者的錯）。
 
-**C. 標註者的判斷錯誤（13 條）**
+**C. 標註者的判斷錯誤（14 條）**
 
 | 錯誤類型 | 條數 | 內容 |
 |---|---|---|
-| **把程序內的東西當成元件，並且自己造名字** | 6 | ecommerce 的 `<svc> → <svc>-database`。出處（`application-dev.yml:13`）是真的，但那一行是 `jdbc:h2:mem:ecommerce_dev_db`——**H2 記憶體內資料庫**，程序內、不是獨立元件；而 `user-service-database` 這個名字 repo 裡根本不存在。三個錯誤疊在一起：程序內當成外部、名字編造、同一條邊因三份 profile 重複標三次 |
+| **照常識類推出不存在的資料庫** | 7 | ecommerce 的 `<svc> → <svc>-database` 6 條：出處（`application-dev.yml:13`）是真的，但那一行是 `jdbc:h2:mem:ecommerce_dev_db`——**H2 記憶體內資料庫**，程序內、不是獨立元件；而 `user-service-database` 這個名字 repo 裡根本不存在。piggymetrics 的 `registry → registry-mongodb` 1 條更直接：它引 `shared/registry.yml:1`，而那個檔案**只有兩行**（`server: port: 8761`），repo 裡也沒有 `registry-mongodb` 這個字串——純粹照「其他服務都有一個 mongodb」類推。prompt 明文寫了「不要從這類系統通常有什麼去推測」 |
 | **宣告當成使用** | 7 | ecommerce 的 `user-service → product-service` 等。來源是 `AppConstant.java:20` 的 `PRODUCT_SERVICE_HOST = "http://PRODUCT-SERVICE/…"`——**每個服務都複製一份含全部 URL 的常數檔，而多數沒人引用**。這正是 2026-09-22 規則 9（`markUnreferencedUrlConstants`）處理的東西：工具與作者都不畫，標註者畫了。**這一組是規則 9 的獨立驗證：那些邊不是工具偷懶少畫，是真的不該畫** |
 | **方向搞反** | 3 | online-boutique 的 `emailservice → checkoutservice`、`paymentservice → checkoutservice`、`adservice → frontend`——三條的真實方向都相反。這是最嚴重的一類錯誤（方向錯比漏抓更誤導），而且它只發生在「出處是架構圖、標註者只能從 README 文字推」的那個專案 |
 | 自環 | 1 | TeaStore 的 `kieker-rabbitmq → kieker-rabbitmq` |
-| 待查 | 1 | piggymetrics 的 `registry → registry-mongodb`（repo 裡沒有這個 mongo，疑似與其他服務的 `*-mongodb` 類推） |
 
 ### 3.6 這一輪真正的產出：truth 裡最難複驗的兩組
 
@@ -343,11 +342,23 @@ TeaStore 的 `teastore-* → teastore-kieker-rabbitmq` 五條**在 truth 裡**�
 4. **它對命名慣例的遵守很不穩定**：prompt 明確要求用部署名，七個專案裡有兩個（ewolff-k8s、ecommerce）整批用錯。
 5. 因此**這個方法能回答的是一個方向的問題**：「作者有沒有標出別人也看得到的東西」（七個專案的答案都是有）。它**不能**用來反推作者漏了什麼——它自己的漏抓與錯誤太多。
 
-### 3.8 這一輪要改的 truth（待辦，不在本次）
+### 3.8 依這些發現改掉的 truth（2026-09-26 當天做完）
 
-- **online-boutique 的 9 條**：出處從「架構圖」改成 manifest 的 `*_SERVICE_ADDR` env 與 `src/frontend/main.go` 的宣告，架構圖降為補充。
-- **TeaStore 的 7 條**：evidence 補上「呼叫點的 `檔案:行` ＋ enum 常數名」，並在報告與論文裡標明這一組的證據性質不同。
-- **piggymetrics 的 `registry → registry-mongodb`**：查 repo 確認標註者是不是編的（初步看 repo 裡沒有這個 mongo）。
+**① online-boutique：15 條「架構圖」出處全部換成可複驗的兩處。** 原本 16 條裡有 15 條的 evidence 只寫「架構圖」；現在每一條都指到**程式碼讀哪個環境變數**與**manifest 給它什麼值**，例如：
+
+```
+frontend  adservice  business
+  src/frontend/main.go:138 mustMapEnv(&svc.adSvcAddr, "AD_SERVICE_ADDR")；
+  值在 kubernetes-manifests/frontend.yaml:82 value: "adservice:9555"
+```
+
+`checkoutservice` 的 6 條同樣改成 `src/checkoutservice/main.go:111-116` ＋ `checkoutservice.yaml:57-67`。架構圖不再是任何一條的唯一出處。有檔案出處的條數從 **2 → 16**。
+
+**② TeaStore：7 條 enum 邊的出處改成真正的呼叫點。** 原本寫「`Service.PERSISTENCE` 引用 21 處」，現在指到**第一個實際呼叫點**（例如 `DataBaseActionServlet.java:67 loadBalanceRESTOperation(Service.PERSISTENCE`）並保留引用處數。
+
+查證過程還修正了一件事：`teastore-webui → teastore-auth` 的兩處 `Service.AUTH` 在 webui 自己的程式碼裡**都只是狀態頁的 `getServersForService`**，真正的業務呼叫發生在**共用模組** `utilities/tools.descartes.teastore.registryclient/.../LoadBalancedStoreOperations.java:56`。這條邊要跨兩層才看得出來（webui 呼叫 utility 的方法 → utility 對 `Service.AUTH` 發 REST），出處已照實寫成兩段。**這也是靜態層與獨立標註者都看不到它的真正原因**，比「enum 動態分派」的說法更精確。有檔案出處的條數從 **2 → 9**。
+
+**③ 出處總數**：92 → **113**，全部打得開且內容相符（`TruthEvidenceResolvesTest`）。
 
 **這招的強度要說清楚**（已寫進測試的 javadoc）：
 
