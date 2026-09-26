@@ -1,0 +1,545 @@
+<title>DepWeaver 上次反饋進度（三點）</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+  /* SOSEL weekly-meeting deck style (docs/deck-template.html). Single theme on purpose. */
+  :root {
+    --coral: #ff7b7b; --pink: #f86bc5;
+    --grad: linear-gradient(90deg, #ff7b7b 0%, #f86bc5 100%);
+    --ink: #1c1c1c; --grey: #6f6f6f; --line: #e3e3e3; --paper: #ffffff; --ground: #f2f2f2;
+    --green: #2e8b57; --bubble: #d9d9d9;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; background: var(--ground); }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "Nunito", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; font-size: 18px; line-height: 1.55; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .9em; }
+  h1, h2, h3, h4 { margin: 0; font-weight: 800; }
+  p { margin: 0; }
+  ul { margin: .2rem 0 0; padding-left: 1.4em; }
+  ul ul { margin-top: .1rem; }
+  li { margin: .18rem 0; }
+  .id { color: var(--green); font-weight: 700; }
+  .k { font-weight: 800; }
+
+  .slide { position: relative; width: min(100vw, 1280px); aspect-ratio: 16 / 9; margin: 24px auto; background: var(--paper);
+    scroll-snap-align: center; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.08); display: grid; grid-template-rows: 64px 1fr 34px; }
+  .hdr { display: flex; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--line); box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+  .hdr img { height: 44px; }
+  .hdr .t { font-size: 24px; font-weight: 900; }
+  .hdr .t small { font-size: 13px; font-weight: 700; margin-left: 10px; color: var(--ink); }
+  .burger { margin-left: auto; width: 30px; display: grid; gap: 6px; }
+  .burger i { display: block; height: 3px; background: var(--coral); border-radius: 2px; }
+  .bd { padding: 18px 40px 10px; overflow: hidden; }
+  .ftr { background: var(--grad); }
+  .num { position: absolute; right: 22px; bottom: 16px; width: 54px; height: 54px; border-radius: 50%; background: var(--bubble);
+    color: #fff; font-weight: 800; font-size: 20px; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+
+  .sec { font-size: 22px; font-weight: 900; margin: 2px 0 8px; }
+  .sec::before { content: "丨"; margin-right: 2px; }
+  .sub { font-size: 19px; font-weight: 900; margin-top: 12px; }
+  .sub:first-child { margin-top: 0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; }
+  .two.w64 { grid-template-columns: 1.15fr .85fr; }
+  .two.w46 { grid-template-columns: .9fr 1.1fr; }
+  .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 26px; align-items: start; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 17px; }
+  th, td { border: 1px solid #222; padding: 7px 12px; text-align: left; vertical-align: top; }
+  th { font-weight: 800; text-align: center; background: #fff; }
+  td.c, th.c { text-align: center; }
+  table.sm { font-size: 15px; } table.sm th, table.sm td { padding: 5px 10px; }
+  table.xs { font-size: 14px; line-height: 1.45; } table.xs th, table.xs td { padding: 4px 8px; }
+  tr.hot td { background: #fff1f4; font-weight: 700; }
+  .tag { display: inline-block; padding: 1px 10px; border-radius: 6px; font-size: 14px; font-weight: 800; color: #fff; white-space: nowrap; }
+  .tag.code { background: #2f5fb3; } .tag.ai { background: #a24fd1; } .tag.mix { background: var(--grad); }
+  .ok { color: var(--green); font-weight: 800; } .bad { color: #d0342c; font-weight: 800; }
+
+  .box { border: 2.5px solid var(--coral); border-radius: 44px; padding: 26px 30px; background: #fff; min-height: 300px; font-size: 17px; }
+  .box h3 { text-align: center; font-size: 21px; margin-bottom: 12px; }
+  .box.hot { background: var(--grad); border: 0; color: #fff; }
+  .box.hot .id { color: #fff; text-decoration: underline; }
+  .arrow { align-self: center; justify-self: center; background: var(--grad); color: #fff; font-weight: 800; padding: 8px 22px; clip-path: polygon(0 20%, 75% 20%, 75% 0, 100% 50%, 75% 100%, 75% 80%, 0 80%); }
+  .flow3 { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: stretch; }
+  .note { border-left: 4px solid var(--coral); background: #fff6f6; padding: 8px 14px; font-size: 16px; margin-top: 12px; }
+  .stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 4px 0 12px; }
+  .stat div { border: 2px solid var(--coral); border-radius: 18px; padding: 8px 14px; text-align: center; }
+  .stat b { display: block; font-size: 30px; font-weight: 900; line-height: 1.2; color: #f0617f; }
+  .stat span { font-size: 14px; color: #333; }
+  .fig { text-align: center; }
+  .fig img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; }
+  svg.chart { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  .cap { font-size: 13px; color: var(--grey); margin-top: 4px; text-align: center; }
+  .pill2 { display: inline-block; background: var(--grad); color: #fff; font-weight: 800; padding: 1px 10px; border-radius: 6px; font-size: 14px; }
+  /* External evidence is always a live link: clickable in the browser and in the printed PDF. */
+  a { color: inherit; text-decoration: underline; text-decoration-color: var(--coral); text-decoration-thickness: 1.5px; text-underline-offset: 2.5px; }
+  a:hover { color: #d0347c; }
+  .box.hot a, .tag a { color: #fff; text-decoration-color: rgba(255,255,255,.8); }
+  .srcs { font-size: 12.5px; color: var(--grey); margin-top: 8px; line-height: 1.5; }
+  .srcs a { color: var(--grey); }
+
+  .cover { display: block; }
+  .cover .wave { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .cover .logo { position: absolute; left: 80px; top: 205px; height: 60px; }
+  .cover h1 { position: absolute; left: 80px; top: 285px; font-size: 62px; font-weight: 900; letter-spacing: .02em; }
+  .cover .when { position: absolute; left: 82px; top: 380px; color: var(--grey); font-size: 18px; }
+  .cover .pill { position: absolute; left: 70px; bottom: 96px; background: var(--grad); color: #fff; font-weight: 800; padding: 6px 18px; border-radius: 8px; font-size: 20px; }
+  .cover .cat { position: absolute; right: 120px; bottom: 90px; width: 380px; }
+  .cover .burger { position: absolute; right: 56px; top: 50px; width: 32px; }
+  .cover .ftr { display: none; }
+
+  .notes { display: none; position: absolute; left: 40px; right: 100px; bottom: 44px; background: rgba(255,255,255,.96); border-left: 4px solid var(--pink);
+    padding: 8px 14px; font-size: 14px; color: #333; box-shadow: 0 -2px 10px rgba(0,0,0,.1); }
+  body.show-notes .notes { display: block; }
+  .hud { position: fixed; right: 14px; top: 12px; display: flex; gap: .5rem; font-size: 13px; z-index: 5; }
+  .hud button { font: inherit; border: 1px solid #ccc; background: #fff; color: #333; border-radius: 6px; padding: .3em .7em; cursor: pointer; }
+  .hud button:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+  /* 16:9 pages, so the printed PDF is a deck and not letter paper with a band of slide on top. */
+  @page { size: 1280px 720px; margin: 0; }
+  @media print { html { scroll-snap-type: none; background: #fff; } .slide { margin: 0; box-shadow: none; page-break-after: always; width: 100%; } .hud { display: none; } }
+</style>
+
+<!-- 1 · 封面 -->
+<section class="slide cover" id="s1">
+  <img class="wave" src="{{WAVE}}" alt="">
+  <div class="burger"><i></i><i></i><i></i></div>
+  <img class="logo" src="{{LOGO}}" alt="SOSEL">
+  <h1>碩一週進度會議</h1>
+  <p class="when">會議時間：2026/10/2　·　主題：上次的反饋（三點）</p>
+  <span class="pill">學生：李安喻</span>
+  <img class="cat" src="{{CAT}}" alt="">
+  <div class="notes"><b>講稿</b>　上次三點反饋都做完了。第一點（20 個節點）的結論是維持 20，但我把論證整個換掉，因為原本的講法確實是錯的方向。第二點（標準答案是我給的）做了三件事，其中一件的結果超出預期：它當場查出工具四個真缺陷。第三點 pattern 已經寫成中文全文。順序：先總覽，再一點一點講，最後講還空著的地方。</div>
+</section>
+
+<!-- 2 · 總覽 -->
+<section class="slide" id="s2">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 本週總覽 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">上次的三點反饋：都做完，而且第二點查出工具的問題</p>
+    <table class="sm">
+      <tr><th style="width:4%">#</th><th style="width:22%">反饋</th><th style="width:34%">做了什麼</th><th>結果</th></tr>
+      <tr><td class="c">1</td><td>要找<b>認知負荷</b>的論文；而且我們的結果可以到 <b>21</b>，為什麼選 20</td><td>先把兩個被混在一起的命題拆開，再找文獻；然後回答 20 與 21 到底在選什麼</td><td>找到含 <b>EEG／瞳孔／心率</b>量測的那一篇；<b>維持 20 但論證整個換掉</b>，並補上「截斷要看得見」的實作</td></tr>
+      <tr><td class="c">2</td><td><b>標準答案是我給的</b>，可靠度會降低；要改說法或用別的方式</td><td>兩個都做：換一份<b>別人發表</b>的參考邊集、讓每條出處第三方打得開、再請一個獨立標註者標一份</td><td>第三方邊集上 <b>91/95＝0.96</b>；七個專案的獨立標註者<b>一條邊都沒推翻</b>；<b>順帶查出工具四個真缺陷</b></td></tr>
+      <tr><td class="c">3</td><td>開始寫 <b>AsianPLoP</b> 的 pattern</td><td>把討論稿補成可投稿的中文全文</td><td><b>五個 pattern</b> 完整格式 ＋ 相關研究 ＋ 討論與限制 ＋ 34 筆參考文獻，<b>647 行</b></td></tr>
+    </table>
+    <p class="sub" style="margin-top:14px">這次最值得講的一件事</p>
+    <div class="note" style="margin-top:6px"><b>第二點本來是「怎麼讓人相信我的標註」，結果變成「工具被外部答案抓到四個缺陷」。</b>把標準答案換成別人發表的之後，七個專案裡有四個的一致度是 <b>0.00</b>——不是邊錯，是<b>節點名一個都對不上</b>。追下去是工具的兩個問題；再追一個分數特別低的專案，又發現我們<b>對它的歸因錯了一半</b>。修完之後既有十個專案逐項不變、零錯邊。</div>
+    <p class="sub" style="margin-top:12px">這次的數字都可以當場查</p>
+    <table class="xs">
+      <tr><th style="width:26%">數字</th><th style="width:38%">誰產生的</th><th>怎麼驗</th></tr>
+      <tr><td>第三方一致度 0.96</td><td><span class="mono">ExternalTruthAgreementTest</span> 讀資料集的 graphml 與探針輸出</td><td>測試<b>斷言</b>五個專案必須全中、整體 ≥ 0.95；<b>簡報的圖直接讀它輸出的 CSV</b></td></tr>
+      <tr><td>出處 113／113</td><td><span class="mono">TruthEvidenceResolvesTest</span></td><td>任何一條出處打不開、或內容不在檔案裡，<b>測試就失敗</b></td></tr>
+      <tr><td>七個專案的裁決</td><td><span class="mono">SecondAnnotatorTest</span>（含離線重算）</td><td>比對規則改了可以<b>重算既有回答</b>，不必重新呼叫 API</td></tr>
+    </table>
+    <p class="cap" style="text-align:left;margin-top:8px">文件：docs/graph-readability-cognitive-load.md · docs/generalization-external.md · docs/asianplop-paper-zh.md</p>
+    <div class="notes"><b>講稿</b>　三點一句話各講一次。第一點結論是維持 20，但重點不是數字沒變，是論證換掉了——原本的講法確實不對，等一下第 3 頁會講清楚差在哪。第二點是這次最有收穫的：本來只是要回應「答案是你給的」，結果換了外部答案之後當場查出工具四個缺陷，而且其中一個推翻了我們自己九月的歸因。第三點 pattern 已經是全文，可以開始給人看。下面那格是我想特別講的一件事，等第 6 到 9 頁會展開。</div>
+  </div>
+  <div class="ftr"></div><div class="num">2</div>
+</section>
+
+<!-- 3 · 反饋 1：兩個命題 -->
+<section class="slide" id="s3">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 20 個節點 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">先把兩個被混在一起的命題拆開</p>
+    <table class="sm">
+      <tr><th style="width:5%"></th><th style="width:33%">命題</th><th style="width:30%">誰能支持它</th><th>我們的立場</th></tr>
+      <tr><td class="c"><b>A</b></td><td>「<b>超過 20 個節點，人在視覺化與理解上會顯著變弱</b>」</td><td>只有針對<b>我們的圖、我們的任務、我們的讀者</b>做的使用者實驗</td><td class="bad">我們沒有做這個實驗，所以<b>不主張它</b>。引用別人的實驗只能說「在他們的圖與任務上某個規模之後某種表示法會輸」，不能搬成我們圖的認知極限</td></tr>
+      <tr class="hot"><td class="c"><b>B</b></td><td>部分圖需要一個<b>節點數安全閥</b>；它的刻度取自<b>他人受控實驗的門檻</b>，並由我們的語料驗證「這個值下 241／242 組不被截，被截時會明講」</td><td>文獻給「這個量級是安全的」＋ 我們自己量<b>圖的大小分布</b></td><td class="ok">這是我們主張的命題。<b>我們量的是圖，不是人的理解</b></td></tr>
+    </table>
+    <p class="sub" style="margin-top:12px">所以措辭也改了</p>
+    <div class="two" style="gap:20px;margin-top:4px">
+      <div><p style="font-size:17px"><span class="ok">✓ 用</span>「Ghoniem 等人受控實驗的<b>門檻</b>」、「文獻安全區內的<b>保守值</b>」、「<b>安全閥</b>」</p></div>
+      <div><p style="font-size:17px"><span class="bad">✗ 不用</span>「公認的<b>可讀性上限</b>」、「<b>認知負荷上限</b>」、「超過 20 就看不懂」</p></div>
+    </div>
+    <div class="note" style="margin-top:12px">上一版文件把 20 寫成「可讀性天花板」，讀起來就是命題 A——<b>那確實是我沒講清楚</b>。改寫後的文件與論文一律照命題 B 的講法，<span class="mono">docs/graph-readability-cognitive-load.md</span> 第 1 節就是這張表。</div>
+    <p class="sub" style="margin-top:14px">那為什麼不乾脆做實驗去主張命題 A？</p>
+    <table class="xs">
+      <tr><th style="width:30%">要主張 A 得付出什麼</th><th>而它能買到什麼</th></tr>
+      <tr><td>依 <a href="https://doi.org/10.1057/ivs.2009.10">Huang, Eades &amp; Hong（2009）</a>，只量正確率與反應時間<b>不夠</b>——兩種畫法表現一樣，可能只是受試者<b>付出的心力不同</b>，所以要量認知負荷（NASA-TLX 或生理訊號），受試者、器材、時間都要</td><td>在我們的語料上，這個上限<b>在 15 到 25 之間只影響 242 組裡的 1 組</b>（第 5 頁）。<b>花一個使用者實驗去調一個不敏感的參數，投報率太低</b></td></tr>
+      <tr class="hot"><td colspan="2">所以要做實驗的話，我會先做<b>另一個</b>：驗證「<b>截斷揭露有沒有用</b>」——那才是我們主張的命題（第 13 頁）</td></tr>
+    </table>
+    <div class="notes"><b>講稿</b>　這一頁是回應「你們的方向不是這個」。我先承認：上一版文件把 20 寫成「可讀性天花板」，那個寫法讀起來就是命題 A，是我沒講清楚。命題 A 要成立，得自己做使用者實驗——我們沒做，所以不主張。我們主張的是命題 B：部分圖需要一個安全閥，刻度借自別人的受控實驗，我們自己量的是圖的大小分布，不是人的理解。下面那兩欄是措辭對照，文件裡已經全部換過。</div>
+  </div>
+  <div class="ftr"></div><div class="num">3</div>
+</section>
+
+<!-- 4 · 反饋 1：認知負荷文獻 -->
+<section class="slide" id="s4">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 20 個節點 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">認知負荷的文獻：找到最貼的一篇，而且它對我們不完全有利</p>
+    <div class="two w64" style="gap:24px">
+      <div>
+        <p style="font-size:17px"><b><a href="https://doi.org/10.1109/TVCG.2020.3030459">Yoghourdjian 等人</a></b>（IEEE TVCG 27(2):1677–1687, 2021；預印本 <a href="https://arxiv.org/abs/2008.07944">arXiv:2008.07944</a>）</p>
+        <table class="sm" style="margin-top:8px">
+          <tr><th style="width:26%">任務</th><td>在節點連結圖上<b>找兩點之間的最短路徑</b>——與部分圖要讀的東西是同一類</td></tr>
+          <tr><th>規模</th><td>25 到 175 個節點，密度分高低兩組</td></tr>
+          <tr><th>量了什麼</th><td>正確率、反應時間、主觀回饋，<b>以及 EEG、瞳孔放大、心率變異度</b>（作者稱這是第一個納入生理量測的網路視覺化研究）</td></tr>
+          <tr class="hot"><th>結果</th><td>高密度圖<b>超過 50 個節點</b>、低密度圖<b>超過 100 個節點</b>時顯著困難；而且認知負荷升到一定難度後<b>反而下降</b>——作者的解讀是受試者放棄了</td></tr>
+        </table>
+        <div class="note" style="margin-top:10px;font-size:16px"><b>對我們兩面都要寫：</b>它支持「<b>20 夠小</b>」（落在困難區之下很多），但<b>不支持「21 就不行」</b>——照這篇，我們的上限甚至偏保守。這句話必須寫在論文裡，否則就是過度引用。<br>「放棄」那個發現對我們是警訊而不是支持：圖太大時讀者不是讀得慢，而是<b>不讀了</b>。</div>
+      </div>
+      <div>
+        <p class="sub" style="margin-top:0">另外三條線，各自的界線也要標</p>
+        <table class="xs" style="margin-top:6px">
+          <tr><th style="width:38%">文獻</th><th style="width:30%">能支持什麼</th><th><b>不能</b>支持什麼</th></tr>
+          <tr><td><a href="https://doi.org/10.1016/j.visinf.2018.12.006">Yoghourdjian 等人綜述</a><br>（Visual Informatics 2018）</td><td>「大」與「複雜」是<b>相對的</b>，取決於資料複雜度、視覺複雜度與所用技術</td><td>沒有普適的節點數門檻——<b>這反而最有用</b>：問題從「找到正確答案」變成「說清楚你的情境」</td></tr>
+          <tr><td><a href="https://doi.org/10.1057/ivs.2009.10">Huang, Eades &amp; Hong</a><br>（Information Visualization 2009）</td><td>只看正確率與反應時間<b>不夠敏感</b>：表現一樣可能是心力付出不同</td><td>不給門檻。<b>它正好說明為什麼我們不主張命題 A</b>——要主張就得量認知負荷</td></tr>
+          <tr><td><a href="https://doi.org/10.1037/h0043158">Miller 1956</a>（7±2）<br><a href="https://doi.org/10.1017/S0140525X01003922">Cowan 2001</a>（3–5）<br><a href="https://doi.org/10.1023/A:1022193728205">Sweller 1998</a></td><td>「一次要同時記住的東西越少越好」；呈現方式決定<b>外在負荷</b></td><td><b>不能推出 20</b>。讀圖可以反覆掃視、不必全記住；照 chunk 數直接推，上限會變成 4，而 4 個節點畫不出任何流程</td></tr>
+        </table>
+        <p class="srcs">情境差距也要講：受控實驗用抽象網路、桌機螢幕、專門的佈局演算法；我們的圖是<b>聊天訊息裡的 PNG</b>、讀者只看幾秒、圖是分層有向圖。方向上對我們有利（該更保守），但那是推論不是量測。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　左邊這篇就是上次要的那種：它真的量認知負荷，用 EEG、瞳孔、心率，任務又剛好是最短路徑，跟部分圖同一類。但它的結論對我們不完全有利——高密度圖要超過 50 個節點才顯著困難，所以它支持「20 夠小」，不支持「21 就不行」。這句我一定會寫進論文，藏起來口試會被抓。那個「認知負荷升到一定程度後反而下降、因為受試者放棄了」的發現我覺得最重要：圖太大時讀者不是讀得慢，是不讀了。右邊三條線各自標了不能用來做什麼，特別是 Miller 的 7±2 ——常常有人拿它論證介面元素上限，那是跨越界線，我們不做。</div>
+  </div>
+  <div class="ftr"></div><div class="num">4</div>
+</section>
+
+<!-- 5 · 反饋 1：20 vs 21 -->
+<section class="slide" id="s5">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 20 個節點 <small>3</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div>
+        <p class="sec">「可以到 21」精確的意思</p>
+        <table class="sm">
+          <tr><th class="c" style="width:38%">上限</th><th class="c">完整畫出</th><th class="c">被截</th></tr>
+          <tr><td class="c">15（規則選出的值）</td><td class="c">95%</td><td class="c">11／242</td></tr>
+          <tr class="hot"><td class="c"><b>20（採用）</b></td><td class="c"><b>100%</b>（四捨五入）</td><td class="c"><b>1／242</b></td></tr>
+          <tr><td class="c">21 以上</td><td class="c">100%</td><td class="c">0／242</td></tr>
+        </table>
+        <div class="note" style="margin-top:10px;font-size:16px"><b>先講一個讀法問題：</b>這 242 組起點集合是<b>程式窮舉</b>的（單點、兩兩組合、3／4／6／8 個成員的滑動視窗），<b>不是問句的機率樣本</b>。所以 p90 與最大值<b>不能</b>讀成「多少比例的問句會被截」。21 只是<b>窮舉出來的最大值</b>，出現在「一次餵 8 個種子」那一列，而 8 是查詢的工程上限，不是觀察到的問句寬度。</div>
+        <p class="sub" style="margin-top:12px">那真正的問句有多寬？</p>
+        <table class="xs">
+          <tr><th style="width:52%">一句點名幾個節點（102 句 hold-out）</th><th class="c">句數</th><th class="c">比例</th></tr>
+          <tr><td>0 個（例如「哪些依賴還沒有流量佐證？」）</td><td class="c">59</td><td class="c">58%</td></tr>
+          <tr><td>1 個</td><td class="c">33</td><td class="c">32%</td></tr>
+          <tr><td>2 個</td><td class="c">9</td><td class="c">9%</td></tr>
+          <tr class="hot"><td><b>3 個（最寬）</b>——<b>沒有任何一句點名到 8 個</b></td><td class="c">1</td><td class="c">1%</td></tr>
+        </table>
+        <p class="srcs"><b>但這 102 句也是我自己寫的。</b>「問句有多寬」的三個資料來源（hold-out、242 組窮舉、流程成員標註）<b>全部經過我的手</b>；真實使用者問句的樣本只能來自已部署實例的 thread log，<b>還沒收集</b>。所以右邊兩個理由刻意寫成<b>不依賴</b>問句分布。</p>
+      </div>
+      <div>
+        <p class="sec">為什麼停在 20</p>
+        <table class="sm">
+          <tr><th style="width:24%">理由</th><th>內容</th></tr>
+          <tr><td><b>① 極端值<br>不可外推</b></td><td>21 是「我們這次枚舉裡的最大值」。拿它當上限等於宣告「上限＝我目前算過最大的那個切片」，換一個系統（train-ticket 的閘道有 46 條路由）馬上又破，而且破的時候<b>沒有原則</b>可以決定新值。20 有出處，21 只有我們的枚舉結果</td></tr>
+          <tr><td><b>② 這個參數<br>不敏感</b></td><td>15 到 25 之間只影響 <b>242 組裡的 1 組</b>。<b>與其把它調準，不如承認它不需要調準</b>——這也是為什麼沒有為它做使用者實驗：實驗成本很高，而可量到的差別是 1／242</td></tr>
+          <tr><td><b>③ 它是安全閥<br>不是最佳化目標</b></td><td>規則選出的其實是 <b>15</b>（比 20 更緊）；採用 20 是因為在文獻安全區內<b>多畫一個節點沒有壞處、少畫一個就少一個事實</b></td></tr>
+        </table>
+        <p class="sub" style="margin-top:12px">所以真正該補的是「截斷看得見」</p>
+        <div class="note" style="font-size:15.5px;margin-top:4px">誠實的做法不是把上限推到剛好不截，而是<b>讓被截這件事無法被忽略</b>：截斷寫進<b>圖本身的標題</b>（<span class="mono">20 of 23 nodes shown, limit 20</span>）——因為<b>圖會被複製到簡報或論文，訊息裡的說明不會跟著走</b>；訊息裡<b>點名</b>被省略的節點而不只報數量。兩處都有測試釘住。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　先解釋「可以到 21」是什麼：上限設 21 的話 242 組全部不被截，設 20 截掉 1 組。但這裡有個讀法問題我要先講：那 242 組是程式窮舉的，不是問句的機率樣本，所以 p90 跟最大值不能讀成「多少比例的問句會被截」——這點我之前寫得不夠清楚。21 只是窮舉的最大值，而且出現在「一次餵 8 個種子」那一列，8 是查詢的工程上限。左下那張表是我唯一有的問句樣本：102 句裡最寬只點名 3 個節點，沒有一句到 8 個。但那 102 句也是我寫的，這點要自己先講，所以右邊兩個理由我刻意寫成不依賴問句分布。右邊三個理由，最重要的是第二個：這個參數在 15 到 25 之間只差一組，它不需要被調準。所以我改的不是數字，是讓截斷看得見——特別是寫進圖的標題，因為圖會被單獨複製出去。</div>
+  </div>
+  <div class="ftr"></div><div class="num">5</div>
+</section>
+
+<!-- 6 · 反饋 2：問題與三招 -->
+<section class="slide" id="s6">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 標準答案的可靠度 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">這個疑慮是對的，而且它有名字：建構效度</p>
+    <p style="font-size:17px">九月那輪泛化的 P／R 是<b>程式算的</b>，但分母與分子都來自我手寫的參考邊集——<b>同一個人決定了什麼是正確答案，又寫了被評的工具</b>。「程式計分」只保證<b>算得沒錯</b>，不保證<b>答案是對的</b>。</p>
+    <table class="sm" style="margin-top:12px">
+      <tr><th style="width:5%"></th><th style="width:30%">做法</th><th style="width:22%">我的參與程度</th><th>結果</th></tr>
+      <tr class="hot"><td class="c"><b>①</b></td><td>對照 <b><a href="https://ceur-ws.org/Vol-2520/paper1a.pdf">MicroDepGraph 資料集</a>自己發表的依賴圖</b>，7 個專案</td><td class="ok"><b>零</b>——邊集是別人發表的，我只寫對照程式</td><td><b>95 條裡畫到 91＝0.96</b>；漏的 4 條逐條可解釋</td></tr>
+      <tr><td class="c"><b>②</b></td><td>讓每一條出處<b>第三方打得開</b>：補成完整的 <span class="mono">路徑:行</span>，而且<b>內容要真的在裡面</b></td><td>從「決定答案」降為「<b>抄錄出處</b>」</td><td><b>113／113</b>（測試斷言）；過程抓到 <b>3 條寫錯 ＋ 3 條不精確</b>的出處</td></tr>
+      <tr><td class="c"><b>③</b></td><td><b>第二標註者</b>：一個沒看過參考邊集、也沒看過工具輸出的獨立標註者標一份</td><td>只<b>裁決</b>不一致的條目</td><td>七個專案，<b>40 條差異沒有一條是我漏標</b>；但它指出了<b>最難複驗的兩組</b></td></tr>
+    </table>
+    <p class="sub" style="margin-top:14px">措辭也全部改掉</p>
+    <table class="xs">
+      <tr><th style="width:30%">原本的說法</th><th style="width:30%">改成</th><th>理由</th></tr>
+      <tr><td>ground truth／標準答案</td><td><b>參考邊集</b>（作者整理的／第三方發表的，分開講）</td><td>「標準答案」暗示它是對的；它其實是一份<b>有出處、可複驗的讀法</b></td></tr>
+      <tr><td>precision／recall</td><td><b>一致度（agreement）</b>，並分方向講</td><td>P／R 的語意預設分母是真值</td></tr>
+      <tr><td>「程式計分，不是人數的」</td><td>保留，但加一句「<b>程式只保證算得沒錯，不保證答案是對的</b>」</td><td>這正是上次指出的落差</td></tr>
+    </table>
+    <div class="notes"><b>講稿</b>　先把這個疑慮的名字講出來：建構效度。我同意這個問題是真的——程式計分只保證算術沒錯，不保證答案對。上次說「改說法或用別的方式」，我兩個都做了，因為只改說法擋不住這個質疑。三招強度由高到低：第一招標準答案完全不經我的手，第二招把我的角色從「決定答案」降成「抄錄出處」，第三招找獨立標註者。下面那張表是措辭的改動，文件跟論文都換過了。接下來三頁講第一招，它的收穫超出我原本的預期。</div>
+  </div>
+  <div class="ftr"></div><div class="num">6</div>
+</section>
+
+<!-- 7 · 反饋 2：第三方邊集 -->
+<section class="slide" id="s7">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 標準答案的可靠度 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w46" style="gap:26px">
+      <div>
+        <p class="sec">標準答案換成別人發表的</p>
+        <p style="font-size:16px">那 20 張圖本來只是為了量「真實系統有多深」收進來的（上次的 4 跳）。這次發現它們還有第二個用途：<b>它們就是 20 個專案的依賴圖，由別人發表，我們一個字都沒改</b>。其中 <b>7 個</b>的 repo 可以直接跑我們的靜態探針。</p>
+        <div class="note" style="margin-top:10px;font-size:16px"><b>時間對齊：</b>資料集的檔案日期是 2021-02-26，所以每個 repo <b>checkout 到那天之前的最後一個 commit</b>，兩邊才是看同一份程式碼。commit 與日期都寫在表裡，每一格是可點的連結。</div>
+        <p class="sub" style="margin-top:12px">兩邊量的不完全是同一件事</p>
+        <table class="xs">
+          <tr><th style="width:22%"></th><th>資料集</th><th>我們的靜態層</th></tr>
+          <tr><td>邊怎麼來</td><td>Compose <span class="mono">depends_on</span>／<span class="mono">links</span> ＋ 內部 API 呼叫</td><td>tree-sitter 抓的呼叫點、設定檔位址、manifest 佈線、反向代理路由</td></tr>
+          <tr><td>外部主機</td><td>沒有這個概念</td><td>有（<span class="id">github.com</span>、<span class="id">paypal.com</span>）</td></tr>
+          <tr><td>證據等級</td><td>沒有</td><td>三級</td></tr>
+        </table>
+        <p class="srcs">所以這裡<b>不報 precision</b>：工具多畫的邊大多是資料集的方法看不到的東西，算成「錯」是錯的。報的是<b>一致度</b>＝資料集的邊工具畫到多少（<b>這個方向漏掉就是工具的問題，沒有辯解空間</b>），以及工具另外畫了哪些，逐條列出。</p>
+      </div>
+      <div>
+        {{CHART:external-agreement}}
+        <div class="note" style="margin-top:12px;font-size:15.5px"><b>漏的 4 條，逐條原因：</b><br>
+          · petclinic 2 條（<span class="id">hystrix-dashboard</span>）——<b>repo 演進</b>：資料集抓的版本有這個模組，2021-02-06 的 repo 已經沒有了。工具畫不出不存在的東西，而且<b>沒有為了對上答案而編造</b>。<br>
+          · spring-cloud-microservice 2 條——<b>工具的剩餘邊界</b>：compose 服務叫 <span class="id">hystrix</span>，模組目錄叫 <span class="id">cloud-hystrix-dashboard</span>，是<b>中綴縮寫</b>，對應規則不接受。<b>不修</b>：放寬會把 <span class="id">cloud-simple-service</span> 配到 <span class="id">simple</span>，誤併的代價高於這 2／95 條。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　這一招的關鍵是：標準答案完全不經我的手。而且資料集那 20 張圖本來就在我們的 repo 裡，是上次量 4 跳收進來的，這次發現它還有第二個用途。時間對齊那點要講：我把每個 repo checkout 到資料集擷取日之前的 commit，不然比的是不同版本的程式碼。兩邊定義不同，所以我不報 precision 只報一致度，而且明講「這個方向漏掉就是工具的問題」。圖上七個專案，五個是 1.00，合計 91/95。漏的四條逐條可解釋：兩條是 repo 後來把模組拿掉了，兩條是工具的邊界，而那兩條我選擇不修，理由是放寬比對會誤併，代價比 2/95 大。</div>
+  </div>
+  <div class="ftr"></div><div class="num">7</div>
+</section>
+
+<!-- 8 · 反饋 2：逼出四個缺陷 -->
+<section class="slide" id="s8">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 外部答案當場查出四個缺陷 <small>3</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w46" style="gap:24px">
+      <div>
+        <p class="sec">第一次跑：七個裡有四個是 0.00</p>
+        <p style="font-size:16.5px"><b>不是邊錯，是節點名一個都對不上</b>：工具用 Maven 模組名 <span class="id">spring-petclinic-customers-service</span>，部署與所有呼叫端用的是 <span class="id">customers-service</span>。更糟的是<b>同一個服務同時以兩種拼法出現在圖上</b>。</p>
+        <table class="xs" style="margin-top:10px">
+          <tr><th style="width:8%">#</th><th style="width:46%">規則</th><th>怎麼發現的</th></tr>
+          <tr class="hot"><td class="c"><b>11</b></td><td><b>Compose 的 <span class="mono">services</span> key 也是部署詞彙表</b>，與 k8s workload 同級；但<b>有 manifest 時完全不看 compose 名</b>（否則同一服務兩種拼法）</td><td>四個專案只有 Compose，而詞彙表只從 k8s manifest 建</td></tr>
+          <tr class="hot"><td class="c"><b>12</b></td><td><b>也認 Compose 第 1 版格式</b>（沒有 <span class="mono">services:</span>、頂層即服務）與 <b><span class="mono">links:</span></b></td><td>兩個 2017 年的專案<b>整份佈線讀不到</b>（ledger 連一筆都沒有）</td></tr>
+          <tr><td class="c"><b>13</b></td><td><b>XML namespace 不是位址</b>：URL 那行或前兩行出現 <span class="mono">namespace</span>／<span class="mono">xmlns</span>／<span class="mono">soapAction</span> 就不畫</td><td>LakesideMutual 圖上兩個<b>沒人呼叫</b>的外部主機（<span class="mono">@XmlSchema</span>、<span class="mono">setTargetNamespace</span>、跨行的 <span class="mono">SoapActionCallback</span>）</td></tr>
+          <tr><td class="c"><b>14</b></td><td><b>workload 自己 env 裡的服務位址是宣告</b>，畫成點線；共用 ConfigMap 的仍不畫</td><td>下一頁</td></tr>
+        </table>
+      </div>
+      <div>
+        {{CHART:external-agreement-rules}}
+        <div class="note" style="margin-top:10px;font-size:15.5px"><b>ewolff-k8s 的 0.00 是假象</b>——五條邊<b>完全相同</b>，一條都沒有分歧。這一格值得寫進論文：<b>「模組名還是部署名」這個歧義強到人、模型、工具都會踩</b>（第 10 頁會看到獨立標註者犯了一模一樣的錯）。<br><br><b>零回歸：</b>同一份 checkout 改動前後，既有的 <b>train-ticket、petclinic、robot-shop、piggymetrics</b> 等<b>十個專案逐項不變</b>。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　這是我說「收穫超出預期」的地方。第一次跑完七個專案，四個的一致度是 0.00，我原本以為是工具爛掉了，仔細看才發現邊全對、只是節點名一個都對不上——工具用 Maven 模組名，而部署跟所有呼叫端用的是另一個名字，同一個服務還會同時以兩種拼法出現。這是真缺陷，而且只有換成外部答案才看得到，因為我自己標的參考邊集是照工具的節點名寫的。追下去修了三條規則，右邊那張圖是前後對比。零回歸那點很重要：同一份 checkout 比對，既有十個專案逐項不變。</div>
+  </div>
+  <div class="ftr"></div><div class="num">8</div>
+</section>
+
+<!-- 9 · 反饋 2：歸因錯了一半 -->
+<section class="slide" id="s9">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 追一個低分專案，推翻自己的歸因 <small>4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">九月我寫的：「薄表面」</p>
+        <p style="font-size:16.5px">Online Boutique 的 recall 只有 <b>0.13</b>（16 條真邊只畫 2 條），九月的報告歸因為<b>沒有文法的語言</b>：「16 條真邊裡來源是 Python／Java 的只有 2 條，其餘 13 條是 Go／C#／Node」。</p>
+        <p class="sub">這個歸因只對了一半</p>
+        <p style="font-size:16.5px">那些服務的呼叫目標<b>其實寫在各自 workload 的 manifest 裡</b>：</p>
+        <pre class="mono" style="font-size:14.5px;background:#f7f7f7;border-radius:8px;padding:10px 14px;margin:8px 0;overflow:hidden"># kubernetes-manifests/frontend.yaml:69
+- name: PRODUCT_CATALOG_SERVICE_ADDR
+  value: "productcatalogservice:3550"</pre>
+        <p style="font-size:16.5px">探針的 ledger 有 <b>51 筆</b>這種紀錄，圖上卻只有 2 條邊——因為九月的規則是「<b>服務位址一律不畫</b>」。</p>
+        <div class="note" style="margin-top:10px;font-size:16px">那條規則的理由<b>對共用 ConfigMap 成立</b>（一份位址表會發給不呼叫它們的 workload），<b>對「寫在 workload 自己 env 裡的字面值」不成立</b>——後者是這個 workload 自己說它要哪個服務，是 manifest 裡<b>最明確的宣告形式</b>。而完全不畫，等於把「有宣告」和「什麼證據都沒有」放在同一級，<b>這正是點線（inferred）這一級存在要避免的事</b>。</div>
+      </div>
+      <div>
+        <p class="sec">規則 14：分來源，不是一刀切</p>
+        <table class="sm">
+          <tr><th style="width:44%">位址從哪來</th><th class="c" style="width:24%">之前</th><th class="c">現在</th></tr>
+          <tr class="hot"><td>workload 自己的 <span class="mono">env[].value</span>（字面值）</td><td class="c">不畫</td><td class="c"><b>畫成點線</b></td></tr>
+          <tr><td>共用 ConfigMap 的 <span class="mono">envFrom</span></td><td class="c">不畫</td><td class="c">不畫（理由不變）</td></tr>
+          <tr><td>資料儲存／佇列</td><td class="c">畫</td><td class="c">不變</td></tr>
+        </table>
+        <p class="sub" style="margin-top:14px">結果（同一份 checkout，前後比較）</p>
+        <table class="sm">
+          <tr><th style="width:40%">專案</th><th class="c">recall</th><th class="c">precision</th></tr>
+          <tr class="hot"><td>Online Boutique</td><td class="c">0.12 → <b>1.00</b>（17／17）</td><td class="c">1.00 → <b>1.00</b></td></tr>
+          <tr class="hot"><td>Bank of Anthos</td><td class="c">0.92 → <b>1.00</b></td><td class="c">1.00 → <b>1.00</b></td></tr>
+          <tr><td>TeaStore</td><td class="c">0.08 → <b>0.46</b></td><td class="c">1.00 → <b>1.00</b></td></tr>
+          <tr><td>其他 <b>10 個</b>（train-ticket、petclinic、robot-shop、piggymetrics…）</td><td class="c" colspan="2"><b>逐項不變</b></td></tr>
+        </table>
+        <div class="note" style="margin-top:10px;font-size:15.5px"><b>零錯邊</b>：新增的邊沒有一條是參考邊集裡沒有的；第三方一致度不變（0.96）。<br><b>一句話：</b>原本歸因為「語言沒有文法」的損失，<b>有一大半其實是工具自己不畫 manifest 已經寫明的宣告</b>。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　這一頁是自我更正。九月我把 Online Boutique 的低分歸因為「那些服務是 Go、C#、Node，工具沒有文法」，聽起來很合理，我也就沒再追。這次因為要回答「標準答案可靠度」，順手去看它的 ledger，發現有 51 筆 workload-env 紀錄，圖上卻只有兩條邊——目標其實寫在各自的 manifest 裡，是工具自己的規則不畫服務位址。那條規則的理由對共用 ConfigMap 成立，對寫在自己 env 的字面值不成立。更關鍵的是：完全不畫，等於把「有宣告」跟「什麼證據都沒有」放同一級，而那正是我們證據分級裡「點線」這一級存在的意義——工具跟自己的設計原則不一致。修完之後 Online Boutique 從 0.13 變 1.00，Bank of Anthos 那條唯一漏的邊也回來了，十個既有專案逐項不變，零錯邊。教訓是：分數低的時候要先追「是設計決定還是真的邊界」，不要太快歸因於語言。</div>
+  </div>
+  <div class="ftr"></div><div class="num">9</div>
+</section>
+
+<!-- 10 · 反饋 2：第二標註者 -->
+<section class="slide" id="s10">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 第二標註者：七個專案 <small>5</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:24px">
+      <div>
+        <p class="sec">一致度從 0.00 到 0.92，而數字不是產出</p>
+        <table class="xs">
+          <tr><th style="width:26%">專案</th><th class="c">兩人都有</th><th class="c">只有我</th><th class="c">只有標註者</th><th class="c">Jaccard</th></tr>
+          <tr><td>bank-of-anthos</td><td class="c">11</td><td class="c">1</td><td class="c">0</td><td class="c"><b>0.92</b></td></tr>
+          <tr><td>robot-shop</td><td class="c">17</td><td class="c">4</td><td class="c">1</td><td class="c">0.77</td></tr>
+          <tr><td>piggymetrics</td><td class="c">25</td><td class="c">9</td><td class="c">2</td><td class="c">0.69</td></tr>
+          <tr><td>teastore</td><td class="c">6</td><td class="c">7</td><td class="c">1</td><td class="c">0.43</td></tr>
+          <tr><td>online-boutique</td><td class="c">7</td><td class="c">10</td><td class="c">3</td><td class="c">0.35</td></tr>
+          <tr><td>ecommerce</td><td class="c">13</td><td class="c">25</td><td class="c">23</td><td class="c">0.21</td></tr>
+          <tr><td>ewolff-k8s</td><td class="c">0</td><td class="c">5</td><td class="c">5</td><td class="c"><b>0.00</b></td></tr>
+        </table>
+        <p class="sub" style="margin-top:12px">40 條「只有標註者有」逐條裁決</p>
+        <table class="xs">
+          <tr><th class="c" style="width:12%">17 條</th><td><b>命名問題</b>：ewolff 的 5 條是<b>模組名 vs 部署名</b>（邊完全相同，0.00 是假象）——<b>它犯的正是工具在規則 11 之前犯的同一個錯</b>，而 prompt 明確要求用部署名；ecommerce 10 條是把 <span class="mono">*-container</span>（compose 服務名本身）當成依賴</td></tr>
+          <tr><th class="c">5 條</th><td><b>部署變體</b>：TeaStore 的 kieker 邊<b>本來就在參考邊集裡</b>，是我的比對程式把變體整批排除才算成分歧（已修）</td></tr>
+          <tr><th class="c">18 條</th><td><b>標註者的錯</b>：把 <span class="mono">jdbc:h2:mem:</span>（<b>程序內</b>記憶體資料庫）當成外部元件並<b>自己造名字</b> 6 條、piggymetrics 編造一個 repo 裡不存在的 mongodb 1 條、把「<b>宣告但沒人引用</b>」的常數當呼叫 7 條、<b>方向反轉 3 條</b>、自環 1 條</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="box hot" style="min-height:0;padding:20px 24px;font-size:17px">
+          <h3 style="margin-bottom:8px">40 條差異裡<br><b>沒有一條是我漏標的</b></h3>
+          <p style="font-size:16px">和第三方資料集那一招互相獨立，兩邊都指向同一個結論。</p>
+        </div>
+        <div class="note" style="margin-top:14px;font-size:15.5px"><b>兩個對論文有用的觀察：</b><br>
+          ① <b>它的漏抓是隨機的，不是系統性的。</b>robot-shop 那次的缺口有規則可循（「它不讀反向代理設定」）；bank-of-anthos 這次它標了 balancereader 與 transactionhistory 讀資料庫、<b>漏了結構完全相同的 ledgerwriter</b>。這種漏抓無法預測 → <b>它能檢查「我有沒有標出別人也看得到的東西」，但不能反推「我漏了什麼」</b>。<br>
+          ② <b>位置給它，它忠實引用；位置不給它，它就編。</b>材料裡逐行附行號的程式碼，它引的行號<b>全部查得住</b>；整份貼上、沒有行號的 Compose 檔，它寫出 <span class="mono">(lines: 26-33)</span> 這種<b>互相重疊、明顯是猜的</b>區間。這正好是「事實由程式寫」那個 pattern 的邊界條件。</div>
+        <p class="srcs"><b>方法論紅線：</b>那些缺口看起來只要在 prompt 加一句就會變 1.00——<b>不可以改</b>。那是往「讓標註者同意我」的方向優化，第二標註者就不再獨立。七個專案用<b>完全相同</b>的 prompt。<br>中途確實改過一次<b>材料</b>（不是 prompt）：piggymetrics 第一輪 0.29，因為我沒把 Spring Cloud Config 倉庫的 yml、pom.xml、Feign annotation 給它看——<b>那三類工具自己看得到</b>，所以對標註者不公平。改完三個已跑的專案全部重跑。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　七個專案的一致度差很多，從 0.00 到 0.92，但數字本身不是重點，逐條裁決才是。40 條「只有標註者有」的邊，沒有一條是我漏標的：17 條是命名問題，其中 ewolff 那 5 條讓 Jaccard 變成 0.00，但五條邊完全相同——而且它犯的正是工具在規則 11 之前犯的同一個錯，儘管 prompt 明確要它用部署名。5 條是部署變體，那是我比對程式的 bug。18 條是它自己的錯，包括把 H2 記憶體資料庫當成外部元件、編造一個不存在的 mongodb、還有三條方向反轉。右邊兩個觀察我覺得對論文有用，特別是第二個：位置給它就忠實引用，不給就編，這正好是我們那個 pattern 的邊界條件。最後紅線那段要主動講：我中途改過材料但沒改 prompt，而且改的理由是公平性——那三類檔案工具自己看得到，不給標註者看不公平。改完之後前面跑過的全部重跑。</div>
+  </div>
+  <div class="ftr"></div><div class="num">10</div>
+</section>
+
+<!-- 11 · 反饋 2：它真正的產出 -->
+<section class="slide" id="s11">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 它指出的不是錯的邊，是撐不住的出處 <small>6</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">61 條「只有我有」的邊裡，兩組的性質不同</p>
+    <div class="two" style="gap:26px;margin-top:6px">
+      <div>
+        <div class="box" style="min-height:0;padding:18px 24px">
+          <h3 style="font-size:19px">① Online Boutique 的 15 條：<br>出處是<b>一張 PNG 架構圖</b></h3>
+          <p style="font-size:16px"><span class="mono">frontend → adservice</span> 等，參考邊集的出處欄只寫「架構圖」。</p>
+          <ul style="font-size:16px">
+            <li><b>純文字的第三方無法複驗</b>——標註者看不到圖片，任何只讀文字的人也看不到</li>
+            <li>它被迫從 README 文字推，結果<b>3 條方向全反</b>（<span class="mono">emailservice → checkoutservice</span> 其實是反向）</li>
+            <li class="bad"><b>而且還會漏</b>：追工具的 recall 時發現架構圖<b>沒畫 shoppingassistantservice</b>，照圖標註的參考邊集也跟著漏了一條真的邊</li>
+          </ul>
+          <p style="font-size:16px;margin-top:8px"><b>已改：</b>每條指到「程式碼讀哪個 env」＋「manifest 給什麼值」兩處，架構圖降為補充。有檔案出處 <b>2 → 16</b> 條。</p>
+        </div>
+      </div>
+      <div>
+        <div class="box" style="min-height:0;padding:18px 24px">
+          <h3 style="font-size:19px">② TeaStore 的 7 條：<br>出處是 <b>enum 常數的引用次數</b></h3>
+          <p style="font-size:16px">「<span class="mono">Service.PERSISTENCE</span> 引用 21 處」——目標是 Java enum，經自家 registry 在執行期解析。標註者<b>一條都沒標</b>（材料裡沒有任何 host 字串），完全符合預期。</p>
+          <p style="font-size:16px;margin-top:6px">它可複驗，但複驗的人要<b>先讀懂分派機制</b>才知道那個 enum 代表一個呼叫目標——<b>這是參考邊集裡證據最弱的一組</b>。</p>
+          <p style="font-size:16px;margin-top:8px"><b>已改：</b>指到第一個實際呼叫點。查的過程又修正一件事：<span class="mono">webui → auth</span> 在 webui 自己的程式碼裡<b>只是狀態頁</b>，真正的業務呼叫在<b>共用模組</b>裡——<b>跨兩層才看得出來</b>，這才是靜態層與獨立標註者都看不到它的真正原因。有檔案出處 <b>2 → 9</b> 條。</p>
+        </div>
+      </div>
+    </div>
+    <div class="stat" style="margin-top:12px">
+      <div><b>16 / 140</b><span>兩組佔七個專案非變體參考邊的 11.4%</span></div>
+      <div><b>92 → 113</b><span>有檔案出處的條數，全部可查（測試斷言）</span></div>
+      <div><b>3 + 3</b><span>抓到 3 條寫錯、3 條不精確的出處</span></div>
+    </div>
+    <div class="note" style="margin-top:8px;font-size:16px"><b>它一條邊都沒推翻，但它精準指出了哪些出處撐不起第三方複驗。</b>三道檢查抓到的六條全部是<b>出處</b>的問題，<b>沒有一條是邊本身錯</b>。</div>
+    <div class="notes"><b>講稿</b>　這頁是第二標註者真正有用的地方。它沒有推翻任何一條邊，但它精準指出兩組我最難複驗的出處。第一組是 Online Boutique，15 條的出處只寫「架構圖」——那是一張 PNG，純文字的第三方根本查不了，標註者被迫從 README 文字推，三條方向全反。更糟的是後來發現架構圖本身漏畫了一個服務，我照圖標註也跟著漏了一條真的邊，那條是工具從 manifest 抓到的。第二組是 TeaStore，出處是 enum 的引用次數，可以查但要先讀懂分派機制，是我參考邊集裡最弱的一組。兩組當天都補強了。下面三個數字：兩組佔 11.4%、出處從 92 變 113 條全部可查、三道檢查抓到六條出處問題。最後那句是結論：抓到的全是出處的問題，沒有一條是邊本身錯。</div>
+  </div>
+  <div class="ftr"></div><div class="num">11</div>
+</section>
+
+<!-- 12 · 反饋 3：AsianPLoP -->
+<section class="slide" id="s12">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ AsianPLoP pattern <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w46" style="gap:26px">
+      <div>
+        <p class="sec">一個問題，五個依建構順序排的 pattern</p>
+        <p style="font-size:16.5px"><b>由多種可靠度不同的證據合成依賴圖與報告時，怎麼讓讀者可以信任其中的每一條關係、每一個數字、每一句說法？</b></p>
+        <table class="xs" style="margin-top:10px">
+          <tr><th style="width:6%"></th><th style="width:40%">Pattern</th><th>套用後產生的新問題（＝下一個的情境）</th></tr>
+          <tr><td class="c">①</td><td><b>證據分級的關係</b><br>Evidence-Graded Relations</td><td>同一條關係被多個來源以不同等級提到，要合在哪裡、以誰為準？</td></tr>
+          <tr><td class="c">②</td><td><b>單一標準模型、多個視圖</b><br>One Model, Many Views</td><td>模型一致了，但報告是 LLM 寫的，它重述事實時會漂移</td></tr>
+          <tr><td class="c">③</td><td><b>事實由程式寫</b><br>Code-Authored Facts</td><td>數字由程式算了，但比率的<b>分母</b>要算進哪些項目？</td></tr>
+          <tr><td class="c">④</td><td><b>誠實分母</b><br>Honest Denominator</td><td>排除之後，有些項目或整個指標<b>根本沒量測</b>，要顯示什麼？</td></tr>
+          <tr><td class="c">⑤</td><td><b>未量測不是零</b><br>Unmeasured Is Not Zero</td><td>（終點）每個數字與說法都有依據，或明說沒有</td></tr>
+        </table>
+        <p class="srcs">這是 <b>language</b> 而不是 catalog：相鄰的 pattern 之間有<b>生成關係</b>——套用一個之後才會出現下一個要解的情境。</p>
+      </div>
+      <div>
+        <p class="sec">全文已經寫完：647 行</p>
+        <table class="xs">
+          <tr><th style="width:30%">章節</th><th>內容</th></tr>
+          <tr><td>摘要 ＋ 緒論</td><td>問題、為什麼現在（LLM 進入產出鏈）、讀者、根原則、pattern 格式</td></tr>
+          <tr><td>Running example</td><td>中性的線上商店，五種證據分布；每個 pattern 都用它說明「沒套用會怎樣」</td></tr>
+          <tr><td><b>五個 pattern</b></td><td>Context／Problem／Forces／Solution／實作要點／Resulting Context／Consequences／<b>Known Uses</b>／Related Patterns</td></tr>
+          <tr><td>相關研究</td><td>四條線：分級是成熟做法、業界格式已在做、單一來源不完整、讀者端與 LLM 端</td></tr>
+          <tr><td>討論與限制</td><td>適用邊界、<b>每個 pattern 的證據強度評估</b>、威脅效度</td></tr>
+          <tr><td>附錄</td><td>pattern ↔ 程式碼與測試的對應表（審稿人查證用）、投稿資訊</td></tr>
+        </table>
+        <p class="sub" style="margin-top:12px">論文裡也寫清楚它<b>不能</b>宣稱什麼</p>
+        <ul style="font-size:15.5px">
+          <li>五個 pattern <b>都來自同一個工具</b>：外部實例證明「別人也這樣做」，但不能證明「在別的工具裡照這個順序建構也會順利」——<b>生成性目前只走過一遍</b></li>
+          <li>事件是<b>回溯敘述</b>的：每個都有 commit 或日期，但「當初為什麼這樣改」是事後整理的</li>
+          <li><b>沒有使用者研究</b>：文獻裡也找不到——<b>這是可以主張的貢獻缺口</b></li>
+        </ul>
+        <div class="note" style="margin-top:8px;font-size:15px"><b>每個 pattern 都有工具以外、至少兩個查證過的外部實例</b>：情報分析的 <b>Admiralty Code</b>（來源可靠度與可信度<b>分兩個軸</b>）、<b>CycloneDX</b> 的 confidence、<b>Kiali</b> 的 idle edges、<b>Satyrn</b>（先算後寫，正確主張 86% 對 57%）、<b>CONSORT</b>、<b>coverage.py</b>（JaCoCo 與 Istanbul 當<b>反例</b>）、<b>SQL NULL</b>、<b>Kubernetes 的 Unknown</b>、<b>Grafana 的 No Data</b>。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　pattern 的部分已經寫成中文全文，647 行，結構照 PLoP 的慣例。左邊是五個 pattern 跟它們的生成關係——這是 language 不是 catalog，關鍵在於套用一個之後會產生下一個要解的情境，這條線我在文件裡逐個寫清楚了。右邊是全文的章節，重點是三個：每個 pattern 都有完整八個欄位、每個都有工具以外至少兩個查證過的外部實例、還有一節誠實寫限制。附錄那個對應表是給審稿人查證用的，pattern 對到哪段程式碼、哪個測試釘住它。下一步是翻英文、套 ACM 模板，投稿前待辦有七項寫在文件最後。</div>
+  </div>
+  <div class="ftr"></div><div class="num">12</div>
+</section>
+
+<!-- 13 · 誠實的缺口 -->
+<section class="slide" id="s13">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 還空著的地方 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">三個缺口，都是我自己標出來的</p>
+    <table class="sm">
+      <tr><th style="width:26%">缺口</th><th style="width:38%">為什麼還空著</th><th>最小的補法</th></tr>
+      <tr><td><b>沒有真實使用者問句的樣本</b></td><td>「問句有多寬」的三個資料來源（102 句 hold-out、242 組窮舉、流程成員標註）<b>全部經過我的手</b></td><td>已部署實例的 thread log 裡每次路由都留了紀錄，<b>撈出來就是第一份真實樣本</b>；它同時補掉路由門檻那 102 句也是我寫的問題</td></tr>
+      <tr><td><b>沒有我們自己的使用者實驗</b></td><td>所以命題 A（超過 20 就理解變弱）<b>不主張</b></td><td>先做小的那個：同一張<b>被截的</b>部分圖，一組有標題揭露、一組沒有，問「這張圖有沒有把相關服務都畫出來」——<b>直接驗證這次做的改動</b>，10–12 人、between-subject</td></tr>
+      <tr><td><b>第二標註者的材料是摘錄</b></td><td>它看到的是摘錄，我看到的是整個 repo；這個不對等<b>無法完全消除</b>（prompt 有預算）。它也<b>看不到圖片</b></td><td>不打算補——改成在論文裡寫清楚它只能回答<b>一個方向</b>的問題：「作者有沒有標出別人也看得到的東西」</td></tr>
+    </table>
+    <div class="note" style="margin-top:12px;font-size:16px"><b>為什麼要自己先講：</b>這三個缺口都是<b>別人一問就會問到</b>的地方。第一個影響的是「問句有多寬」這個前提，第二個決定我們能不能主張命題 A，第三個限制了第二標註者能回答的問題方向。<b>與其被問出來，不如寫在文件裡並附上補法</b>——前兩個的補法都很便宜。</div>
+    <p class="sub" style="margin-top:12px">另外三件需要換機器或叢集的</p>
+    <ul style="font-size:16.5px">
+      <li><b>TeaStore 跑 runtime</b>：靜態層在它身上只有 0.46，而那是 enum 動態分派造成的——<b>這正是 runtime 層存在的理由</b>，目標是「靜態 6/13 → runtime 全中，工具與 TeaStore 都不改」</li>
+      <li><b>純 AI 對照第四輪</b>：第三輪的數字是圖修正<b>之前</b>的，要在修好的圖上重跑才一致</li>
+      <li><b>top-k 與路由門檻換一份別的專案的 archive</b>：現在的選 k 規則是看過那條曲線才定的，換一份重跑才是真正的檢驗</li>
+    </ul>
+    <div class="notes"><b>講稿</b>　這頁是我自己列的缺口，不等被問。第一個最重要：問句有多寬這件事，三個資料來源全部經過我的手，真實使用者問句我沒有樣本。補法很便宜——已部署實例的 log 裡每次路由都有紀錄，撈出來就有了，而且順便補掉路由那 102 句也是我寫的問題。第二個是使用者實驗，我建議先做小的那個，直接驗證「截斷揭露有沒有用」，因為那才是我們主張的命題。第三個我不打算補，改成在論文裡寫清楚它的方向性。下面三件是要換機器的，其中 TeaStore 跑 runtime 最有價值，因為它剛好是靜態層做不到、runtime 層應該做得到的那種案例。</div>
+  </div>
+  <div class="ftr"></div><div class="num">13</div>
+</section>
+
+<!-- 14 · 參考資料 -->
+<section class="slide" id="s14">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 參考資料與產出 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">這次引用的文獻</p>
+        <ul style="font-size:15.5px">
+          <li><a href="https://doi.org/10.1109/TVCG.2020.3030459">Yoghourdjian 等人，<i>Scalability of Network Visualisation from a Cognitive Load Perspective</i></a>，IEEE TVCG 27(2):1677–1687, 2021（EEG／瞳孔／心率，25–175 節點的最短路徑任務）</li>
+          <li><a href="https://doi.org/10.1016/j.visinf.2018.12.006">Yoghourdjian 等人，<i>Exploring the limits of complexity</i></a>，Visual Informatics 2(4):264–282, 2018（「大」是相對的）</li>
+          <li><a href="https://doi.org/10.1057/ivs.2009.10">Huang, Eades &amp; Hong，<i>Measuring Effectiveness of Graph Visualizations: A Cognitive Load Perspective</i></a>，Information Visualization 8(3), 2009</li>
+          <li><a href="https://doi.org/10.1057/palgrave.ivs.9500092">Ghoniem, Fekete &amp; Castagliola</a>，Information Visualization 4(2), 2005（20 個頂點的門檻）／<a href="https://doi.org/10.1109/TVCG.2018.2865940">Okoe, Jianu &amp; Kobourov</a>，TVCG 2019（大規模重做）</li>
+          <li><a href="https://doi.org/10.1037/h0043158">Miller 1956</a>、<a href="https://doi.org/10.1017/S0140525X01003922">Cowan 2001</a>、<a href="https://doi.org/10.1023/A:1022193728205">Sweller 等人 1998</a>（工作記憶與認知負荷理論；<b>不用來推導門檻</b>）</li>
+          <li><a href="https://ceur-ws.org/Vol-2520/paper1a.pdf">Rahman, Panichella &amp; Taibi，<i>A Curated Dataset of Microservices-Based Systems</i></a>，SattoSE 2019（<a href="https://github.com/clowee/MicroserviceDataset">資料集</a>，LGPL-3.0）</li>
+          <li><a href="https://hillside.net/index.php/pattern-writing-checklist">Hillside Pattern Writing Checklist</a>、<a href="https://plopcon.org/asianplop2026/submissions/">AsianPLoP 徵稿</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="sec">這次的產出</p>
+        <table class="xs">
+          <tr><th style="width:46%">文件</th><th>內容</th></tr>
+          <tr><td><span class="mono">docs/graph-readability-cognitive-load.md</span></td><td>反饋 ①：兩個命題、文獻與各自的界線、20 vs 21、找不到的東西</td></tr>
+          <tr><td><span class="mono">docs/generalization-external.md</span></td><td>反饋 ②：三招、七個專案的逐條裁決、四條新規則、結論五點</td></tr>
+          <tr><td><span class="mono">docs/asianplop-paper-zh.md</span></td><td>反饋 ③：五個 pattern 的中文全文（647 行）</td></tr>
+          <tr><td><span class="mono">docs/threshold-design.md</span> §8</td><td>節點上限的論證改寫、截斷可見的實作紀錄</td></tr>
+          <tr><td><span class="mono">docs/generalization-2026-09-22.md</span></td><td>九月那輪的報告，這次<b>就地更正</b>了 Online Boutique 的歸因</td></tr>
+        </table>
+        <p class="sub" style="margin-top:10px">怎麼重跑（都不需要叢集）</p>
+        <pre class="mono" style="font-size:12.5px;background:#f7f7f7;border-radius:8px;padding:7px 12px;margin:6px 0;overflow:hidden">mvn -o test -Dtest=ExternalTruthAgreementTest          # 計分 → 表與 CSV
+mvn -o test -Dtest=TruthEvidenceResolvesTest -Dtruth.repos=&lt;dir&gt;   # 出處
+python3 docs/charts/plot_external_agreement.py         # 兩張圖（讀 CSV）</pre>
+        <p class="sub" style="margin-top:8px">程式與測試</p>
+        <ul style="font-size:15px">
+          <li>新測試 <b>5 個</b>、新規則 <b>4 條</b>（11–14）；既有<b>十個</b>專案逐項不變、<b>零錯邊</b>；全套 <b>254 個</b>測試，唯一失敗的是需要叢集的那個</li>
+          <li>圖表由<b>計分程式輸出的 CSV</b> 直接畫——<b>簡報的圖與文件的表不會各說各話</b></li>
+        </ul>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　文獻都附了可點的連結。左邊前三篇是這次為了「認知負荷」找的，第四行那兩篇是原本就有的 20 個頂點那條線。Miller、Cowan、Sweller 我有引但標明不用來推導門檻。右邊是產出，五份文件跟程式測試。最後那點我想強調：這次的圖是直接讀計分程式輸出的 CSV 畫的，所以簡報上的圖跟文件裡的表不可能各說各話——之前是手抄數字，這次不是。</div>
+  </div>
+  <div class="ftr"></div><div class="num">14</div>
+</section>
