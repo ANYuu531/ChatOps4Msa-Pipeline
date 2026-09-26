@@ -120,7 +120,7 @@
       <tr><th style="width:4%">#</th><th style="width:22%">反饋</th><th style="width:34%">做了什麼</th><th>結果</th></tr>
       <tr><td class="c">1</td><td>要找<b>認知負荷</b>的論文；而且我們的結果可以到 <b>21</b>，為什麼選 20</td><td>先把兩個被混在一起的命題拆開，再找文獻；然後回答 20 與 21 到底在選什麼</td><td>找到含 <b>EEG／瞳孔／心率</b>量測的那一篇；<b>維持 20 但論證整個換掉</b>，並補上「截斷要看得見」的實作</td></tr>
       <tr><td class="c">2</td><td><b>標準答案是我給的</b>，可靠度會降低；要改說法或用別的方式</td><td>兩個都做：換一份<b>別人發表</b>的參考邊集、讓每條出處第三方打得開、再請一個獨立標註者標一份</td><td>第三方邊集上 <b>91/95＝0.96</b>；七個專案的獨立標註者<b>一條邊都沒推翻</b>；<b>順帶查出工具四個真缺陷</b></td></tr>
-      <tr><td class="c">3</td><td>開始寫 <b>AsianPLoP</b> 的 pattern</td><td>把討論稿補成可投稿的中文全文</td><td><b>五個 pattern</b> 完整格式 ＋ 相關研究 ＋ 討論與限制 ＋ 34 筆參考文獻，<b>647 行</b></td></tr>
+      <tr><td class="c">3</td><td>開始寫 <b>AsianPLoP</b> 的 pattern</td><td>照 PLoP 的八個欄位<b>一個一個寫</b>；Forces 只留真的互相拉扯的、代價寫得跟好處一樣具體、每個都要有工具以外的外部實例</td><td>第 12 頁<b>攤開一個完整走一遍</b>，第 13 頁<b>另外四個逐一說明</b>——Problem 怎麼寫成兩難、Solution 的核心、誠實寫的代價</td></tr>
     </table>
     <p class="sub" style="margin-top:14px">這次最值得講的一件事</p>
     <div class="note" style="margin-top:6px"><b>第二點本來是「怎麼讓人相信我的標註」，結果變成「工具被外部答案抓到四個缺陷」。</b>把標準答案換成別人發表的之後，七個專案裡有四個的一致度是 <b>0.00</b>——不是邊錯，是<b>節點名一個都對不上</b>。追下去是工具的兩個問題；再追一個分數特別低的專案，又發現我們<b>對它的歸因錯了一半</b>。修完之後既有十個專案逐項不變、零錯邊。</div>
@@ -435,51 +435,72 @@
   <div class="ftr"></div><div class="num">11</div>
 </section>
 
-<!-- 12 · 反饋 3：AsianPLoP -->
+<!-- 12 · 反饋 3：一個 pattern 完整走一遍 -->
 <section class="slide" id="s12">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ AsianPLoP pattern <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ 一個 pattern 是怎麼寫的 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
   <div class="bd">
-    <div class="two w46" style="gap:26px">
+    <p class="sec">① 證據分級的關係（Evidence-Graded Relations）——八個欄位逐一走一遍</p>
+    <div class="two w46" style="gap:22px;margin-top:4px">
       <div>
-        <p class="sec">一個問題，五個依建構順序排的 pattern</p>
-        <p style="font-size:16.5px"><b>由多種可靠度不同的證據合成依賴圖與報告時，怎麼讓讀者可以信任其中的每一條關係、每一個數字、每一句說法？</b></p>
-        <table class="xs" style="margin-top:10px">
-          <tr><th style="width:6%"></th><th style="width:40%">Pattern</th><th>套用後產生的新問題（＝下一個的情境）</th></tr>
-          <tr><td class="c">①</td><td><b>證據分級的關係</b><br>Evidence-Graded Relations</td><td>同一條關係被多個來源以不同等級提到，要合在哪裡、以誰為準？</td></tr>
-          <tr><td class="c">②</td><td><b>單一標準模型、多個視圖</b><br>One Model, Many Views</td><td>模型一致了，但報告是 LLM 寫的，它重述事實時會漂移</td></tr>
-          <tr><td class="c">③</td><td><b>事實由程式寫</b><br>Code-Authored Facts</td><td>數字由程式算了，但比率的<b>分母</b>要算進哪些項目？</td></tr>
-          <tr><td class="c">④</td><td><b>誠實分母</b><br>Honest Denominator</td><td>排除之後，有些項目或整個指標<b>根本沒量測</b>，要顯示什麼？</td></tr>
-          <tr><td class="c">⑤</td><td><b>未量測不是零</b><br>Unmeasured Is Not Zero</td><td>（終點）每個數字與說法都有依據，或明說沒有</td></tr>
+        <table class="xs">
+          <tr><th style="width:20%">Context</th><td>你從多個來源收集元件之間的關係：執行期遙測、程式碼、設定檔與部署描述、專案文件。你準備把它們<b>畫成一張圖給人看</b>。</td></tr>
+          <tr class="hot"><th>Problem</th><td>來源的可靠度差很多。<b>全部畫成同一種線，讀者會以為每條都一樣真；只畫最可靠的（量測到的），又會丟掉那些量測不到、但確實存在的依賴。</b></td></tr>
+          <tr><th>Forces<br><span class="cap">（只列真的互相拉扯的，每條寫「不這樣做會怎樣」）</span></th><td>
+            · <b>可靠度與完整度方向相反</b>：遙測 precision 高 recall 低、結構分析反過來、文字兩者都低——只取一個一定犧牲另一個<br>
+            · <b>讀者要一眼看懂</b>：分級太多看不懂；只有兩級又把「有程式碼證據但沒跑到」和「文件隨口提過」混為一談<br>
+            · <b>下游會偷偷升級</b>：摘要、報告、問答很容易把「只被提到」講成「確定存在」——<b>尤其下游是 LLM</b><br>
+            · <b>視覺通道有限</b>：線型、顏色、粗細要分給等級、類型、流量；<a href="https://ieeexplore.ieee.org/abstract/document/7089294">Guo 等人（TVCG 2015）</a>指出同時編碼主屬性與不確定性的視覺變數<b>會互相干擾</b><br>
+            · <b>誠實揭露可能反過來降低信任</b>：不確定性視覺化是雙面刃，可能被讀成「這份東西不可靠」</td></tr>
         </table>
-        <p class="srcs">這是 <b>language</b> 而不是 catalog：相鄰的 pattern 之間有<b>生成關係</b>——套用一個之後才會出現下一個要解的情境。</p>
       </div>
       <div>
-        <p class="sec">全文已經寫完：647 行</p>
         <table class="xs">
-          <tr><th style="width:30%">章節</th><th>內容</th></tr>
-          <tr><td>摘要 ＋ 緒論</td><td>問題、為什麼現在（LLM 進入產出鏈）、讀者、根原則、pattern 格式</td></tr>
-          <tr><td>Running example</td><td>中性的線上商店，五種證據分布；每個 pattern 都用它說明「沒套用會怎樣」</td></tr>
-          <tr><td><b>五個 pattern</b></td><td>Context／Problem／Forces／Solution／實作要點／Resulting Context／Consequences／<b>Known Uses</b>／Related Patterns</td></tr>
-          <tr><td>相關研究</td><td>四條線：分級是成熟做法、業界格式已在做、單一來源不完整、讀者端與 LLM 端</td></tr>
-          <tr><td>討論與限制</td><td>適用邊界、<b>每個 pattern 的證據強度評估</b>、威脅效度</td></tr>
-          <tr><td>附錄</td><td>pattern ↔ 程式碼與測試的對應表（審稿人查證用）、投稿資訊</td></tr>
+          <tr><th style="width:22%">Solution<br><span class="cap">（五條，寫成可以照做的步驟）</span></th><td>
+            ① 定義<b>小而有序</b>的三級：<b>量測到</b>／<b>有使用證據</b>／<b>只被提到</b><br>
+            ② <b>等級（多可信）與來源（誰說的）分開存</b>——一條關係可以有多個來源，但只有一個等級<br>
+            ③ 以（來源, 目標）為鍵合併：等級<b>取最高</b>、來源與佐證<b>取聯集</b><br>
+            ④ 把<b>最醒目的視覺通道給等級</b>（實線／虛線／點線），類型用顏色、流量降級成線寬<br>
+            ⑤ 所有下游<b>只能照抄或降級，不能升級</b></td></tr>
+          <tr><th>Resulting<br>Context</th><td>每條關係都有等級了。但一次分析有好幾個產物，各自推導就會對同一條關係說出不同的話 <b>→ 這就是 ② 的情境</b></td></tr>
+          <tr><th>Consequences<br><span class="cap">（代價要跟好處一樣具體）</span></th><td>
+            ＋ 量測不到的真依賴仍在圖上，但不會被誤認為已確認；合併只需要「取最高」，<b>沒有參數要調</b><br>
+            － <b>「什麼算使用證據」需要領域知識</b>，每種語言與框架各要一份判準<br>
+            － <b>強來源誤判會蓋掉弱來源的正確判斷</b>（取最高沒有降級機制）<br>
+            － 三級<b>無法表達「兩個弱來源互相佐證」</b></td></tr>
+          <tr><th>Known Uses<br><span class="cap">（工具以外至少兩個，查證過）</span></th><td>
+            <b>本工具</b>：三級 ＋ 取最高合併 ＋ 三種線型；附<b>兩個事件</b>（被指出「比較像流量圖」而改成以等級為主要編碼；同一條邊三次實驗從「不存在」→「虛線」→「實線 5 191 次」）<br>
+            <b>Admiralty Code</b>（NATO）：來源可靠度 A–F 與資訊可信度 1–6 <b>分兩個軸</b>——「等級與來源分開存」最古老的先例<br>
+            <b>Kiali</b> 的 idle edges、<b>CycloneDX</b> 的 confidence 0–1、<b>SLSA</b> 等級、<b>W3C PROV</b></td></tr>
         </table>
-        <p class="sub" style="margin-top:12px">論文裡也寫清楚它<b>不能</b>宣稱什麼</p>
-        <ul style="font-size:15.5px">
-          <li>五個 pattern <b>都來自同一個工具</b>：外部實例證明「別人也這樣做」，但不能證明「在別的工具裡照這個順序建構也會順利」——<b>生成性目前只走過一遍</b></li>
-          <li>事件是<b>回溯敘述</b>的：每個都有 commit 或日期，但「當初為什麼這樣改」是事後整理的</li>
-          <li><b>沒有使用者研究</b>：文獻裡也找不到——<b>這是可以主張的貢獻缺口</b></li>
-        </ul>
-        <div class="note" style="margin-top:8px;font-size:15px"><b>每個 pattern 都有工具以外、至少兩個查證過的外部實例</b>：情報分析的 <b>Admiralty Code</b>（來源可靠度與可信度<b>分兩個軸</b>）、<b>CycloneDX</b> 的 confidence、<b>Kiali</b> 的 idle edges、<b>Satyrn</b>（先算後寫，正確主張 86% 對 57%）、<b>CONSORT</b>、<b>coverage.py</b>（JaCoCo 與 Istanbul 當<b>反例</b>）、<b>SQL NULL</b>、<b>Kubernetes 的 Unknown</b>、<b>Grafana 的 No Data</b>。</div>
       </div>
     </div>
-    <div class="notes"><b>講稿</b>　pattern 的部分已經寫成中文全文，647 行，結構照 PLoP 的慣例。左邊是五個 pattern 跟它們的生成關係——這是 language 不是 catalog，關鍵在於套用一個之後會產生下一個要解的情境，這條線我在文件裡逐個寫清楚了。右邊是全文的章節，重點是三個：每個 pattern 都有完整八個欄位、每個都有工具以外至少兩個查證過的外部實例、還有一節誠實寫限制。附錄那個對應表是給審稿人查證用的，pattern 對到哪段程式碼、哪個測試釘住它。下一步是翻英文、套 ACM 模板，投稿前待辦有七項寫在文件最後。</div>
+    <div class="notes"><b>講稿</b>　與其說「寫完了幾行」，不如把一個 pattern 攤開來看怎麼寫的。我選第一個。Context 是情境，Problem 我一律寫成「兩難」——全部畫一樣讀者分不出真假，只畫最可靠的又會丟掉真的依賴，兩邊都不行，這才叫 problem。Forces 是這個格式最容易寫壞的地方：我只列真的互相拉扯的，而且每條都寫「不這樣做會怎樣」，沒有張力的就移到實作要點去。像「視覺通道有限」那條我引了一篇 TVCG 的實驗，它說同時編碼主屬性跟不確定性的視覺變數會互相干擾，所以通道分配是有代價的選擇。Solution 寫成五個可以照做的步驟。Resulting Context 一定要接到下一個 pattern 的情境，這是 language 跟 catalog 的差別。Consequences 我要求代價寫得跟好處一樣具體——像「取最高沒有降級機制」「三級表達不了兩個弱來源互相佐證」，這些都是真的限制。Known Uses 除了自己的工具，至少要兩個查證過的外部實例，而自己的工具那段我附了事件，因為 pattern 的力量來自它解掉的真實失敗。</div>
   </div>
   <div class="ftr"></div><div class="num">12</div>
 </section>
 
-<!-- 13 · 誠實的缺口 -->
+<!-- 13 · 反饋 3：另外四個 -->
 <section class="slide" id="s13">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ 另外四個，逐一說明 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <table class="xs">
+      <tr><th style="width:13%">Pattern</th><th style="width:25%">Problem（寫成兩難）</th><th style="width:30%">Solution 的核心</th><th style="width:16%">誠實寫的代價</th><th>外部實例</th></tr>
+      <tr><td><b>② 單一標準模型、多個視圖</b><br><span class="cap">One Model,<br>Many Views</span></td><td>每個產物各自從原始證據推導時，<b>推導邏輯會分岔</b>；讀者看到「報告說 A、圖畫 B」，而且<b>無從判斷誰對</b></td><td>先建<b>一個標準模型</b>再產所有視圖；每個視圖是模型的<b>純函式</b>；衍生計算<b>只實作一次</b>；模型可序列化，<b>晚到的視圖讀回同一份</b>而不重推</td><td>schema 成為共同介面，改動要照顧所有消費者；<b>模型失敗時所有視圖一起失敗</b></td><td>Pandoc 的 AST、<b>MVC</b>（Reenskaug 1978）、Backstage catalog</td></tr>
+      <tr><td><b>③ 事實由程式寫</b><br><span class="cap">Code-Authored<br>Facts</span></td><td>LLM 重述事實時會漂移，而<b>收緊 prompt 通常只是把錯誤換個樣子</b>；但完全不用它，報告就沒人想讀</td><td>段落分成<b>事實型</b>與<b>詮釋型</b>；事實型<b>由程式從模型產生</b>、措辭固定；用<b>結構錨點</b>拼接，<b>LLM 若自己也寫了就丟掉它的版本</b>；找不到錨點就附在最後</td><td>報告<b>風格不一致</b>（有一段是範本文字）；拼接依賴標題慣例</td><td><b>Satyrn</b>（先算後寫，正確主張 <b>86%</b> 對 57%）、SymGen、knitr 行內程式碼、OpenAPI 產生的文件</td></tr>
+      <tr><td><b>④ 誠實分母</b><br><span class="cap">Honest<br>Denominator</span></td><td>把量不到的項目算進分母，分數<b>被永久壓低</b>；把弱證據算進去，<b>文件多說幾句就稀釋分數</b>；排除太多又<b>虛高</b>——而讀者只看到一個百分比</td><td>分母只算<b>量測機制做得到</b>且<b>證據高於「只被提到」</b>的項目；性質不同的用<b>獨立比率</b>；<b>一定揭露</b>「未計分 N 項，理由」；排除多於計分時<b>警告</b>；同時列出未覆蓋清單</td><td>排除規則是<b>一份要維護的清單</b>；分母定義改了<b>歷史數字不可比</b></td><td><b>CONSORT</b>（每階段都要寫排除人數與理由）、coverage.py；<b>反例</b>：JaCoCo（排除但不揭露）、Istanbul（排除但灌進分子）</td></tr>
+      <tr><td><b>⑤ 未量測不是零</b><br><span class="cap">Unmeasured<br>Is Not Zero</span></td><td>沒收集的資料在程式裡變成 <b>0 或 false</b>，在 LLM 手上變成猜測；<b>失敗的步驟看起來和「什麼都沒找到」一模一樣</b></td><td>狀態用<b>三值</b>、預設是「未知」；<b>執行模式</b>當中繼資料傳到每個視圖；遇到未知就<b>寫一句話</b>說為什麼、補什麼會知道；<b>絕不用 0／0% 當佔位</b>交給 LLM；步驟失敗記<b>失敗狀態</b>而不是空結果</td><td>每個讀取點都要處理三值；<b>漏一個地方沒傳模式資訊，幻覺就從那裡回來</b>（最脆弱，要求全面實施）</td><td><b>SQL 的 NULL</b> 與三值邏輯、<b>Kubernetes</b> 的 <span class="mono">Unknown</span>、<b>Grafana 的 No Data</b>、Prometheus 的 <span class="mono">absent()</span></td></tr>
+    </table>
+    <div class="two" style="gap:20px;margin-top:10px">
+      <div><div class="note" style="font-size:15.5px;margin:0"><b>為什麼是 language 不是 catalog：</b>每個 Resulting Context 都接到下一個的 Context。分級之後才會出現「多個產物怎麼一致」；一致之後才會出現「LLM 重述會漂移」；事實由程式寫之後才會出現「分母算什麼」；分母收斂之後才會出現「<b>整個指標沒量測時顯示什麼</b>」。</div></div>
+      <div><p style="font-size:15px;margin:0"><b>全文除了五個 pattern 還有：</b>摘要與緒論（為什麼現在——LLM 進入產出鏈）、中性的 running example（線上商店，每個 pattern 都用它說明「沒套用會怎樣」）、相關研究四條線、討論與限制（<b>每個 pattern 的證據強度評估</b>）、附錄（<b>pattern ↔ 程式碼與測試的對應表</b>，給審稿人查證）。<b>共 647 行；下一步是翻英文、套 ACM 模板。</b></p></div>
+    </div>
+    <div class="notes"><b>講稿</b>　另外四個用同一個格式逐一講。②的 Problem 是產物互相矛盾而讀者無從判斷誰對，解法是先建一個模型再產所有視圖，代價是 schema 變成共同介面、而且模型失敗所有視圖一起失敗。③是這五個裡最有量化外部支撐的：Satyrn 那篇先由程式算事實再讓模型寫，正確主張 86%，直接讓模型寫只有 57%；我們自己的事件是改了兩次 prompt 都只是換一種錯法，最後那一節改由程式產生。④的三個代價我寫得很具體，而且我特別放了兩個反例——JaCoCo 排除但不揭露、Istanbul 排除但灌進分子，這兩個反例把紅線劃出來。⑤最脆弱，因為它要求全面實施，漏一個地方沒傳執行模式，幻覺就從那裡回來。下面左邊那格是 language 跟 catalog 的差別，右邊是全文除了 pattern 還有什麼。</div>
+  </div>
+  <div class="ftr"></div><div class="num">13</div>
+</section>
+
+<!-- 14 · 誠實的缺口 -->
+<section class="slide" id="s14">
   <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 還空著的地方 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
   <div class="bd">
     <p class="sec">三個缺口，都是我自己標出來的</p>
@@ -498,11 +519,11 @@
     </ul>
     <div class="notes"><b>講稿</b>　這頁是我自己列的缺口，不等被問。第一個最重要：問句有多寬這件事，三個資料來源全部經過我的手，真實使用者問句我沒有樣本。補法很便宜——已部署實例的 log 裡每次路由都有紀錄，撈出來就有了，而且順便補掉路由那 102 句也是我寫的問題。第二個是使用者實驗，我建議先做小的那個，直接驗證「截斷揭露有沒有用」，因為那才是我們主張的命題。第三個我不打算補，改成在論文裡寫清楚它的方向性。下面三件是要換機器的，其中 TeaStore 跑 runtime 最有價值，因為它剛好是靜態層做不到、runtime 層應該做得到的那種案例。</div>
   </div>
-  <div class="ftr"></div><div class="num">13</div>
+  <div class="ftr"></div><div class="num">14</div>
 </section>
 
-<!-- 14 · 參考資料 -->
-<section class="slide" id="s14">
+<!-- 15 · 參考資料 -->
+<section class="slide" id="s15">
   <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 參考資料與產出 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
   <div class="bd">
     <div class="two" style="gap:26px">
@@ -541,5 +562,5 @@ python3 docs/charts/plot_external_agreement.py         # 兩張圖（讀 CSV）<
     </div>
     <div class="notes"><b>講稿</b>　文獻都附了可點的連結。左邊前三篇是這次為了「認知負荷」找的，第四行那兩篇是原本就有的 20 個頂點那條線。Miller、Cowan、Sweller 我有引但標明不用來推導門檻。右邊是產出，五份文件跟程式測試。最後那點我想強調：這次的圖是直接讀計分程式輸出的 CSV 畫的，所以簡報上的圖跟文件裡的表不可能各說各話——之前是手抄數字，這次不是。</div>
   </div>
-  <div class="ftr"></div><div class="num">14</div>
+  <div class="ftr"></div><div class="num">15</div>
 </section>
