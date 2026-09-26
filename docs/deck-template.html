@@ -74,6 +74,8 @@
   .hud { position: fixed; right: 14px; top: 12px; display: flex; gap: .5rem; font-size: 13px; z-index: 5; }
   .hud button { font: inherit; border: 1px solid #ccc; background: #fff; color: #333; border-radius: 6px; padding: .3em .7em; cursor: pointer; }
   .hud button:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+  /* 16:9 pages, so the printed PDF is a deck and not letter paper with a band of slide on top. */
+  @page { size: 1280px 720px; margin: 0; }
   @media print { html { scroll-snap-type: none; background: #fff; } .slide { margin: 0; box-shadow: none; page-break-after: always; width: 100%; } .hud { display: none; } .notes { display: block; position: static; } }
 </style>
 

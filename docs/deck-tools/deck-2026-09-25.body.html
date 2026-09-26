@@ -1,0 +1,461 @@
+<title>DepWeaver 上次反饋進度</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+  /* SOSEL weekly-meeting deck style (docs/deck-template.html). Single theme on purpose. */
+  :root {
+    --coral: #ff7b7b; --pink: #f86bc5;
+    --grad: linear-gradient(90deg, #ff7b7b 0%, #f86bc5 100%);
+    --ink: #1c1c1c; --grey: #6f6f6f; --line: #e3e3e3; --paper: #ffffff; --ground: #f2f2f2;
+    --green: #2e8b57; --bubble: #d9d9d9;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; background: var(--ground); }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "Nunito", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; font-size: 18px; line-height: 1.55; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .9em; }
+  h1, h2, h3, h4 { margin: 0; font-weight: 800; }
+  p { margin: 0; }
+  ul { margin: .2rem 0 0; padding-left: 1.4em; }
+  ul ul { margin-top: .1rem; }
+  li { margin: .18rem 0; }
+  .id { color: var(--green); font-weight: 700; }
+  .k { font-weight: 800; }
+
+  .slide { position: relative; width: min(100vw, 1280px); aspect-ratio: 16 / 9; margin: 24px auto; background: var(--paper);
+    scroll-snap-align: center; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.08); display: grid; grid-template-rows: 64px 1fr 34px; }
+  .hdr { display: flex; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--line); box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+  .hdr img { height: 44px; }
+  .hdr .t { font-size: 24px; font-weight: 900; }
+  .hdr .t small { font-size: 13px; font-weight: 700; margin-left: 10px; color: var(--ink); }
+  .burger { margin-left: auto; width: 30px; display: grid; gap: 6px; }
+  .burger i { display: block; height: 3px; background: var(--coral); border-radius: 2px; }
+  .bd { padding: 18px 40px 10px; overflow: hidden; }
+  .ftr { background: var(--grad); }
+  .num { position: absolute; right: 22px; bottom: 16px; width: 54px; height: 54px; border-radius: 50%; background: var(--bubble);
+    color: #fff; font-weight: 800; font-size: 20px; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+
+  .sec { font-size: 22px; font-weight: 900; margin: 2px 0 8px; }
+  .sec::before { content: "丨"; margin-right: 2px; }
+  .sub { font-size: 19px; font-weight: 900; margin-top: 12px; }
+  .sub:first-child { margin-top: 0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; }
+  .two.w64 { grid-template-columns: 1.15fr .85fr; }
+  .two.w46 { grid-template-columns: .9fr 1.1fr; }
+  .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 26px; align-items: start; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 17px; }
+  th, td { border: 1px solid #222; padding: 7px 12px; text-align: left; vertical-align: top; }
+  th { font-weight: 800; text-align: center; background: #fff; }
+  td.c, th.c { text-align: center; }
+  table.sm { font-size: 15px; } table.sm th, table.sm td { padding: 5px 10px; }
+  table.xs { font-size: 14px; line-height: 1.45; } table.xs th, table.xs td { padding: 4px 8px; }
+  tr.hot td { background: #fff1f4; font-weight: 700; }
+  .tag { display: inline-block; padding: 1px 10px; border-radius: 6px; font-size: 14px; font-weight: 800; color: #fff; white-space: nowrap; }
+  .tag.code { background: #2f5fb3; } .tag.ai { background: #a24fd1; } .tag.mix { background: var(--grad); }
+  .ok { color: var(--green); font-weight: 800; } .bad { color: #d0342c; font-weight: 800; }
+
+  .box { border: 2.5px solid var(--coral); border-radius: 44px; padding: 26px 30px; background: #fff; min-height: 300px; font-size: 17px; }
+  .box h3 { text-align: center; font-size: 21px; margin-bottom: 12px; }
+  .box.hot { background: var(--grad); border: 0; color: #fff; }
+  .box.hot .id { color: #fff; text-decoration: underline; }
+  .arrow { align-self: center; justify-self: center; background: var(--grad); color: #fff; font-weight: 800; padding: 8px 22px; clip-path: polygon(0 20%, 75% 20%, 75% 0, 100% 50%, 75% 100%, 75% 80%, 0 80%); }
+  .flow3 { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: stretch; }
+  .note { border-left: 4px solid var(--coral); background: #fff6f6; padding: 8px 14px; font-size: 16px; margin-top: 12px; }
+  .stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 4px 0 12px; }
+  .stat div { border: 2px solid var(--coral); border-radius: 18px; padding: 8px 14px; text-align: center; }
+  .stat b { display: block; font-size: 30px; font-weight: 900; line-height: 1.2; color: #f0617f; }
+  .stat span { font-size: 14px; color: #333; }
+  .fig { text-align: center; }
+  .fig img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; }
+  svg.chart { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  .cap { font-size: 13px; color: var(--grey); margin-top: 4px; text-align: center; }
+  .pill2 { display: inline-block; background: var(--grad); color: #fff; font-weight: 800; padding: 1px 10px; border-radius: 6px; font-size: 14px; }
+  /* External evidence is always a live link: clickable in the browser and in the printed PDF. */
+  a { color: inherit; text-decoration: underline; text-decoration-color: var(--coral); text-decoration-thickness: 1.5px; text-underline-offset: 2.5px; }
+  a:hover { color: #d0347c; }
+  .box.hot a, .tag a { color: #fff; text-decoration-color: rgba(255,255,255,.8); }
+  .srcs { font-size: 12.5px; color: var(--grey); margin-top: 8px; line-height: 1.5; }
+  .srcs a { color: var(--grey); }
+
+  .cover { display: block; }
+  .cover .wave { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .cover .logo { position: absolute; left: 80px; top: 205px; height: 60px; }
+  .cover h1 { position: absolute; left: 80px; top: 285px; font-size: 62px; font-weight: 900; letter-spacing: .02em; }
+  .cover .when { position: absolute; left: 82px; top: 380px; color: var(--grey); font-size: 18px; }
+  .cover .pill { position: absolute; left: 70px; bottom: 96px; background: var(--grad); color: #fff; font-weight: 800; padding: 6px 18px; border-radius: 8px; font-size: 20px; }
+  .cover .cat { position: absolute; right: 120px; bottom: 90px; width: 380px; }
+  .cover .burger { position: absolute; right: 56px; top: 50px; width: 32px; }
+  .cover .ftr { display: none; }
+
+  .notes { display: none; position: absolute; left: 40px; right: 100px; bottom: 44px; background: rgba(255,255,255,.96); border-left: 4px solid var(--pink);
+    padding: 8px 14px; font-size: 14px; color: #333; box-shadow: 0 -2px 10px rgba(0,0,0,.1); }
+  body.show-notes .notes { display: block; }
+  .hud { position: fixed; right: 14px; top: 12px; display: flex; gap: .5rem; font-size: 13px; z-index: 5; }
+  .hud button { font: inherit; border: 1px solid #ccc; background: #fff; color: #333; border-radius: 6px; padding: .3em .7em; cursor: pointer; }
+  .hud button:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+  /* 16:9 pages, so the printed PDF is a deck and not letter paper with a band of slide on top. */
+  @page { size: 1280px 720px; margin: 0; }
+  @media print { html { scroll-snap-type: none; background: #fff; } .slide { margin: 0; box-shadow: none; page-break-after: always; width: 100%; } .hud { display: none; } }
+</style>
+
+<!-- 1 · 封面 -->
+<section class="slide cover" id="s1">
+  <img class="wave" src="{{WAVE}}" alt="">
+  <div class="burger"><i></i><i></i><i></i></div>
+  <img class="logo" src="{{LOGO}}" alt="SOSEL">
+  <h1>碩一週進度會議</h1>
+  <p class="when">會議時間：2026/9/25　·　主題：上次的反饋（五點）</p>
+  <span class="pill">學生：李安喻</span>
+  <img class="cat" src="{{CAT}}" alt="">
+  <div class="notes"><b>講稿</b>　這禮拜報告上次的五點反饋，五點都做完、都有數字；其中兩點結論是「維持不改」，但那是量完才知道不用改，講到的時候要說明量的過程查出了什麼。順序是先總覽、再一點一點講。另外我自己多做了一件事（換六個沒測過的專案驗證泛化），那塊還在整理，下次再報告。</div>
+</section>
+
+<!-- 2 · 總覽 -->
+<section class="slide" id="s2">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 本週總覽 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">上次的反饋：五點都有數字</p>
+    <table class="sm">
+      <tr><th style="width:4%">#</th><th style="width:20%">反饋</th><th style="width:36%">做了什麼</th><th>結果</th></tr>
+      <tr><td class="c">1</td><td>證據分級要有文獻佐證<br>（重要、大家在意、有用）</td><td>三個子命題各自找文獻，每條標「讀過原文／只讀摘要」</td><td>醫學 GRADE、軟工 EBSE、CycloneDX／SLSA／W3C PROV、三篇實測數字；<b>誠實缺口：找不到「分級讓決策變好」的使用者研究</b></td></tr>
+      <tr><td class="c">2</td><td>4 跳、20 節點<br>要有原因</td><td>自家兩張圖直徑都是 3、量不出差別 → 改用 <b>22 個真實系統</b>的依賴圖</td><td>實測直徑<b>中位數 2、最大 3</b>；4 ＝ 實測最大深度 + 1；20 ＝ 可讀性文獻的天花板，而且剛好咬住一組</td></tr>
+      <tr><td class="c">3</td><td>用純 AI 測試、<br>比較結果</td><td>三組同題同模型：純讀報告／一般 RAG／現行系統；標準答案由圖查詢引擎產生、程式評分</td><td>跑了<b>三輪</b>；結論是<b>量到的是圖的好壞，不是 LLM 的好壞</b></td></tr>
+      <tr><td class="c">4</td><td>參數設定畫成曲線圖<br>（表格不好讀）</td><td>寫一支只用標準函式庫的繪圖程式，讀實驗 CSV 直接輸出 SVG</td><td><b>11 張</b>曲線圖，配色過色盲檢查，可直接貼進論文</td></tr>
+      <tr><td class="c">5</td><td>top-k 再往上測</td><td>網格從 16 拉到 <b>80</b>（＝整份報告的段數）</td><td>找到真正的平台值；事先寫的選 k 規則失效兩次，第三版選出的仍是 <b>16</b>，<b>不改設定</b></td></tr>
+    </table>
+    <p class="sub" style="margin-top:14px">貫穿這六件事的同一個原則</p>
+    <ul style="font-size:17px">
+      <li><span class="k">規則先寫下、由資料選；規則失效也照登。</span>選門檻、選 k、選跳數與節點上限的規則都在跑實驗<b>之前</b>寫進程式；其中兩條後來被資料推翻，失敗的版本留在文件裡，採用的理由另外講。</li>
+      <li><span class="k">量不到就說量不到，不要編。</span>Alibaba 那 4% 是二手數字、22 個系統的邊是宣告不是觀測、可讀性只引文獻沒自己做實驗——這些限制都寫在旁邊，不靠它們撐結論。</li>
+    </ul>
+    <p class="cap" style="text-align:left;margin-top:10px">文件：docs/evidence-grading-related-work.md · docs/threshold-design.md §4 §8 §9 §10</p>
+    <div class="notes"><b>講稿</b>　一句話講每一點：文獻找到了，而且找到一個可以主張的缺口；4 跳 20 節點第一版卡住（自家兩張圖直徑都是 3，量不出差別）所以改用 22 個真實系統；純 AI 對照跑三輪，結論是量到的是圖不是 LLM；曲線 11 張；top-k 測到底結論是維持 16。top-k 這裡要多講一句免得像白做：以前是沒量過先這樣設，現在是量過了知道最好，而且量的過程發現真正卡住的是字數預算不是 k。下面兩條原則：規則先寫下由資料選、失效也照登；量不到就說量不到。</div>
+  </div>
+  <div class="ftr"></div><div class="num">2</div>
+</section>
+
+<!-- 3 · 反饋 1：證據分級文獻 -->
+<section class="slide" id="s3">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 證據分級的文獻 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">拆成三個子命題，各自對應不同領域</p>
+    <table class="sm">
+      <tr><th style="width:12%">子命題</th><th style="width:44%">文獻</th><th>對應到這個工具</th></tr>
+      <tr><td><b>重要</b><br><span class="cap">不是我發明的</span></td><td><b><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC545647/">GRADE</a></b>（BMC 2004，<b>起源</b>）：醫學界曾有六套以上互相衝突的分級系統，爭議在「怎麼分」而不是「要不要分」；證據品質與建議強度分成兩個軸<br>　└ <a href="https://doi.org/10.1016/j.jclinepi.2010.04.026">J Clin Epidemiol 2011</a>：<b>現行的方法學基準</b><br><b><a href="https://cms.simula.no/sites/default/files/publications/SE.5.Kitchenham.2004.pdf">EBSE</a></b>（Kitchenham, ICSE 2004，<b>起源</b>）：軟體工程證據較弱，因此<b>接受所有等級，但必須標明等級</b><br>　└ <a href="https://doi.org/10.1201/b19467">同作者 2015 專書</a>：<b>現在的標準參考</b></td><td>我們也分兩個軸：一條邊的<b>證據等級</b>（量測到／有使用證據／只被提到），與它<b>算不算進覆蓋率的分母</b>，是兩件事</td></tr>
+      <tr><td><b>大家在意</b><br><span class="cap">業界已經在做</span></td><td><b><a href="https://cyclonedx.org/docs/1.6/json/">CycloneDX</a></b> component evidence（1.5 導入、<b>現行 1.6 仍保留</b>）：每個元件可帶「用了哪些方法、每個方法的 <b>confidence 0–1</b>、在原始碼的哪些位置」<br><b><a href="https://slsa.dev/spec/v1.1/faq">SLSA</a></b> build level、<b><a href="https://slsa.dev/spec/draft/build-provenance">in-toto</a></b> attestation：同一個事實依產生方式分級<br><b><a href="https://www.w3.org/TR/prov-dm/">W3C PROV</a></b>：provenance 的定義就是「用來評估品質與可信度的資訊」</td><td>幾乎就是我們的邊模型：<span class="id">provenance</span>（執行期／程式碼／文件）＋ <span class="id">confidence</span>（observed／documented／inferred）＋ <span class="id">evidence</span>（檔名:行號、Prometheus 指標）</td></tr>
+      <tr><td><b>有用</b><br><span class="cap">不分級會出事</span></td><td><b><a href="https://doi.org/10.1145/3377811.3380441">ICSE 2020</a></b>：靜態呼叫圖相對實際執行的 recall <b>中位數 0.884</b>（最好 0.935）；<a href="https://www.opal-project.de/articles/TotalRecall@ISSTA24.pdf">ISSTA 2024</a> 四年後重做同一個問題<br><b><a href="https://doi.org/10.1007/s10664-025-10686-2">EMSE 2025</a></b> 微服務架構回復工具比較（MSR'24 registered report 的<b>期刊版</b>）：單一最佳 F1 <b>0.86</b>，四個合起來 <b>0.91</b><br><b><a href="https://aclanthology.org/2023.findings-emnlp.467/">EMNLP 2023</a></b>：生成式搜尋平均只有 <b>51.5%</b> 的句子被引用完整支撐<br><b><a href="https://arxiv.org/abs/2605.06635">2026-05</a></b> 深度研究 agent：連結有效率 >94%，但<b>事實正確率只有 39–77%</b>，而且查得越深越糟</td><td>①只靠程式碼一定會漏 ②<b>合成多來源會更好，但合成之後就得回答「以誰為準」</b> ③沒有依據的敘述會被寫得很像真的 → 事實由程式寫</td></tr>
+    </table>
+    <div class="note" style="margin-top:10px"><b>誠實的缺口（想討論的一點）：</b>找不到任何直接量測「把依賴關係分級之後，工程師的決策變好」的使用者研究。現有證據都是間接的。<b>這正好是可以主張的貢獻缺口</b>；最小的補法是一個小型使用者研究：同一張圖，一組有分級、一組全部同樣畫法，問「哪些關係你敢據以做部署決策」。</div>
+    <div class="notes"><b>講稿</b>　三件事分開找。重要靠 GRADE 與 EBSE——GRADE 的出發點就是「分級沒爭議，爭議在怎麼分」。講到這裡自己先把反駁講掉：醫學分的是研究設計、我們分的是關係來源，抽象層級不同，論文裡當類比與先例，不宣稱方法相同。大家在意靠 CycloneDX 1.5 的 confidence，順便說明為什麼我們用離散三級不用連續值：可解釋、可對應線型、沒有自由參數。有用靠三個數字：靜態呼叫圖 recall 中位數 0.884、單一工具 0.86 對四工具合併 0.91、LLM 只有 51.5% 的句子有依據。文獻我沒有全部讀原文，文件裡每條標了驗證狀態。最後那格是缺口，也是可以主張的貢獻。</div>
+  </div>
+  <div class="ftr"></div><div class="num">3</div>
+</section>
+
+<!-- 4 · 反饋 2：4 跳 -->
+<section class="slide" id="s4">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 部分圖的兩個上限 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">先承認第一版卡住了</p>
+        <p style="font-size:17px">只用自家兩張圖（Bank of Anthos 執行期、train-ticket 靜態）時，<b>兩張的直徑都是 3</b>，任何 ≥ 3 的跳數上限切出來的子圖完全一樣 → <b>這個數字根本量不出差別</b>。</p>
+        <p class="sub">所以改用外部語料</p>
+        <p style="font-size:17px"><a href="https://ceur-ws.org/Vol-2520/paper1a.pdf">MicroDepGraph 資料集</a>（SattoSE 2019，LGPL-3.0，<a href="https://github.com/clowee/MicroserviceDataset">資料</a>）的 <b>20 個開源微服務系統</b> ＋ 自家 2 張 ＝ <b>22 張圖、568 組有向可達的服務對</b>。</p>
+        <table style="margin-top:12px">
+          <tr><th style="width:46%">量什麼</th><th>結果</th></tr>
+          <tr><td>直徑（最長的最短路徑）</td><td><b>中位數 2、最大 3</b>，22 張沒有一張超過 3</td></tr>
+          <tr><td>1 跳連得到</td><td>76.8% 的可達服務對</td></tr>
+          <tr><td>2 跳</td><td>95.6%</td></tr>
+          <tr class="hot"><td>3 跳</td><td><b>100.0%</b>（4 跳以上沒有任何新增）</td></tr>
+          <tr><td>放寬跳數的代價</td><td>p90 子圖 <b>12 個節點，1 到 12 跳都一樣</b>；逐組比對只有 <b>4.4%</b> 的問句各多 1 個節點</td></tr>
+        </table>
+      </div>
+      <div>
+        {{CHART:corpus-reach-vs-hops}}
+        <div class="note" style="margin-top:14px;font-size:16px"><b>4 跳的理由：</b><br>① 實測最大深度是 3，上限設在 <b>最大深度 + 1</b>，保證這條規則不會是切斷真實流程的原因。<br>② 放寬的代價<b>接近 0</b>：568 組問句裡只有 25 組（4.4%）各多 1 個節點。因為子圖幾乎就是「種子 ＋ 一跳鄰居」，只有「離每個種子都超過一跳」的節點要靠路徑帶進來，而那種節點只出現在長度 ≥ 3 的路徑中間。<br>③ 上限仍要存在：Alibaba 兩萬個微服務、百億筆呼叫追蹤的研究（<a href="https://doi.org/10.1145/3472883.3487003">SoCC 2021</a>）顯示<b>有超過 4% 的呼叫圖深度超過 10</b>，沒有上限就會把兩個不相干的服務用一條十跳的路徑接成「一條流程」。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　先講第一版怎麼卡住：自家兩張圖直徑都是 3，三跳以上切出來都一樣。所以找外部語料，22 張圖、568 組。直徑最大 3、三跳 100%。放寬跳數那一列要小心講：表上每一列只統計「該跳數連得到的配對」（436／543／568），母體不同，所以我另外逐組比對——1 跳和 2 跳的完全不變，3 跳的 25 組各多 1 個節點，也就是 4.4%。機制是子圖幾乎等於「種子＋一跳鄰居」，只有「離每個種子都超過一跳」的節點要靠路徑，那種節點只出現在長度 ≥ 3 的路徑中間。這批語料的限制也要講：邊是 depends_on 與內部 API 的宣告關係、不是觀測到的呼叫，是上界估計，2021 快照。Alibaba 那 4% 是二手數字，我沒跑過那份 25 GB 資料。</div>
+  </div>
+  <div class="ftr"></div><div class="num">4</div>
+</section>
+
+<!-- 5 · 反饋 2：20 節點 -->
+<section class="slide" id="s5">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 部分圖的兩個上限 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div>
+        <p class="sec">20 節點：文獻給的可讀性天花板</p>
+        <p style="font-size:16px"><a href="https://doi.org/10.1057/palgrave.ivs.9500092">Ghoniem, Fekete &amp; Castagliola</a>（<i>Information Visualization</i> 2005）的受控實驗原文：「超過二十個頂點時，矩陣式呈現在多數任務上勝過節點連結圖；<b>只有路徑尋找始終站在節點連結圖這邊</b>」。</p>
+        <p style="font-size:15px;margin-top:8px"><a href="https://doi.org/10.1109/TVCG.2018.2865940">Okoe, Jianu &amp; Kobourov（TVCG 2019）</a>用群眾外包、更廣的任務集、更大的真實網路（258 節點）<b>重做了這個比較</b>：節點連結圖在<b>連通性</b>任務較好，矩陣在共同鄰居與群集任務較好——<b>支持我們選的形式，但沒有重述「二十」這個門檻</b>。所以 20 我說成「2005 年受控實驗的門檻」，不說成公認上限。</p>
+        <p style="font-size:16px;margin-top:6px">部分圖要讀的正是<b>路徑</b> → 形式選節點連結圖是對的，而 <b>20 是這個形式的可讀性天花板</b>。</p>
+        <p class="sub">而且 20 剛好咬住</p>
+        <table class="sm">
+          <tr><th class="c" style="width:34%">問句點名幾個服務</th><th class="c">子圖中位數</th><th class="c">p90</th><th class="c">最大</th></tr>
+          <tr><td class="c">1</td><td class="c">5</td><td class="c">9</td><td class="c">9</td></tr>
+          <tr><td class="c">3</td><td class="c">9</td><td class="c">12</td><td class="c">13</td></tr>
+          <tr><td class="c">6</td><td class="c">15</td><td class="c">18</td><td class="c">19</td></tr>
+          <tr class="hot"><td class="c">8（查詢的種子上限）</td><td class="c">20</td><td class="c">21</td><td class="c"><b>21</b></td></tr>
+        </table>
+        <p style="font-size:15px;margin-top:6px">242 組起點集合裡<b>只有 1 組</b>會被 20 截掉——20 同時是文獻的天花板，又正好只截掉分布的極端一點。</p>
+      </div>
+      <div>
+        {{CHART:subgraph-nodes}}
+        <div class="note" style="margin-top:10px;font-size:15px"><b>對自己不利、但照登：</b>事先寫好的規則（「讓 ≥ 90% 子圖不被截的最小上限」）選出的是 <b>15</b>，比 20 緊。仍採 20 的理由另外講：這個上限的用途是<b>安全閥</b>，不是最佳化目標；在天花板以下多畫一個節點沒有壞處，少畫一個就少一個事實，15 會讓 5% 的子圖無謂被截。<b>規則的答案照登，採用的理由分開寫。</b></div>
+      </div>
+    </div>
+    <p class="cap" style="text-align:left;margin-top:6px"><b>附帶發現（值得寫進論文）：</b>22 張圖裡 9 張直徑只有 1、11 張是 2、2 張是 3 → 微服務依賴圖是「閘道 ＋ 一層業務服務 ＋ 共用基礎設施」的星狀結構。<b>部分圖要解的問題其實是「寬」不是「深」</b>，所以節點上限才是真正會生效的參數，跳數上限只是防長尾用的。</p>
+    <div class="notes"><b>講稿</b>　20 是文獻給的天花板：超過二十個頂點，節點連結圖就輸給矩陣，唯一例外是找路徑——而我們要讀的正是路徑。同時要說明我沒有對自己的圖做可讀性實驗。實測 242 組裡只有 1 組被截，剛好咬住；8 個起點是壓力測試不是典型，流程成員是我標的。右下誠實講：事先寫的規則選出 15，我還是採 20，因為它是安全閥不是最佳化目標，規則的答案照登、採用的理由分開寫。最下面那行：這類圖是寬不是深。</div>
+  </div>
+  <div class="ftr"></div><div class="num">5</div>
+</section>
+
+<!-- 6 · 反饋 3：純 AI 對照設計 -->
+<section class="slide" id="s6">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ 純 AI 對照 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">三組比較：同一批題目、同一個模型、temperature = 0</p>
+    <table>
+      <tr><th style="width:16%">組別</th><th style="width:40%">模型看得到什麼</th><th>代表什麼</th></tr>
+      <tr><td><span class="tag ai">report-only</span></td><td>報告全文（最多 60 000 字），沒有檢索、沒有路由、沒有圖</td><td>「直接把報告丟給 LLM 問」</td></tr>
+      <tr><td><span class="tag ai">rag</span></td><td>正式環境檢索器取回的段落，僅此而已</td><td>一般 RAG 基線</td></tr>
+      <tr class="hot"><td><span class="tag mix">depweaver</span></td><td>正式流程：語意路由（沒把握才叫 planner）→ 圖查詢 → 確定性結果 ＋ 同一批段落</td><td>現行系統</td></tr>
+    </table>
+    <div class="two" style="margin-top:12px;gap:26px">
+      <div>
+        <p class="sub">怎麼評分：不靠人判斷、不靠 LLM 當裁判</p>
+        <ul style="font-size:17px">
+          <li>每一題的答案都是<b>一組節點</b>（誰呼叫 X、X 掛掉影響誰、哪些服務真的用資料庫、哪些邊沒有執行期證據……）</li>
+          <li><b>標準答案 ＝ 圖查詢引擎對該題標註查詢的輸出</b>——我只標「這題用哪條查詢」，答案由程式在圖上算；所以<b>三組同一份 gold、我改不了</b>，但也代表<b>圖錯 gold 就錯</b></li><li>評分程式從回答文字裡抓出圖上存在的節點，算 precision／recall／F1</li>
+          <li>另記兩個指標：<b>off-graph</b>（像服務名但圖上沒有）與<b>圖與報告都沒有</b>（最接近「憑空捏造」的訊號）</li>
+          <li>指標是<b>近似值</b>：抓的是 <span class="mono">a-b</span> 形式的小寫詞，英文連字詞可能誤抓，所以只看比例、不當成謊言計數</li>
+        </ul>
+      </div>
+      <div>
+        <p class="sub">這個比較內建的偏袒，寫在結果旁邊</p>
+        <div class="note" style="margin-top:6px;font-size:15.5px">標準答案 ＝ 在圖上跑標註的那條查詢。而 depweaver 的正式流程也是<b>在圖上跑同一條查詢</b>再讓模型講成人話——<b>它收到的輸入就是標準答案本身</b>。<br><b>像考試把答案卷發給其中一組，再用那張答案卷改考卷。</b><br>所以 1.000 要讀成「<b>路由選對查詢 ＋ 模型忠實轉述</b>」這個<b>下限檢查</b>，不是「我們比較強」。公平的比法要讓標準答案來自管線之外（例如專案自己的架構文件）。</div>
+        <p class="sub" style="margin-top:12px">評分程式自己踩過的三個坑</p>
+        <ul style="font-size:16px">
+          <li>圖答「沒有」的題目標準答案是空集合 → <b>答對反而 0 分</b>。改成不自動計分、逐題列出讓人判讀</li>
+          <li>引擎的否定句與 <span class="mono">Query:</span> 回音污染標準答案 → <b>複誦問句裡的名字就能拿滿分</b></li>
+          <li>查詢運算子名被當成「編造的服務名」</li>
+        </ul>
+        <p style="font-size:15px;margin-top:6px">第一輪的原始數字因此<b>不可用</b>——是評分程式的錯，不是系統的錯。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　三組、同一批十題、同一個模型、temperature 零。先解釋「接地」＝回答前先去確定的地方查事實、模型只負責講成人話；三組就是照接地程度排的。偏袒那格一定要把兩條線接起來講：標準答案＝在圖上跑標註的那條查詢；depweaver 的正式流程也是在圖上跑同一條查詢——**它收到的輸入就是標準答案本身**。用考試比喻：另外兩組讀課本自己推，我把答案卷發給第三組，再拿那張答案卷改考卷。所以 1.000 要讀成「路由選對查詢＋模型忠實轉述」的**下限檢查**（拿不到 1.0 代表管線壞了），不是我們比較強。公平的比法要讓標準答案來自管線之外。評分程式的三個界線也要講：量的是點名了哪些服務不是說法對不對、否定句只在 gold 端過濾、off-graph 清單手動維護。</div>
+  </div>
+  <div class="ftr"></div><div class="num">6</div>
+</section>
+
+<!-- 7 · 反饋 3：三輪對比（主打） -->
+<section class="slide" id="s7">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ 純 AI 對照 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">同一題、同一個模型，三種證據等級</p>
+    <p style="font-size:16px;margin-bottom:10px">題目：<b>「<span class="id">transactionhistory</span> 和 <span class="id">ledger-db</span> 有關係嗎？」</b>（真實情況：有，而且 8/25 的執行期驗證量到資料層 5 條全中）</p>
+    <div class="flow3" style="grid-template-columns:1fr auto 1fr auto 1fr;gap:10px">
+      <div class="box" style="min-height:340px;padding:24px 26px;border-radius:32px;font-size:16.5px">
+        <h3 style="font-size:19px">第一輪：圖漏了這條邊</h3>
+        <p><b>靜態圖的 6 條資料庫邊全部來自文件層</b>，文件沒提到 transactionhistory，圖上就沒有它。</p>
+        <p style="margin-top:10px"><span class="bad">三組全部答「沒有關係」——全錯。</span></p>
+        <p style="margin-top:10px">接地組還特地補一句「transactionhistory 沒有任何對外依賴」。<b>圖錯時，接地不會救你，反而讓錯誤講得更有自信。</b></p>
+      </div>
+      <div class="arrow">修圖</div>
+      <div class="box" style="min-height:250px;padding:20px 22px;border-radius:28px;font-size:15px">
+        <h3 style="font-size:18px">第三輪：靜態修好 → 虛線</h3>
+        <p>根因：Spring Boot 對 <span class="mono">SPRING_DATASOURCE_URL</span> 是<b>隱式綁定</b>，程式碼裡沒有那一行，合併器就不畫邊。缺的資訊在 Deployment 的 <span class="mono">envFrom</span> 裡。</p>
+        <p style="margin-top:10px"><span class="ok">三組全對。</span>接地組答：「由程式碼與文件宣告並有使用證據，<b>但在本次靜態分析中尚未觀察到執行期連線</b>」，並附 manifest 檔名。</p>
+      </div>
+      <div class="arrow">部署</div>
+      <div class="box hot" style="min-height:250px;padding:20px 22px;border-radius:28px;font-size:15px">
+        <h3 style="font-size:18px">第二輪：執行期 → 實線</h3>
+        <p>把 Bank of Anthos 真的部署起來，Istio 的 TCP 觀測量到 <b>5 191 條連線</b>。</p>
+        <p style="margin-top:10px"><b>三組全對。</b></p>
+        <p style="margin-top:10px">這條邊從「圖上沒有」→「虛線、誠實說沒量到」→「實線、有次數」，<b>三種證據等級各出現一次</b>。</p>
+      </div>
+    </div>
+    <div class="note" style="margin-top:16px;font-size:19px"><b>這一頁的結論：</b>同一題、同一個模型，<b>圖錯三組全錯、圖對三組全對。決定答案品質的是圖，不是 LLM。</b></div>
+    <div class="notes"><b>講稿</b>　三輪裡最值得講的一組。第一輪圖漏，三組全錯，而且我們這組錯得最有自信。根因是 Spring Boot 對 datasource 隱式綁定，程式碼裡沒有讀那個變數的行——這是通則不是這個專案特有，原本三個專案沒暴露是因為 petclinic 剛好被文件層補上了。修的時候只接受資料儲存與佇列類主機、有持久化才標 documented，所以不會反而多畫。第三輪虛線、誠實說沒量到；第二輪執行期 5191 條、實線。畫面照證據等級排，實跑是 21、22、23；第二輪機器跑成執行期，所以靜態修正的端到端驗證是第三輪才完成。</div>
+  </div>
+  <div class="ftr"></div><div class="num">7</div>
+</section>
+
+<!-- 8 · 反饋 3：三輪數字與型態 -->
+<section class="slide" id="s8">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ 純 AI 對照 <small>3</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:24px">
+      <div>
+        <p class="sec">三輪數字</p>
+        <table class="sm">
+          <tr><th style="width:15%">輪次</th><th style="width:19%">報告來源</th><th class="c" style="width:22%">report-only<br>P / R / F1</th><th class="c" style="width:22%">rag<br>P / R / F1</th><th class="c">depweaver<br>P / R / F1</th></tr>
+          <tr><td>第一輪<br>9/21</td><td>靜態（修前，<b>圖漏一條邊</b>）</td><td class="c">.984 / .825 / .888</td><td class="c">.961 / .948 / .951</td><td class="c"><b>1.00 / 1.00 / 1.00</b></td></tr>
+          <tr><td>第二輪<br>9/22</td><td>執行期（Istio TCP）</td><td class="c">.984 / .943 / .956</td><td class="c">.982 / .885 / .925</td><td class="c"><b>1.00 / 1.00 / 1.00</b></td></tr>
+          <tr class="hot"><td>第三輪<br>9/23</td><td>靜態（<b>修後</b>）</td><td class="c">.861 / .722 / .779</td><td class="c">.986 / .837 / .898</td><td class="c"><b>1.00 / .963 / .978</b></td></tr>
+        </table>
+        <p class="sub">沒有接地的兩組，失分型態很固定</p>
+        <ul style="font-size:16.5px">
+          <li><b>純讀報告：不胡說，但少講。</b>precision 一直很高，失分幾乎都在 recall（0.72–0.94，隨報告裡「硬句子」的多寡起伏）。執行期報告有「TCP 5 191 次」這種句子，它就答得好；靜態報告沒有，它就漏。<b>不完整而語氣肯定，讀者看不出少了什麼</b>——這是沒有接地最危險的形態。</li>
+          <li><b>多跳推理必失手：</b>「accounts-db 掛掉會影響誰」5 個只答 3 個。傳遞閉包正是圖查詢的價值，也符合 <a href="https://arxiv.org/abs/2502.11371">GraphRAG 文獻</a>的觀察。</li>
+          <li><b>RAG 在「答案是沒有」的題目上壞得最明顯：</b>沒有叢集資料時列了 11 個服務、沒有外部主機時列出 GKE／Cloud SQL／Cloud Trace。不是幻覺（報告多半提過），但<b>回答的不是問題</b>。</li>
+        </ul>
+      </div>
+      <div>
+        {{CHART:baseline-arms}}
+        <div class="note" style="margin-top:14px;font-size:16.5px"><b>整節的結論：</b>對照實驗<b>量到的不是 LLM 的好壞，是圖的好壞</b>。接地組每一輪的失分都能追到圖上一個具體缺陷，修掉就消失——第三輪唯一的失分追到「文件層用去連字號的拼法又造了一份資料庫」，已修。</div>
+        <p style="font-size:15px;margin-top:10px;color:#6f6f6f"><b>樣本限制：</b>10 題、一個專案、一份 archive、一個模型，F1 差距不做統計檢定。最省的強化是把題目擴到 train-ticket 的 archive 再跑一次。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　接地那一欄很漂亮但我不主打，因為前一頁講過它內建偏袒。有內容的是三個失分型態：純讀報告不胡說但少講，而且少講的程度取決於報告裡有沒有硬數字；多跳推理一定失手；RAG 在「答案是沒有」的題目填清單。第二輪 RAG 那 0.30 多半是評分的近似誤差不是幻覺，那兩個名字是真實的初始化 Job。第三輪我們是 0.963，因為標準答案被重複拼法污染，已修但這一輪的數字是修正前的，我不想事後重算一個好看的數字。結論：量到的是圖不是 LLM；範圍：這個實驗不證明工具整體有用。</div>
+  </div>
+  <div class="ftr"></div><div class="num">8</div>
+</section>
+
+<!-- 9 · 反饋 4：曲線圖 -->
+<section class="slide" id="s9">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ④ 參數曲線 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">11 張曲線圖，直接從實驗 CSV 產生</p>
+    <p style="font-size:17px;margin-bottom:10px">繪圖程式只用 Python 標準函式庫、直接輸出 SVG（向量，貼進投影片與論文不會糊）；配色用經過色盲檢查的類別色，每條線除了顏色還有<b>線尾標籤</b>，識別不只靠顏色。重跑實驗就重畫，不用手工改圖。</p>
+    <div class="two" style="gap:24px">
+      <div>
+        {{CHART:router-operating-curve}}
+        <p class="cap">路由門檻的操作曲線：<b>2 990 組</b>門檻組合攤開，橫軸「有把握但答錯」、縱軸「有把握的比例」，標出選定組合與舊門檻的位置——一眼看得出舊門檻在哪、為什麼要換</p>
+      </div>
+      <div>
+        {{CHART:corpus-slice-vs-hops}}
+        <p class="cap">22 個真實系統：跳數上限對子圖大小的影響——<b>1 到 12 跳的 12 條線完全重疊</b>。每條線只統計「該跳數連得到的配對」，所以要配合逐組比對看：4.4% 的問句各多 1 個節點</p>
+      </div>
+    </div>
+    <p class="cap" style="text-align:left;margin-top:12px;font-size:15px">另外 9 張：<span class="mono">router-coverage-vs-t</span> · <span class="mono">router-wrong-vs-t</span> · <span class="mono">topk-recall</span> · <span class="mono">topk-cost</span> · <span class="mono">subgraph-hops</span> · <span class="mono">subgraph-nodes</span> · <span class="mono">subgraph-size-vs-seeds</span> · <span class="mono">corpus-diameters</span> · <span class="mono">corpus-reach-vs-hops</span>　（本次簡報其他頁面已用到 3 張）</p>
+    <div class="notes"><b>講稿</b>　只用標準函式庫是刻意的，這支程式跑在測試環境，不想為了畫圖增加相依；輸出 SVG 是向量，而且本身就是文字。讀實驗的 CSV 就畫，重跑實驗就重畫。左邊把 2990 組門檻攤開，一眼看得出舊的在哪、新的在哪；路由門檻是上一次的反饋，這次只是畫成曲線。右邊 12 條線完全重疊，但要配合第 4 頁的但書講：每條線只統計該跳數連得到的配對，逐組比對是 4.4% 的問句各多 1 個節點，所以講「幾乎不用付代價」不要講「零」。色盲檢查有驗證腳本，對比度偏低的三色用線尾標籤補償——但那是程式模擬，沒找真的色覺異常的人測過。要補一句：**這頁只是換個方式呈現，不會讓數字更可信**，每張圖的限制就是它背後那個實驗的限制。</div>
+  </div>
+  <div class="ftr"></div><div class="num">9</div>
+</section>
+
+<!-- 10 · 反饋 5：top-k -->
+<section class="slide" id="s10">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ⑤ 檢索 top-k <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w46" style="gap:24px">
+      <div>
+        <p class="sec">網格拉到 80 ＝ 整份報告的段數</p>
+        <table class="xs">
+          <tr><th class="c" style="width:12%">k</th><th class="c">Recall@k</th><th class="c">Precision@k</th><th class="c">實際選進段數</th><th class="c">平均 context</th></tr>
+          <tr><td class="c">8</td><td class="c">0.605</td><td class="c">0.192</td><td class="c">8.0</td><td class="c">6 447</td></tr>
+          <tr class="hot"><td class="c"><b>16</b></td><td class="c"><b>0.807</b></td><td class="c">0.138</td><td class="c">16.0</td><td class="c">14 421（<b>60% 預算</b>）</td></tr>
+          <tr><td class="c">20</td><td class="c">0.818</td><td class="c">0.113</td><td class="c">20.0</td><td class="c">18 707（78%）</td></tr>
+          <tr><td class="c">28</td><td class="c"><b>0.917</b>（平台）</td><td class="c">0.101</td><td class="c">26.5</td><td class="c">22 539（94%）</td></tr>
+          <tr><td class="c">32–80</td><td class="c">0.917（完全不動）</td><td class="c">0.096→0.088</td><td class="c">28.6→33.2</td><td class="c">23 741→26 231</td></tr>
+        </table>
+        <ul style="font-size:16px;margin-top:10px">
+          <li><b>曲線真的有平台，而且不在網格邊緣：</b>k = 28 之後 Recall 完全不動。上一輪停在 16、還在爬，當時無法判斷。</li>
+          <li><b>k ≥ 24 之後真正的限制是預算不是 k：</b>「實際選進的段數」開始小於 k（k = 80 也只進得去 33 段），因為段落預算先滿了。<b>把 k 開到最大等同把預算用光</b>，事實表與對話歷史會被擠掉。</li>
+          <li><b>k 影響的是「湊齊」不是「找到」：</b>MRR 與 Hit@k 在 k = 8 就飽和，往上加的是需要多段證據的題目。</li>
+        </ul>
+      </div>
+      <div>
+        <div style="max-width:520px;margin:0 auto">{{CHART:topk-recall}}</div>
+        <p class="sub" style="margin-top:10px">選 k 的規則失效了兩次</p>
+        <table class="xs">
+          <tr><th style="width:20%">版本</th><th style="width:44%">規則</th><th>結果</th></tr>
+          <tr><td>第一版</td><td>Recall 達最高值 95% 的最小 k</td><td>網格拉到語料全長後<b>退化</b>成「幾乎讀完整份報告」</td></tr>
+          <tr><td>第二版</td><td>邊際增益首次低於 0.01 的前一個 k（膝點）</td><td>真實曲線是顛簸的，規則<b>在第一個坑就停住，選出 k = 4</b></td></tr>
+          <tr class="hot"><td>第三版<br>（現行）</td><td><b>可負擔集合（≤ 75% 預算）內，達到最高 Recall 95% 的最小 k</b>——Recall 單調不遞減，不受顛簸影響</td><td><b>選出 16 ＝ 維持現行值，不改設定</b></td></tr>
+        </table>
+        <p style="font-size:14px;margin-top:8px"><b>誠實的部分：</b>第三版是<b>看過曲線之後才寫的</b>，文件裡這樣寫。緩解理由是它沒有任何在這 15 題上被微調的參數，但真正的檢驗是<b>換一份別的專案的 archive 重跑</b>——列為待辦。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　網格拉到 80。兩個發現：平台在 28，而且 24 以後真正卡住的是字數預算不是 k。0.917 上不去不是檢索失敗，是標註的界線——有 11 段沒有標題。右下誠實講：選 k 規則失效兩次，第一版在網格拉長後退化，第二版被曲線顛簸騙到選出 4。第三版是看過曲線才寫的，文件裡就這樣寫；辯護是沒有新增自由參數、選出的值跟前一輪一樣是 16，但唯一的證明是換一份 archive 重跑。15 題標註是我做的，而且第一輪是用猜的、不可用，重標過。為何不調到 28：要花 94% 預算，16 只花 60%。</div>
+  </div>
+  <div class="ftr"></div><div class="num">10</div>
+</section>
+
+<!-- 11 · 下一步 -->
+<section class="slide" id="s11">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 下一步 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">接下來要做的</p>
+    <table class="sm">
+      <tr><th style="width:6%">優先</th><th style="width:26%">要做什麼</th><th style="width:40%">為什麼</th><th>狀態</th></tr>
+      <tr class="hot"><td class="c">1</td><td><b>第四輪純 AI 對照</b></td><td>第三輪接地組唯一的失分來自「文件層用去連字號的拼法又造了一份資料庫」，已修但還沒重跑；預期 recall 從 0.963 補到 1.0</td><td>要叢集與 API 額度</td></tr>
+      <tr><td class="c">2</td><td>換一份別的專案的報告<br>重跑 top-k</td><td>現行的選 k 規則是<b>看過 Bank of Anthos 的曲線之後才寫的</b>，要證明 k = 16 不是這一份報告特有的結果</td><td>要叢集與 API 額度</td></tr>
+      <tr><td class="c">3</td><td>換一個新專案<br>部署起來跑執行期分析</td><td>靜態分析抓不到「靠註冊中心動態分派」這種呼叫；要有一個完整例子說明<b>靜態抓不到的、執行期補得上</b>，而且工具不用改</td><td>候選與步驟已備妥</td></tr>
+      <tr><td class="c">4</td><td>證據分級的<br>小型使用者研究</td><td>文獻裡<b>找不到</b>「分級讓工程師決策變好」的研究 → 這是可以主張的貢獻缺口。最小做法：同一張圖，一組有分級一組沒有，問「哪些關係你敢據以做部署決策」</td><td>想討論要不要做</td></tr>
+      <tr><td class="c">—</td><td>AsianPLoP 的 pattern language</td><td>「可信的依賴視圖」：1 個問題、5 個 pattern，每個都有查證過的外部實例</td><td>待確認方向</td></tr>
+    </table>
+    <p class="sub">想討論的兩件事</p>
+    <ul style="font-size:16px">
+      <li><b>使用者研究要不要做。</b>它是目前唯一能把「證據分級有用」從間接證據變成直接證據的方法，但要花時間找受試者；如果不做，論文就以「這是公認的缺口」的方式陳述。</li>
+      <li><b>要不要做「抽圖層」的對照。</b>現在這個問答層的對照<b>內建偏袒、不能用來主張我們比純 AI 強</b>。抽圖層可以：同一個 repo，一組把原始碼丟給 LLM 直接要它輸出服務與邊，一組跑我們的管線，用<b>專案自己的架構文件</b>當標準答案——沒有偏袒。設計已寫在 threshold-design §9.5。</li>
+    </ul>
+    <div class="notes"><b>講稿</b>　第四輪排第一，因為第三輪那個失分已經追到根因也修了，只差重跑。top-k 重跑是要證明 16 不是那一份報告特有的。第三項是找一個新專案部署起來跑執行期。想討論兩件事：使用者研究要不要做——最小規模十幾個受試者、成本在設計題目不在跑；還有抽圖層對照要不要做——那個才能正面回答「我們比純 AI 強嗎」，因為標準答案來自專案自己的架構文件、沒有偏袒。</div>
+  </div>
+  <div class="ftr"></div><div class="num">11</div>
+</section>
+
+<!-- 12 · 參考資料 -->
+<section class="slide" id="s12">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 參考資料 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">外部引用（投影片內的每個連結都可點）</p>
+    <p style="font-size:15px;margin-bottom:10px">灰字是<b>同一條線的現行版本</b>：奠基性的引用（GRADE 2004、EBSE 2004、Ghoniem 2005）不換掉，因為那是起源；但每一條都配一條近期的，證明這個領域到今天仍然在動。</p>
+    <div class="two" style="gap:28px">
+      <div>
+        <p class="sub" style="font-size:17px">證據分級（第 3 頁）</p>
+        <table class="xs" style="font-size:11.5px;line-height:1.32">
+          <tr><td style="width:30%"><b>GRADE</b><br>BMC 2004（起源）<br><span style="color:#6f6f6f">＋ J Clin Epidemiol 2011<br>（現行方法學）</span></td><td class="mono">ncbi.nlm.nih.gov/pmc/articles/PMC545647/<br><span style="color:#6f6f6f">doi.org/10.1016/j.jclinepi.2010.04.026</span></td></tr>
+          <tr><td><b>EBSE</b><br>Kitchenham, ICSE 2004（起源）<br><span style="color:#6f6f6f">＋ 同作者 2015 專書</span></td><td class="mono">cms.simula.no/sites/default/files/<br>publications/SE.5.Kitchenham.2004.pdf<br><span style="color:#6f6f6f">doi.org/10.1201/b19467</span></td></tr>
+          <tr><td><b>CycloneDX</b><br>component evidence（現行 1.6）</td><td class="mono">cyclonedx.org/docs/1.6/json/<br><span style="color:#6f6f6f">cyclonedx.org/guides/sbom/evidence/</span></td></tr>
+          <tr><td><b>SLSA</b> build track<br><b>in-toto</b> attestation</td><td class="mono">slsa.dev/spec/v1.1/faq<br>slsa.dev/spec/draft/build-provenance</td></tr>
+          <tr><td><b>W3C PROV-DM</b></td><td class="mono">w3.org/TR/prov-dm/</td></tr>
+          <tr><td><b>靜態呼叫圖 recall</b><br>Sui et al., ICSE 2020<br><span style="color:#6f6f6f">＋ Total Recall?, ISSTA 2024</span></td><td class="mono">doi.org/10.1145/3377811.3380441<br><span style="color:#6f6f6f">opal-project.de/articles/<br>TotalRecall@ISSTA24.pdf</span></td></tr>
+          <tr><td><b>微服務架構回復工具比較</b><br>Schneider et al.,<br><b>Empirical Softw. Eng. 30(5), 2025</b></td><td class="mono">doi.org/10.1007/s10664-025-10686-2<br><span style="color:#6f6f6f">預印本 arxiv.org/abs/2412.08352</span></td></tr>
+          <tr><td><b>生成式搜尋可驗證性</b><br>Liu et al., EMNLP 2023<br><span style="color:#6f6f6f">＋ Cited but Not Verified,<br>2026-05（深度研究 agent）</span></td><td class="mono">aclanthology.org/2023.findings-emnlp.467/<br><span style="color:#6f6f6f">arxiv.org/abs/2605.06635</span></td></tr>
+          <tr><td><b>RAG vs GraphRAG</b>（第 8 頁）</td><td class="mono">arxiv.org/abs/2502.11371</td></tr>
+        </table>
+      </div>
+      <div>
+        <p class="sub" style="font-size:17px">部分圖的上限（第 4–5 頁）</p>
+        <table class="xs" style="font-size:12.5px;line-height:1.4">
+          <tr><td style="width:30%"><b>MicroDepGraph 資料集</b><br>Rahman, Panichella &amp; Taibi,<br>SattoSE 2019（LGPL-3.0）</td><td class="mono">ceur-ws.org/Vol-2520/paper1a.pdf<br>github.com/clowee/MicroserviceDataset<br><span style="color:#6f6f6f">本地副本：src/test/resources/graphs/<br>microdepgraph/（附 SOURCE.md）</span></td></tr>
+          <tr><td><b>節點連結圖 vs 矩陣的可讀性</b><br>Ghoniem, Fekete &amp; Castagliola,<br><i>Information Visualization</i> 2005<br><span style="color:#6f6f6f">＋ Okoe, Jianu &amp; Kobourov,<br>TVCG 2019（大規模重做）</span></td><td class="mono">doi.org/10.1057/palgrave.ivs.9500092<br><span style="color:#6f6f6f">doi.org/10.1109/TVCG.2018.2865940</span></td></tr>
+          <tr><td><b>Alibaba 呼叫追蹤</b><br>Luo et al., SoCC 2021</td><td class="mono">doi.org/10.1145/3472883.3487003</td></tr>
+        </table>
+        <p class="sub" style="font-size:17px;margin-top:14px">自家兩張圖的來源專案（第 4–5 頁）</p>
+        <table class="xs" style="font-size:12.5px;line-height:1.4">
+          <tr><td style="width:30%"><b>Bank of Anthos</b><br><span style="color:#6f6f6f">執行期圖，10 節點 12 邊</span></td><td class="mono">github.com/GoogleCloudPlatform/bank-of-anthos</td></tr>
+          <tr><td><b>train-ticket</b><br><span style="color:#6f6f6f">靜態圖，53 節點 51 邊</span></td><td class="mono">github.com/FudanSELab/train-ticket</td></tr>
+        </table>
+      </div>
+    </div>
+    <p class="srcs" style="margin-top:6px;font-size:12px">本專案文件：<span class="mono">evidence-grading-related-work.md</span>（每條文獻標驗證狀態）　·　<span class="mono">threshold-design.md</span> §4 §8 §9 §10</p>
+    <div class="notes"><b>講稿</b>　前面每個引用都是可以點的連結，這頁是把完整網址整理出來，印在紙上也找得到。連結我都用程式檢查過狀態碼；SAGE 和 ACM 回 403 是擋機器人，瀏覽器點得開，所以保留 DOI 這個標準引用形式。MicroDepGraph 是 LGPL-3.0，原封不動收錄並附出處。最下面那行是我們自己的文件：每條文獻標了驗證狀態，每條標準答案標了出處。</div>
+  </div>
+  <div class="ftr"></div><div class="num">12</div>
+</section>
+
+<div class="hud">
+  <button type="button" id="notesBtn" aria-pressed="false">講稿 (N)</button>
+  <button type="button" id="printBtn">列印 / PDF</button>
+</div>
+<script>
+  (function () {
+    var body = document.body, btn = document.getElementById('notesBtn');
+    function toggleNotes() { body.classList.toggle('show-notes'); btn.setAttribute('aria-pressed', body.classList.contains('show-notes') ? 'true' : 'false'); }
+    btn.addEventListener('click', toggleNotes);
+    document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    function current() { var y = window.scrollY + window.innerHeight / 2, best = 0; slides.forEach(function (s, i) { if (s.offsetTop <= y) best = i; }); return best; }
+    document.addEventListener('keydown', function (e) {
+      if (e.target && /input|textarea/i.test(e.target.tagName)) return;
+      if (e.key === 'n' || e.key === 'N') { toggleNotes(); return; }
+      var i = current();
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); if (slides[i + 1]) slides[i + 1].scrollIntoView(); }
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); if (slides[i - 1]) slides[i - 1].scrollIntoView(); }
+    });
+  })();
+</script>
