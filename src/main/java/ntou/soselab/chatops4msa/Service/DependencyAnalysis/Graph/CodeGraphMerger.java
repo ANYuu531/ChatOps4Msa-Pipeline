@@ -485,16 +485,22 @@ public class CodeGraphMerger {
             String source = matchNodeLoose(fields.optString("workload", ""));
             if (source == null) continue;
 
-            Set<String> hosts = new LinkedHashSet<>();
+            // Where the address came from decides what a service-kind target means, so the
+            // two sources are kept apart rather than merged into one set.
+            Map<String, Boolean> hosts = new LinkedHashMap<>(); // host -> written on this workload
             String configMap = fields.optString("configmap", "");
-            if (!configMap.isBlank()) hosts.addAll(configMapHosts.getOrDefault(configMap, Set.of()));
+            for (String h : configMapHosts.getOrDefault(configMap, Set.of())) hosts.putIfAbsent(h, false);
             String literal = fields.optString("host", "");
-            if (!literal.isBlank()) hosts.add(literal);
+            if (!literal.isBlank()) hosts.put(literal, true);
 
             String file = edge.optString("file", "");
-            for (String host : hosts) {
+            for (Map.Entry<String, Boolean> entry : hosts.entrySet()) {
+                String host = entry.getKey();
                 if (isLoopback(host)) continue;
-                String node = matchNode(host);
+                // Loose: a manifest often injects the short service name (REGISTRY_HOST:
+                // registry) while the workload is deployed as teastore-registry. Matching
+                // strictly here invented a second node for the same component.
+                String node = matchNodeLoose(host);
                 if (node == null) {
                     String label = cleanLabel(host);
                     if (label == null || !isPlausibleName(label)) continue;
@@ -502,7 +508,19 @@ public class CodeGraphMerger {
                 }
                 if (node.equals(source)) continue;
                 String kind = DependencyGraph.classifyKind(node);
-                if (!DependencyGraph.KIND_DB.equals(kind) && !DependencyGraph.KIND_QUEUE.equals(kind)) continue;
+                if (!DependencyGraph.KIND_DB.equals(kind) && !DependencyGraph.KIND_QUEUE.equals(kind)) {
+                    // A service address written into this workload's own env is that
+                    // workload saying which service it needs — the most explicit form a
+                    // declaration takes in a manifest. Drawing nothing puts it level with
+                    // "no evidence at all", which is what the inferred grade exists to
+                    // avoid; drawing it dotted says "declared, no use observed".
+                    // A shared ConfigMap is still excluded: it is handed to workloads that
+                    // call none of it, and there the code layer is the only honest source.
+                    if (!entry.getValue()) continue;
+                    graph.addNode(node, kind);
+                    addCodeEdge(source, node, edgeType("", kind), file, -1, DependencyGraph.CONF_INFERRED);
+                    continue;
+                }
                 graph.addNode(node, kind);
                 String confidence = DependencyGraph.KIND_DB.equals(kind) && !persistenceServices.contains(source)
                         ? DependencyGraph.CONF_INFERRED

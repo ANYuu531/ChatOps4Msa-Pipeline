@@ -10,12 +10,13 @@
 - url = 11
 - jpa = 4
 - config = 8
+- compose-service = 18
 - compose-dependency = 16
 - env-address = 2
 - workload-env = 2
 - k8s-workload = 3
 - service-root = 13
-- TOTAL = 71 | files with syntax errors = 0
+- TOTAL = 89 | files with syntax errors = 0
 
 ## graph
 - after merge: 15 nodes / 18 edges | after normalize: 15 nodes / 18 edges | unresolved code edges = 1

@@ -12,7 +12,7 @@
 | tap-and-eat | [`3ad20b8`](https://github.com/jferrater/Tap-And-Eat-MicroServices/tree/3ad20b8fa421dc837ef423270a9bf9ece1615a03) (2017-01-04) | 4 | 4 | **1.00** | 3 |
 | spring-cloud-netflix | [`3b86bf0`](https://github.com/yidongnan/spring-cloud-netflix-example/tree/3b86bf0e20a7c7da8f4e3e7e2cb15bf4cd407743) (2020-09-11) | 26 | 26 | **1.00** | 2 |
 | spring-cloud-microservice | [`6938297`](https://github.com/zpng/spring-cloud-microservice-examples/tree/6938297335e924f8066f5558b79ee82fa204c4ee) (2017-03-23) | 26 | 24 | **0.92** | 5 |
-| lakeside-mutual | [`4fc6b43`](https://github.com/Microservice-API-Patterns/LakesideMutual/tree/4fc6b430da8a8c5db9a8d5918117e3c7a6a89c6d) (2021-02-26) | 9 | 9 | **1.00** | 3 |
+| lakeside-mutual | [`4fc6b43`](https://github.com/Microservice-API-Patterns/LakesideMutual/tree/4fc6b430da8a8c5db9a8d5918117e3c7a6a89c6d) (2021-02-26) | 9 | 9 | **1.00** | 11 |
 | robot-shop | [`2fcc0c9`](https://github.com/instana/robot-shop/tree/2fcc0c9835dbb8c0c2db54f888608891f72aa308) (2021-02-24) | 12 | 12 | **1.00** | 6 |
 | **合計** | 7 個專案 | **95** | **91** | **0.96** | — |
 
@@ -72,9 +72,17 @@
 
 資料集的 9 條邊**全部畫到**。
 
-工具畫了、資料集沒有（3 條；資料集看不到外部主機與程式碼層呼叫，所以多出來不等於錯）：
+工具畫了、資料集沒有（11 條；資料集看不到外部主機與程式碼層呼叫，所以多出來不等於錯）：
 - customer-core -> eureka-server  (sync-http, documented)
+- customer-core -> spring-boot-admin  (sync-http, inferred)
+- customer-management-backend -> eureka-server  (sync-http, inferred)
+- customer-management-backend -> spring-boot-admin  (sync-http, inferred)
+- customer-self-service-backend -> eureka-server  (sync-http, inferred)
 - customer-self-service-backend -> policy-management-backend  (sync-http, documented)
+- customer-self-service-backend -> spring-boot-admin  (sync-http, inferred)
+- policy-management-backend -> eureka-server  (sync-http, inferred)
+- policy-management-backend -> spring-boot-admin  (sync-http, inferred)
+- risk-management-server -> policy-management-backend-queue  (sync-http, inferred)
 - spring-boot-admin -> eureka-server  (sync-http, documented)
 
 ## robot-shop

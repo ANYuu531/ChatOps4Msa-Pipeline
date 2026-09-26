@@ -5,6 +5,7 @@ frontend	cartservice	business	src/frontend/main.go:134 CART_SERVICE_ADDR；kuber
 frontend	shippingservice	business	src/frontend/main.go:137 SHIPPING_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:78 value: "shippingservice:50051"
 frontend	currencyservice	business	src/frontend/main.go:133 CURRENCY_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:72 value: "currencyservice:7000"
 frontend	checkoutservice	business	src/frontend/main.go:136 CHECKOUT_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:80 value: "checkoutservice:5050"
+frontend	shoppingassistantservice	business	src/frontend/main.go:139 mustMapEnv(&svc.shoppingAssistantSvcAddr, "SHOPPING_ASSISTANT_SERVICE_ADDR")；值在 kubernetes-manifests/frontend.yaml:84 value: "shoppingassistantservice:80"（2026-09-26 補：README 的架構圖沒畫這個服務，照圖標註時漏了，是工具從 manifest 抓到的）
 checkoutservice	productcatalogservice	business	src/checkoutservice/main.go:112 PRODUCT_CATALOG_SERVICE_ADDR；kubernetes-manifests/checkoutservice.yaml:57
 checkoutservice	cartservice	business	src/checkoutservice/main.go:113 CART_SERVICE_ADDR；kubernetes-manifests/checkoutservice.yaml:67
 checkoutservice	shippingservice	business	src/checkoutservice/main.go:111 SHIPPING_SERVICE_ADDR；kubernetes-manifests/checkoutservice.yaml:59

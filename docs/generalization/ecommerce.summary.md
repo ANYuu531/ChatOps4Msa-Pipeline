@@ -7,9 +7,10 @@
 - http-server = 128
 - jpa = 28
 - feign = 33
+- compose-service = 21
 - config = 46
 - service-root = 10
-- TOTAL = 389 | files with syntax errors = 0
+- TOTAL = 410 | files with syntax errors = 0
 
 ## graph
 - after merge: 11 nodes / 20 edges | after normalize: 11 nodes / 20 edges | unresolved code edges = 0

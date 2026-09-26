@@ -4,29 +4,47 @@ flowchart TB
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
   subgraph layer0 ["entry services"]
     direction LR
-    recommendationservice["recommendationservice"]
-    cartservice["cartservice"]
+    loadgenerator["loadgenerator"]
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
-    productcatalogservice["productcatalogservice"]
-  end
-  subgraph layer2 ["data stores"]
-    direction LR
-    redis_cart[("redis-cart")]:::db
-  end
-  subgraph layer3 ["no dependencies found"]
-    direction LR
-    emailservice["emailservice"]
-    checkoutservice["checkoutservice"]
     frontend["frontend"]
-    paymentservice["paymentservice"]
-    loadgenerator["loadgenerator"]
-    currencyservice["currencyservice"]
-    shippingservice["shippingservice"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    checkoutservice["checkoutservice"]
+    recommendationservice["recommendationservice"]
     adservice["adservice"]
     shoppingassistantservice["shoppingassistantservice"]
   end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    emailservice["emailservice"]
+    paymentservice["paymentservice"]
+    productcatalogservice["productcatalogservice"]
+    cartservice["cartservice"]
+    currencyservice["currencyservice"]
+    shippingservice["shippingservice"]
+  end
+  subgraph layer4 ["data stores"]
+    direction LR
+    redis_cart[("redis-cart")]:::db
+  end
   recommendationservice -.-> productcatalogservice
+  checkoutservice -. declared? .-> productcatalogservice
+  checkoutservice -. declared? .-> shippingservice
+  checkoutservice -. declared? .-> paymentservice
+  checkoutservice -. declared? .-> emailservice
+  checkoutservice -. declared? .-> currencyservice
+  checkoutservice -. declared? .-> cartservice
+  frontend -. declared? .-> productcatalogservice
+  frontend -. declared? .-> currencyservice
+  frontend -. declared? .-> cartservice
+  frontend -. declared? .-> recommendationservice
+  frontend -. declared? .-> shippingservice
+  frontend -. declared? .-> checkoutservice
+  frontend -. declared? .-> adservice
+  frontend -. declared? .-> shoppingassistantservice
   cartservice -. db? .-> redis_cart
+  loadgenerator -. declared? .-> frontend
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;

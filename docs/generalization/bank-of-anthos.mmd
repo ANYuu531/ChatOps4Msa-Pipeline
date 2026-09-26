@@ -4,27 +4,30 @@ flowchart TB
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
   subgraph layer0 ["entry services"]
     direction LR
-    frontend["frontend"]
+    loadgenerator["loadgenerator"]
   end
   subgraph layer1 ["services · depth 1"]
+    direction LR
+    frontend["frontend"]
+  end
+  subgraph layer2 ["services · depth 2"]
     direction LR
     ledgerwriter["ledgerwriter"]
     transactionhistory["transactionhistory"]
     contacts["contacts"]
     userservice["userservice"]
   end
-  subgraph layer2 ["services · depth 2"]
+  subgraph layer3 ["services · depth 3"]
     direction LR
     balancereader["balancereader"]
   end
-  subgraph layer3 ["data stores"]
+  subgraph layer4 ["data stores"]
     direction LR
     accounts_db[("accounts-db")]:::db
     ledger_db[("ledger-db")]:::db
   end
-  subgraph layer4 ["no dependencies found"]
+  subgraph layer5 ["no dependencies found"]
     direction LR
-    loadgenerator["loadgenerator"]
     pgpool_operator["pgpool-operator"]
   end
   ledgerwriter -.-> balancereader
@@ -35,6 +38,7 @@ flowchart TB
   frontend -.-> contacts
   ledgerwriter -. db .-> ledger_db
   transactionhistory -. db .-> ledger_db
+  loadgenerator -. declared? .-> frontend
   balancereader -. db .-> ledger_db
   contacts -. db .-> accounts_db
   userservice -. db .-> accounts_db

@@ -7,12 +7,13 @@
 - http-server = 16
 - feign = 5
 - config = 45
+- compose-service = 28
 - compose-dependency = 8
 - service-root = 10
-- TOTAL = 88 | files with syntax errors = 0
+- TOTAL = 116 | files with syntax errors = 0
 
 ## graph
-- after merge: 17 nodes / 41 edges | after normalize: 17 nodes / 41 edges | unresolved code edges = 0
+- after merge: 16 nodes / 41 edges | after normalize: 16 nodes / 41 edges | unresolved code edges = 0
 - persistence services: [statistics-service, account-service, notification-service, auth-service]
 
 ## nodes (kind, layer)
@@ -23,7 +24,6 @@
 - auth-service  [service, L4]
 - config  [service, L5]
 - gateway  [service, L0]
-- mongodb  [db, L8]
 - monitoring  [service, L0]
 - notification-mongodb  [db, L6]
 - notification-service  [service, L1]
@@ -87,9 +87,9 @@ flowchart TB
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
   subgraph layer0 ["entry services"]
     direction LR
-    turbine_stream_service["turbine-stream-service"]
-    monitoring["monitoring"]
     gateway["gateway"]
+    monitoring["monitoring"]
+    turbine_stream_service["turbine-stream-service"]
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
@@ -114,20 +114,16 @@ flowchart TB
   end
   subgraph layer6 ["data stores"]
     direction LR
-    auth_mongodb[("auth-mongodb")]:::db
-    notification_mongodb[("notification-mongodb")]:::db
-    statistics_mongodb[("statistics-mongodb")]:::db
     rabbitmq{{"rabbitmq"}}:::queue
+    auth_mongodb[("auth-mongodb")]:::db
     account_mongodb[("account-mongodb")]:::db
+    statistics_mongodb[("statistics-mongodb")]:::db
+    notification_mongodb[("notification-mongodb")]:::db
   end
   subgraph layer7 ["external"]
     direction LR
     api_exchangeratesapi_io[/"api.exchangeratesapi.io"/]:::external
     smtp_gmail_com[/"smtp.gmail.com"/]:::external
-  end
-  subgraph layer8 ["no dependencies found"]
-    direction LR
-    mongodb[("mongodb")]:::db
   end
   statistics_service -. ext .-> api_exchangeratesapi_io
   account_service -.-> statistics_service

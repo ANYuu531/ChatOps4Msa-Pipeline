@@ -103,6 +103,9 @@ public class ExternalTruthAgreementTest {
           .append("| 專案 | commit（日期） | 資料集邊 | 工具畫到 | 一致度 | 工具另外畫了 |\n")
           .append("|---|---|---|---|---|---|\n");
         StringBuilder details = new StringBuilder();
+        // The same numbers as a CSV, so the figure is drawn from what the scorer counted
+        // rather than from the table being retyped (docs/charts/plot_external_agreement.py).
+        StringBuilder csv = new StringBuilder("project,commit,date,dataset_edges,drawn,agreement,tool_only\n");
 
         int datasetTotal = 0;
         int drawnTotal = 0;
@@ -129,6 +132,10 @@ public class ExternalTruthAgreementTest {
                     c.name, c.commit.substring(0, 7), c.repo, c.commit, c.date,
                     dataset.size(), both.size(), ratio(both.size(), dataset.size()), toolOnly.size()));
 
+            csv.append(String.format(Locale.ROOT, "%s,%s,%s,%d,%d,%.4f,%d%n",
+                    c.name, c.commit.substring(0, 7), c.date, dataset.size(), both.size(),
+                    (double) both.size() / dataset.size(), toolOnly.size()));
+
             details.append("\n## ").append(c.name).append('\n');
             if (datasetOnly.isEmpty()) {
                 details.append("\n資料集的 ").append(dataset.size()).append(" 條邊**全部畫到**。\n");
@@ -149,6 +156,7 @@ public class ExternalTruthAgreementTest {
                 datasetTotal, drawnTotal, ratio(drawnTotal, datasetTotal)));
         md.append(details);
         Files.writeString(DIR.getParent().resolve("external-agreement.md"), md.toString());
+        Files.writeString(DIR.getParent().resolve("external-agreement.csv"), csv.toString());
         System.out.println(md);
 
         for (String name : FULL_AGREEMENT) {

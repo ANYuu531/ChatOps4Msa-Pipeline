@@ -7,13 +7,13 @@ flowchart TB
     customer_self_service_frontend["customer-self-service-frontend"]
     policy_management_frontend["policy-management-frontend"]
     risk_management_server["risk-management-server"]
-    spring_boot_admin["spring-boot-admin"]
     customer_management_frontend["customer-management-frontend"]
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
     customer_self_service_backend["customer-self-service-backend"]
     customer_management_backend["customer-management-backend"]
+    policy_management_backend_queue["policy-management-backend-queue"]
   end
   subgraph layer2 ["services · depth 2"]
     direction LR
@@ -24,6 +24,10 @@ flowchart TB
     customer_core["customer-core"]
   end
   subgraph layer4 ["services · depth 4"]
+    direction LR
+    spring_boot_admin["spring-boot-admin"]
+  end
+  subgraph layer5 ["services · depth 5"]
     direction LR
     eureka_server["eureka-server"]
   end
@@ -39,3 +43,11 @@ flowchart TB
   policy_management_frontend -.-> policy_management_backend
   spring_boot_admin -.-> eureka_server
   risk_management_server -.-> policy_management_backend
+  customer_management_backend -. declared? .-> eureka_server
+  customer_self_service_backend -. declared? .-> eureka_server
+  policy_management_backend -. declared? .-> eureka_server
+  customer_core -. declared? .-> spring_boot_admin
+  customer_management_backend -. declared? .-> spring_boot_admin
+  policy_management_backend -. declared? .-> spring_boot_admin
+  customer_self_service_backend -. declared? .-> spring_boot_admin
+  risk_management_server -. declared? .-> policy_management_backend_queue

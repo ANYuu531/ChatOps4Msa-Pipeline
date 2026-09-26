@@ -22,7 +22,7 @@
 4. **但它精準指出了 truth 裡最難複驗的兩組**：online-boutique 的 9 條出處是**一張 PNG 架構圖**——純文字的第三方無法複驗，而標註者從 README 文字推的結果有 3 條方向是反的；TeaStore 的 7 條出處是 **enum 常數的引用次數**，可複驗但要先讀懂 registry 分派機制。這兩組共 16 條（佔七個專案 139 條非變體參考邊的 11.5%），證據性質與其餘 123 條不同，論文要分開講（§3.6）。這是這個方法真正的價值：它不推翻邊，它指出哪些出處撐不起第三方複驗。
 5. **作者標註的地位降級、並且可被別人檢查**：不再稱它為 ground truth／標準答案，改稱「參考邊集」，指標改稱「一致度」；每一條出處都必須是第三方**打得開**、而且**內容真的在裡面**的 `路徑:行`，由 `TruthEvidenceResolvesTest` 斷言（**113／113**）。三道檢查累計抓到 **3 條寫錯的出處 ＋ 3 條不精確的出處**，而**沒有一條是邊本身錯**——這個對比本身就是結論的一部分：作者對「有哪些依賴」的判斷站得住，對「證據在哪一行」的紀錄則需要程式看著。
 
-附帶的收穫：這一輪對照當場逼出工具的 **3 個真缺陷**（§1.6），修完既有七個專案零回歸。
+附帶的收穫：這一輪對照當場逼出工具的 **4 個真缺陷**（§1.6、§1.8），修完**十個**既有專案逐項不變、零錯邊。其中第 14 條把 Online Boutique 的 recall 從 **0.13 拉到 1.00**、Bank of Anthos 從 0.92 到 **1.00**、TeaStore 從 0.08 到 0.46——而這是在追問「為什麼那個專案這麼低」時發現的：**原本歸因為「語言沒有文法」的損失，有一大半其實是工具自己不畫 manifest 已經寫明的宣告**。
 
 ---
 
@@ -63,7 +63,13 @@
 | robot-shop | `2fcc0c9` (2021-02-24) | 12 | 12 | **1.00** | 6 |
 | **合計** | 7 個專案 | **95** | **91** | **0.96** | — |
 
-逐條差異在 `docs/generalization/external-agreement.md`（程式產生）。
+逐條差異在 `docs/generalization/external-agreement.md`，數字另存 `external-agreement.csv`（兩者都由計分程式產生）。圖：
+
+![第三方參考邊集的一致度](charts/external-agreement.svg)
+
+![規則 11–13 前後的一致度](charts/external-agreement-rules.svg)
+
+（`python3 docs/charts/plot_external_agreement.py`，讀的就是計分程式寫的 CSV，所以圖與表不會各說各話。）
 
 ### 1.4 漏的 4 條，逐條原因
 
@@ -72,7 +78,7 @@
 | `hystrix-dashboard → config-server`、`hystrix-dashboard → discovery-server`（petclinic） | **repo 演進**：資料集抓的版本有 hystrix-dashboard，2021-02-06 的 repo 已經沒有這個模組，compose 裡也沒有這個服務 | 不是。工具畫不出不存在的東西，而且它沒有為了對上答案而編造 |
 | `hystrix → discovery`、`hystrix → gateway`（spring-cloud-microservice） | **工具的剩餘邊界**：compose 服務叫 `hystrix`，模組目錄叫 `cloud-hystrix-dashboard`。對應規則接受「完全相同」或「模組名以 `-<部署名>` 結尾」，而這裡部署名是模組名的**中綴縮寫**，對不上，於是那兩條 `links` 解析不到來源 | **是**。不修的理由：允許「任一 `-` 分隔片段唯一匹配」會把 `cloud-simple-service` 配到 `simple`，誤併的代價高於這 2／95 條 |
 
-### 1.5 工具多畫的 27 條是什麼
+### 1.5 工具多畫的 35 條是什麼
 
 抽樣（全部在 `external-agreement.md`）：
 
@@ -84,7 +90,7 @@
 
 **這一欄不是「工具比較好」的證據**，而是「兩邊的方法看得到的東西不同」的證據。要說工具比較好，得對每一條再找出處——那又回到作者標註，所以這裡只列不評分。
 
-### 1.6 這一輪對照當場逼出的兩個真缺陷（都已修，零回歸）
+### 1.6 這一輪對照當場逼出的三個真缺陷（都已修，零回歸；第四個在 §1.8）
 
 **第一個：沒有 k8s manifest 時，節點名用錯了。**
 
@@ -140,6 +146,42 @@ namespace URI 依規範不必指向任何可連的東西。修法：`TreeSitterE
 多出來的 9 條是：`cart→catalogue`、`payment→user`、`payment→cart`、`shipping→cart`、`ratings→catalogue`（程式碼層的呼叫，第三方靠 `depends_on`／`links` 看不到）、`payment→paypal.com`（外部主機，第三方沒有這個概念）、`web→cart`、`web→ratings`、`load→web`（nginx 路由表與另一份 compose 檔）。每一條都有 §2 檢查過、打得開的出處。
 
 **這一比的意義**：如果作者的標註有「往自己的工具傾斜」的偏差，最可能的形態是**漏掉工具抓不到的邊**（分母變小、分數變好看）。這裡漏標是 **0**——第三方認定的每一條都在作者的 truth 裡，沒有一條與之矛盾。**樣本只有一個專案**，所以這是「沒有發現偏差」而不是「證明沒有偏差」；但它是目前唯一一個不經作者的檢查，方向上是支持的。
+
+### 1.8 追查「Online Boutique 為什麼只有 0.13」，逼出第 14 條規則（2026-09-26）
+
+9/22 的報告把 Online Boutique 的 recall 0.13 歸因為「薄表面」——16 條真邊裡 13 條的來源是 Go／C#／Node，工具沒有文法。**這個歸因只對了一半。** 那些服務的呼叫目標其實寫在**各自 workload 的 manifest env** 裡：
+
+```yaml
+# kubernetes-manifests/frontend.yaml:69
+- name: PRODUCT_CATALOG_SERVICE_ADDR
+  value: "productcatalogservice:3550"
+```
+
+探針的 ledger 有 **51 筆 `workload-env`**，一條邊都沒畫出來——因為 2026-09-22 的規則是「**只取資料儲存與佇列的位址，服務位址一律不畫**」，理由寫在程式的註解裡：一份含服務位址的 ConfigMap 會被注入到**不呼叫它們**的 workload（train-ticket 的形態）。
+
+那個理由對**共用 ConfigMap** 成立，對**寫在 workload 自己 env 裡的字面位址**不成立——後者是這個 workload 自己說它要哪個服務，是 manifest 裡最明確的宣告形式。而完全不畫，等於把「有宣告」和「什麼證據都沒有」放在同一級，**這正是 `inferred`（點線）這一級存在要避免的事**（pattern ① 與 ⑤）。所以規則不該是「服務位址不畫」，而是要分來源：
+
+| 位址從哪來 | 之前 | 現在 |
+|---|---|---|
+| workload 自己的 `env[].value`（字面值） | 不畫 | **畫成 `inferred`（點線）** |
+| 共用 ConfigMap 的 `envFrom` | 不畫 | 不畫（理由不變：它發給不呼叫它們的 workload） |
+| 資料儲存／佇列 | 畫（`documented`／`inferred`） | 不變 |
+
+順帶修掉一個命名問題：位址對節點原本用嚴格比對，manifest 常注入短名（`REGISTRY_HOST: registry`）而 workload 叫 `teastore-registry`，於是同一個元件被造出第二個節點；改用既有的寬鬆比對就併回去了。
+
+**結果（同一份 checkout，改動前後）**
+
+| 專案 | 邊數 | recall | precision |
+|---|---|---|---|
+| Online Boutique | 2 → **17** | 0.12 → **1.00** | 1.00 → **1.00** |
+| Bank of Anthos | 11 → **12** | 0.92 → **1.00** | 1.00 → **1.00** |
+| TeaStore | 12 → 12（節點 10 → 9） | 0.08 → **0.46** | 1.00 → **1.00** |
+| LakesideMutual | 12 → 20 | — | 資料集一致度不變（9／9） |
+| 其他 **10 個**專案（含 train-ticket、petclinic、robot-shop、piggymetrics…） | **逐項不變** | | |
+
+**零錯邊**：三個有參考邊集的專案，新增的邊沒有一條是參考邊集裡沒有的。第三方資料集的一致度也完全不變（95 → 91，0.96）。
+
+**這次追查還發現參考邊集漏了一條**：`frontend → shoppingassistantservice`。它是真的（`src/shoppingassistantservice/` 存在、`main.go:139` 讀 `SHOPPING_ASSISTANT_SERVICE_ADDR`、`frontend.yaml:84` 給值），但**README 的架構圖沒有畫這個服務**，所以照圖標註時漏了——正是 §3.6 說的「架構圖當出處」的第二種代價：不只無法複驗，**還會漏**。已補進 truth（Online Boutique 因此是 17／17）。
 
 ## 2. ② 讓手寫的 truth 逐條可複驗
 

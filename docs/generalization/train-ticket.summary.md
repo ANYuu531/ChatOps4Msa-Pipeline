@@ -10,12 +10,13 @@
 - http-client = 65
 - url = 31
 - config = 178
+- compose-service = 142
 - compose-dependency = 2
 - k8s-workload = 272
 - env-address = 4
 - workload-env = 3
 - service-root = 50
-- TOTAL = 865 | files with syntax errors = 0
+- TOTAL = 1007 | files with syntax errors = 0
 
 ## graph
 - after merge: 100 nodes / 121 edges | after normalize: 100 nodes / 121 edges | unresolved code edges = 31

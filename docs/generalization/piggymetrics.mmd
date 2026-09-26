@@ -4,9 +4,9 @@ flowchart TB
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
   subgraph layer0 ["entry services"]
     direction LR
-    turbine_stream_service["turbine-stream-service"]
-    monitoring["monitoring"]
     gateway["gateway"]
+    monitoring["monitoring"]
+    turbine_stream_service["turbine-stream-service"]
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
@@ -31,20 +31,16 @@ flowchart TB
   end
   subgraph layer6 ["data stores"]
     direction LR
-    auth_mongodb[("auth-mongodb")]:::db
-    notification_mongodb[("notification-mongodb")]:::db
-    statistics_mongodb[("statistics-mongodb")]:::db
     rabbitmq{{"rabbitmq"}}:::queue
+    auth_mongodb[("auth-mongodb")]:::db
     account_mongodb[("account-mongodb")]:::db
+    statistics_mongodb[("statistics-mongodb")]:::db
+    notification_mongodb[("notification-mongodb")]:::db
   end
   subgraph layer7 ["external"]
     direction LR
     api_exchangeratesapi_io[/"api.exchangeratesapi.io"/]:::external
     smtp_gmail_com[/"smtp.gmail.com"/]:::external
-  end
-  subgraph layer8 ["no dependencies found"]
-    direction LR
-    mongodb[("mongodb")]:::db
   end
   statistics_service -. ext .-> api_exchangeratesapi_io
   account_service -.-> statistics_service

@@ -16,20 +16,20 @@
 - TOTAL = 277 | files with syntax errors = 0
 
 ## graph
-- after merge: 10 nodes / 11 edges | after normalize: 10 nodes / 11 edges | unresolved code edges = 6
+- after merge: 10 nodes / 12 edges | after normalize: 10 nodes / 12 edges | unresolved code edges = 6
 - persistence services: [balancereader, ledgerwriter, transactionhistory, contacts, userservice]
 
 ## nodes (kind, layer)
-- accounts-db  [db, L3]
-- balancereader  [service, L2]
-- contacts  [service, L1]
-- frontend  [service, L0]
-- ledger-db  [db, L3]
-- ledgerwriter  [service, L1]
-- loadgenerator  [service, L4]
-- pgpool-operator  [service, L4]
-- transactionhistory  [service, L1]
-- userservice  [service, L1]
+- accounts-db  [db, L4]
+- balancereader  [service, L3]
+- contacts  [service, L2]
+- frontend  [service, L1]
+- ledger-db  [db, L4]
+- ledgerwriter  [service, L2]
+- loadgenerator  [service, L0]
+- pgpool-operator  [service, L5]
+- transactionhistory  [service, L2]
+- userservice  [service, L2]
 
 ## edges (type, confidence, evidence)
 - balancereader -> ledger-db  (db, documented)  code: kubernetes-manifests/balance-reader.yaml
@@ -41,6 +41,7 @@
 - frontend -> userservice  (sync-http, documented)  code: src/frontend/frontend.py:665
 - ledgerwriter -> balancereader  (sync-http, documented)  code: src/ledger/ledgerwriter/src/main/java/anthos/samples/bankofanthos/ledgerwriter/LedgerWriterController.java:86
 - ledgerwriter -> ledger-db  (db, documented)  code: kubernetes-manifests/ledger-writer.yaml
+- loadgenerator -> frontend  (sync-http, inferred)  code: kubernetes-manifests/loadgenerator.yaml
 - transactionhistory -> ledger-db  (db, documented)  code: kubernetes-manifests/transaction-history.yaml
 - userservice -> accounts-db  (db, documented)  code: kubernetes-manifests/userservice.yaml
 
@@ -60,27 +61,30 @@ flowchart TB
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
   subgraph layer0 ["entry services"]
     direction LR
-    frontend["frontend"]
+    loadgenerator["loadgenerator"]
   end
   subgraph layer1 ["services · depth 1"]
+    direction LR
+    frontend["frontend"]
+  end
+  subgraph layer2 ["services · depth 2"]
     direction LR
     ledgerwriter["ledgerwriter"]
     transactionhistory["transactionhistory"]
     contacts["contacts"]
     userservice["userservice"]
   end
-  subgraph layer2 ["services · depth 2"]
+  subgraph layer3 ["services · depth 3"]
     direction LR
     balancereader["balancereader"]
   end
-  subgraph layer3 ["data stores"]
+  subgraph layer4 ["data stores"]
     direction LR
     accounts_db[("accounts-db")]:::db
     ledger_db[("ledger-db")]:::db
   end
-  subgraph layer4 ["no dependencies found"]
+  subgraph layer5 ["no dependencies found"]
     direction LR
-    loadgenerator["loadgenerator"]
     pgpool_operator["pgpool-operator"]
   end
   ledgerwriter -.-> balancereader
@@ -91,6 +95,7 @@ flowchart TB
   frontend -.-> contacts
   ledgerwriter -. db .-> ledger_db
   transactionhistory -. db .-> ledger_db
+  loadgenerator -. declared? .-> frontend
   balancereader -. db .-> ledger_db
   contacts -. db .-> accounts_db
   userservice -. db .-> accounts_db

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="360" viewBox="0 0 760 360" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+<rect width="760" height="360" fill="#ffffff"/>
+<text x="24" y="30" font-size="15" font-weight="600" fill="#1c1c1c">規則 11–13 的效果：同一份 checkout，改動前後的一致度</text>
+<text x="24" y="50" font-size="11.5" fill="#6f6f6f">改動前的數字取自 docs/generalization-external.md §1.6（同一份 checkout 重跑）</text>
+<line x1="208.0" y1="64" x2="208.0" y2="306.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="208.0" y="58" font-size="10.5" fill="#6f6f6f" text-anchor="middle">0</text>
+<line x1="314.0" y1="64" x2="314.0" y2="306.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="314.0" y="58" font-size="10.5" fill="#6f6f6f" text-anchor="middle">0.25</text>
+<line x1="420.0" y1="64" x2="420.0" y2="306.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="420.0" y="58" font-size="10.5" fill="#6f6f6f" text-anchor="middle">0.5</text>
+<line x1="526.0" y1="64" x2="526.0" y2="306.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="526.0" y="58" font-size="10.5" fill="#6f6f6f" text-anchor="middle">0.75</text>
+<line x1="632.0" y1="64" x2="632.0" y2="306.0" stroke="#e8e8e6" stroke-width="1"/>
+<text x="632.0" y="58" font-size="10.5" fill="#6f6f6f" text-anchor="middle">1</text>
+<text x="196" y="82" font-size="11.5" fill="#1c1c1c" text-anchor="end">microservices-book</text>
+<line x1="208.0" y1="78" x2="632.0" y2="78" stroke="#1baf7a" stroke-width="3" stroke-linecap="round"/>
+<circle cx="208.0" cy="78" r="4.5" fill="#ffffff" stroke="#6f6f6f" stroke-width="2"/>
+<circle cx="632.0" cy="78" r="5" fill="#1baf7a"/>
+<text x="666.0" y="82" font-size="11.5" fill="#1c1c1c" text-anchor="end">1.00</text>
+<text x="676.0" y="82" font-size="10.5" fill="#6f6f6f">原 0.00</text>
+<text x="196" y="116" font-size="11.5" fill="#1c1c1c" text-anchor="end">tap-and-eat</text>
+<line x1="208.0" y1="112" x2="632.0" y2="112" stroke="#1baf7a" stroke-width="3" stroke-linecap="round"/>
+<circle cx="208.0" cy="112" r="4.5" fill="#ffffff" stroke="#6f6f6f" stroke-width="2"/>
+<circle cx="632.0" cy="112" r="5" fill="#1baf7a"/>
+<text x="666.0" y="116" font-size="11.5" fill="#1c1c1c" text-anchor="end">1.00</text>
+<text x="676.0" y="116" font-size="10.5" fill="#6f6f6f">原 0.00</text>
+<text x="196" y="150" font-size="11.5" fill="#1c1c1c" text-anchor="end">spring-cloud-netflix</text>
+<line x1="225.0" y1="146" x2="632.0" y2="146" stroke="#1baf7a" stroke-width="3" stroke-linecap="round"/>
+<circle cx="225.0" cy="146" r="4.5" fill="#ffffff" stroke="#6f6f6f" stroke-width="2"/>
+<circle cx="632.0" cy="146" r="5" fill="#1baf7a"/>
+<text x="666.0" y="150" font-size="11.5" fill="#1c1c1c" text-anchor="end">1.00</text>
+<text x="676.0" y="150" font-size="10.5" fill="#6f6f6f">原 0.04</text>
+<text x="196" y="184" font-size="11.5" fill="#1c1c1c" text-anchor="end">spring-cloud-microservice</text>
+<line x1="208.0" y1="180" x2="599.4" y2="180" stroke="#1baf7a" stroke-width="3" stroke-linecap="round"/>
+<circle cx="208.0" cy="180" r="4.5" fill="#ffffff" stroke="#6f6f6f" stroke-width="2"/>
+<circle cx="599.4" cy="180" r="5" fill="#1baf7a"/>
+<text x="666.0" y="184" font-size="11.5" fill="#1c1c1c" text-anchor="end">0.92</text>
+<text x="676.0" y="184" font-size="10.5" fill="#6f6f6f">原 0.00</text>
+<text x="196" y="218" font-size="11.5" fill="#1c1c1c" text-anchor="end">spring-petclinic</text>
+<line x1="208.0" y1="214" x2="566.8" y2="214" stroke="#1baf7a" stroke-width="3" stroke-linecap="round"/>
+<circle cx="208.0" cy="214" r="4.5" fill="#ffffff" stroke="#6f6f6f" stroke-width="2"/>
+<circle cx="566.8" cy="214" r="5" fill="#1baf7a"/>
+<text x="666.0" y="218" font-size="11.5" fill="#1c1c1c" text-anchor="end">0.85</text>
+<text x="676.0" y="218" font-size="10.5" fill="#6f6f6f">原 0.00</text>
+<text x="196" y="252" font-size="11.5" fill="#1c1c1c" text-anchor="end">lakeside-mutual</text>
+<circle cx="632.0" cy="248" r="4.5" fill="#ffffff" stroke="#6f6f6f" stroke-width="2"/>
+<circle cx="632.0" cy="248" r="5" fill="#6f6f6f"/>
+<text x="666.0" y="252" font-size="11.5" fill="#1c1c1c" text-anchor="end">1.00</text>
+<text x="676.0" y="252" font-size="10.5" fill="#6f6f6f">未變</text>
+<text x="196" y="286" font-size="11.5" fill="#1c1c1c" text-anchor="end">robot-shop</text>
+<circle cx="632.0" cy="282" r="4.5" fill="#ffffff" stroke="#6f6f6f" stroke-width="2"/>
+<circle cx="632.0" cy="282" r="5" fill="#6f6f6f"/>
+<text x="666.0" y="286" font-size="11.5" fill="#1c1c1c" text-anchor="end">1.00</text>
+<text x="676.0" y="286" font-size="10.5" fill="#6f6f6f">未變</text>
+<circle cx="214" cy="343" r="4.5" fill="#ffffff" stroke="#6f6f6f" stroke-width="2"/>
+<text x="226" y="347" font-size="11" fill="#6f6f6f">規則 11–13 之前</text>
+<circle cx="330" cy="343" r="5" fill="#1baf7a"/>
+<text x="342" y="347" font-size="11" fill="#6f6f6f">之後</text>
+</svg>

@@ -11,22 +11,21 @@ flowchart TB
     teastore_webui["teastore-webui"]
     teastore_all["teastore-all"]
   end
-  subgraph layer1 ["data stores"]
-    direction LR
-    teastore_db[("teastore-db")]:::db
-    teastore_kieker_rabbitmq{{"teastore-kieker-rabbitmq"}}:::queue
-    rabbitmq{{"rabbitmq"}}:::queue
-  end
-  subgraph layer2 ["no dependencies found"]
+  subgraph layer1 ["services · depth 1"]
     direction LR
     teastore_registry["teastore-registry"]
   end
+  subgraph layer2 ["data stores"]
+    direction LR
+    teastore_db[("teastore-db")]:::db
+    teastore_kieker_rabbitmq{{"teastore-kieker-rabbitmq"}}:::queue
+  end
+  teastore_persistence -. declared? .-> teastore_registry
   teastore_persistence -. db .-> teastore_db
-  teastore_persistence -. async .-> rabbitmq
-  teastore_auth -. async .-> rabbitmq
-  teastore_image -. async .-> rabbitmq
-  teastore_recommender -. async .-> rabbitmq
-  teastore_webui -. async .-> rabbitmq
+  teastore_auth -. declared? .-> teastore_registry
+  teastore_image -. declared? .-> teastore_registry
+  teastore_recommender -. declared? .-> teastore_registry
+  teastore_webui -. declared? .-> teastore_registry
   teastore_persistence -. async .-> teastore_kieker_rabbitmq
   teastore_auth -. async .-> teastore_kieker_rabbitmq
   teastore_image -. async .-> teastore_kieker_rabbitmq

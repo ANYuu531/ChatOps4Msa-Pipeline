@@ -50,13 +50,14 @@ mvn -o test -Dtest=GreenfieldProbeTest -Dprobe.repo=/path/to/checkout -Dprobe.ou
 
 另外把**格式字串 host** 補齊：`http://%s:%s/catalog/` 走既有的「URL 路徑點名服務」規則；`http://{user}:8080/…` 的變數名本身對上服務就用它。
 
-**2026-09-25 又追加三條**（由第三方資料集的對照逼出來的，細節與前後數字在 `docs/generalization-external.md` §1.6）：
+**2026-09-25／26 又追加四條**（前三條由第三方資料集的對照逼出來，第 14 條由「Online Boutique 為什麼只有 0.13」的追查逼出來；細節與前後數字在 `docs/generalization-external.md` §1.6、§1.8）：
 
 | # | 規則 | 觸發它的專案 | 位置 |
 |---|---|---|---|
 | 11 | **Compose 的 `services` key 也是部署詞彙表**，與 k8s workload 同級，但**有 manifest 時完全不看 compose 名**（避免同一服務出現兩種拼法） | spring-petclinic、ewolff/microservice、Tap-And-Eat、spring-cloud-microservice | `ConfigExtractor.extractComposeServices`（新 `compose-service` 區段）、`CodeGraphMerger.indexMeta` |
 | 12 | **也認 Compose 第 1 版檔案格式**（沒有 `services:`，頂層即服務，要有 `image`／`build` 才算）與 **`links:`**（v1 宣告依賴的方式，`服務:別名` 取冒號前） | Tap-And-Eat、spring-cloud-microservice（皆 2017 年的專案） | `ConfigExtractor.composeServices`、`extractComposeDependsOn` |
 | 13 | **XML namespace 不是位址**：URL 字面值那一行或前兩行出現 `namespace`／`schemaLocation`／`xmlns`／`soapAction` 時不畫邊 | LakesideMutual（`@XmlSchema`、`setTargetNamespace`、`SoapActionCallback` 三種形態，畫出兩個沒人呼叫的外部主機） | `TreeSitterExtractor.dropNonAddressUrls` |
+| 14 | **workload 自己 env 裡的服務位址是宣告，畫成 `inferred`**（點線）；**共用 ConfigMap 注入的仍然不畫**（它被發給不呼叫它們的 workload，只有程式碼層看得到誰真的用）。位址對節點改用寬鬆比對（manifest 常注入短名 `registry`，workload 叫 `teastore-registry`） | Online Boutique、Bank of Anthos、TeaStore、LakesideMutual | `CodeGraphMerger.mergeWorkloadWiring` |
 
 第十條是回歸測試逼出來的（§5）：**只認「部署了這個 repo 自己模組」的 manifest 目錄**。repo 常附監控堆疊與選配元件的 manifest（train-ticket 的 prometheus/grafana/jaeger/EFK 共 60 個 workload、Bank of Anthos 的 pgpool operator 與 Cloud SQL populate job），第一版把它們全拉成節點；現在一個目錄要有至少一個 workload 對得上 repo 的模組，它的 workload 才進詞彙表。順帶修正佔位符的優先序：`${X_HOST:ts-x-service}` 要先用預設值（`documented`），最後才用變數名猜（`inferred`）。
 
@@ -66,21 +67,23 @@ mvn -o test -Dtest=GreenfieldProbeTest -Dprobe.repo=/path/to/checkout -Dprobe.ou
 
 參考邊集逐條寫在 `docs/generalization/truth/<name>.tsv`（來源：README 段落、架構圖、或程式碼行號；分 business / data / external / control / variant 五類），`GeneralizationScoreTest` 讀它與探針的邊表算分、輸出 `docs/generalization/scores.md`。**表裡的數字是程式算的，不是人數的**；`variant`（只在某部署變體存在的邊）不進分子分母。
 
-| 專案 | 畫了 | 對 | 錯 | 漏 | P | R | business P/R | data P/R | control R |
-|---|---|---|---|---|---|---|---|---|---|
-| ewolff | 5 | 5 | 0 | 0 | **1.00** | **1.00** | 1.00 / 1.00 | — | 1.00 |
-| ecommerce | 20 | 20 | 0 | 18 | **1.00** | 0.53 | 1.00 / 1.00 | — | 0.28 |
-| piggymetrics | 41 | 34 | 7 | 0 | **0.83** | **1.00** | 0.63 / 1.00 | 0.67 / 1.00 | 1.00 |
-| robot-shop | 18 | 18 | 0 | 3 | **1.00** | **0.86** | 1.00 / 0.40 | 1.00 / 1.00 | 1.00 |
-| TeaStore | 1 | 1 | 0 | 12 | 1.00 | **0.08** | — / 0.00 | 1.00 / 1.00 | 0.00 |
-| Online Boutique | 2 | 2 | 0 | 14 | 1.00 | **0.13** | 1.00 / 0.07 | 1.00 / 1.00 | 0.00 |
-| Bank of Anthos（回歸） | 11 | 11 | 0 | 1 | **1.00** | 0.92 | 1.00 / 1.00 | 1.00 / 1.00 | 0.00 |
+> **2026-09-26 重跑**：下表是**當日 checkout ＋ 規則 11–14** 的結果（`GeneralizationScoreTest` 產生 `docs/generalization/scores.md`）。與 9/22 那一輪的差異來自三件事：規則 11–14、TeaStore 上游改版（它現在有 k8s manifest，9/22 那次只有 1 條邊）、以及各 repo 這四天的變動。**precision 全部維持 1.00 或不變**。
+
+| 專案 | 畫了 | 對 | 錯 | 漏 | P | R | business P/R | data P/R | control R | 9/22 的 R |
+|---|---|---|---|---|---|---|---|---|---|---|
+| ewolff | 5 | 5 | 0 | 0 | **1.00** | **1.00** | 1.00 / 1.00 | — | 1.00 | 1.00 |
+| ecommerce | 20 | 20 | 0 | 18 | **1.00** | 0.53 | 1.00 / 1.00 | — | 0.28 | 0.53 |
+| piggymetrics | 41 | 34 | 7 | 0 | **0.83** | **1.00** | 0.63 / 1.00 | 0.67 / 1.00 | 1.00 | 1.00 |
+| robot-shop | 18 | 18 | 0 | 3 | **1.00** | **0.86** | 1.00 / 0.40 | 1.00 / 1.00 | 1.00 | 0.86 |
+| TeaStore | 6 | 6 | 0 | 7 | **1.00** | **0.46** | — / 0.00 | 1.00 / 1.00 | 1.00 | 0.08 |
+| Online Boutique | 17 | 17 | 0 | 0 | **1.00** | **1.00** | 1.00 / 1.00 | 1.00 / 1.00 | 1.00 | 0.13 |
+| Bank of Anthos（回歸） | 12 | 12 | 0 | 0 | **1.00** | **1.00** | 1.00 / 1.00 | 1.00 / 1.00 | 1.00 | 0.92 |
 
 - **piggymetrics 的 7 條錯邊**全來自同一個原因：共用 `application.yml` 裡的 `user-info-uri: auth-service` 與 `rabbitmq.host` 被攤到**所有** config client，包括 registry、monitoring、turbine、gateway、auth 這幾個其實不當 OAuth resource server / pom 裡沒有 hystrix-stream、bus-amqp 的服務（真的用 RabbitMQ 的只有 account、statistics、notification、turbine 四個，看 pom 就知道）。工具目前無法從靜態檔判斷「這個 client 有沒有用到共用設定裡的這個 key」，這七條都標 `documented`，要靠 runtime 層才能降級。
 - **ecommerce 的控制面邊**（每個服務→service-discovery、→cloud-config、→zipkin）全部漏掉，原因很誠實：repo 裡的 `application.yml` 只寫 `${SPRING_CONFIG_IMPORT:optional:configserver:http://localhost:9296}`，真正的主機名只存在 README 說「之後會放」的 k8s 目錄裡（目前不存在）；工具照規則把 `localhost` 預設值丟掉，沒有編造。
 - **robot-shop 漏的 3 條**：`cart→catalogue`（Node）、`ratings→catalogue`（PHP）是沒有文法的語言；`shipping→cart` 是 `String.format("http://%s/shipping/", getenv("CART_ENDPOINT","cart"))`，host 由另一行的 getenv 預設值決定、路徑又點名的是自己，靜態層無法連。
 - **TeaStore 是最誠實的失敗**：五個服務的所有 REST 呼叫都寫成 `loadBalanceRESTOperation(Service.PERSISTENCE, …)`，目標是 enum 常數，經自家 registry 動態解析；靜態層抓不到任何 host 字串，圖上就一條都沒畫（也一條都沒編）。這正是 runtime 層（Istio）存在的理由：這種系統要部署起來跑流量才有邊。節點、DB 邊（`persistence→teastore-db`，有 JPA 證據，`documented`）與 Kieker 變體的 RabbitMQ 邊都對。
-- **Online Boutique 是「薄表面」的量化例子**：16 條真邊裡，來源是 Python/Java 的只有 2 條（recommendation→productcatalog、loadgenerator→frontend），工具抓到前者；後者的 host 來自 locust 的 `--host` 參數不在程式碼裡。`cart→redis-cart` 是靠 manifest 佈線（C# 程式碼看不到）推出的 `inferred` 邊。剩下 13 條的來源都是 Go/C#/Node，工具的偵測器已經把這些檔案標成「LLM tier、本次跳過」。
+- **Online Boutique 原本是「薄表面」的量化例子，2026-09-26 之後不再是**：9/22 那輪 16 條真邊只畫 2 條（R 0.13），歸因寫「13 條的來源是 Go/C#/Node，工具沒有文法」。**這個歸因只對了一半**：那些服務的呼叫目標其實寫在**各自 workload 的 manifest env** 裡（`PRODUCT_CATALOG_SERVICE_ADDR: productcatalogservice:3550`），而工具當時的規則是「服務位址一律不畫」。規則 14 把「寫在 workload 自己 env 裡的服務位址」畫成點線之後，**17／17 全中、零錯邊**。真正屬於「沒有文法」的損失比原本以為的小得多——語言決定的是「能不能看到程式碼層的呼叫」，而部署描述本來就把同一件事寫了一遍。
 
 ## 5. 回頭驗證：舊專案沒有退步（真 checkout 重跑，不只 fixture）
 
