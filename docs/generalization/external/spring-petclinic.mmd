@@ -1,0 +1,49 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    api_gateway["api-gateway"]
+    admin_server["admin-server"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    customers_service["customers-service"]
+    visits_service["visits-service"]
+    vets_service["vets-service"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    discovery_server["discovery-server"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    config_server["config-server"]
+  end
+  subgraph layer4 ["external"]
+    direction LR
+    github_com[/"github.com"/]:::external
+  end
+  subgraph layer5 ["no dependencies found"]
+    direction LR
+    tracing_server["tracing-server"]
+    grafana_server["grafana-server"]
+    prometheus_server["prometheus-server"]
+  end
+  api_gateway -.-> customers_service
+  api_gateway -.-> visits_service
+  config_server -. ext .-> github_com
+  api_gateway -.-> vets_service
+  discovery_server -.-> config_server
+  customers_service -.-> config_server
+  customers_service -.-> discovery_server
+  visits_service -.-> config_server
+  visits_service -.-> discovery_server
+  vets_service -.-> config_server
+  vets_service -.-> discovery_server
+  api_gateway -.-> config_server
+  api_gateway -.-> discovery_server
+  admin_server -.-> config_server
+  admin_server -.-> discovery_server
+classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

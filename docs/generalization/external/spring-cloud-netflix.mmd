@@ -1,0 +1,68 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    admin_dashboard["admin-dashboard"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    zuul["zuul"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    service_a["service-a"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    service_b["service-b"]
+  end
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    zipkin["zipkin"]
+    config_server["config-server"]
+    hystrix_dashboard["hystrix-dashboard"]
+  end
+  subgraph layer5 ["services · depth 5"]
+    direction LR
+    eureka_server["eureka-server"]
+  end
+  subgraph layer6 ["data stores"]
+    direction LR
+    rabbitmq{{"rabbitmq"}}:::queue
+  end
+  subgraph layer7 ["external"]
+    direction LR
+    github_com[/"github.com"/]:::external
+  end
+  service_a -.-> service_b
+  service_a -. ext .-> github_com
+  service_b -. ext .-> github_com
+  config_server -.-> eureka_server
+  config_server -. async .-> rabbitmq
+  service_b -.-> eureka_server
+  service_b -.-> config_server
+  service_b -.-> hystrix_dashboard
+  service_b -. async .-> rabbitmq
+  service_b -.-> zipkin
+  service_a -.-> eureka_server
+  service_a -.-> config_server
+  service_a -.-> hystrix_dashboard
+  service_a -. async .-> rabbitmq
+  service_a -.-> zipkin
+  admin_dashboard -.-> eureka_server
+  admin_dashboard -. async .-> rabbitmq
+  admin_dashboard -.-> config_server
+  admin_dashboard -.-> service_a
+  admin_dashboard -.-> service_b
+  admin_dashboard -.-> zuul
+  admin_dashboard -.-> hystrix_dashboard
+  zuul -.-> eureka_server
+  zuul -.-> config_server
+  zuul -.-> service_a
+  zuul -. async .-> rabbitmq
+  zuul -.-> zipkin
+  hystrix_dashboard -.-> eureka_server
+classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;
+classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

@@ -17,7 +17,7 @@ import java.util.Properties;
  *
  * Not a test (the name matches no surefire pattern).
  */
-final class ChatCompletions {
+public final class ChatCompletions {
 
     private final String url;
     private final String key;
@@ -34,30 +34,30 @@ final class ChatCompletions {
     }
 
     /** null when there is no key: the caller says so and skips rather than failing. */
-    static ChatCompletions fromOrNull(Properties p) {
+    public static ChatCompletions fromOrNull(Properties p) {
         String key = p.getProperty("openai.api.key", "");
         if (key.isBlank()) return null;
         return new ChatCompletions(p.getProperty("openai.api.url", "https://api.openai.com/v1/chat/completions"),
                 key, p.getProperty("openai.api.model", "gpt-3.5-turbo"));
     }
 
-    String model() {
+    public String model() {
         return model;
     }
 
-    int calls() {
+    public int calls() {
         return calls;
     }
 
-    int promptTokens() {
+    public int promptTokens() {
         return promptTokens;
     }
 
-    int completionTokens() {
+    public int completionTokens() {
         return completionTokens;
     }
 
-    String ask(String system, String user) throws Exception {
+    public String ask(String system, String user) throws Exception {
         JSONArray messages = new JSONArray()
                 .put(new JSONObject().put("role", "system").put("content", system))
                 .put(new JSONObject().put("role", "user").put("content", user));

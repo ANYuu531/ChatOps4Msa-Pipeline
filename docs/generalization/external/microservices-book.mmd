@@ -1,0 +1,30 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    order["order"]
+    zuul["zuul"]
+    turbine["turbine"]
+    microservice_demo_turbine_server["microservice-demo-turbine-server"]
+    microservice_demo_zuul_server["microservice-demo-zuul-server"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    customer["customer"]
+    catalog["catalog"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    eureka["eureka"]
+  end
+  order -.-> catalog
+  order -.-> customer
+  customer -.-> eureka
+  catalog -.-> eureka
+  order -.-> eureka
+  zuul -.-> eureka
+  turbine -.-> eureka
+  microservice_demo_turbine_server -.-> eureka
+  microservice_demo_zuul_server -.-> eureka

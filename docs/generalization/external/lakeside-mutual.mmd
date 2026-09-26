@@ -1,0 +1,41 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    customer_self_service_frontend["customer-self-service-frontend"]
+    policy_management_frontend["policy-management-frontend"]
+    risk_management_server["risk-management-server"]
+    spring_boot_admin["spring-boot-admin"]
+    customer_management_frontend["customer-management-frontend"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    customer_self_service_backend["customer-self-service-backend"]
+    customer_management_backend["customer-management-backend"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    policy_management_backend["policy-management-backend"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    customer_core["customer-core"]
+  end
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    eureka_server["eureka-server"]
+  end
+  customer_management_backend -.-> customer_core
+  policy_management_backend -.-> customer_core
+  customer_self_service_backend -.-> customer_core
+  customer_core -.-> eureka_server
+  customer_management_frontend -.-> customer_management_backend
+  customer_self_service_backend -.-> policy_management_backend
+  customer_self_service_frontend -.-> customer_self_service_backend
+  customer_self_service_frontend -.-> customer_management_backend
+  customer_self_service_frontend -.-> policy_management_backend
+  policy_management_frontend -.-> policy_management_backend
+  spring_boot_admin -.-> eureka_server
+  risk_management_server -.-> policy_management_backend

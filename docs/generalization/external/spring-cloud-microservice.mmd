@@ -1,0 +1,70 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    turbine["turbine"]
+    cloud_config_server["cloud-config-server"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    gateway["gateway"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    simple_service["simple-service"]
+    simple_service2["simple-service2"]
+    simple_serviceb["simple-serviceb"]
+    simple_ui["simple-ui"]
+    cloud_simple_service["cloud-simple-service"]
+    cloud_simple_serviceb["cloud-simple-serviceb"]
+    cloud_simple_ui["cloud-simple-ui"]
+    uaa_service["uaa-service"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    zipkin["zipkin"]
+  end
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    configserver["configserver"]
+  end
+  subgraph layer5 ["services · depth 5"]
+    direction LR
+    discovery["discovery"]
+  end
+  subgraph layer6 ["external"]
+    direction LR
+    github_com[/"github.com"/]:::external
+  end
+  turbine -.-> gateway
+  turbine -.-> discovery
+  configserver -.-> discovery
+  gateway -.-> discovery
+  gateway -.-> configserver
+  gateway -.-> simple_service
+  gateway -.-> simple_service2
+  gateway -.-> simple_serviceb
+  gateway -.-> simple_ui
+  gateway -.-> zipkin
+  simple_service -.-> discovery
+  simple_service -.-> configserver
+  simple_service -.-> zipkin
+  simple_service2 -.-> discovery
+  simple_service2 -.-> configserver
+  simple_service2 -.-> zipkin
+  simple_serviceb -.-> discovery
+  simple_serviceb -.-> configserver
+  simple_serviceb -.-> zipkin
+  simple_ui -.-> discovery
+  simple_ui -.-> configserver
+  simple_ui -.-> zipkin
+  zipkin -.-> discovery
+  zipkin -.-> configserver
+  cloud_config_server -. ext .-> github_com
+  gateway -.-> cloud_simple_service
+  gateway -.-> cloud_simple_serviceb
+  gateway -.-> cloud_simple_ui
+  gateway -.-> uaa_service
+classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

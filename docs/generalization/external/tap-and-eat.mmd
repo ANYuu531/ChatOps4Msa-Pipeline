@@ -1,0 +1,40 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    configservice["configservice"]
+    foodtrayservice["foodtrayservice"]
+    accounts["accounts"]
+    prices["prices"]
+    customers["customers"]
+    stores["stores"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    item_service["item-service"]
+    price_service["price-service"]
+    configserver["configserver"]
+  end
+  subgraph layer2 ["external"]
+    direction LR
+    github_com[/"github.com"/]:::external
+  end
+  subgraph layer3 ["no dependencies found"]
+    direction LR
+    accountservice["accountservice"]
+    discoveryservice["discoveryservice"]
+    priceservice["priceservice"]
+    storeservice["storeservice"]
+    customerservice["customerservice"]
+    itemservice["itemservice"]
+  end
+  foodtrayservice -.-> item_service
+  foodtrayservice -.-> price_service
+  configservice -. ext .-> github_com
+  accounts -.-> configserver
+  prices -.-> configserver
+  customers -.-> configserver
+  stores -.-> configserver
+classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
