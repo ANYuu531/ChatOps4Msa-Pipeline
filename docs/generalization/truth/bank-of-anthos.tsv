@@ -1,0 +1,12 @@
+frontend	userservice	business	src/frontend/frontend.py:665（USERSERVICE_API_ADDR）；runtime 2026-08 實測
+frontend	contacts	business	src/frontend/frontend.py:672
+frontend	balancereader	business	src/frontend/frontend.py:667
+frontend	transactionhistory	business	src/frontend/frontend.py:669
+frontend	ledgerwriter	business	src/frontend/frontend.py:663
+ledgerwriter	balancereader	business	src/ledger/ledgerwriter/src/main/java/anthos/samples/bankofanthos/ledgerwriter/LedgerWriterController.java:86
+userservice	accounts-db	data	kubernetes-manifests/userservice.yaml + SQLAlchemy Table()；runtime TCP 5/5
+contacts	accounts-db	data	kubernetes-manifests/contacts.yaml
+ledgerwriter	ledger-db	data	kubernetes-manifests/ledger-writer.yaml + @Entity
+balancereader	ledger-db	data	kubernetes-manifests/balance-reader.yaml
+transactionhistory	ledger-db	data	kubernetes-manifests/transaction-history.yaml
+loadgenerator	frontend	control	src/loadgenerator/locustfile.py（FRONTEND_ADDR）

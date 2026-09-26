@@ -1,0 +1,16 @@
+frontend	adservice	business	README docs/img/architecture-diagram.png（frontend → ad）
+frontend	recommendationservice	business	架構圖
+frontend	productcatalogservice	business	架構圖
+frontend	cartservice	business	架構圖
+frontend	shippingservice	business	架構圖
+frontend	currencyservice	business	架構圖
+frontend	checkoutservice	business	架構圖
+checkoutservice	productcatalogservice	business	架構圖
+checkoutservice	cartservice	business	架構圖
+checkoutservice	shippingservice	business	架構圖
+checkoutservice	currencyservice	business	架構圖
+checkoutservice	paymentservice	business	架構圖
+checkoutservice	emailservice	business	架構圖
+recommendationservice	productcatalogservice	business	架構圖 + src/recommendationservice/recommendation_server.py:131
+cartservice	redis-cart	data	架構圖（cart → Redis cache）+ kubernetes-manifests/cartservice.yaml REDIS_ADDR
+loadgenerator	frontend	control	架構圖（loadgenerator → frontend）

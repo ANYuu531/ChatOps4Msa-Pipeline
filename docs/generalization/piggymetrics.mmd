@@ -1,0 +1,92 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    turbine_stream_service["turbine-stream-service"]
+    monitoring["monitoring"]
+    gateway["gateway"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    notification_service["notification-service"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    account_service["account-service"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    statistics_service["statistics-service"]
+  end
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    registry["registry"]
+    auth_service["auth-service"]
+  end
+  subgraph layer5 ["services · depth 5"]
+    direction LR
+    config["config"]
+  end
+  subgraph layer6 ["data stores"]
+    direction LR
+    auth_mongodb[("auth-mongodb")]:::db
+    notification_mongodb[("notification-mongodb")]:::db
+    statistics_mongodb[("statistics-mongodb")]:::db
+    rabbitmq{{"rabbitmq"}}:::queue
+    account_mongodb[("account-mongodb")]:::db
+  end
+  subgraph layer7 ["external"]
+    direction LR
+    api_exchangeratesapi_io[/"api.exchangeratesapi.io"/]:::external
+    smtp_gmail_com[/"smtp.gmail.com"/]:::external
+  end
+  subgraph layer8 ["no dependencies found"]
+    direction LR
+    mongodb[("mongodb")]:::db
+  end
+  statistics_service -. ext .-> api_exchangeratesapi_io
+  account_service -.-> statistics_service
+  account_service -.-> auth_service
+  notification_service -.-> account_service
+  statistics_service -.-> config
+  account_service -.-> config
+  notification_service -.-> config
+  gateway -.-> auth_service
+  gateway -.-> account_service
+  gateway -.-> statistics_service
+  gateway -.-> notification_service
+  auth_service -. db .-> auth_mongodb
+  notification_service -.-> auth_service
+  notification_service -. db .-> notification_mongodb
+  notification_service -. ext .-> smtp_gmail_com
+  statistics_service -.-> auth_service
+  statistics_service -. db .-> statistics_mongodb
+  statistics_service -.-> registry
+  account_service -.-> registry
+  notification_service -.-> registry
+  turbine_stream_service -.-> registry
+  monitoring -.-> registry
+  auth_service -.-> registry
+  gateway -.-> registry
+  turbine_stream_service -.-> auth_service
+  registry -.-> auth_service
+  monitoring -.-> auth_service
+  statistics_service -. async .-> rabbitmq
+  account_service -. async .-> rabbitmq
+  notification_service -. async .-> rabbitmq
+  turbine_stream_service -. async .-> rabbitmq
+  registry -. async .-> rabbitmq
+  monitoring -. async .-> rabbitmq
+  auth_service -. async .-> rabbitmq
+  gateway -. async .-> rabbitmq
+  account_service -. db .-> account_mongodb
+  turbine_stream_service -.-> config
+  registry -.-> config
+  gateway -.-> config
+  auth_service -.-> config
+  monitoring -.-> config
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;
+classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

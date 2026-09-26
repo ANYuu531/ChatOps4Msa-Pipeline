@@ -1,0 +1,38 @@
+api-gateway	proxy-client	control	api-gateway/src/main/resources/application.yml routes（lb://PROXY-CLIENT）
+api-gateway	user-service	control	api-gateway/src/main/resources/application.yml routes
+api-gateway	product-service	control	api-gateway/src/main/resources/application.yml routes
+api-gateway	order-service	control	api-gateway/src/main/resources/application.yml routes
+api-gateway	payment-service	control	api-gateway/src/main/resources/application.yml routes
+api-gateway	shipping-service	control	api-gateway/src/main/resources/application.yml routes
+api-gateway	favourite-service	control	api-gateway/src/main/resources/application.yml routes
+proxy-client	user-service	business	proxy-client/src/main/java/com/selimhorri/app/business/user/service/UserClientService.java:19 @FeignClient(name="USER-SERVICE")
+proxy-client	product-service	business	proxy-client/src/main/java/com/selimhorri/app/business/product/service/ProductClientService.java:19
+proxy-client	order-service	business	proxy-client/src/main/java/com/selimhorri/app/business/order/service/OrderClientService.java:19
+proxy-client	payment-service	business	proxy-client/src/main/java/com/selimhorri/app/business/payment/service/PaymentClientService.java:19
+proxy-client	shipping-service	business	proxy-client/src/main/java/com/selimhorri/app/business/orderItem/service/OrderItemClientService.java:19
+proxy-client	favourite-service	business	proxy-client/src/main/java/com/selimhorri/app/business/favourite/service/FavouriteClientService.java:19
+favourite-service	product-service	business	favourite-service/src/main/java/com/selimhorri/app/service/impl/FavouriteServiceImpl.java（RestTemplate + PRODUCT_SERVICE_API_URL）
+favourite-service	user-service	business	favourite-service/src/main/java/com/selimhorri/app/service/impl/FavouriteServiceImpl.java（USER_SERVICE_API_URL）
+order-service	user-service	business	order-service/src/main/java/com/selimhorri/app/service/impl/CartServiceImpl.java（USER_SERVICE_API_URL）
+payment-service	order-service	business	payment-service/src/main/java/com/selimhorri/app/service/impl/PaymentServiceImpl.java:38
+shipping-service	order-service	business	shipping-service/src/main/java/com/selimhorri/app/service/impl/OrderItemServiceImpl.java:42
+shipping-service	product-service	business	shipping-service/src/main/java/com/selimhorri/app/service/impl/OrderItemServiceImpl.java:40
+cloud-config	github.com	external	cloud-config/src/main/resources/application.yml（spring.cloud.config.server.git.uri）
+api-gateway	service-discovery	control	README「service registry (Eureka)」；api-gateway/src/main/resources/application.yml（每個服務都有同型設定） eureka.client（主機名只在缺席的 k8s 目錄）
+proxy-client	service-discovery	control	同上
+user-service	service-discovery	control	同上
+product-service	service-discovery	control	同上
+order-service	service-discovery	control	同上
+payment-service	service-discovery	control	同上
+shipping-service	service-discovery	control	同上
+favourite-service	service-discovery	control	同上
+cloud-config	service-discovery	control	同上
+api-gateway	cloud-config	control	api-gateway/src/main/resources/application.yml（每個服務都有同型設定） spring.config.import=configserver:（預設 localhost）
+proxy-client	cloud-config	control	同上
+user-service	cloud-config	control	同上
+product-service	cloud-config	control	同上
+order-service	cloud-config	control	同上
+payment-service	cloud-config	control	同上
+shipping-service	cloud-config	control	同上
+favourite-service	cloud-config	control	同上
+service-discovery	cloud-config	control	同上

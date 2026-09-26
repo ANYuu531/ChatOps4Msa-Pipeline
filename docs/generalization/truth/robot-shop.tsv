@@ -1,0 +1,21 @@
+web	catalogue	control	web/default.conf.template:61 proxy_pass
+web	user	control	web/default.conf.template:65
+web	cart	control	web/default.conf.template:69
+web	shipping	control	web/default.conf.template:73
+web	payment	control	web/default.conf.template:77
+web	ratings	control	web/default.conf.template:81
+cart	redis	data	cart/server.js:390 redis.createClient
+cart	catalogue	business	cart/server.js:362 request('http://' + catalogueHost + ':8080/product/')
+user	mongodb	data	user/server.js:272 mongodb://mongodb:27017/users
+user	redis	data	user/server.js:258
+catalogue	mongodb	data	catalogue/server.js:157
+shipping	mysql	data	shipping/src/main/java/com/instana/robotshop/shipping/JpaConfig.java:16 jdbc:mysql://mysql/cities
+shipping	cart	business	shipping/src/main/java/com/instana/robotshop/shipping/Controller.java:24 String.format("http://%s/shipping/", getenv("CART_ENDPOINT","cart"))
+payment	user	business	payment/payment.py:64 http://{user}:8080/check/
+payment	cart	business	payment/payment.py:116 http://{cart}:8080/cart/
+payment	rabbitmq	data	payment/rabbitmq.py:6 AMQP_HOST
+payment	paypal.com	external	payment/payment.py:26 PAYMENT_GATEWAY
+ratings	mysql	data	ratings/html/src/Database.php（mysql）
+ratings	catalogue	business	ratings/html/src/Service/CatalogueService.php:27 sprintf('%s/product/%s', $this->catalogueUrl)（host 由 config/services.yaml 的 CATALOGUE_URL 注入）
+dispatch	rabbitmq	data	dispatch/main.go（consumer）
+load	web	control	docker-compose-load.yaml HOST=http://web:8080

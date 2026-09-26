@@ -75,7 +75,21 @@ public class CodeGraphMerger {
      * ({@code env-address}). They seed the greenfield vocabulary and resolve
      * indirected targets; they are never rendered as arrows.
      */
-    private static final Set<String> META_SECTIONS = Set.of("service-root", "env-address", "workload-env");
+    private static final Set<String> META_SECTIONS = Set.of("service-root", "env-address", "workload-env",
+            "k8s-workload", "compose-service");
+
+    /** Hosts that name the caller itself, never another workload. */
+    private static final Set<String> LOOPBACK = Set.of(
+            "localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]", "host.docker.internal");
+
+    /** Config keys whose bare (non-URL) value is a host or a registry id, i.e. a target. */
+    private static final String[] HOST_KEY_SUFFIXES = {
+            ".host", ".hostname", "_host", "_hostname", ".address", ".serviceid", ".service-id"};
+
+    /** Feign attributes that are bean wiring, not a target: a contextId is not a host. */
+    private static final Set<String> FEIGN_NON_TARGET_ATTRS = Set.of(
+            "contextid", "qualifier", "qualifiers", "fallback", "fallbackfactory",
+            "configuration", "primary", "decode404", "path");
 
     private final DependencyGraph graph;
     private final Set<String> knownNodes = new LinkedHashSet<>();
@@ -105,6 +119,20 @@ public class CodeGraphMerger {
      * known service names, with and without a {@code ts-} prefix / {@code service} suffix.
      */
     private final Map<String, String> serviceKeys = new LinkedHashMap<>();
+    /** Workload names the k8s manifests declare ({@code k8s-workload}); greenfield vocabulary. */
+    private final Set<String> workloads = new LinkedHashSet<>();
+    /** Module names that are (or align to) a deployable workload; pre-added as nodes in greenfield. */
+    private final Set<String> deployableModules = new LinkedHashSet<>();
+    /** Spring property key (lower-cased) -> address-shaped value, from every config file read. */
+    private final Map<String, String> properties = new LinkedHashMap<>();
+    /** {@code file:line} of every @FeignClient that declares a url — its name is then only a bean id. */
+    private final Set<String> feignUrlSites = new LinkedHashSet<>();
+    /** Config file (relative path) -> the client service it configures, by file stem. */
+    private final Map<String, String> configFileService = new LinkedHashMap<>();
+    /** Config files shared by every client of a config repository (application*.yml beside per-service files). */
+    private final Set<String> sharedConfigFiles = new LinkedHashSet<>();
+    /** Services that fetch their config from a config server (bootstrap: spring.cloud.config.uri). */
+    private final Set<String> configClients = new LinkedHashSet<>();
 
     private CodeGraphMerger(DependencyGraph graph, String repoName) {
         this.graph = graph;
@@ -119,8 +147,44 @@ public class CodeGraphMerger {
      * table (which resolves indirected targets like {@code TRANSACTIONS_API_ADDR}).
      */
     private void indexMeta(JSONArray edges) {
+        // Pass 0 (greenfield only): the workloads the manifests declare. These are the
+        // names the cluster — and so the runtime graph — would use, so they outrank a
+        // module directory's spelling: "catalog", not microservice-kubernetes-demo-catalog.
+        // Grouped by manifest directory: only a directory that deploys this repo's own
+        // modules is the application's deployment. A repo also ships manifests for its
+        // monitoring stack (train-ticket: prometheus, grafana, jaeger, an EFK stack —
+        // 60 workloads) and for optional extras (Bank of Anthos: a pgpool operator, a
+        // Cloud SQL populate job); none of those is a node of the application's graph.
+        // A Compose file's services are the same kind of vocabulary, for the repos whose
+        // only deployment description it is (petclinic, ewolff's microservice-demo,
+        // Tap-And-Eat). The manifests win when there are any: a k8s workload name is what
+        // the cluster — and so the runtime graph — really uses, and mixing the two
+        // spellings would split one service in two, which is the very fault this fixes.
+        Map<String, Set<String>> workloadsByDir = new LinkedHashMap<>();
+        Set<String> allWorkloads = new LinkedHashSet<>();
+        if (greenfield) {
+            for (String section : List.of("k8s-workload", "compose-service")) {
+                for (int i = 0; i < edges.length(); i++) {
+                    JSONObject edge = edges.optJSONObject(i);
+                    if (edge == null || !section.equals(edge.optString("section", ""))) continue;
+                    JSONObject fields = edge.optJSONObject("fields");
+                    if (fields == null) continue;
+                    String name = clean(fields.optString("name", ""));
+                    if (!isPlausibleName(name)) continue;
+                    allWorkloads.add(name);
+                    workloadsByDir.computeIfAbsent(parentDir(edge.optString("file", "").replace('\\', '/')),
+                            k -> new LinkedHashSet<>()).add(name);
+                }
+                if (!allWorkloads.isEmpty()) break;
+            }
+        }
+
         // Pass 1: the service inventory, so knownNodes is complete before env-address
-        // resolution below can prefer a host that is actually a known service.
+        // resolution below can prefer a host that is actually a known service. A module
+        // directory aligns to the workload it deploys as (exact, or by -suffix) when the
+        // manifests know one; otherwise its own name is the node.
+        Map<String, String> moduleNodes = new LinkedHashMap<>(); // dir -> node, in inventory order
+        Set<String> aligned = new LinkedHashSet<>();
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
             if (edge == null || !"service-root".equals(edge.optString("section", ""))) continue;
@@ -128,9 +192,36 @@ public class CodeGraphMerger {
             if (fields == null) continue;
             String dir = fields.optString("dir", "");
             String name = clean(fields.optString("name", ""));
-            if (!dir.isBlank() && isPlausibleName(name)) {
-                serviceDirs.put(dir.replace('\\', '/'), name);
-                if (greenfield) knownNodes.add(name);
+            if (dir.isBlank() || !isPlausibleName(name)) continue;
+            if (greenfield && !allWorkloads.isEmpty()) {
+                String workload = matchWorkloadForModule(name, allWorkloads);
+                if (workload != null) {
+                    name = workload;
+                    aligned.add(workload);
+                }
+            }
+            moduleNodes.put(dir.replace('\\', '/'), name);
+        }
+        // The application's manifests: the directories in which some module of this repo
+        // is deployed. Their workloads (a database StatefulSet, the registry, the broker
+        // of a variant) are the vocabulary; the other directories' are not.
+        for (Map.Entry<String, Set<String>> e : workloadsByDir.entrySet()) {
+            for (String w : e.getValue()) {
+                if (aligned.contains(w)) {
+                    workloads.addAll(e.getValue());
+                    break;
+                }
+            }
+        }
+        if (greenfield) knownNodes.addAll(workloads);
+        for (Map.Entry<String, String> e : moduleNodes.entrySet()) {
+            String name = e.getValue();
+            serviceDirs.put(e.getKey(), name);
+            if (greenfield) {
+                knownNodes.add(name);
+                // A module the manifests never deploy is a library or a tool; with no
+                // manifests at all, every module is presumed deployable.
+                if (workloads.isEmpty() || workloads.contains(name)) deployableModules.add(name);
             }
         }
 
@@ -158,8 +249,15 @@ public class CodeGraphMerger {
 
         // In greenfield the inventory IS the graph's node set: add every service so
         // even a service nobody calls still appears (an accurate, if isolated, node).
+        // The manifests' workloads are part of that inventory — a database StatefulSet
+        // has no source directory and would otherwise only exist once something
+        // resolves to it.
+        // A module the manifests do not deploy (TeaStore's registryclient library, its
+        // Docker base image) is not pre-added: it still attributes sources, and appears
+        // only if an edge actually touches it.
         if (greenfield) {
-            for (String name : serviceDirs.values()) {
+            for (String name : workloads) graph.addNode(name, DependencyGraph.classifyKind(name));
+            for (String name : deployableModules) {
                 graph.addNode(name, DependencyGraph.classifyKind(name));
             }
         }
@@ -167,6 +265,117 @@ public class CodeGraphMerger {
         // Build the path -> service lookup from the final node vocabulary, so a
         // path-encoded callee (see serviceKeys) can be resolved later.
         for (String node : knownNodes) registerServiceKeys(node);
+
+        indexConfig(edges);
+    }
+
+    /**
+     * A module directory's workload: the same name, or a workload the directory's
+     * name ends with ({@code microservice-kubernetes-demo-catalog} → {@code catalog},
+     * {@code tools-descartes-teastore-webui} → {@code teastore-webui}). The longest
+     * workload wins so {@code ts-station-food-service} is not taken for {@code food-service}.
+     */
+    private static String matchWorkloadForModule(String module, Set<String> workloads) {
+        String best = null;
+        for (String w : workloads) {
+            if (w.equalsIgnoreCase(module)) return w;
+            if (w.length() >= 3 && (module.endsWith("-" + w) || module.endsWith("_" + w))
+                    && (best == null || w.length() > best.length())) {
+                best = w;
+            }
+        }
+        return best;
+    }
+
+    /**
+     * The lookup tables the config rows carry, read before any edge is merged:
+     * <ul>
+     *   <li>the property table ({@code rates.url → https://api.exchangeratesapi.io}), so a
+     *       {@code ${property}} placeholder in a client declaration resolves like an env var;</li>
+     *   <li>the Feign clients that declare a {@code url}: their {@code name} is a bean id
+     *       (piggymetrics's "rates-client"), not a host, and must not become a node;</li>
+     *   <li>a Spring Cloud Config repository's layout: a file named after a client
+     *       service ({@code shared/account-service.yml}) configures THAT service, whatever
+     *       directory it sits in, and the {@code application.yml} beside such files is
+     *       shared by every config client. Attributed by path, every one of piggymetrics's
+     *       datasources and its Eureka registration read as dependencies of the config
+     *       server (2026-09-22).</li>
+     * </ul>
+     */
+    private void indexConfig(JSONArray edges) {
+        Set<String> configRepoDirs = new LinkedHashSet<>();
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null) continue;
+            String section = edge.optString("section", "");
+            JSONObject fields = edge.optJSONObject("fields");
+            if (fields == null) continue;
+            String file = edge.optString("file", "").replace('\\', '/');
+
+            if ("feign".equals(section)) {
+                if ("url".equalsIgnoreCase(fields.optString("attr", "")) && !fields.optString("value", "").isBlank()) {
+                    feignUrlSites.add(file + ":" + edge.optInt("line", 0));
+                }
+                continue;
+            }
+            if (!"config".equals(section)) continue;
+
+            String key = fields.optString("key", "").toLowerCase(Locale.ROOT);
+            String value = fields.optString("value", "");
+            if (!key.isEmpty() && !value.isBlank() && !value.contains("${")
+                    && (looksLikeUrl(value) || isPlausibleName(clean(value)))) {
+                properties.putIfAbsent(key, value.trim());
+            }
+            if (key.startsWith("spring.cloud.config.uri") || key.startsWith("spring.cloud.config.import")
+                    || (key.startsWith("spring.config.import") && value.contains("configserver"))) {
+                String client = resolveSource(file);
+                if (client != null) configClients.add(client);
+            }
+
+            // A config FILE named after a known service configures that service. Only a
+            // config file: a code file also yields config rows (getenv, @Value), and
+            // CatalogClient.java is not catalog's configuration.
+            String stem = isConfigFile(file) ? fileStem(file) : null;
+            if (stem != null && !stem.startsWith("application") && !stem.startsWith("bootstrap")) {
+                String node = matchNode(stem);
+                for (String s = stem; node == null && s.contains("-"); s = s.substring(0, s.lastIndexOf('-'))) {
+                    node = matchNode(s); // account-service-dev → account-service
+                }
+                if (node != null) {
+                    configFileService.put(file, node);
+                    configRepoDirs.add(parentDir(file));
+                }
+            }
+        }
+        // The application*.yml beside per-service files is the shared part of the repo.
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null || !"config".equals(edge.optString("section", ""))) continue;
+            String file = edge.optString("file", "").replace('\\', '/');
+            String stem = fileStem(file);
+            if (stem != null && stem.startsWith("application") && configRepoDirs.contains(parentDir(file))) {
+                sharedConfigFiles.add(file);
+            }
+        }
+    }
+
+    private static boolean isConfigFile(String file) {
+        String f = file == null ? "" : file.toLowerCase(Locale.ROOT);
+        return f.endsWith(".yml") || f.endsWith(".yaml") || f.endsWith(".properties");
+    }
+
+    /** {@code config/shared/account-service.yml} → {@code account-service}; null when no name. */
+    private static String fileStem(String file) {
+        if (file == null || file.isBlank()) return null;
+        String base = file.substring(file.lastIndexOf('/') + 1);
+        int dot = base.lastIndexOf('.');
+        String stem = (dot > 0 ? base.substring(0, dot) : base).toLowerCase(Locale.ROOT);
+        return stem.isEmpty() ? null : stem;
+    }
+
+    private static String parentDir(String file) {
+        int slash = file.lastIndexOf('/');
+        return slash < 0 ? "" : file.substring(0, slash);
     }
 
     /** Registers the letters-only key variants of a service node for path resolution. */
@@ -273,7 +482,7 @@ public class CodeGraphMerger {
             if (edge == null || !"workload-env".equals(edge.optString("section", ""))) continue;
             JSONObject fields = edge.optJSONObject("fields");
             if (fields == null) continue;
-            String source = matchNode(fields.optString("workload", ""));
+            String source = matchNodeLoose(fields.optString("workload", ""));
             if (source == null) continue;
 
             Set<String> hosts = new LinkedHashSet<>();
@@ -284,6 +493,7 @@ public class CodeGraphMerger {
 
             String file = edge.optString("file", "");
             for (String host : hosts) {
+                if (isLoopback(host)) continue;
                 String node = matchNode(host);
                 if (node == null) {
                     String label = cleanLabel(host);
@@ -375,6 +585,15 @@ public class CodeGraphMerger {
     }
 
     private void mergeOne(JSONObject edge, List<Unresolved> unresolved) {
+        mergeOne(edge, unresolved, null);
+    }
+
+    /**
+     * @param sourceOverride the calling service when the caller already knows it (a
+     *                       shared config file fanned out to each config client); null
+     *                       to attribute the edge from its file path.
+     */
+    private void mergeOne(JSONObject edge, List<Unresolved> unresolved, String sourceOverride) {
         String section = edge.optString("section", "");
         JSONObject fields = edge.optJSONObject("fields");
         if (fields == null) fields = new JSONObject();
@@ -387,7 +606,10 @@ public class CodeGraphMerger {
         // the meta-sections (service-root / env-address) are lookup tables consumed
         // in indexMeta, never edges.
         if ("http-server".equals(section) || PERSISTENCE_SECTIONS.contains(section)
-                || META_SECTIONS.contains(section)) return;
+                || META_SECTIONS.contains(section) || "url-constant".equals(section)) return;
+        // A URL in a constant nobody references is declared, not used (see
+        // TreeSitterExtractor.markUnreferencedUrlConstants): no edge, no residue.
+        if ("url".equals(section) && "true".equals(fields.optString("unreferenced", ""))) return;
 
         // docker-compose depends_on names BOTH endpoints explicitly (source_service ->
         // target_service), so the source comes from the field, not the file's module.
@@ -397,12 +619,36 @@ public class CodeGraphMerger {
             String src = resolveComposeService(fields.optString("source_service", ""));
             String tgt = resolveComposeService(fields.optString("target_service", ""));
             if (src != null && tgt != null && !src.equals(tgt)) {
+                // The target is a node too: Robot Shop's cart -> redis edge pointed at a
+                // node that did not exist, because only the source was ever added.
+                graph.addNode(tgt, DependencyGraph.classifyKind(tgt));
                 addCodeEdge(src, tgt, edgeType("", DependencyGraph.classifyKind(tgt)), file, line);
             }
             return;
         }
 
-        String source = resolveSource(file);
+        // A Feign client's contextId / qualifier / path are bean wiring; and when it
+        // declares a url, its name is only a bean id (piggymetrics: name="rates-client",
+        // url="${rates.url}") — the url row carries the target.
+        if ("feign".equals(section)) {
+            String attr = fields.optString("attr", "").toLowerCase(Locale.ROOT);
+            if (FEIGN_NON_TARGET_ATTRS.contains(attr)) return;
+            if ((attr.equals("name") || attr.equals("value") || attr.isEmpty())
+                    && feignUrlSites.contains(file.replace('\\', '/') + ":" + line)) return;
+        }
+
+        // A shared config file of a config repository configures every client; the
+        // edges it states belong to each of them, not to the server that serves it.
+        if (sourceOverride == null && "config".equals(section) && sharedConfigFiles.contains(file.replace('\\', '/'))) {
+            for (String client : configClients) mergeOne(edge, unresolved, client);
+            return;
+        }
+
+        String source = sourceOverride != null ? sourceOverride : resolveSource(file);
+        if ("config".equals(section) && sourceOverride == null) {
+            String owner = configFileService.get(file.replace('\\', '/'));
+            if (owner != null) source = owner;
+        }
 
         // A code-side config edge is a service reading an env var. When that env var
         // resolves (via the k8s ConfigMap / .env table) to a host that is a known
@@ -417,6 +663,28 @@ public class CodeGraphMerger {
                 if (node != null && !node.equals(source)) {
                     addCodeEdge(source, node, edgeType("", DependencyGraph.classifyKind(node)), file, line);
                 }
+            }
+            return;
+        }
+
+        // @Value("${catalog.service.host:catalog}"): the property may resolve through
+        // the config files, and failing that its default names the host. Only a value
+        // that is an address or a known node is taken — a port or a flag is not.
+        if ("config".equals(section) && fields.has("property")) {
+            String value = substitutePlaceholders(fields.optString("property", ""));
+            if (value == null || source == null) return;
+            String node = matchNode(value);
+            if (node == null && looksLikeUrl(value) && !isLoopback(stripToHost(value))) {
+                String host = stripToHost(value);
+                if (isExternal(host, graph.getNamespace())) {
+                    graph.addNode(host, DependencyGraph.KIND_EXTERNAL);
+                    addCodeEdge(source, host, "external", file, line);
+                    return;
+                }
+                node = matchNode(host);
+            }
+            if (node != null && !node.equals(source)) {
+                addCodeEdge(source, node, edgeType("", DependencyGraph.classifyKind(node)), file, line);
             }
             return;
         }
@@ -439,31 +707,55 @@ public class CodeGraphMerger {
         // Fallback for a call whose host is a variable but whose URL path names the
         // service by convention (/api/v1/orderservice/... -> order-service). Used only
         // when the host cannot be resolved below, so a real literal host always wins.
-        String pathNode = (source == null) ? null : resolveServiceFromPath(fields.optString("path", ""));
-
         String rawTarget = syncTarget(section, fields);
+
+        // The host may be a placeholder — http://${BALANCES_API_ADDR}/balances, or a
+        // Feign url="${rates.url}". The env -> host table (k8s ConfigMap / .env) or the
+        // property table (application*.yml) fills it in, and a ${key:default} falls
+        // back to its default: this is what draws ledgerwriter -> balancereader, and
+        // statistics-service -> api.exchangeratesapi.io, with no runtime data.
+        nameInferred = false;
+        String substituted = substitutePlaceholders(rawTarget);
+        if (substituted != null) rawTarget = substituted;
+        boolean inferredByName = nameInferred;
+
+        // Fallback for a call whose host is a variable but whose URL path names the
+        // service by convention (/api/v1/orderservice/… → order-service; a format string
+        // "http://%s:%s/catalog/" → catalog). Used only when the host cannot be resolved
+        // below, so a real literal host always wins.
+        String pathNode = null;
+        if (source != null) {
+            pathNode = resolveServiceFromPath(fields.optString("path", ""));
+            if (pathNode == null) pathNode = resolveServiceFromPath(pathOf(rawTarget));
+        }
+
         if (rawTarget == null || source == null) {
             if (pathNode != null && !pathNode.equals(source)) {
                 addCodeEdge(source, pathNode, "sync-http", file, line);
                 return;
             }
+            // A config key whose value names no address (a username, a profile, a
+            // context path) is a signal the ledger keeps, not a dependency that failed
+            // to resolve; it must not be handed to the LLM as residue.
+            if (rawTarget == null && "config".equals(section)) return;
             unresolved.add(new Unresolved(section, source, rawTarget, file, line));
             return;
         }
 
-        // The host may be an env placeholder — http://${BALANCES_API_ADDR}/balances.
-        // stripToHost cannot resolve it, but the env -> host table can: this is what
-        // draws ledgerwriter -> balancereader with no runtime data.
-        String envHost = hostFromEnvPlaceholder(rawTarget);
-        if (envHost != null) {
-            String node = matchNode(envHost);
+        String fullHost = stripToHost(rawTarget);
+        // localhost / 127.0.0.1 is the caller itself (a dev profile, a health check),
+        // never another workload — piggymetrics and TeaStore both grew a "localhost" node.
+        if (isLoopback(fullHost)) return;
+        // A format-string host whose variable is itself named after the service:
+        // http://{user}:8080/check/{id} with USER = os.getenv('USER_HOST', 'user').
+        java.util.regex.Matcher formatted = FORMAT_HOST.matcher(fullHost);
+        if (formatted.matches()) {
+            String node = matchNode(formatted.group(1));
             if (node != null && !node.equals(source)) {
                 addCodeEdge(source, node, edgeType(section, DependencyGraph.classifyKind(node)), file, line);
                 return;
             }
         }
-
-        String fullHost = stripToHost(rawTarget);
         if (fullHost.isEmpty()) {
             if (pathNode != null && !pathNode.equals(source)) {
                 addCodeEdge(source, pathNode, "sync-http", file, line);
@@ -501,7 +793,9 @@ public class CodeGraphMerger {
         // A db the service really uses (has persistence code) is documented; a db known
         // only from a datasource URL, with no entity/repository code, is a bare
         // declaration — kept but marked weakest so the graph does not overstate it.
-        String confidence = DependencyGraph.KIND_DB.equals(kind) && !persistenceServices.contains(source)
+        // A target found only through its variable's name is a guess of the same rank.
+        String confidence = (DependencyGraph.KIND_DB.equals(kind) && !persistenceServices.contains(source))
+                || inferredByName
                 ? DependencyGraph.CONF_INFERRED
                 : DependencyGraph.CONF_DOCUMENTED;
         addCodeEdge(source, node, edgeType(section, kind), file, line, confidence);
@@ -549,9 +843,17 @@ public class CodeGraphMerger {
                 return firstNonBlank(fields, "value", "target", "host", "name");
             }
             case "config" -> {
-                // Only a config value that looks like a URL is a dependency target.
+                // A config value that is a URL is a dependency target; so is a bare host
+                // under a host-shaped key (spring.data.mongodb.host: account-mongodb) or a
+                // registry id under a route (zuul.routes.x.serviceId: account-service).
                 String v = firstNonBlank(fields, "value");
-                return (v != null && looksLikeUrl(v)) ? v : null;
+                if (v == null) return null;
+                if (looksLikeUrl(v)) return v;
+                String key = fields.optString("key", "").toLowerCase(Locale.ROOT);
+                for (String suffix : HOST_KEY_SUFFIXES) {
+                    if (key.endsWith(suffix)) return v;
+                }
+                return null;
             }
             default -> {
                 return null;
@@ -559,25 +861,76 @@ public class CodeGraphMerger {
         }
     }
 
+    /** A Python/Java format placeholder standing in for the whole host: {user}, {cart_host}. */
+    private static final java.util.regex.Pattern FORMAT_HOST =
+            java.util.regex.Pattern.compile("\\{([a-z][a-z0-9_]*)}");
+
+    private static final java.util.regex.Pattern PLACEHOLDER =
+            java.util.regex.Pattern.compile("\\$\\{([^}:]+)(?::([^}]*))?}|\\{\\{([^}]+)}}");
+
     /**
-     * The host an env-var placeholder resolves to via the {@code env-address} table,
-     * or null. Matches {@code ${NAME}} and {@code {{NAME}}} against the table
-     * case-insensitively, so a URL whose host is externalised to config
-     * ({@code http://${BALANCES_API_ADDR}/…}) still yields a concrete target.
+     * The target with every {@code ${NAME}}, {@code ${NAME:default}} and {@code {{NAME}}}
+     * placeholder filled in, or null when the input has none or one cannot be filled.
+     * A name is looked up in the env → host table (k8s ConfigMap / .env), then in the
+     * property table (application*.yml, a config repository), then falls back to the
+     * placeholder's own default; each lookup is case-insensitive and also tries the last
+     * dotted segment, so {@code ${env.BALANCES_API_ADDR}} still hits. The whole string
+     * is returned, so {@code http://${X}/path} keeps its path for the rules that follow.
      */
-    private String hostFromEnvPlaceholder(String rawTarget) {
-        if (rawTarget == null || envAddress.isEmpty()) return null;
-        java.util.regex.Matcher m =
-                java.util.regex.Pattern.compile("\\$\\{([^}]+)}|\\{\\{([^}]+)}}").matcher(rawTarget);
-        if (!m.find()) return null;
-        String name = m.group(1) != null ? m.group(1) : m.group(2);
-        if (name == null) return null;
-        name = name.trim();
-        // Property paths like ${app.balances.url} are not an env key; take the last
-        // segment too, so ${BALANCES_API_ADDR} and ${env.BALANCES_API_ADDR} both hit.
-        String host = envLookup(name);
-        if (host == null && name.contains(".")) host = envLookup(name.substring(name.lastIndexOf('.') + 1));
-        return host;
+    private String substitutePlaceholders(String rawTarget) {
+        if (rawTarget == null) return null;
+        java.util.regex.Matcher m = PLACEHOLDER.matcher(rawTarget);
+        StringBuilder out = new StringBuilder();
+        boolean any = false;
+        while (m.find()) {
+            any = true;
+            String name = (m.group(1) != null ? m.group(1) : m.group(3));
+            String fallback = m.group(2);
+            String value = name == null ? null : lookupPlaceholder(name.trim());
+            // The placeholder's own default outranks a guess from its name: train-ticket's
+            // lb://${ADMIN_ORDER_SERVICE_HOST:ts-admin-order-service} states the host.
+            if (value == null && fallback != null && !fallback.isBlank()) value = fallback.trim();
+            if (value == null && name != null) {
+                value = nodeNamedByVariable(name.trim());
+                if (value != null) nameInferred = true;
+            }
+            if (value == null) return null;
+            m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(value));
+        }
+        if (!any) return null;
+        m.appendTail(out);
+        return out.toString();
+    }
+
+    private String lookupPlaceholder(String name) {
+        String value = envLookup(name);
+        if (value == null) value = propertyLookup(name);
+        if (value == null && name.contains(".")) {
+            String last = name.substring(name.lastIndexOf('.') + 1);
+            value = envLookup(last);
+            if (value == null) value = propertyLookup(last);
+        }
+        return value;
+    }
+
+    /**
+     * Set by {@link #substitutePlaceholders} when a placeholder resolved by its name
+     * alone — the last resort after the tables and the placeholder's own default:
+     * ${CATALOGUE_HOST} in Robot Shop's nginx template names catalogue, and no table
+     * said so, so the edge this produces is marked inferred, not documented.
+     */
+    private boolean nameInferred;
+
+    private static final java.util.regex.Pattern VARIABLE_HOST_SUFFIX = java.util.regex.Pattern.compile(
+            "(?i)(_service)?(_host|_hostname|_addr|_address|_url|_uri|_endpoint|_server)$");
+
+    private String nodeNamedByVariable(String name) {
+        String base = VARIABLE_HOST_SUFFIX.matcher(name.trim()).replaceFirst("");
+        if (base.isEmpty() || base.equals(name.trim())) return null; // no host-shaped suffix: not a host variable
+        String label = base.toLowerCase(Locale.ROOT).replace('_', '-').replace('.', '-');
+        String node = matchNode(label);
+        if (node == null) node = serviceKeys.get(label.replaceAll("[^a-z0-9]", ""));
+        return node;
     }
 
     private String envLookup(String name) {
@@ -587,6 +940,32 @@ public class CodeGraphMerger {
             if (e.getKey().equalsIgnoreCase(name)) return e.getValue();
         }
         return null;
+    }
+
+    /** A property by its Spring key, relaxed over case and {@code -}/{@code _} spelling. */
+    private String propertyLookup(String name) {
+        String key = name.toLowerCase(Locale.ROOT);
+        String value = properties.get(key);
+        if (value != null) return value;
+        String relaxed = key.replaceAll("[-_]", "");
+        for (Map.Entry<String, String> e : properties.entrySet()) {
+            if (e.getKey().replaceAll("[-_]", "").equals(relaxed)) return e.getValue();
+        }
+        return null;
+    }
+
+    /** The path part of a URL-ish target ({@code http://%s:%s/catalog/} → {@code /catalog/}), or "". */
+    private static String pathOf(String rawTarget) {
+        if (rawTarget == null) return "";
+        String s = rawTarget.trim();
+        int scheme = s.indexOf("://");
+        if (scheme < 0) return "";
+        int slash = s.indexOf('/', scheme + 3);
+        return slash < 0 ? "" : s.substring(slash);
+    }
+
+    private static boolean isLoopback(String host) {
+        return host != null && LOOPBACK.contains(host.toLowerCase(Locale.ROOT));
     }
 
     /** The broker destination (topic / exchange / queue) for an async section. */
@@ -608,10 +987,41 @@ public class CodeGraphMerger {
      * real dependency, drawn dashed. Null only for a blank or implausible name.
      */
     private String resolveComposeService(String raw) {
-        String node = matchNode(raw);
+        String node = matchNodeLoose(raw);
         if (node != null) return node;
         String label = cleanLabel(raw);
         return (label != null && isPlausibleName(label) && !SOURCE_STOP.contains(label)) ? label : null;
+    }
+
+    /** Suffixes a Compose/Helm service name adds over the workload it runs (order-service-container). */
+    private static final String[] DEPLOY_NAME_SUFFIXES = {"-container", "-svc", "-pod", "-deployment"};
+
+    /**
+     * {@link #matchNode}, then the spellings a deployment file gives the same workload: a
+     * {@code -container} suffix stripped, or the bare last word of a prefixed workload
+     * name when it is unambiguous — TeaStore's compose file says {@code persistence} and
+     * {@code db} for the workloads its manifests call {@code teastore-persistence} and
+     * {@code teastore-db}. A short name that fits several nodes resolves to none.
+     */
+    private String matchNodeLoose(String candidate) {
+        String node = matchNode(candidate);
+        if (node != null) return node;
+        String c = clean(candidate);
+        if (c.isEmpty()) return null;
+        for (String suffix : DEPLOY_NAME_SUFFIXES) {
+            if (c.endsWith(suffix) && c.length() > suffix.length()) {
+                node = matchNode(c.substring(0, c.length() - suffix.length()));
+                if (node != null) return node;
+            }
+        }
+        String unique = null;
+        for (String known : knownNodes) {
+            if (known.length() > c.length() + 1 && known.endsWith("-" + c)) {
+                if (unique != null) return null; // ambiguous
+                unique = known;
+            }
+        }
+        return unique;
     }
 
     /** Resolve a host/name to a known workload id, or null. Deterministic only. */

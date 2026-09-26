@@ -1,0 +1,260 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    ts_voucher_service["ts-voucher-service"]
+    ts_ui_dashboard["ts-ui-dashboard"]
+    ts_wait_order_service["ts-wait-order-service"]
+    ts_common["ts-common"]
+    ts_food_delivery_service["ts-food-delivery-service"]
+    ts_delivery_service["ts-delivery-service"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    ts_gateway_service["ts-gateway-service"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    ts_admin_basic_info_service["ts-admin-basic-info-service"]
+    ts_admin_order_service["ts-admin-order-service"]
+    ts_admin_route_service["ts-admin-route-service"]
+    ts_admin_travel_service["ts-admin-travel-service"]
+    ts_admin_user_service["ts-admin-user-service"]
+    ts_assurance_service["ts-assurance-service"]
+    ts_cancel_service["ts-cancel-service"]
+    ts_config_service["ts-config-service"]
+    ts_consign_price_service["ts-consign-price-service"]
+    ts_execute_service["ts-execute-service"]
+    ts_preserve_other_service["ts-preserve-other-service"]
+    ts_preserve_service["ts-preserve-service"]
+    ts_rebook_service["ts-rebook-service"]
+    ts_security_service["ts-security-service"]
+    ts_user_service["ts-user-service"]
+    ts_travel_plan_service["ts-travel-plan-service"]
+    ts_verification_code_service["ts-verification-code-service"]
+    ts_avatar_service["ts-avatar-service"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    ts_consign_service["ts-consign-service"]
+    ts_contacts_service["ts-contacts-service"]
+    ts_food_service["ts-food-service"]
+    ts_inside_payment_service["ts-inside-payment-service"]
+    ts_auth_service["ts-auth-service"]
+    ts_notification_service["ts-notification-service"]
+    ts_route_plan_service["ts-route-plan-service"]
+    ts_register_service["ts-register-service"]
+  end
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    ts_payment_service["ts-payment-service"]
+    ts_travel2_service["ts-travel2-service"]
+    ts_travel_service["ts-travel-service"]
+    rest_service_external["rest-service-external"]
+    ts_train_food_service["ts-train-food-service"]
+    ts_station_food_service["ts-station-food-service"]
+  end
+  subgraph layer5 ["services · depth 5"]
+    direction LR
+    ts_basic_service["ts-basic-service"]
+    ts_seat_service["ts-seat-service"]
+  end
+  subgraph layer6 ["services · depth 6"]
+    direction LR
+    ts_order_other_service["ts-order-other-service"]
+    ts_order_service["ts-order-service"]
+    ts_price_service["ts-price-service"]
+    ts_route_service["ts-route-service"]
+    ts_train_service["ts-train-service"]
+  end
+  subgraph layer7 ["services · depth 7"]
+    direction LR
+    ts_station_service["ts-station-service"]
+  end
+  subgraph layer8 ["data stores"]
+    direction LR
+    ts_voucher_mysql[("ts-voucher-mysql")]:::db
+    ts_contacts_mysql[("ts-contacts-mysql")]:::db
+    ts_notification_mysql[("ts-notification-mysql")]:::db
+    ts_config_mysql[("ts-config-mysql")]:::db
+    ts_assurance_mysql[("ts-assurance-mysql")]:::db
+    ts_order_other_mysql[("ts-order-other-mysql")]:::db
+    ts_security_mysql[("ts-security-mysql")]:::db
+    ts_consign_mysql[("ts-consign-mysql")]:::db
+    ts_train_mysql[("ts-train-mysql")]:::db
+    ts_food_mysql[("ts-food-mysql")]:::db
+    ts_train_food_mysql[("ts-train-food-mysql")]:::db
+    ts_food_delivery_mysql[("ts-food-delivery-mysql")]:::db
+    ts_consign_price_mysql[("ts-consign-price-mysql")]:::db
+    ts_station_mysql[("ts-station-mysql")]:::db
+    ts_auth_mysql[("ts-auth-mysql")]:::db
+    ts_user_mysql[("ts-user-mysql")]:::db
+    ts_payment_mysql[("ts-payment-mysql")]:::db
+    ts_inside_payment_mysql[("ts-inside-payment-mysql")]:::db
+    ts_delivery_mysql[("ts-delivery-mysql")]:::db
+    ts_travel2_mysql[("ts-travel2-mysql")]:::db
+    ts_travel_mysql[("ts-travel-mysql")]:::db
+  end
+  subgraph layer9 ["external"]
+    direction LR
+    github_com[/"github.com"/]:::external
+    smtp_163_com[/"smtp.163.com"/]:::external
+  end
+  subgraph layer10 ["no dependencies found"]
+    direction LR
+    ts_food_map_service["ts-food-map-service"]
+    ts_news_service["ts-news-service"]
+    ts_ticket_office_service["ts-ticket-office-service"]
+    ts_ticketinfo_service["ts-ticketinfo-service"]
+    ts_user_mongo[("ts-user-mongo")]:::db
+    ts_auth_mongo[("ts-auth-mongo")]:::db
+    ts_route_mongo[("ts-route-mongo")]:::db
+    ts_contacts_mongo[("ts-contacts-mongo")]:::db
+    ts_order_mongo[("ts-order-mongo")]:::db
+    ts_order_other_mongo[("ts-order-other-mongo")]:::db
+    ts_config_mongo[("ts-config-mongo")]:::db
+    ts_station_mongo[("ts-station-mongo")]:::db
+    ts_train_mongo[("ts-train-mongo")]:::db
+    ts_travel_mongo[("ts-travel-mongo")]:::db
+    ts_travel2_mongo[("ts-travel2-mongo")]:::db
+    ts_price_mongo[("ts-price-mongo")]:::db
+    ts_security_mongo[("ts-security-mongo")]:::db
+    ts_inside_payment_mongo[("ts-inside-payment-mongo")]:::db
+    ts_payment_mongo[("ts-payment-mongo")]:::db
+    ts_assurance_mongo[("ts-assurance-mongo")]:::db
+    ts_ticket_office_mongo[("ts-ticket-office-mongo")]:::db
+    ts_food_map_mongo[("ts-food-map-mongo")]:::db
+    ts_consign_mongo[("ts-consign-mongo")]:::db
+    ts_consign_price_mongo[("ts-consign-price-mongo")]:::db
+    ts_food_mongo[("ts-food-mongo")]:::db
+    jaeger["jaeger"]
+    ts_login_service["ts-login-service"]
+    ts_sso_service["ts-sso-service"]
+    redis[("redis")]:::db
+    ts_account_mongo[("ts-account-mongo")]:::db
+  end
+  ts_admin_user_service -.-> ts_register_service
+  ts_cancel_service -.-> ts_notification_service
+  ts_cancel_service -.-> ts_order_service
+  ts_cancel_service -.-> ts_order_other_service
+  ts_order_other_service -.-> ts_station_service
+  ts_preserve_service -.-> ts_basic_service
+  ts_preserve_service -.-> ts_seat_service
+  ts_preserve_service -.-> ts_travel_service
+  ts_preserve_service -.-> ts_order_service
+  ts_preserve_service -.-> ts_food_service
+  ts_preserve_service -.-> ts_consign_service
+  ts_order_service -.-> ts_station_service
+  ts_food_service -.-> ts_station_food_service
+  ts_rebook_service -.-> ts_seat_service
+  ts_rebook_service -.-> ts_inside_payment_service
+  ts_admin_basic_info_service -.-> ts_contacts_service
+  ts_wait_order_service -.-> ts_preserve_service
+  ts_basic_service -.-> ts_station_service
+  ts_basic_service -.-> ts_train_service
+  ts_basic_service -.-> ts_route_service
+  ts_basic_service -.-> ts_price_service
+  ts_preserve_other_service -.-> ts_basic_service
+  ts_preserve_other_service -.-> ts_seat_service
+  ts_preserve_other_service -.-> ts_travel2_service
+  ts_preserve_other_service -.-> ts_order_other_service
+  ts_preserve_other_service -.-> ts_food_service
+  ts_preserve_other_service -.-> ts_consign_service
+  ts_common -. ext .-> github_com
+  ts_user_service -.-> ts_auth_service
+  ts_route_plan_service -.-> ts_travel_service
+  ts_route_plan_service -.-> ts_travel2_service
+  ts_inside_payment_service -.-> rest_service_external
+  ts_inside_payment_service -.-> ts_payment_service
+  ts_seat_service -.-> ts_order_service
+  ts_seat_service -.-> ts_order_other_service
+  ts_travel_plan_service -.-> ts_seat_service
+  ts_travel_plan_service -.-> ts_route_plan_service
+  ts_travel_plan_service -.-> ts_travel_service
+  ts_travel_plan_service -.-> ts_travel2_service
+  ts_travel2_service -.-> ts_basic_service
+  ts_travel2_service -.-> ts_seat_service
+  ts_travel_service -.-> ts_basic_service
+  ts_travel_service -.-> ts_seat_service
+  ts_admin_order_service -.-> ts_order_service
+  ts_admin_order_service -.-> ts_order_other_service
+  ts_admin_travel_service -.-> ts_travel_service
+  ts_admin_travel_service -.-> ts_travel2_service
+  ts_admin_travel_service -.-> ts_station_service
+  ts_admin_route_service -.-> ts_route_service
+  ts_admin_route_service -.-> ts_station_service
+  ts_voucher_service -.-> ts_order_service
+  ts_voucher_service -.-> ts_order_other_service
+  ts_contacts_service -. db .-> ts_contacts_mysql
+  ts_notification_service -. ext .-> smtp_163_com
+  ts_notification_service -. db .-> ts_notification_mysql
+  ts_config_service -. db .-> ts_config_mysql
+  ts_assurance_service -. db .-> ts_assurance_mysql
+  ts_order_other_service -. db .-> ts_order_other_mysql
+  ts_ui_dashboard -.-> ts_gateway_service
+  ts_security_service -. db .-> ts_security_mysql
+  ts_security_service -.-> ts_order_service
+  ts_security_service -.-> ts_order_other_service
+  ts_consign_service -. db .-> ts_consign_mysql
+  ts_train_service -. db .-> ts_train_mysql
+  ts_food_service -. db .-> ts_food_mysql
+  ts_food_service -.-> ts_station_service
+  ts_food_service -.-> ts_travel_service
+  ts_food_service -.-> ts_train_food_service
+  ts_train_food_service -. db .-> ts_train_food_mysql
+  ts_food_delivery_service -. db .-> ts_food_delivery_mysql
+  ts_consign_price_service -. db .-> ts_consign_price_mysql
+  ts_station_service -. db .-> ts_station_mysql
+  ts_voucher_service -. db .-> ts_voucher_mysql
+  ts_auth_service -. db .-> ts_auth_mysql
+  ts_user_service -. db .-> ts_user_mysql
+  ts_gateway_service -.-> ts_admin_basic_info_service
+  ts_gateway_service -.-> ts_admin_order_service
+  ts_gateway_service -.-> ts_admin_route_service
+  ts_gateway_service -.-> ts_admin_travel_service
+  ts_gateway_service -.-> ts_admin_user_service
+  ts_gateway_service -.-> ts_assurance_service
+  ts_gateway_service -.-> ts_auth_service
+  ts_gateway_service -.-> ts_avatar_service
+  ts_gateway_service -.-> ts_basic_service
+  ts_gateway_service -.-> ts_cancel_service
+  ts_gateway_service -.-> ts_config_service
+  ts_gateway_service -.-> ts_consign_price_service
+  ts_gateway_service -.-> ts_consign_service
+  ts_gateway_service -.-> ts_contacts_service
+  ts_gateway_service -.-> ts_execute_service
+  ts_gateway_service -.-> ts_food_service
+  ts_gateway_service -.-> ts_inside_payment_service
+  ts_gateway_service -.-> ts_notification_service
+  ts_gateway_service -.-> ts_order_other_service
+  ts_gateway_service -.-> ts_order_service
+  ts_gateway_service -.-> ts_payment_service
+  ts_gateway_service -.-> ts_preserve_other_service
+  ts_gateway_service -.-> ts_preserve_service
+  ts_gateway_service -.-> ts_price_service
+  ts_gateway_service -.-> ts_rebook_service
+  ts_gateway_service -.-> ts_route_plan_service
+  ts_gateway_service -.-> ts_route_service
+  ts_gateway_service -.-> ts_seat_service
+  ts_gateway_service -.-> ts_security_service
+  ts_gateway_service -.-> ts_station_food_service
+  ts_gateway_service -.-> ts_station_service
+  ts_gateway_service -.-> ts_train_food_service
+  ts_gateway_service -.-> ts_train_service
+  ts_gateway_service -.-> ts_travel2_service
+  ts_gateway_service -.-> ts_travel_plan_service
+  ts_gateway_service -.-> ts_travel_service
+  ts_gateway_service -.-> ts_user_service
+  ts_gateway_service -.-> ts_verification_code_service
+  ts_payment_service -. db .-> ts_payment_mysql
+  ts_inside_payment_service -. db .-> ts_inside_payment_mysql
+  ts_delivery_service -. db .-> ts_delivery_mysql
+  ts_travel2_service -. db .-> ts_travel2_mysql
+  ts_travel_service -. db .-> ts_travel_mysql
+  ts_travel_service -.-> ts_train_service
+  ts_travel_service -.-> ts_order_service
+  ts_travel_service -.-> ts_route_service
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

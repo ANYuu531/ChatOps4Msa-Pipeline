@@ -109,6 +109,7 @@ public class TreeSitterExtractor {
         Map<String, Integer> sectionCounts = new LinkedHashMap<>();
         List<Path> files = SourceScanner.filesWithExtensions(root, stack.extensions);
         int parsed = 0;
+        Map<String, String> sources = new LinkedHashMap<>(); // relative path -> text, for the reference check
 
         for (Path file : files) {
             String source;
@@ -117,6 +118,7 @@ public class TreeSitterExtractor {
             } catch (Exception e) {
                 continue; // binary or non-UTF-8: not source we can analyse
             }
+            sources.put(SourceScanner.relative(root, file), source);
             byte[] bytes = source.getBytes(StandardCharsets.UTF_8);
 
             TSTree tree;
@@ -139,6 +141,8 @@ public class TreeSitterExtractor {
         }
 
         ledger.addFilesParsed(parsed);
+        dropNonAddressUrls(ledger, sources);
+        markUnreferencedUrlConstants(root, ledger, sources);
 
         for (TreeSitterQueryEngine engine : engines) {
             for (String error : engine.getPredicateErrors()) ledger.addWarning(error);
@@ -179,6 +183,113 @@ public class TreeSitterExtractor {
             ledger.add(section, entry.getValue(), file, match.line,
                     confidenceOf(section, entry.getValue()));
         }
+    }
+
+    /**
+     * Where a URL is a name rather than an address. A line that carries an http URL and
+     * mentions a namespace, a schema location or a SOAP action is declaring an XML
+     * identifier, in any of the spellings the libraries use: {@code @XmlSchema(namespace =
+     * …)}, {@code setTargetNamespace(…)}, {@code xmlns:x=…}, {@code schemaLocation},
+     * {@code new SoapActionCallback("http://…/GetCustomerRequest")}. All three appear in
+     * LakesideMutual, and none of them is something any component calls.
+     */
+    private static final java.util.regex.Pattern XML_NAMESPACE_SITE =
+            java.util.regex.Pattern.compile("(?i)(namespace|schemalocation|xmlns|soapaction)");
+
+    /**
+     * An XML namespace URI is an identifier, not an address. {@code @XmlSchema(namespace =
+     * "http://example.com/interfaces/xsd")} need not resolve to anything and nothing calls
+     * it; in JAXB-generated code it is often the only URL in the file. Found on 2026-09-25
+     * while scoring against the MicroDepGraph dataset: two such lines had put two external
+     * hosts on LakesideMutual's graph that no code ever calls. The row is marked the same
+     * way an unreferenced constant is, so the merger draws no edge for it.
+     */
+    private void dropNonAddressUrls(EdgeLedger ledger, Map<String, String> sources) {
+        int dropped = 0;
+        for (EdgeLedger.Edge e : ledger.getEdges()) {
+            if (!"url".equals(e.section) || e.line <= 0) continue;
+            String source = sources.get(e.file);
+            if (source == null) continue;
+            String[] lines = source.split("\n", -1);
+            if (e.line > lines.length) continue;
+            // The call that names it may be wrapped onto the line above: the URL literal of
+            // new SoapActionCallback(\n "http://…") is on its own line.
+            StringBuilder window = new StringBuilder();
+            for (int l = Math.max(1, e.line - 2); l <= e.line; l++) window.append(lines[l - 1]).append('\n');
+            if (!XML_NAMESPACE_SITE.matcher(window).find()) continue;
+            e.fields.put("unreferenced", "true");
+            e.fields.put("not-an-address", "xml-namespace");
+            dropped++;
+        }
+        if (dropped > 0) {
+            ledger.addWarning(dropped + " URL literal(s) are XML namespaces or schema locations, "
+                    + "not call targets; they are drawn as no edge.");
+        }
+    }
+
+    /**
+     * A URL literal that lives in a static constant is a dependency only if the
+     * constant is used. For every {@code url-constant} row, the constant's name is
+     * searched in the source of its own module (the nearest directory up from the file
+     * that carries a build marker) outside the declaring line; when nothing refers to
+     * it, the {@code url} row emitted for the same literal is marked
+     * {@code unreferenced}, and the merger leaves it out. Declared, not used.
+     */
+    private void markUnreferencedUrlConstants(Path root, EdgeLedger ledger, Map<String, String> sources) {
+        List<EdgeLedger.Edge> constants = new ArrayList<>();
+        for (EdgeLedger.Edge e : ledger.getEdges()) if ("url-constant".equals(e.section)) constants.add(e);
+        if (constants.isEmpty()) return;
+
+        int unreferenced = 0;
+        for (EdgeLedger.Edge constant : constants) {
+            String name = constant.fields.get("name");
+            if (name == null || name.isBlank()) continue;
+            String module = moduleOf(root, constant.file);
+            java.util.regex.Pattern ref = java.util.regex.Pattern.compile("\\b" + java.util.regex.Pattern.quote(name) + "\\b");
+            boolean referenced = false;
+            for (Map.Entry<String, String> src : sources.entrySet()) {
+                if (!src.getKey().startsWith(module)) continue;
+                String[] lines = src.getValue().split("\n", -1);
+                for (int i = 0; i < lines.length && !referenced; i++) {
+                    if (src.getKey().equals(constant.file) && i + 1 == constant.line) continue; // the declaration itself
+                    if (ref.matcher(lines[i]).find()) referenced = true;
+                }
+                if (referenced) break;
+            }
+            if (referenced) continue;
+            unreferenced++;
+            for (EdgeLedger.Edge e : ledger.getEdges()) {
+                if ("url".equals(e.section) && e.file.equals(constant.file) && e.line == constant.line
+                        && constant.fields.get("value").equals(e.fields.get("value"))) {
+                    e.fields.put("unreferenced", "true");
+                }
+            }
+        }
+        if (unreferenced > 0) {
+            ledger.addWarning(unreferenced + " URL constant(s) are declared but never referenced in their module; "
+                    + "their url rows are marked unreferenced and drawn as no edge.");
+        }
+    }
+
+    /**
+     * The module a file belongs to: the path prefix up to the nearest ancestor that
+     * holds a build marker (pom.xml, package.json, …), or "" for the whole repository.
+     */
+    private static String moduleOf(Path root, String relativeFile) {
+        Path dir = root.resolve(relativeFile).getParent();
+        while (dir != null && !dir.equals(root)) {
+            for (String marker : ServiceRootScanner.markerFiles()) {
+                try (var listing = Files.list(dir)) {
+                    if (listing.anyMatch(p -> p.getFileName().toString().equalsIgnoreCase(marker))) {
+                        return SourceScanner.relative(root, dir) + "/";
+                    }
+                } catch (Exception ignored) {
+                    // unreadable directory: keep climbing
+                }
+            }
+            dir = dir.getParent();
+        }
+        return "";
     }
 
     /**

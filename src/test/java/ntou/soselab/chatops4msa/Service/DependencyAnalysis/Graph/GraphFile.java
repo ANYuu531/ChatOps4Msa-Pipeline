@@ -23,10 +23,12 @@ import java.util.regex.Pattern;
  */
 final class GraphFile {
 
+    // Node shapes: [( )] db, ([ ]) gateway, [/ /] external, {{ }} queue, [ ] service.
+    // Edge labels: "db", "ext", "async", and the emitter's "db?" for an inferred edge.
     private static final Pattern MERMAID_NODE = Pattern.compile(
-            "^\\s*([A-Za-z0-9_]+)\\s*(\\[\\(|\\(\\[|\\[/|\\[)\"?([^\"\\]/)]+)\"?.*$");
+            "^\\s*([A-Za-z0-9_]+)\\s*(\\[\\(|\\(\\[|\\[/|\\{\\{|\\[)\"?([^\"\\]/)}]+)\"?.*$");
     private static final Pattern MERMAID_EDGE = Pattern.compile(
-            "^\\s*([A-Za-z0-9_]+)\\s*(-[.-]->|-\\.\\s*([a-z]+)\\s*\\.->|--\\s*\"?([^\"]*)\"?\\s*-->)\\s*([A-Za-z0-9_]+)\\s*$");
+            "^\\s*([A-Za-z0-9_]+)\\s*(-[.-]->|-\\.\\s*([a-z]+\\??)\\s*\\.->|--\\s*\"?([^\"]*)\"?\\s*-->)\\s*([A-Za-z0-9_]+)\\s*$");
     private static final Pattern DOT_NODE = Pattern.compile("^\\s*\"([^\"]+)\"\\s*\\[(.*)\\];\\s*$");
     private static final Pattern DOT_EDGE = Pattern.compile("^\\s*\"([^\"]+)\"\\s*->\\s*\"([^\"]+)\"\\s*(?:\\[(.*)\\])?;\\s*$");
     private static final Pattern GRAPHML_NODE = Pattern.compile("<node\\s+id=\"([^\"]+)\"");
@@ -79,6 +81,7 @@ final class GraphFile {
             String kind = line.contains(":::db") || "[(".equals(node.group(2)) ? DependencyGraph.KIND_DB
                     : line.contains(":::external") || "[/".equals(node.group(2)) ? DependencyGraph.KIND_EXTERNAL
                     : line.contains(":::gateway") || "([".equals(node.group(2)) ? DependencyGraph.KIND_GATEWAY
+                    : line.contains(":::queue") || "{{".equals(node.group(2)) ? DependencyGraph.KIND_QUEUE
                     : DependencyGraph.KIND_SERVICE;
             idByAlias.put(alias, id);
             graph.addNode(id, kind);
@@ -91,8 +94,11 @@ final class GraphFile {
             if (source == null || target == null) continue;
             String label = edge.group(3) != null ? edge.group(3) : edge.group(4);
             boolean observed = line.contains("-->") && !line.contains("-.");
+            boolean inferred = label != null && label.endsWith("?");
+            if (inferred) label = label.substring(0, label.length() - 1);
             graph.addEdge(source, target, type(label, graph, target), null,
-                    observed ? DependencyGraph.CONF_OBSERVED : DependencyGraph.CONF_DOCUMENTED, observed, 0, null);
+                    observed ? DependencyGraph.CONF_OBSERVED : inferred ? DependencyGraph.CONF_INFERRED : DependencyGraph.CONF_DOCUMENTED,
+                    observed, 0, null);
         }
         return graph;
     }

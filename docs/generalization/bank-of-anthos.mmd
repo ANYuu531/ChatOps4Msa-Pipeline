@@ -1,0 +1,41 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    frontend["frontend"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    ledgerwriter["ledgerwriter"]
+    transactionhistory["transactionhistory"]
+    contacts["contacts"]
+    userservice["userservice"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    balancereader["balancereader"]
+  end
+  subgraph layer3 ["data stores"]
+    direction LR
+    accounts_db[("accounts-db")]:::db
+    ledger_db[("ledger-db")]:::db
+  end
+  subgraph layer4 ["no dependencies found"]
+    direction LR
+    loadgenerator["loadgenerator"]
+    pgpool_operator["pgpool-operator"]
+  end
+  ledgerwriter -.-> balancereader
+  frontend -.-> ledgerwriter
+  frontend -.-> userservice
+  frontend -.-> balancereader
+  frontend -.-> transactionhistory
+  frontend -.-> contacts
+  ledgerwriter -. db .-> ledger_db
+  transactionhistory -. db .-> ledger_db
+  balancereader -. db .-> ledger_db
+  contacts -. db .-> accounts_db
+  userservice -. db .-> accounts_db
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;

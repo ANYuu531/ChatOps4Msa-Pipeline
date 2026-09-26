@@ -1,0 +1,32 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    recommendationservice["recommendationservice"]
+    cartservice["cartservice"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    productcatalogservice["productcatalogservice"]
+  end
+  subgraph layer2 ["data stores"]
+    direction LR
+    redis_cart[("redis-cart")]:::db
+  end
+  subgraph layer3 ["no dependencies found"]
+    direction LR
+    emailservice["emailservice"]
+    checkoutservice["checkoutservice"]
+    frontend["frontend"]
+    paymentservice["paymentservice"]
+    loadgenerator["loadgenerator"]
+    currencyservice["currencyservice"]
+    shippingservice["shippingservice"]
+    adservice["adservice"]
+    shoppingassistantservice["shoppingassistantservice"]
+  end
+  recommendationservice -.-> productcatalogservice
+  cartservice -. db? .-> redis_cart
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;

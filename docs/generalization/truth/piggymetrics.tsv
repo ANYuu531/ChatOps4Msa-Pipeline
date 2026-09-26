@@ -1,0 +1,34 @@
+gateway	account-service	control	config/src/main/resources/shared/gateway.yml zuul.routes.account-service
+gateway	statistics-service	control	config/src/main/resources/shared/gateway.yml zuul.routes.statistics-service
+gateway	notification-service	control	config/src/main/resources/shared/gateway.yml zuul.routes.notification-service
+gateway	auth-service	control	config/src/main/resources/shared/gateway.yml zuul.routes.auth-service（url: http://auth-service:5000）
+account-service	auth-service	business	account-service/src/main/java/com/piggymetrics/account/client/AuthServiceClient.java:9 + config/src/main/resources/shared/account-service.yml accessTokenUri
+account-service	statistics-service	business	account-service/src/main/java/com/piggymetrics/account/client/StatisticsServiceClient.java:10
+notification-service	account-service	business	notification-service/src/main/java/com/piggymetrics/notification/client/AccountServiceClient.java:9
+statistics-service	auth-service	business	config/src/main/resources/shared/statistics-service.yml security.oauth2.client.accessTokenUri
+notification-service	auth-service	business	config/src/main/resources/shared/notification-service.yml security.oauth2.client.accessTokenUri
+statistics-service	api.exchangeratesapi.io	external	config/src/main/resources/shared/statistics-service.yml rates.url + ExchangeRatesClient.java:10
+notification-service	smtp.gmail.com	external	config/src/main/resources/shared/notification-service.yml spring.mail.host
+account-service	account-mongodb	data	README「Each microservice has its own database … MongoDB」+ config/src/main/resources/shared/account-service.yml spring.data.mongodb.host
+auth-service	auth-mongodb	data	config/src/main/resources/shared/auth-service.yml
+statistics-service	statistics-mongodb	data	config/src/main/resources/shared/statistics-service.yml
+notification-service	notification-mongodb	data	config/src/main/resources/shared/notification-service.yml
+account-service	rabbitmq	data	account-service/pom.xml hystrix-stream + bus-amqp；config/src/main/resources/shared/application.yml spring.rabbitmq.host
+statistics-service	rabbitmq	data	statistics-service/pom.xml hystrix-stream + bus-amqp
+notification-service	rabbitmq	data	notification-service/pom.xml hystrix-stream + bus-amqp
+turbine-stream-service	rabbitmq	data	turbine-stream-service/pom.xml spring-cloud-starter-stream-rabbit（consumer）
+account-service	config	control	account-service/src/main/resources/bootstrap.yml spring.cloud.config.uri
+auth-service	config	control	auth-service/src/main/resources/bootstrap.yml / docker-compose depends_on
+gateway	config	control	gateway/src/main/resources/bootstrap.yml / docker-compose depends_on
+monitoring	config	control	monitoring/src/main/resources/bootstrap.yml / docker-compose depends_on
+notification-service	config	control	notification-service/src/main/resources/bootstrap.yml
+registry	config	control	registry/src/main/resources/bootstrap.yml
+statistics-service	config	control	statistics-service/src/main/resources/bootstrap.yml
+turbine-stream-service	config	control	turbine-stream-service/src/main/resources/bootstrap.yml
+account-service	registry	control	config/src/main/resources/shared/application.yml eureka.client.serviceUrl.defaultZone（所有 config client）
+auth-service	registry	control	同上
+gateway	registry	control	同上
+monitoring	registry	control	同上
+notification-service	registry	control	同上
+statistics-service	registry	control	同上
+turbine-stream-service	registry	control	同上

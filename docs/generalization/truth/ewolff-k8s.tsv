@@ -1,0 +1,5 @@
+apache	order	control	README「Apache HTTP is configured as a reverse proxy」+ microservice-kubernetes-demo/apache/000-default.conf:14
+apache	catalog	control	microservice-kubernetes-demo/apache/000-default.conf:17
+apache	customer	control	microservice-kubernetes-demo/apache/000-default.conf:20
+order	catalog	business	README「order … uses catalog」+ microservice-kubernetes-demo/microservice-kubernetes-demo-order/src/main/java/com/ewolff/microservice/order/clients/CatalogClient.java:66
+order	customer	business	microservice-kubernetes-demo/microservice-kubernetes-demo-order/src/main/java/com/ewolff/microservice/order/clients/CustomerClient.java:78

@@ -1,0 +1,24 @@
+teastore-webui	teastore-auth	business	services/tools.descartes.teastore.webui：Service.AUTH 引用 2 處（loadBalanceRESTOperation）
+teastore-webui	teastore-image	business	webui：Service.IMAGE 引用 3 處
+teastore-webui	teastore-persistence	business	webui：Service.PERSISTENCE 引用 21 處
+teastore-webui	teastore-recommender	business	webui：Service.RECOMMENDER 引用 4 處
+teastore-auth	teastore-persistence	business	auth：Service.PERSISTENCE 引用 5 處
+teastore-image	teastore-persistence	business	image：Service.PERSISTENCE 引用 5 處
+teastore-recommender	teastore-persistence	business	recommender：Service.PERSISTENCE 引用 6 處
+teastore-persistence	teastore-db	data	GET_STARTED「DB_HOST … only needed for persistence service」+ persistence/…/domain/*.java @Entity
+teastore-webui	teastore-registry	control	GET_STARTED「Services register at a separate simple registry」；REGISTRY_HOST env
+teastore-auth	teastore-registry	control	同上
+teastore-image	teastore-registry	control	同上
+teastore-recommender	teastore-registry	control	同上
+teastore-persistence	teastore-registry	control	同上
+teastore-webui	teastore-kieker-rabbitmq	variant	examples/kubernetes/teastore-ribbon-kieker*.yaml（Kieker 監控變體）
+teastore-auth	teastore-kieker-rabbitmq	variant	同上
+teastore-image	teastore-kieker-rabbitmq	variant	同上
+teastore-recommender	teastore-kieker-rabbitmq	variant	同上
+teastore-persistence	teastore-kieker-rabbitmq	variant	同上
+teastore-webui	rabbitmq	variant	examples/docker/docker-compose_kieker.yaml（同一個 Kieker 變體的 compose 拼法）
+teastore-auth	rabbitmq	variant	同上
+teastore-image	rabbitmq	variant	同上
+teastore-recommender	rabbitmq	variant	同上
+teastore-persistence	rabbitmq	variant	同上
+teastore-all	teastore-db	variant	examples/kubernetes/teastore-all.yaml（單體變體）

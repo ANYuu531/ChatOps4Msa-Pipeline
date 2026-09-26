@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Language-agnostic extraction of service URLs and infrastructure endpoints from
@@ -25,33 +26,59 @@ public class ConfigExtractor {
 
     public void extract(Path root, EdgeLedger ledger) {
         List<Path> files = SourceScanner.filesWithExtensions(root,
-                List.of(".yml", ".yaml", ".properties", ".env"));
+                List.of(".yml", ".yaml", ".properties", ".env", ".conf", ".conf.template"));
 
         for (Path file : files) {
+            if (file.getFileName().toString().endsWith(".conf")
+                    || file.getFileName().toString().endsWith(".conf.template")) {
+                // A reverse proxy's routing table is the edge list of the front door:
+                // Apache's ProxyPass and nginx's proxy_pass name the upstreams.
+                try {
+                    extractReverseProxy(file, SourceScanner.relative(root, file), ledger);
+                } catch (Exception ignored) {
+                    // unreadable: not worth failing the analysis over
+                }
+                continue;
+            }
             String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
             boolean isSpringConfig = name.startsWith("application") || name.startsWith("bootstrap");
             boolean isEnv = name.equals(".env") || name.startsWith(".env.");
-            boolean isCompose = name.startsWith("docker-compose");
+            // The Compose spec's default file names are compose.y*ml; docker-compose.y*ml
+            // is the legacy spelling. Both are the same document.
+            boolean isCompose = name.startsWith("docker-compose") || name.startsWith("compose.");
             boolean isYaml = name.endsWith(".yml") || name.endsWith(".yaml");
 
             String relative = SourceScanner.relative(root, file);
             try {
                 if (name.endsWith(".properties") || isEnv) {
                     readKeyValueFile(file, relative, ledger);
-                } else if (isSpringConfig || isCompose) {
+                } else if (isCompose) {
                     Object loaded = new Yaml().load(Files.newBufferedReader(file, StandardCharsets.UTF_8));
-                    flatten("", loaded, relative, ledger);
                     // docker-compose declares each service's startup dependencies
                     // (config-server, discovery-server, …) as depends_on — the one
                     // structured place a "service -> control-plane" edge is stated when
-                    // the client-side URLs are externalised to a config repo.
-                    if (isCompose) extractComposeDependsOn(loaded, relative, ledger);
+                    // the client-side URLs are externalised to a config repo — and each
+                    // service's environment, which is the same wiring a k8s manifest
+                    // carries (DB_HOST: db). It is not read as a service's own config:
+                    // flattened, TeaStore's compose file made its examples/ directory the
+                    // source of every database edge (2026-09-22).
+                    extractComposeServices(loaded, relative, ledger);
+                    extractComposeDependsOn(loaded, relative, ledger);
+                    extractComposeEnvironment(loaded, relative, ledger);
+                } else if (isSpringConfig) {
+                    Object loaded = new Yaml().load(Files.newBufferedReader(file, StandardCharsets.UTF_8));
+                    flatten("", loaded, relative, ledger);
                 } else if (isYaml) {
-                    // Any other YAML may be a k8s manifest holding the env -> host table
-                    // (a ConfigMap of *_API_ADDR values, or literal env in a Deployment).
-                    // That table is what resolves an env-indirected call target when there
-                    // is no runtime graph — the greenfield case.
-                    extractK8sEnvAddresses(file, relative, ledger);
+                    // Any other YAML is either a k8s manifest (the workload inventory and
+                    // the env -> host table that resolve targets with no cluster — the
+                    // greenfield case) or a Spring config document that is not called
+                    // application.yml: a Spring Cloud Config repository keeps one file per
+                    // client service (shared/account-service.yml). Piggymetrics's datasources
+                    // all live in such files, and the analysis saw none of them (2026-09-22).
+                    if (!extractK8sEnvAddresses(file, relative, ledger)) {
+                        Object loaded = new Yaml().load(Files.newBufferedReader(file, StandardCharsets.UTF_8));
+                        if (looksLikeSpringConfig(loaded)) flatten("", loaded, relative, ledger);
+                    }
                 }
             } catch (Exception ignored) {
                 // unreadable or malformed config: not worth failing the analysis over
@@ -67,13 +94,26 @@ public class ConfigExtractor {
      * {@code TRANSACTIONS_API_ADDR -> ledgerwriter}) with no cluster running.
      * Multi-document YAML (k8s files routinely use {@code ---}) is fully scanned.
      */
-    private void extractK8sEnvAddresses(Path file, String relative, EdgeLedger ledger) throws Exception {
+    private boolean extractK8sEnvAddresses(Path file, String relative, EdgeLedger ledger) throws Exception {
+        boolean anyK8s = false;
         try (var reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             for (Object doc : new Yaml().loadAll(reader)) {
                 if (!(doc instanceof Map<?, ?> root)) continue;
                 if (root.get("apiVersion") == null || root.get("kind") == null) continue; // not a k8s object
+                anyK8s = true;
                 String kind = String.valueOf(root.get("kind"));
                 String name = metadataName(root);
+
+                // The workload inventory: what the cluster would actually run. With no
+                // runtime graph this is the only vocabulary that carries the real names —
+                // a Maven module called microservice-kubernetes-demo-catalog deploys as
+                // "catalog", and tools.descartes.teastore.webui as "teastore-webui".
+                if (WORKLOAD_KINDS.contains(kind) && name != null) {
+                    Map<String, String> fields = new LinkedHashMap<>();
+                    fields.put("name", name);
+                    fields.put("kind", kind);
+                    ledger.add("k8s-workload", fields, relative, -1, "High (k8s manifest)");
+                }
 
                 if ("ConfigMap".equals(kind) && root.get("data") instanceof Map<?, ?> data) {
                     for (Map.Entry<?, ?> e : data.entrySet()) {
@@ -87,7 +127,7 @@ public class ConfigExtractor {
                         Object v = pair.get("value"); // valueFrom (configMapKeyRef) has no literal here
                         if (k != null && v != null) {
                             recordEnvAddress(String.valueOf(k), String.valueOf(v), null, relative, ledger);
-                            String host = addressHost(String.valueOf(v));
+                            String host = addressHost(String.valueOf(k), String.valueOf(v));
                             if (name != null && host != null) recordWorkloadEnv(name, null, host, relative, ledger);
                         } else if (k != null && pair.get("valueFrom") instanceof Map<?, ?> from
                                 && from.get("configMapKeyRef") instanceof Map<?, ?> ref && ref.get("name") != null) {
@@ -102,6 +142,30 @@ public class ConfigExtractor {
                 }
             }
         }
+        return anyK8s;
+    }
+
+    /** k8s kinds that run a container — the inventory of what the cluster would actually run. */
+    private static final java.util.Set<String> WORKLOAD_KINDS = java.util.Set.of(
+            "Deployment", "StatefulSet", "DaemonSet", "ReplicaSet", "Job", "CronJob", "Pod");
+
+    /**
+     * Top-level keys that mark a YAML document as Spring configuration. A YAML file not
+     * named application.yml is read as config only when it looks like one, so a GitHub
+     * workflow, a Helm values file or a Compose file is not flattened into the ledger.
+     */
+    private static final java.util.Set<String> SPRING_TOP_KEYS = java.util.Set.of(
+            "spring", "server", "eureka", "zuul", "ribbon", "hystrix", "feign", "management",
+            "security", "logging", "resilience4j");
+
+    private static boolean looksLikeSpringConfig(Object loaded) {
+        if (!(loaded instanceof Map<?, ?> map) || map.isEmpty()) return false;
+        int hits = 0;
+        for (Object key : map.keySet()) {
+            if (SPRING_TOP_KEYS.contains(String.valueOf(key).toLowerCase(Locale.ROOT))) hits++;
+        }
+        // "spring" alone is unambiguous; otherwise two Spring-shaped keys are required.
+        return map.containsKey("spring") || map.containsKey("eureka") || hits >= 2;
     }
 
     /** {@code metadata.name} of a k8s object, or null. */
@@ -164,7 +228,7 @@ public class ConfigExtractor {
         key = key.trim();
         value = value.trim();
         if (key.isEmpty() || value.isEmpty()) return;
-        String host = addressHost(value);
+        String host = addressHost(key, value);
         if (host == null) return;
 
         Map<String, String> fields = new LinkedHashMap<>();
@@ -174,15 +238,133 @@ public class ConfigExtractor {
         ledger.add("env-address", fields, relative, -1, "High (k8s manifest)");
     }
 
+    /** Env names whose bare value is a host even without a port: DB_HOST, REGISTRY_HOST, CART_ENDPOINT. */
+    private static final java.util.regex.Pattern HOST_ENV_NAME = java.util.regex.Pattern.compile(
+            "(?i)(_host|_hostname|_addr|_address|_url|_uri|_endpoint|_server)$");
+
     /**
      * The host of a value that is an address (a URL or {@code host:port}), or null for
      * anything else — {@code "true"}, {@code "v0"}, a log level. A bare word is a valid
-     * DNS label, so the shape check has to come before the host extraction.
+     * DNS label, so the shape check has to come before the host extraction — unless the
+     * variable's own name says it holds a host ({@code DB_HOST: teastore-db}, the port in
+     * a sibling {@code DB_PORT}), which is how TeaStore and Robot Shop wire everything.
      */
-    private static String addressHost(String value) {
+    private static String addressHost(String name, String value) {
         String v = value == null ? "" : value.trim();
         boolean addressShaped = v.contains("://") || v.matches("[^\\s/]+:\\d{2,5}(/.*)?");
-        return addressShaped ? hostOf(v) : null;
+        if (addressShaped) return hostOf(v);
+        if (name != null && HOST_ENV_NAME.matcher(name.trim()).find()) return hostOf(v);
+        return null;
+    }
+
+    /** Compose keys that are not services, in either file format. */
+    private static final Set<String> COMPOSE_TOP_LEVEL_KEYS =
+            Set.of("version", "services", "networks", "volumes", "configs", "secrets", "name", "include");
+
+    /**
+     * The service map of a Compose file, in both formats: {@code services:} in version 2
+     * and later, and — in the version 1 file format, which the Spring Cloud samples of that
+     * era use — the top level itself, where every key is a service. Version 1 is not a
+     * curiosity to skip: it is where those projects state their wiring, and the dataset we
+     * score against derives its edges from exactly these files (2026-09-25).
+     */
+    private static Map<?, ?> composeServices(Object loaded) {
+        if (!(loaded instanceof Map<?, ?> root)) return null;
+        if (root.get("services") instanceof Map<?, ?> services) return services;
+        if (root.get("version") != null || root.get("services") != null) return null;
+        Map<Object, Object> top = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> e : root.entrySet()) {
+            String key = String.valueOf(e.getKey());
+            if (COMPOSE_TOP_LEVEL_KEYS.contains(key) || key.startsWith("x-")) continue;
+            // A v1 service is a map with an image or a build context; anything else at the
+            // top level of a file named docker-compose.* is not a service declaration.
+            if (e.getValue() instanceof Map<?, ?> value
+                    && (value.get("image") != null || value.get("build") != null)) {
+                top.put(e.getKey(), e.getValue());
+            }
+        }
+        return top.isEmpty() ? null : top;
+    }
+
+    /**
+     * Every {@code services.<name>} key of a Compose file, as the deployment's own
+     * vocabulary — the role a k8s workload's {@code metadata.name} plays.
+     *
+     * <p>Without it, a repo whose only deployment description is Compose has its nodes
+     * named after source modules: {@code spring-petclinic-customers-service} rather than
+     * the {@code customers-service} the deployment (and every caller's URL) uses, and the
+     * same service then arrives twice — once per spelling. Found on 2026-09-25 by scoring
+     * against the MicroDepGraph dataset's own graphs, where four of six projects had every
+     * edge right and no node name in common with the dataset.
+     */
+    private void extractComposeServices(Object loaded, String relative, EdgeLedger ledger) {
+        Map<?, ?> services = composeServices(loaded);
+        if (services == null) return;
+        for (Object key : services.keySet()) {
+            String service = String.valueOf(key).trim();
+            if (service.isEmpty()) continue;
+            Map<String, String> fields = new LinkedHashMap<>();
+            fields.put("name", service);
+            fields.put("kind", "ComposeService");
+            ledger.add("compose-service", fields, relative, -1, "High (compose services key)");
+        }
+    }
+
+    /**
+     * Compose {@code services.<svc>.environment}, in both its forms (a {@code K=V} list
+     * or a map), as the same {@code env-address} / {@code workload-env} rows a k8s
+     * manifest yields: the env → host table, and which service receives which host.
+     */
+    private void extractComposeEnvironment(Object loaded, String relative, EdgeLedger ledger) {
+        Map<?, ?> services = composeServices(loaded);
+        if (services == null) return;
+        for (Map.Entry<?, ?> entry : services.entrySet()) {
+            String service = String.valueOf(entry.getKey()).trim();
+            if (service.isEmpty() || !(entry.getValue() instanceof Map<?, ?> config)) continue;
+            Object environment = config.get("environment");
+            Map<String, String> env = new LinkedHashMap<>();
+            if (environment instanceof Map<?, ?> map) {
+                for (Map.Entry<?, ?> e : map.entrySet()) {
+                    if (e.getValue() != null) env.put(String.valueOf(e.getKey()), String.valueOf(e.getValue()));
+                }
+            } else if (environment instanceof List<?> list) {
+                for (Object item : list) {
+                    String s = String.valueOf(item);
+                    int eq = s.indexOf('=');
+                    if (eq > 0) env.put(s.substring(0, eq).trim(), s.substring(eq + 1).trim());
+                }
+            }
+            for (Map.Entry<String, String> e : env.entrySet()) {
+                recordEnvAddress(e.getKey(), e.getValue(), null, relative, ledger);
+                String host = addressHost(e.getKey(), e.getValue());
+                if (host != null) recordWorkloadEnv(service, null, host, relative, ledger);
+            }
+        }
+    }
+
+    /** {@code ProxyPass /order http://order:8080/} (Apache) and {@code proxy_pass http://cart:8080/;} (nginx). */
+    private static final java.util.regex.Pattern PROXY_DIRECTIVE = java.util.regex.Pattern.compile(
+            "(?i)^\\s*(?:ProxyPass|ProxyPassReverse|proxy_pass)\\s+(?:\\S+\\s+)?([a-z]+://\\S+?)[;\\s]*$");
+
+    /**
+     * Emits a {@code url} row for every upstream a reverse-proxy config routes to. The
+     * proxy is the front door of many demo systems (ewolff's Apache, Robot Shop's nginx);
+     * its config is the only place its edges exist, and it is not a language any grammar
+     * covers. A commented line is skipped; a {@code ${VAR}} host is kept for the merger's
+     * placeholder tables to fill.
+     */
+    private void extractReverseProxy(Path file, String relative, EdgeLedger ledger) throws Exception {
+        int lineNo = 0;
+        for (String raw : Files.readAllLines(file, StandardCharsets.UTF_8)) {
+            lineNo++;
+            String line = raw.trim();
+            if (line.isEmpty() || line.startsWith("#")) continue;
+            java.util.regex.Matcher m = PROXY_DIRECTIVE.matcher(line);
+            if (!m.matches()) continue;
+            Map<String, String> fields = new LinkedHashMap<>();
+            fields.put("value", m.group(1));
+            ledger.add("url", fields, relative, lineNo, "High (reverse-proxy config)");
+        }
     }
 
     /**
@@ -227,19 +409,24 @@ public class ConfigExtractor {
      * since every service declares the dependency here.
      */
     private void extractComposeDependsOn(Object loaded, String relative, EdgeLedger ledger) {
-        if (!(loaded instanceof Map<?, ?> root)) return;
-        if (!(root.get("services") instanceof Map<?, ?> services)) return;
+        Map<?, ?> services = composeServices(loaded);
+        if (services == null) return;
 
         for (Map.Entry<?, ?> entry : services.entrySet()) {
             String service = String.valueOf(entry.getKey()).trim();
             if (service.isEmpty() || !(entry.getValue() instanceof Map<?, ?> config)) continue;
-            Object dependsOn = config.get("depends_on");
 
             java.util.List<String> targets = new java.util.ArrayList<>();
-            if (dependsOn instanceof List<?> list) {
-                for (Object t : list) targets.add(String.valueOf(t).trim());
-            } else if (dependsOn instanceof Map<?, ?> map) {
-                for (Object k : map.keySet()) targets.add(String.valueOf(k).trim());
+            // links is the version 1 file format's way of saying the same thing, and says
+            // slightly more: a link exists so that this container can reach that one by
+            // name. "gateway" or "db:database" — the alias after the colon is local.
+            for (String key : List.of("depends_on", "links")) {
+                Object declared = config.get(key);
+                if (declared instanceof List<?> list) {
+                    for (Object t : list) targets.add(String.valueOf(t).trim().split(":")[0].trim());
+                } else if (declared instanceof Map<?, ?> map) {
+                    for (Object k : map.keySet()) targets.add(String.valueOf(k).trim());
+                }
             }
 
             for (String target : targets) {
@@ -247,7 +434,7 @@ public class ConfigExtractor {
                 Map<String, String> fields = new LinkedHashMap<>();
                 fields.put("source_service", service);
                 fields.put("target_service", target);
-                ledger.add("compose-dependency", fields, relative, -1, "High (docker-compose depends_on)");
+                ledger.add("compose-dependency", fields, relative, -1, "High (docker-compose depends_on/links)");
             }
         }
     }
@@ -300,10 +487,13 @@ public class ConfigExtractor {
                 || k.startsWith("eureka.") || k.startsWith("spring.cloud.consul")) {
             return true;
         }
-        if (k.endsWith(".url") || k.endsWith(".uri") || k.endsWith(".host")
+        if (k.endsWith(".url") || k.endsWith(".uri") || k.endsWith(".host") || k.endsWith(".hostname")
                 || k.endsWith(".endpoint") || k.endsWith(".address")
-                || k.endsWith("_url") || k.endsWith("_uri") || k.endsWith("_host")
-                || k.endsWith("_endpoint") || k.endsWith("_addr")) {
+                || k.endsWith("_url") || k.endsWith("_uri") || k.endsWith("_host") || k.endsWith("_hostname")
+                || k.endsWith("_endpoint") || k.endsWith("_addr")
+                // A gateway route that names its backend by registry id (Zuul serviceId,
+                // Spring Cloud Gateway's lb://) is a dependency stated in config.
+                || k.endsWith(".serviceid") || k.endsWith(".service-id")) {
             return true;
         }
         // A value that is plainly a URL is worth keeping whatever the key is called.
