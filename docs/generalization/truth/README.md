@@ -24,6 +24,7 @@ mvn -o test -Dtest=TruthEvidenceResolvesTest -Dsurefire.failIfNoSpecifiedTests=f
   目前 92 條有檔案出處的條目全部打得開。2026-09-25 第一次跑這道檢查時抓到 **2 條寫錯的出處**（`dispatch/src/main.go` 實際是 `dispatch/main.go`；robot-shop 根本沒有 `ratings/html/API.php`，真正的呼叫點是 `ratings/html/src/Service/CatalogueService.php:27`）——邊是對的，出處不可用，而在舊的寫法下沒有人會發現。
 
 - 同名檔案用**邊的來源服務**消歧（`<來源服務>/src/main/resources/bootstrap.yml`），不要寫成 `bootstrap.yml`。
+- **出處指「哪裡發出呼叫」，不是「host 從哪來」。** 這個慣例是 2026-09-26 的第二標註者實驗逼出來的：同一條 `cart → catalogue`，獨立標註者引 `cart/server.js:30`（`catalogueHost = process.env.CATALOGUE_HOST`），本檔的慣例是引 `:362`（真正發出請求的那一行）。兩邊都查得住，但不寫下來就會有分歧。host 的來源寫在同一格的說明文字裡。
 - 出處**不是檔案**時照實寫（TeaStore 的 `loadBalanceRESTOperation(Service.PERSISTENCE, …)` 是 enum 常數，目標在執行期由自家 registry 解析），並在報告裡說明它為什麼不能是路徑。
 
 ## 新增一個專案時

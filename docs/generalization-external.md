@@ -10,7 +10,7 @@
 > |---|---|---|---|
 > | **①** | 對照 **MicroDepGraph 資料集自己發表的依賴圖**，7 個專案 | **零**——邊集是別人發表的，作者只寫對照程式 | `docs/generalization/external-agreement.md` |
 > | **②** | 讓手寫 truth 的每一條**逐條可複驗**：出處補成完整的 `路徑:行`，可被第三方直接打開 | 作者從「決定答案」降為「抄錄出處」 | `truth/*.tsv`（已改寫 32 條）、本文件 §2 |
-> | **③** | **第二標註者**：一個沒看過 truth、也沒看過工具輸出的 LLM 獨立標一份，算逐條一致度 | 作者只裁決不一致的條目 | `SecondAnnotatorTest` → `docs/generalization/second-annotator/<name>.md`（**待機器 B 跑，本機 API 無額度**） |
+> | **③** | **第二標註者**：一個沒看過 truth、也沒看過工具輸出的 LLM 獨立標一份，算逐條一致度 | 作者只裁決不一致的條目 | `SecondAnnotatorTest` → `docs/generalization/second-annotator/<name>.md`（3／7 已跑，材料修過一次要重跑，見 §3.4） |
 >
 > 措辭也改：不再寫 “ground truth”／「標準答案」，一律寫**「參考邊集」**，指標寫**「一致度（agreement）」**而不是準確率。§4 說明每個詞怎麼換。
 >
@@ -18,7 +18,8 @@
 
 1. **工具的泛化結果不再只靠作者的標註**：在一份**完全不是我們寫的**參考邊集上（第三方發表的 7 個專案、95 條邊），工具畫到 **91 條＝0.96**，漏的 4 條逐條可解釋（2 條是 repo 演進、2 條是已知邊界）。這個數字可以單獨拿去報告，因為標準答案不是我給的。
 2. **作者標註目前沒有發現偏差，但只驗過一個專案**：唯一兩邊都有的 `robot-shop`，第三方的 12 條邊**全部**落在作者 truth 的 21 條裡，漏標 0、矛盾 0（§1.7）。作者多標的 9 條是第三方方法看不到的東西（程式碼呼叫、外部主機、nginx 路由），每條都有打得開的出處。**樣本 1，所以是「沒發現偏差」不是「證明沒有偏差」。**
-3. **作者標註的地位降級、並且可被別人檢查**：不再稱它為 ground truth／標準答案，改稱「參考邊集」，指標改稱「一致度」；每一條出處都必須是第三方**打得開**的 `路徑:行`，由 `TruthEvidenceResolvesTest` 斷言（92／92），這道檢查第一次跑就抓到 **2 條寫錯的出處**。第二標註者（③）**還沒有數字**，所以「作者與另一個標註者看法有多接近」目前仍是空白。
+3. **兩個專案上，獨立標註者都沒有指出作者漏標的任何一條邊**：`robot-shop` 18／3／**0**（Jaccard 0.86）、`bank-of-anthos` 10／2／**0**（0.83）。五條差異逐條裁決全是標註者漏抓或判斷分歧，作者的參考邊集**沒有一條被質疑**（§3.1、§3.2）。這和 §1.7 的第三方檢查互相獨立，兩邊都指向「漏標 0」。**但第三個專案（piggymetrics）暴露了材料收集的缺陷，三個都要用修好的材料重跑（§3.4）；prompt 一個字都沒改，改的是給它看的材料。**
+4. **作者標註的地位降級、並且可被別人檢查**：不再稱它為 ground truth／標準答案，改稱「參考邊集」，指標改稱「一致度」；每一條出處都必須是第三方**打得開**、而且**內容真的在裡面**的 `路徑:行`，由 `TruthEvidenceResolvesTest` 斷言（92／92）。三道檢查累計抓到 **3 條寫錯的出處 ＋ 3 條不精確的出處**，而**沒有一條是邊本身錯**——這個對比本身就是結論的一部分：作者對「有哪些依賴」的判斷站得住，對「證據在哪一行」的紀錄則需要程式看著。
 
 附帶的收穫：這一輪對照當場逼出工具的 **3 個真缺陷**（§1.6），修完既有七個專案零回歸。
 
@@ -184,13 +185,102 @@ account-service   account-mongodb   data   shared/account-service.yml
 
 輸出 `docs/generalization/second-annotator/<name>.md`：兩人都認為存在的、只有作者有的、只有第二標註者有的，逐條列出，並算 Jaccard 一致度。
 
+### 3.1 結果：robot-shop（2026-09-26 機器 B，`gpt-4.1-mini`，temperature 0，1 次呼叫、prompt 4 964 token）
+
+> **材料版本：舊**（§3.4 修過材料收集之後要重跑；robot-shop 的證據多在 compose 與程式碼行裡，受影響較小，但為了各輪可比仍要重跑）
+
+| | 條數 |
+|---|---|
+| 兩人都認為存在 | **18** |
+| 只有作者的參考邊集有 | 3 |
+| **只有第二標註者有** | **0** |
+| 一致度（Jaccard） | **0.86** |
+
+**最重要的那一格是 0**：獨立標註者**沒有指出任何一條作者漏標的邊**。前面 §1.7 用第三方資料集查的是同一件事（漏標 0），兩個互相獨立的檢查指向同一個結論。
+
+**三條差異逐條裁決（結論：三條都是標註者漏抓，作者的 truth 沒有一條被質疑）**
+
+| 只有作者有的邊 | 作者的出處 | 裁決 |
+|---|---|---|
+| `web → cart` | `web/default.conf.template:69` `proxy_pass http://${CART_HOST}:8080/` | **truth 對**。nginx 設定裡有 6 條 `proxy_pass`（catalogue／user／cart／shipping／payment／ratings），標註者只從 compose 抓到 4 條 `web → *`，**沒有讀反向代理的設定**——雖然材料裡給了它。工具抓到了這兩條（標 `inferred`，因為 host 是 `${CART_HOST}` 佔位符） |
+| `web → ratings` | `web/default.conf.template:81` | 同上 |
+| `payment → paypal.com` | `payment/payment.py:26` `PAYMENT_GATEWAY = os.getenv('PAYMENT_GATEWAY', 'https://paypal.com/')` | **truth 對**，但這一條是**真正的標註者分歧**而不是單純漏看：標註者引用了同一個檔案的第 24、25 行（`payment → cart`、`payment → user`），所以它**看得到**第 26 行，卻沒有把外部支付閘道算成依賴。「呼叫外部 SaaS 算不算系統的依賴」是判斷問題，不是事實問題 |
+
+**兩個附帶發現，都值得寫進論文**
+
+1. **標註者的行號全部查得住**，這和文獻對 LLM 引用的預期（§5.4：連結有效但事實正確率只有 39–77%）相反——在「材料就在 prompt 裡、而且每一行都附了檔名與行號」的條件下，它沒有編造出處。這反過來支撐 ③「事實由程式寫」的邊界：**把事實與位置一起餵給模型，它的轉述是可靠的；要它自己去找，才是不可靠的。**
+2. **兩個標註者對「出處該指哪裡」有系統性偏好差異。** 同一條 `cart → catalogue`，標註者引 `cart/server.js:30`（`catalogueHost = process.env.CATALOGUE_HOST || 'catalogue'`，host 是**從哪來**的），作者引 `:362`（`request('http://' + catalogueHost …)`，**哪裡發出呼叫**）。`ratings → mysql`、`payment → cart`、`user → redis` 都是同一個形態。兩邊都可複驗，但這說明「逐條可複驗」還不足以消除分歧——**出處的慣例也要寫下來**（`truth/README.md` 已補：出處指呼叫點，host 的來源寫在同一格的說明裡）。
+
+**方法論紅線**：一致度 0.86 的三條缺口都是標註者漏抓，看起來只要在 prompt 裡加一句「記得讀反向代理設定」就會變成 1.00——**不可以這樣做**。那是往「讓標註者同意作者」的方向優化，第二標註者就不再獨立，這個檢查也就失去意義。其餘六個專案用**完全相同的 prompt** 跑。
+
+### 3.2 結果：bank-of-anthos（同一天、同一個設定）
+
+> **材料版本：舊**（同上，要重跑）
+
+| | 條數 |
+|---|---|
+| 兩人都認為存在 | **10** |
+| 只有作者的參考邊集有 | 2 |
+| **只有第二標註者有** | **0** |
+| 一致度（Jaccard） | **0.83** |
+
+**兩條差異逐條裁決**
+
+| 只有作者有的邊 | 裁決 |
+|---|---|
+| `ledgerwriter → ledger-db` | **truth 對，而且這是標註者最說不過去的一次漏抓。** 它標了 `balancereader → ledger-db`（引 `BalanceReaderApplication.java:49`）與 `transactionhistory → ledger-db`（同型的 `:49`），而 `LedgerWriterApplication.java:51` 有**完全一樣的** `SPRING_DATASOURCE_URL`，ledgerwriter 也有 `@Repository TransactionRepository extends CrudRepository`。三個結構相同的服務，它標了兩個、漏了一個 |
+| `loadgenerator → frontend` | **邊對，但作者的出處寫錯了**（見下），標註者也沒標。這條邊工具也畫不出來（host 在 Dockerfile 的 `ENTRYPOINT` 命令列參數裡） |
+
+**這一輪最有價值的發現：LLM 標註者的漏抓是隨機的，不是系統性的。** robot-shop 那次的兩條缺口有規則可循（「它不讀反向代理設定」），所以可以預測、可以在報告裡交代。但這一次它對三個**完全同型**的服務做了不同處理——這種漏抓無法用任何規則描述，也就無法預測。對「用 LLM 當第二標註者」這件事來說這是負面證據，要寫進論文：**它可以用來檢查「作者有沒有標出別人看得到的東西」（這個方向它做得很好，兩個專案都是 0），但不能用來反推「作者漏了什麼」，因為它自己的漏抓沒有規律。**
+
+### 3.3 第二標註者順帶抓到第三條寫錯的出處
+
+`loadgenerator → frontend` 原本寫 `src/loadgenerator/locustfile.py（FRONTEND_ADDR）`。檔案存在，所以 §2 的檢查放過了它——但 **`locustfile.py` 裡沒有 `FRONTEND_ADDR`**：它在 `src/loadgenerator/Dockerfile:49` 的 `ENTRYPOINT locust --host="http://${FRONTEND_ADDR}"`，值在 `src/loadgenerator/k8s/base/loadgenerator.yaml:50`。已改。
+
+於是 `TruthEvidenceResolvesTest` 也跟著強化：**除了檔案要打得開，evidence 裡提到的程式碼識別字（`FRONTEND_ADDR`、`proxy_pass`、`redis.createClient` 這種）必須真的出現在那個檔案裡**。只讀「路徑之後、第一個分隔符之前」那一段，因為一格 evidence 常常接著指第二個來源，而第二個來源的識別字不是對第一個檔案的主張。
+
+強化之後又抓出 3 條**不精確**（不是指錯檔案）的出處：piggymetrics 的 `auth-service`／`gateway`／`monitoring` → `config` 原本寫「`bootstrap.yml` / docker-compose depends_on」，而 compose 裡這三個服務**根本沒有 `depends_on`**；真正的出處是 `bootstrap.yml:6` 的 `spring.cloud.config.uri: http://config:8888`（更精確，因為它直接給了 host）。已改，92／92 仍然全過。
+
+**累計**：這三道檢查（第三方邊集、出處可打開、出處內容相符）總共抓到 **3 條寫錯的出處 ＋ 3 條不精確的出處**，全部來自作者手寫的那 92 條。這個數字本身就是對「作者標註需要外部檢查」最好的論證——**而且每一條被抓到的都是出處，沒有一條是邊本身**。
+
+### 3.4 piggymetrics 暴露了這個方法的一個缺陷：材料不足（這一輪的數字作廢）
+
+| | 條數 |
+|---|---|
+| 兩人都認為存在 | 10 |
+| 只有作者的參考邊集有 | **24** |
+| 只有第二標註者有 | 0 |
+| 一致度（Jaccard） | **0.29** |
+
+**這 0.29 不是「作者的 truth 可疑」，也不是「標註者不行」，是我們給它的材料少於作者看得到的東西。** 證據很直接：標註者標的 10 條**全部**來自 `docker-compose.yml`，而作者那 24 條的出處是三類材料收集規則漏掉的檔案：
+
+| 作者的出處類型 | 條數 | 為什麼沒給標註者看 |
+|---|---|---|
+| `config/src/main/resources/shared/<service>.yml`（Spring Cloud Config 倉庫）：`zuul.routes`、`accessTokenUri`、`rates.url`、`spring.mail.host`、`eureka.client.serviceUrl.defaultZone` | 16 | 材料只收檔名是 `application*`／`bootstrap*` 或路徑含 `k8s` 的 yml；`shared/gateway.yml` 一條都不符合 |
+| `<service>/pom.xml` 的 `hystrix-stream`／`bus-amqp`／`stream-rabbit` starter（佇列的唯一證據） | 4 | 材料根本沒收任何依賴宣告檔 |
+| Feign client 的 `.java`（`@FeignClient(name = "auth-service")`） | 3 | 程式碼行的篩選條件要有 `http://`、`_HOST` 之類，annotation 裡沒有 |
+
+諷刺的是**工具自己看得到這三類**（2026-09-22 的規則 3、5、9 就是為它們加的），所以這一輪的對照是**對標註者不公平**，而不是對作者寬鬆。
+
+**修法（改材料，不改 prompt）**：收**所有** `.yml`／`.yaml`（工具就是這樣掃的）、加收依賴宣告檔（`pom.xml`、`package.json`、`requirements.txt`、`go.mod`、`composer.json`、`build.gradle`）、程式碼行的篩選加上 `@FeignClient`／`RestTemplate`／`WebClient`／`getenv`／`process.env`／`accessTokenUri`／`defaultZone` 等呼叫線索，預算從 58 KB 提到 90 KB。piggymetrics 的材料因此從 4 個檔案變成 **28 個**（含 9 份 `shared/*.yml` 與 5 份 `pom.xml`），45 898 字。
+
+**這是看過結果之後才改的，所以要說清楚兩件事**：
+1. 改的理由是**公平性**（材料明顯少於作者與工具可見的範圍），不是分數。判準是「作者的出處類型有沒有被材料涵蓋」，這個判準不看一致度。
+2. **三個已跑過的專案（robot-shop、bank-of-anthos、piggymetrics）都要用新材料重跑**，否則各輪的材料不一致、數字不可比。§3.1、§3.2 的數字是**舊材料**下的結果，重跑後以新的為準；本節的 0.29 直接作廢。
+
+**附帶的對照發現（這一輪最值得寫進論文的東西）**：標註者在前兩輪的行號**全部查得住**，這一輪卻把 Compose 的出處寫成 `docker-compose.yml (lines: 26-33)` 這種**互相重疊、明顯是猜的區間**。差別在於：前兩輪它引用的是材料裡**逐行附了行號**的程式碼行，這一輪引用的是整份貼上、**沒有行號**的 Compose 檔。
+
+> **同一個模型、同一次呼叫裡：位置給它，它忠實引用；位置不給它，它就編。** 這正是 pattern ③「事實由程式寫」的邊界條件，而且是在自家資料上看到的對照組。修法順帶處理了它：現在每份完整檔案都逐行附行號。
+
+### 3.5 其餘四個專案
+
 **這招的強度要說清楚**（已寫進測試的 javadoc）：
 
 - 它量的是**兩個獨立標註者的一致度**，不是誰對。一致度高只代表作者的 truth 不是個人特有的讀法。
 - 第二標註者不是裁判：它讀同一份 repo，會漏也會編，而且和工具用的是同一族模型（方法上並不完全獨立，只是彼此沒看過對方的答案）。
 - 所以三招裡**最硬的還是 ①**（別人發表的邊集），③ 是補充。
 
-**狀態**：程式已寫好並可執行，但**本機的 OpenAI key 沒有額度**（`chat 429: You have no credits remaining`），所以還沒有數字。指令在 §5，要在機器 B 上跑。
+**狀態**：三個專案跑過（§3.1 robot-shop、§3.2 bank-of-anthos、§3.4 piggymetrics），三個的「只有第二標註者有」都是 **0**。但 §3.4 發現材料收集漏了三類證據，修好之後**這三個都要重跑**，其餘四個（`ecommerce`、`ewolff-k8s`、`teastore`、`online-boutique`）用新材料跑，指令在 §5，**prompt 一個字都不改**（§3.1 的方法論紅線）。每個專案一通長 prompt，`gpt-4.1-mini` 等級約數美分。
 
 ---
 

@@ -51,8 +51,9 @@ public class SecondAnnotatorTest {
 
     /** Budgets for the material handed over, so one run stays a few cents. */
     private static final int README_BUDGET = 8_000;
-    private static final int DEPLOY_BUDGET = 30_000;
-    private static final int CODE_BUDGET = 20_000;
+    private static final int DEPLOY_BUDGET = 45_000;
+    private static final int MANIFEST_BUDGET = 12_000;
+    private static final int CODE_BUDGET = 25_000;
 
     @Test
     void anIndependentAnnotatorSeesTheSameDependencies() throws Exception {
@@ -76,6 +77,12 @@ public class SecondAnnotatorTest {
 
         String material = material(root);
         assertFalse(material.isBlank(), "nothing to read in " + repo);
+        // Printed before the call: what the annotator was shown decides what it can find,
+        // so an unexpectedly low agreement should be checked against this list first.
+        List<String> shown = new ArrayList<>();
+        for (String line : material.split("\n")) if (line.startsWith("=== ")) shown.add(line.substring(4).replace(" ===", ""));
+        System.out.println("material: " + material.length() + " chars, " + shown.size() + " file(s)");
+        for (String s : shown) System.out.println("  " + s);
         String answer = chat.ask(SYSTEM, "Repository: " + root.getFileName() + "\n\n" + material);
 
         Set<String> theirs = edgesOf(parse(answer));
@@ -187,23 +194,37 @@ public class SecondAnnotatorTest {
             sb.append("=== README.md ===\n").append(cut(Files.readString(readme, StandardCharsets.UTF_8), README_BUDGET)).append("\n\n");
         }
         int deployBudget = DEPLOY_BUDGET;
+        // Every config document, not only the ones named application.yml: a Spring Cloud
+        // Config repository keeps one file per client service (shared/gateway.yml), and
+        // leaving those out is what made the piggymetrics round unfair — 24 of the author's
+        // edges are stated there and the annotator was never shown them (2026-09-26).
         for (Path f : SourceScanner.filesWithExtensions(root, List.of(".yml", ".yaml", ".conf", ".conf.template"))) {
             if (deployBudget <= 0) break;
             String rel = SourceScanner.relative(root, f);
-            String lower = f.getFileName().toString().toLowerCase(Locale.ROOT);
-            boolean deployment = lower.startsWith("docker-compose") || lower.startsWith("compose.")
-                    || lower.endsWith(".conf") || lower.endsWith(".conf.template")
-                    || rel.contains("k8s") || rel.contains("kubernetes") || rel.contains("manifest")
-                    || lower.startsWith("application") || lower.startsWith("bootstrap");
-            if (!deployment) continue;
-            String body = cut(Files.readString(f, StandardCharsets.UTF_8), Math.min(6_000, deployBudget));
+            String body = cut(numbered(Files.readAllLines(f, StandardCharsets.UTF_8)), Math.min(8_000, deployBudget));
             deployBudget -= body.length();
             sb.append("=== ").append(rel).append(" ===\n").append(body).append("\n\n");
         }
+        // Dependency manifests: a queue is often declared here and nowhere else (a
+        // bus-amqp or stream-rabbit starter in a pom).
+        int manifestBudget = MANIFEST_BUDGET;
+        for (Path f : SourceScanner.filesWithExtensions(root,
+                List.of("pom.xml", "package.json", "requirements.txt", "go.mod", "composer.json", "build.gradle"))) {
+            if (manifestBudget <= 0) break;
+            String rel = SourceScanner.relative(root, f);
+            String body = cut(Files.readString(f, StandardCharsets.UTF_8), Math.min(4_000, manifestBudget));
+            manifestBudget -= body.length();
+            sb.append("=== ").append(rel).append(" ===\n").append(body).append("\n\n");
+        }
         int codeBudget = CODE_BUDGET;
-        sb.append("=== source lines that carry an address ===\n");
+        sb.append("=== source lines that name a call target or an address ===\n");
+        // Not only literal addresses: a Feign client names its callee in an annotation, and
+        // a REST client's target can be an injected property with no URL on that line.
         java.util.regex.Pattern address = java.util.regex.Pattern.compile(
-                "(?i)(https?://|jdbc:|mongodb://|amqp://|redis://|_HOST|_ADDR|_ENDPOINT|_URI|_URL)");
+                "(?i)(https?://|jdbc:|mongodb://|amqp://|redis://|_HOST|_ADDR|_ENDPOINT|_URI|_URL"
+                        + "|@FeignClient|FeignClient\\(|RestTemplate|WebClient|WebTarget|HttpClient"
+                        + "|requests\\.(get|post|put|delete)|axios|fetch\\(|getenv|process\\.env|System\\.getenv"
+                        + "|@Value\\(\"\\$\\{|accessTokenUri|serviceUrl|serviceId|defaultZone)");
         for (Path f : SourceScanner.filesWithExtensions(root,
                 List.of(".java", ".py", ".js", ".go", ".php", ".cs", ".rb", ".ts"))) {
             if (codeBudget <= 0) break;
@@ -216,6 +237,18 @@ public class SecondAnnotatorTest {
                 sb.append(row);
             }
         }
+        return sb.toString();
+    }
+
+    /**
+     * Every line prefixed with its number, so a citation into a whole file can be as exact
+     * as one into a source line. Without this the annotator cited Compose files as
+     * "(lines: 26-33)" — invented ranges, while its citations into the numbered source
+     * lines were all correct (2026-09-26).
+     */
+    private static String numbered(List<String> lines) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < lines.size(); i++) sb.append(i + 1).append(": ").append(lines.get(i)).append('\n');
         return sb.toString();
     }
 

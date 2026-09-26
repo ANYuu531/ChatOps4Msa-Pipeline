@@ -15,7 +15,7 @@
 ## bank-of-anthos
 
 漏（truth 有、工具沒畫）：
-- loadgenerator -> frontend  ·  src/loadgenerator/locustfile.py（FRONTEND_ADDR）
+- loadgenerator -> frontend  ·  src/loadgenerator/Dockerfile:49 ENTRYPOINT locust --host="http://${FRONTEND_ADDR}"；FRONTEND_ADDR 的值在 src/loadgenerator/k8s/base/loadgenerator.yaml:50（host 在命令列參數裡，不在 locustfile.py）
 
 ## ecommerce
 

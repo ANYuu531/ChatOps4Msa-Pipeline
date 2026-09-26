@@ -18,9 +18,9 @@ statistics-service	rabbitmq	data	statistics-service/pom.xml hystrix-stream + bus
 notification-service	rabbitmq	data	notification-service/pom.xml hystrix-stream + bus-amqp
 turbine-stream-service	rabbitmq	data	turbine-stream-service/pom.xml spring-cloud-starter-stream-rabbit（consumer）
 account-service	config	control	account-service/src/main/resources/bootstrap.yml spring.cloud.config.uri
-auth-service	config	control	auth-service/src/main/resources/bootstrap.yml / docker-compose depends_on
-gateway	config	control	gateway/src/main/resources/bootstrap.yml / docker-compose depends_on
-monitoring	config	control	monitoring/src/main/resources/bootstrap.yml / docker-compose depends_on
+auth-service	config	control	auth-service/src/main/resources/bootstrap.yml:6 spring.cloud.config.uri: http://config:8888
+gateway	config	control	gateway/src/main/resources/bootstrap.yml:6 spring.cloud.config.uri: http://config:8888
+monitoring	config	control	monitoring/src/main/resources/bootstrap.yml:6 spring.cloud.config.uri: http://config:8888
 notification-service	config	control	notification-service/src/main/resources/bootstrap.yml
 registry	config	control	registry/src/main/resources/bootstrap.yml
 statistics-service	config	control	statistics-service/src/main/resources/bootstrap.yml

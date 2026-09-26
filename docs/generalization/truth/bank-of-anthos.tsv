@@ -9,4 +9,4 @@ contacts	accounts-db	data	kubernetes-manifests/contacts.yaml
 ledgerwriter	ledger-db	data	kubernetes-manifests/ledger-writer.yaml + @Entity
 balancereader	ledger-db	data	kubernetes-manifests/balance-reader.yaml
 transactionhistory	ledger-db	data	kubernetes-manifests/transaction-history.yaml
-loadgenerator	frontend	control	src/loadgenerator/locustfile.py（FRONTEND_ADDR）
+loadgenerator	frontend	control	src/loadgenerator/Dockerfile:49 ENTRYPOINT locust --host="http://${FRONTEND_ADDR}"；FRONTEND_ADDR 的值在 src/loadgenerator/k8s/base/loadgenerator.yaml:50（host 在命令列參數裡，不在 locustfile.py）

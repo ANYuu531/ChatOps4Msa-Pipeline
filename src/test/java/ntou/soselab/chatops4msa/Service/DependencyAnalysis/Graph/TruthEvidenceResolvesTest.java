@@ -54,9 +54,46 @@ public class TruthEvidenceResolvesTest {
         REPOS.put("bank-of-anthos", "bank-of-anthos");
     }
 
-    /** The first path-shaped token of an evidence cell, with an optional {@code :line}. */
+    /**
+     * The first path-shaped token of an evidence cell, with an optional {@code :line}.
+     * Dockerfile and Makefile carry no extension but are cited like any other file.
+     */
     private static final Pattern CITATION = Pattern.compile(
-            "([\\w./\\u2026-]*?[\\w-]+\\.(?:java|py|js|ts|go|php|cs|rb|yml|yaml|conf\\.template|conf|xml|properties|json|md))(?::(\\d+))?");
+            "([\\w./\\u2026-]*?(?:[\\w-]+\\.(?:java|py|js|ts|go|php|cs|rb|yml|yaml|conf\\.template|conf|xml|properties|json|md)|Dockerfile|Makefile))(?::(\\d+))?");
+
+    /**
+     * An identifier the evidence names — {@code FRONTEND_ADDR}, {@code proxy_pass},
+     * {@code redis.createClient} — so that "the file exists" is not the whole check.
+     * Only tokens that look like code are used: a SCREAMING_CASE name, a call, or a
+     * dotted member. Prose around them is ignored, and a citation that names no such
+     * token is checked for existence only.
+     */
+    private static final Pattern CODE_TOKEN = Pattern.compile(
+            "\\b([A-Z][A-Z0-9_]{3,}|[a-z][A-Za-z0-9_]*\\.[a-z][A-Za-z0-9_]*\\(|[a-z][a-z0-9_]{2,}_[a-z0-9_]+)\\b");
+
+    /**
+     * The first code-shaped token the evidence names that the cited file does not contain,
+     * or null when the citation checks out.
+     *
+     * <p>Only the text between the citation and the first separator is read, because an
+     * evidence cell often names a second source after one ("… Dockerfile:49 ENTRYPOINT …;
+     * the value is in loadgenerator.yaml:50") and a token belonging to the second source is
+     * not a claim about the first file. The token is looked for anywhere in the file rather
+     * than on the cited line: line numbers drift as a repository moves on, and a wrong line
+     * is a much smaller problem than a wrong file.
+     */
+    private static String codeTokenNotInFile(Path file, String evidence, int citationEnd) throws Exception {
+        int end = evidence.length();
+        for (String separator : List.of("；", ";", "（", "(", "，", ",")) {
+            int at = evidence.indexOf(separator, citationEnd);
+            if (at >= 0 && at < end) end = at;
+        }
+        Matcher m = CODE_TOKEN.matcher(evidence.substring(Math.min(citationEnd, end), end));
+        if (!m.find()) return null;
+        String token = m.group(1).replace("(", "");
+        String body = Files.readString(file, java.nio.charset.StandardCharsets.UTF_8);
+        return body.contains(token) ? null : token;
+    }
 
     @Test
     void everyCitedFileCanBeOpened() throws Exception {
@@ -94,11 +131,18 @@ public class TruthEvidenceResolvesTest {
                     continue;
                 }
                 projectCited++;
-                if (Files.exists(root.resolve(path))) {
-                    projectOk++;
-                } else {
+                Path file = root.resolve(path);
+                if (!Files.exists(file)) {
                     broken.add(e.getKey() + ": " + path + " does not exist  (" + cols[0] + " -> " + cols[1] + ")");
+                    continue;
                 }
+                String missing = codeTokenNotInFile(file, cols[3], m.end());
+                if (missing != null) {
+                    broken.add(e.getKey() + ": " + path + " does not contain " + missing
+                            + "  (" + cols[0] + " -> " + cols[1] + ")");
+                    continue;
+                }
+                projectOk++;
             }
             cited += projectCited;
             resolvable += projectOk;
