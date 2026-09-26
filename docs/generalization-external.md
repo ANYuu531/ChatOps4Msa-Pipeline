@@ -10,16 +10,17 @@
 > |---|---|---|---|
 > | **①** | 對照 **MicroDepGraph 資料集自己發表的依賴圖**，7 個專案 | **零**——邊集是別人發表的，作者只寫對照程式 | `docs/generalization/external-agreement.md` |
 > | **②** | 讓手寫 truth 的每一條**逐條可複驗**：出處補成完整的 `路徑:行`，可被第三方直接打開 | 作者從「決定答案」降為「抄錄出處」 | `truth/*.tsv`（已改寫 32 條）、本文件 §2 |
-> | **③** | **第二標註者**：一個沒看過 truth、也沒看過工具輸出的 LLM 獨立標一份，算逐條一致度 | 作者只裁決不一致的條目 | `SecondAnnotatorTest` → `docs/generalization/second-annotator/<name>.md`（3／7 已跑，材料修過一次要重跑，見 §3.4） |
+> | **③** | **第二標註者**：一個沒看過 truth、也沒看過工具輸出的 LLM 獨立標一份，算逐條一致度 | 作者只裁決不一致的條目 | `SecondAnnotatorTest` → `docs/generalization/second-annotator/<name>.md`（**7／7 已跑**，見 §3.5 的裁決） |
 >
 > 措辭也改：不再寫 “ground truth”／「標準答案」，一律寫**「參考邊集」**，指標寫**「一致度（agreement）」**而不是準確率。§4 說明每個詞怎麼換。
 >
-### 結論（要拿去簡報與論文的那三句）
+### 結論（要拿去簡報與論文的那幾句）
 
 1. **工具的泛化結果不再只靠作者的標註**：在一份**完全不是我們寫的**參考邊集上（第三方發表的 7 個專案、95 條邊），工具畫到 **91 條＝0.96**，漏的 4 條逐條可解釋（2 條是 repo 演進、2 條是已知邊界）。這個數字可以單獨拿去報告，因為標準答案不是我給的。
 2. **作者標註目前沒有發現偏差，但只驗過一個專案**：唯一兩邊都有的 `robot-shop`，第三方的 12 條邊**全部**落在作者 truth 的 21 條裡，漏標 0、矛盾 0（§1.7）。作者多標的 9 條是第三方方法看不到的東西（程式碼呼叫、外部主機、nginx 路由），每條都有打得開的出處。**樣本 1，所以是「沒發現偏差」不是「證明沒有偏差」。**
-3. **兩個專案上，獨立標註者都沒有指出作者漏標的任何一條邊**：`robot-shop` 18／3／**0**（Jaccard 0.86）、`bank-of-anthos` 10／2／**0**（0.83）。五條差異逐條裁決全是標註者漏抓或判斷分歧，作者的參考邊集**沒有一條被質疑**（§3.1、§3.2）。這和 §1.7 的第三方檢查互相獨立，兩邊都指向「漏標 0」。**但第三個專案（piggymetrics）暴露了材料收集的缺陷，三個都要用修好的材料重跑（§3.4）；prompt 一個字都沒改，改的是給它看的材料。**
-4. **作者標註的地位降級、並且可被別人檢查**：不再稱它為 ground truth／標準答案，改稱「參考邊集」，指標改稱「一致度」；每一條出處都必須是第三方**打得開**、而且**內容真的在裡面**的 `路徑:行`，由 `TruthEvidenceResolvesTest` 斷言（92／92）。三道檢查累計抓到 **3 條寫錯的出處 ＋ 3 條不精確的出處**，而**沒有一條是邊本身錯**——這個對比本身就是結論的一部分：作者對「有哪些依賴」的判斷站得住，對「證據在哪一行」的紀錄則需要程式看著。
+3. **七個專案跑完，獨立標註者一條邊都沒有推翻**：40 條「只有標註者有」的邊逐條裁決後，是命名問題（22 條，其中 ewolff-k8s 那 5 條讓 Jaccard 變成 0.00 純粹是模組名 vs 部署名）、部署變體（5 條其實在 truth 裡，比對程式的 bug，已修）、標註者的判斷錯誤（13 條：把 H2 in-memory 當外部資料庫、把宣告未使用的常數當呼叫、**三條方向反轉**）。**沒有一條是作者漏標。** 一致度從 0.00 到 0.92，而數字本身不是產出（§3.5）。
+4. **但它精準指出了 truth 裡最難複驗的兩組（17%）**：online-boutique 的 9 條出處是**一張 PNG 架構圖**——純文字的第三方無法複驗，而標註者從 README 文字推的結果有 3 條方向是反的；TeaStore 的 7 條出處是 **enum 常數的引用次數**，可複驗但要先讀懂 registry 分派機制。這兩組的證據性質與其他 76 條不同，論文要分開講（§3.6）。這是這個方法真正的價值：它不推翻邊，它指出哪些出處撐不起第三方複驗。
+5. **作者標註的地位降級、並且可被別人檢查**：不再稱它為 ground truth／標準答案，改稱「參考邊集」，指標改稱「一致度」；每一條出處都必須是第三方**打得開**、而且**內容真的在裡面**的 `路徑:行`，由 `TruthEvidenceResolvesTest` 斷言（92／92）。三道檢查累計抓到 **3 條寫錯的出處 ＋ 3 條不精確的出處**，而**沒有一條是邊本身錯**——這個對比本身就是結論的一部分：作者對「有哪些依賴」的判斷站得住，對「證據在哪一行」的紀錄則需要程式看著。
 
 附帶的收穫：這一輪對照當場逼出工具的 **3 個真缺陷**（§1.6），修完既有七個專案零回歸。
 
@@ -272,7 +273,81 @@ account-service   account-mongodb   data   shared/account-service.yml
 
 > **同一個模型、同一次呼叫裡：位置給它，它忠實引用；位置不給它，它就編。** 這正是 pattern ③「事實由程式寫」的邊界條件，而且是在自家資料上看到的對照組。修法順帶處理了它：現在每份完整檔案都逐行附行號。
 
-### 3.5 其餘四個專案
+### 3.5 七個專案跑完（2026-09-26 機器 B，修好的材料）
+
+| 專案 | 兩人都有 | 只有作者 | 只有標註者 | Jaccard | 舊材料 |
+|---|---|---|---|---|---|
+| bank-of-anthos | 11 | 1 | 0 | **0.92** | 0.83 |
+| robot-shop | 17 | 4 | 1 | 0.77 | 0.86 |
+| piggymetrics | 25 | 9 | 2 | **0.69** | 0.29 |
+| online-boutique | 7 | 9 | 3 | 0.37 | — |
+| teastore | 6 | 7 | 6 | 0.32 | — |
+| ecommerce | 13 | 25 | 23 | 0.21 | — |
+| ewolff-k8s | 0 | 5 | 5 | **0.00** | — |
+
+材料修正對 piggymetrics 的效果正如預期（0.29 → 0.69）。但**一致度本身不是這一節的產出**——逐條裁決才是，而裁決的結論是：
+
+> **40 條「只有標註者有」的邊裡，沒有一條是作者漏標的。** 它們分成命名問題（22 條）、部署變體（5 條，其實在 truth 裡）、以及標註者的判斷錯誤（13 條）。而 40 條「只有作者有」的邊裡，**有兩組指出了 truth 真正的弱點**（§3.6）。
+
+**A. 命名問題（22 條）——最大的一類，而且映射了工具自己犯過的錯**
+
+| 專案 | 條數 | 標註者用的名字 | truth 用的名字 | 誰對 |
+|---|---|---|---|---|
+| ewolff-k8s | 5 | `microservice-kubernetes-demo-order` | `order` | **truth 對**。標註者用了 Maven 模組名——**正是工具在規則 11 之前犯的同一個錯**。而 prompt 明確寫了「用部署描述的名字，不要用原始碼目錄名」，它還是踩了 |
+| ecommerce | 10 | `user-service-container` 等 | `user-service` | **truth 對**。`*-container` 是 compose 的服務名本身（`container_name`），標註者把服務自己當成它的依賴。工具的規則 7 就是處理這個後綴的 |
+| robot-shop | 1 | `payment-gateway` | `paypal.com` | **truth 對**，但標註者**其實標到了那條邊**，只是用環境變數名 `PAYMENT_GATEWAY` 當節點名而不是 host |
+| piggymetrics | 1 | `external` | `api.exchangeratesapi.io` | 同上，它標到了那條外部依賴，名字寫成 `external` |
+| 小計 | **22** | | | |
+
+ewolff-k8s 的 0.00 因此是**假象**：五條邊**完全相同**，一條都沒有分歧。這一格在論文裡要特別講：**「模組名還是部署名」這個歧義強到人、模型、工具都會踩**，它不是工具的疏忽。
+
+**B. 部署變體（5 條）——比對程式的 bug，不是分歧**
+
+TeaStore 的 `teastore-* → teastore-kieker-rabbitmq` 五條**在 truth 裡**，標成 `variant`（只有 Kieker 追蹤變體才有的邊）。比對程式為了計分把 variant 整批排除，結果標註者標了它們就被算成「只有標註者有」。已修：現在單獨列成「標註者也標了、作者標為部署變體」一節，不計分也不算分歧。**修正後 TeaStore 的分歧只剩 1 條**（一個自環 `kieker-rabbitmq → kieker-rabbitmq`，標註者的錯）。
+
+**C. 標註者的判斷錯誤（13 條）**
+
+| 錯誤類型 | 條數 | 內容 |
+|---|---|---|
+| **把程序內的東西當成元件，並且自己造名字** | 6 | ecommerce 的 `<svc> → <svc>-database`。出處（`application-dev.yml:13`）是真的，但那一行是 `jdbc:h2:mem:ecommerce_dev_db`——**H2 記憶體內資料庫**，程序內、不是獨立元件；而 `user-service-database` 這個名字 repo 裡根本不存在。三個錯誤疊在一起：程序內當成外部、名字編造、同一條邊因三份 profile 重複標三次 |
+| **宣告當成使用** | 7 | ecommerce 的 `user-service → product-service` 等。來源是 `AppConstant.java:20` 的 `PRODUCT_SERVICE_HOST = "http://PRODUCT-SERVICE/…"`——**每個服務都複製一份含全部 URL 的常數檔，而多數沒人引用**。這正是 2026-09-22 規則 9（`markUnreferencedUrlConstants`）處理的東西：工具與作者都不畫，標註者畫了。**這一組是規則 9 的獨立驗證：那些邊不是工具偷懶少畫，是真的不該畫** |
+| **方向搞反** | 3 | online-boutique 的 `emailservice → checkoutservice`、`paymentservice → checkoutservice`、`adservice → frontend`——三條的真實方向都相反。這是最嚴重的一類錯誤（方向錯比漏抓更誤導），而且它只發生在「出處是架構圖、標註者只能從 README 文字推」的那個專案 |
+| 自環 | 1 | TeaStore 的 `kieker-rabbitmq → kieker-rabbitmq` |
+| 待查 | 1 | piggymetrics 的 `registry → registry-mongodb`（repo 裡沒有這個 mongo，疑似與其他服務的 `*-mongodb` 類推） |
+
+### 3.6 這一輪真正的產出：truth 裡最難複驗的兩組
+
+40 條「只有作者有」的邊裡，大部分是標註者漏抓（沒讀 nginx、沒把共用設定攤到每個 client、沒標控制面）。但有**兩組**的性質不同——它們是**作者的出處本身難以被第三方複驗**：
+
+**① online-boutique 的 9 條，出處是一張 PNG 架構圖。**
+
+`frontend → adservice`／`recommendationservice`／`productcatalogservice`／`cartservice`／`shippingservice`／`currencyservice`／`checkoutservice`、`cartservice → redis-cart`、`loadgenerator → frontend`——truth 的 evidence 欄寫的是「README `docs/img/architecture-diagram.png`（frontend → ad）」或「架構圖」。
+
+**這 9 條在文字上無法複驗**：標註者看不到圖片（任何純文字的第三方也看不到），而 README 的文字沒有把這些邊列出來。更糟的是，它從文字推測的結果**有 3 條方向是反的**（§3.5 C）——正好說明「沒有可讀的出處時會發生什麼」。
+
+要補的做法：這些邊多半有 manifest 的證據（`cartservice → redis-cart` 就有 `kubernetes-manifests/cartservice.yaml` 的 `REDIS_ADDR`，truth 已經寫了），其餘的 `frontend → *` 可以改引 `src/frontend/main.go` 的 `*_SERVICE_ADDR` 環境變數宣告與 manifest 的 env。**「架構圖」可以留著當補充，但不能是唯一的出處。**
+
+**② TeaStore 的 7 條，出處是 enum 常數的引用次數。**
+
+`teastore-webui → teastore-persistence`（出處：「webui：`Service.PERSISTENCE` 引用 21 處」）這一組，目標是 Java enum 常數，經自家 registry 在執行期解析。標註者**一條都沒標**——材料裡沒有任何 host 字串可讀，這完全符合預期（`docs/generalization-2026-09-22.md` §6 早就把它列為「registry/enum 動態分派」這個邊界）。
+
+**這是 truth 裡證據最弱的一組**：它可複驗（grep `Service.PERSISTENCE` 數引用次數），但複驗的人要先讀懂 `loadBalanceRESTOperation` 的分派機制才知道那個 enum 代表一個呼叫目標。論文要這樣寫：**這 7 條的等級不等於其他條**，它們靠的是對框架機制的理解，而不是一行可以指出來的字串。
+
+**兩組加起來 16 條，佔 92 條的 17%。** 這就是「第二標註者」這個方法的真正價值——它一條邊都沒推翻，但它精準指出了**哪些邊的出處撐不起第三方複驗**。
+
+### 3.7 這個方法本身的限制（跑完七個之後才看清楚）
+
+1. **標註者看到的是摘錄，作者看到的是整個 repo。** 這個不對等無法完全消除（prompt 有預算上限），所以「只有作者有」永遠會包含一部分「材料沒給它看」。§3.4 修掉的是明顯的缺口，剩下的是本質的。
+2. **它看不到圖片。** online-boutique 那 9 條就是這個限制撞上 truth 的弱點。
+3. **它的錯誤類型比人類標註者更奇怪**：把服務自己當依賴、把環境變數名當節點名、把 H2 in-memory 當外部資料庫、方向反轉。人類標註者大概不會犯前三種，但可能犯第四種。
+4. **它對命名慣例的遵守很不穩定**：prompt 明確要求用部署名，七個專案裡有兩個（ewolff-k8s、ecommerce）整批用錯。
+5. 因此**這個方法能回答的是一個方向的問題**：「作者有沒有標出別人也看得到的東西」（七個專案的答案都是有）。它**不能**用來反推作者漏了什麼——它自己的漏抓與錯誤太多。
+
+### 3.8 這一輪要改的 truth（待辦，不在本次）
+
+- **online-boutique 的 9 條**：出處從「架構圖」改成 manifest 的 `*_SERVICE_ADDR` env 與 `src/frontend/main.go` 的宣告，架構圖降為補充。
+- **TeaStore 的 7 條**：evidence 補上「呼叫點的 `檔案:行` ＋ enum 常數名」，並在報告與論文裡標明這一組的證據性質不同。
+- **piggymetrics 的 `registry → registry-mongodb`**：查 repo 確認標註者是不是編的（初步看 repo 裡沒有這個 mongo）。
 
 **這招的強度要說清楚**（已寫進測試的 javadoc）：
 
@@ -280,7 +355,7 @@ account-service   account-mongodb   data   shared/account-service.yml
 - 第二標註者不是裁判：它讀同一份 repo，會漏也會編，而且和工具用的是同一族模型（方法上並不完全獨立，只是彼此沒看過對方的答案）。
 - 所以三招裡**最硬的還是 ①**（別人發表的邊集），③ 是補充。
 
-**狀態**：三個專案跑過（§3.1 robot-shop、§3.2 bank-of-anthos、§3.4 piggymetrics），三個的「只有第二標註者有」都是 **0**。但 §3.4 發現材料收集漏了三類證據，修好之後**這三個都要重跑**，其餘四個（`ecommerce`、`ewolff-k8s`、`teastore`、`online-boutique`）用新材料跑，指令在 §5，**prompt 一個字都不改**（§3.1 的方法論紅線）。每個專案一通長 prompt，`gpt-4.1-mini` 等級約數美分。
+**狀態**：**七個專案全部跑完**（§3.5），逐條裁決見 §3.5、§3.6。§3.1 與 §3.2 是舊材料下的第一輪，保留當紀錄，指令在 §5，**prompt 一個字都不改**（§3.1 的方法論紅線）。每個專案一通長 prompt，`gpt-4.1-mini` 等級約數美分。
 
 ---
 

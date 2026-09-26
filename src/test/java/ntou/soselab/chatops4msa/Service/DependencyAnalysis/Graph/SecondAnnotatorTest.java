@@ -87,15 +87,20 @@ public class SecondAnnotatorTest {
 
         Set<String> theirs = edgesOf(parse(answer));
         Set<String> ours = new LinkedHashSet<>();
+        Set<String> variants = new LinkedHashSet<>();
         Map<String, String> evidence = new TreeMap<>();
         for (String line : Files.readAllLines(truthFile)) {
             if (line.isBlank() || line.startsWith("#")) continue;
             String[] cols = line.split("\t");
             if (cols.length < 3) continue;
-            if (cols[2].trim().equals("variant")) continue;
             String key = cols[0].trim() + " -> " + cols[1].trim();
-            ours.add(key);
             evidence.put(key, cols.length > 3 ? cols[3].trim() : "");
+            // A variant edge (one only some deployment configuration has) counts neither
+            // for nor against — but it is still in the author's set, so an annotator that
+            // names it agrees rather than disagreeing. Counting those as "only the
+            // annotator" made TeaStore look like five disagreements it never had.
+            if (cols[2].trim().equals("variant")) variants.add(key);
+            else ours.add(key);
         }
         assertFalse(ours.isEmpty(), "empty truth: " + truthFile);
 
@@ -103,7 +108,11 @@ public class SecondAnnotatorTest {
         List<String> onlyOurs = new ArrayList<>();
         for (String e : ours) (theirs.contains(e) ? both : onlyOurs).add(e);
         List<String> onlyTheirs = new ArrayList<>();
-        for (String e : theirs) if (!ours.contains(e)) onlyTheirs.add(e);
+        List<String> variantsFound = new ArrayList<>();
+        for (String e : theirs) {
+            if (ours.contains(e)) continue;
+            (variants.contains(e) ? variantsFound : onlyTheirs).add(e);
+        }
 
         StringBuilder md = new StringBuilder();
         md.append("# 第二標註者：").append(name).append("\n\n")
@@ -127,6 +136,12 @@ public class SecondAnnotatorTest {
         if (!onlyTheirs.isEmpty()) {
             md.append("\n## 只有第二標註者有（要逐條裁決：truth 漏了，還是標註者看錯）\n");
             for (String e : onlyTheirs) md.append("- ").append(e).append('\n');
+        }
+        if (!variantsFound.isEmpty()) {
+            md.append("\n## 標註者也標了、作者標為部署變體（`variant`，不計分也不算分歧）\n");
+            for (String e : variantsFound) {
+                md.append("- ").append(e).append("  ·  ").append(evidence.get(e)).append('\n');
+            }
         }
         md.append("\n## 標註者的原始回答\n\n```\n").append(answer.strip()).append("\n```\n");
 
