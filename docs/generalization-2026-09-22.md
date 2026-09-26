@@ -3,6 +3,7 @@
 > 問題：我們在 petclinic / Bank of Anthos / train-ticket 上做的調校，對一個**全新、沒測試過**的專案有沒有效？
 > 做法：挑六個形狀各異的開源微服務專案，只跑**靜態 greenfield 路徑**（tree-sitter + 設定檔 + 合併 + 正規化 + 分層；不接叢集、不接 DeepWiki、不叫 LLM），把工具畫的圖對照每個專案自己的架構說明或程式碼事實，算 precision / recall。
 > 結論一句：**第一輪六個全部有問題**（一個整張圖崩掉、一個六成邊是假的、一個資料層全漏）；追出來的**十條通用規則**修完後，**Java 專案的業務邊 precision 1.0、recall 0.86–1.0**（程式計分，見 §4）；三個失敗的地方都能指出是哪一種語言或哪一種呼叫型態不在工具的靜態表面上，而且圖上沒有為此編造任何邊；舊的 Bank of Anthos 圖逐條不變、train-ticket 只多不少（§5）。
+> **2026-09-25／26 續**：又追加四條規則（§3），**七個專案的 precision 全是 1.00，Bank of Anthos 與 Online Boutique 的 recall 到 1.00**；其中三個失敗裡的一個（Online Boutique 的「薄表面」）追下去發現**歸因錯了一半**（§6 第 3 點、`docs/generalization-external.md` §1.8）。
 
 跑法（離線、不開 port）：
 
@@ -89,7 +90,7 @@ mvn -o test -Dtest=GreenfieldProbeTest -Dprobe.repo=/path/to/checkout -Dprobe.ou
 
 用新規則重跑 Bank of Anthos 與 train-ticket 的真實 checkout（`docs/generalization/bank-of-anthos.*`、`train-ticket.*`），和已 commit 的舊圖比：
 
-- **Bank of Anthos**：11 條邊（6 業務 + 5 DB）**與 `docs/bank-of-anthos-greenfield-graph.mmd` 逐條相同**；計分 P 1.00 / R 0.92，唯一漏的是 `loadgenerator → frontend`（locust 的 host 來自命令列參數，程式碼裡沒有）。第一版新規則曾多出 `populate-*-db → db` 與 `pgpool-operator`（`extras/` 裡選配元件的 manifest），第十條規則後只剩 pgpool-operator 一個孤立節點（它和 accounts-db 的 HPA 變體同目錄，算該變體的真 workload）。
+- **Bank of Anthos**：11 條邊（6 業務 + 5 DB）**與 `docs/bank-of-anthos-greenfield-graph.mmd` 逐條相同**；計分 P 1.00 / R 0.92，唯一漏的是 `loadgenerator → frontend`（locust 的 host 來自命令列參數，程式碼裡沒有）。**2026-09-26：規則 14 之後這條也畫出來了**（`loadgenerator.yaml:82` 的 `FRONTEND_ADDR: "frontend:80"` 是寫在該 workload 自己 env 裡的字面位址），BoA 成為 12 條、R 1.00；`docs/bank-of-anthos-greenfield-graph.mmd` 是 9/22 的紀錄，**刻意不換**，最新的圖在 `docs/generalization/bank-of-anthos.mmd`。第一版新規則曾多出 `populate-*-db → db` 與 `pgpool-operator`（`extras/` 裡選配元件的 manifest），第十條規則後只剩 pgpool-operator 一個孤立節點（它和 accounts-db 的 HPA 變體同目錄，算該變體的真 workload）。
 - **train-ticket**：舊圖 50 條服務邊**全部保留**，多 2 條真的（`ts-ui-dashboard → ts-gateway-service` 來自 nginx.conf 的 proxy_pass；`ts-admin-user-service → ts-register-service`），再多 **46 條 gateway 路由**（`lb://${ADMIN_ORDER_SERVICE_HOST:ts-admin-order-service}`，舊版連 `lb://` 帶佔位符都解不開）與 **21 條 DB 邊**（每個服務自己的 mysql/mongo，來自 manifest 佈線＋JPA 證據）。節點 100 個（54 服務 + 44 資料庫 + 2 外部），第一版曾是 114（多了 prometheus、grafana、EFK 等監控 workload，第十條規則後移除）。**`docs/train-ticket-greenfield-graph.mmd` 刻意不換**：它是 threshold-design §8 子圖實驗的固定輸入，換掉數字就得重跑；新圖放在 `docs/generalization/train-ticket.mmd`。
 - 既有測試全過：`DependencyGraphTest` 71（petclinic runtime 合併、BoA greenfield fixture、train-ticket 路徑點名 fixture）等。
 - 新增 `GreenfieldGeneralizationTest`（merger 層，每條規則一個最小 fixture，15 個）、`ExtractionGeneralizationTest`（extractor 層，temp 目錄，6 個）、`GeneralizationScoreTest`（計分，1 個）。
@@ -99,8 +100,9 @@ mvn -o test -Dtest=GreenfieldProbeTest -Dprobe.repo=/path/to/checkout -Dprobe.ou
 ## 6. 對「通用性」問題的誠實回答
 
 1. **抽取層（tree-sitter + 設定檔）本來就通用**，這次六個專案 0 個語法錯誤；問題全在**合併層的假設**——第一版假設「模組目錄名＝部署名」、「設定只在 `application.yml`」、「compose 是某個目錄的設定」、「URL 字串出現就是呼叫」，這些在三個舊專案剛好都成立，所以之前看不出來。
-2. 九條規則都是**看到的形狀**而不是專案名；每條有對應測試；但它們的來源是六個專案，第七個專案很可能再逼出第十條。**方法本身可重複**：clone → 跑 probe → 對架構圖 → 每條差異追到一條規則或一個明確的語言/型態邊界。
+2. 十四條規則都是**看到的形狀**而不是專案名；每條有對應測試；但它們的來源是十三個專案，第十四個很可能再逼出下一條——2026-09-25 的七個新專案就一次逼出了三條（§3 的 11–13），而第 14 條是追問「為什麼某個專案分數這麼低」問出來的。**方法本身可重複**：clone → 跑 probe → 對架構圖 → 每條差異追到一條規則或一個明確的語言/型態邊界。
 3. 工具靜態層的三個明確邊界，這次量出來了：**沒有文法的語言**（Online Boutique 13/16、robot-shop 2/3 的漏邊）、**registry/enum 動態分派**（TeaStore 12/13）、**跨行拼接的 host**（robot-shop 1/3）。這三個都是 runtime 層要補的，而不是靜態層再加規則能解決的。
+   > **2026-09-26 更正第一個邊界**：Online Boutique 那 13 條**不是**沒有文法造成的損失——它們的目標寫在各自 workload 的 manifest env 裡，工具當時的規則不畫服務位址。規則 14 之後 **17／17 全中**。真正屬於「沒有文法」的損失小得多：語言決定的是能不能看到**程式碼層的呼叫**，而部署描述常常把同一件事寫了一遍。robot-shop 與 TeaStore 的兩個邊界不變（一個是 Node/PHP 的呼叫、一個是 enum 分派，兩者都沒有寫進 manifest）。
 4. 一個新的精確度來源被量出來：**「宣告但沒使用」**——ecommerce 25 條常數邊有 19 條沒人引用。這個規則對 train-ticket 這種「每個服務自己拼 URL」的專案沒有影響（它們的 URL 在呼叫點），只影響「常數檔複製到每個服務」的風格。
 
 ## 6b. 2026-09-25 的續篇

@@ -7,9 +7,9 @@
 | | 條數 |
 |---|---|
 | 兩人都認為存在 | 7 |
-| 只有作者的 truth 有 | 9 |
+| 只有作者的 truth 有 | 10 |
 | 只有第二標註者有 | 3 |
-| 一致度（交集 ÷ 聯集，Jaccard） | **0.37** |
+| 一致度（交集 ÷ 聯集，Jaccard） | **0.35** |
 
 ## 只有作者的 truth 有（第二標註者沒找到；附作者寫的出處，逐條可查）
 - frontend -> adservice  ·  src/frontend/main.go:138 mustMapEnv(&svc.adSvcAddr, "AD_SERVICE_ADDR")；值在 kubernetes-manifests/frontend.yaml:82 value: "adservice:9555"
@@ -19,6 +19,7 @@
 - frontend -> shippingservice  ·  src/frontend/main.go:137 SHIPPING_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:78 value: "shippingservice:50051"
 - frontend -> currencyservice  ·  src/frontend/main.go:133 CURRENCY_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:72 value: "currencyservice:7000"
 - frontend -> checkoutservice  ·  src/frontend/main.go:136 CHECKOUT_SERVICE_ADDR；kubernetes-manifests/frontend.yaml:80 value: "checkoutservice:5050"
+- frontend -> shoppingassistantservice  ·  src/frontend/main.go:139 mustMapEnv(&svc.shoppingAssistantSvcAddr, "SHOPPING_ASSISTANT_SERVICE_ADDR")；值在 kubernetes-manifests/frontend.yaml:84 value: "shoppingassistantservice:80"（2026-09-26 補：README 的架構圖沒畫這個服務，照圖標註時漏了，是工具從 manifest 抓到的）
 - cartservice -> redis-cart  ·  kubernetes-manifests/cartservice.yaml:50 REDIS_ADDR，值 "redis-cart:6379"
 - loadgenerator -> frontend  ·  kubernetes-manifests/loadgenerator.yaml:82 FRONTEND_ADDR，值 "frontend:80"（locust 的 --host 由它組成，不在 locustfile.py 裡）
 
