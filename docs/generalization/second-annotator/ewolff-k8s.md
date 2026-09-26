@@ -1,6 +1,6 @@
 # 第二標註者：ewolff-k8s
 
-由 `SecondAnnotatorTest` 產生（模型 `gpt-4.1-mini`，temperature 0，1 次呼叫，prompt 6470 token）。標註者**沒有看過** `truth/ewolff-k8s.tsv`，也沒有看過工具的輸出；它讀的是部署描述、README 與含位址的原始碼行。
+由 `SecondAnnotatorTest` 產生（模型 `gpt-4.1-mini`，temperature 0，1 次呼叫，prompt 6470 token；比對規則更新後以 `-Dannotate.replay=true` 重算，未重新呼叫 API）。標註者**沒有看過** `truth/ewolff-k8s.tsv`，也沒有看過工具的輸出；它讀的是部署描述、README 與含位址的原始碼行。
 
 量的是**兩個獨立標註者的一致度**，不是誰對：一致度高只代表作者的 truth 不是個人特有的讀法。
 

@@ -85,6 +85,56 @@ public class SecondAnnotatorTest {
         for (String s : shown) System.out.println("  " + s);
         String answer = chat.ask(SYSTEM, "Repository: " + root.getFileName() + "\n\n" + material);
 
+        compareAndWrite(name, truthFile, answer, "模型 `" + chat.model() + "`，temperature 0，"
+                + chat.calls() + " 次呼叫，prompt " + chat.promptTokens() + " token");
+    }
+
+    /**
+     * Re-runs the comparison on the answers already stored under
+     * {@code docs/generalization/second-annotator/}, with no API call and no checkout.
+     *
+     * <p>The annotator's reply is the expensive part and it does not change; the comparison
+     * rules do — the variant fix of 2026-09-26 was one, and it silently invalidated the
+     * TeaStore report until this existed. Re-paying for seven long prompts to apply a rule
+     * change would be absurd, and worse, it would change two things at once. Run with
+     * {@code mvn -o test -Dtest=SecondAnnotatorTest -Dannotate.replay=true}.
+     */
+    @Test
+    void replayStoredAnswersThroughTheCurrentComparison() throws Exception {
+        Assumptions.assumeTrue("true".equals(System.getProperty("annotate.replay")),
+                "pass -Dannotate.replay=true to recompare the stored answers offline");
+        assertTrue(Files.isDirectory(OUT), "nothing stored yet: " + OUT);
+        List<Path> stored = new ArrayList<>();
+        try (var s = Files.list(OUT)) {
+            s.filter(f -> f.toString().endsWith(".md")).sorted().forEach(stored::add);
+        }
+        assertFalse(stored.isEmpty(), "no stored runs under " + OUT);
+        for (Path file : stored) {
+            String name = file.getFileName().toString().replace(".md", "");
+            String body = Files.readString(file, StandardCharsets.UTF_8);
+            int at = body.indexOf("## 標註者的原始回答");
+            assertTrue(at > 0, "no stored answer in " + file);
+            int open = body.indexOf("```", at);
+            int close = body.indexOf("```", open + 3);
+            assertTrue(open > 0 && close > open, "unreadable answer block in " + file);
+            String answer = body.substring(open + 3, close);
+
+            String provenance = "以 `-Dannotate.replay=true` 用現行比對規則重算既有回答，未重新呼叫 API";
+            java.util.regex.Matcher m = java.util.regex.Pattern
+                    .compile("模型 `([^`]+)`，temperature 0，(\\d+) 次呼叫，prompt (\\d+) token").matcher(body);
+            if (m.find()) {
+                provenance = "模型 `" + m.group(1) + "`，temperature 0，" + m.group(2) + " 次呼叫，prompt "
+                        + m.group(3) + " token；比對規則更新後以 `-Dannotate.replay=true` 重算，未重新呼叫 API";
+            }
+            compareAndWrite(name, TRUTH.resolve(name + ".tsv"), answer, provenance);
+            System.out.println("replayed " + name);
+        }
+    }
+
+    /** The comparison and the report — shared by the API run and the offline replay. */
+    private static void compareAndWrite(String name, Path truthFile, String answer, String provenance)
+            throws Exception {
+        assertTrue(Files.exists(truthFile), "no truth file: " + truthFile);
         Set<String> theirs = edgesOf(parse(answer));
         Set<String> ours = new LinkedHashSet<>();
         Set<String> variants = new LinkedHashSet<>();
@@ -116,9 +166,8 @@ public class SecondAnnotatorTest {
 
         StringBuilder md = new StringBuilder();
         md.append("# 第二標註者：").append(name).append("\n\n")
-          .append("由 `SecondAnnotatorTest` 產生（模型 `").append(chat.model())
-          .append("`，temperature 0，").append(chat.calls()).append(" 次呼叫，prompt ")
-          .append(chat.promptTokens()).append(" token）。標註者**沒有看過** `truth/").append(name)
+          .append("由 `SecondAnnotatorTest` 產生（").append(provenance)
+          .append("）。標註者**沒有看過** `truth/").append(name)
           .append(".tsv`，也沒有看過工具的輸出；它讀的是部署描述、README 與含位址的原始碼行。\n\n")
           .append("量的是**兩個獨立標註者的一致度**，不是誰對：一致度高只代表作者的 truth 不是個人特有的讀法。\n\n")
           .append("| | 條數 |\n|---|---|\n")
