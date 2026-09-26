@@ -1,5 +1,7 @@
 # DepWeaver Pattern 候選目錄（AsianPLoP 投稿前・與指導老師討論用）
 
+> **2026-09-15 更新**：這份 15 個候選太散（橫跨四個問題、三種抽象層級），已收斂成一個 pattern language：**`docs/pattern-language-asianplop.md`**（5 個 pattern）。本文件保留當素材庫，各候選的去處見新文件第 4 節。
+
 > **狀態**：討論稿（2026-09-14）。回應老師 9/14 反饋：「思考這個生成依賴報告和依賴圖裡面可以泛用的 pattern（要拿來投 AsianPLoP）」。
 > 定案要收哪幾個 pattern 之後，才寫英文論文。
 >
