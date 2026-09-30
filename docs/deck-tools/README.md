@@ -10,7 +10,7 @@
   **改簡報請改 `.body.html` 再重跑**，不要直接改產出的 HTML。
 
 - `pdf_to_pptx.py`：把列印好的 PDF 轉成 `.pptx`，**一頁一張全出血圖片**，給 Google Slides 用。
-  版面 100% 等於 PDF，不會跑掉；代價是**文字不可編輯**（連結也會失效，連結留在 HTML 與 PDF）。
+  版面 100% 等於 PDF，不會跑掉；代價是**文字不可編輯**。**連結會保留**：PDF 裡每個 `<a href>` 的位置會在 pptx 上重建成一個 1% 白色的可點形狀，所以參考文獻在 PowerPoint 與 Google Slides 都點得開。
   逐頁講稿會自動放進每張投影片的**備忘稿**。
   ```
   python3 docs/deck-tools/pdf_to_pptx.py ~/Downloads/deck.pdf ~/Downloads/deck.pptx docs/meeting-script-<date>.md
