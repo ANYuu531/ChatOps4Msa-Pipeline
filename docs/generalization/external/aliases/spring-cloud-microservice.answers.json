@@ -1,0 +1,5 @@
+[
+  {"name": "hystrix", "decision": "!new"},
+  {"name": "cloud-hystrix-dashboard", "decision": "hystrix"},
+  {"name": "cloud-eureka-server", "decision": "discovery"}
+]
