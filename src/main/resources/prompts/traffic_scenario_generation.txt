@@ -190,7 +190,7 @@ RULES:
 6. Include cheap read-only items too (list/detail endpoints) — they are the
    easiest edges to confirm — but do NOT stop there. The deep write paths are the
    point.
-7. Do NOT invent endpoints. Use only paths evidenced by the code extraction, the
+7. Do NOT invent endpoints. Use only paths found in the code extraction, the
    Istio routing, or the documentation you were given.
 8. Do not include destructive operations against anything that looks like real
    data (mass delete, account deletion, payment against a real gateway).

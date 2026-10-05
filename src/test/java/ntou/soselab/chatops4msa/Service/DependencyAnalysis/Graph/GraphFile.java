@@ -47,7 +47,7 @@ final class GraphFile {
     /**
      * A GraphML dependency graph from outside this project (the MicroDepGraph dataset —
      * see {@code src/test/resources/graphs/microdepgraph/SOURCE.md}). Those graphs carry
-     * no kind and no evidence level: every node is read as a service and every edge as a
+     * no kind and no confidence level: every node is read as a service and every edge as a
      * declared dependency, which is what the dataset actually asserts.
      */
     static DependencyGraph fromGraphml(String xml, String namespace) {

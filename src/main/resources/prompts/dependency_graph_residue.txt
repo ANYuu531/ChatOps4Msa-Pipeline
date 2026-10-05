@@ -14,7 +14,7 @@ You are given:
     section       the dependency kind (feign / http-client / url / grpc / config / kafka-* / rabbit-*)
     source_hint   a guess at the calling service (may be blank or wrong)
     target_raw    the raw callee token from the source (a URL, client name, topic, …)
-    evidence      file:line
+    provenance    file:line
 
 For each row, decide:
 1. source: the calling service — MUST be one of KNOWN NODES. If you cannot map it
@@ -35,5 +35,8 @@ polluted.
 
 OUTPUT: a single JSON array, nothing else (no prose, no markdown fences). Each
 element:
-  {"source":"<known node>","target":"<known node | external:host | queue:name>","type":"...","confidence":"..."}
+  {"target_raw":"<the input row's target_raw, verbatim>","source":"<known node>","target":"<known node | external:host | queue:name>","type":"...","confidence":"..."}
+target_raw echoes the input row you resolved, so the rows you DROPPED can be told
+apart from the rows you mapped: a dropped row is shown to the operator as a question
+("which service is this?") instead of being lost.
 If nothing can be mapped, output exactly: []

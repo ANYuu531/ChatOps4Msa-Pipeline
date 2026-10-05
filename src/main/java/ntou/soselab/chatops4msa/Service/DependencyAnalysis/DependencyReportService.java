@@ -2,6 +2,7 @@ package ntou.soselab.chatops4msa.Service.DependencyAnalysis;
 
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.DiscordToolkit;
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.LlmToolkit;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.AliasResolution;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CodeGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyzer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
@@ -24,8 +25,10 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -58,7 +61,7 @@ public class DependencyReportService {
     }
 
     /**
-     * Generates and posts the report for the given user from the stored evidence.
+     * Generates and posts the report for the given user from the stored provenance.
      * UserContextHolder must already be set to this user (LlmToolkit needs it).
      */
     /** No namespace (blank / "none" / "greenfield") means a static, no-cluster run. */
@@ -109,7 +112,9 @@ public class DependencyReportService {
 
         String report = "## Microservice Dependency Analysis Report\n"
                 + "**Repository:** `" + state.repoName + "` | **Namespace:** `" + state.namespace + "`\n\n"
-                + spliceInfrastructureSection(response, graph);
+                + spliceInfrastructureSection(response, graph)
+                + nameResolutionSection(AliasResolution.Answers.fromJson(
+                        state.stage(DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS)));
         try {
             // toolkitDiscordText auto-sends as a file when the text is long,
             // matching how the report is delivered from the low-code flow.
@@ -120,11 +125,11 @@ public class DependencyReportService {
 
         // Alongside the prose report, post the dependency graph as Mermaid. It is
         // built deterministically from the raw Istio Prometheus JSON (no LLM), so
-        // it is another, more scannable reading of the same runtime evidence.
+        // it is another, more scannable reading of the same runtime observations.
         String coverage = postRuntimeGraph(graph, state);
 
         // Open the "ask the report" thread BEFORE the checkpoint goes: the archive it
-        // builds takes the evidence notes from the state. It never throws.
+        // builds takes the provenance notes from the state. It never throws.
         reportQaService.openQaThread(userId, state, mode, report, graph, coverage);
 
         stateStore.remove(userId);
@@ -158,7 +163,7 @@ public class DependencyReportService {
      * rather than by the model.
      *
      * This section is pure fact: which workload depends on which datastore/broker/
-     * external host, whether the mesh observed it, and how strong the evidence is.
+     * external host, whether the mesh observed it, and how confident the tool is.
      * The graph already holds all of it. Asking the model to restate it added nothing
      * and produced, on consecutive runs of the same system, "runtime observed:
      * unknown" for edges the graph drew solid, and then a list of build-time libraries
@@ -173,7 +178,7 @@ public class DependencyReportService {
     static String infrastructureSection(DependencyGraph graph) {
         StringBuilder sb = new StringBuilder("# 5. Infrastructure Dependencies\n\n");
         if (graph == null || graph.isEmpty()) {
-            sb.append("None resolved from the collected evidence.\n\n");
+            sb.append("None resolved from the collected provenance.\n\n");
             return sb.toString();
         }
 
@@ -192,7 +197,7 @@ public class DependencyReportService {
         }
         if (infra.isEmpty()) {
             sb.append("No datastore, broker or external dependency was found in the "
-                    + "collected evidence.\n\n");
+                    + "collected provenance.\n\n");
             return sb.toString();
         }
 
@@ -209,11 +214,11 @@ public class DependencyReportService {
                     DependencyGraph.KIND_DB.equals(kind) ? "database"
                             : DependencyGraph.KIND_QUEUE.equals(kind) ? "message broker"
                             : "external service").append('\n');
-            sb.append("- Evidence: ").append(String.join(", ", edge.provenance)).append('\n');
+            sb.append("- Provenance: ").append(String.join(", ", edge.provenance)).append('\n');
             sb.append("- Runtime observed: ").append(edge.runtimeObserved ? "Yes" : "No").append('\n');
             if (edge.runtimeObserved) {
                 // Named precisely: for a database this is connections, not requests.
-                sb.append("- Runtime evidence: ").append(edge.count).append(
+                sb.append("- Runtime provenance: ").append(edge.count).append(
                         DependencyGraph.KIND_DB.equals(kind)
                                 ? " TCP connections observed (a connection count, not a request count)"
                                 : " observed by the mesh").append('\n');
@@ -224,8 +229,8 @@ public class DependencyReportService {
                             : Boolean.FALSE.equals(target.deployed) ? "No — referenced but not running"
                             : "Not determined (externally managed, or a StatefulSet rather than a Deployment)")
                     .append('\n');
-            if (!edge.evidence.isEmpty()) {
-                sb.append("- Evidence reference: ").append(edge.evidence.get(0)).append('\n');
+            if (!edge.provenanceRefs.isEmpty()) {
+                sb.append("- Provenance reference: ").append(edge.provenanceRefs.get(0)).append('\n');
             }
             sb.append('\n');
         }
@@ -236,13 +241,33 @@ public class DependencyReportService {
         return sb.toString();
     }
 
-    /** How the report should describe an edge's evidence strength. */
+    /**
+     * The names the operator resolved for this project, written by code so the reader
+     * can see which edges rest on a human's word rather than on a rule. Empty when
+     * nothing was asked — the section is then absent, not an empty heading.
+     */
+    public static String nameResolutionSection(AliasResolution.Answers answers) {
+        if (answers == null || answers.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder("\n# Names resolved by the operator\n\n");
+        sb.append("The documentation or the code used these names for services and no alignment "
+                + "rule could map them, so the tool asked instead of guessing. The answers below "
+                + "are applied wherever the name appears and are remembered for this repository.\n\n");
+        for (Map.Entry<String, String> e : answers.asMap().entrySet()) {
+            sb.append("- `").append(e.getKey()).append("` ")
+                    .append(AliasResolution.describe(e.getValue())).append('\n');
+        }
+        sb.append("\n_This section is generated from the operator's answers, not written by the "
+                + "language model._\n\n");
+        return sb.toString();
+    }
+
+    /** How the report should describe an edge's confidence. */
     private static String confidenceWord(DependencyGraph.Edge edge) {
         if (edge.runtimeObserved) return "High — confirmed at runtime";
         if (DependencyGraph.CONF_DOCUMENTED.equals(edge.confidence)) {
-            return "Medium — declared in code/docs with usage evidence, not observed at runtime";
+            return "Medium — declared in code/docs with a usage signal, not observed at runtime";
         }
-        return "Low — declared only (configuration or documentation), no usage evidence";
+        return "Low — declared only (configuration or documentation), no usage signal";
     }
 
     /**
@@ -286,9 +311,35 @@ public class DependencyReportService {
      * answer.
      */
     private DependencyGraph buildGraph(DependencyAnalysisStateStore.State state) {
+        return buildGraph(state, null);
+    }
+
+    /**
+     * The names the documentation and the residual code edges use that no rule could
+     * map onto the graph — for the operator to resolve BEFORE the report, the way the
+     * traffic generator asks for a value it cannot derive. Builds the same merged
+     * graph the report will build, so the questions are exactly the names the report
+     * would otherwise have dropped; the graph itself is discarded here. Names the
+     * operator already answered (this run, or an earlier run of the same repository)
+     * are applied, not asked again.
+     */
+    public AliasResolution.Questions aliasQuestions(DependencyAnalysisStateStore.State state) {
+        AliasResolution.Questions questions = new AliasResolution.Questions();
+        if (state != null) buildGraph(state, questions);
+        return questions;
+    }
+
+    /**
+     * @param questions receives every service name the merge could not align and the
+     *                  operator has not decided on; null when the caller does not ask
+     */
+    private DependencyGraph buildGraph(DependencyAnalysisStateStore.State state,
+                                       AliasResolution.Questions questions) {
         try {
             String raw = state.stage(DependencyAnalysisStateStore.STAGE_TRAFFIC_RAW);
             DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(raw, state.namespace);
+            AliasResolution.Answers answers = AliasResolution.Answers.fromJson(
+                    state.stage(DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS));
 
             // Fold in runtime-observed EXTERNAL edges from the egress telemetry: an
             // attributed external host (a ServiceEntry exists, e.g. github.com) merges
@@ -306,13 +357,18 @@ public class DependencyReportService {
                     graph,
                     state.stage(DependencyAnalysisStateStore.STAGE_CODE_EDGES),
                     state.repoName);
-            resolveResidueWithLlm(graph, residue);
+            // The operator's word first: a name they already resolved is not a residue.
+            residue = applyAliasAnswers(graph, residue, answers);
+            List<CodeGraphMerger.Unresolved> leftovers = resolveResidueWithLlm(graph, residue);
+            // What neither the rules nor the LLM could place is a question, not a loss.
+            recordCodeQuestions(graph, leftovers, questions);
 
-            // Merge documentation (DeepWiki) evidence as doc-provenance edges: the
+            // Merge the documentation (DeepWiki) ledger as doc-provenance edges: the
             // dependencies only the docs name (an externalised datasource, a
             // documented association). Never runtime fact — dashed/dotted, and a
             // db a service really uses (persistence code) outranks a doc-only one.
-            DocGraphMerger.merge(graph, state.stage(DependencyAnalysisStateStore.STAGE_MERGED_NOTES));
+            DocGraphMerger.merge(graph, state.stage(DependencyAnalysisStateStore.STAGE_MERGED_NOTES),
+                    answers, questions);
 
             // Promote any db a persistence-bearing service uses to "really used",
             // whichever provenance the db edge came from. The datasource is often
@@ -330,8 +386,10 @@ public class DependencyReportService {
             // Final clean-up: collapse code/doc aliases (api-gateway-controller -> api-gateway)
             // and drop framework-library / grouping pseudo-nodes (resilience4j, jolokia,
             // all-services, …) that are not real workloads. Runs after k8s enrichment so it
-            // only ever touches undeployed nodes, never a live service.
-            GraphNormalizer.normalize(graph);
+            // only ever touches undeployed nodes, never a live service. A library name the
+            // deployment layer drew edges on (Compose's "hystrix" dashboard) is a question
+            // for the operator, not a silent drop.
+            GraphNormalizer.normalize(graph, answers, questions);
 
             // Tier the nodes (ingress -> services by call depth -> data stores), so a
             // graph the size of train-ticket's reads as a system instead of a hairball.
@@ -457,11 +515,11 @@ public class DependencyReportService {
         // found nothing. The reader is given both numbers rather than one of them.
         if (coverage.mentionedOnly > 0) {
             msg.append("\n_Not scored: ").append(coverage.mentionedOnly)
-                    .append(" edge(s) mentioned with no usage evidence — drawn dotted, "
+                    .append(" edge(s) mentioned with no usage signal — drawn dotted, "
                             + "excluded from both ratios._");
-            if (coverage.isThinlyEvidenced()) {
+            if (coverage.isLowConfidence()) {
                 msg.append("\n⚠️ Those outnumber the scored edges: the extraction produced "
-                        + "little hard evidence for this project, so this percentage rests "
+                        + "few confirmed edges for this project (low confidence), so this percentage rests "
                         + "on a small surface.");
             }
             msg.append('\n');
@@ -476,8 +534,11 @@ public class DependencyReportService {
      * leaves the deterministic graph untouched. An edge is added only when both
      * endpoints validate against the known vocabulary.
      */
-    private void resolveResidueWithLlm(DependencyGraph graph, List<CodeGraphMerger.Unresolved> residue) {
-        if (residue == null || residue.isEmpty()) return;
+    private List<CodeGraphMerger.Unresolved> resolveResidueWithLlm(DependencyGraph graph,
+                                                                   List<CodeGraphMerger.Unresolved> residue) {
+        List<CodeGraphMerger.Unresolved> leftovers = new ArrayList<>();
+        if (residue == null || residue.isEmpty()) return leftovers;
+        leftovers.addAll(residue);
         try {
             Set<String> knownNodes = new HashSet<>();
             for (DependencyGraph.Node node : graph.getNodes()) knownNodes.add(node.id);
@@ -490,9 +551,10 @@ public class DependencyReportService {
 
             String response = llmToolkit.toolkitLlmCall(prompt, "dependency_graph_residue");
             JSONArray mapped = parseJsonArray(response);
-            if (mapped == null) return;
+            if (mapped == null) return leftovers;
 
             int added = 0;
+            Set<String> resolvedRaw = new HashSet<>();
             for (int i = 0; i < mapped.length(); i++) {
                 JSONObject row = mapped.optJSONObject(i);
                 if (row == null) continue;
@@ -500,14 +562,120 @@ public class DependencyReportService {
                 String target = row.optString("target", "");
                 String type = row.optString("type", "sync-http");
                 String confidence = row.optString("confidence", DependencyGraph.CONF_INFERRED);
-                if (addLlmEdge(graph, knownNodes, source, target, type, confidence)) added++;
+                if (addLlmEdge(graph, knownNodes, source, target, type, confidence)) {
+                    added++;
+                    // The prompt asks the model to echo the row it resolved; an older
+                    // model answer without it is matched on the target instead.
+                    String echoed = row.optString("target_raw", "");
+                    resolvedRaw.add(AliasResolution.key(echoed.isBlank() ? target : echoed));
+                    resolvedRaw.add(AliasResolution.key(target));
+                }
             }
             if (added > 0) System.out.println("[INFO] dependency graph: LLM aligned " + added
                     + " of " + residue.size() + " residual code edge(s).");
+            leftovers.removeIf(u -> u.rawTarget != null && resolvedRaw.contains(AliasResolution.key(u.rawTarget)));
         } catch (Exception e) {
             // Necessary-only LLM step: on any problem, keep the deterministic graph.
             System.out.println("[WARNING] residue LLM alignment skipped: " + e.getMessage());
         }
+        return leftovers;
+    }
+
+    /**
+     * Applies the operator's alias answers to the code edges the deterministic pass
+     * could not map, before the LLM sees them: a human's word is the strongest
+     * alignment there is, and an edge they resolved is not a residue any more.
+     *
+     * @return the residue that is still open (no answer, or a source the graph does not know)
+     */
+    public static List<CodeGraphMerger.Unresolved> applyAliasAnswers(DependencyGraph graph,
+                                                             List<CodeGraphMerger.Unresolved> residue,
+                                                             AliasResolution.Answers answers) {
+        List<CodeGraphMerger.Unresolved> rest = new ArrayList<>();
+        if (residue == null) return rest;
+        for (CodeGraphMerger.Unresolved u : residue) {
+            // The caller first: a module directory the operator mapped onto a service
+            // ("cloud-hystrix-dashboard" is "hystrix") becomes that service.
+            String source = u.rawSource;
+            String sourceDecision = (source == null || answers == null) ? null : answers.decisionFor(source);
+            if (sourceDecision != null) {
+                if (AliasResolution.IGNORE.equals(sourceDecision)) continue;   // that directory is not a service
+                if (AliasResolution.NEW.equals(sourceDecision)) {
+                    source = AliasResolution.nodeId(source);
+                    if (source.isEmpty()) continue;
+                    graph.addNode(source, DependencyGraph.classifyKind(source));
+                } else if (graph.findNode(sourceDecision) != null) {
+                    source = sourceDecision;
+                }
+            }
+            boolean sourceKnown = source != null && graph.findNode(source) != null;
+
+            String decided = (u.rawTarget == null || answers == null) ? null : answers.decisionFor(u.rawTarget);
+            if (decided == null) {
+                // No word on the callee. A caller the operator just settled is handed on
+                // under its real name, so the LLM pass sees a known source.
+                rest.add(sourceDecision != null && sourceKnown
+                        ? new CodeGraphMerger.Unresolved(u.section, source, u.rawTarget, u.file, u.line) : u);
+                continue;
+            }
+            if (AliasResolution.IGNORE.equals(decided)) continue;   // not a service: the edge goes nowhere
+            if (!sourceKnown) {
+                rest.add(u);   // the callee is settled, the caller is not: the LLM may still place it
+                continue;
+            }
+            String target;
+            if (AliasResolution.NEW.equals(decided)) {
+                target = AliasResolution.nodeId(u.rawTarget);
+                if (target.isEmpty()) continue;
+                graph.addNode(target, DependencyGraph.classifyKind(target));
+            } else if (graph.findNode(decided) != null) {
+                target = decided;
+            } else {
+                rest.add(u);   // answered against a vocabulary this run no longer has
+                continue;
+            }
+            if (source.equals(target)) continue;
+            graph.addEdge(source, target, "sync-http", DependencyGraph.PROV_CODE,
+                    DependencyGraph.CONF_DOCUMENTED, false, 0,
+                    "code (operator-aligned): " + u.file + (u.line > 0 ? ":" + u.line : ""));
+        }
+        return rest;
+    }
+
+    /**
+     * Turns the code residue nobody could place into questions for the operator. A
+     * token with a dot or only digits is a host or an address, which the external-host
+     * path owns; only a service-looking name is worth asking about.
+     */
+    public static void recordCodeQuestions(DependencyGraph graph, List<CodeGraphMerger.Unresolved> leftovers,
+                                    AliasResolution.Questions questions) {
+        if (questions == null || leftovers == null || leftovers.isEmpty()) return;
+        List<String> services = new ArrayList<>();
+        for (DependencyGraph.Node n : graph.getNodes()) {
+            if (n.kind == null || DependencyGraph.KIND_SERVICE.equals(n.kind)
+                    || DependencyGraph.KIND_GATEWAY.equals(n.kind)) services.add(n.id);
+        }
+        for (CodeGraphMerger.Unresolved u : leftovers) {
+            String where = u.section + " at " + u.file + (u.line > 0 ? ":" + u.line : "");
+            // The caller: a module directory no service on the graph is named after
+            // ("cloud-hystrix-dashboard" when the deployment calls it "hystrix").
+            String src = u.rawSource;
+            if (src != null && !src.isBlank() && graph.findNode(src) == null && looksLikeServiceName(src)) {
+                questions.add(src, "code", "the module directory of " + where
+                        + " — no service on the graph has this name", services);
+            }
+            String raw = u.rawTarget;
+            if (raw == null || raw.isBlank() || !looksLikeServiceName(raw)) continue;
+            if (u.section != null && (u.section.startsWith("kafka") || u.section.startsWith("rabbit"))) continue;
+            questions.add(raw, "code", where, services);
+        }
+    }
+
+    /** A token worth asking about: a name, not a host, an address, a URL or a placeholder. */
+    private static boolean looksLikeServiceName(String token) {
+        String t = token.trim();
+        if (t.isEmpty() || t.contains(".") || t.contains("/") || t.contains("$") || t.contains(":")) return false;
+        return !t.matches("[\\d]+") && t.length() <= 63;
     }
 
     /** Adds one LLM-aligned edge iff its endpoints validate. Returns whether it was added. */

@@ -32,7 +32,7 @@ import java.util.Set;
  *       dropped.</li>
  * </ol>
  * The edges are induced: every edge of the original graph whose two ends are both kept,
- * with its type, provenance, confidence, observed flag, count and evidence unchanged. A
+ * with its type, provenance, confidence, observed flag, count and provenance references unchanged. A
  * slice therefore never shows an edge the full graph does not have, and never draws one
  * with a stronger line than the full graph does. The tiers are re-assigned on the slice,
  * so it lays out compactly instead of inheriting the gaps of the full layering.
@@ -153,7 +153,7 @@ public final class SubgraphExtractor {
             DependencyGraph.Edge copy = slice.addEdge(e.source, e.target, e.type, null,
                     e.confidence, e.runtimeObserved, e.count, null);
             copy.provenance.addAll(e.provenance);
-            copy.evidence.addAll(e.evidence);
+            copy.provenanceRefs.addAll(e.provenanceRefs);
         }
         if (!slice.getNodes().isEmpty()) GraphLayerAssigner.assign(slice);
         return new Result(slice, seeds, connectors, neighbours, new ArrayList<>(omitted));

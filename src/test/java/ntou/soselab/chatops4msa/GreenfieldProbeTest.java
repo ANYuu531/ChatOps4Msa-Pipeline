@@ -6,6 +6,8 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.EdgeLe
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ServiceRootScanner;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.StackDetector;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.TreeSitterExtractor;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyReportService;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.AliasResolution;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CodeGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphLayerAssigner;
@@ -75,14 +77,25 @@ public class GreenfieldProbeTest {
         out.append("- TOTAL = ").append(ledger.edgeCount())
                 .append(" | files with syntax errors = ").append(ledger.getFilesWithErrors()).append('\n');
 
+        // The operator's alias answers, when a previous probe run raised questions and a
+        // human answered them: -Dprobe.aliases=/path/answers.json (AliasResolution.Answers).
+        String aliasesPath = System.getProperty("probe.aliases");
+        AliasResolution.Answers answers = (aliasesPath == null || aliasesPath.isBlank())
+                ? new AliasResolution.Answers()
+                : AliasResolution.Answers.fromJson(Files.readString(Path.of(aliasesPath)));
+        AliasResolution.Questions questions = new AliasResolution.Questions();
+
         String codeEdges = ledger.toJson().toString();
         DependencyGraph graph = new DependencyGraph("");
         List<CodeGraphMerger.Unresolved> unresolved = CodeGraphMerger.merge(graph, codeEdges, repoName);
+        unresolved = DependencyReportService.applyAliasAnswers(graph, unresolved, answers);
         int rawNodes = graph.getNodes().size();
         int rawEdges = graph.getEdges().size();
         Set<String> persistence = CodeGraphMerger.persistenceServices(graph, codeEdges, repoName);
         CodeGraphMerger.promoteReallyUsedDbs(graph, persistence);
-        GraphNormalizer.normalize(graph);
+        GraphNormalizer.normalize(graph, answers, questions);
+        // Offline there is no LLM residue pass, so everything unresolved is a leftover.
+        DependencyReportService.recordCodeQuestions(graph, unresolved, questions);
         GraphLayerAssigner.assign(graph);
 
         out.append("\n## graph\n");
@@ -99,10 +112,10 @@ public class GreenfieldProbeTest {
         }
         nodeLines.values().forEach(l -> out.append(l).append('\n'));
 
-        out.append("\n## edges (type, confidence, evidence)\n");
+        out.append("\n## edges (type, confidence, provenance ref)\n");
         Map<String, String> edgeLines = new TreeMap<>();
         for (DependencyGraph.Edge e : graph.getEdges()) {
-            String ev = e.evidence.isEmpty() ? "" : "  " + e.evidence.get(0);
+            String ev = e.provenanceRefs.isEmpty() ? "" : "  " + e.provenanceRefs.get(0);
             edgeLines.put(e.source + "->" + e.target,
                     "- " + e.source + " -> " + e.target + "  (" + e.type + ", " + e.confidence + ")" + ev);
         }
@@ -111,6 +124,23 @@ public class GreenfieldProbeTest {
         out.append("\n## unresolved (source hint / raw target / file:line), first 40\n");
         unresolved.stream().limit(40).forEach(u -> out.append("- ").append(u.rawSource)
                 .append("  =>  ").append(u.rawTarget).append("   @ ").append(u.file).append(':').append(u.line).append('\n'));
+
+        // The names the tool would ask the operator about, and the answers it applied.
+        // This is the offline form of the "Resolve names" button: run once, read the
+        // questions, write an answers file, run again with -Dprobe.aliases.
+        out.append("\n## alias questions (name [origin] seen in | candidates)\n");
+        if (questions.isEmpty()) out.append("- none\n");
+        for (AliasResolution.Question q : questions.list()) {
+            out.append("- ").append(q.name).append("  [").append(q.origin).append("]  ").append(q.seenIn)
+                    .append(q.mentions > 1 ? "  (+" + (q.mentions - 1) + " more)" : "")
+                    .append("   | candidates: ").append(q.candidates.isEmpty() ? "-" : String.join(", ", q.candidates))
+                    .append('\n');
+        }
+        out.append("\n## alias answers applied\n");
+        if (answers.isEmpty()) out.append("- none\n");
+        for (Map.Entry<String, String> a : answers.asMap().entrySet()) {
+            out.append("- ").append(a.getKey()).append("  ").append(AliasResolution.describe(a.getValue())).append('\n');
+        }
 
         String mermaid = MermaidEmitter.emit(graph);
         out.append("\n## mermaid\n```mermaid\n").append(mermaid).append("\n```\n");

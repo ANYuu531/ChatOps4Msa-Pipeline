@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
  *   <li>a gateway / db / queue / external with no match → left {@code null}:
  *       gateways commonly live in another namespace (istio-ingressgateway), and
  *       datastores/brokers/externals are legitimately externally managed, so their
- *       absence from this namespace's Deployment inventory is not evidence they are
+ *       absence from this namespace's Deployment inventory is not a sign they are
  *       "not deployed".</li>
  * </ul>
  * When the input is blank (an old checkpoint captured before this stage existed)

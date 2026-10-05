@@ -36,11 +36,11 @@ public final class GraphQuery {
         OPS.put("startup-needs", 1);     // transitive dependencies of X ("what must run before X")
         OPS.put("path", 2);              // shortest directed path X -> Y (and Y -> X)
         OPS.put("edges-of-type", 1);     // sync-http | db | async | external
-        OPS.put("db-users", 0);          // every service -> database edge, with the evidence level
+        OPS.put("db-users", 0);          // every service -> database edge, with the confidence level
         OPS.put("observed-edges", 0);    // edges Istio saw at runtime
         OPS.put("unobserved-edges", 0);  // edges declared (code/doc) but never observed
         OPS.put("uncovered", 0);         // the coverage analyser's uncovered business edges
-        OPS.put("mentioned-only", 0);    // edges with no usage evidence (dotted)
+        OPS.put("mentioned-only", 0);    // edges with no usage signal (dotted)
         OPS.put("undeployed", 0);        // nodes referenced but not running in the cluster
         OPS.put("deploy-order", 0);      // start-up order implied by the tiers
         OPS.put("externals", 0);         // external hosts and who calls them

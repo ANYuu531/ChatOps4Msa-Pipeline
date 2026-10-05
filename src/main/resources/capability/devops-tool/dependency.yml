@@ -68,7 +68,7 @@ low_code:
 
               ${code_extraction_notes}
 
-        # ---- External dependencies: code -> ServiceEntry -> runtime evidence ----
+        # ---- External dependencies: code -> ServiceEntry -> runtime observation ----
         # Istio cannot observe an external dependency by itself: the callee has no
         # sidecar to report the request, and with no ServiceEntry the caller's
         # sidecar routes through PassthroughCluster, which loses the hostname.
@@ -368,7 +368,7 @@ low_code:
         # destination_workload is "unknown" and the Service name is the only identity).
         # destination_service_name is grouped for exactly that fallback.
         # NOTE the count is connections opened, not queries: clients pool connections, so
-        # it is evidence THAT a service talks to that database, not how much.
+        # it is a sign THAT a service talks to that database, not how much.
         - toolkit-prometheus-query:
             host_url: ${istio_prometheus_host_url}
             promql: |
@@ -459,7 +459,7 @@ low_code:
 
         # ---- Completeness / health check BEFORE the report ----
         # The gap list is shown first so the user can decide whether to generate the
-        # report now, or pause to supplement evidence and resume.
+        # report now, or pause to supplement provenance and resume.
         # The database edges, computed deterministically from the TCP metric. Without
         # this the health check and the report call every db edge "unknown" while the
         # graph draws it solid — see DepstateToolkit.toolkitDepstateDataLayer.
@@ -524,6 +524,14 @@ low_code:
         # (see ButtonListener). Applying is never automatic — it waits for the click.
         - toolkit-depstate-apply-button: {}
 
+        # Names before values. The docs/code may call a service by a name no alignment
+        # rule can map onto the graph; rather than guess (or drop the edge), the tool
+        # posts a "Resolve names" button listing them with the closest candidates. The
+        # answers are applied when the report is generated and remembered for the
+        # repository. Posts nothing when every name aligned. Runs in greenfield too —
+        # a static run has only names to go on.
+        - toolkit-depstate-alias-button: {}
+
         # Tier 3 — ask the human. Posts the "Provide values" button, but ONLY when the
         # generator declared an ASK: variable it could not derive from the project's own
         # example requests (Tier 1) or the 4xx feedback (Tier 2). Answering it re-drives
@@ -535,7 +543,7 @@ low_code:
         # so nothing is collected twice.
         - toolkit-depstate-checkpoint: {}
 
-    # Resume from the checkpoint after the user paused to supplement evidence.
+    # Resume from the checkpoint after the user paused to supplement provenance.
     #
     # This is the coverage-guided loop. It does NOT just re-query Prometheus: it
     # reads the previous completeness check (which edges are still missing) and the
@@ -808,6 +816,9 @@ low_code:
               **Namespace:** `${namespace}`
 
               ${health_check}
+
+        # Names still open from the first round (the operator may have left some blank).
+        - toolkit-depstate-alias-button: {}
 
         # Tier 3 again: this round may have surfaced NEW values only a human can give
         # (or the user may have left some blank last time). Posts nothing when the

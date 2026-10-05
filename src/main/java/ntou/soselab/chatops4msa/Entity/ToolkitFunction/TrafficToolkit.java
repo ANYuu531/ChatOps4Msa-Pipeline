@@ -43,7 +43,7 @@ public class TrafficToolkit extends ToolkitFunction {
             return "# Traffic Execution Report\n\n"
                     + "Traffic was NOT driven: no usable entry_url was provided (got: " + entry_url + ").\n"
                     + "Istio can only observe a dependency after a real request crosses it, so any edge "
-                    + "not already exercised will be missing from the runtime evidence.\n"
+                    + "not already exercised will be missing from the runtime observations.\n"
                     + "Drive traffic manually, then resume.";
         }
 
@@ -54,7 +54,7 @@ public class TrafficToolkit extends ToolkitFunction {
             return "# Traffic Execution Report\n\n"
                     + "Traffic was NOT driven: the Postman collection could not be parsed ("
                     + e.getMessage() + ").\n"
-                    + "No requests were sent, so no new runtime evidence was produced.";
+                    + "No requests were sent, so no new runtime observation was produced.";
         }
 
         int passes;

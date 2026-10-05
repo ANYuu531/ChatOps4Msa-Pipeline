@@ -29,22 +29,22 @@ public class DetectedStack {
     /** File extensions belonging to this language, e.g. [".java"]. */
     public final List<String> extensions;
     /** What made us decide this, e.g. "pom.xml (spring-boot-starter-web)". */
-    public final String evidence;
+    public final String provenance;
 
     public DetectedStack(String language, String framework, Tier tier,
-                         List<String> extensions, String evidence) {
+                         List<String> extensions, String provenance) {
         this.language = language;
         this.framework = framework;
         this.tier = tier;
         this.extensions = extensions;
-        this.evidence = evidence;
+        this.provenance = provenance;
     }
 
     /** e.g. "java/spring (FRAMEWORK)" or "ruby (LLM)". */
     public String describe() {
         return language
                 + (framework == null ? "" : "/" + framework)
-                + " (" + tier + ", from " + evidence + ")";
+                + " (" + tier + ", from " + provenance + ")";
     }
 
     /** Base name of the query packs to load, most specific first. */

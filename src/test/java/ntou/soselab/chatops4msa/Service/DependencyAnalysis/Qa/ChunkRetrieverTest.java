@@ -20,7 +20,7 @@ public class ChunkRetrieverTest {
 
     private static final List<TextChunk> CORPUS = List.of(
             chunk("a", "Candidate: frontend -> userservice",
-                    "Protocol HTTP. Runtime observed: Yes. Evidence istio_requests_total."),
+                    "Protocol HTTP. Runtime observed: Yes. Provenance istio_requests_total."),
             chunk("b", "Infrastructure dependency: userservice -> accounts-db",
                     "Dependency type: database. Runtime observed: Yes. 8187 TCP connections observed."),
             chunk("c", "Candidate: ledgerwriter -> balancereader",
@@ -81,7 +81,7 @@ public class ChunkRetrieverTest {
         assertEquals("l", lexicalOnly.get(0).id);
 
         // With a question vector pointing at the semantic passage, both are returned and
-        // the fused order still puts the lexical+semantic evidence first when both agree.
+        // the fused order still puts the lexical+semantic match first when both agree.
         List<TextChunk> fused = ChunkRetriever.retrieve(List.of(lexical, semantic), "where is the cache?", new double[]{0, 1}, 2, 10000);
         assertEquals(2, fused.size());
         assertTrue(fused.stream().anyMatch(c -> c.id.equals("s")), "the semantic neighbour is surfaced");

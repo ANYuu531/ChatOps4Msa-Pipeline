@@ -27,7 +27,7 @@ import java.util.concurrent.Executors;
 
 /**
  * "Ask the report": a conversation, in a Discord thread under each report, grounded in
- * that report's evidence.
+ * that report's provenance.
  *
  * The teacher's request was that a reader be able to ask about the details after the
  * report is posted, RAG being an acceptable means. This is retrieval-augmented in two
@@ -39,14 +39,14 @@ import java.util.concurrent.Executors;
  *       observed/declared, counts, transitive closure, tiers) are written out by code.
  *       This is where the answers to most dependency questions actually live, and it
  *       cannot hallucinate.</li>
- *   <li><b>Passage retrieval</b> ({@link ChunkRetriever}): the report and the evidence
+ *   <li><b>Passage retrieval</b> ({@link ChunkRetriever}): the report and the provenance
  *       notes are chunked by heading at archive time; the passages relevant to the
  *       question are selected by BM25, fused with embedding similarity when vectors
  *       are available. This supplies the wording, roles, limitations and file:line
  *       references the graph does not carry.</li>
  * </ol>
  * The model receives both, the recent turns of the thread, and a prompt that binds it
- * to the context and to the evidence levels. Its output is one message in the thread.
+ * to the context and to the confidence levels. Its output is one message in the thread.
  *
  * Why a thread rather than the existing mention-and-intent flow: the intent flow ends
  * in a Perform button per capability, which is right for an action and wrong for a
@@ -68,17 +68,17 @@ public class ReportQaService {
     /** Pictures per answer; a plan holds at most three queries, and two pictures already compete. */
     private static final int MAX_PICTURES = 2;
 
-    /** The evidence stages worth archiving, label → checkpoint key. Raw JSON stages are not: the graph already holds them. */
-    private static final Map<String, String> EVIDENCE_STAGES = new java.util.LinkedHashMap<>();
+    /** The provenance stages worth archiving, label → checkpoint key. Raw JSON stages are not: the graph already holds them. */
+    private static final Map<String, String> PROVENANCE_STAGES = new java.util.LinkedHashMap<>();
 
     static {
-        EVIDENCE_STAGES.put("docs+code notes", DependencyAnalysisStateStore.STAGE_MERGED_NOTES);
-        EVIDENCE_STAGES.put("code extraction", DependencyAnalysisStateStore.STAGE_CODE);
-        EVIDENCE_STAGES.put("kubernetes/istio notes", DependencyAnalysisStateStore.STAGE_K8S);
-        EVIDENCE_STAGES.put("istio runtime edge ledger", DependencyAnalysisStateStore.STAGE_TRAFFIC);
-        EVIDENCE_STAGES.put("istio egress ledger", DependencyAnalysisStateStore.STAGE_EGRESS);
-        EVIDENCE_STAGES.put("traffic run report", DependencyAnalysisStateStore.STAGE_TRAFFIC_REPORT);
-        EVIDENCE_STAGES.put("health check", DependencyAnalysisStateStore.STAGE_HEALTH);
+        PROVENANCE_STAGES.put("docs+code notes", DependencyAnalysisStateStore.STAGE_MERGED_NOTES);
+        PROVENANCE_STAGES.put("code extraction", DependencyAnalysisStateStore.STAGE_CODE);
+        PROVENANCE_STAGES.put("kubernetes/istio notes", DependencyAnalysisStateStore.STAGE_K8S);
+        PROVENANCE_STAGES.put("istio runtime edge ledger", DependencyAnalysisStateStore.STAGE_TRAFFIC);
+        PROVENANCE_STAGES.put("istio egress ledger", DependencyAnalysisStateStore.STAGE_EGRESS);
+        PROVENANCE_STAGES.put("traffic run report", DependencyAnalysisStateStore.STAGE_TRAFFIC_REPORT);
+        PROVENANCE_STAGES.put("health check", DependencyAnalysisStateStore.STAGE_HEALTH);
     }
 
     private final ReportArchiveStore store;
@@ -140,7 +140,7 @@ public class ReportQaService {
                     + archive.repoName + "`"
                     + (archive.namespace.isBlank() ? " (greenfield)" : " · namespace `" + archive.namespace + "`")
                     + "\nReply **in the thread below** — no need to mention the bot. Answers are grounded in the "
-                    + "dependency graph and the report's evidence; when something is not in the evidence, "
+                    + "dependency graph and the report's provenance; when something is not in it, "
                     + "I will say so rather than guess.";
             String threadName = truncate("Ask " + DependencyGraph.TOOL_NAME + " · " + shortRepo(archive.repoName), 100);
             String threadId = jdaService.sendChatOpsChannelMessageAndOpenThread(intro, threadName);
@@ -169,9 +169,9 @@ public class ReportQaService {
         archive.graphJson = graph == null ? new JSONObject() : graph.toJson();
         archive.coverage = coverage == null ? "" : coverage;
         if (state != null) {
-            for (Map.Entry<String, String> e : EVIDENCE_STAGES.entrySet()) {
+            for (Map.Entry<String, String> e : PROVENANCE_STAGES.entrySet()) {
                 String text = state.stage(e.getValue());
-                if (text != null && !text.isBlank()) archive.evidence.put(e.getKey(), text);
+                if (text != null && !text.isBlank()) archive.provenance.put(e.getKey(), text);
             }
         }
         archive.chunks.addAll(chunk(archive));
@@ -179,11 +179,11 @@ public class ReportQaService {
         return archive;
     }
 
-    /** The corpus: the report first (it is what the user read), then each evidence stage. */
+    /** The corpus: the report first (it is what the user read), then each provenance stage. */
     static List<TextChunk> chunk(ReportArchive archive) {
         List<TextChunk> chunks = new ArrayList<>(ReportChunker.chunk("report", archive.report));
         if (!archive.coverage.isBlank()) chunks.addAll(ReportChunker.chunk("runtime coverage", archive.coverage));
-        for (Map.Entry<String, String> e : archive.evidence.entrySet()) {
+        for (Map.Entry<String, String> e : archive.provenance.entrySet()) {
             chunks.addAll(ReportChunker.chunk(e.getKey(), e.getValue()));
         }
         return chunks;
@@ -247,7 +247,7 @@ public class ReportQaService {
                 ReportArchive archive = store.findByThread(threadId);
                 if (archive == null) {
                     jdaService.sendThreadMessage(threadId,
-                            "This report's archive has expired, so I can no longer answer from its evidence. "
+                            "This report's archive has expired, so I can no longer answer from its provenance. "
                                     + "Please re-run the dependency analysis.");
                     return;
                 }
@@ -491,7 +491,7 @@ public class ReportQaService {
                     : archive.coverage + "\n\n");
         }
 
-        sb.append("# 3. RETRIEVED PASSAGES (report + evidence notes, selected for this question)\n\n");
+        sb.append("# 3. RETRIEVED PASSAGES (report + provenance notes, selected for this question)\n\n");
         List<TextChunk> hits = ChunkRetriever.retrieve(archive.chunks, question, questionVector, topK, PASSAGE_BUDGET_CHARS);
         if (hits.isEmpty()) {
             sb.append("No passage of the report matched the question's terms.\n");

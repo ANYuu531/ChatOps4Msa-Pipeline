@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * A partial graph is drawn for a question ("the checkout flow"), so what it must never
  * do is show something the full graph does not say: no invented edge, no upgraded
- * evidence. What it may choose is only which real nodes to include, by stated rules.
+ * confidence. What it may choose is only which real nodes to include, by stated rules.
  */
 public class SubgraphExtractorTest {
 
@@ -76,7 +76,7 @@ public class SubgraphExtractorTest {
     }
 
     @Test
-    void edgesAreInducedFromTheFullGraphWithTheirEvidenceUnchanged() {
+    void edgesAreInducedFromTheFullGraphWithTheirProvenanceUnchanged() {
         DependencyGraph full = sockShop();
         SubgraphExtractor.Result r = SubgraphExtractor.extract(full, List.of("orders", "payment"));
 
@@ -88,7 +88,7 @@ public class SubgraphExtractorTest {
             assertEquals(original.runtimeObserved, e.runtimeObserved);
             assertEquals(original.count, e.count);
             assertEquals(original.provenance, e.provenance);
-            assertEquals(original.evidence, e.evidence);
+            assertEquals(original.provenanceRefs, e.provenanceRefs);
         }
         // Every full-graph edge between two kept nodes is present.
         Set<String> kept = Set.copyOf(ids(r.graph));

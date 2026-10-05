@@ -14,7 +14,7 @@
 #   kubectl apply -f 40-egress-serviceentry.yaml
 #   kubectl -n petclinic rollout restart deploy/config-server   # force a fresh clone so the attributed connection is made
 #
-# Evidence: spring-petclinic-config-server/src/main/resources/application.yml
+# Provenance: spring-petclinic-config-server/src/main/resources/application.yml
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: ServiceEntry
@@ -22,7 +22,7 @@ metadata:
   name: github-com
   namespace: petclinic
   annotations:
-    chatops4msa.io/evidence: "spring-petclinic-config-server/src/main/resources/application.yml"
+    chatops4msa.io/provenance: "spring-petclinic-config-server/src/main/resources/application.yml"
 spec:
   hosts:
     - github.com

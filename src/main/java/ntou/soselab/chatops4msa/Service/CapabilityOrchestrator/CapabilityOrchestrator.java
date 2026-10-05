@@ -47,8 +47,8 @@ public class CapabilityOrchestrator {
             "toolkit-depstate-ask-button");
 
     /**
-     * toolkit-llm-call prompt templates that SUMMARISE cluster/runtime evidence.
-     * In greenfield there is no such evidence, so running these on empty input just
+     * toolkit-llm-call prompt templates that SUMMARISE cluster/runtime observations.
+     * In greenfield there are no such observations, so running these on empty input just
      * makes the LLM hallucinate a k8s/Istio inventory (pods, EndpointSlices, traffic)
      * that then poisons the report. Skipping them leaves their variables empty. The
      * documentation/code templates (e.g. deepwiki_dependency_notes) are NOT here —
@@ -320,8 +320,8 @@ public class CapabilityOrchestrator {
         if (invokedFunctionName.startsWith("toolkit-mcp-")) {
             return "k8s".equals(subArgumentMap.get("server_name"));
         }
-        // An LLM step that only summarises runtime/cluster evidence: skip in greenfield
-        // so it cannot hallucinate that evidence from empty input.
+        // An LLM step that only summarises runtime/cluster observations: skip in greenfield
+        // so it cannot hallucinate those observations from empty input.
         if ("toolkit-llm-call".equals(invokedFunctionName)) {
             String template = subArgumentMap.get("prompt_template");
             return template != null && CLUSTER_LLM_TEMPLATES.contains(template);

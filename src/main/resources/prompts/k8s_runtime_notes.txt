@@ -1,4 +1,4 @@
-Build a compact Kubernetes and Istio Evidence Ledger from the provided command outputs.
+Build a compact Kubernetes and Istio Provenance Ledger from the provided command outputs.
 
 This stage extracts observable cluster facts only.
 Do not infer application-level business dependencies.

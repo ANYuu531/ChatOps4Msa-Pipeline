@@ -49,7 +49,7 @@ public class GraphQueryPlanner {
      * @param hints report passages retrieved for the question. A business flow
      *              ("checkout") is not in the graph, but the documentation notes often
      *              say which services a flow goes through; with them the seeds of a
-     *              {@code subgraph} rest on the report's evidence rather than on how
+     *              {@code subgraph} rest on the report's provenance rather than on how
      *              the service names sound.
      */
     public List<GraphQuery> plan(DependencyGraph graph, String question, String hints) {
@@ -122,11 +122,11 @@ public class GraphQueryPlanner {
             case "startup-needs": return "everything that must be running before a node works";
             case "path": return "shortest call path between two nodes";
             case "edges-of-type": return "all edges of one type: sync-http, db, async, external";
-            case "db-users": return "which services use which database, with evidence level";
+            case "db-users": return "which services use which database, with confidence level";
             case "observed-edges": return "edges Istio actually observed at runtime";
             case "unobserved-edges": return "edges declared in code/docs but never observed";
             case "uncovered": return "the coverage figure and the business edges traffic never exercised";
-            case "mentioned-only": return "edges with no usage evidence (only mentioned in docs)";
+            case "mentioned-only": return "edges with no usage signal (only mentioned in docs)";
             case "undeployed": return "workloads referenced but not running in the cluster";
             case "deploy-order": return "start-up / deployment order implied by the graph";
             case "externals": return "external hosts and who calls them";

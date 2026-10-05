@@ -31,7 +31,7 @@ public class GeneralizationScoreTest {
 
     private static final Path DIR = Path.of("docs/generalization");
 
-    private record Truth(String source, String target, String cls, String evidence) {
+    private record Truth(String source, String target, String cls, String provenance) {
         String key() {
             return source + " -> " + target;
         }
@@ -103,7 +103,7 @@ public class GeneralizationScoreTest {
             if (inferred > 0) details.append("\n對的裡面有 ").append(inferred).append(" 條標 inferred（名字推的，不是表查到的）。\n");
             if (!missed.isEmpty()) {
                 details.append("\n漏（truth 有、工具沒畫）：\n");
-                for (String m : missed) details.append("- ").append(m).append("  ·  ").append(truth.get(m).evidence).append('\n');
+                for (String m : missed) details.append("- ").append(m).append("  ·  ").append(truth.get(m).provenance).append('\n');
             }
             if (wrong.isEmpty() && missed.isEmpty()) details.append("\n全對。\n");
         }

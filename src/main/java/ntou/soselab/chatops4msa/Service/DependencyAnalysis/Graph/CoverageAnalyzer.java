@@ -52,7 +52,7 @@ import java.util.Map;
  *       permanently capping it below 100%. Name-based, so it still holds on a checkpoint
  *       built without k8s deployment status.</li>
  *   <li><b>Merely-mentioned edges are excluded.</b> An {@code inferred} edge — the
- *       graph's dotted tier: declared somewhere with no usage evidence at all — does not
+ *       graph's dotted tier: declared somewhere with no usage signal at all — does not
  *       enter the denominator. The documentation layer is LLM-read prose and varies
  *       between runs; one Bank of Anthos run invented three "userservice → ledger
  *       service" edges and four edges to a generic {@code postgresql} node duplicating
@@ -62,7 +62,7 @@ import java.util.Map;
  *       marked as unconfirmed) — they are just not scored.</li>
  * </ul>
  * The net effect: the denominator is the set of service→service sync edges that traffic
- * <em>could</em> exercise and that something actually evidences, so the percentage
+ * <em>could</em> exercise and that something actually backs, so the percentage
  * answers "of the reachable business surface, how much did we drive?" rather than being
  * diluted by infra, phantom and merely-mentioned edges.
  */
@@ -91,7 +91,7 @@ public class CoverageAnalyzer {
         public final List<String> dbUncovered;
         /**
          * How many edges were left OUT of both denominators for having no usage
-         * evidence (the dotted tier).
+         * signal (the dotted tier).
          *
          * Reported, never hidden. Excluding them is right when they are documentation
          * noise, but the count is what tells a reader whether the score rests on a real
@@ -119,9 +119,9 @@ public class CoverageAnalyzer {
 
         /**
          * Whether the unscored edges outnumber the scored ones — the shape of a run
-         * whose extraction produced mostly guesses, where the percentage means little.
+         * whose extraction produced mostly inferred edges, where the percentage means little (low confidence).
          */
-        public boolean isThinlyEvidenced() {
+        public boolean isLowConfidence() {
             return mentionedOnly > total + dbTotal;
         }
 
@@ -162,7 +162,7 @@ public class CoverageAnalyzer {
         for (DependencyGraph.Node node : graph.getNodes()) byId.put(node.id, node);
 
         for (DependencyGraph.Edge edge : graph.getEdges()) {
-            if (!isEvidenced(edge)) mentionedOnly++;
+            if (!hasUsageConfidence(edge)) mentionedOnly++;
             if (isDataStore(edge, byId)) {
                 dbTotal++;
                 if (edge.runtimeObserved) dbObserved++;
@@ -191,7 +191,7 @@ public class CoverageAnalyzer {
         if (isProcessLocal(edge.target)) return false;
         // Same rule as the business ratio: a datastore the docs merely name (a generic
         // "postgresql" beside the real ledger-db) is not a measurable dependency.
-        if (!isEvidenced(edge)) return false;
+        if (!hasUsageConfidence(edge)) return false;
         DependencyGraph.Node source = byId.get(edge.source);
         return source != null && isServiceOrGateway(source.kind)
                 && !Boolean.FALSE.equals(source.deployed);
@@ -201,15 +201,15 @@ public class CoverageAnalyzer {
     private static boolean isBusinessSync(DependencyGraph.Edge edge, Map<String, DependencyGraph.Node> byId) {
         String type = edge.type == null ? "" : edge.type;
         if (!type.equals("sync-http") && !type.equals("grpc")) return false;
-        if (!isEvidenced(edge)) return false;
+        if (!hasUsageConfidence(edge)) return false;
         return isCountableWorkload(edge.source, byId.get(edge.source))
                 && isCountableWorkload(edge.target, byId.get(edge.target));
     }
 
     /**
-     * Whether the edge has evidence that it is a REAL call, as opposed to something a
+     * Whether the edge carries a usage signal that it is a REAL call, as opposed to something a
      * document mentioned. This is the difference between the graph's dashed and dotted
-     * tiers: {@code inferred} means declared with no usage evidence at all.
+     * tiers: {@code inferred} means declared with no usage signal at all.
      *
      * Such an edge must not enter the denominator. The documentation layer is written
      * by an LLM reading prose, and it varies between runs: one Bank of Anthos run
@@ -226,7 +226,7 @@ public class CoverageAnalyzer {
      *
      * An observed edge always counts, whatever its confidence field says — it happened.
      */
-    private static boolean isEvidenced(DependencyGraph.Edge edge) {
+    private static boolean hasUsageConfidence(DependencyGraph.Edge edge) {
         return edge.runtimeObserved || !DependencyGraph.CONF_INFERRED.equals(edge.confidence);
     }
 

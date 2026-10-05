@@ -120,7 +120,7 @@ public class AskFlowTest {
         assertTrue(detail.awaitingValue, "a pending value in the path must hold the request back");
 
         // Held-back steps are not counted as driven traffic or as transport failures:
-        // they produced no evidence and nothing went wrong.
+        // they produced no observation and nothing went wrong.
         assertEquals(1, report.executed);
         assertEquals(1, report.transportErrors);   // only "home", which really was attempted
 

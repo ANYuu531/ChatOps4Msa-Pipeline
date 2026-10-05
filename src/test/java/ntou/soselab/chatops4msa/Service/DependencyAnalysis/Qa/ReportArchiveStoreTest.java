@@ -39,7 +39,7 @@ public class ReportArchiveStoreTest {
         g.addEdge("frontend", "userservice", "sync-http", DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 6, "istio");
         a.graphJson = g.toJson();
         a.coverage = "7 / 7";
-        a.evidence.put("docs+code notes", "frontend calls userservice");
+        a.provenance.put("docs+code notes", "frontend calls userservice");
         TextChunk c = new TextChunk("report#0", "report", "1. Collection Status", "- ok");
         c.embedding = new double[]{0.1, 0.2, 0.3};
         a.chunks.add(c);
@@ -57,7 +57,7 @@ public class ReportArchiveStoreTest {
         assertEquals("runtime", b.mode);
         assertEquals(a.report, b.report);
         assertEquals("7 / 7", b.coverage);
-        assertEquals("frontend calls userservice", b.evidence.get("docs+code notes"));
+        assertEquals("frontend calls userservice", b.provenance.get("docs+code notes"));
         assertEquals(1, b.chunks.size());
         assertEquals("1. Collection Status", b.chunks.get(0).title);
         assertEquals(3, b.chunks.get(0).embedding.length);

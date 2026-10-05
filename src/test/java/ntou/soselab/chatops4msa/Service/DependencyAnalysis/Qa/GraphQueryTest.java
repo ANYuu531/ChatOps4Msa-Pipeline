@@ -122,7 +122,7 @@ public class GraphQueryTest {
     }
 
     @Test
-    void typeAndEvidenceFilters() {
+    void typeAndProvenanceFilters() {
         assertTrue(run("edges-of-type", "db").startsWith("2 edge(s):"));
         assertTrue(run("db-users").contains("userservice -> accounts-db [db]; confidence=documented; provenance=code; runtime observed: YES (8187 TCP connections"));
         assertTrue(run("observed-edges").startsWith("4 edge(s):"));
@@ -140,7 +140,7 @@ public class GraphQueryTest {
     void uncoveredReusesTheCoverageAnalyser() {
         String out = run("uncovered");
         // The analyser scores the gateway edge and the four service->service sync edges
-        // with usage evidence (5); the two mentioned-only edges are not scored. Three of
+        // with a usage signal (5); the two mentioned-only edges are not scored. Three of
         // the five were observed. The point is that this is the analyser's own figure.
         assertTrue(out.contains("Business edges observed 3 / 5 (60%)."), out);
         assertTrue(out.contains("- uncovered: frontend -> ledgerwriter"));

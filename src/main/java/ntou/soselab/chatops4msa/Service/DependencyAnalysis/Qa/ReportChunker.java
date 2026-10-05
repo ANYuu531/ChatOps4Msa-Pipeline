@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 /**
  * Splits a Markdown document into retrievable chunks along its headings.
  *
- * The report and the evidence notes are all heading-structured Markdown (the report
+ * The report and the provenance notes are all heading-structured Markdown (the report
  * prompt mandates "# N." sections with "### Candidate: a -> b" blocks), so a heading is
  * the natural unit of retrieval: one candidate, one component, one collection-status
  * entry. A chunk carries its heading path as the title so the model — and the user —
@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  *
  * Deterministic and dependency-free on purpose: the corpus is one report, built once
  * per analysis, and a chunking that changes between runs would make the answers drift
- * for reasons unrelated to the evidence.
+ * for reasons unrelated to the content.
  */
 public final class ReportChunker {
 

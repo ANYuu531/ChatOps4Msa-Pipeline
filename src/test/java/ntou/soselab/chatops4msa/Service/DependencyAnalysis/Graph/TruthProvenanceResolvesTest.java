@@ -20,14 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * ({@code docs/generalization/truth/*.tsv}) points at a file a third party can actually
  * open. The point is not tidiness: a reader who cannot find the cited line has no way to
  * disagree with the annotation, and an annotation nobody can check is the weak form of
- * evidence the 2026-09-25 feedback was about. Two citations were simply wrong when this
+ * provenance the 2026-09-25 feedback was about. Two citations were simply wrong when this
  * was first run ({@code dispatch/src/main.go} for {@code dispatch/main.go}, and an
  * {@code API.php} that does not exist in Robot Shop at all); both edges were right and
  * only their citations were unusable.
  *
  * <p>Needs the checkouts, so it is skipped unless a directory holding them is given:
  * <pre>
- * mvn -o test -Dtest=TruthEvidenceResolvesTest -Dtruth.repos=/path/to/checkouts
+ * mvn -o test -Dtest=TruthProvenanceResolvesTest -Dtruth.repos=/path/to/checkouts
  * </pre>
  * Each project is expected at {@code <dir>/<repo directory name>} as the table below says.
  * Projects whose directory is absent are skipped and counted, so a partial set of checkouts
@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * service's application.yml"), a README section, or a Java enum constant used as a call
  * target — are reported separately and do not fail the test.
  */
-public class TruthEvidenceResolvesTest {
+public class TruthProvenanceResolvesTest {
 
     private static final Path TRUTH = Path.of("docs/generalization/truth");
 
@@ -55,14 +55,14 @@ public class TruthEvidenceResolvesTest {
     }
 
     /**
-     * The first path-shaped token of an evidence cell, with an optional {@code :line}.
+     * The first path-shaped token of an provenance cell, with an optional {@code :line}.
      * Dockerfile and Makefile carry no extension but are cited like any other file.
      */
     private static final Pattern CITATION = Pattern.compile(
             "([\\w./\\u2026-]*?(?:[\\w-]+\\.(?:java|py|js|ts|go|php|cs|rb|yml|yaml|conf\\.template|conf|xml|properties|json|md)|Dockerfile|Makefile))(?::(\\d+))?");
 
     /**
-     * An identifier the evidence names — {@code FRONTEND_ADDR}, {@code proxy_pass},
+     * An identifier the provenance names — {@code FRONTEND_ADDR}, {@code proxy_pass},
      * {@code redis.createClient} — so that "the file exists" is not the whole check.
      * Only tokens that look like code are used: a SCREAMING_CASE name, a call, or a
      * dotted member. Prose around them is ignored, and a citation that names no such
@@ -72,23 +72,23 @@ public class TruthEvidenceResolvesTest {
             "\\b([A-Z][A-Z0-9_]{3,}|[a-z][A-Za-z0-9_]*\\.[a-z][A-Za-z0-9_]*\\(|[a-z][a-z0-9_]{2,}_[a-z0-9_]+)\\b");
 
     /**
-     * The first code-shaped token the evidence names that the cited file does not contain,
+     * The first code-shaped token the provenance names that the cited file does not contain,
      * or null when the citation checks out.
      *
      * <p>Only the text between the citation and the first separator is read, because an
-     * evidence cell often names a second source after one ("… Dockerfile:49 ENTRYPOINT …;
+     * provenance cell often names a second source after one ("… Dockerfile:49 ENTRYPOINT …;
      * the value is in loadgenerator.yaml:50") and a token belonging to the second source is
      * not a claim about the first file. The token is looked for anywhere in the file rather
      * than on the cited line: line numbers drift as a repository moves on, and a wrong line
      * is a much smaller problem than a wrong file.
      */
-    private static String codeTokenNotInFile(Path file, String evidence, int citationEnd) throws Exception {
-        int end = evidence.length();
+    private static String codeTokenNotInFile(Path file, String provenance, int citationEnd) throws Exception {
+        int end = provenance.length();
         for (String separator : List.of("；", ";", "（", "(", "，", ",")) {
-            int at = evidence.indexOf(separator, citationEnd);
+            int at = provenance.indexOf(separator, citationEnd);
             if (at >= 0 && at < end) end = at;
         }
-        Matcher m = CODE_TOKEN.matcher(evidence.substring(Math.min(citationEnd, end), end));
+        Matcher m = CODE_TOKEN.matcher(provenance.substring(Math.min(citationEnd, end), end));
         if (!m.find()) return null;
         String token = m.group(1).replace("(", "");
         String body = Files.readString(file, java.nio.charset.StandardCharsets.UTF_8);

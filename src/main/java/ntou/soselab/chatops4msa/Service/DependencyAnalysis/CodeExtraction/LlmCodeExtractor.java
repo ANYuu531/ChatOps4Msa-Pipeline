@@ -129,7 +129,7 @@ public class LlmCodeExtractor {
             int limit = Math.min(lines.length, MAX_FILE_LINES);
             for (int i = 0; i < limit; i++) {
                 if (SIGNAL.matcher(lines[i]).find()) signals++;
-                // Line numbers are given to the model so the evidence it reports is checkable.
+                // Line numbers are given to the model so the provenance it reports is checkable.
                 numbered.append(i + 1).append(": ").append(lines[i]).append('\n');
             }
             if (signals == 0) continue;

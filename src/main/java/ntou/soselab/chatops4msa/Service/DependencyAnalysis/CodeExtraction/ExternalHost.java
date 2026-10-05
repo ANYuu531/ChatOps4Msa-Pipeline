@@ -29,7 +29,7 @@ public class ExternalHost {
     /** HTTP or HTTPS (as Istio's ServiceEntry spells protocols). */
     public final String protocol;
     /** Where in the source this host was seen. */
-    public final Set<String> evidence = new LinkedHashSet<>();
+    public final Set<String> provenance = new LinkedHashSet<>();
 
     public ExternalHost(String host, int port, String protocol) {
         this.host = host;
@@ -63,7 +63,7 @@ public class ExternalHost {
                     .put("host", host.host)
                     .put("port", host.port)
                     .put("protocol", host.protocol)
-                    .put("evidence", new JSONArray(host.evidence)));
+                    .put("provenance", new JSONArray(host.provenance)));
         }
         return array;
     }
@@ -79,9 +79,10 @@ public class ExternalHost {
                         object.getString("host"),
                         object.getInt("port"),
                         object.optString("protocol", "HTTP"));
-                JSONArray evidence = object.optJSONArray("evidence");
-                if (evidence != null) {
-                    for (int j = 0; j < evidence.length(); j++) host.evidence.add(evidence.getString(j));
+                JSONArray provenance = object.optJSONArray("provenance");
+                if (provenance == null) provenance = object.optJSONArray("evidence"); // legacy key: checkpoints written before the rename
+                if (provenance != null) {
+                    for (int j = 0; j < provenance.length(); j++) host.provenance.add(provenance.getString(j));
                 }
                 hosts.add(host);
             }

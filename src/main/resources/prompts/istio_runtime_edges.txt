@@ -16,7 +16,7 @@ network at least once since the workloads started:
   source_workload  -> destination_workload   (value = total observed request count)
 
 A series with a value greater than 0 means that call really happened over the
-network. This is direct runtime evidence (Istio proxy access-log derived), so
+network. This is a direct runtime observation (Istio proxy access-log derived), so
 such an edge qualifies as "Runtime Observed: Yes".
 
 STRICT RULES:
@@ -35,13 +35,13 @@ STRICT RULES:
 4. If the input begins with PROMETHEUS_UNAVAILABLE, then Prometheus could not be
    reached at all. This is NOT an empty result and must NEVER be reported as
    "no dependencies observed" — we did not get to ask the question. State exactly:
-   "Runtime evidence UNAVAILABLE: Prometheus could not be queried (<reason>).
+   "Runtime observation UNAVAILABLE: Prometheus could not be queried (<reason>).
     The runtime dimension is UNKNOWN, not empty. Absence of an edge here proves
     nothing. Fix the Prometheus endpoint and resume."
-   Set "Traffic evidence usable: No" and report NO edges. Do not guess any.
+   Set "Traffic observation usable: No" and report NO edges. Do not guess any.
 
-5. If Prometheus DID answer and data.result is empty (no series), that is real
-   evidence — we asked, and the mesh has seen no such traffic. State exactly:
+5. If Prometheus DID answer and data.result is empty (no series), that is a real
+   observation — we asked, and the mesh has seen no such traffic. State exactly:
    "No runtime request edge was observed.
     Either no traffic has ever been driven through the mesh, Istio telemetry is
     not scraped by Prometheus, or the namespace label does not match."
@@ -62,7 +62,7 @@ Output format (block-style bullets, NO tables):
 
 ## Collection Status
 - Query returned series count:
-- Traffic evidence usable: Yes | No (No = Prometheus unreachable, i.e. UNKNOWN)
+- Traffic observation usable: Yes | No (No = Prometheus unreachable, i.e. UNKNOWN)
 - Note:
 
 ## Observed Business Edges
@@ -71,7 +71,7 @@ For each business edge:
 - Runtime observed: Yes
 - Total observed request count:
 - Entry edge (from ingress gateway): Yes | No
-- Evidence: istio_requests_total (reporter=destination), cumulative counter
+- Provenance: istio_requests_total (reporter=destination), cumulative counter
 
 ## Excluded / Non-Business Edges
 For each excluded series:

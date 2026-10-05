@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
  *    so LLM-authored scripts cannot run arbitrary code against a real cluster.
  *  - This is traffic OBSERVATION, not test assertion: a 4xx/5xx is not a failure,
  *    it still proves the edge into that endpoint. We treat every response as
- *    evidence and emit a "step -> status -> intended edge" report that feeds the
+ *    an observation and emit a "step -> status -> intended edge" report that feeds the
  *    coverage-refinement loop; Newman's pass/fail model has no notion of edges.
  *  - We need full control of a small subset: retry, cookie jar, variable
  *    substitution, UNREACHABLE gap reporting, report truncation, timeouts.
@@ -146,7 +146,7 @@ public class TrafficRunner {
                     + "is observed. It does NOT prove the endpoint's downstream calls happened: a "
                     + "service that rejects the input before calling downstream produces no deeper edge.\n");
             sb.append("- A transport error means the request never arrived; that step produced no "
-                    + "evidence at all.\n");
+                    + "observation at all.\n");
             sb.append("- A `response:` line is a snippet of a 4xx/5xx body — it usually names the "
                     + "missing/invalid field. Use it to CORRECT that request's payload next round, "
                     + "not to drop the step.\n");

@@ -7,7 +7,7 @@ ledgers are EMPTY ON PURPOSE; that is NOT a collection failure. In greenfield yo
     pods "observed", pod states, "Ready", EndpointSlice/VirtualService/DestinationRule
     counts, sidecar status, or ANY number of observed resources. Inventing these is the
     worst possible error — none were collected.
-  - For every cluster-dependent section (the Kubernetes/Istio evidence ledger,
+  - For every cluster-dependent section (the Kubernetes/Istio provenance ledger,
     "Components Observed in the Kubernetes Namespace", "Runtime Facts", health/
     observability, runtime coverage), output ONLY the single line:
     "N/A — greenfield (static) analysis: no cluster was queried."
@@ -16,21 +16,21 @@ ledgers are EMPTY ON PURPOSE; that is NOT a collection failure. In greenfield yo
   - Do NOT recommend driving traffic, "Pause & supplement", Resume, or ServiceEntry.
   - A clean static extraction is a COMPLETE greenfield report; do NOT rate it down or
     call runtime "missing". The single next step, if any, is "deploy and re-run with a
-    namespace to add runtime evidence".
+    namespace to add runtime observations".
 If the mode is `runtime`, proceed exactly as specified below.
 
-Generate a conservative evidence-based microservice dependency report from:
+Generate a conservative provenance-based microservice dependency report from:
 
-1. DeepWiki Evidence Ledger
-2. Kubernetes and Istio Evidence Ledger
-3. Istio Runtime-Observed Edge Ledger (direct traffic evidence derived from
+1. DeepWiki Provenance Ledger
+2. Kubernetes and Istio Provenance Ledger
+3. Istio Runtime-Observed Edge Ledger (direct runtime observations derived from
    istio_requests_total). Each edge listed there as "Runtime observed: Yes" is a
    call that actually crossed the network and MUST be reported with
    Runtime Observed: Yes in the synchronous dependency section, cross-referenced
    with any matching documented/configured candidate. If this ledger is empty,
    treat runtime invocation as Unknown as before.
 
-4. Data-layer Edges Observed at Runtime (TCP). This is the ONLY runtime evidence a
+4. Data-layer Edges Observed at Runtime (TCP). This is the ONLY runtime observation a
    DATABASE dependency can have: Istio emits istio_requests_total solely for the
    protocols it parses (HTTP/gRPC), so a PostgreSQL/MySQL connection appears here and
    NOWHERE in ledger 3. Every edge listed in this section is confirmed — report it as
@@ -41,7 +41,7 @@ Generate a conservative evidence-based microservice dependency report from:
    it as traffic volume. An edge absent from this section stays Unknown as usual.
 
 Do not invent services, dependencies, routes, protocols, runtime events, or deployment facts.
-Do not upgrade evidence strength.
+Do not upgrade confidence.
 
 Return Markdown using headings, subsections, and block-style bullet lists only.
 DO NOT use Markdown tables.
@@ -49,7 +49,7 @@ DO NOT use HTML tables.
 
 Before generating the report, validate every item using these rules:
 
-1. DeepWiki Evidence Ledger cannot prove runtime invocation.
+1. DeepWiki Provenance Ledger cannot prove runtime invocation.
    Therefore, any DeepWiki-only item must have:
    Runtime Observed: Unknown.
 
@@ -107,9 +107,9 @@ Before generating the report, validate every item using these rules:
     do not include it in confirmed dependency blocks.
     Put it in Unresolved Candidates.
 
-14. If an evidence reference is generic or not directly verifiable,
+14. If a provenance reference is generic or not directly verifiable,
     lower confidence by one level and state:
-    "Evidence reference is not directly verifiable."
+    "Provenance reference is not directly verifiable."
 
 15. If Kubernetes collection is PARTIAL or FAILED,
     preserve the affected limitation in every relevant section.
@@ -159,7 +159,7 @@ For each component:
 - Documented:
 - Configured:
 - Observed in current namespace:
-- Evidence reference:
+- Provenance reference:
 - Confidence:
 - Limitations:
 
@@ -173,7 +173,7 @@ For each observed component:
 - Pod state:
 - Pod ready:
 - Relationship status:
-- Evidence source:
+- Provenance source:
 - Limitations:
 
 If the relationship status is name_based_match, explicitly state:
@@ -200,13 +200,13 @@ For each candidate:
 - Endpoint available:
 - Runtime observed:
 - Confidence:
-- Evidence reference:
+- Provenance reference:
 - Limitations:
 
 If no direct runtime-observed synchronous invocation exists, state exactly:
-"No synchronous service-to-service invocation was directly observed in the collected runtime evidence."
+"No synchronous service-to-service invocation was directly observed in the collected runtime observations."
 
-Do not omit documented candidates merely because runtime evidence is absent.
+Do not omit documented candidates merely because a runtime observation is absent.
 
 # 5. Infrastructure Dependencies
 
@@ -228,7 +228,7 @@ For each service-broker relationship:
 - Deployed:
 - Runtime observed:
 - Confidence:
-- Evidence reference:
+- Provenance reference:
 - Limitations:
 
 ## 6.2 Producer-Broker-Consumer Workflows
@@ -244,7 +244,7 @@ For each workflow:
 - Configured:
 - Runtime observed:
 - Confidence:
-- Evidence reference:
+- Provenance reference:
 - Limitations:
 
 # 7. Health Checks and Observability Relations
@@ -256,7 +256,7 @@ For each relation:
 - Documented:
 - Configured:
 - Runtime observed:
-- Evidence reference:
+- Provenance reference:
 - Notes:
 
 If no health-check relation is available, state that.
@@ -280,8 +280,8 @@ Do not list inferred application calls.
 For each item:
 ### Unresolved item: <name>
 - Reason:
-- Available evidence:
-- Missing evidence:
+- Available provenance:
+- Missing provenance:
 - Impact on report:
 
 Include:
@@ -289,8 +289,8 @@ Include:
 - missing method / endpoint
 - missing queue / exchange / routing key
 - unknown endpoint ownership
-- missing trace evidence
-- generic evidence references
+- missing trace provenance
+- generic provenance references
 - partial or failed collection
 - repository components absent from the namespace
 
@@ -308,10 +308,10 @@ Possible examples:
 - runtime inventory component absent from repository documentation
 - count mismatch
 - documented port differing from Kubernetes Service port
-- corrected invalid evidence claim
+- corrected invalid provenance claim
 - incomplete endpoint mapping
 
-Do not treat deployment variants as errors without evidence.
+Do not treat deployment variants as errors without provenance.
 
 # 11. Confidence Summary
 
@@ -351,4 +351,4 @@ End with exactly two lines:
 
 Key limitation: [one concise sentence].
 
-Recommended next evidence collection step: [one concise sentence].
+Recommended next collection step: [one concise sentence].

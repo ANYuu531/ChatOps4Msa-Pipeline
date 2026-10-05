@@ -10,17 +10,17 @@ Identify:
 - documented request-flow steps
 - documented asynchronous workflow steps
 - potential circular dependencies only when explicitly documented
-- highly coupled components only when supported by explicit dependency evidence
+- highly coupled components only when supported by explicit dependency provenance
 
 For every major statement, include:
-- Evidence type: documentation | source_code_reference | configuration
-- Evidence reference
+- Provenance type: documentation | source_code_reference | configuration
+- Provenance reference
 - Confidence
 - Limitations
 
 Rules:
 1. Do NOT claim that an ingress, gateway, service, or route is active at runtime.
-2. Do NOT compare documentation with Kubernetes runtime data; Kubernetes runtime evidence is collected separately.
+2. Do NOT compare documentation with Kubernetes runtime data; Kubernetes runtime observations are collected separately.
 3. Clearly distinguish:
    - direct synchronous call
    - documented association
@@ -41,12 +41,12 @@ For each step, use:
 - Relation type: direct synchronous call | documented association | indirect workflow step | asynchronous handoff
 - Source:
 - Target:
-- Evidence type:
-- Evidence reference:
+- Provenance type:
+- Provenance reference:
 - Confidence:
 - Limitations:
 
 ## Documented asynchronous flow
 ## Dependency hubs
 ## Coupling and circularity
-## Evidence and limitations
+## Provenance and limitations

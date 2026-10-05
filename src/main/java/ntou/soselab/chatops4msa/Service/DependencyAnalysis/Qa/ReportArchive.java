@@ -15,10 +15,10 @@ import java.util.Map;
  * The analysis checkpoint is deleted the moment the report is posted (it holds raw
  * Prometheus JSON and user-supplied secrets, and its job is done). What the reader
  * wants to ask about afterwards is different: the report text, the graph the report
- * was derived from, the coverage figure, and the human-readable evidence notes. This
+ * was derived from, the coverage figure, and the human-readable provenance notes. This
  * object is that residue, kept as one JSON file per report, so a question asked hours
  * later — in the Discord thread opened under the report — can still be answered from
- * the same evidence the report was written from rather than from memory.
+ * the same provenance the report was written from rather than from memory.
  */
 public final class ReportArchive {
 
@@ -38,10 +38,10 @@ public final class ReportArchive {
     public JSONObject graphJson = new JSONObject();
     /** The deterministic coverage message, or empty when nothing was measurable. */
     public String coverage = "";
-    /** Human-readable evidence stages, label → text (merged notes, k8s notes, traffic report…). */
-    public final Map<String, String> evidence = new LinkedHashMap<>();
+    /** Human-readable provenance stages, label → text (merged notes, k8s notes, traffic report…). */
+    public final Map<String, String> provenance = new LinkedHashMap<>();
 
-    /** The retrieval corpus built from report + evidence, with embeddings when available. */
+    /** The retrieval corpus built from report + provenance, with embeddings when available. */
     public final List<TextChunk> chunks = new ArrayList<>();
     /** The Q&amp;A so far, as {role, content} messages, oldest first. */
     public final List<JSONObject> history = new ArrayList<>();
@@ -59,7 +59,7 @@ public final class ReportArchive {
 
     public JSONObject toJson() {
         JSONObject ev = new JSONObject();
-        evidence.forEach(ev::put);
+        provenance.forEach(ev::put);
         JSONArray chunkArray = new JSONArray();
         for (TextChunk c : chunks) chunkArray.put(c.toJson());
         return new JSONObject()
@@ -73,7 +73,7 @@ public final class ReportArchive {
                 .put("report", report)
                 .put("graph", graphJson)
                 .put("coverage", coverage)
-                .put("evidence", ev)
+                .put("provenance", ev)
                 .put("chunks", chunkArray)
                 .put("history", new JSONArray(history))
                 .put("lastPlan", lastPlan);
@@ -96,8 +96,9 @@ public final class ReportArchive {
         JSONObject graph = json.optJSONObject("graph");
         a.graphJson = graph == null ? new JSONObject() : graph;
         a.coverage = json.optString("coverage", "");
-        JSONObject ev = json.optJSONObject("evidence");
-        if (ev != null) for (String key : ev.keySet()) a.evidence.put(key, ev.optString(key, ""));
+        JSONObject ev = json.optJSONObject("provenance");
+        if (ev == null) ev = json.optJSONObject("evidence"); // legacy key: archives written before the rename
+        if (ev != null) for (String key : ev.keySet()) a.provenance.put(key, ev.optString(key, ""));
         JSONArray chunkArray = json.optJSONArray("chunks");
         if (chunkArray != null) {
             for (int i = 0; i < chunkArray.length(); i++) {

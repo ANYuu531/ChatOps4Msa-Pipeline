@@ -2,6 +2,7 @@ package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +24,7 @@ import java.util.Set;
  *       a documentation shorthand for "every service", never a node. Removed.</li>
  *   <li><b>Aliases of a real workload</b> ({@code api-gateway-controller},
  *       {@code customers-service-client}) — the same service under a controller/client
- *       display name. Merged back onto the real workload so its edge evidence is kept on
+ *       display name. Merged back onto the real workload so its edge provenance is kept on
  *       the real node instead of splitting into a duplicate.</li>
  * </ul>
  *
@@ -64,7 +65,30 @@ public final class GraphNormalizer {
 
     /** Cleans phantom/library/grouping nodes and collapses aliases, in place. */
     public static void normalize(DependencyGraph graph) {
+        normalize(graph, null, null);
+    }
+
+    /**
+     * As {@link #normalize(DependencyGraph)}, with the operator in the loop for the one
+     * decision this pass cannot make on its own: a node whose name is on the library
+     * list but which the code or deployment layer drew edges on.
+     *
+     * <p>{@code hystrix} is a circuit-breaker library — and, in spring-cloud-microservice's
+     * Compose file, the name of the Hystrix <em>dashboard</em> service, with two
+     * {@code links}. The list cannot tell those apart; dropping the node silently lost
+     * both edges the dataset expected (2026-10-02, agreement 93/95). So such a node is
+     * still dropped, but it is recorded as a question; once the operator answers it is
+     * kept ({@code new}), folded onto the service they name, or dropped for good
+     * ({@code ignore}). A library name with no edge, or one only the wiki mentioned, is
+     * dropped silently as before — nothing is lost by it.
+     *
+     * @param answers   the operator's decisions; null = none yet
+     * @param questions receives the names worth asking about; null = do not collect
+     */
+    public static void normalize(DependencyGraph graph, AliasResolution.Answers answers,
+                                 AliasResolution.Questions questions) {
         if (graph == null) return;
+        AliasResolution.Answers decided = answers == null ? new AliasResolution.Answers() : answers;
 
         // Snapshot ids + deployment status up front: the pass mutates the graph.
         Map<String, Boolean> deployed = new LinkedHashMap<>();
@@ -74,8 +98,28 @@ public final class GraphNormalizer {
             String id = e.getKey();
             if (Boolean.TRUE.equals(e.getValue())) continue; // never touch a real workload
 
-            if (isGrouping(id) || LIBRARY_PHANTOMS.contains(id.toLowerCase(Locale.ROOT))) {
+            if (isGrouping(id)) {
                 graph.removeNode(id);
+                continue;
+            }
+            if (LIBRARY_PHANTOMS.contains(id.toLowerCase(Locale.ROOT))) {
+                String decision = decided.decisionFor(id);
+                if (decision == null) {
+                    DependencyGraph.Node node = graph.findNode(id);
+                    List<String> edges = edgesOf(graph, id);
+                    if (questions != null && node != null && !node.docIntroduced && !edges.isEmpty()) {
+                        questions.add(id, "code", "a library name, but the code/deployment layer drew "
+                                + edges.size() + " edge(s) on it: " + String.join(", ", edges.subList(0, Math.min(3, edges.size()))),
+                                serviceIds(graph));
+                    }
+                    graph.removeNode(id);
+                } else if (AliasResolution.IGNORE.equals(decision)) {
+                    graph.removeNode(id);
+                } else if (!AliasResolution.NEW.equals(decision)) {
+                    // The operator named the service it really is: fold the edges onto it.
+                    if (graph.findNode(decision) != null && !decision.equals(id)) graph.renameNode(id, decision);
+                }
+                // NEW: the operator says it is a real service under this name — keep it.
                 continue;
             }
             String target = aliasTarget(id, deployed);
@@ -94,7 +138,7 @@ public final class GraphNormalizer {
         // Anthos's docs drew userservice -> accountsdb beside the code's
         // userservice -> accounts-db, and the graph carried two databases for one
         // (2026-09-23). Same letters, punctuation aside, means the same node; the doc
-        // edges fold onto the real one and keep their evidence there.
+        // edges fold onto the real one and keep their provenance there.
         Map<String, String> canonical = new LinkedHashMap<>();
         for (DependencyGraph.Node n : graph.getNodes()) {
             if (!n.docIntroduced) canonical.putIfAbsent(lettersOnly(n.id), n.id);
@@ -125,6 +169,25 @@ public final class GraphNormalizer {
         for (DependencyGraph.Node n : new ArrayList<>(graph.getNodes())) {
             if (n.docIntroduced && !Boolean.TRUE.equals(n.deployed) && !touched.contains(n.id)) graph.removeNode(n.id);
         }
+    }
+
+    /** The edges touching a node, as "a -> b", for the question's "seen in". */
+    private static List<String> edgesOf(DependencyGraph graph, String id) {
+        List<String> out = new ArrayList<>();
+        for (DependencyGraph.Edge e : graph.getEdges()) {
+            if (id.equals(e.source) || id.equals(e.target)) out.add(e.source + " -> " + e.target);
+        }
+        return out;
+    }
+
+    /** The service-like node ids, offered as candidates when asking. */
+    private static List<String> serviceIds(DependencyGraph graph) {
+        List<String> out = new ArrayList<>();
+        for (DependencyGraph.Node n : graph.getNodes()) {
+            if (n.kind == null || DependencyGraph.KIND_SERVICE.equals(n.kind)
+                    || DependencyGraph.KIND_GATEWAY.equals(n.kind)) out.add(n.id);
+        }
+        return out;
     }
 
     /** {@code accounts-db}, {@code accountsdb} and {@code Accounts_DB} are one spelling here. */

@@ -5,7 +5,7 @@ import org.json.JSONObject;
 
 /**
  * One retrievable passage of a report archive: a heading-delimited piece of the
- * report or of an evidence stage, with an optional embedding vector.
+ * report or of a provenance stage, with an optional embedding vector.
  *
  * The chunk keeps its {@code source} (which document it came from) and {@code title}
  * (the heading path inside that document) so a retrieved passage can be shown to the

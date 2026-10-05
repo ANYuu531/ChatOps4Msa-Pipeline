@@ -39,7 +39,7 @@ public class CodeGraphMerger {
         public final String file;
         public final int line;
 
-        Unresolved(String section, String rawSource, String rawTarget, String file, int line) {
+        public Unresolved(String section, String rawSource, String rawTarget, String file, int line) {
             this.section = section;
             this.rawSource = rawSource;
             this.rawTarget = rawTarget;
@@ -52,7 +52,7 @@ public class CodeGraphMerger {
                     .put("section", section)
                     .put("source_hint", rawSource == null ? "" : rawSource)
                     .put("target_raw", rawTarget == null ? "" : rawTarget)
-                    .put("evidence", file + (line > 0 ? ":" + line : ""));
+                    .put("provenance", file + (line > 0 ? ":" + line : ""));
         }
     }
 
@@ -512,7 +512,7 @@ public class CodeGraphMerger {
                     // A service address written into this workload's own env is that
                     // workload saying which service it needs — the most explicit form a
                     // declaration takes in a manifest. Drawing nothing puts it level with
-                    // "no evidence at all", which is what the inferred grade exists to
+                    // "no provenance at all", which is what the inferred grade exists to
                     // avoid; drawing it dotted says "declared, no use observed".
                     // A shared ConfigMap is still excluded: it is handed to workloads that
                     // call none of it, and there the code layer is the only honest source.

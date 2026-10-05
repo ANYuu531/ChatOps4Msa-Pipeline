@@ -20,7 +20,7 @@ Rules:
 5. Do NOT claim any event or message was observed at runtime.
 6. Use UNKNOWN for unsupported values.
 7. If a workflow is documented but exchange, queue, routing key, or event type is unknown, retain the workflow and mark the missing fields UNKNOWN.
-8. If no asynchronous mechanism is supported by repository evidence, state:
+8. If no asynchronous mechanism is supported by repository provenance, state:
    "No repository-documented asynchronous communication mechanism detected."
 
 Return Markdown:
@@ -31,8 +31,8 @@ For each broker:
 
 ### Broker: <name>
 - Protocol:
-- Evidence type:
-- Evidence reference:
+- Provenance type:
+- Provenance reference:
 - Notes:
 
 ## Producer-broker-consumer workflows
@@ -46,8 +46,8 @@ For each workflow:
 - Queue:
 - Topic:
 - Routing key:
-- Producer evidence:
-- Consumer evidence:
+- Producer provenance:
+- Consumer provenance:
 - Runtime observed: UNKNOWN
 - Confidence:
 - Limitations:

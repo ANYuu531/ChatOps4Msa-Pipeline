@@ -8,17 +8,17 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Merges the DeepWiki documentation evidence ledger (the {@code merged_notes} JSON,
+ * Merges the DeepWiki documentation provenance ledger (the {@code merged_notes} JSON,
  * a docs+code fusion produced by the {@code deepwiki_dependency_notes} prompt) onto
  * a {@link DependencyGraph} as {@code doc}-provenance edges.
  *
  * DeepWiki is the one source that names dependencies the mesh never observes and the
  * code extractor cannot see (an externalised datasource, a documented association).
- * Those belong in the graph — but only ever as evidence, never as runtime fact: the
+ * Those belong in the graph — but only ever as declared provenance, never as runtime fact: the
  * ledger's own contract fixes {@code runtime_observed = "unknown"}, so every edge
  * here is added with {@code runtimeObserved = false} (dashed / dotted, never solid).
  *
- * The ledger's three-axis evidence model is what drives the DB "really used vs merely
+ * The ledger's three-axis provenance model is what drives the DB "really used vs merely
  * declared" distinction the visualization needs:
  * <ul>
  *   <li>{@code configured = "yes"} (a connection string / client init / config key
@@ -38,17 +38,45 @@ public class DocGraphMerger {
 
     private final DependencyGraph graph;
     private final Set<String> knownNodes = new LinkedHashSet<>();
+    /** The service ids a documented name may be an alias of — offered as candidates when asking. */
+    private final Set<String> knownServices = new LinkedHashSet<>();
+    /** What the operator has already decided for a documented name; never null. */
+    private final AliasResolution.Answers answers;
+    /** Where an unresolved documented service name is recorded instead of being dropped; may be null. */
+    private final AliasResolution.Questions questions;
 
-    private DocGraphMerger(DependencyGraph graph) {
+    private DocGraphMerger(DependencyGraph graph, AliasResolution.Answers answers,
+                           AliasResolution.Questions questions) {
         this.graph = graph;
-        for (DependencyGraph.Node node : graph.getNodes()) knownNodes.add(node.id);
+        this.answers = answers == null ? new AliasResolution.Answers() : answers;
+        this.questions = questions;
+        for (DependencyGraph.Node node : graph.getNodes()) {
+            knownNodes.add(node.id);
+            if (node.kind == null || DependencyGraph.KIND_SERVICE.equals(node.kind)
+                    || DependencyGraph.KIND_GATEWAY.equals(node.kind)) {
+                knownServices.add(node.id);
+            }
+        }
     }
 
     /**
      * @param graph           the graph to enrich (mutated in place)
-     * @param mergedNotesJson the {@code merged_notes} DeepWiki evidence-ledger JSON
+     * @param mergedNotesJson the {@code merged_notes} DeepWiki provenance-ledger JSON
      */
     public static void merge(DependencyGraph graph, String mergedNotesJson) {
+        merge(graph, mergedNotesJson, null, null);
+    }
+
+    /**
+     * As {@link #merge(DependencyGraph, String)}, consulting the operator's earlier
+     * alias answers and recording the documented service names that still do not
+     * align — the tool asks about those instead of guessing or dropping them.
+     *
+     * @param answers   what the operator decided for names asked before; null = nothing yet
+     * @param questions receives each unresolved service name; null = do not collect
+     */
+    public static void merge(DependencyGraph graph, String mergedNotesJson,
+                             AliasResolution.Answers answers, AliasResolution.Questions questions) {
         if (graph == null || mergedNotesJson == null || mergedNotesJson.isBlank()) return;
         JSONObject root = parseObject(mergedNotesJson);
         if (root == null) return;
@@ -59,7 +87,7 @@ public class DocGraphMerger {
         Set<String> known = new java.util.HashSet<>();
         for (DependencyGraph.Node n : graph.getNodes()) known.add(n.id);
 
-        DocGraphMerger merger = new DocGraphMerger(graph);
+        DocGraphMerger merger = new DocGraphMerger(graph, answers, questions);
         try {
             merger.mergeSynchronous(root.optJSONArray("synchronous_candidates"));
             merger.mergeInfrastructure(root.optJSONArray("infrastructure_dependencies"));
@@ -81,9 +109,12 @@ public class DocGraphMerger {
             JSONObject it = items.optJSONObject(i);
             if (it == null) continue;
             String depType = it.optString("dependency_type", "");
-            String source = resolveNode(it.optString("source", ""), null);
+            String rawSource = it.optString("source", "");
+            String rawTarget = it.optString("target", "");
+            String seenIn = "synchronous: " + rawSource + " -> " + rawTarget;
+            String source = resolveNode(rawSource, null, seenIn);
             String targetKind = kindForDependencyType(depType);
-            String target = resolveNode(it.optString("target", ""), targetKind);
+            String target = resolveNode(rawTarget, targetKind, seenIn);
             if (source == null || target == null || source.equals(target)) continue;
 
             addDocEdge(source, target, edgeType(depType, target), it);
@@ -97,9 +128,12 @@ public class DocGraphMerger {
             JSONObject it = items.optJSONObject(i);
             if (it == null) continue;
             String depType = it.optString("dependency_type", "");
-            String source = resolveNode(it.optString("source_component", ""), null);
+            String rawSource = it.optString("source_component", "");
+            String rawTarget = it.optString("target", "");
+            String seenIn = "infrastructure: " + rawSource + " -> " + rawTarget;
+            String source = resolveNode(rawSource, null, seenIn);
             String targetKind = kindForDependencyType(depType);
-            String target = resolveNode(it.optString("target", ""), targetKind);
+            String target = resolveNode(rawTarget, targetKind, seenIn);
             if (source == null || target == null || source.equals(target)) continue;
 
             addDocEdge(source, target, edgeType(depType, target), it);
@@ -112,10 +146,13 @@ public class DocGraphMerger {
         for (int i = 0; i < items.length(); i++) {
             JSONObject it = items.optJSONObject(i);
             if (it == null) continue;
-            String broker = resolveNode(it.optString("broker", ""), DependencyGraph.KIND_QUEUE);
+            String rawBroker = it.optString("broker", "");
+            String seenIn = "asynchronous: " + it.optString("producer", "") + " -> "
+                    + rawBroker + " -> " + it.optString("consumer", "");
+            String broker = resolveNode(rawBroker, DependencyGraph.KIND_QUEUE, seenIn);
             if (broker == null) continue;
-            String producer = resolveNode(it.optString("producer", ""), null);
-            String consumer = resolveNode(it.optString("consumer", ""), null);
+            String producer = resolveNode(it.optString("producer", ""), null, seenIn);
+            String consumer = resolveNode(it.optString("consumer", ""), null, seenIn);
             if (producer != null && !producer.equals(broker)) addDocEdge(producer, broker, "async", it);
             if (consumer != null && !consumer.equals(broker)) addDocEdge(broker, consumer, "async", it);
         }
@@ -126,10 +163,12 @@ public class DocGraphMerger {
      * configuration/connection-string-backed dependency is documented; a
      * doc-only mention is inferred (the weakest, dotted tier).
      */
-    private void addDocEdge(String source, String target, String type, JSONObject evidence) {
-        boolean configured = "yes".equalsIgnoreCase(evidence.optString("configured", ""));
+    private void addDocEdge(String source, String target, String type, JSONObject item) {
+        boolean configured = "yes".equalsIgnoreCase(item.optString("configured", ""));
         String confidence = configured ? DependencyGraph.CONF_DOCUMENTED : DependencyGraph.CONF_INFERRED;
-        String ref = evidence.optString("evidence_reference", "");
+        String ref = item.optString("provenance_reference", "");
+        // Legacy key: notes produced by the prompt before the rename.
+        if (ref.isBlank()) ref = item.optString("evidence_reference", "");
         graph.addEdge(source, target, type,
                 DependencyGraph.PROV_DOC, confidence, false, 0,
                 "doc" + (ref.isBlank() ? "" : ": " + ref));
@@ -146,9 +185,15 @@ public class DocGraphMerger {
      * the runtime and code never surfaced (a db, an external host, a genuinely new
      * service) still appears; a blank, placeholder, generic, or infra name yields null.
      */
-    private String resolveNode(String raw, String forcedKind) {
+    private String resolveNode(String raw, String forcedKind, String seenIn) {
         if (raw == null || raw.isBlank()) return null;
         boolean external = DependencyGraph.KIND_EXTERNAL.equals(forcedKind);
+
+        // 0) The operator has already said what this name is. Their word outranks
+        //    every rule below: a name they mapped lands on that node, a name they
+        //    declared a real service becomes one, a name they dismissed is dropped.
+        String decided = answers.decisionFor(raw);
+        if (decided != null) return applyDecision(raw, decided);
 
         // 1) Align to an existing workload before ever creating a node.
         String aligned = alignToKnown(raw);
@@ -182,10 +227,33 @@ public class DocGraphMerger {
         }
 
         // 4) A documented service/gateway that does NOT align to a known workload is
-        //    almost always an alias, a technology label ("Netflix Eureka"), or a
-        //    grouping ("All Services") — never a real new service. Introducing it just
-        //    litters the graph with phantom "(not deployed)" nodes. Doc edges enrich
-        //    known services and surface db/external; they do not invent service nodes.
+        //    usually an alias, a technology label ("Netflix Eureka"), or a grouping
+        //    ("All Services") — but sometimes a real service the other layers missed.
+        //    The tool cannot tell which, so it does not guess: the name is recorded as
+        //    a question for the operator (with the closest known services as
+        //    candidates) and left off the graph until they answer. Introducing it
+        //    blindly would litter the graph with phantom "(not deployed)" nodes;
+        //    dropping it silently would hide a dependency the docs asserted.
+        if (questions != null && isPlausibleLabel(kebab(raw))) {
+            questions.add(raw, "doc", seenIn, knownServices);
+        }
+        return null;
+    }
+
+    /** Resolves a name the operator has decided on: a node id, a new node, or nothing. */
+    private String applyDecision(String raw, String decided) {
+        if (AliasResolution.IGNORE.equals(decided)) return null;
+        if (AliasResolution.NEW.equals(decided)) {
+            String id = AliasResolution.nodeId(raw);
+            if (id.isEmpty()) return null;
+            graph.addNode(id, DependencyGraph.classifyKind(id));
+            knownNodes.add(id);
+            knownServices.add(id);
+            return id;
+        }
+        // A node id. It must still exist on this graph: an answer given against an
+        // older run whose vocabulary has since changed must not conjure a node.
+        for (String node : knownNodes) if (node.equalsIgnoreCase(decided)) return node;
         return null;
     }
 

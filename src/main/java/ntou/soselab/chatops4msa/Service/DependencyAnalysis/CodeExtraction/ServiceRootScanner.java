@@ -52,7 +52,7 @@ public class ServiceRootScanner {
             "(?i)(^|[-_.])(e2e|tests?|spec|specs)$|^tests?([-_.]|$)");
 
     public void scan(Path root, EdgeLedger ledger) {
-        // dir -> the marker file that justified it (first one wins, for stable evidence).
+        // dir -> the marker file that justified it (first one wins, for stable provenance).
         Map<Path, String> serviceDirs = new LinkedHashMap<>();
         try (Stream<Path> stream = Files.walk(root)) {
             stream.filter(Files::isRegularFile)

@@ -11,7 +11,7 @@ Each element:
   "section": "<one of the section names below>",
   "fields":  { "<name>": "<value>", ... },
   "file":    "<the exact path from the FILE header>",
-  "line":    <the line number the evidence is on>,
+  "line":    <the line number the finding is on>,
   "confidence": "High" | "Medium"
 }
 

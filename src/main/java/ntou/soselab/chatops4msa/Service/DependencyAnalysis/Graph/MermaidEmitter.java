@@ -66,7 +66,7 @@ public class MermaidEmitter {
             // the edge type is the label; the request count is deliberately NOT the
             // headline, so the graph reads as dependencies, not as traffic volume.
             String tag = typeTag(edge);
-            // Declared-only edges (config/doc, no usage evidence, not observed) are the
+            // Declared-only edges (config/doc, no usage signal, not observed) are the
             // weakest tier: flag them with "?" so a merely-declared db never reads as used.
             boolean declaredOnly = !edge.runtimeObserved
                     && DependencyGraph.CONF_INFERRED.equals(edge.confidence);

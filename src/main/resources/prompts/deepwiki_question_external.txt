@@ -18,20 +18,20 @@ For each dependency, provide:
 - Dependency type
 - Deployment scope: repository_declared | external | optional | unknown
 - Purpose
-- Evidence type: documentation | source_code_reference | configuration
-- Evidence reference
+- Provenance type: documentation | source_code_reference | configuration
+- Provenance reference
 - Confidence
 - Limitations
 
 Rules:
 1. Do NOT use "Runtime Detected", "Deployed", or claim that a dependency is currently active.
 2. Do NOT use deployment_scope = in_cluster in this repository-only analysis.
-   Kubernetes runtime evidence is collected separately.
+   Kubernetes runtime observations are collected separately.
 3. A dependency described only in documentation must be marked as repository_declared or optional, not active.
 4. A database, cache, broker, or observability component is not automatically external merely because it is infrastructure.
-5. Optional cloud integrations must be marked deployment_scope = optional unless repository evidence explicitly requires them.
+5. Optional cloud integrations must be marked deployment_scope = optional unless repository provenance explicitly requires them.
 6. Do not infer actual network usage from architecture descriptions.
-7. Use UNKNOWN when evidence is insufficient.
+7. Use UNKNOWN when provenance is insufficient.
 
 Return Markdown:
 
@@ -43,8 +43,8 @@ For each dependency:
 - Dependency type:
 - Deployment scope:
 - Purpose:
-- Evidence type:
-- Evidence reference:
+- Provenance type:
+- Provenance reference:
 - Runtime observed: UNKNOWN
 - Confidence:
 - Limitations:

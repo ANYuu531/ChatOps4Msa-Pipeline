@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
  * <ul>
  *   <li>a global summary (counts, tiers, an implied start-up order) — always;</li>
  *   <li>a fact sheet per node the question names: its edges in both directions with
- *       provenance / confidence / observed / count / evidence, plus the transitive
+ *       provenance / confidence / observed / count / provenance references, plus the transitive
  *       closure each way;</li>
  *   <li>for the first two named nodes, how they relate: a direct edge or the shortest
  *       directed path.</li>
@@ -292,8 +292,8 @@ public final class GraphGrounding {
         }
         sb.append("- Edges: ").append(graph.getEdges().size())
                 .append(" (runtime-observed: ").append(observed)
-                .append("; declared in code/docs with usage evidence but not observed: ").append(documented)
-                .append("; mentioned only, no usage evidence: ").append(inferred).append(")\n");
+                .append("; declared in code/docs with a usage signal but not observed: ").append(documented)
+                .append("; mentioned only, no usage signal: ").append(inferred).append(")\n");
 
         List<String> undeployed = new ArrayList<>();
         for (DependencyGraph.Node n : graph.getNodes()) if (Boolean.FALSE.equals(n.deployed)) undeployed.add(n.id);
@@ -354,9 +354,9 @@ public final class GraphGrounding {
         } else {
             sb.append("no");
         }
-        if (!e.evidence.isEmpty()) {
-            sb.append("; evidence: ").append(e.evidence.get(0));
-            if (e.evidence.size() > 1) sb.append(" (+").append(e.evidence.size() - 1).append(" more)");
+        if (!e.provenanceRefs.isEmpty()) {
+            sb.append("; provenance ref: ").append(e.provenanceRefs.get(0));
+            if (e.provenanceRefs.size() > 1) sb.append(" (+").append(e.provenanceRefs.size() - 1).append(" more)");
         }
         return sb.toString();
     }

@@ -160,7 +160,7 @@ public class RuntimeGraphBuilder {
     }
 
     /**
-     * Folds <b>in-mesh TCP</b> telemetry onto the graph — the runtime evidence for a
+     * Folds <b>in-mesh TCP</b> telemetry onto the graph — the runtime observation for a
      * dependency that is not HTTP, which in practice means <b>the database</b>.
      *
      * Why this is separate from {@link #fromIstioRequests}: Istio emits
@@ -168,7 +168,7 @@ public class RuntimeGraphBuilder {
      * or PostgreSQL connection is opaque TCP, so it appears exclusively in
      * {@code istio_tcp_*} — which the pipeline previously queried only for egress
      * ({@code destination_app="unknown"}, i.e. outside the mesh). An in-cluster
-     * database therefore had NO runtime evidence at all, and its edge could never be
+     * database therefore had NO runtime observation at all, and its edge could never be
      * more than code-declared, however real it was.
      *
      * The query groups by workload and service name:
@@ -182,7 +182,7 @@ public class RuntimeGraphBuilder {
      * usually is NOT sidecar-injected, in which case {@code destination_workload} is
      * {@code unknown} and the Service name is the only identity available.
      *
-     * <p><b>What the count means.</b> It is connections opened, not queries — evidence
+     * <p><b>What the count means.</b> It is connections opened, not queries — a sign
      * that this service really talks to that database, never a measure of how much.
      * How it grows depends entirely on the client: a pooling client (Java/HikariCP)
      * establishes its pool at startup and the number then barely moves, whereas a

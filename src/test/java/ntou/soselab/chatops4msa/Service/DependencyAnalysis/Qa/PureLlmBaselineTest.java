@@ -249,7 +249,7 @@ public class PureLlmBaselineTest {
             for (GraphQuery q : queries) if (!"edges-of-type".equals(q.op)) plannedNodes.addAll(q.args);
             String context = ReportQaService.buildContext(archive, graph, question, vector, topK, queryResults, plannedNodes);
             // What the arms can actually see: the narrative report AND every archived
-            // passage (evidence tables, k8s inventories) — a name from the evidence appendix
+            // passage (provenance tables, k8s inventories) — a name from the provenance appendix
             // is not invented just because the narrative never used it.
             StringBuilder visible = new StringBuilder(archive.report);
             for (TextChunk c : archive.chunks) visible.append('\n').append(c.text);

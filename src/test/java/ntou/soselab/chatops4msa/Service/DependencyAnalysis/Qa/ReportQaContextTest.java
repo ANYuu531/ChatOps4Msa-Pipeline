@@ -26,7 +26,7 @@ public class ReportQaContextTest {
                 + "### Candidate: ledgerwriter -> balancereader\n- Runtime observed: Yes\n- Limitations: only on a debit\n\n"
                 + "# 9. Unresolved Candidates and Unknowns\n- none\n";
         a.coverage = "Istio observed **7 / 7** business edges";
-        a.evidence.put("docs+code notes", "## ledgerwriter\nChecks the balance via balancereader before a debit (LedgerWriterController.java:112).\n");
+        a.provenance.put("docs+code notes", "## ledgerwriter\nChecks the balance via balancereader before a debit (LedgerWriterController.java:112).\n");
         a.chunks.addAll(ReportQaService.chunk(a));
         return a;
     }
@@ -42,7 +42,7 @@ public class ReportQaContextTest {
     }
 
     @Test
-    void corpusIsReportThenCoverageThenEvidence() {
+    void corpusIsReportThenCoverageThenProvenance() {
         ReportArchive a = archive();
         List<String> sources = a.chunks.stream().map(c -> c.source).distinct().toList();
         assertEquals(List.of("report", "runtime coverage", "docs+code notes"), sources);

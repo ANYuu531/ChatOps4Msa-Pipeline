@@ -173,7 +173,7 @@ public class DotEmitter {
         if (!tag.isEmpty()) append(attrs, "label=\"" + tag + "\"");
 
         // Colour by dependency type, so type is legible independent of provenance;
-        // a declared-only edge is greyed to read as the weakest evidence.
+        // a declared-only edge is greyed to read as the lowest confidence.
         append(attrs, "color=\"" + (declaredOnly ? "#b3bcc6" : typeColor(edge)) + "\"");
 
         if (edge.runtimeObserved) {
@@ -181,12 +181,12 @@ public class DotEmitter {
             // The request count is demoted to line weight — present, but not the headline.
             append(attrs, "penwidth=" + weight(edge.count));
         } else if (declaredOnly) {
-            // Weakest tier: declared in config/doc, with NO usage evidence and no
+            // Weakest tier: declared in config/doc, with NO usage signal and no
             // runtime — dotted, so a merely-declared db never looks really used.
             append(attrs, "style=dotted");
             append(attrs, "penwidth=1.0");
         } else {
-            // Declared in code/doc (with usage evidence) but never seen on the wire — dashed.
+            // Declared in code/doc (with a usage signal) but never seen on the wire — dashed.
             append(attrs, "style=dashed");
             append(attrs, "penwidth=1.0");
         }
@@ -194,7 +194,7 @@ public class DotEmitter {
                 + attrs + "];";
     }
 
-    /** The weakest evidence tier: declared (config/doc) only, no usage signal, not observed. */
+    /** The lowest confidence tier: declared (config/doc) only, no usage signal, not observed. */
     private static boolean isDeclaredOnly(DependencyGraph.Edge edge) {
         return !edge.runtimeObserved && DependencyGraph.CONF_INFERRED.equals(edge.confidence);
     }

@@ -34,7 +34,7 @@ public class ExternalHostDetector {
             "^(127\\.|10\\.|192\\.168\\.|172\\.(1[6-9]|2\\d|3[01])\\.|0\\.0\\.0\\.0$)");
 
     /**
-     * @return one entry per host:port, with the source evidence merged.
+     * @return one entry per host:port, with the source provenance merged.
      */
     public List<ExternalHost> detect(EdgeLedger ledger) {
         Map<String, ExternalHost> found = new LinkedHashMap<>();
@@ -47,7 +47,7 @@ public class ExternalHostDetector {
                     if (host == null) continue;
                     ExternalHost existing = found.computeIfAbsent(host.key(), k -> host);
                     String where = edge.file + (edge.line > 0 ? ":" + edge.line : "");
-                    existing.evidence.add(where);
+                    existing.provenance.add(where);
                 }
             }
         }
@@ -127,8 +127,8 @@ public class ExternalHostDetector {
             sb.append("  name: ").append(host.resourceName()).append('\n');
             sb.append("  namespace: ").append(namespace).append('\n');
             sb.append("  annotations:\n");
-            sb.append("    chatops4msa.io/evidence: \"")
-                    .append(String.join(", ", host.evidence)).append("\"\n");
+            sb.append("    chatops4msa.io/provenance: \"")
+                    .append(String.join(", ", host.provenance)).append("\"\n");
             sb.append("spec:\n");
             sb.append("  hosts:\n");
             sb.append("    - ").append(host.host).append('\n');
@@ -152,9 +152,9 @@ public class ExternalHostDetector {
         for (ExternalHost host : hosts) {
             sb.append("- ").append(host.host).append(':').append(host.port)
                     .append(" (").append(host.protocol).append(')')
-                    .append(" [Evidence: ").append(String.join(", ", host.evidence)).append(']');
+                    .append(" [Provenance: ").append(String.join(", ", host.provenance)).append(']');
             if ("HTTPS".equals(host.protocol)) {
-                sb.append(" — TLS originated by the app, so runtime evidence will appear in "
+                sb.append(" — TLS originated by the app, so the runtime observation will appear in "
                         + "istio_tcp_* metrics, not istio_requests_total");
             }
             sb.append('\n');

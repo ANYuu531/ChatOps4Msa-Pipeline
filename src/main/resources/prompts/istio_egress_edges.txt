@@ -34,7 +34,7 @@ STRICT RULES:
    Never invent or infer an external dependency here.
 
 2. For each edge, state which query it came from and therefore what is known:
-   - from Query 1 (HTTP): request count is real traffic evidence.
+   - from Query 1 (HTTP): request count is a real traffic observation.
    - from Query 2 (TCP):  connection count only. Do NOT report a request count.
 
 3. If destination_service_name is "PassthroughCluster", "unknown", or empty, the
@@ -43,11 +43,11 @@ STRICT RULES:
    Do not guess which host it was, even if the code analysis mentions candidates.
 
 4. If a query's input begins with PROMETHEUS_UNAVAILABLE, Prometheus could not be
-   reached for that query. That is NOT an empty result: it is NO EVIDENCE AT ALL.
+   reached for that query. That is NOT an empty result: it is NO OBSERVATION AT ALL.
    Report that query's dimension as UNKNOWN, never as "no external calls". Say
    which query was unavailable and why, and report no edges from it.
 
-5. If Prometheus DID answer and both results are empty, that is real evidence.
+5. If Prometheus DID answer and both results are empty, that is a real observation.
    State exactly:
    "No egress edge was observed. Either the services make no external calls, no
     traffic has exercised those paths yet, or no ServiceEntry is declared and the
@@ -66,7 +66,7 @@ Output format (block-style bullets, NO tables):
 ## Collection Status
 - Query 1 (HTTP) series count:
 - Query 2 (TCP) series count:
-- Egress evidence usable: Yes | No
+- Egress observation usable: Yes | No
 
 ## Observed External Edges
 For each edge:

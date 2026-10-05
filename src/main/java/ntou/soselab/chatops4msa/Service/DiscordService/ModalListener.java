@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.DepstateToolkit;
 import ntou.soselab.chatops4msa.Service.CapabilityOrchestrator.CapabilityOrchestrator;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisStateStore;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.AliasResolution;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Traffic.AskItem;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,10 @@ public class ModalListener extends ListenerAdapter {
 
     @Override
     public void onModalInteraction(@NotNull ModalInteractionEvent event) {
+        if (DepstateToolkit.RESOLVE_ALIASES_MODAL_ID.equals(event.getModalId())) {
+            onAliasAnswers(event);
+            return;
+        }
         if (!DepstateToolkit.ASK_VALUES_MODAL_ID.equals(event.getModalId())) return;
 
         System.out.println(">>> trigger modal interaction event");
@@ -110,6 +115,98 @@ public class ModalListener extends ListenerAdapter {
                         "resume-dependency-analysis", Map.of("namespace", namespace), roleNameList));
 
         System.out.println("<<< end of current modal interaction event");
+    }
+
+    /**
+     * Receives the operator's answers to "which service is this name?".
+     *
+     * Parsing is deterministic ({@link AliasResolution#parseAnswer}): a candidate's
+     * number, a service id in any spelling, {@code new} or {@code ignore}. An answer
+     * that is not understood leaves the name pending and says so — a misread answer
+     * must never silently become a merged edge. Nothing is re-run here: the answers
+     * are applied when the report is generated (the graph is built then), and they are
+     * saved per repository so the next run applies them without asking.
+     */
+    private void onAliasAnswers(ModalInteractionEvent event) {
+        System.out.println(">>> trigger alias modal interaction event");
+        String testerId = event.getUser().getId();
+
+        DependencyAnalysisStateStore.State state = stateStore.get(testerId);
+        if (state == null) {
+            event.reply("The checkpoint has expired, so these answers have nowhere to go. "
+                    + "Please re-run get-dependency-analysis.").setEphemeral(true).queue();
+            return;
+        }
+
+        List<AliasResolution.Question> pending = AliasResolution.Questions.fromJson(
+                stateStore.getStage(testerId, DependencyAnalysisStateStore.STAGE_PENDING_ALIASES)).list();
+        AliasResolution.Answers answers = AliasResolution.Answers.fromJson(
+                stateStore.getStage(testerId, DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS));
+
+        // The candidates offered are the only service ids the form knows about; an id
+        // typed in full is accepted when it is one of them or appears in any question.
+        java.util.Set<String> knownIds = new java.util.LinkedHashSet<>();
+        for (AliasResolution.Question q : pending) knownIds.addAll(q.candidates);
+
+        List<String> understood = new ArrayList<>();
+        List<String> notUnderstood = new ArrayList<>();
+        for (ModalMapping mapping : event.getValues()) {
+            String id = mapping.getId();
+            if (!id.startsWith(DepstateToolkit.ALIAS_INPUT_PREFIX)) continue;
+            int index;
+            try {
+                index = Integer.parseInt(id.substring(DepstateToolkit.ALIAS_INPUT_PREFIX.length()));
+            } catch (NumberFormatException e) {
+                continue;
+            }
+            if (index < 0 || index >= pending.size()) continue;
+            AliasResolution.Question q = pending.get(index);
+            String typed = mapping.getAsString();
+            if (typed == null || typed.isBlank()) continue;          // left blank: still pending
+            String decision = AliasResolution.parseAnswer(typed, q, knownIds);
+            if (decision == null) {
+                notUnderstood.add("`" + q.name + "` ← \"" + typed.trim() + "\"");
+                continue;
+            }
+            answers.put(q.name, decision);
+            understood.add("`" + q.name + "` " + AliasResolution.describe(decision));
+        }
+
+        if (understood.isEmpty()) {
+            String why = notUnderstood.isEmpty()
+                    ? "Nothing was filled in, so nothing changed."
+                    : "I could not read these answers, so nothing changed:\n• "
+                        + String.join("\n• ", notUnderstood);
+            event.reply(why + "\nAnswer with a candidate's number, the service id, `new` or `ignore`. "
+                    + "Click **Resolve names** again when ready.").setEphemeral(true).queue();
+            return;
+        }
+
+        stateStore.putStage(testerId, DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS, answers.toJson());
+        stateStore.saveProjectAliases(state.repoName, answers.toJson());
+
+        // Whatever was not answered (blank or unreadable) stays pending for the next round.
+        AliasResolution.Questions stillPending = new AliasResolution.Questions();
+        for (AliasResolution.Question q : pending) {
+            if (!answers.has(q.name)) stillPending.add(q.name, q.origin, q.seenIn, q.candidates);
+        }
+        stateStore.putStage(testerId, DependencyAnalysisStateStore.STAGE_PENDING_ALIASES,
+                stillPending.isEmpty() ? "" : stillPending.toJson());
+
+        StringBuilder sb = new StringBuilder("**Got it — names resolved:**\n");
+        for (String line : understood) sb.append("• ").append(line).append('\n');
+        if (!notUnderstood.isEmpty()) {
+            sb.append("\nNot understood (still pending): ").append(String.join(", ", notUnderstood)).append('\n');
+        }
+        if (!stillPending.isEmpty()) {
+            sb.append("\nStill open: ").append(stillPending.size())
+                    .append(" name(s) — click **Resolve names** again, or leave them off the graph.\n");
+        }
+        sb.append("\nThese are applied when you click **Generate report**, and remembered for `")
+                .append(state.repoName).append("` so the next analysis does not ask again.");
+        event.reply(sb.toString()).queue();
+
+        System.out.println("<<< end of current alias modal interaction event");
     }
 
     /**

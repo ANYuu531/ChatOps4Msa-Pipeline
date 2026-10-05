@@ -138,13 +138,13 @@ public class SecondAnnotatorTest {
         Set<String> theirs = edgesOf(parse(answer));
         Set<String> ours = new LinkedHashSet<>();
         Set<String> variants = new LinkedHashSet<>();
-        Map<String, String> evidence = new TreeMap<>();
+        Map<String, String> citations = new TreeMap<>();
         for (String line : Files.readAllLines(truthFile)) {
             if (line.isBlank() || line.startsWith("#")) continue;
             String[] cols = line.split("\t");
             if (cols.length < 3) continue;
             String key = cols[0].trim() + " -> " + cols[1].trim();
-            evidence.put(key, cols.length > 3 ? cols[3].trim() : "");
+            citations.put(key, cols.length > 3 ? cols[3].trim() : "");
             // A variant edge (one only some deployment configuration has) counts neither
             // for nor against — but it is still in the author's set, so an annotator that
             // names it agrees rather than disagreeing. Counting those as "only the
@@ -180,7 +180,7 @@ public class SecondAnnotatorTest {
           .append("** |\n");
         if (!onlyOurs.isEmpty()) {
             md.append("\n## 只有作者的 truth 有（第二標註者沒找到；附作者寫的出處，逐條可查）\n");
-            for (String e : onlyOurs) md.append("- ").append(e).append("  ·  ").append(evidence.get(e)).append('\n');
+            for (String e : onlyOurs) md.append("- ").append(e).append("  ·  ").append(citations.get(e)).append('\n');
         }
         if (!onlyTheirs.isEmpty()) {
             md.append("\n## 只有第二標註者有（要逐條裁決：truth 漏了，還是標註者看錯）\n");
@@ -189,7 +189,7 @@ public class SecondAnnotatorTest {
         if (!variantsFound.isEmpty()) {
             md.append("\n## 標註者也標了、作者標為部署變體（`variant`，不計分也不算分歧）\n");
             for (String e : variantsFound) {
-                md.append("- ").append(e).append("  ·  ").append(evidence.get(e)).append('\n');
+                md.append("- ").append(e).append("  ·  ").append(citations.get(e)).append('\n');
             }
         }
         md.append("\n## 標註者的原始回答\n\n```\n").append(answer.strip()).append("\n```\n");
@@ -204,7 +204,7 @@ public class SecondAnnotatorTest {
             repository material given, list every dependency between components that the
             material actually states. One per line, tab-separated:
 
-            source<TAB>target<TAB>class<TAB>evidence
+            source<TAB>target<TAB>class<TAB>provenance
 
             class is one of: business (service calls service), data (service uses a database,
             cache or message broker), external (service calls a host outside the system),
@@ -216,7 +216,7 @@ public class SecondAnnotatorTest {
               Kubernetes workload name), not source directory names.
             - Only list a dependency the material states. Do not infer from what a system
               like this usually has. If nothing states it, leave it out.
-            - evidence must be the file (and line, if you can see it) that states it.
+            - provenance must be the file (and line, if you can see it) that states it.
             - Message queues: write consumer -> broker as well as producer -> broker.
             - Output only the rows, no header, no commentary.
             """;

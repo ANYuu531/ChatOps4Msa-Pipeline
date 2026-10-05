@@ -103,7 +103,7 @@ public final class SemanticRouter {
                     "which edges were never observed at runtime?", "what was not exercised by traffic?", "what is the runtime coverage?", "which declared edges have no traffic?", "which declared calls never got traffic?"),
             new Intent("observed-edges", 0, List.of("observed-edges"), false,
                     "哪些邊有被觀測到？", "哪幾條是 runtime 觀測到的？", "實線的邊有哪些？", "Istio 真的看到哪些呼叫？", "有流量的邊是哪些？",
-                    "which edges did Istio actually observe?", "what was seen at runtime?", "which calls have runtime evidence?", "list the observed edges", "which dependencies were confirmed by real traffic?"),
+                    "which edges did Istio actually observe?", "what was seen at runtime?", "which calls have runtime evidence?", "which calls have a runtime observation?", "list the observed edges", "which dependencies were confirmed by real traffic?"),
             new Intent("db-users", 0, List.of("db-users"), false,
                     "哪些服務有用到資料庫？", "誰會連資料庫？", "資料庫的依賴有哪些？", "哪些服務會寫入 DB？", "資料層的邊有哪些？",
                     "which services use a database?", "who talks to the db?", "what are the datastore dependencies?", "which services persist data?"),
@@ -120,8 +120,8 @@ public final class SemanticRouter {
                     "有沒有訊息佇列？", "非同步的邊有哪些？", "有用 Kafka 或 RabbitMQ 嗎？", "誰在發事件、誰在收？", "有沒有透過 queue 溝通的服務？", "服務之間有用佇列傳訊息嗎？",
                     "is there a message broker?", "what asynchronous communication is there?", "any queues or events?", "who publishes and who consumes?"),
             new Intent("mentioned-only", 0, List.of("mentioned-only"), false,
-                    "哪些邊只被文件提到？", "只有文件說、沒有程式證據的邊有哪些？", "點線的邊是哪些？", "哪些依賴沒有使用證據？",
-                    "which edges are mentioned only?", "which edges have no usage evidence?", "what is documented but not evidenced in code?"),
+                    "哪些邊只被文件提到？", "只有文件說、沒有程式證據的邊有哪些？", "點線的邊是哪些？", "哪些依賴沒有使用證據？", "哪些邊的信心等級最低？", "哪些邊只有文件出處？",
+                    "which edges are mentioned only?", "which edges have no usage evidence?", "what is documented but not evidenced in code?", "which edges are low-confidence?", "which edges have no provenance beyond the docs?"),
             // Without a named node (a flow: "結帳流程") this is never confident, and the
             // model planner picks the seeds from the ids and the report's passages.
             new Intent("subgraph", GraphQuery.VARIADIC, List.of("subgraph"), false,

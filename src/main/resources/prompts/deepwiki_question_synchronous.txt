@@ -17,8 +17,8 @@ For each candidate, provide:
 - HTTP method, if explicitly documented; otherwise UNKNOWN
 - Endpoint path, if explicitly documented; otherwise UNKNOWN
 - Purpose
-- Evidence type: source_code_reference | configuration | documentation
-- Evidence reference
+- Provenance type: source_code_reference | configuration | documentation
+- Provenance reference
 - Directness: confirmed_direct | not_confirmed
 - Limitations
 
@@ -46,8 +46,8 @@ For each candidate:
 - Method:
 - Endpoint:
 - Purpose:
-- Evidence type:
-- Evidence reference:
+- Provenance type:
+- Provenance reference:
 - Directness:
 - Runtime observed: UNKNOWN
 - Limitations:
@@ -58,4 +58,4 @@ For each candidate:
 ## Unresolved candidates
 - Item:
 - Reason:
-- Missing evidence:
+- Missing provenance:

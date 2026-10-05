@@ -42,7 +42,7 @@ class GreenfieldGatingTest {
 
     @Test
     void runtimeSummaryLlmStepsAreGatedButDocsAndReportAreNot() {
-        // These LLM steps only summarise cluster/runtime evidence — skip them in
+        // These LLM steps only summarise cluster/runtime observations — skip them in
         // greenfield so they cannot hallucinate a k8s/Istio inventory from empty input.
         assertTrue(CapabilityOrchestrator.requiresLiveCluster(
                 "toolkit-llm-call", Map.of("prompt_template", "k8s_runtime_notes")));

@@ -3,6 +3,8 @@ package ntou.soselab.chatops4msa.Entity.ToolkitFunction;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ExternalHost;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisStateStore;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyReportService;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.AliasResolution;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CodeGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CoverageAnalyzer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
@@ -22,7 +24,7 @@ import java.util.List;
  * Checkpointing for the dependency analysis.
  *
  * Each collection stage stores its result as it completes, so that pausing to
- * supplement evidence (typically: drive traffic through the mesh) can be resumed
+ * supplement provenance (typically: drive traffic through the mesh) can be resumed
  * from the breakpoint. Resuming re-runs only the stale stage and its downstream
  * steps; DeepWiki and the repository clone are not repeated.
  */
@@ -36,17 +38,88 @@ public class DepstateToolkit extends ToolkitFunction {
     /** Opens the form that collects the values the traffic generator asked a human for. */
     public static final String ASK_VALUES_BUTTON_ID = "DepProvideValues";
     public static final String ASK_VALUES_MODAL_ID = "DepProvideValuesModal";
+    /** Opens the form that asks which service each unaligned documented/coded name is. */
+    public static final String RESOLVE_ALIASES_BUTTON_ID = "DepResolveAliases";
+    public static final String RESOLVE_ALIASES_MODAL_ID = "DepResolveAliasesModal";
+    /** The form input ids are positional ({@code alias_0} …) because a raw name may not be a valid id. */
+    public static final String ALIAS_INPUT_PREFIX = "alias_";
     /** Discord allows at most five inputs in one modal; the rest are asked next round. */
     public static final int MAX_ASKS_PER_MODAL = 5;
 
     private final DependencyAnalysisStateStore stateStore;
     private final JDAService jdaService;
+    private final DependencyReportService reportService;
 
     @Autowired
     public DepstateToolkit(DependencyAnalysisStateStore stateStore,
-                           @Lazy JDAService jdaService) {
+                           @Lazy JDAService jdaService,
+                           @Lazy DependencyReportService reportService) {
         this.stateStore = stateStore;
         this.jdaService = jdaService;
+        this.reportService = reportService;
+    }
+
+    /**
+     * Posts the "Resolve names" button — the alias counterpart of the Tier 3 ask.
+     *
+     * The documentation and the residual code edges name services in their own words.
+     * The deterministic alignment rules (and, for code, the LLM name-alignment pass)
+     * map the regular spellings; what is left is genuinely ambiguous, and both
+     * automatic outcomes are wrong — dropping the edge hides a documented dependency,
+     * fuzzy-matching it invents one. So the tool lists those names with the closest
+     * candidates and asks. Answers are applied when the report is generated and are
+     * remembered for the repository, so the next run does not ask again.
+     *
+     * Nothing is posted when every name aligned: a clean run is unchanged.
+     */
+    public String toolkitDepstateAliasButton() {
+        String userId = requireUser();
+        if (userId == null) return "[ERROR] no user context; cannot post the alias button.";
+        DependencyAnalysisStateStore.State state = stateStore.get(userId);
+        if (state == null) return "[ERROR] no checkpoint; the run was never started.";
+
+        AliasResolution.Questions questions = reportService.aliasQuestions(state);
+        if (questions.isEmpty()) {
+            stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_PENDING_ALIASES, "");
+            return "every documented/coded name aligned; nothing to ask.";
+        }
+        stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_PENDING_ALIASES, questions.toJson());
+
+        List<AliasResolution.Question> list = questions.list();
+        StringBuilder message = new StringBuilder();
+        message.append("**").append(list.size()).append(" name(s) in the docs/code do not match any "
+                        + "service on the graph**\n")
+                .append("The tool does not guess which service a name means: each one is left off "
+                        + "the graph until you say. For each, answer with the service it refers to "
+                        + "(a candidate's number or the service id), `new` if it is a real service the "
+                        + "other layers missed, or `ignore` if it is not a service (a library, a "
+                        + "grouping, a technology label).\n\n");
+        int shown = 0;
+        for (AliasResolution.Question q : list) {
+            if (shown++ >= MAX_ASKS_PER_MODAL) break;
+            message.append("• `").append(q.name).append("` — ").append(q.origin)
+                    .append(", seen in ").append(q.seenIn);
+            if (q.mentions > 1) message.append(" (+").append(q.mentions - 1).append(" more)");
+            if (!q.candidates.isEmpty()) {
+                message.append("\n   closest: ");
+                for (int i = 0; i < q.candidates.size(); i++) {
+                    if (i > 0) message.append(" · ");
+                    message.append(i + 1).append(' ').append('`').append(q.candidates.get(i)).append('`');
+                }
+            }
+            message.append('\n');
+        }
+        if (list.size() > MAX_ASKS_PER_MODAL) {
+            message.append("_(").append(list.size() - MAX_ASKS_PER_MODAL)
+                    .append(" more will be asked in the next round — Discord allows five per form.)_\n");
+        }
+        message.append("\nClicking **Resolve names** opens a form. Answer what you know and leave the "
+                + "rest blank; **Generate report** then uses your answers, and they are remembered "
+                + "for `" + state.repoName + "`.");
+
+        jdaService.sendChatOpsChannelMessageWithButtons(message.toString(),
+                List.of(Button.primary(RESOLVE_ALIASES_BUTTON_ID, "Resolve names")));
+        return "alias button posted for " + list.size() + " name(s)";
     }
 
     /**
@@ -100,7 +173,7 @@ public class DepstateToolkit extends ToolkitFunction {
 
     /**
      * Posts the continue / pause decision. The report itself is produced only when
-     * the user clicks "Generate report", from the evidence already stored.
+     * the user clicks "Generate report", from the provenance already stored.
      */
     public String toolkitDepstateCheckpoint() {
         String userId = requireUser();
@@ -112,8 +185,8 @@ public class DepstateToolkit extends ToolkitFunction {
         String message = "**Dependency Analysis - collection done, completeness checked**\n"
                 + "Repository: `" + state.repoName + "` | Namespace: `" + state.namespace + "`\n\n"
                 + "Review the completeness check and gap list above, then choose:\n"
-                + "• **Generate report** — produce the final report from the current evidence\n"
-                + "• **Pause & supplement** — go drive traffic or add evidence, then resume "
+                + "• **Generate report** — produce the final report from the current provenance\n"
+                + "• **Pause & supplement** — go drive traffic or add provenance, then resume "
                 + "(the analysis continues from here; DeepWiki and code extraction are not re-run)";
 
         List<Button> buttons = List.of(
@@ -292,7 +365,7 @@ public class DepstateToolkit extends ToolkitFunction {
 
         DependencyGraph graph = RuntimeGraphBuilder.fromIstioRequests(
                 state.stage(DependencyAnalysisStateStore.STAGE_TRAFFIC_RAW), state.namespace);
-        // Same in-mesh TCP evidence the report path folds in, so a database edge the
+        // Same in-mesh TCP observations the report path folds in, so a database edge the
         // mesh HAS seen is not reported back to the resume loop as a missing target.
         RuntimeGraphBuilder.mergeIstioTcp(graph,
                 state.stage(DependencyAnalysisStateStore.STAGE_TCP_RAW));
@@ -304,8 +377,10 @@ public class DepstateToolkit extends ToolkitFunction {
         // the report path builds the graph; a no-op when the k8s stage is absent.
         K8sGraphBuilder.enrich(graph, state.stage(DependencyAnalysisStateStore.STAGE_K8S_RAW));
         // Same alias-collapse / phantom-drop the report path applies, so the resume
-        // objective is stated against real workloads, not build-time noise.
-        GraphNormalizer.normalize(graph);
+        // objective is stated against real workloads, not build-time noise. The
+        // operator's alias answers apply here too; nothing new is asked from this path.
+        GraphNormalizer.normalize(graph, AliasResolution.Answers.fromJson(
+                state.stage(DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS)), null);
 
         CoverageAnalyzer.Report coverage = CoverageAnalyzer.analyze(graph);
         if (!coverage.hasEdges()) return "";
@@ -337,11 +412,11 @@ public class DepstateToolkit extends ToolkitFunction {
         // the score is resting on very little.
         if (coverage.mentionedOnly > 0) {
             sb.append("\nNot scored: ").append(coverage.mentionedOnly)
-                    .append(" edge(s) are mentioned somewhere but have no usage evidence "
+                    .append(" edge(s) are mentioned somewhere but have no usage signal "
                             + "(drawn dotted). Do NOT target these with traffic.");
-            if (coverage.isThinlyEvidenced()) {
+            if (coverage.isLowConfidence()) {
                 sb.append(" NOTE: they outnumber the scored edges — the extraction found "
-                        + "little hard evidence, so treat the percentage with caution.");
+                        + "few confirmed edges (low confidence), so treat the percentage with caution.");
             }
             sb.append('\n');
         }

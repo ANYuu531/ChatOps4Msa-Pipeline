@@ -16,7 +16,7 @@ import java.util.Set;
  * The canonical dependency-graph model — the single source of truth every
  * renderer (emitter) consumes.
  *
- * The dependency evidence is scattered across the pipeline in many shapes
+ * The dependency provenance is scattered across the pipeline in many shapes
  * (structured {@code EdgeLedger} from code, raw Istio Prometheus JSON from
  * runtime, LLM prose from the docs). This model is the one structured form they
  * all normalise into, so that a renderer never has to know where an edge came
@@ -39,7 +39,7 @@ public class DependencyGraph {
      * header, the report heading) so an artefact is identifiable away from the channel
      * it was posted in — a paper figure, a slide, a file someone was sent.
      *
-     * "Weaver" is the multi-evidence merge itself: runtime, code and documentation are
+     * "Weaver" is the multi-source merge itself: runtime, code and documentation are
      * woven into one graph rather than chosen between. Defined once here because the
      * emitters, the report and the docs must all say the same word.
      */
@@ -51,7 +51,7 @@ public class DependencyGraph {
     public static final String KIND_EXTERNAL = "external";
     public static final String KIND_GATEWAY = "gateway";
 
-    /** Where the evidence for an edge came from. An edge can have several. */
+    /** Which layer an edge came from (its provenance). An edge can have several. */
     public static final String PROV_RUNTIME = "runtime";
     public static final String PROV_CODE = "code";
     public static final String PROV_DOC = "doc";
@@ -147,7 +147,8 @@ public class DependencyGraph {
         public boolean runtimeObserved;
         /** Runtime request count; 0 when unknown (e.g. a code-only edge). */
         public long count;
-        public final List<String> evidence = new ArrayList<>();
+        /** The references backing the edge (file:line, Prometheus metric, doc section). */
+        public final List<String> provenanceRefs = new ArrayList<>();
 
         Edge(String source, String target) {
             this.source = source;
@@ -163,7 +164,7 @@ public class DependencyGraph {
             json.put("confidence", confidence);
             json.put("runtimeObserved", runtimeObserved);
             if (count > 0) json.put("count", count);
-            if (!evidence.isEmpty()) json.put("evidence", new JSONArray(evidence));
+            if (!provenanceRefs.isEmpty()) json.put("provenanceRefs", new JSONArray(provenanceRefs));
             return json;
         }
     }
@@ -198,13 +199,13 @@ public class DependencyGraph {
 
     /**
      * Adds an edge, merging into an existing (source,target) instead of duplicating
-     * it: provenance and evidence are unioned, the request count is kept as the max,
+     * it: provenance and provenance references are unioned, the request count is kept as the max,
      * and runtimeObserved is OR-ed. This is what lets Phase 2 union code/doc edges
      * onto the same runtime edge without creating parallel arrows.
      */
     public Edge addEdge(String source, String target, String type,
                         String provenance, String confidence,
-                        boolean runtimeObserved, long count, String evidence) {
+                        boolean runtimeObserved, long count, String provenanceRef) {
         String key = source + "\u0000" + target;
         Edge edge = edges.get(key);
         if (edge == null) {
@@ -219,8 +220,8 @@ public class DependencyGraph {
         if (provenance != null) edge.provenance.add(provenance);
         edge.runtimeObserved |= runtimeObserved;
         if (count > edge.count) edge.count = count;
-        if (evidence != null && !evidence.isBlank() && !edge.evidence.contains(evidence)) {
-            edge.evidence.add(evidence);
+        if (provenanceRef != null && !provenanceRef.isBlank() && !edge.provenanceRefs.contains(provenanceRef)) {
+            edge.provenanceRefs.add(provenanceRef);
         }
         return edge;
     }
@@ -239,7 +240,7 @@ public class DependencyGraph {
 
     /** Removes the (source, target) edge. A no-op when there is none. */
     public void removeEdge(String source, String target) {
-        if (source != null && target != null) edges.remove(source + " " + target);
+        if (source != null && target != null) edges.remove(source + "\u0000" + target);
     }
 
     /** Removes a node and every edge incident to it. A no-op when the id is absent. */
@@ -250,14 +251,14 @@ public class DependencyGraph {
 
     /**
      * Merges {@code fromId} into {@code toId}: every edge touching {@code fromId} is
-     * redirected onto {@code toId} (its provenance, evidence, confidence, observed flag
+     * redirected onto {@code toId} (its provenance, provenance references, confidence, observed flag
      * and count folded onto any existing edge exactly as {@link #addEdge} would), then
      * {@code fromId} and its now-stale edges are dropped. A self-edge produced by the
      * redirect is discarded. A no-op when {@code fromId} is absent or equals {@code toId}.
      *
      * This is how {@code GraphNormalizer} collapses a documentation/code alias
      * (e.g. {@code api-gateway-controller}) onto the real workload it names, so the alias
-     * does not linger as a duplicate phantom node while its evidence is preserved on the
+     * does not linger as a duplicate phantom node while its provenance references are preserved on the
      * real edge.
      */
     public void renameNode(String fromId, String toId) {
@@ -273,7 +274,7 @@ public class DependencyGraph {
             if (s.equals(t)) continue;
             Edge merged = addEdge(s, t, e.type, null, e.confidence, e.runtimeObserved, e.count, null);
             merged.provenance.addAll(e.provenance);
-            for (String ev : e.evidence) if (!merged.evidence.contains(ev)) merged.evidence.add(ev);
+            for (String ref : e.provenanceRefs) if (!merged.provenanceRefs.contains(ref)) merged.provenanceRefs.add(ref);
         }
         removeNode(fromId);
     }
@@ -297,7 +298,7 @@ public class DependencyGraph {
      * checkpoint that produced it is gone, so the graph must be able to come back from
      * its own JSON rather than be re-derived from raw stages. Every field the emitters
      * and the grounding read (kind, deployed, image, replicas, layer, provenance,
-     * confidence, observed, count, evidence) round-trips; unknown keys are ignored.
+     * confidence, observed, count, provenanceRefs) round-trips; unknown keys are ignored. The pre-rename key {@code evidence} is still read, so a graph archived before the rename comes back whole.
      *
      * @return the graph; an empty graph for {@code null} or malformed input rather than
      *         an exception, since an old or partial archive must still answer questions
@@ -334,11 +335,12 @@ public class DependencyGraph {
                         e.optLong("count", 0), null);
                 JSONArray prov = e.optJSONArray("provenance");
                 if (prov != null) for (int p = 0; p < prov.length(); p++) edge.provenance.add(prov.optString(p));
-                JSONArray ev = e.optJSONArray("evidence");
-                if (ev != null) {
-                    for (int v = 0; v < ev.length(); v++) {
-                        String s = ev.optString(v);
-                        if (!s.isBlank() && !edge.evidence.contains(s)) edge.evidence.add(s);
+                JSONArray refs = e.optJSONArray("provenanceRefs");
+                if (refs == null) refs = e.optJSONArray("evidence"); // legacy key: archives written before the rename
+                if (refs != null) {
+                    for (int v = 0; v < refs.length(); v++) {
+                        String s = refs.optString(v);
+                        if (!s.isBlank() && !edge.provenanceRefs.contains(s)) edge.provenanceRefs.add(s);
                     }
                 }
             }

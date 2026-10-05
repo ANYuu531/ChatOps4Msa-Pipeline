@@ -18,7 +18,7 @@ import java.util.Set;
  * see exactly one format and do not care which tier ran.
  *
  * An edge is a section (what kind of dependency signal) plus an ordered map of
- * key/value fields plus file:line evidence. Sections are free-form strings so a
+ * key/value fields plus file:line provenance. Sections are free-form strings so a
  * new .scm pattern can introduce one without touching Java.
  */
 public class EdgeLedger {
@@ -68,7 +68,7 @@ public class EdgeLedger {
                 parts.add(e.getKey() + "=" + e.getValue());
             }
             sb.append(String.join(", ", parts));
-            sb.append(" [Evidence: ").append(file);
+            sb.append(" [Provenance: ").append(file);
             if (line > 0) sb.append(':').append(line);
             sb.append(", ").append(confidence).append(']');
             return sb.toString();

@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * The checkpoint for a dependency analysis: the evidence collected so far, stage
+ * The checkpoint for a dependency analysis: the provenance collected so far, stage
  * by stage, so a paused analysis can be resumed instead of re-run.
  *
  * Why per stage rather than one blob: when the user pauses to drive more traffic,
@@ -59,7 +59,7 @@ public class DependencyAnalysisStateStore {
     /**
      * Raw Prometheus JSON of the in-mesh TCP query
      * ({@code istio_tcp_connections_opened_total}, reporter=source), which is the ONLY
-     * runtime evidence for a non-HTTP dependency — in practice the database. Istio
+     * runtime observation for a non-HTTP dependency — in practice the database. Istio
      * parses HTTP/gRPC into {@link #STAGE_TRAFFIC_RAW}; a MySQL/PostgreSQL connection
      * is opaque TCP and appears nowhere else.
      */
@@ -99,6 +99,15 @@ public class DependencyAnalysisStateStore {
      */
     public static final String STAGE_PENDING_ASKS = "pending_asks";
     public static final String STAGE_USER_VALUES = "user_values";
+    /**
+     * The same shape for NAMES: the service names in the docs/code that no alignment
+     * rule could map onto the graph (JSON list of {@code AliasResolution.Question}),
+     * and what the operator said each one is ({@code AliasResolution.Answers} JSON).
+     * The answers are also kept per repository (see {@link #loadProjectAliases}) so a
+     * later run of the same project applies them instead of asking again.
+     */
+    public static final String STAGE_PENDING_ALIASES = "pending_aliases";
+    public static final String STAGE_ALIAS_ANSWERS = "alias_answers";
 
     public static class State {
         public String repoName = "";
@@ -160,8 +169,45 @@ public class DependencyAnalysisStateStore {
         State state = new State();
         state.repoName = repoName == null ? "" : repoName;
         state.namespace = namespace == null ? "" : namespace;
+        // Names the operator resolved on an earlier run of this repository are
+        // answers already; the new run applies them and only asks about new names.
+        String remembered = loadProjectAliases(state.repoName);
+        if (!remembered.isBlank()) state.stages.put(STAGE_ALIAS_ANSWERS, remembered);
         save(userId, state);
         return state;
+    }
+
+    /**
+     * The alias answers remembered for a repository (JSON, {@code AliasResolution.Answers}),
+     * or an empty string. Kept outside the per-user checkpoint and outside its TTL: a
+     * name resolution is a fact about the project, not about one run.
+     */
+    public String loadProjectAliases(String repoName) {
+        try {
+            Path file = aliasFileOf(repoName);
+            if (file == null || !Files.exists(file)) return "";
+            return Files.readString(file, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** Remembers the alias answers for a repository; a failure to write only means the next run asks again. */
+    public void saveProjectAliases(String repoName, String answersJson) {
+        try {
+            Path file = aliasFileOf(repoName);
+            if (file == null) return;
+            Files.createDirectories(file.getParent());
+            Files.writeString(file, answersJson == null ? "" : answersJson, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            System.out.println("[WARNING] cannot persist alias answers for " + repoName + ": " + e.getMessage());
+        }
+    }
+
+    private Path aliasFileOf(String repoName) {
+        if (repoName == null || repoName.isBlank()) return null;
+        String safe = repoName.trim().toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9._-]+", "_");
+        return directory.resolve("aliases").resolve(safe + ".json");
     }
 
     /** Null when there is no checkpoint, or it has expired. */

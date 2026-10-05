@@ -118,7 +118,7 @@ public class GraphGroundingTest {
     void factSheetSaysWhenAnEdgeIsDeclaredButNotObserved() {
         DependencyGraph g = boa();
         String sheet = GraphGrounding.factSheet(g, node(g, "ledgerwriter"));
-        assertTrue(sheet.contains("ledgerwriter -> balancereader [sync-http]; confidence=documented; provenance=code; runtime observed: no; evidence: src/ledger/ledgerwriter/.../LedgerWriterController.java:112"));
+        assertTrue(sheet.contains("ledgerwriter -> balancereader [sync-http]; confidence=documented; provenance=code; runtime observed: no; provenance ref: src/ledger/ledgerwriter/.../LedgerWriterController.java:112"));
         assertTrue(sheet.contains("ledgerwriter -> ledger-db [db]; confidence=documented; provenance=code; runtime observed: no"));
     }
 
@@ -154,7 +154,7 @@ public class GraphGroundingTest {
         String summary = GraphGrounding.summary(boa());
         assertTrue(summary.contains("## Graph summary — namespace bank-of-anthos"));
         assertTrue(summary.contains("- Nodes: 11 (3 database, 1 gateway, 7 service)"));
-        assertTrue(summary.contains("- Edges: 10 (runtime-observed: 7; declared in code/docs with usage evidence but not observed: 2; mentioned only, no usage evidence: 1)"));
+        assertTrue(summary.contains("- Edges: 10 (runtime-observed: 7; declared in code/docs with a usage signal but not observed: 2; mentioned only, no usage signal: 1)"));
         assertTrue(summary.contains("- Referenced but NOT deployed in the cluster: ts-order-service"));
         assertTrue(summary.contains("- Nodes with no edges at all (the extraction found nothing for them): postgresql"));
         assertTrue(summary.contains("  - tier 0: istio-ingressgateway"));

@@ -40,7 +40,7 @@ services:
       # paused analysis — DeepWiki's questions and the repo clone are the
       # expensive stages and resuming is supposed to skip them.
       - ./dep-state:/app/dep-state
-      # Report Q&A archives (report + graph + evidence per generated report). Mounted
+      # Report Q&A archives (report + graph + provenance per generated report). Mounted
       # so the "Ask DepWeaver" thread still answers after a restart.
       - ./dep-reports:/app/dep-reports
     depends_on:

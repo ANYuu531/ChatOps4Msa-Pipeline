@@ -41,7 +41,7 @@ public class CodeToolkit extends ToolkitFunction {
      * @param repo GitHub repository as "owner/repo", or a full clone URL.
      * @return a Code-Extracted Edge Ledger. Fails soft: a clone or parse failure
      *         is reported inside the ledger so the surrounding dependency-analysis
-     *         flow still completes on documentation and runtime evidence.
+     *         flow still completes on documentation and runtime provenance.
      */
     public String toolkitCodeExtract(String repo) {
         CodeExtractionService.ExtractionResult result = codeExtractionService.extract(repo);

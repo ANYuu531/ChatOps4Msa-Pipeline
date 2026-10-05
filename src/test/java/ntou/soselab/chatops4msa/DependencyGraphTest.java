@@ -233,7 +233,7 @@ public class DependencyGraphTest {
         // transactionhistory never reads SPRING_DATASOURCE_URL in code — Spring Boot binds
         // it — so the config-read rule cannot fire. The Deployment's envFrom says it gets
         // ledger-db-config, the ConfigMap says that is ledger-db, and the JPA marker says
-        // it persists: a documented db edge, with the manifest as evidence.
+        // it persists: a documented db edge, with the manifest as provenance.
         DependencyGraph g = new DependencyGraph("");
         CodeGraphMerger.merge(g, BOA_WIRING, "GoogleCloudPlatform/bank-of-anthos");
         DependencyGraph.Edge e = edge(g, "transactionhistory", "ledger-db");
@@ -242,7 +242,7 @@ public class DependencyGraphTest {
         assertEquals(DependencyGraph.CONF_DOCUMENTED, e.confidence);
         assertFalse(e.runtimeObserved);
         assertTrue(e.provenance.contains(DependencyGraph.PROV_CODE));
-        assertTrue(e.evidence.stream().anyMatch(s -> s.contains("transaction-history.yaml")));
+        assertTrue(e.provenanceRefs.stream().anyMatch(s -> s.contains("transaction-history.yaml")));
     }
 
     @Test
@@ -314,7 +314,7 @@ public class DependencyGraphTest {
         DependencyGraph.Edge e = edge(g, "userservice", "accounts-db");
         assertNotNull(e);
         assertTrue(e.provenance.contains(DependencyGraph.PROV_CODE));
-        assertTrue(e.provenance.contains(DependencyGraph.PROV_DOC), "the doc evidence lands on the real edge");
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_DOC), "the doc provenance lands on the real edge");
         assertEquals(DependencyGraph.CONF_DOCUMENTED, e.confidence, "merging never weakens the edge");
         assertEquals(1, g.getEdges().size());
     }
@@ -471,7 +471,7 @@ public class DependencyGraphTest {
         assertTrue(m.contains("2026-07-20"));
     }
 
-    // ---- DB "really used" vs "declared" (JPA persistence signal + doc evidence) ----
+    // ---- DB "really used" vs "declared" (JPA persistence signal + doc provenance) ----
 
     @Test
     void jpaMarkerMakesDbReallyUsedNotJustDeclared() {
@@ -501,16 +501,16 @@ public class DependencyGraphTest {
     }
 
     @Test
-    void docMergerAddsDeepwikiEdgesWithEvidenceTiers() {
+    void docMergerAddsDeepwikiEdgesWithConfidenceTiers() {
         DependencyGraph g = mergedGraph();
         String notes = """
                 {
                   "synchronous_candidates": [
-                    {"source":"API Gateway","target":"Discovery Server","dependency_type":"application","configured":"yes","evidence_reference":"docs/arch.md"},
+                    {"source":"API Gateway","target":"Discovery Server","dependency_type":"application","configured":"yes","provenance_reference":"docs/arch.md"},
                     {"source":"API Gateway","target":"Some Widget Registry","dependency_type":"application","configured":"yes"}
                   ],
                   "infrastructure_dependencies": [
-                    {"source_component":"vets-service","target":"vets-cache","dependency_type":"cache","configured":"no","evidence_reference":"wiki"}
+                    {"source_component":"vets-service","target":"vets-cache","dependency_type":"cache","configured":"no","provenance_reference":"wiki"}
                   ]
                 }
                 """;
@@ -656,7 +656,7 @@ public class DependencyGraphTest {
         assertEquals(DependencyGraph.CONF_INFERRED, edge(g, "visits-service", "orders-db").confidence);
         DocGraphMerger.merge(g, """
                 {"infrastructure_dependencies":[
-                  {"source_component":"visits-service","target":"orders-db","dependency_type":"database","configured":"yes","evidence_reference":"cfg"}
+                  {"source_component":"visits-service","target":"orders-db","dependency_type":"database","configured":"yes","provenance_reference":"cfg"}
                 ]}
                 """);
         assertEquals(DependencyGraph.CONF_DOCUMENTED, edge(g, "visits-service", "orders-db").confidence);
@@ -742,7 +742,7 @@ public class DependencyGraphTest {
         assertNotNull(e);
         assertTrue(e.runtimeObserved);                                   // stays solid
         assertTrue(e.provenance.contains(DependencyGraph.PROV_RUNTIME));
-        assertTrue(e.provenance.contains(DependencyGraph.PROV_CODE));    // alias evidence folded in
+        assertTrue(e.provenance.contains(DependencyGraph.PROV_CODE));    // alias provenance folded in
         assertEquals(1, g.getEdges().stream()
                 .filter(x -> x.source.equals("api-gateway") && x.target.equals("customers-service"))
                 .count());                                              // merged, not duplicated
@@ -1011,7 +1011,7 @@ public class DependencyGraphTest {
         RuntimeGraphBuilder.mergeIstioTcp(g, PETCLINIC_TCP);
 
         DependencyGraph.Edge after = edge(g, "customers-service", "customers-db");
-        assertTrue(after.runtimeObserved, "a TCP connection is the db edge's runtime evidence");
+        assertTrue(after.runtimeObserved, "a TCP connection is the db edge's runtime observation");
         assertEquals("db", after.type, "merging must not relabel the existing db edge");
         assertEquals(DependencyGraph.CONF_OBSERVED, after.confidence);
         // Both provenances survive: the code declared it, the mesh confirmed it.
@@ -1301,7 +1301,7 @@ public class DependencyGraphTest {
                 DependencyGraph.CONF_OBSERVED, true, 10, "x");
         g.addEdge("ledgerwriter", "ledger-db", "db", DependencyGraph.PROV_RUNTIME,
                 DependencyGraph.CONF_OBSERVED, true, 99, "x");
-        // Merely mentioned by the docs — dotted in the graph, no usage evidence.
+        // Merely mentioned by the docs — dotted in the graph, no usage signal.
         g.addEdge("userservice", "ledgerwriter", "sync-http", DependencyGraph.PROV_DOC,
                 DependencyGraph.CONF_INFERRED, false, 0, "doc");
         g.addEdge("ledgerwriter", "postgresql", "db", DependencyGraph.PROV_DOC,
@@ -1317,11 +1317,11 @@ public class DependencyGraphTest {
         // Excluded, but counted and reported — the same tier is where a weak extraction
         // lands, and a silently shrinking denominator would flatter such a run.
         assertEquals(2, r.mentionedOnly);
-        assertFalse(r.isThinlyEvidenced(), "2 scored vs 2 unscored is not 'thin'");
+        assertFalse(r.isLowConfidence(), "2 scored vs 2 unscored is not 'thin'");
     }
 
     @Test
-    void aRunWhoseEvidenceIsMostlyGuessesIsFlaggedAsThin() {
+    void aRunWhoseConfidenceIsMostlyInferredIsFlaggedLow() {
         // The generalisation risk of excluding inferred edges: a language with no
         // tree-sitter grammar falls back to the LLM reader, and its edges can ALL be
         // inferred. The denominator then shrinks until the percentage means nothing —
@@ -1343,11 +1343,11 @@ public class DependencyGraphTest {
         assertEquals(1, r.total);
         assertEquals(100, r.percent(), "1/1 looks perfect...");
         assertEquals(4, r.mentionedOnly);
-        assertTrue(r.isThinlyEvidenced(), "...but must be flagged: 4 unscored vs 1 scored");
+        assertTrue(r.isLowConfidence(), "...but must be flagged: 4 unscored vs 1 scored");
     }
 
     @Test
-    void aDeclaredEdgeWithUsageEvidenceStillCounts() {
+    void aDeclaredEdgeWithUsageProvenanceStillCounts() {
         // documented (dashed) = code/doc proved it is really used, just not yet driven.
         // That IS a coverage gap and must stay in the denominator.
         DependencyGraph g = new DependencyGraph("ns");

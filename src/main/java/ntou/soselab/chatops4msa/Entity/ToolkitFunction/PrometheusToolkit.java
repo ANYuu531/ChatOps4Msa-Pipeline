@@ -20,11 +20,11 @@ import java.time.Duration;
  *    default error handler, so a 502 (or a timeout, or a dead host) throws and
  *    kills the whole dependency analysis — throwing away DeepWiki's five
  *    questions and the repository clone with it. Runtime traffic is only ONE of
- *    several evidence sources; losing it must not lose everything else.
+ *    several provenance sources; losing it must not lose everything else.
  *
  * 2. IT MUST DISTINGUISH "COULD NOT ASK" FROM "ASKED, AND THERE ARE NO EDGES".
- *    These mean opposite things. An empty result set is real evidence that the
- *    mesh has not seen that traffic. An unreachable Prometheus is no evidence at
+ *    These mean opposite things. An empty result set is a real observation that the
+ *    mesh has not seen that traffic. An unreachable Prometheus is no observation at
  *    all — and reporting it as "no dependencies observed" would be a lie. So a
  *    failure is returned as an explicit UNAVAILABLE block that the prompts are
  *    told to treat as "unknown", never as "absent".
@@ -115,7 +115,7 @@ public class PrometheusToolkit extends ToolkitFunction {
                 + "Query: " + promql + "\n"
                 + "Reason: " + detail + "\n"
                 + "\n"
-                + "This is NOT an empty result. No runtime evidence could be collected at all, so "
+                + "This is NOT an empty result. No runtime observation could be collected at all, so "
                 + "the absence of an edge below proves nothing about whether that call happens. "
                 + "Report the runtime dimension as UNKNOWN, never as 'no dependencies observed'.";
     }

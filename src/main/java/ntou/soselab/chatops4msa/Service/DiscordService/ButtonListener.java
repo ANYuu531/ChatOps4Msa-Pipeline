@@ -18,6 +18,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.Extern
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ExternalHostDetector;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisStateStore;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyReportService;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.AliasResolution;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Traffic.AskItem;
 import org.json.JSONObject;
 import ntou.soselab.chatops4msa.Service.NLPService.DialogueTracker;
@@ -81,6 +82,10 @@ public class ButtonListener extends ListenerAdapter {
         // deliberately left enabled: the user may reopen the form to correct a value.
         if (DepstateToolkit.ASK_VALUES_BUTTON_ID.equals(buttonId)) {
             openAskValuesModal(event, testerId);
+            return;
+        }
+        if (DepstateToolkit.RESOLVE_ALIASES_BUTTON_ID.equals(buttonId)) {
+            openResolveAliasesModal(event, testerId);
             return;
         }
 
@@ -283,6 +288,48 @@ public class ButtonListener extends ListenerAdapter {
                     .setMaxLength(200);
             if (!ask.example.isEmpty()) input.setPlaceholder(truncate(ask.example, 100));
             modal.addActionRow(input.build());
+        }
+
+        event.replyModal(modal.build()).queue();
+    }
+
+    /**
+     * Builds the "which service is this?" form from the pending alias questions, one
+     * text input per name. The input id is positional ({@code alias_0}…) because the
+     * raw name — "Customer API", "Netflix Eureka" — is rarely a valid component id;
+     * {@link ModalListener} maps the position back to the question. The placeholder
+     * shows the numbered candidates so the operator can answer with a digit.
+     */
+    private void openResolveAliasesModal(ButtonInteractionEvent event, String testerId) {
+        List<AliasResolution.Question> questions = AliasResolution.Questions.fromJson(
+                stateStore.getStage(testerId, DependencyAnalysisStateStore.STAGE_PENDING_ALIASES)).list();
+        if (questions.isEmpty()) {
+            event.reply("There are no names to resolve right now — "
+                    + "either they were already answered, or the checkpoint has expired.")
+                    .setEphemeral(true).queue();
+            return;
+        }
+
+        Modal.Builder modal = Modal.create(
+                DepstateToolkit.RESOLVE_ALIASES_MODAL_ID, "Which service is each name?");
+
+        int added = 0;
+        for (AliasResolution.Question q : questions) {
+            if (added >= DepstateToolkit.MAX_ASKS_PER_MODAL) break;
+            TextInput.Builder input = TextInput.create(
+                            DepstateToolkit.ALIAS_INPUT_PREFIX + added, truncate(q.name, 45), TextInputStyle.SHORT)
+                    .setRequired(false)
+                    .setMaxLength(100);
+            StringBuilder hint = new StringBuilder();
+            for (int i = 0; i < q.candidates.size(); i++) {
+                if (i > 0) hint.append(" / ");
+                hint.append(i + 1).append(' ').append(q.candidates.get(i));
+            }
+            if (hint.length() > 0) hint.append(" / ");
+            hint.append("new / ignore");
+            input.setPlaceholder(truncate(hint.toString(), 100));
+            modal.addActionRow(input.build());
+            added++;
         }
 
         event.replyModal(modal.build()).queue();

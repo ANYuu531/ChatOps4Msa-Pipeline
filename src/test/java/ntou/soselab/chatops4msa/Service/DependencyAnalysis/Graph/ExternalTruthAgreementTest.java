@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>The two are not measuring quite the same thing and the report must say so. MicroDepGraph
  * derives edges from Compose {@code depends_on}/{@code links} and internal API calls, and
  * keeps infrastructure (eureka, rabbitmq, zipkin) as ordinary nodes; it has no notion of an
- * external host or of evidence grade. So this test reports <b>agreement</b>, not precision:
+ * external host or of confidence grade. So this test reports <b>agreement</b>, not precision:
  * how much of the dataset's edge set the tool draws (it should draw nearly all of it), and
  * every edge only one side has, listed individually so each can be traced to a cause.
  *

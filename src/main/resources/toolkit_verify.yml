@@ -157,6 +157,8 @@ toolkit-depstate-apply-button:
   []
 toolkit-depstate-ask-button:
   []
+toolkit-depstate-alias-button:
+  []
 toolkit-depstate-supplied-values:
   []
 toolkit-depstate-data-layer:

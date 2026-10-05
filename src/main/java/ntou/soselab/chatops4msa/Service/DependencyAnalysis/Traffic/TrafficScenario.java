@@ -66,7 +66,7 @@ public class TrafficScenario {
      * Values the generator could not produce and wants a human to supply (Tier 3).
      * These are deliberately NOT in {@link #variables}: an ask with no answer must stay
      * an unresolved {{placeholder}} so the runner refuses to send that request, rather
-     * than sending it with an empty value and reading the resulting 4xx as evidence.
+     * than sending it with an empty value and reading the resulting 4xx as a signal.
      */
     public final List<AskItem> asks = new ArrayList<>();
 

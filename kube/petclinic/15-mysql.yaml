@@ -16,7 +16,7 @@
 #      but naming it makes the intent explicit and keeps the metric labels stable.
 #   2. Connection POOLS open once. Hikari builds its pool at service startup, so the
 #      counter reflects pool establishment, not query volume — which is fine (it is
-#      evidence THAT the service talks to the db). But it means ordering matters:
+#      a sign THAT the service talks to the db). But it means ordering matters:
 #      MySQL must be Ready BEFORE the app pods start, or their first pool is built
 #      against a dead host and retried in a way the sidecar may never attribute.
 #      Apply order: 10-config-server -> 15-mysql (wait Ready) -> 20-services.

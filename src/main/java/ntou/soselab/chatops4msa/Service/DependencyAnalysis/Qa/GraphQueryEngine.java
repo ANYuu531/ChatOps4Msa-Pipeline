@@ -49,7 +49,7 @@ public final class GraphQueryEngine {
             case "observed-edges": return edges(graph, e -> e.runtimeObserved, "no edge was observed at runtime (a greenfield run has none by design)");
             case "unobserved-edges": return edges(graph, e -> !e.runtimeObserved, "every edge was observed at runtime");
             case "uncovered": return uncovered(graph);
-            case "mentioned-only": return edges(graph, e -> DependencyGraph.CONF_INFERRED.equals(e.confidence), "no edge is mentioned-only; every edge has usage evidence");
+            case "mentioned-only": return edges(graph, e -> DependencyGraph.CONF_INFERRED.equals(e.confidence), "no edge is mentioned-only; every edge has a usage signal");
             case "undeployed": return undeployed(graph);
             case "deploy-order": return deployOrder(graph);
             case "externals": return edges(graph, e -> isKind(graph, e.target, DependencyGraph.KIND_EXTERNAL), "no external host in the graph");

@@ -8,8 +8,8 @@ For each component, provide:
 - Main responsibility in one sentence
 - Technology stack: language and framework, if explicitly documented
 - Listening port, if explicitly documented
-- Evidence type: documentation | source_code_reference | configuration | unknown
-- Evidence reference: exact documentation section, file path, configuration key, or source-code reference when available
+- Provenance type: documentation | source_code_reference | configuration | unknown
+- Provenance reference: exact documentation section, file path, configuration key, or source-code reference when available
 
 Rules:
 1. Do NOT state whether the component is deployed, running, ready, reachable, or observed at runtime.
@@ -26,6 +26,6 @@ Return Markdown using one block per component:
 - Responsibility:
 - Technology stack:
 - Listening port:
-- Evidence type:
-- Evidence reference:
+- Provenance type:
+- Provenance reference:
 - Limitations:

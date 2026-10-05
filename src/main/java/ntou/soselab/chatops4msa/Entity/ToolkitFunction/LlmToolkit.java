@@ -70,7 +70,7 @@ public class LlmToolkit {
 
             // Estimate token length and trim if needed. Keep at least the current
             // (last) message: a single prompt can exceed the budget on its own — the
-            // dependency-analysis resume prompt bundles all collected evidence — and
+            // dependency-analysis resume prompt bundles all collected provenance — and
             // trimming it to an empty array makes the API reject the call with
             // "Invalid 'messages': empty array". A lone oversized message is fine for
             // a large-context model (gpt-4o).
