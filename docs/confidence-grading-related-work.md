@@ -1,7 +1,7 @@
-# 證據分級：文獻佐證
+# 信心分級：文獻佐證
 
-> 回應 2026-09-14 反饋第 1 點：「搜尋『證據分級』相關的論文，要證明這確實是一件重要的、大家在意的事、有用的事」。
-> 用途有兩個：碩論的 related work，以及 AsianPLoP pattern 1（證據分級的關係）的 known uses 與 forces 依據。
+> 回應 2026-09-14 反饋第 1 點：「搜尋『信心分級』相關的論文，要證明這確實是一件重要的、大家在意的事、有用的事」。
+> 用途有兩個：碩論的 related work，以及 AsianPLoP pattern 1（信心分級的關係）的 known uses 與 forces 依據。
 > **驗證狀態**欄說明每一條是讀過原文、只讀過摘要，還是只看到二手整理。沒讀過的不寫細節數字。
 
 ---
@@ -18,11 +18,11 @@
 
 ---
 
-## 2. 「重要」：證據分級是成熟領域的標準做法
+## 2. 「重要」：信心分級是成熟領域的標準做法
 
 | 出處 | 說的是什麼 | 對應到 DepWeaver | 驗證狀態 |
 |---|---|---|---|
-| GRADE Working Group, *Systems for grading the quality of evidence and the strength of recommendations I: critical appraisal of existing approaches*, BMC Health Serv Res 2004（[PMC545647](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC545647/)；II 為 pilot study，[PMC1084246](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1084246/)） | 醫學界在 2000 年代初期有六套以上互相衝突的證據分級系統，GRADE 的出發點就是「分級本身沒有爭議，爭議的是怎麼分」，並把**證據品質**與**建議強度**分成兩個軸 | 我們也分兩個軸：一條邊的**證據等級**（量測到／有使用證據／只被提到）與它在**覆蓋率分母**裡算不算數，是兩件事 | 摘要 |
+| GRADE Working Group, *Systems for grading the quality of evidence and the strength of recommendations I: critical appraisal of existing approaches*, BMC Health Serv Res 2004（[PMC545647](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC545647/)；II 為 pilot study，[PMC1084246](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1084246/)） | 醫學界在 2000 年代初期有六套以上互相衝突的信心分級系統，GRADE 的出發點就是「分級本身沒有爭議，爭議的是怎麼分」，並把**證據品質**與**建議強度**分成兩個軸 | 我們也分兩個軸：一條邊的**信心等級**（量測到／有使用證據／只被提到）與它在**覆蓋率分母**裡算不算數，是兩件事 | 摘要 |
 | *The hierarchy of evidence: levels and grades of recommendation*（[PMC2981887](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2981887/)） | 證據階層的通論：等級不是為了排斥低等級證據，而是為了讓讀者知道自己站在哪一階 | 「只被提到」的邊不刪掉，畫成點線並排除在分母外，理由相同 | 摘要 |
 | Guyatt et al., *GRADE guidelines: 1. Introduction — GRADE evidence profiles and summary of findings tables*, J Clin Epidemiol 64(4), 2011（[doi:10.1016/j.jclinepi.2010.04.026](https://doi.org/10.1016/j.jclinepi.2010.04.026)） | GRADE 的**現行方法學基準**，2011 年起的系列文章第一篇；把「證據品質」正式定義成「對效果估計的信心」 | 引 2004 是講**起源與動機**（當時六套系統互相衝突），引 2011 是講**現行做法**。論文兩篇都放，避免只靠 20 年前的引用 | 摘要 |
 | Kitchenham, Dybå, Jørgensen, *Evidence-based Software Engineering*, ICSE 2004（[PDF](https://cms.simula.no/sites/default/files/publications/SE.5.Kitchenham.2004.pdf)） | 把實證醫學的方法搬進軟體工程，並指出軟體工程的證據普遍較弱、RCT 稀少，因此**通常接受所有等級的證據，但必須標明等級** | 這正是工具面對的情況：遙測很少、程式碼分析有限、文件常常是唯一來源 | 摘要＋二手整理 |
@@ -66,7 +66,7 @@
 
 | 出處 | 數字 | 用途 | 驗證狀態 |
 |---|---|---|---|
-| Liu, Zhang, Liang, *Evaluating Verifiability in Generative Search Engines*, Findings of EMNLP 2023（[ACL](https://aclanthology.org/2023.findings-emnlp.467/)、[arXiv 2304.09848](https://arxiv.org/abs/2304.09848)） | 四個商用生成式搜尋引擎：**平均只有 51.5% 的句子被引用完整支撐，只有 74.5% 的引用真的支撐它所附的句子**；回答「流暢且看起來有資訊量」 | 最直接支撐「事實由程式寫、LLM 只補語言」與證據等級必須出現在 context 裡 | 摘要 |
+| Liu, Zhang, Liang, *Evaluating Verifiability in Generative Search Engines*, Findings of EMNLP 2023（[ACL](https://aclanthology.org/2023.findings-emnlp.467/)、[arXiv 2304.09848](https://arxiv.org/abs/2304.09848)） | 四個商用生成式搜尋引擎：**平均只有 51.5% 的句子被引用完整支撐，只有 74.5% 的引用真的支撐它所附的句子**；回答「流暢且看起來有資訊量」 | 最直接支撐「事實由程式寫、LLM 只補語言」與信心等級必須出現在 context 裡 | 摘要 |
 | Onweller et al., *Cited but Not Verified: Parsing and Evaluating Source Attribution in LLM Deep Research Agents*（[arXiv 2605.06635](https://arxiv.org/abs/2605.06635)，2026-05） | 前沿模型的**連結有效率 >94%、相關性 >80%，但事實正確率只有 39–77%**——即 **23–61% 的引用通不過對來源的事實查核**；而且工具呼叫次數從 2 增到 150 時，查核正確率再掉約 42% | **比 2023 那篇更貼近現在的 agent**：說明「看起來有引用」和「引用真的支撐」是兩件事，而且**做得越深越糟**。這正是我們把事實從 LLM 手上拿走的理由 | 摘要 |
 | *RAG vs. GraphRAG: A Systematic Evaluation*（[arXiv 2502.11371](https://arxiv.org/html/2502.11371v3)）、*In-depth Analysis of Graph-based RAG in a Unified Framework*（[arXiv 2503.04338](https://arxiv.org/pdf/2503.04338)） | 圖結構化檢索在多跳推理題型上勝過純向量 RAG，但在單純段落題型不一定；並指出「保留原文段落很關鍵」 | 支撐我們的混合設計（圖查詢結果 ＋ 報告段落一起進 context），也是純 AI 對照實驗（`threshold-design.md` 第 9 節）的比較基礎 | 摘要 |
 
@@ -76,10 +76,10 @@
 
 | 位置 | 引用 |
 |---|---|
-| 碩論 related work「為什麼依賴視圖需要證據等級」 | GRADE 2004 ＋ **2011**、EBSE 2004 ＋ **2015 書**、ICSE 2020 ＋ **ISSTA 2024** recall、**EMSE 2025** 工具比較、Lutellier |
+| 碩論 related work「為什麼依賴視圖需要信心等級」 | GRADE 2004 ＋ **2011**、EBSE 2004 ＋ **2015 書**、ICSE 2020 ＋ **ISSTA 2024** recall、**EMSE 2025** 工具比較、Lutellier |
 | 碩論 related work「為什麼 LLM 不能負責事實」 | Liu et al. 2023 ＋ **2026「Cited but Not Verified」**、RAG vs GraphRAG |
 | 碩論設計章「為什麼線型這樣畫、為什麼子圖 20 節點」 | Guo et al. 2015、Ghoniem et al. 2005 ＋ **Okoe et al. 2019 重做** |
-| AsianPLoP pattern 1（證據分級的關係）known uses | CycloneDX component evidence、SLSA build levels、GRADE（跨領域實例） |
+| AsianPLoP pattern 1（信心分級的關係）known uses | CycloneDX component evidence、SLSA build levels、GRADE（跨領域實例） |
 | AsianPLoP pattern 1 forces | CHI 2026 不確定性與信任（誠實揭露可能降低信任）、Guo et al.（兩個視覺變數會互相干擾） |
 
 ---
@@ -88,7 +88,7 @@
 
 1. **沒有找到**直接量測「把依賴關係分級之後，工程師的決策變好」的使用者研究。現有證據是間接的：分級在別的領域是標準做法（第 2、3 節）、不分級的前提（單一來源完整）被實測推翻（第 4.1 節）、不確定性編碼有視覺化研究（第 4.2 節）。
    → 這正好是可以主張的貢獻缺口；要補的話，最小做法是一個小型使用者研究：同一張圖，一組有分級、一組全部同樣畫法，問「哪些關係你敢據以做部署決策」。
-2. 微服務領域**沒有找到**現成的「依賴證據等級」標準命名（三級的名字是我們自己定的）。CycloneDX 用的是連續 confidence，不是離散等級；要在論文裡說明為什麼選離散三級（可解釋、可對應線型、沒有自由參數）。
+2. 微服務領域**沒有找到**現成的「依賴信心等級」標準命名（三級的名字是我們自己定的）。CycloneDX 用的是連續 confidence，不是離散等級；要在論文裡說明為什麼選離散三級（可解釋、可對應線型、沒有自由參數）。
 3. 上表標「摘要」的項目，投稿前要讀全文確認數字與上下文，尤其 ICSE 2020 的 0.884／0.935 與 EMSE 2025 的 0.86／0.91，以及 Okoe et al. 2019 的結果節。
 
 ---
@@ -107,4 +107,4 @@
 
 ## 7. 搜尋紀錄（可重跑）
 
-以下查詢在 2026-09-18 以英文執行：`evidence-based software engineering hierarchy of evidence Kitchenham`、`software architecture recovery ground truth static vs dynamic dependencies`、`static call graph recall soundness empirical study`、`uncertainty visualization graph edges confidence encoding`、`CycloneDX component evidence identity confidence`、`SLSA in-toto attestation levels`、`W3C PROV provenance trust`、`evaluating verifiability generative search engines`、`GraphRAG versus vanilla RAG evaluation`、`Ghoniem Fekete Castagliola readability node-link matrix`。中文關鍵詞（證據分級、證據等級）幾乎只會命中醫學文獻，軟體領域要用 provenance／confidence／evidence 才查得到。
+以下查詢在 2026-09-18 以英文執行：`evidence-based software engineering hierarchy of evidence Kitchenham`、`software architecture recovery ground truth static vs dynamic dependencies`、`static call graph recall soundness empirical study`、`uncertainty visualization graph edges confidence encoding`、`CycloneDX component evidence identity confidence`、`SLSA in-toto attestation levels`、`W3C PROV provenance trust`、`evaluating verifiability generative search engines`、`GraphRAG versus vanilla RAG evaluation`、`Ghoniem Fekete Castagliola readability node-link matrix`。中文關鍵詞（信心分級、信心等級）幾乎只會命中醫學文獻，軟體領域要用 provenance／confidence／evidence 才查得到。

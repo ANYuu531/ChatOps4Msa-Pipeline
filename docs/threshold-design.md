@@ -8,7 +8,7 @@
 > - 第 3 點「用純 AI 測試看看，比較結果」→ 第 9 節（程式已寫好，待機器 B 跑）
 > - 第 4 點「參數設定要畫成曲線圖」→ 第 10 節（產生器已寫好，子圖三張已產出）
 > - 第 5 點「top-k 要繼續測試更多的」→ 第 4.3 節換掉選 k 規則、網格擴到語料全長；**2026-09-19 機器 B 已重跑**，曲線在 k=28 出現平台，依規則仍選 16（第 4.4 節）
-> - 第 1 點「搜尋證據分級相關的論文」→ 另一份文件 `docs/evidence-grading-related-work.md`
+> - 第 1 點「搜尋信心分級相關的論文」→ 另一份文件 `docs/confidence-grading-related-work.md`
 >
 > 沒有跑過的東西不寫數字；每一節都標明數字是本機跑的、機器 B 跑的，還是待跑。
 
@@ -42,7 +42,7 @@ DepWeaver 裡「寫死的數字」性質並不一樣，需要的論證也不同�
 | 需節點意圖要有節點 | 0／1／2／1..8 個 | `SemanticRouter.java:282`、`:286`、`:290` | 需要節點的意圖若問句沒點名節點，視為沒把握 | —（布林規則） | — | 設計規則：沒有節點就產不出查詢 | 不另做；在掃描裡依「有沒有點名節點」分組觀察 |
 | 否定詞／方向詞規則 | regex | `SemanticRouter.java:136`、`:140`、`:143` | 修正 embedding 看不出來的功能詞（沒觀測到→uncovered；誰依賴 X vs X 依賴誰） | — | — | 真環境錯誤驅動（2026-09-08 第一輪 12 題） | 不另做；掃描用的判定函式就是正式環境的 `decide()`，規則已包含在內 |
 | 檢索 top-k | **16** | `application.properties` 的 `dependency.qa.top-k`、`ReportQaService.java:110` | 放進 context 的段落數上限 | context 變長、雜訊段落稀釋關鍵段（Precision@k 掉到 0.09）、擠掉事實表 | 關鍵段落進不了 context → 模型說「報告沒有」或只憑圖回答 | 消融實驗，網格到語料全長（第 4.4 節，2026-09-19 第三輪） | 已做，第 4 節 |
-| thin-evidence 警告 | `mentionedOnly > total + dbTotal` | `Graph/CoverageAnalyzer.java:124-126` | 未計分邊比計分邊多時，覆蓋率訊息加警告 | 該警告時不警告：抽取稀疏的專案覆蓋率虛高而沒提醒 | 抽取正常的專案也被警告，警告失去意義 | 規則式比較，無自由參數 | 暫不做，理由見第 5 節 |
+| low-confidence 警告 | `mentionedOnly > total + dbTotal` | `Graph/CoverageAnalyzer.java:124-126` | 未計分邊比計分邊多時，覆蓋率訊息加警告 | 該警告時不警告：抽取稀疏的專案覆蓋率虛高而沒提醒 | 抽取正常的專案也被警告，警告失去意義 | 規則式比較，無自由參數 | 暫不做，理由見第 5 節 |
 | router-then-planner 開關 | `dependency.qa.query-planner=true` | `application.properties:46` | 路由沒把握時是否呼叫 planner | — | — | 功能開關 | 不需要 |
 
 ### 2.2 (b) 資源／工程上限
@@ -74,7 +74,7 @@ DepWeaver 裡「寫死的數字」性質並不一樣，需要的論證也不同�
 | 回應內容節錄 | 400 字 | `Traffic/TrafficRunner.java:57` | 報告裡回應 body 的節錄長度 | 報告冗長 | 看不出錯誤原因 | 工程估算 | 不需要 |
 | 遙測沉澱等待 | 20s | `Traffic/TrafficRunner.java:67` | 流量打完後等 Prometheus scrape 再查 | 每輪多等 | 最後幾個請求（通常是最深的邊）還沒進 Prometheus → 邊被漏掉 | **平台估算**：Istio Prometheus 預設 scrape 15s，取略大於一個週期 | 不需要；原理性下限（見程式碼註解） |
 | Tier 3 每個表單最多問幾項 | 5 | `Entity/ToolkitFunction/DepstateToolkit.java:40` | 多出來的下一輪再問 | Discord 拒絕建立 modal | — | **平台限制**（Discord modal 最多 5 個輸入） | 不需要 |
-| LLM 讀碼上限 | 40 檔、240KB、每批 24KB、每檔 400 行 | `CodeExtraction/LlmCodeExtractor.java:47-50` | 無 grammar 語言退回 LLM 讀碼時的上限 | 成本、context 超限 | 大 repo 漏讀 → 邊變少（thin-evidence 的主要來源） | 工程估算 | 暫不做；見威脅效度 |
+| LLM 讀碼上限 | 40 檔、240KB、每批 24KB、每檔 400 行 | `CodeExtraction/LlmCodeExtractor.java:47-50` | 無 grammar 語言退回 LLM 讀碼時的上限 | 成本、context 超限 | 大 repo 漏讀 → 邊變少（low-confidence 的主要來源） | 工程估算 | 暫不做；見威脅效度 |
 | 範例請求蒐集上限 | 12 檔、每檔 8KB、總計 24KB | `CodeExtraction/ExampleRequestHarvester.java:59-61` | Tier 1 從 repo 撿範例請求的上限 | prompt 太長 | 少了範例、流量生成較難命中 | 工程估算 | 不需要 |
 | tree-sitter 區段上限 | url 60、config 80、其他 200 | `CodeExtraction/TreeSitterExtractor.java:40-44` | 單一 repo 某類抽取結果的條數上限 | 報告被雜訊淹沒 | 真實呼叫點被截 | 工程估算 | 不需要 |
 | 原始碼檔案大小上限 | 512KB | `CodeExtraction/SourceScanner.java:33` | 略過 minified／產生出來的檔案 | 解析巨型產生檔 | 真正的大原始檔被略過 | 工程估算 | 不需要 |
@@ -242,7 +242,7 @@ DepWeaver 裡「寫死的數字」性質並不一樣，需要的論證也不同�
 2. **「有把握」要看領先幅度，不是看絕對分數。** top-1 對與錯的分數帶幾乎重疊：中位數 0.641 對 0.592，錯的最高 0.784 已經高於對的 p90。所以單靠 T 分不開；程式選出的組合反而把 T **降**到 0.51、把 M **拉高**到 0.10，同時 H 降到 0.80，剛好讓 0.78 那句要看 margin（0.04，不夠）。十句錯的第二名都落後不到 0.10。
 3. **代價是多交給 LLM planner。** coverage 46.1% → 30.4%，約七成問題要多一次 planner 小呼叫。依 3.3 的不對稱代價，這是該付的：多一次小呼叫只是變慢，有把握地選錯是漏答。
 4. **跨專案大致穩定。** leave-one-project-out 三次有兩次驗證專案 0 錯；train-ticket 當驗證集時錯 1 句（34 句中）。可預期換一批問句時，有把握但錯約在 1–3% 的量級，而不是 0。
-5. **天花板在例句，不在門檻。** top-1 只有 73.9%，而且和門檻無關。錯誤集中在兩類：證據等級意圖彼此混淆（observed／uncovered／mentioned-only／undeployed 六句），以及方向（dependents-of／dependencies-of 兩句）。例句 leave-one-out 只有 97／151 最近鄰同意圖，也說明卡片之間重疊。要提高 coverage，得改例句或合併易混淆的卡片；**但這批 102 句已經看過結果，改完例句必須換一批新的 hold-out 驗證，不能用這批報成績。**
+5. **天花板在例句，不在門檻。** top-1 只有 73.9%，而且和門檻無關。錯誤集中在兩類：信心等級意圖彼此混淆（observed／uncovered／mentioned-only／undeployed 六句），以及方向（dependents-of／dependencies-of 兩句）。例句 leave-one-out 只有 97／151 最近鄰同意圖，也說明卡片之間重疊。要提高 coverage，得改例句或合併易混淆的卡片；**但這批 102 句已經看過結果，改完例句必須換一批新的 hold-out 驗證，不能用這批報成績。**
 6. **選定是在同一批資料上做的（in-sample）。** leave-one-project-out 是對這點的部分補救；第 6 節的威脅效度仍然適用。
 
 **採用**：`application-template.properties` 與程式預設值改為 T=0.51／M=0.10／H=0.80（2026-09-14）。
@@ -341,15 +341,15 @@ DepWeaver 裡「寫死的數字」性質並不一樣，需要的論證也不同�
 
 ---
 
-## 5. 規則式門檻：thin-evidence
+## 5. 規則式門檻：low-confidence
 
 ### 5.1 規則
 
-`CoverageAnalyzer.Report.isThinlyEvidenced()`：`mentionedOnly > total + dbTotal`，即「沒有使用證據、被排除在分母外的邊」比「計分的業務邊 + 資料層邊」還多時，覆蓋率訊息加警告（`DependencyReportService.java:462`、`DepstateToolkit.java:342`）。它**只加警告，不改分數**。
+`CoverageAnalyzer.Report.isLowConfidence()`：`mentionedOnly > total + dbTotal`，即「沒有使用證據、被排除在分母外的邊」比「計分的業務邊 + 資料層邊」還多時，覆蓋率訊息加警告（`DependencyReportService.java:462`、`DepstateToolkit.java:342`）。它**只加警告，不改分數**。
 
 ### 5.2 為什麼有這條規則
 
-排除 `inferred`（點線、只被提到）是為了不讓文件幻覺稀釋覆蓋率：BoA 某次 run 的 DeepWiki 多講了 3 條 `userservice → ledger service` 與 4 條指向泛稱 `postgresql` 的邊，系統與流量都沒變，覆蓋率卻從 7/7 掉到 7/10（出處：`CoverageAnalyzer.java` 類別註解與 `isEvidenced()` 註解；8/25 反饋紀錄）。
+排除 `inferred`（點線、只被提到）是為了不讓文件幻覺稀釋覆蓋率：BoA 某次 run 的 DeepWiki 多講了 3 條 `userservice → ledger service` 與 4 條指向泛稱 `postgresql` 的邊，系統與流量都沒變，覆蓋率卻從 7/7 掉到 7/10（出處：`CoverageAnalyzer.java` 類別註解與 `hasConfidence()` 註解；8/25 反饋紀錄）。
 但排除會帶來反方向的風險：如果抽取層幾乎沒抓到東西、文件層卻講很多，分母只剩幾條，跑出 100% 也只涵蓋系統一小角（`docs/meeting-script-2026-09-03.md` P18）。所以規定「可以排除，但不准靜默」，並在未計分的邊佔多數時警告。
 
 ### 5.3 為什麼選這個比較式
@@ -680,7 +680,7 @@ depweaver 組拿到的正是「標準答案那條查詢」的執行結果，所�
 2. **純 LLM 的失分幾乎都在 recall（0.825），不在 precision（0.984）。** 它講的東西幾乎都對，但**少講**：例如「誰呼叫 ledgerwriter」只答出一半、「哪些服務直接存取資料庫」7 個只講 6 個。讀報告時漏看一段，答案就少一塊，而且讀者看不出少了。這是「沒有接地」在實務上最危險的形態——不是胡說，是**不完整而語氣肯定**。
 3. **RAG 補回了 recall（0.948），卻在「答案是沒有」的題目上壞得最明顯。** 檢索到一堆相關段落之後，它傾向把看到的服務全部列出來：沒有叢集資料時列 11 個服務、沒有外部主機時列出 GKE／Cloud SQL／Cloud Trace。這些不是幻覺（報告裡多半提過），但**回答的不是問題**，而且 0.10／題的 off-graph 名字連報告裡都找不到。
 4. **「答案是沒有」正是接地最划算的地方。** 圖能明確回答「沒有這種節點」「兩者之間沒有路徑」，模型就不會為了填滿答案而列清單。三組在這 3 題的差距比 7 題的 F1 差距更能說明問題。
-5. **最重要的一個反例：`path(transactionhistory, ledger-db)` 三組都答「沒有關係」，而這是錯的。** BoA 的 transactionhistory 實際上會讀 ledger-db（8/25 的 runtime 驗證量到資料層 5/5），是這份 **greenfield archive 的靜態抽取漏了這條邊**。標準答案忠實反映了圖，而圖是錯的。**當圖錯時，接地不會救你，反而讓錯誤講得更有自信**——depweaver 那組還特地補了一句「transactionhistory 沒有任何對外依賴」。這要寫進論文的威脅效度，也是「證據分級」這條線的支撐：圖上那條邊若存在也只會是 `documented`（虛線），讀者至少看得出它沒有被量測過；而真正的問題是**連虛線都沒有**——靜態抽取在 greenfield 模式下漏抽，覆蓋率的分母就看不見它。
+5. **最重要的一個反例：`path(transactionhistory, ledger-db)` 三組都答「沒有關係」，而這是錯的。** BoA 的 transactionhistory 實際上會讀 ledger-db（8/25 的 runtime 驗證量到資料層 5/5），是這份 **greenfield archive 的靜態抽取漏了這條邊**。標準答案忠實反映了圖，而圖是錯的。**當圖錯時，接地不會救你，反而讓錯誤講得更有自信**——depweaver 那組還特地補了一句「transactionhistory 沒有任何對外依賴」。這要寫進論文的威脅效度，也是「信心分級」這條線的支撐：圖上那條邊若存在也只會是 `documented`（虛線），讀者至少看得出它沒有被量測過；而真正的問題是**連虛線都沒有**——靜態抽取在 greenfield 模式下漏抽，覆蓋率的分母就看不見它。
 
    **根因與修正（2026-09-22）**：用離線的 `StaticExtractionProbeTest` 對 BoA 重跑純靜態抽取，發現問題比「漏一條」大——**程式碼層對 BoA 一條 DB 邊都畫不出來**，archive 裡的 6 條 DB 邊全部來自 DeepWiki 文件層（含兩條指向泛稱 `postgresql` 的幻覺邊），文件沒提到 transactionhistory，圖就沒有它。原因：合併器只在「程式碼裡有讀該環境變數」時才把 `env→host` 表的對應變成邊，而 Spring Boot 對 `SPRING_DATASOURCE_URL` 是隱式綁定，程式碼裡沒有那一行；JPA 標記（Repository/Entity/Table 三個都抓到了）只用來「升級」既有的邊，本身不產生邊。缺的那塊資訊在 Deployment 裡：`envFrom: configMapRef: ledger-db-config`。修正是新增 `workload-env` 這一節（哪個 workload 注入哪個 ConfigMap／字面位址），合併器把「注入的 ConfigMap 裡有資料庫位址 ＋ 該服務有持久化程式碼」畫成 `documented` 的 db 邊（沒有持久化程式碼則 `inferred`；服務位址一律不畫，因為被注入位址不等於有呼叫）。修正後純靜態的 BoA 圖從 6 條邊變成 11 條：**多出來的 5 條 db 邊與 runtime 驗證的資料層 5/5 完全一致**，且沒有 `postgresql` 幻覺邊。測試：`DependencyGraphTest.injectedDatasource*`、`CodeExtractionTest.k8sManifestsRecordWhoIsInjectedWhat`。**這份 archive 是修正前產的，要重新跑 greenfield 分析才會有這條邊**；純 AI 對照組也要在新 archive 上重跑一次，看這一題三組是否都翻正。
 6. **樣本小。** 10 題、一個專案、一份 archive、一個模型；7 題的 F1 差距（1.000 對 0.951 對 0.888）不做統計檢定。要強化，最省的是把題目擴到 train-ticket 的 archive 再跑一次。
@@ -721,7 +721,7 @@ depweaver 組拿到的正是「標準答案那條查詢」的執行結果，所�
 
 **驗證通過的部分**
 
-1. **`transactionhistory → ledger-db` 這條邊回來了，而且回來的方式是對的。** 三組全對；depweaver 的回答是：「由程式碼與文件宣告並有使用證據，但在本次靜態分析中尚未觀察到執行期連線」，並引 `src/ledger/transactionhistory/k8s/base/transactionhistory.yaml`。**這是三次對照裡最適合上簡報的一組對比：圖漏 → 三組全錯（9/21）；靜態修好 → 虛線、誠實說沒量到（9/23）；runtime 量到 → 實線、5 191 次（9/22）。**同一題、同一模型、三種證據等級。
+1. **`transactionhistory → ledger-db` 這條邊回來了，而且回來的方式是對的。** 三組全對；depweaver 的回答是：「由程式碼與文件宣告並有使用證據，但在本次靜態分析中尚未觀察到執行期連線」，並引 `src/ledger/transactionhistory/k8s/base/transactionhistory.yaml`。**這是三次對照裡最適合上簡報的一組對比：圖漏 → 三組全錯（9/21）；靜態修好 → 虛線、誠實說沒量到（9/23）；runtime 量到 → 實線、5 191 次（9/22）。**同一題、同一模型、三種信心等級。
 2. **接地組的 off-graph 名字降到 0**，「答案是沒有」的兩題也一個都沒亂點；純 LLM 與 RAG 仍然在那兩題填清單（9 個服務），RAG 的 off-graph 名字更達 1.20／題。
 3. **純 LLM 在 greenfield 報告上又掉回 0.722**（runtime 報告是 0.943）：靜態報告沒有「TCP 幾次」這種硬句子，模型就容易漏；「哪些邊沒有 runtime 證據」它整題答成 0（greenfield 全部都沒有，它卻答「無法判斷」）。
 
@@ -787,4 +787,4 @@ depweaver 組拿到的正是「標準答案那條查詢」的執行結果，所�
 | `test/.../Qa/ChatCompletions.java` | 實驗用的 chat 呼叫（同一個端點、模型、temperature 0），不需要 Spring context |
 | `test/resources/qa/answer-labels.tsv` | 20 題「答案是一組節點」的問題與其標註查詢 |
 | `docs/charts/plot_calibration.py` | 第 10 節的曲線圖產生器（純標準函式庫，輸出 SVG） |
-| `docs/evidence-grading-related-work.md` | 反饋第 1 點的文獻整理 |
+| `docs/confidence-grading-related-work.md` | 反饋第 1 點的文獻整理 |

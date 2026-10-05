@@ -79,7 +79,7 @@ PLoP 系列（含 AsianPLoP）沿用 Christopher Alexander 的定義：
 ```mermaid
 flowchart LR
     E["證據<br/>量測／程式碼／文字"] --> P1
-    P1["① 證據分級的關係<br/>Evidence-Graded Relations"] -->|"多來源、多等級的關係<br/>要合在一個地方"| P2
+    P1["① 信心分級的關係<br/>Confidence-Graded Relations"] -->|"多來源、多等級的關係<br/>要合在一個地方"| P2
     P2["② 單一標準模型<br/>One Model, Many Views"] -->|"模型一致了，但 LLM 寫的<br/>報告文字仍會重述事實而漂移"| P3
     P3["③ 事實由程式寫<br/>Code-Authored Facts"] -->|"數字由程式算了，<br/>但分母該算哪些？"| P4
     P4["④ 誠實分母<br/>Honest Denominator"] -->|"有些項目根本沒量測，<br/>該顯示什麼？"| P5
@@ -88,7 +88,7 @@ flowchart LR
 
 | 順序 | Pattern | 解決的問題 | 套用後產生的新問題（下一個 pattern 的情境） |
 |---|---|---|---|
-| ① | 證據分級的關係 | 所有關係畫成一樣，讀者分不出哪條是真的 | 同一條關係被多個來源、以不同等級提到，要合在哪裡、以誰為準？ |
+| ① | 信心分級的關係 | 所有關係畫成一樣，讀者分不出哪條是真的 | 同一條關係被多個來源、以不同等級提到，要合在哪裡、以誰為準？ |
 | ② | 單一標準模型、多個視圖 | 圖、數字、報告各自推導，互相矛盾 | 模型一致了，但報告是 LLM 寫的，它重述事實時會漂移 |
 | ③ | 事實由程式寫 | LLM 重述事實會漂移，改 prompt 只是換一種錯 | 數字由程式算了，但分母要算進哪些項目？ |
 | ④ | 誠實分母 | 分母混進量不到、證據弱的項目，分數失真 | 排除之後，有些項目或整個指標根本沒量測，要顯示什麼？ |
@@ -100,7 +100,7 @@ flowchart LR
 
 ## 3. Patterns
 
-### ① 證據分級的關係（Evidence-Graded Relations）
+### ① 信心分級的關係（Confidence-Graded Relations）
 
 **Context**
 你從多個來源收集系統元件之間的關係：遙測、程式碼、設定檔、文件。你準備把它們畫成一張圖給人看。
@@ -113,14 +113,14 @@ flowchart LR
 - **讀者要一眼看懂**：分級太多看不懂，太少又分不出差異。
 - **同一條關係會被多個來源重複提到**：不能畫成多條平行線，也不能讓後到的弱來源蓋掉先到的強來源。
 - **下游會偷偷升級**：摘要、報告、問答容易把「只被提到」講成「確定存在」。
-- **視覺通道有限**：線型、顏色、粗細、標籤要分給證據等級、關係類型、流量大小。
+- **視覺通道有限**：線型、顏色、粗細、標籤要分給信心等級、關係類型、流量大小。
 
 **Solution**
 因此：
-1. 定義**小而有序**的證據等級，建議三級：**量測到**（observed）＞ **有使用證據**（used，例如真的呼叫的程式碼、持久化程式碼）＞ **只被提到**（mentioned，例如只有設定或文件）。
+1. 定義**小而有序**的信心等級，建議三級：**量測到**（observed）＞ **有使用證據**（used，例如真的呼叫的程式碼、持久化程式碼）＞ **只被提到**（mentioned，例如只有設定或文件）。
 2. 等級（**有多可信**）與來源（**誰說的**）分開存。一條關係可以有多個來源，但只有一個等級。
 3. 以（來源元件, 目標元件）為鍵合併：等級**取最高**、來源與佐證**取聯集**。
-4. 視覺上把**最醒目的通道（線型）給證據等級**：實線、虛線、點線。類型用顏色或標籤；流量大小降級成粗細或不畫。
+4. 視覺上把**最醒目的通道（線型）給信心等級**：實線、虛線、點線。類型用顏色或標籤；流量大小降級成粗細或不畫。
 5. 所有下游讀取等級時，**只能照抄或降級，不能升級**。
 
 *Running example*：`web → orders` 實線（量測到）；`orders → payment` 虛線（程式碼有呼叫）；`orders → shipping` 與 `catalog → catalog-db` 點線（只被提到，後者標 `db?`）。
@@ -139,7 +139,7 @@ flowchart LR
 **Known Uses**
 1. **DepWeaver**（微服務依賴分析，本研究）
    - `DependencyGraph` 三級 `observed／documented／inferred`，`addEdge()` 取最高並聯集來源與佐證；`DotEmitter`／`MermaidEmitter` 用實線、虛線、點線，並加 `db?` 與圖例。
-   - 事件：指導老師看了只有遙測的圖，說它「比較像流量圖，不像依賴圖」→ 讓程式碼與文件的關係成為一等公民，以證據等級為主要編碼、請求數降級成線寬（2026-07-21）。之後老師提醒「資料庫是否真的有使用要注意」→ 只有連線設定的資料庫邊畫成點線 `db?`（2026-07-23）。
+   - 事件：指導老師看了只有遙測的圖，說它「比較像流量圖，不像依賴圖」→ 讓程式碼與文件的關係成為一等公民，以信心等級為主要編碼、請求數降級成線寬（2026-07-21）。之後老師提醒「資料庫是否真的有使用要注意」→ 只有連線設定的資料庫邊畫成點線 `db?`（2026-07-23）。
    - 升級實例：Bank of Anthos 部署真實資料庫、補上 in-mesh TCP 查詢後，`userservice → accounts-db` 由虛線升為實線（commit `852de69`）。
 2. **Kiali**（Istio 服務圖）：Display 選項「Idle Edges」會把「曾經有流量、但查詢期間沒有流量」的邊也畫出來，預設關閉，閒置的邊以灰色呈現，和有流量的邊區分開（https://kiali.io/docs/faq/graph/）。
 3. **情報分析的 Admiralty Code**（NATO AJP-2.1）：來源可靠度 A–F 與資訊可信度 1–6 **分開評級**，正是「等級與來源分開存」的先例（同儕審查論文：https://www.cambridge.org/core/journals/judgment-and-decision-making/article/effect-of-source-reliability-and-information-credibility-on-judgments-of-information-quality-in-intelligence-analysis/E67548E8010A47345C3439D45D9EC6B3 ；論文定稿要改引 AJP-2.1 原文）。
@@ -196,7 +196,7 @@ flowchart LR
 ### ③ 事實由程式寫（Code-Authored Facts）
 
 **Context**
-你有標準模型（②），報告由 LLM 撰寫，才讀得通順、有解釋。報告裡有一部分是可以從模型直接列出的**事實**（哪個元件依賴哪個資料庫、有沒有量測到、證據等級），另一部分是**詮釋**（角色、風險、建議）。
+你有標準模型（②），報告由 LLM 撰寫，才讀得通順、有解釋。報告裡有一部分是可以從模型直接列出的**事實**（哪個元件依賴哪個資料庫、有沒有量測到、信心等級），另一部分是**詮釋**（角色、風險、建議）。
 
 **Problem**
 > LLM 重述事實時會漂移，而且收緊 prompt 通常只是把錯誤換個樣子。怎麼保有 LLM 報告的可讀性，又讓事實不出錯？
@@ -340,7 +340,7 @@ flowchart LR
 | P1 確定性骨幹 | **引言的根原則**（§1.4） | 抽象層級是原則，單獨成篇易被評為常識 |
 | P2 詞彙表錨定 | ① 或 ② 的 Solution 實作說明（弱來源只能掛到已知元件上） | 是建模時的技巧，層級低於這 5 個 |
 | P3 失敗時關閉的擴充點 | ⑤ 的 Related（被丟棄的比對要留痕跡） | 太細，是抽取器實作技巧 |
-| P4 證據分級的邊 | **①** | — |
+| P4 信心分級的邊 | **①** | — |
 | P5 正規化層 | ② 的 Solution 補充（建模前清掉偽元件與別名） | 技巧層級 |
 | P6 單一標準模型 | **②** | — |
 | P7 權威段落由程式碼產生 | **③** | — |
@@ -357,7 +357,7 @@ flowchart LR
 
 | Pattern | 查證過、可寫進論文的外部實例 | 已拿掉或改寫的 |
 |---|---|---|
-| ① 證據分級的關係 | Kiali Idle Edges、Admiralty Code、OpenLineage（部分實例） | Backstage relation 標來源：**不成立**（來源記在實體的 annotation 上，不在 relation 上），已拿掉 |
+| ① 信心分級的關係 | Kiali Idle Edges、Admiralty Code、OpenLineage（部分實例） | Backstage relation 標來源：**不成立**（來源記在實體的 annotation 上，不在 relation 上），已拿掉 |
 | ② 單一標準模型 | Pandoc AST、MVC（Reenskaug）、Backstage catalog（用官方措辭） | Backstage「single source of truth」只見於第三方文章，改用官方措辭 |
 | ③ 事實由程式寫 | **Satyrn（有量化結果）**、SymGen、knitr inline code、OpenAPI 產生文件 | — |
 | ④ 誠實分母 | CONSORT 2010／2025、coverage.py | JaCoCo、Istanbul 改當**反例** |

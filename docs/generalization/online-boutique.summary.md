@@ -33,7 +33,7 @@
 - shippingservice  [service, L3]
 - shoppingassistantservice  [service, L2]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - cartservice -> redis-cart  (db, inferred)  code: kubernetes-manifests/cartservice.yaml
 - checkoutservice -> cartservice  (sync-http, inferred)  code: kubernetes-manifests/checkoutservice.yaml
 - checkoutservice -> currencyservice  (sync-http, inferred)  code: kubernetes-manifests/checkoutservice.yaml

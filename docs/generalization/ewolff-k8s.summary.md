@@ -20,7 +20,7 @@
 - customer  [service, L2]
 - order  [service, L1]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - apache -> catalog  (sync-http, documented)  code: microservice-kubernetes-demo/apache/000-default.conf:17
 - apache -> customer  (sync-http, documented)  code: microservice-kubernetes-demo/apache/000-default.conf:20
 - apache -> order  (sync-http, documented)  code: microservice-kubernetes-demo/apache/000-default.conf:14

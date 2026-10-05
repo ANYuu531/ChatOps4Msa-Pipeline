@@ -33,7 +33,7 @@
 - stores  [service, L0]
 - storeservice  [service, L3]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - accounts -> configserver  (sync-http, documented)  code: Docker/docker-compose.yml
 - configservice -> github.com  (external, documented)  code: ConfigService/src/main/resources/application.yml
 - customers -> configserver  (sync-http, documented)  code: Docker/docker-compose.yml

@@ -30,7 +30,7 @@
 - vets-service  [service, L1]
 - visits-service  [service, L1]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - admin-server -> config-server  (sync-http, documented)  code: docker-compose.yml
 - admin-server -> discovery-server  (sync-http, documented)  code: docker-compose.yml
 - api-gateway -> config-server  (sync-http, documented)  code: docker-compose.yml

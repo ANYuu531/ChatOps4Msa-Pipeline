@@ -34,7 +34,7 @@
 - statistics-service  [service, L3]
 - turbine-stream-service  [service, L0]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - account-service -> account-mongodb  (db, documented)  code: config/src/main/resources/shared/account-service.yml
 - account-service -> auth-service  (sync-http, documented)  code: account-service/src/main/java/com/piggymetrics/account/client/AuthServiceClient.java:9
 - account-service -> config  (sync-http, documented)  code: account-service/src/main/resources/bootstrap.yml

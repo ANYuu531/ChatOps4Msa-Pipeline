@@ -41,7 +41,7 @@
 - user  [service, L3]
 - web  [service, L1]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - cart -> redis  (db, documented)  code: docker-compose.yaml
 - catalogue -> mongodb  (db, documented)  code: docker-compose.yaml
 - dispatch -> rabbitmq  (async, documented)  code: docker-compose.yaml

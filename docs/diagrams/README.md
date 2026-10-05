@@ -5,7 +5,7 @@
 | 檔案 | 圖 |
 |---|---|
 | `fig1-pipeline-overview.drawio` | **Fig.1** 端到端流程總覽（Pipeline Overview） |
-| `fig2-evidence-merge-chain.drawio` | **Fig.2** 證據合併鏈（Evidence Merge Chain） |
+| `fig2-confidence-merge-chain.drawio` | **Fig.2** 信心等級合併鏈（Confidence Merge Chain） |
 
 底下另有三張 **Fig.3**，它們**不是** draw.io 畫的，是工具自己輸出的（見下一節）：
 
@@ -57,7 +57,7 @@ dot -Tpng -Gdpi=180 docs/diagrams/fig3a-boa-layered.dot -o docs/diagrams/fig3a-b
 ## 匯出（投影片 / 論文用）
 
 repo 裡除了 `.drawio` 原始檔，另有兩份 **SVG**（`fig1-pipeline-overview.svg`、
-`fig2-evidence-merge-chain.svg`），由 `drawio2svg.py` 從同一份 `.drawio` 直接轉出，
+`fig2-confidence-merge-chain.svg`），由 `drawio2svg.py` 從同一份 `.drawio` 直接轉出，
 **不需要安裝 draw.io**：
 
 ```bash

@@ -25,7 +25,7 @@
 - turbine  [service, L0]
 - zuul  [service, L0]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - catalog -> eureka  (sync-http, documented)  code: docker/docker-compose.yml
 - customer -> eureka  (sync-http, documented)  code: docker/docker-compose.yml
 - microservice-demo-turbine-server -> eureka  (sync-http, documented)  code: microservice-demo/microservice-demo-turbine-server/src/main/resources/application.yml

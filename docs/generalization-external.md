@@ -20,7 +20,7 @@
 2. **作者標註目前沒有發現偏差，但只驗過一個專案**：唯一兩邊都有的 `robot-shop`，第三方的 12 條邊**全部**落在作者 truth 的 21 條裡，漏標 0、矛盾 0（§1.7）。作者多標的 9 條是第三方方法看不到的東西（程式碼呼叫、外部主機、nginx 路由），每條都有打得開的出處。**樣本 1，所以是「沒發現偏差」不是「證明沒有偏差」。**
 3. **七個專案跑完，獨立標註者一條邊都沒有推翻**：40 條「只有標註者有」的邊逐條裁決後，是命名問題（**17 條**，其中 ewolff-k8s 那 5 條讓 Jaccard 變成 0.00 純粹是模組名 vs 部署名）、部署變體（5 條其實在 truth 裡，比對程式的 bug，已修）、標註者的判斷錯誤（**18 條**：把 H2 in-memory 與不存在的 mongodb 當成資料庫、把宣告未使用的常數當呼叫、**三條方向反轉**）。**沒有一條是作者漏標。** 一致度從 0.00 到 0.92，而數字本身不是產出（§3.5）。
 4. **但它精準指出了 truth 裡最難複驗的兩組，兩組當天都補強了**：online-boutique 原本有 15 條的出處只寫「架構圖」（一張 PNG，純文字的第三方無法複驗；標註者被迫從 README 文字推，3 條方向反了），TeaStore 有 7 條的出處是 enum 常數的引用次數。兩組共 16 條，佔七個專案 140 條非變體參考邊的 11.4%。**現在前者指到「程式碼讀哪個 env ＋ manifest 給什麼值」、後者指到第一個實際呼叫點**（§3.8），出處總數 92 → 113，全部打得開且內容相符。追這件事時還發現**架構圖讓 truth 漏了一條真的邊**（§1.8）。
-5. **作者標註的地位降級、並且可被別人檢查**：不再稱它為 ground truth／標準答案，改稱「參考邊集」，指標改稱「一致度」；每一條出處都必須是第三方**打得開**、而且**內容真的在裡面**的 `路徑:行`，由 `TruthEvidenceResolvesTest` 斷言（**113／113**）。三道檢查累計抓到 **3 條寫錯的出處 ＋ 3 條不精確的出處**，而**沒有一條是邊本身錯**——這個對比本身就是結論的一部分：作者對「有哪些依賴」的判斷站得住，對「證據在哪一行」的紀錄則需要程式看著。
+5. **作者標註的地位降級、並且可被別人檢查**：不再稱它為 ground truth／標準答案，改稱「參考邊集」，指標改稱「一致度」；每一條出處都必須是第三方**打得開**、而且**內容真的在裡面**的 `路徑:行`，由 `TruthProvenanceResolvesTest` 斷言（**113／113**）。三道檢查累計抓到 **3 條寫錯的出處 ＋ 3 條不精確的出處**，而**沒有一條是邊本身錯**——這個對比本身就是結論的一部分：作者對「有哪些依賴」的判斷站得住，對「證據在哪一行」的紀錄則需要程式看著。
 
 附帶的收穫：這一輪對照當場逼出工具的 **4 個真缺陷**（§1.6、§1.8），修完**十個**既有專案逐項不變、零錯邊。其中第 14 條把 Online Boutique 的 recall 從 **0.13 拉到 1.00**、Bank of Anthos 從 0.92 到 **1.00**、TeaStore 從 0.08 到 0.46——而這是在追問「為什麼那個專案這麼低」時發現的：**原本歸因為「語言沒有文法」的損失，有一大半其實是工具自己不畫 manifest 已經寫明的宣告**。
 
@@ -43,7 +43,7 @@
 | 邊怎麼來 | Compose `depends_on`／`links` ＋ 內部 API 呼叫 | tree-sitter 抓的呼叫點、設定檔位址、manifest 佈線、反向代理路由 |
 | 基礎設施 | 當一般節點（eureka、rabbitmq、zipkin、mysql） | 一部分被 `GraphNormalizer` 視為平台基礎設施 |
 | 外部主機 | 沒有這個概念 | 有（`github.com`、`paypal.com`） |
-| 證據等級 | 沒有 | 三級（observed／documented／inferred） |
+| 信心等級 | 沒有 | 三級（observed／documented／inferred） |
 
 所以這裡**不報 precision**：工具多畫的邊大多是資料集的方法看不到的東西（程式碼層的呼叫、外部主機），把它算成「錯」是錯的。報的是：
 
@@ -205,7 +205,7 @@ account-service   account-mongodb   data   shared/account-service.yml
 | teastore | 2 | **2** | 另有 7 條出處是 `Service.PERSISTENCE` 這種 enum 常數，不是檔案位址（就是工具畫不出來的那組） |
 | online-boutique | 2 | **2** | 其餘出處是 README 段落與 manifest 名 |
 | bank-of-anthos | 12 | **12** | — |
-| **合計** | **92** | **92** | 由 `TruthEvidenceResolvesTest` 斷言，不是人數的（第二標註者那一輪之後補到 **113／113**，見 §3.8） |
+| **合計** | **92** | **92** | 由 `TruthProvenanceResolvesTest` 斷言，不是人數的（第二標註者那一輪之後補到 **113／113**，見 §3.8） |
 
 **這道檢查抓到兩條真的寫錯的出處**——這正是它存在的理由：
 
@@ -218,7 +218,7 @@ account-service   account-mongodb   data   shared/account-service.yml
 
 **還有一類不能變成檔案路徑，照實留著並標明性質**：TeaStore 的 7 條 `loadBalanceRESTOperation(Service.PERSISTENCE, …)`——出處是 Java enum 常數，目標由自家 registry 在執行期解析。這正是 truth 標成 `business` 而工具一條都畫不出來的那組，出處寫成「呼叫點 ＋ enum 常數名」是它能有的最精確形式。
 
-這道檢查現在是 `TruthEvidenceResolvesTest`，**不可打開的出處會讓測試失敗**（指令見 §5），所以「出處只有我看得懂」這件事以後會被擋下來。
+這道檢查現在是 `TruthProvenanceResolvesTest`，**不可打開的出處會讓測試失敗**（指令見 §5），所以「出處只有我看得懂」這件事以後會被擋下來。
 
 ---
 
@@ -280,7 +280,7 @@ account-service   account-mongodb   data   shared/account-service.yml
 
 `loadgenerator → frontend` 原本寫 `src/loadgenerator/locustfile.py（FRONTEND_ADDR）`。檔案存在，所以 §2 的檢查放過了它——但 **`locustfile.py` 裡沒有 `FRONTEND_ADDR`**：它在 `src/loadgenerator/Dockerfile:49` 的 `ENTRYPOINT locust --host="http://${FRONTEND_ADDR}"`，值在 `src/loadgenerator/k8s/base/loadgenerator.yaml:50`。已改。
 
-於是 `TruthEvidenceResolvesTest` 也跟著強化：**除了檔案要打得開，evidence 裡提到的程式碼識別字（`FRONTEND_ADDR`、`proxy_pass`、`redis.createClient` 這種）必須真的出現在那個檔案裡**。只讀「路徑之後、第一個分隔符之前」那一段，因為一格 evidence 常常接著指第二個來源，而第二個來源的識別字不是對第一個檔案的主張。
+於是 `TruthProvenanceResolvesTest` 也跟著強化：**除了檔案要打得開，evidence 裡提到的程式碼識別字（`FRONTEND_ADDR`、`proxy_pass`、`redis.createClient` 這種）必須真的出現在那個檔案裡**。只讀「路徑之後、第一個分隔符之前」那一段，因為一格 evidence 常常接著指第二個來源，而第二個來源的識別字不是對第一個檔案的主張。
 
 強化之後又抓出 3 條**不精確**（不是指錯檔案）的出處：piggymetrics 的 `auth-service`／`gateway`／`monitoring` → `config` 原本寫「`bootstrap.yml` / docker-compose depends_on」，而 compose 裡這三個服務**根本沒有 `depends_on`**；真正的出處是 `bootstrap.yml:6` 的 `spring.cloud.config.uri: http://config:8888`（更精確，因為它直接給了 host）。已改，92／92 仍然全過。
 
@@ -402,7 +402,7 @@ frontend  adservice  business
 
 查證過程還修正了一件事：`teastore-webui → teastore-auth` 的兩處 `Service.AUTH` 在 webui 自己的程式碼裡**都只是狀態頁的 `getServersForService`**，真正的業務呼叫發生在**共用模組** `utilities/tools.descartes.teastore.registryclient/.../LoadBalancedStoreOperations.java:56`。這條邊要跨兩層才看得出來（webui 呼叫 utility 的方法 → utility 對 `Service.AUTH` 發 REST），出處已照實寫成兩段。**這也是靜態層與獨立標註者都看不到它的真正原因**，比「enum 動態分派」的說法更精確。有檔案出處的條數從 **2 → 9**。
 
-**③ 出處總數**：92 → **113**，全部打得開且內容相符（`TruthEvidenceResolvesTest`）。
+**③ 出處總數**：92 → **113**，全部打得開且內容相符（`TruthProvenanceResolvesTest`）。
 
 **這招的強度要說清楚**（已寫進測試的 javadoc）：
 
@@ -447,10 +447,10 @@ mvn -o test -Dtest=ExternalTruthAgreementTest -Dsurefire.failIfNoSpecifiedTests=
 
 計分測試會**斷言** robot-shop／lakeside-mutual／spring-cloud-netflix／tap-and-eat／microservices-book 的資料集邊必須全部畫到，且整體一致度 ≥ 0.95——命名規則若再被改壞，這裡會先失敗。
 
-**② 出處逐條可複驗**（離線，需要 checkout 放在同一個目錄下，目錄名見 `TruthEvidenceResolvesTest.REPOS`）：
+**② 出處逐條可複驗**（離線，需要 checkout 放在同一個目錄下，目錄名見 `TruthProvenanceResolvesTest.REPOS`）：
 
 ```bash
-mvn -o test -Dtest=TruthEvidenceResolvesTest -Dsurefire.failIfNoSpecifiedTests=false \
+mvn -o test -Dtest=TruthProvenanceResolvesTest -Dsurefire.failIfNoSpecifiedTests=false \
   -Dtruth.repos=/path/to/checkouts
 ```
 

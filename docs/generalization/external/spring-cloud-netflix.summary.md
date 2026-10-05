@@ -26,7 +26,7 @@
 - zipkin  [service, L4]
 - zuul  [service, L1]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - admin-dashboard -> config-server  (sync-http, documented)  code: docker-compose.yml
 - admin-dashboard -> eureka-server  (sync-http, documented)  code: docker-compose.yml
 - admin-dashboard -> hystrix-dashboard  (sync-http, documented)  code: docker-compose.yml

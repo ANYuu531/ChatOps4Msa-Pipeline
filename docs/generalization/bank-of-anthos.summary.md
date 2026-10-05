@@ -31,7 +31,7 @@
 - transactionhistory  [service, L2]
 - userservice  [service, L2]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - balancereader -> ledger-db  (db, documented)  code: kubernetes-manifests/balance-reader.yaml
 - contacts -> accounts-db  (db, documented)  code: kubernetes-manifests/contacts.yaml
 - frontend -> balancereader  (sync-http, documented)  code: src/frontend/frontend.py:667

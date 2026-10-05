@@ -34,7 +34,7 @@
 - risk-management-server  [service, L0]
 - spring-boot-admin  [service, L4]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - customer-core -> eureka-server  (sync-http, documented)  code: docker-compose-eureka.yml
 - customer-core -> spring-boot-admin  (sync-http, inferred)  code: docker-compose.yml
 - customer-management-backend -> customer-core  (sync-http, documented)  code: customer-management-backend/src/main/java/com/lakesidemutual/customermanagement/infrastructure/CustomerCoreClient.java:20

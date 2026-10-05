@@ -29,7 +29,7 @@
 - shipping-service  [service, L2]
 - user-service  [service, L4]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - api-gateway -> favourite-service  (sync-http, documented)  code: api-gateway/src/main/resources/application.yml
 - api-gateway -> order-service  (sync-http, documented)  code: api-gateway/src/main/resources/application.yml
 - api-gateway -> payment-service  (sync-http, documented)  code: api-gateway/src/main/resources/application.yml

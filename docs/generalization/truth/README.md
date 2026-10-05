@@ -1,9 +1,9 @@
 # 參考邊集（作者整理，出處逐條可複驗）
 
-每個專案一個 TSV：`source<TAB>target<TAB>class<TAB>evidence`。
+每個專案一個 TSV：`source<TAB>target<TAB>class<TAB>provenance`。
 
 - `class`：`business`（服務→服務）、`data`（服務→資料庫/佇列）、`external`（→外部主機）、`control`（→config server / registry / 反向代理入口等控制面）、`variant`（只在某個部署變體才存在，例如 TeaStore 的 Kieker RabbitMQ；工具畫了不算錯，沒畫也不算漏）。
-- `evidence`：**完整的 repo 相對路徑 `檔案:行`**，或 README 段落／架構圖的指名。
+- `provenance`（出處）：**完整的 repo 相對路徑 `檔案:行`**，或 README 段落／架構圖的指名。
 - 節點名用工具的 id（manifest 的 workload 名；沒有 manifest 時是 Compose 的服務名）。方向：呼叫端→被呼叫端；訊息佇列的消費者也寫成 `consumer -> broker`（工具目前不分方向）。
 
 計分：`GeneralizationScoreTest` 讀這裡與 `../<name>.mmd`，輸出 `../scores.md`。`variant` 類不進分子分母。
@@ -14,10 +14,10 @@
 
 - 名稱一律用**參考邊集**，指標一律說**一致度**，不寫 ground truth／precision／recall。
 - 強度更高的對照是 `docs/generalization-external.md`：**MicroDepGraph 資料集自己發表的邊集**，7 個專案，作者沒有參與標註。
-- 每一條出處都要**第三方打得開**。`TruthEvidenceResolvesTest` 會檢查，打不開就失敗：
+- 每一條出處都要**第三方打得開**。`TruthProvenanceResolvesTest` 會檢查，打不開就失敗：
 
 ```bash
-mvn -o test -Dtest=TruthEvidenceResolvesTest -Dsurefire.failIfNoSpecifiedTests=false \
+mvn -o test -Dtest=TruthProvenanceResolvesTest -Dsurefire.failIfNoSpecifiedTests=false \
   -Dtruth.repos=<放各專案 checkout 的目錄>
 ```
 
@@ -31,6 +31,6 @@ mvn -o test -Dtest=TruthEvidenceResolvesTest -Dsurefire.failIfNoSpecifiedTests=f
 
 1. `GreenfieldProbeTest` 產圖（`docs/generalization/<name>.mmd` 與 `.summary.md`）。
 2. 讀專案自己的 README／架構圖／程式碼，寫 `truth/<name>.tsv`，**出處一律寫完整路徑**。
-3. `GeneralizationScoreTest` 計分、`TruthEvidenceResolvesTest` 檢查出處。
+3. `GeneralizationScoreTest` 計分、`TruthProvenanceResolvesTest` 檢查出處。
 4. 每一條差異追到「一條通用規則」或「一個明確的語言／呼叫型態邊界」，寫進報告。
 5. 如果這個專案也在 MicroDepGraph 資料集裡，順便加進 `ExternalTruthAgreementTest.CASES`——那一份對照不需要本檔案。

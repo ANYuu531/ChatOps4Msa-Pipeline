@@ -124,7 +124,7 @@
 - ts-voucher-service  [service, L0]
 - ts-wait-order-service  [service, L0]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - ts-admin-basic-info-service -> ts-contacts-service  (sync-http, documented)  code: ts-admin-basic-info-service/src/main/java/adminbasic/service/AdminBasicInfoServiceImpl.java:44
 - ts-admin-order-service -> ts-order-other-service  (sync-http, documented)  code: ts-admin-order-service/src/main/java/adminorder/service/AdminOrderServiceImpl.java:66
 - ts-admin-order-service -> ts-order-service  (sync-http, documented)  code: ts-admin-order-service/src/main/java/adminorder/service/AdminOrderServiceImpl.java:48

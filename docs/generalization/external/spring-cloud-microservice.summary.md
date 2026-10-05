@@ -34,7 +34,7 @@
 - uaa-service  [service, L2]
 - zipkin  [service, L3]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - cloud-config-server -> github.com  (external, documented)  code: cloud-config-server/src/main/resources/application.yaml
 - configserver -> discovery  (sync-http, documented)  code: docker/docker-compose.yaml
 - gateway -> cloud-simple-service  (sync-http, documented)  code: cloud-api-gateway/src/main/resources/application.yaml

@@ -30,7 +30,7 @@
 - teastore-registry  [service, L1]
 - teastore-webui  [service, L0]
 
-## edges (type, confidence, evidence)
+## edges (type, confidence, provenance)
 - teastore-all -> teastore-db  (db, inferred)  code: examples/kubernetes/teastore-all.yaml
 - teastore-auth -> teastore-kieker-rabbitmq  (async, documented)  code: examples/docker/docker-compose_kieker.yaml
 - teastore-auth -> teastore-registry  (sync-http, inferred)  code: examples/docker/docker-compose_https.yaml

@@ -49,8 +49,8 @@ DepWeaver 做的是微服務依賴，但這些 pattern 不限微服務。以下�
 |---|---|---|
 | 2026-07-13 | 發現 Docker image 沒有 `git`，程式碼抽取在容器裡**從來沒成功過**。fail-soft 讓它靜默退化成「只看文件」，報告看起來一樣 | P9 未量測不是零 |
 | 2026-07-13 | tree-sitter 的 Java binding 不會求值述詞（predicate）。沒察覺的話，`logger.send("this-is-not-a-topic")` 會被當成 Kafka topic | P3 失敗時關閉的擴充點 |
-| 2026-07-13 | 「暫停補流量」只能整條重跑；補的流量查了 Prometheus 卻**沒寫回**狀態 | P10 分段證據檢查點 |
-| 2026-07-21 | 老師：只有 runtime 的圖「比較像流量圖，不像依賴圖」 | P4 證據分級的邊 |
+| 2026-07-13 | 「暫停補流量」只能整條重跑；補的流量查了 Prometheus 卻**沒寫回**狀態 | P10 分段信心檢查點 |
+| 2026-07-21 | 老師：只有 runtime 的圖「比較像流量圖，不像依賴圖」 | P4 信心分級的邊 |
 | 2026-07-23 | 老師：「DB 是否真的有使用要注意」；同時發現**完全沒有程式化的覆蓋率**，漏了哪些邊全靠 LLM 眼睛比對 | P4、P8、P11 |
 | 2026-07-24 | DeepWiki 用別名與技術名造出幽靈節點（`netflix-eureka`、`all-services`、`caffeine` 被當 DB） | P2 詞彙表錨定 |
 | 2026-07-29 | 修好 petclinic 服務發現後，覆蓋率反而掉到**假的 45%**（分母 20 條含雜訊）→ 修正後是 **4/4=100%** | P5 正規化層、P8 誠實分母 |
@@ -84,7 +84,7 @@ flowchart TB
         P1["P1 確定性骨幹<br/>Deterministic Backbone"]
         P2["P2 詞彙表錨定<br/>Known-Vocabulary Anchoring"]
         P3["P3 失敗時關閉的擴充點<br/>Fail-Closed Extension Point"]
-        P4["P4 證據分級的邊<br/>Evidence-Graded Edges"]
+        P4["P4 信心分級的邊<br/>Confidence-Graded Edges"]
         P5["P5 正規化層<br/>Normalization Pass"]
     end
     subgraph B["B. 產物誠實"]
@@ -94,8 +94,8 @@ flowchart TB
         P9["P9 未量測不是零<br/>Unmeasured Is Not Zero"]
     end
     subgraph C["C. 補證迴圈"]
-        P10["P10 分段證據檢查點<br/>Staged Evidence Checkpoint"]
-        P11["P11 覆蓋率導向的補證迴圈<br/>Coverage-Driven Evidence Loop"]
+        P10["P10 分段信心檢查點<br/>Staged Confidence Checkpoint"]
+        P11["P11 覆蓋率導向的補證迴圈<br/>Coverage-Driven Gap-Filling Loop"]
         P12["P12 最後才問人<br/>Ask the Human Last"]
     end
     subgraph D["D. 對產物提問"]
@@ -306,9 +306,9 @@ flowchart TB
 
 ---
 
-### P4 證據分級的邊（Evidence-Graded Edges）
+### P4 信心分級的邊（Confidence-Graded Edges）
 
-**一句話**：圖上的每條關係都帶一個**有序的證據等級**（量測到 > 有使用證據 > 只被提到）；合併時取最高等級，並用最醒目的視覺通道（線型）呈現。
+**一句話**：圖上的每條關係都帶一個**有序的信心等級**（量測到 > 有使用證據 > 只被提到）；合併時取最高等級，並用最醒目的視覺通道（線型）呈現。
 
 **Context**
 依賴圖由多個來源合成。執行期量測精確但看不全（非 HTTP 協定、沒部署的元件看不到）；靜態分析看得全但包含死碼；文件最鬆散。
@@ -324,7 +324,7 @@ flowchart TB
 - **視覺通道有限**：線型、顏色、粗細、標籤要分配給不同資訊（證據、類型、流量大小）。
 
 **Solution**
-1. 定義**小而有序**的證據等級，建議三級：
+1. 定義**小而有序**的信心等級，建議三級：
    - `observed`：量測到
    - `documented`：有使用證據，例如持久化程式碼或連線設定
    - `inferred`：只有宣告或只被提到
@@ -471,7 +471,7 @@ flowchart TB
 **一句話**：LLM 撰寫的報告裡，**純事實的段落**改由程式碼從模型產生，再拼接進 LLM 的文字；LLM 被告知跳過那一段。
 
 **Context**
-報告由 LLM 撰寫，才讀得通順、有解釋。但報告中有一部分是可以從結構化模型直接列出來的事實（例如哪個元件依賴哪個資料庫、有沒有被量測到、證據等級）。
+報告由 LLM 撰寫，才讀得通順、有解釋。但報告中有一部分是可以從結構化模型直接列出來的事實（例如哪個元件依賴哪個資料庫、有沒有被量測到、信心等級）。
 
 **Problem**
 LLM 重述事實時會漂移，而且**收緊 prompt 通常只是把錯誤換一個樣子**。怎麼讓報告保有 LLM 的可讀性，事實段落又不會出錯？
@@ -562,9 +562,9 @@ LLM 重述事實時會漂移，而且**收緊 prompt 通常只是把錯誤換一
    - `Graph/CoverageAnalyzer.java`：
      - `analyze()`（第 151–178 行）；
      - `isBusinessSync()`、`isCountableWorkload()`（排除 `deployed == FALSE` 與 `PLATFORM_INFRA`）；
-     - `isEvidenced()`（第 229–231 行，`inferred` 不進分母，但量測到的一律算）；
+     - `hasConfidence()`（第 229–231 行，`inferred` 不進分母，但量測到的一律算）；
      - `isDataStore()` 與 `isProcessLocal()`（資料層獨立計算，排除程序內快取）；
-     - `Report.mentionedOnly` 與 `isThinlyEvidenced()`（第 124–126 行）。
+     - `Report.mentionedOnly` 與 `isLowConfidence()`（第 124–126 行）。
    - 揭露文字在 `DependencyReportService.coverageMessage()` 第 454–468 行（「Not scored: N edge(s)…」與 ⚠️ 警告）。
    - **觸發事件**：
      - **2026-07-29 petclinic**：覆蓋率被控制面、幽靈、別名稀釋成**假 45%** → 改成只算可驅動業務邊之後是 **4/4=100%**。
@@ -576,7 +576,7 @@ LLM 重述事實時會漂移，而且**收緊 prompt 通常只是把錯誤換一
 3. **coverage.py**：報告中把被排除（excluded）的行數與執行、遺漏的行數分開列出（待查證）。
 
 **Related Patterns**
-- P4：分母依證據等級決定。
+- P4：分母依信心等級決定。
 - P5：分母依乾淨的實體清單。
 - P9：分母為零或根本沒量測時，不能輸出 0%。
 - P11：未覆蓋清單是補證迴圈的目標。
@@ -644,7 +644,7 @@ LLM 重述事實時會漂移，而且**收緊 prompt 通常只是把錯誤換一
 
 ---
 
-### P10 分段證據檢查點（Staged Evidence Checkpoint）
+### P10 分段信心檢查點（Staged Confidence Checkpoint）
 
 **一句話**：證據依來源分段、落盤保存；續跑時只重算過期的階段與其下游。**收集與產出分開**：產出只讀檢查點，從不重新收集。
 
@@ -700,7 +700,7 @@ LLM 重述事實時會漂移，而且**收緊 prompt 通常只是把錯誤換一
 
 ---
 
-### P11 覆蓋率導向的補證迴圈（Coverage-Driven Evidence Loop）
+### P11 覆蓋率導向的補證迴圈（Coverage-Driven Gap-Filling Loop）
 
 **一句話**：每輪結束後**確定性地**算出還沒被證實的項目，當成下一輪產生測試流量的**權威目標**；成功與否以「預期的證據有沒有出現」判斷，不看回應碼。
 
@@ -859,7 +859,7 @@ LLM 重述事實時會漂移，而且**收緊 prompt 通常只是把錯誤換一
 2. Planner 的輸出**只准是計畫**，不准是答案。
 3. 驗證失敗的條目**丟棄**，不嘗試修補；Planner 整個失敗時系統仍可運作。
 4. 執行器全部是確定性的，而且**呼叫產物用的同一套計算**（覆蓋率、分層），不另寫一份。
-5. 敘述的 LLM 被規定不得新增實體或升級證據等級（P4）。
+5. 敘述的 LLM 被規定不得新增實體或升級信心等級（P4）。
 
 **Consequences**
 - 好處：
@@ -965,7 +965,7 @@ LLM 重述事實時會漂移，而且**收緊 prompt 通常只是把錯誤換一
 
 ### P15 權威排序的脈絡（Authority-Ordered Context）
 
-**一句話**：給 LLM 的脈絡依**權威**分區並排序：程式算出的事實最前、程式算出的指標次之、檢索到的散文最後。system prompt 明定衝突時誰贏，而且不准升級證據等級。
+**一句話**：給 LLM 的脈絡依**權威**分區並排序：程式算出的事實最前、程式算出的指標次之、檢索到的散文最後。system prompt 明定衝突時誰贏，而且不准升級信心等級。
 
 **Context**
 檢索增強生成（RAG）的脈絡同時包含程式算出來的事實，以及過去由 LLM 寫的散文（報告段落）。兩者可能矛盾。
@@ -985,7 +985,7 @@ LLM 讀到互相矛盾的脈絡時，可能跟著散文走，因為散文比較�
 3. system prompt 寫明：衝突時以前面的區塊為準，而且要指出衝突；散文只能用於措辭、角色與限制，不得推翻事實。
 4. 未量測時，在權威區**明寫 NOT MEASURED**，不要讓散文中的數字填補空白。
 5. 最低權威區設預算上限（段數、字數）。
-6. 回答時要分辨證據等級，不准升級。
+6. 回答時要分辨信心等級，不准升級。
 
 **Consequences**
 - 好處：
@@ -1033,7 +1033,7 @@ AsianPLoP 論文通常收 3–5 個緊密相關的 pattern。以下三種組合�
 ### 組合 A：「依賴圖的誠實呈現」（Honest Dependency Views）
 
 - **主軸**：多來源合成的依賴圖，怎麼變成**不自相矛盾、不灌水、不把沒量到講成零**的圖、數字與報告。
-- **收錄**：P6 單一標準模型（根）→ P4 證據分級的邊 → P8 誠實分母 → P9 未量測不是零；第 5 個可選 P7 權威段落由程式碼產生。
+- **收錄**：P6 單一標準模型（根）→ P4 信心分級的邊 → P8 誠實分母 → P9 未量測不是零；第 5 個可選 P7 權威段落由程式碼產生。
 - **優點**：
   - 每個 pattern 都有**具體數字的失敗事件**：假 45% → 4/4、7/7 → 7/10、報告與圖矛盾、greenfield 講成 0%。
   - 最不依賴 LLM 熱度，泛化性最好，可以直接套到資料血緣、SBOM、監控儀表板、測試覆蓋率報告。
