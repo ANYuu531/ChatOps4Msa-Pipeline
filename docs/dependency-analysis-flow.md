@@ -1,7 +1,7 @@
 # DepWeaver：使用者下指令後，背後發生什麼
 
-> **DepWeaver** — 基於多源證據融合與對話式補值的微服務相依圖自動建構方法
-> A Multi-Evidence Fusion Approach to Automated Microservice Dependency Graph Construction with Conversational Gap-Filling
+> **DepWeaver** — 基於多來源融合與對話式補值的微服務相依圖自動建構方法
+> A Multi-Source Fusion Approach to Automated Microservice Dependency Graph Construction with Conversational Gap-Filling
 >
 > 設計立場：**確定性優先、LLM 只補殘餘**
 >
@@ -12,7 +12,7 @@
 > | 編號 | 圖名 | 正式版（draw.io） | 本文（Mermaid） |
 > |---|---|---|---|
 > | **Fig.1** | 端到端流程總覽（Pipeline Overview） | `docs/diagrams/fig1-pipeline-overview.drawio` | ✔ |
-> | **Fig.2** | 證據合併鏈（Evidence Merge Chain） | `docs/diagrams/fig2-evidence-merge-chain.drawio` | ✔ |
+> | **Fig.2** | 信心等級合併鏈（Confidence Merge Chain） | `docs/diagrams/fig2-confidence-merge-chain.drawio` | ✔ |
 > | **Fig.3** | 分層相依圖（Layered Dependency Graph） | — 工具自動產出，不手畫 | `docs/train-ticket-greenfield-graph-layered.mmd` |
 > | **Fig.4** | 對話補值迴圈（Interactive Gap-Filling Loop） | Fig.1 裡「Provide values」那條分支 | ✔ |
 >
@@ -88,7 +88,7 @@ flowchart TD
 
 ---
 
-## Fig.2 · 證據合併鏈（Evidence Merge Chain）
+## Fig.2 · 信心等級合併鏈（Confidence Merge Chain）
 
 `postRuntimeGraph` 的核心。
 

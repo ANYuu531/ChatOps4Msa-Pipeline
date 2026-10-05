@@ -157,10 +157,11 @@ petclinic 圖上 `customers-service → mysql`、`vets-service → mysql`、`vis
 
 ### 定案：**DepWeaver**
 
-中文全名（論文用）：**基於多源證據融合與對話式補值的微服務相依圖自動建構方法**
-英文全名：A Multi-Evidence Fusion Approach to Automated Microservice Dependency Graph Construction with Conversational Gap-Filling
+中文全名（論文用）：**基於多來源融合與對話式補值的微服務相依圖自動建構方法**
+英文全名：A Multi-Source Fusion Approach to Automated Microservice Dependency Graph Construction with Conversational Gap-Filling
+（2026-10-05 依反饋「不用 evidence」由 Multi-Evidence 改為 Multi-Source；中文「多源證據融合」同步改「多來源融合」。evidence 在題目裡指來源，改字是為了不讓同一個字在題目與內文有兩種用法。）
 
-副標固定成一句：**「多證據融合的微服務相依圖建構——確定性優先、LLM 只補殘餘」**。
+副標固定成一句：**「多來源融合的微服務相依圖建構——確定性優先、LLM 只補殘餘」**。
 
 *weave*（織）講的就是核心設計：runtime / code / doc 三種證據**織成同一張圖**，不是三選一。
 （曾考慮過的其他候選：TriDep、MeshLens、MEDGE。）
