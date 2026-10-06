@@ -142,6 +142,10 @@ python3 docs/generalization/external/aliases/agreement_one.py $S/r2/spring-cloud
 
 **第四次真跑（同日）**：問 4 題，2 題是 DeepWiki 新用的名字（`cloud-finagle-thrift-client`／`-server`，正常），2 題是 bug：wiki 把多個消費者寫在同一個欄位「cloud-simple-service, cloud-simple-serviceB」，工具當成一個名字去對。修法：欄位先依逗號、分號、斜線、and 拆開，逐個對應；候選名單也改成用操作者已對應過的名字。
 
+**第五次真跑（同日）**：問 2 題。`ZooKeeper`（上輪叫「ZooKeeper ServerSets」，用詞又變）；`zpng/spring-cloud-microservice-examples`——wiki 把整個 repo 當成五條基礎設施依賴的來源，工具不認得這是 repo 名就拿來問。修法：doc merge 帶 repo 名（owner/repo 與 repo 兩種），遇到就丟掉、不問。
+
+**已知界線（還沒修）**：答 `new` 時節點名由題目字面產生，`ZooKeeper` 會變成 `zoo-keeper`，操作者沒辦法指定節點名。
+
 ## 6. 真環境要驗的事（機器 B）
 
 1. 重編（`--build`），先 grep `Started ChatOps4MsaApplication`。
