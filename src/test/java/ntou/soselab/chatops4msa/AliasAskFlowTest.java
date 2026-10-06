@@ -424,7 +424,20 @@ public class AliasAskFlowTest {
 
         String section = DependencyReportService.infrastructureSection(g, true);
         assertTrue(section.contains("Not determined (static run: no cluster was queried)"));
+        assertTrue(section.contains("Runtime observed: Unknown (static run: not measured)"),
+                "nothing was measured, so 'No' would be a measurement that never happened");
+        assertFalse(section.contains("Runtime observed: No"));
         assertFalse(section.contains("StatefulSet"));
+
+        // Section 4 does not call a statically declared edge HTTP: the graph never recorded that.
+        g.addNode("thrift-client", DependencyGraph.KIND_SERVICE);
+        g.addEdge("thrift-client", "simple-service", "sync-http", DependencyGraph.PROV_DOC, DependencyGraph.CONF_DOCUMENTED, false, 0, "doc: UserController.java");
+        g.addEdge("gateway-x", "simple-service", "sync-http", DependencyGraph.PROV_RUNTIME, DependencyGraph.CONF_OBSERVED, true, 12, "istio");
+        g.addNode("gateway-x", DependencyGraph.KIND_SERVICE);
+        String four = DependencyReportService.synchronousSection(g, false);
+        assertTrue(four.contains("Protocol: not determined"), four);
+        assertTrue(four.contains("Protocol: HTTP (observed by the mesh)"), four);
+        assertFalse(four.contains("Protocol: HTTP\n"));
         assertTrue(DependencyReportService.infrastructureSection(g, false).contains("StatefulSet"),
                 "the runtime wording is unchanged");
     }

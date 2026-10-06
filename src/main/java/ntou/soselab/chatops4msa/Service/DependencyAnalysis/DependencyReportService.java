@@ -223,7 +223,15 @@ public class DependencyReportService {
         for (DependencyGraph.Edge edge : sync) {
             DependencyGraph.Node target = byId.get(edge.target);
             sb.append("### Candidate: ").append(edge.source).append(" -> ").append(edge.target).append('\n');
-            sb.append("- Protocol: ").append("grpc".equals(edge.type) ? "gRPC" : "HTTP").append('\n');
+            // The graph records that an edge is synchronous, not its protocol: a Compose
+            // "links" entry and a Thrift client both arrive as sync-http. Only the mesh
+            // (an HTTP metric) or a gRPC capture says what is on the wire; the rest is
+            // stated as not determined rather than written as HTTP (2026-10-06).
+            sb.append("- Protocol: ").append(
+                    "grpc".equals(edge.type) ? "gRPC"
+                            : edge.runtimeObserved ? "HTTP (observed by the mesh)"
+                            : "not determined (a synchronous dependency declared statically; the protocol is not recorded)")
+                    .append('\n');
             sb.append("- Provenance: ").append(String.join(", ", edge.provenance)).append('\n');
             sb.append("- Runtime observed: ").append(
                     edge.runtimeObserved ? "Yes — " + edge.count + " requests observed by the mesh"
@@ -398,7 +406,9 @@ public class DependencyReportService {
                             : DependencyGraph.KIND_QUEUE.equals(kind) ? "message broker"
                             : "external service").append('\n');
             sb.append("- Provenance: ").append(String.join(", ", edge.provenance)).append('\n');
-            sb.append("- Runtime observed: ").append(edge.runtimeObserved ? "Yes" : "No").append('\n');
+            sb.append("- Runtime observed: ").append(
+                    edge.runtimeObserved ? "Yes"
+                            : greenfield ? "Unknown (static run: not measured)" : "No").append('\n');
             if (edge.runtimeObserved) {
                 // Named precisely: for a database this is connections, not requests.
                 sb.append("- Runtime provenance: ").append(edge.count).append(
