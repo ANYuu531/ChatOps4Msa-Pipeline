@@ -242,8 +242,13 @@ public final class AliasResolution {
             if (name == null || decision == null || decision.isBlank()) return;
             String k = key(name);
             if (k.isEmpty()) return;
+            String d = decision.trim();
+            // "hystrix is hystrix": the name is a service under its own name, which is
+            // what NEW means. Stored as such so the report does not read "hystrix → hystrix"
+            // (2026-10-06); files written before this are corrected as they load.
+            if (!IGNORE.equals(d) && !NEW.equals(d) && key(d).equals(k)) d = NEW;
             names.put(k, name.trim());
-            decisions.put(k, decision.trim());
+            decisions.put(k, d);
         }
 
         /** The decision for this spelling, or null when the operator was never asked / never answered. */
@@ -440,6 +445,9 @@ public final class AliasResolution {
         String lower = text.toLowerCase(Locale.ROOT);
         if (IGNORE_WORDS.contains(lower)) return IGNORE;
         if (NEW_WORDS.contains(lower)) return NEW;
+
+        // The question's own name: "it is itself", i.e. a service of its own.
+        if (question != null && key(text).equals(question.key())) return NEW;
 
         List<String> candidates = question == null ? List.of() : question.candidates;
         if (lower.matches("\\d{1,2}")) {

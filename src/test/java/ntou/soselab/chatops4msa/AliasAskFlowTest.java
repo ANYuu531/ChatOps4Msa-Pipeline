@@ -460,6 +460,112 @@ public class AliasAskFlowTest {
                 .stage(DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS), "the next run asks again");
     }
 
+    // ---------- the second Discord run (2026-10-06) ----------
+
+    @Test
+    void answeringAQuestionWithItsOwnNameMeansAServiceOfItsOwn() {
+        AliasResolution.Questions questions = new AliasResolution.Questions();
+        questions.add("hystrix", "code", "library name with edges", Set.of("gateway"));
+        AliasResolution.Question q = questions.list().get(0);
+        assertEquals(AliasResolution.NEW, AliasResolution.parseAnswer("hystrix", q, Set.of("hystrix", "gateway")));
+        assertEquals(AliasResolution.NEW, AliasResolution.parseAnswer("Hystrix", q, Set.of()));
+
+        // An answers file written before this ("hystrix" -> "hystrix") is read as NEW.
+        AliasResolution.Answers old = AliasResolution.Answers.fromJson("[{\"name\":\"hystrix\",\"decision\":\"hystrix\"}]");
+        assertEquals(AliasResolution.NEW, old.decisionFor("hystrix"));
+        assertTrue(DependencyReportService.nameResolutionSection(old).contains("`hystrix` kept as its own service node"));
+    }
+
+    @Test
+    void aHostThatIsAStringConstantOfTheSameClassIsResolved() {
+        // cloud-simple-ui's UserService: "http://" + SERVICE_NAME + "/user".
+        String java = """
+                public class UserService {
+                    final String SERVICE_NAME = "cloud-simple-service";
+                    public List<User> readUserInfo() {
+                        return restTemplate.getForObject("http://" + SERVICE_NAME + "/user", List.class);
+                    }
+                }
+                """;
+        ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.EdgeLedger ledger =
+                new ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.EdgeLedger();
+        Map<String, String> fields = new java.util.LinkedHashMap<>();
+        fields.put("method", "getForObject");
+        fields.put("scheme", "http://");
+        fields.put("hostref", "SERVICE_NAME");
+        ledger.add("http-client", fields, "cloud-simple-ui/src/main/java/UserService.java", 4, "High");
+        Map<String, String> unknown = new java.util.LinkedHashMap<>();
+        unknown.put("method", "getForObject");
+        unknown.put("scheme", "http://");
+        unknown.put("hostref", "OTHER_HOST");   // not declared here: left alone
+        ledger.add("http-client", unknown, "cloud-simple-ui/src/main/java/UserService.java", 5, "High");
+
+        ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.TreeSitterExtractor.resolveConstantHosts(
+                ledger, Map.of("cloud-simple-ui/src/main/java/UserService.java", java));
+
+        assertEquals("http://cloud-simple-service", ledger.getEdges().get(0).fields.get("url"));
+        assertFalse(ledger.getEdges().get(1).fields.containsKey("url"));
+    }
+
+    @Test
+    void sectionFourIsWrittenFromTheGraphAndTheModelsVersionIsDropped() {
+        DependencyGraph g = new DependencyGraph("");
+        for (String s : new String[]{"gateway", "simple-service", "simple-ui"}) g.addNode(s, DependencyGraph.KIND_SERVICE);
+        g.addNode("mysql", DependencyGraph.KIND_DB);
+        g.addEdge("gateway", "simple-service", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "code: application.yaml");
+        g.addEdge("simple-ui", "simple-service", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "code: UserService.java:32");
+        g.addEdge("simple-service", "mysql", "db", DependencyGraph.PROV_DOC, DependencyGraph.CONF_DOCUMENTED, false, 0, "doc: pom.xml");
+
+        String llm = """
+                # 3. Components Observed in the Kubernetes Namespace
+                N/A
+
+                # 4. Synchronous Dependency Candidates
+                ### Candidate: MyAppThriftClient -> FooService
+                - Runtime observed: Unknown
+
+                # 6. Asynchronous Communication
+                None.
+                """;
+        String out = DependencyReportService.spliceFactSections(llm, g, true);
+
+        assertFalse(out.contains("MyAppThriftClient"), "the model's section 4 is gone");
+        assertTrue(out.contains("### Candidate: simple-ui -> simple-service"));
+        assertTrue(out.contains("### Candidate: gateway -> simple-service"));
+        assertFalse(out.contains("Candidate: simple-service -> mysql"), "a database edge is section 5's");
+        assertTrue(out.contains("Runtime observation: not measured"));
+        assertTrue(out.indexOf("# 3.") < out.indexOf("# 4.") && out.indexOf("# 4.") < out.indexOf("# 5.")
+                && out.indexOf("# 5.") < out.indexOf("# 6."));
+        assertEquals(1, out.split("# 4\\. Synchronous", -1).length - 1, "exactly one section 4");
+    }
+
+    @Test
+    void theModelsProseUsesTheGraphsNamesButPathsAndFilesAreLeftAlone() {
+        DependencyGraph g = new DependencyGraph("");
+        for (String s : new String[]{"gateway", "turbine", "hystrix", "discovery", "simple-service", "simple-serviceb"}) {
+            g.addNode(s, DependencyGraph.KIND_SERVICE);
+        }
+        AliasResolution.Answers answers = new AliasResolution.Answers();
+        answers.put("Eureka Server", "discovery");
+        answers.put("MyAppThriftClient", AliasResolution.IGNORE);
+
+        String prose = "Broker relationship: hystrix-turbine -> RabbitMQ\n"
+                + "Workflow: cloud-api-gateway routes to cloud-simple-serviceB via Eureka Server.\n"
+                + "Endpoint: /cloud-simple-service/**\n"
+                + "Provenance reference: cloud-api-gateway/src/main/resources/application.yaml lines 5-6\n"
+                + "See pom.xml dependencies in cloud-simple-serviceB/pom.xml\n"
+                + "MyAppThriftClient calls FooService.";
+
+        String out = DependencyReportService.normalizeServiceNames(prose, g, answers);
+
+        assertTrue(out.contains("Broker relationship: turbine -> RabbitMQ"), out);
+        assertTrue(out.contains("Workflow: gateway routes to simple-serviceb via discovery."), out);
+        assertTrue(out.contains("Endpoint: /cloud-simple-service/**"), "a route path is what it is called");
+        assertTrue(out.contains("cloud-api-gateway/src/main/resources/application.yaml"), "a file path is left alone");
+        assertTrue(out.contains("cloud-simple-serviceB/pom.xml"));
+        assertTrue(out.contains("MyAppThriftClient calls FooService."), "an ignored name is not rewritten");
+    }
+
     // ---------- persistence ----------
 
     @Test

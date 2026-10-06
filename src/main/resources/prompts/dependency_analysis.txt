@@ -195,35 +195,15 @@ If the relationship status is name_based_match, explicitly state:
 
 # 4. Synchronous Dependency Candidates
 
-First state:
-- Direct runtime-observed synchronous invocations: <count>
-- Documentation/configuration-supported candidates: <count>
-
-For each candidate:
-### Candidate: <source> -> <target>
-- Relationship role:
-- Dependency type:
-- Protocol:
-- Method:
-- Endpoint:
-- Documented:
-- Configured:
-- Deployed:
-- Discoverable:
-- Endpoint available:
-- Runtime observed:
-- Confidence:
-- Provenance reference:
-- Limitations:
-
-If no direct runtime-observed synchronous invocation exists, state exactly:
-"No synchronous service-to-service invocation was directly observed in the collected runtime observations."
-
-Do not omit documented candidates merely because a runtime observation is absent.
+DO NOT WRITE THIS SECTION. Skip it entirely. Like section 5, it is generated
+deterministically from the dependency graph and inserted here afterwards, so
+that every service-to-service dependency in the report is one the graph draws,
+under the graph's name. Anything you write here is discarded. You may still
+refer to these dependencies in your interpretation (sections 9–11).
 
 # 5. Infrastructure Dependencies
 
-DO NOT WRITE THIS SECTION. Skip it entirely — go straight from section 4 to
+DO NOT WRITE THIS SECTION. Skip it entirely — go straight from section 3 to
 section 6. It is generated deterministically from the dependency graph and
 inserted here afterwards, so that it always agrees with the graph posted
 alongside the report. Anything you write here is discarded.

@@ -118,7 +118,7 @@ public class DependencyReportService {
 
         String report = "## Microservice Dependency Analysis Report\n"
                 + "**Repository:** `" + state.repoName + "` | **Namespace:** `" + state.namespace + "`\n\n"
-                + spliceInfrastructureSection(response, graph, greenfield)
+                + spliceFactSections(normalizeServiceNames(response, graph, aliasAnswers), graph, greenfield)
                 + nameResolutionSection(aliasAnswers);
         try {
             // toolkitDiscordText auto-sends as a file when the text is long,
@@ -151,6 +151,170 @@ public class DependencyReportService {
      */
     static String spliceInfrastructureSection(String response, DependencyGraph graph) {
         return spliceInfrastructureSection(response, graph, false);
+    }
+
+    /**
+     * Puts the two generated fact sections — 4 (service-to-service) and 5
+     * (infrastructure) — into the model's report, in place of whatever the model wrote
+     * there. The model is told to skip both; if it drifted and wrote them anyway, its
+     * version is dropped. With no "# 6." heading to anchor on, the sections are
+     * appended instead: a duplicated section is a smaller harm than a lost fact.
+     *
+     * <p>Why section 4 too (2026-10-06, spring-cloud-microservice): the model listed
+     * MyAppThriftClient -> FooService after the operator had said neither is a service,
+     * and simple-ui -> simple-service while the graph beside it did not draw that edge.
+     * The prompt asked for neither; asking harder would only move the error.
+     */
+    public static String spliceFactSections(String response, DependencyGraph graph, boolean greenfield) {
+        String facts = synchronousSection(graph, greenfield) + infrastructureSection(graph, greenfield);
+        if (response == null || response.isBlank()) return facts;
+
+        java.util.regex.Matcher six = java.util.regex.Pattern.compile("(?m)^#+\\s*6\\.").matcher(response);
+        if (!six.find()) return response + "\n\n" + facts;
+
+        int cut = six.start();
+        for (String n : new String[]{"5", "4"}) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?m)^#+\\s*" + n + "\\.").matcher(response);
+            if (m.find() && m.start() < cut) cut = m.start();
+        }
+        return response.substring(0, cut) + facts + response.substring(six.start());
+    }
+
+    /**
+     * Section 4 — the service-to-service dependencies — written from the graph: exactly
+     * the edges the graph draws, under its names, with their confidence and sources.
+     */
+    public static String synchronousSection(DependencyGraph graph, boolean greenfield) {
+        StringBuilder sb = new StringBuilder("# 4. Synchronous Dependency Candidates\n\n");
+        if (graph == null || graph.isEmpty()) {
+            sb.append("None resolved from the collected provenance.\n\n");
+            return sb.toString();
+        }
+        java.util.Map<String, DependencyGraph.Node> byId = new java.util.HashMap<>();
+        for (DependencyGraph.Node node : graph.getNodes()) byId.put(node.id, node);
+
+        List<DependencyGraph.Edge> sync = new ArrayList<>();
+        for (DependencyGraph.Edge edge : graph.getEdges()) {
+            DependencyGraph.Node s = byId.get(edge.source);
+            DependencyGraph.Node t = byId.get(edge.target);
+            if (s == null || t == null || !isServiceKind(s) || !isServiceKind(t)) continue;
+            if ("async".equals(edge.type) || "db".equals(edge.type) || "external".equals(edge.type)) continue;
+            sync.add(edge);
+        }
+        sync.sort((a, b) -> {
+            int o = Boolean.compare(b.runtimeObserved, a.runtimeObserved);
+            if (o != 0) return o;
+            int c = a.source.compareTo(b.source);
+            return c != 0 ? c : a.target.compareTo(b.target);
+        });
+
+        long observed = sync.stream().filter(e -> e.runtimeObserved).count();
+        if (greenfield) {
+            sb.append("- Runtime observation: not measured (static run: no cluster was queried)\n");
+            sb.append("- Declared in code, configuration or documentation: ").append(sync.size()).append("\n\n");
+        } else {
+            sb.append("- Direct runtime-observed synchronous invocations: ").append(observed).append('\n');
+            sb.append("- Declared in code, configuration or documentation, not observed: ")
+                    .append(sync.size() - observed).append("\n\n");
+        }
+        if (sync.isEmpty()) {
+            sb.append("No service-to-service dependency was resolved.\n\n");
+        }
+        for (DependencyGraph.Edge edge : sync) {
+            DependencyGraph.Node target = byId.get(edge.target);
+            sb.append("### Candidate: ").append(edge.source).append(" -> ").append(edge.target).append('\n');
+            sb.append("- Protocol: ").append("grpc".equals(edge.type) ? "gRPC" : "HTTP").append('\n');
+            sb.append("- Provenance: ").append(String.join(", ", edge.provenance)).append('\n');
+            sb.append("- Runtime observed: ").append(
+                    edge.runtimeObserved ? "Yes — " + edge.count + " requests observed by the mesh"
+                            : greenfield ? "Unknown (static run: not measured)" : "No").append('\n');
+            sb.append("- Confidence: ").append(confidenceWord(edge)).append('\n');
+            sb.append("- Target deployed: ").append(
+                    Boolean.TRUE.equals(target.deployed) ? "Yes"
+                            : Boolean.FALSE.equals(target.deployed) ? "No — referenced but not running"
+                            : greenfield ? "Not determined (static run: no cluster was queried)"
+                            : "Not determined").append('\n');
+            if (!edge.provenanceRefs.isEmpty()) {
+                sb.append("- Provenance reference: ")
+                        .append(String.join("; ", edge.provenanceRefs.subList(0, Math.min(3, edge.provenanceRefs.size()))))
+                        .append('\n');
+            }
+            sb.append('\n');
+        }
+        if (!greenfield && observed == 0 && !sync.isEmpty()) {
+            sb.append("No synchronous service-to-service invocation was directly observed in the "
+                    + "collected runtime observations.\n\n");
+        }
+        sb.append("_This section is generated deterministically from the dependency graph, "
+                + "not written by the language model, so it lists exactly the edges the graph draws._\n\n");
+        return sb.toString();
+    }
+
+    private static boolean isServiceKind(DependencyGraph.Node n) {
+        return n.kind == null || DependencyGraph.KIND_SERVICE.equals(n.kind) || DependencyGraph.KIND_GATEWAY.equals(n.kind);
+    }
+
+    /**
+     * Rewrites the service names in the model's prose to the graph's names. The prompt
+     * asks for this and the model mostly complies, but "hystrix-turbine" still appeared
+     * where the graph says turbine (2026-10-06). Two rules, both deterministic:
+     * <ol>
+     *   <li>a name the operator mapped onto a service becomes that service;</li>
+     *   <li>a hyphenated name that is a graph service with a prefix or a suffix of three
+     *       or more letters ({@code cloud-api-gateway}, {@code hystrix-turbine},
+     *       {@code discovery-server}) becomes that service, when exactly one fits —
+     *       a suffix match is preferred, since modules prefix their deployment's name.</li>
+     * </ol>
+     * A name inside a path, a file name or a URL is left alone: {@code /cloud-simple-service/**}
+     * is a route that really is called that, and {@code cloud-api-gateway/src/…} is a
+     * file. Only prose changes; the graph and the generated sections are untouched.
+     */
+    public static String normalizeServiceNames(String text, DependencyGraph graph, AliasResolution.Answers answers) {
+        if (text == null || text.isEmpty() || graph == null) return text;
+        java.util.Map<String, String> lettersToNode = new java.util.LinkedHashMap<>();
+        for (DependencyGraph.Node n : graph.getNodes()) {
+            if (isServiceKind(n)) lettersToNode.put(n.id.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", ""), n.id);
+        }
+
+        String out = text;
+        if (answers != null) {
+            for (Map.Entry<String, String> e : answers.asMap().entrySet()) {
+                String d = e.getValue();
+                if (AliasResolution.IGNORE.equals(d) || AliasResolution.NEW.equals(d) || graph.findNode(d) == null) continue;
+                out = replaceOutsidePaths(out, java.util.regex.Pattern.quote(e.getKey()), d);
+            }
+        }
+
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("(?<![\\w/.:@\\\\-])[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)+(?![\\w/\\\\-]|\\.[A-Za-z])")
+                .matcher(out);
+        StringBuilder sb = new StringBuilder();
+        int last = 0;
+        while (m.find()) {
+            String token = m.group();
+            String letters = token.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+            if (lettersToNode.containsKey(letters)) continue;   // already a graph name (any spelling)
+            String suffix = null, prefix = null;
+            int suffixCount = 0, prefixCount = 0;
+            for (Map.Entry<String, String> n : lettersToNode.entrySet()) {
+                String nl = n.getKey();
+                if (nl.length() < 5 || letters.length() - nl.length() < 3) continue;
+                if (letters.endsWith(nl)) { suffix = n.getValue(); suffixCount++; }
+                else if (letters.startsWith(nl)) { prefix = n.getValue(); prefixCount++; }
+            }
+            String replacement = suffixCount == 1 ? suffix : (suffixCount == 0 && prefixCount == 1 ? prefix : null);
+            if (replacement == null) continue;
+            sb.append(out, last, m.start()).append(replacement);
+            last = m.end();
+        }
+        sb.append(out.substring(last));
+        return sb.toString();
+    }
+
+    /** Replaces a phrase where it is a whole word and not part of a path, a file name or a URL. */
+    private static String replaceOutsidePaths(String text, String quotedPhrase, String replacement) {
+        return text.replaceAll("(?<![\\w/.:@\\\\-])" + quotedPhrase + "(?![\\w/\\\\-]|\\.[A-Za-z])",
+                java.util.regex.Matcher.quoteReplacement(replacement));
     }
 
     static String spliceInfrastructureSection(String response, DependencyGraph graph, boolean greenfield) {

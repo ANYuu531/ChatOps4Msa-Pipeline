@@ -125,6 +125,19 @@ python3 docs/generalization/external/aliases/agreement_one.py $S/r2/spring-cloud
 
 修完後離線重跑同一個專案（帶第一次真跑的答案、Zipkin 改正）：第一輪多問 3 題重複名字（`cloud-config-server`、`cloud-simple-service`、`cloud-simple-ui`），答完 **12 個節點、每個服務只出現一次，對照資料集 26/26**。
 
+## 5.2 第二次 Discord 真跑（2026-10-06）
+
+修完 5.1 之後重跑：每個服務只出現一次，資料集 26 條全在，`users`／`zipkin-server` 消失，報告前半段改用圖上的名字。剩四個問題，當天修掉：
+
+| # | 問題 | 修法 |
+|---|---|---|
+| 1 | `hystrix` 那題答 `hystrix`，報告寫「hystrix → hystrix」 | 答案等於題目本身的名字＝`new`；舊答案檔載入時也自動更正 |
+| 2 | LLM 寫的第 4 節仍列出已答 `ignore` 的 `MyAppThriftClient -> FooService`（prompt 明說不要） | **第 4 節改由程式從圖產生**，和第 5 節同一套拼接；LLM 被要求跳過，寫了也丟掉。代價：LLM 原本會寫的 Method／Endpoint 細節不再出現在第 4 節 |
+| 3 | 第 4 節說有 `simple-ui -> simple-service`，圖上沒有。來源是 `"http://" + SERVICE_NAME + "/user"`，`SERVICE_NAME` 是同類別的字串常數 | 新 tree-sitter 規則抓「scheme ＋ 識別字」的串接，再到同一個檔案找 `String 名稱 = "值"` 補回 URL。只認同檔案、字面值的常數。五個之前驗證過的 Java 專案（含 train-ticket 26 個串接網址檔）**沒有一處命中**，圖不受影響 |
+| 4 | 第 6 節寫 `hystrix-turbine`，圖上叫 `turbine` | LLM 的文字在拼接前由程式改名：操作者對應過的名字、以及「圖上服務名加三字以上前後綴」的連字號名字（偏好後綴）。路徑、檔名、URL 裡的不動（`/cloud-simple-service/**` 是真的路由） |
+
+離線同專案重跑：多出 `simple-ui -> simple-service`（UserService.java:32），對照資料集仍 26/26。
+
 ## 6. 真環境要驗的事（機器 B）
 
 1. 重編（`--build`），先 grep `Started ChatOps4MsaApplication`。

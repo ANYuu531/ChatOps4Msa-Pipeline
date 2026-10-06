@@ -141,6 +141,7 @@ public class TreeSitterExtractor {
         }
 
         ledger.addFilesParsed(parsed);
+        resolveConstantHosts(ledger, sources);
         dropNonAddressUrls(ledger, sources);
         markUnreferencedUrlConstants(root, ledger, sources);
 
@@ -182,6 +183,31 @@ public class TreeSitterExtractor {
 
             ledger.add(section, entry.getValue(), file, match.line,
                     confidenceOf(section, entry.getValue()));
+        }
+    }
+
+    /**
+     * Fills in the url of an http-client row whose host is a constant:
+     * {@code "http://" + SERVICE_NAME + "/user"} with {@code final String SERVICE_NAME =
+     * "cloud-simple-service"} declared in the same file becomes
+     * {@code http://cloud-simple-service}. Only a String constant of the same file with a
+     * literal value counts — a field set at runtime, a property, or a constant from
+     * another class is left alone, and the row stays a hostref the merger cannot place.
+     */
+    public static void resolveConstantHosts(EdgeLedger ledger, Map<String, String> sources) {
+        for (EdgeLedger.Edge e : ledger.getEdges()) {
+            if (!"http-client".equals(e.section)) continue;
+            String ref = e.fields.get("hostref");
+            String scheme = e.fields.get("scheme");
+            if (ref == null || ref.isBlank() || scheme == null || e.fields.containsKey("url")) continue;
+            String source = sources.get(e.file);
+            if (source == null) continue;
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile(
+                    "\\bString\\s+" + java.util.regex.Pattern.quote(ref) + "\\s*=\\s*\"([^\"]*)\"").matcher(source);
+            if (!m.find()) continue;
+            String value = m.group(1).trim();
+            if (value.isEmpty() || value.contains("${")) continue;
+            e.fields.put("url", value.matches("(?i)^https?://.*") ? value : scheme + value);
         }
     }
 

@@ -64,6 +64,34 @@
  (#any-of? @http-client.method
    "getForObject" "getForEntity" "postForObject" "postForEntity" "exchange" "baseUrl" "uri"))
 
+; Scheme + constant host: restTemplate.getForObject("http://" + SERVICE_NAME + "/user", …)
+; with `final String SERVICE_NAME = "cloud-simple-service"` in the same class — the
+; Ribbon/Eureka idiom, where the host is a service id. Only the scheme and the
+; identifier are captured; TreeSitterExtractor resolves the identifier against the
+; file's own String constants and writes the url. spring-cloud-microservice's
+; simple-ui -> simple-service was invisible without this (2026-10-06).
+((method_invocation
+   name: (identifier) @http-client.method
+   arguments: (argument_list . (binary_expression
+     left: (binary_expression
+       left: (string_literal (string_fragment) @http-client.scheme)
+       right: (identifier) @http-client.hostref))))
+ (#any-of? @http-client.method
+   "getForObject" "getForEntity" "postForObject" "postForEntity" "postForLocation"
+   "exchange" "baseUrl" "uri" "put" "delete")
+ (#match? @http-client.scheme "^https?://$"))
+
+; The same with nothing after the host: getForObject("http://" + SERVICE_NAME, …)
+((method_invocation
+   name: (identifier) @http-client.method
+   arguments: (argument_list . (binary_expression
+     left: (string_literal (string_fragment) @http-client.scheme)
+     right: (identifier) @http-client.hostref)))
+ (#any-of? @http-client.method
+   "getForObject" "getForEntity" "postForObject" "postForEntity" "postForLocation"
+   "exchange" "baseUrl" "uri" "put" "delete")
+ (#match? @http-client.scheme "^https?://$"))
+
 ; ---------- Inbound HTTP endpoints (the service's own API surface) ----------
 ; This is what traffic generation aims at: to observe an edge, a request has to
 ; actually reach the endpoint that makes the downstream call.
