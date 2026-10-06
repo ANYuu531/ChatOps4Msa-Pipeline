@@ -138,6 +138,8 @@ python3 docs/generalization/external/aliases/agreement_one.py $S/r2/spring-cloud
 
 離線同專案重跑：多出 `simple-ui -> simple-service`（UserService.java:32），對照資料集仍 26/26。
 
+**第三次真跑（同日）**：之前答過的 11 個名字都沒再問（答案記憶有效），只問 DeepWiki 新冒出的 5 個；圖乾淨、資料集 26 條全在第 4 節（共 31 條，多出的 5 條 repo 裡真的有）；覆蓋率訊息寫「Not measured」。程式產生的段落還有兩處把沒量的東西寫成確定值，當天修掉：第 4 節一律寫「Protocol: HTTP」（圖只記同步、不記協定；Compose links 與 Thrift client 都是 sync-http）→ 只有 mesh 觀測到或 gRPC 才寫協定，其餘「not determined」；第 5 節 greenfield 寫「Runtime observed: No」→「Unknown (static run: not measured)」。LLM 寫的第 6.2 節把 Hystrix 指標流接收端寫成 `hystrix`（應為 `turbine`），是內容判斷錯，程式改名救不了，留著。
+
 ## 6. 真環境要驗的事（機器 B）
 
 1. 重編（`--build`），先 grep `Started ChatOps4MsaApplication`。
