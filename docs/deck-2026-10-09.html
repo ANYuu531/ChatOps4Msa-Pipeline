@@ -347,7 +347,7 @@
         </div>
       </div>
     </div>
-    <div class="notes"><b>講稿</b>　左邊：改名之前先查，發現 confidence 早就在，evidence 其實是出處清單，所以是三個概念分清楚。右邊是上次兩個提醒：分級改成由低到高講，理由是每往上一級多一種佐證；遙測在第一次出現就白話定義——每個服務旁邊有個代理，每次呼叫經過它就記一筆，我們查的是這些計數。</div>
+    <div class="notes"><b>講稿</b>　左邊：改名之前先查，發現 confidence 早就在，evidence 其實是出處清單，所以是三個概念分清楚。右邊是上次兩個提醒：分級改成由低到高講，理由是每往上一級多一種佐證；執行期觀測在第一次出現就白話定義——每個服務旁邊有個代理，每次呼叫經過它就記一筆，我們查的是這些計數。</div>
   </div>
   <div class="ftr"></div><div class="num">8</div>
 </section>
@@ -469,7 +469,7 @@
       <div class="draft" style="font-size:19px">
         <span class="lbl">Context</span>
         <p>你在做一個會自動產出依賴視圖的工具，正在做第一件事：把系統元件之間的關係收集起來，畫成一張圖給人看。關係來自好幾個來源，而且<span class="hl">你刻意要用多個來源，因為單一來源已經被證明不夠</span>（§1.1）：執行期觀測告訴你這段期間真的發生過哪些呼叫；程式碼與設定檔告訴你哪些呼叫寫在那裡、不管有沒有跑到；部署描述告訴你誰被佈線到誰；專案文件（README、架構說明，可能經過 LLM 整理）告訴你前三者都看不到的東西，例如一條只在特殊流程才走的呼叫。</p>
-        <p><span class="hl">讀者是會拿這張圖做決定的人</span>：排部署順序、評估改動影響、決定下一輪要補哪些測試。他們通常不會回頭看原始來源，圖就是他們看到的全部。而你手上這幾個來源的可靠度差很多，而且常常對同一條關係說不同的話：執行期觀測說 <span class="mono">web → orders</span> 走了 95 次，程式碼說 <span class="mono">orders → payment</span> 有一個 HTTP client 但這次沒人呼叫它，文件說 <span class="mono">orders → shipping</span> 存在但程式碼和遙測都找不到。</p>
+        <p><span class="hl">讀者是會拿這張圖做決定的人</span>：排部署順序、評估改動影響、決定下一輪要補哪些測試。他們通常不會回頭看原始來源，圖就是他們看到的全部。而你手上這幾個來源的可靠度差很多，而且常常對同一條關係說不同的話：執行期觀測說 <span class="mono">web → orders</span> 走了 95 次，程式碼說 <span class="mono">orders → payment</span> 有一個 HTTP client 但這次沒人呼叫它，文件說 <span class="mono">orders → shipping</span> 存在但程式碼和執行期觀測都找不到。</p>
       </div>
       <div class="pts" style="font-size:18.5px">
         <h4>重點</h4>
