@@ -46,10 +46,22 @@ public class DocGraphMerger {
     private final AliasResolution.Answers answers;
     /** Where an unresolved documented service name is recorded instead of being dropped; may be null. */
     private final AliasResolution.Questions questions;
+    /**
+     * The analysed repository's own names ("zpng/spring-cloud-microservice-examples" and
+     * "spring-cloud-microservice-examples"): the wiki sometimes makes the whole repository
+     * the source of an infrastructure dependency, and that is not a service to ask about.
+     */
+    private final Set<String> repoNames = new LinkedHashSet<>();
 
     private DocGraphMerger(DependencyGraph graph, AliasResolution.Answers answers,
-                           AliasResolution.Questions questions) {
+                           AliasResolution.Questions questions, String repoName) {
         this.graph = graph;
+        if (repoName != null && !repoName.isBlank()) {
+            String r = repoName.trim().toLowerCase(Locale.ROOT);
+            repoNames.add(AliasResolution.key(r));
+            int slash = r.lastIndexOf('/');
+            if (slash >= 0 && slash < r.length() - 1) repoNames.add(AliasResolution.key(r.substring(slash + 1)));
+        }
         this.answers = answers == null ? new AliasResolution.Answers() : answers;
         this.questions = questions;
         for (DependencyGraph.Node node : graph.getNodes()) {
@@ -84,6 +96,17 @@ public class DocGraphMerger {
      */
     public static void merge(DependencyGraph graph, String mergedNotesJson,
                              AliasResolution.Answers answers, AliasResolution.Questions questions) {
+        merge(graph, mergedNotesJson, answers, questions, null);
+    }
+
+    /**
+     * @param repoName the analysed repository ("owner/repo"); a documented component by
+     *                 that name is the repository itself, never a service, and is dropped
+     *                 without a question
+     */
+    public static void merge(DependencyGraph graph, String mergedNotesJson,
+                             AliasResolution.Answers answers, AliasResolution.Questions questions,
+                             String repoName) {
         if (graph == null || mergedNotesJson == null || mergedNotesJson.isBlank()) return;
         JSONObject root = parseObject(mergedNotesJson);
         if (root == null) return;
@@ -94,7 +117,7 @@ public class DocGraphMerger {
         Set<String> known = new java.util.HashSet<>();
         for (DependencyGraph.Node n : graph.getNodes()) known.add(n.id);
 
-        DocGraphMerger merger = new DocGraphMerger(graph, answers, questions);
+        DocGraphMerger merger = new DocGraphMerger(graph, answers, questions, repoName);
         try {
             merger.mergeSynchronous(root.optJSONArray("synchronous_candidates"));
             merger.mergeInfrastructure(root.optJSONArray("infrastructure_dependencies"));
@@ -220,6 +243,9 @@ public class DocGraphMerger {
         //    declared a real service becomes one, a name they dismissed is dropped.
         String decided = answers.decisionFor(raw);
         if (decided != null) return applyDecision(raw, decided);
+
+        // The repository itself, named as a component: not a service, and not a question.
+        if (repoNames.contains(AliasResolution.key(raw))) return null;
 
         // 1) Align to an existing workload before ever creating a node.
         String aligned = alignToKnown(raw);

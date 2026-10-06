@@ -616,6 +616,28 @@ public class AliasAskFlowTest {
         assertFalse(again.list().get(0).candidates.contains("cloud-simple-service"), again.list().get(0).candidates.toString());
     }
 
+    @Test
+    void theRepositoryItselfNamedAsAComponentIsNeitherAServiceNorAQuestion() {
+        // Fifth Discord run: the wiki made "zpng/spring-cloud-microservice-examples" the
+        // source of five infrastructure dependencies, and the tool asked which service it is.
+        DependencyGraph g = new DependencyGraph("");
+        g.addNode("gateway", DependencyGraph.KIND_SERVICE);
+        AliasResolution.Questions questions = new AliasResolution.Questions();
+        String notes = "{ \"infrastructure_dependencies\": ["
+                + "{ \"source_component\": \"zpng/spring-cloud-microservice-examples\", \"target\": \"MySQL\", \"dependency_type\": \"database\" },"
+                + "{ \"source_component\": \"spring-cloud-microservice-examples\", \"target\": \"RabbitMQ\", \"dependency_type\": \"queue\" },"
+                + "{ \"source_component\": \"gateway\", \"target\": \"RabbitMQ\", \"dependency_type\": \"queue\", \"configured\": \"yes\" } ] }";
+
+        DocGraphMerger.merge(g, notes, null, questions, "zpng/spring-cloud-microservice-examples");
+
+        assertTrue(questions.isEmpty(), questions.list().stream().map(q -> q.name).toList().toString());
+        assertNull(g.findNode("zpng/spring-cloud-microservice-examples"));
+        assertTrue(g.getEdges().stream().noneMatch(e -> e.source.contains("spring-cloud-microservice-examples")),
+                "a repository is not the source of an edge");
+        assertTrue(g.getEdges().stream().anyMatch(e -> e.source.equals("gateway") && e.target.equals("rabbitmq")),
+                "a real service's edge in the same list still merges");
+    }
+
     // ---------- persistence ----------
 
     @Test

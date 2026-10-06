@@ -592,7 +592,7 @@ public class DependencyReportService {
             // documented association). Never runtime fact — dashed/dotted, and a
             // db a service really uses (persistence code) outranks a doc-only one.
             DocGraphMerger.merge(graph, state.stage(DependencyAnalysisStateStore.STAGE_MERGED_NOTES),
-                    answers, questions);
+                    answers, questions, state.repoName);
 
             // Promote any db a persistence-bearing service uses to "really used",
             // whichever provenance the db edge came from. The datasource is often
