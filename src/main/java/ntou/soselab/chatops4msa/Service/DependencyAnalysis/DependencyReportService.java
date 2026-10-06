@@ -465,7 +465,9 @@ public class DependencyReportService {
                         new ByteArrayInputStream(mermaid.getBytes(StandardCharsets.UTF_8)));
             }
 
-            String coverage = coverageMessage(graph, state.repoName);
+            String coverage = isGreenfield(state.namespace)
+                    ? staticCoverageMessage(graph, state.repoName)
+                    : coverageMessage(graph, state.repoName);
             if (coverage != null) jdaService.sendChatOpsChannelMessage(coverage);
             return coverage;
         } catch (Exception e) {
@@ -483,6 +485,46 @@ public class DependencyReportService {
      *
      * @return the message, or {@code null} when nothing is measurable (no service→service edges)
      */
+    /**
+     * The coverage message for a static (greenfield) run, where nothing was measured.
+     *
+     * The runtime message used to be posted here too and read "Istio observed 0 / 23 …
+     * 0% runtime coverage" and "the datastore is deployed" — on a run that had no
+     * cluster, no Istio and no deployment (spring-cloud-microservice, 2026-10-06). That
+     * is the failure the language's fifth pattern is about: an unmeasured value shown as
+     * zero. So a static run states that coverage was not measured and why, and lists the
+     * same declared edges as what to verify once the system runs — not as gaps.
+     *
+     * @return the message, or {@code null} when there are no business edges at all
+     */
+    public static String staticCoverageMessage(DependencyGraph graph, String repoName) {
+        CoverageAnalyzer.Report coverage = CoverageAnalyzer.analyze(graph);
+        if (!coverage.hasEdges() && !coverage.hasDbEdges()) return null;
+
+        StringBuilder msg = new StringBuilder();
+        msg.append("## ").append(DependencyGraph.TOOL_NAME)
+                .append(" · Runtime Traffic Coverage — `").append(repoName).append("`\n")
+                .append("**Not measured.** This was a static (greenfield) run: no namespace was given, so "
+                        + "no cluster was queried, no traffic was driven and no telemetry was collected. "
+                        + "Runtime coverage is unknown, not 0%.\n");
+        if (coverage.hasEdges()) {
+            msg.append("\nThe code and documentation declare **").append(coverage.total)
+                    .append("** business (service→service) edge(s). Once the system is deployed, "
+                            + "run the analysis with its namespace to see which of them traffic actually crosses:\n");
+            for (String edge : coverage.uncovered) msg.append("- `").append(edge).append("`\n");
+        }
+        if (coverage.hasDbEdges()) {
+            msg.append("\n**Data layer:** not measured either. **").append(coverage.dbTotal)
+                    .append("** datastore edge(s) are declared; whether they are deployed or connected is unknown:\n");
+            for (String edge : coverage.dbUncovered) msg.append("- `").append(edge).append("`\n");
+        }
+        if (coverage.mentionedOnly > 0) {
+            msg.append("\n_Also ").append(coverage.mentionedOnly)
+                    .append(" edge(s) are only mentioned (no usage signal), drawn dotted._\n");
+        }
+        return msg.toString();
+    }
+
     static String coverageMessage(DependencyGraph graph, String repoName) {
         CoverageAnalyzer.Report coverage = CoverageAnalyzer.analyze(graph);
         if (!coverage.hasEdges()) return null;

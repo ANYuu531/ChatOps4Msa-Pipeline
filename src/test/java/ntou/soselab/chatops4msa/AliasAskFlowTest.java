@@ -303,6 +303,29 @@ public class AliasAskFlowTest {
         assertTrue(AliasResolution.Questions.vocabularyFromJson("garbage").isEmpty());
     }
 
+    @Test
+    void aStaticRunSaysCoverageWasNotMeasuredInsteadOfZeroPercent() {
+        // spring-cloud-microservice, greenfield, 2026-10-06: the runtime message said
+        // "Istio observed 0 / 23 … 0%" and "the datastore is deployed" with no cluster at all.
+        DependencyGraph g = new DependencyGraph("");
+        g.addNode("gateway", DependencyGraph.KIND_SERVICE);
+        g.addNode("simple-service", DependencyGraph.KIND_SERVICE);
+        g.addNode("mysql", DependencyGraph.KIND_DB);
+        g.addEdge("gateway", "simple-service", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "code: application.yaml");
+        g.addEdge("simple-service", "mysql", "db", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "code: application.yaml");
+
+        String text = DependencyReportService.staticCoverageMessage(g, "zpng/spring-cloud-microservice-examples");
+
+        assertNotNull(text);
+        assertTrue(text.contains("Not measured"));
+        assertTrue(text.contains("unknown, not 0%"));
+        assertTrue(text.contains("gateway -> simple-service"));
+        assertFalse(text.contains("0%  runtime"), text);
+        assertFalse(text.contains("0 / 1"), "no ratio for something never measured");
+        assertFalse(text.contains("Istio observed"), "no telemetry was collected");
+        assertFalse(text.contains("the datastore is deployed"), "nothing was deployed or queried");
+    }
+
     // ---------- persistence ----------
 
     @Test
