@@ -1,6 +1,6 @@
-# 可信依賴視圖：由可靠度不一的來源合成依賴圖、指標與報告的 Pattern Language
+# DepWeaver：基於多來源融合與對話式補值的微服務相依圖自動建構方法——一個 Pattern Language
 
-**Trustworthy Dependency Views: A Pattern Language for Synthesizing Dependency Graphs, Metrics, and Reports from Sources of Unequal Confidence**
+**DepWeaver: A Multi-Source Fusion Approach to Automated Microservice Dependency Graph Construction with Conversational Gap-Filling — A Pattern Language**
 
 > **這是什麼**：AsianPLoP 投稿用的**中文完整全文**（2026-09-25 初稿，2026-10-02 依反饋改版）。
 > 討論稿 `docs/pattern-language-asianplop.md` 保留為**決策紀錄**（為什麼從 15 個候選收成 5 個、查證過程、待老師決定的四件事）；本文件是要拿去翻成英文投稿的那一份。
@@ -11,16 +11,20 @@
 
 | | 中文 | English |
 |---|---|---|
-| **主名稱**（平常這樣叫） | **可信依賴視圖** | **Trustworthy Dependency Views** |
-| **簡稱** | TDV | TDV |
-| **完整名**（論文標題） | 可信依賴視圖：由可靠度不一的來源合成依賴圖、指標與報告的 Pattern Language | Trustworthy Dependency Views: A Pattern Language for Synthesizing Dependency Graphs, Metrics, and Reports from Sources of Unequal Confidence |
+| **主名稱**（平常這樣叫） | **DepWeaver** | **DepWeaver** |
+| **完整名** | DepWeaver：基於多來源融合與對話式補值的微服務相依圖自動建構方法 | DepWeaver: A Multi-Source Fusion Approach to Automated Microservice Dependency Graph Construction with Conversational Gap-Filling |
+| **這篇的定位** | 上面那個方法的 pattern language：從 DepWeaver 兩年的開發與真環境驗證裡抽出來的設計知識 | the pattern language of that approach |
 
-**命名理由**：
+**為什麼用工具與碩論的名字（2026-10-06 定案）**：這個 language 和碩論是同一件工作的兩種寫法——碩論講方法與實驗，這篇講從中抽出的、別人也能用的設計知識。用同一個名字，讀者一看就知道兩者的關係；碩論之後還會往下做得更深，名字先統一，之後不必再對照。*weave*（織）本身就是這個 language 的主軸：三種可靠度不同的來源**織成同一張圖**，而不是三選一（①②），織的時候要誠實（③④⑤）。
 
-- 名字用**讀者要的結果**（視圖可信）命名，不用手段（分級、單一模型、程式寫事實）命名。五個 pattern 各自是一種手段，「視圖可信」是它們唯一共同的目的，也是 §1.2 那個問題的答案要交付的東西。
-- 說「依賴**視圖**」而不是「依賴**圖**」，因為指標與文字報告也是視圖；本 language 一半的篇幅在講圖以外的產物（③④⑤）。
-- 副標講三件事，正好對應 §6.1 的三個適用條件：輸入是**可靠度不一的來源**（所以要分級）、輸出是**圖、指標、報告**三種產物（所以要一致）、動詞是**合成**而不是抽取（本文不談怎麼抽得更準）。
-- **沒選的名字**：「多來源證據融合」（講的是手段，而且「證據」這個字我們現在只留給來源本身）、「誠實的依賴圖」（漏掉指標與報告）、「依賴分析的信心 pattern」（只涵蓋 ①④，② 與 ③ 與信心無關）。
+**曾用過的名字**（審稿人若看過早期版本，對得上）：
+
+| 名字 | 什麼時候 | 為什麼換 |
+|---|---|---|
+| 依賴圖的誠實呈現 / Honest Dependency Views | 2026-09-14，pattern 目錄的候選組合 A | 「誠實」要留給 ④ 誠實分母，兩層同一個字會混 |
+| 可信的依賴視圖 / Trustworthy Dependency Views | 2026-09-18 至 10-05，兩次週會簡報與論文初稿 | 名字只講結果，看不出它和 DepWeaver、碩論的關係 |
+
+**用詞**：碩論題目用「相依」，本文內文目前用「依賴」，兩者在台灣都通；投稿前統一（見「投稿前待辦」）。
 
 ---
 
@@ -852,6 +856,8 @@ LLM 寫出來的        「目前沒有任何服務間呼叫被觀測到，   �
 ## 投稿前待辦
 
 1. **翻成英文**並套 ACM 單欄模板；五個 pattern ＋ running example 預估超過 10 頁，投 Regular paper。
+   - **標題的形式**：PLoP 系列的論文標題慣例是「Patterns for …」或「A Pattern Language for …」；現在的標題是方法名加「— A Pattern Language」，投稿前要確認 shepherd 接不接受這種寫法，不接受就改成「A Pattern Language for Trustworthy Dependency Views, from DepWeaver」這類形式，主名稱 DepWeaver 仍保留在副標或第一段。
+   - **「相依」與「依賴」統一**：碩論題目用「相依」，本文內文用「依賴」（依賴圖、依賴視圖、依賴分析）。擇一全文統一。
 2. **讀全文確認數字**：ICSE 2020 的 0.884／0.935、EMSE 2025 的 0.86／0.91、Okoe et al. 2019 的結果節、ISSTA 2024。目前標「摘要」的都要處理。
 3. **Admiralty Code 改引 AJP-2.1 原文**（現在只有二手與同儕審查論文來源）。
 4. **§6.2 表中 ② 的定位要再寫一次**：它與 MVC 的差別必須在論文本文講清楚，否則會被評為既有知識。

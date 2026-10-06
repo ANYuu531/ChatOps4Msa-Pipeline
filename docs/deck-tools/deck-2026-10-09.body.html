@@ -142,7 +142,7 @@
       <tr><th style="width:4%">#</th><th style="width:24%">反饋</th><th style="width:36%">做了什麼</th><th>結果</th></tr>
       <tr><td class="c">1</td><td><b>別名</b>的問題像補流量那樣<b>在中間問使用者</b>；可以研究 langchain4j</td><td>找出工具<b>四個默默丟掉名字</b>的地方；沿用補流量「按鈕 → 表單 → 存檢查點 → 下一步套用」的路，對象換成名字。langchain4j 實測後<b>決定不用</b>（第 7 頁）</td><td><span class="mono">Resolve names</span> 按鈕；答案<b>程式解析、不經 LLM</b>、記在專案層級、寫進報告。<b>同一個專案</b>（上次簡報漏 2 條那個）離線 24/26 → 26/26；Discord 真跑 <b>5 次</b>，抓到 <b>13</b> 個問題全修</td></tr>
       <tr><td class="c">2</td><td>不要用 <b>evidence</b>，用 <b>confidence</b></td><td>先查：程式碼早就有 <span class="mono">confidence</span>（三級）又有 <span class="mono">evidence</span>（出處清單）——<b>兩個概念</b>。分級叫 confidence，出處叫 <b>provenance</b>；碩論題目改 <b>Multi-Source</b> Fusion</td><td>程式與 prompt 70 個檔、論文全文；舊 JSON 鍵仍認。另外照上次說的：<b>分級由低到高講</b>、<b>「執行期觀測」白話定義（原「遙測」）</b>（第 8 頁）</td></tr>
-      <tr><td class="c">3</td><td>pattern language 要<b>完整的中英文主名稱</b>；每個 pattern <b>寫得更完整</b></td><td>定名稱、寫命名理由；欄位 8 → <b>13</b>（別名、一句話、範例獨立成節…）；Context／Problem／Resulting Context／Related 擴寫</td><td><b>可信依賴視圖 / Trustworthy Dependency Views</b>；全文 647 → <b>858 行</b>；第 11–19 頁 <b>① 逐段放原文</b>，20–23 頁 ②–⑤ 各一頁</td></tr>
+      <tr><td class="c">3</td><td>pattern language 要<b>完整的中英文主名稱</b>；每個 pattern <b>寫得更完整</b></td><td>定名稱、寫命名理由；欄位 8 → <b>13</b>（別名、一句話、範例獨立成節…）；Context／Problem／Resulting Context／Related 擴寫</td><td>名稱定為 <b>DepWeaver</b>＋碩論中英文題目；全文 647 → <b>858 行</b>；第 11–19 頁 <b>① 逐段放原文</b>，20–23 頁 ②–⑤ 各一頁</td></tr>
     </table>
     <p class="sub" style="margin-top:12px">這次最值得講的一件事</p>
     <div class="note" style="margin-top:6px"><b>真環境每跑一次就抓到一兩個問題，五次都是。</b>上個月補流量的 Tier 3 也是真環境逼出六個 bug。這次最有代表性的一個：greenfield 模式沒有量任何東西，覆蓋率訊息卻寫「Istio observed 0 / 23 — 0%」——這正是 pattern ⑤「未量測不是零」在講的失敗，而且是我們自己的工具犯的。所以 pattern 不是事後整理出來的漂亮話，是每一次真跑都會再撞到一次的東西。</div>
@@ -357,32 +357,32 @@
   <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ pattern language 的正式名稱 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
   <div class="bd">
     <table>
-      <tr><th style="width:20%"></th><th style="width:40%">中文</th><th>English</th></tr>
-      <tr class="hot"><td><b>主名稱</b>（平常這樣叫）</td><td style="font-size:24px"><b>可信依賴視圖</b></td><td style="font-size:24px"><b>Trustworthy Dependency Views</b></td></tr>
-      <tr><td><b>簡稱</b></td><td colspan="2">TDV</td></tr>
-      <tr><td><b>完整名</b>（論文標題）</td><td>可信依賴視圖：由可靠度不一的來源合成依賴圖、指標與報告的 Pattern Language</td><td>Trustworthy Dependency Views: A Pattern Language for Synthesizing Dependency Graphs, Metrics, and Reports from Sources of Unequal Confidence</td></tr>
+      <tr><th style="width:18%"></th><th style="width:41%">中文</th><th>English</th></tr>
+      <tr class="hot"><td><b>主名稱</b></td><td style="font-size:24px"><b>DepWeaver</b></td><td style="font-size:24px"><b>DepWeaver</b></td></tr>
+      <tr><td><b>完整名</b></td><td>DepWeaver：基於多來源融合與對話式補值的微服務相依圖自動建構方法</td><td>DepWeaver: A Multi-Source Fusion Approach to Automated Microservice Dependency Graph Construction with Conversational Gap-Filling</td></tr>
+      <tr><td><b>這篇的定位</b></td><td colspan="2">上面那個方法的 <b>pattern language</b>：從 DepWeaver 兩年的開發與真環境驗證裡抽出來、別人也能用的設計知識</td></tr>
     </table>
-    <div class="two" style="gap:24px;margin-top:18px">
+    <div class="two" style="gap:24px;margin-top:16px">
       <div>
-        <p class="sub" style="margin-top:0">命名理由（寫進論文開頭）</p>
+        <p class="sub" style="margin-top:0">為什麼用工具與碩論的名字</p>
         <ul style="font-size:17px">
-          <li>用<b>讀者要的結果</b>（視圖可信）命名，不用手段（分級、單一模型、程式寫事實）——五個 pattern 各是手段，「視圖可信」是<b>唯一共同的目的</b></li>
-          <li>說「依賴<b>視圖</b>」不說「依賴<b>圖</b>」：指標與報告也是視圖，<b>一半的 pattern 在講圖以外的產物</b>（③④⑤）</li>
-          <li>副標三件事對應 §6.1 的三個適用條件：輸入是<b>可靠度不一的來源</b>、輸出是<b>圖、指標、報告</b>、動詞是<b>合成</b>不是抽取</li>
+          <li>language 和碩論是<b>同一件工作的兩種寫法</b>：碩論講方法與實驗，這篇講從中抽出的設計知識。同一個名字，讀者一看就知道關係。</li>
+          <li>碩論之後還會往下做得更深，名字先統一，之後不必再對照。</li>
+          <li><i>weave</i>（織）本身就是這個 language 的主軸：三種可靠度不同的來源<b>織成同一張圖</b>而不是三選一（①②），織的時候要誠實（③④⑤）。</li>
         </ul>
       </div>
       <div>
-        <p class="sub" style="margin-top:0">沒選的名字，也寫下來</p>
+        <p class="sub" style="margin-top:0">曾用過的名字，都留下來</p>
         <table class="sm">
-          <tr><th style="width:44%">候選</th><th>為什麼不選</th></tr>
-          <tr><td>多來源證據融合</td><td>講的是手段；「證據」這個字現在只留給來源本身</td></tr>
-          <tr><td>誠實的依賴圖</td><td>漏掉指標與報告</td></tr>
-          <tr><td>依賴分析的信心 pattern</td><td>只涵蓋 ①④；② 與 ③ 跟信心無關</td></tr>
-          <tr><td>9 月的標題 <i>Trustworthy Dependency Views: A Pattern Language</i></td><td>主名稱其實沒變；缺的是副標說清楚輸入、輸出、動詞，以及<b>把它當名字來用</b>——9 月的簡報從頭到尾沒出現過</td></tr>
+          <tr><th style="width:46%">名字</th><th>什麼時候、為什麼換</th></tr>
+          <tr><td>依賴圖的誠實呈現<br><span class="cap" style="text-align:left">Honest Dependency Views</span></td><td>9/14 目錄的候選組合 A；「誠實」要留給 ④，兩層同一個字會混</td></tr>
+          <tr><td>可信的依賴視圖<br><span class="cap" style="text-align:left">Trustworthy Dependency Views</span></td><td>9/18、9/25 兩次簡報與論文初稿；只講結果，看不出和 DepWeaver、碩論的關係</td></tr>
+          <tr class="hot"><td><b>DepWeaver</b>＋碩論題目</td><td><b>10/6 定案</b></td></tr>
         </table>
+        <div class="note" style="margin-top:10px;font-size:14.5px"><b>兩件投稿前要處理的：</b>PLoP 的標題慣例是「A Pattern Language for …」，現在是方法名加「— A Pattern Language」，要看 shepherd 接不接受；碩論題目用「相依」、論文內文用「依賴」，要統一。</div>
       </div>
     </div>
-    <div class="notes"><b>講稿</b>　名稱定了：可信依賴視圖、Trustworthy Dependency Views、簡稱 TDV，完整名加副標。三條理由：用結果命名、說視圖不說圖、副標對應三個適用條件。右邊最後一列要誠實講：九月的標題已經是這個主名稱，差的是我從來沒把它當名字用。</div>
+    <div class="notes"><b>講稿</b>　名稱定了：就用工具和碩論的名字 DepWeaver，完整名是碩論的中英文題目。理由：language 和碩論是同一件工作的兩種寫法，同一個名字讀者一看就知道關係；碩論之後會做更深，名字先統一。weave 本身就是 language 的主軸。右邊是曾用過的名字，都留在論文裡當別名。兩件投稿前要處理：標題形式、相依與依賴統一。</div>
   </div>
   <div class="ftr"></div><div class="num">9</div>
 </section>
