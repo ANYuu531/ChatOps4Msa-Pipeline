@@ -579,6 +579,43 @@ public class AliasAskFlowTest {
         assertTrue(out.contains("MyAppThriftClient calls FooService."), "an ignored name is not rewritten");
     }
 
+    @Test
+    void severalNamesInOneWikiFieldAreResolvedOneByOne() {
+        assertEquals(List.of("cloud-simple-service", "cloud-simple-serviceB"),
+                DocGraphMerger.splitNames("cloud-simple-service, cloud-simple-serviceB"));
+        assertEquals(List.of("a", "b", "c"), DocGraphMerger.splitNames("a; b and c"));
+        assertEquals(List.of("simple-service"), DocGraphMerger.splitNames("simple-service"));
+        assertTrue(DocGraphMerger.splitNames("").isEmpty());
+
+        // The fourth Discord run: the consumers "cloud-simple-service, cloud-simple-serviceB"
+        // were asked about as one name although both had been answered already.
+        DependencyGraph g = new DependencyGraph("");
+        for (String s : new String[]{"configserver", "simple-service", "simple-serviceb", "cloud-simple-service"}) {
+            g.addNode(s, DependencyGraph.KIND_SERVICE);
+        }
+        AliasResolution.Answers answers = new AliasResolution.Answers();
+        answers.put("cloud-config-server", "configserver");
+        answers.put("cloud-simple-service", "simple-service");
+        answers.put("cloud-simple-serviceB", "simple-serviceb");
+        AliasResolution.Questions questions = new AliasResolution.Questions();
+        String notes = "{ \"asynchronous_workflows\": [ { \"producer\": \"cloud-config-server\", \"broker\": \"RabbitMQ\","
+                + " \"consumer\": \"cloud-simple-service, cloud-simple-serviceB\" } ] }";
+
+        DocGraphMerger.merge(g, notes, answers, questions);
+
+        assertTrue(questions.isEmpty(), "every name in the list was answered: " + questions.list().stream().map(q -> q.name).toList());
+        assertTrue(g.getEdges().stream().anyMatch(e -> e.source.equals("configserver") && e.target.equals("rabbitmq")));
+        assertTrue(g.getEdges().stream().anyMatch(e -> e.source.equals("rabbitmq") && e.target.equals("simple-service")));
+        assertTrue(g.getEdges().stream().anyMatch(e -> e.source.equals("rabbitmq") && e.target.equals("simple-serviceb")));
+
+        // A candidate is offered under the name it will have, not one about to be retired.
+        AliasResolution.Questions again = new AliasResolution.Questions();
+        DocGraphMerger.merge(g, "{ \"synchronous_candidates\": [ { \"source\": \"configserver\", \"target\": \"Simple Svc\", \"dependency_type\": \"rest\" } ] }",
+                answers, again);
+        assertEquals(1, again.size());
+        assertFalse(again.list().get(0).candidates.contains("cloud-simple-service"), again.list().get(0).candidates.toString());
+    }
+
     // ---------- persistence ----------
 
     @Test

@@ -3,7 +3,9 @@ package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -54,7 +56,12 @@ public class DocGraphMerger {
             knownNodes.add(node.id);
             if (node.kind == null || DependencyGraph.KIND_SERVICE.equals(node.kind)
                     || DependencyGraph.KIND_GATEWAY.equals(node.kind)) {
-                knownServices.add(node.id);
+                // A node the operator has already folded onto another is offered under
+                // the name it will have, not the one the normaliser is about to retire.
+                String decided = this.answers.decisionFor(node.id);
+                boolean renamed = decided != null && !AliasResolution.IGNORE.equals(decided)
+                        && !AliasResolution.NEW.equals(decided) && graph.findNode(decided) != null;
+                knownServices.add(renamed ? decided : node.id);
             }
         }
     }
@@ -151,11 +158,30 @@ public class DocGraphMerger {
                     + rawBroker + " -> " + it.optString("consumer", "");
             String broker = resolveNode(rawBroker, DependencyGraph.KIND_QUEUE, seenIn);
             if (broker == null) continue;
-            String producer = resolveNode(it.optString("producer", ""), null, seenIn);
-            String consumer = resolveNode(it.optString("consumer", ""), null, seenIn);
-            if (producer != null && !producer.equals(broker)) addDocEdge(producer, broker, "async", it);
-            if (consumer != null && !consumer.equals(broker)) addDocEdge(broker, consumer, "async", it);
+            // The wiki lists several producers or consumers in one field —
+            // "cloud-simple-service, cloud-simple-serviceB" — which, taken as one name,
+            // matched nothing and was asked about as a whole (2026-10-06). Each name
+            // is resolved on its own.
+            for (String raw : splitNames(it.optString("producer", ""))) {
+                String producer = resolveNode(raw, null, seenIn);
+                if (producer != null && !producer.equals(broker)) addDocEdge(producer, broker, "async", it);
+            }
+            for (String raw : splitNames(it.optString("consumer", ""))) {
+                String consumer = resolveNode(raw, null, seenIn);
+                if (consumer != null && !consumer.equals(broker)) addDocEdge(broker, consumer, "async", it);
+            }
         }
+    }
+
+    /** "a, b and c" / "a; b" / "a / b" → [a, b, c]; a single name comes back as itself. */
+    public static List<String> splitNames(String field) {
+        List<String> out = new ArrayList<>();
+        if (field == null) return out;
+        for (String part : field.split("\\s*(,|;|/|\\band\\b|&)\\s*")) {
+            String p = part.trim();
+            if (!p.isEmpty()) out.add(p);
+        }
+        return out;
     }
 
     /**
