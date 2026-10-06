@@ -201,7 +201,7 @@ public class ModalListener extends ListenerAdapter {
         // Whatever was not answered (blank or unreadable) stays pending for the next round.
         AliasResolution.Questions stillPending = new AliasResolution.Questions();
         for (AliasResolution.Question q : pending) {
-            if (!answers.has(q.name)) stillPending.add(q.name, q.origin, q.seenIn, q.candidates);
+            if (!answers.has(q.name)) stillPending.addWithCandidates(q.name, q.origin, q.seenIn, q.candidates);
         }
         stateStore.putStage(testerId, DependencyAnalysisStateStore.STAGE_PENDING_ALIASES,
                 stillPending.isEmpty() ? "" : stillPending.toJson());

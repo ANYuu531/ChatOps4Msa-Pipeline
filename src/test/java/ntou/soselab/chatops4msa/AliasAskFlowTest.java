@@ -12,6 +12,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -326,6 +327,139 @@ public class AliasAskFlowTest {
         assertFalse(text.contains("the datastore is deployed"), "nothing was deployed or queried");
     }
 
+    // ---------- the first Discord run's graph (2026-10-06) ----------
+
+    /** What the code layer drew for spring-cloud-microservice: module names beside Compose names. */
+    private static DependencyGraph moduleAndComposeNames() {
+        DependencyGraph g = new DependencyGraph("");
+        for (String s : new String[]{"gateway", "simple-service", "simple-service2", "simple-serviceb",
+                "simple-ui", "configserver", "discovery", "zipkin",
+                "cloud-simple-service", "cloud-simple-serviceb", "cloud-simple-ui", "cloud-config-server"}) {
+            g.addNode(s, DependencyGraph.KIND_SERVICE);
+        }
+        g.addNode("mysql", DependencyGraph.KIND_DB);
+        g.addEdge("gateway", "simple-service", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "compose");
+        g.addEdge("gateway", "cloud-simple-service", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "route");
+        g.addEdge("gateway", "cloud-simple-serviceb", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "route");
+        g.addEdge("gateway", "cloud-simple-ui", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "route");
+        g.addEdge("cloud-simple-service", "mysql", "db", DependencyGraph.PROV_DOC, DependencyGraph.CONF_DOCUMENTED, false, 0, "pom");
+        g.addEdge("cloud-config-server", "discovery", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "bootstrap");
+        g.addEdge("simple-service2", "discovery", "sync-http", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "compose");
+        return g;
+    }
+
+    @Test
+    void anAnswerAlsoRenamesANodeTheCodeLayerHadAlreadyDrawn() {
+        AliasResolution.Answers answers = new AliasResolution.Answers();
+        answers.put("cloud-simple-serviceB", "simple-serviceb");
+        DependencyGraph g = moduleAndComposeNames();
+
+        GraphNormalizer.normalize(g, answers, null);
+
+        assertNull(g.findNode("cloud-simple-serviceb"), "the operator said it is simple-serviceb");
+        assertTrue(g.getEdges().stream().anyMatch(e -> e.source.equals("gateway") && e.target.equals("simple-serviceb")));
+    }
+
+    @Test
+    void twoNamesThatDifferOnlyByAPrefixAreAskedAboutAndBothStayUntilAnswered() {
+        DependencyGraph g = moduleAndComposeNames();
+        AliasResolution.Questions questions = new AliasResolution.Questions();
+
+        GraphNormalizer.normalize(g, null, questions);
+
+        Map<String, AliasResolution.Question> byName = new java.util.LinkedHashMap<>();
+        for (AliasResolution.Question q : questions.list()) byName.put(q.name, q);
+        assertEquals(Set.of("cloud-simple-service", "cloud-simple-serviceb", "cloud-simple-ui", "cloud-config-server"),
+                byName.keySet(), "and not simple-service2 / simple-serviceb against simple-service");
+        assertEquals("simple-service", byName.get("cloud-simple-service").candidates.get(0));
+        assertEquals("configserver", byName.get("cloud-config-server").candidates.get(0));
+        assertEquals("graph", byName.get("cloud-simple-ui").origin);
+        // Nothing merged by rule.
+        assertNotNull(g.findNode("cloud-simple-service"));
+        assertNotNull(g.findNode("simple-service"));
+
+        // Answered "1": folded onto the deployment name, edges and all.
+        AliasResolution.Answers answers = new AliasResolution.Answers();
+        answers.put("cloud-simple-service", "simple-service");
+        answers.put("cloud-config-server", "configserver");
+        answers.put("cloud-simple-ui", AliasResolution.NEW);   // "they are different": keep both, stop asking
+        DependencyGraph g2 = moduleAndComposeNames();
+        AliasResolution.Questions again = new AliasResolution.Questions();
+        GraphNormalizer.normalize(g2, answers, again);
+        assertNull(g2.findNode("cloud-simple-service"));
+        assertTrue(g2.getEdges().stream().anyMatch(e -> e.source.equals("simple-service") && e.target.equals("mysql")));
+        assertTrue(g2.getEdges().stream().anyMatch(e -> e.source.equals("configserver") && e.target.equals("discovery")));
+        assertNotNull(g2.findNode("cloud-simple-ui"));
+        assertEquals(List.of("cloud-simple-serviceb"), again.list().stream().map(q -> q.name).toList(),
+                "only the unanswered one is still asked");
+    }
+
+    @Test
+    void aBrowserCallToARelativeUrlIsNotACallToAnotherService() {
+        String js = "cloud-simple-ui/src/main/resources/static/js/app.js";
+        assertTrue(CodeGraphMerger.isRelativeBrowserCall("http-client", "users", js));
+        assertTrue(CodeGraphMerger.isRelativeBrowserCall("http-client", "/api/orders", js));
+        assertTrue(CodeGraphMerger.isRelativeBrowserCall("http-client", "./data.json", "web/index.html"));
+        assertFalse(CodeGraphMerger.isRelativeBrowserCall("http-client", "http://cloud-simple-service/user", js));
+        assertFalse(CodeGraphMerger.isRelativeBrowserCall("http-client", "${API_URL}/users", js), "a placeholder may resolve");
+        assertFalse(CodeGraphMerger.isRelativeBrowserCall("http-client", "users", "src/UserClient.java"), "server code is not a browser");
+        assertFalse(CodeGraphMerger.isRelativeBrowserCall("url", "users", js));
+
+        // End to end through the merge: no "users" node.
+        String ledger = "{\"edges\":[{\"section\":\"http-client\",\"fields\":{\"url\":\"users\",\"method\":\"GET\"},"
+                + "\"file\":\"" + js + "\",\"line\":7}]}";
+        DependencyGraph g = new DependencyGraph("");
+        g.addNode("simple-ui", DependencyGraph.KIND_SERVICE);
+        List<CodeGraphMerger.Unresolved> rest = CodeGraphMerger.merge(g, ledger, "zpng/spring-cloud-microservice-examples");
+        assertNull(g.findNode("users"));
+        assertTrue(rest.isEmpty(), "not a residue either: there is nothing to resolve");
+    }
+
+    @Test
+    void aStaticReportGivesTheRealReasonDeploymentIsUnknown() {
+        DependencyGraph g = new DependencyGraph("");
+        g.addNode("simple-service", DependencyGraph.KIND_SERVICE);
+        g.addNode("mysql", DependencyGraph.KIND_DB);
+        g.addEdge("simple-service", "mysql", "db", DependencyGraph.PROV_DOC, DependencyGraph.CONF_DOCUMENTED, false, 0, "pom");
+
+        String section = DependencyReportService.infrastructureSection(g, true);
+        assertTrue(section.contains("Not determined (static run: no cluster was queried)"));
+        assertFalse(section.contains("StatefulSet"));
+        assertTrue(DependencyReportService.infrastructureSection(g, false).contains("StatefulSet"),
+                "the runtime wording is unchanged");
+    }
+
+    @Test
+    void theReportPromptCarriesTheGraphNamesAndTheOperatorsAnswers() {
+        AliasResolution.Answers answers = new AliasResolution.Answers();
+        answers.put("cloud-simple-serviceB", "simple-serviceb");
+        answers.put("MyAppThriftClient", AliasResolution.IGNORE);
+        answers.put("cloud-dummy-service", AliasResolution.NEW);
+
+        String text = DependencyReportService.serviceNamesForPrompt(moduleAndComposeNames(), answers);
+
+        assertTrue(text.contains("## Service names on the graph"));
+        assertTrue(text.contains("simple-serviceb"));
+        assertFalse(text.contains("mysql"), "only services");
+        assertTrue(text.contains("- cloud-simple-serviceB = simple-serviceb"));
+        assertTrue(text.contains("- MyAppThriftClient = ignored (not a service)"));
+        assertTrue(text.contains("- cloud-dummy-service = cloud-dummy-service (a service of its own)"));
+        assertEquals("", DependencyReportService.serviceNamesForPrompt(null, null));
+    }
+
+    @Test
+    void aWrongAnswerCanBeTakenBackByForgettingTheRepositorysAnswers(@TempDir Path dir) {
+        DependencyAnalysisStateStore store = new DependencyAnalysisStateStore(dir.toString(), 24);
+        AliasResolution.Answers answers = new AliasResolution.Answers();
+        answers.put("Zipkin Server", AliasResolution.NEW);   // should have been "zipkin"
+        store.saveProjectAliases("zpng/spring-cloud-microservice-examples", answers.toJson());
+
+        assertTrue(store.removeProjectAliases("zpng/spring-cloud-microservice-examples"));
+        assertFalse(store.removeProjectAliases("zpng/spring-cloud-microservice-examples"), "nothing left");
+        assertEquals("", store.start("u1", "zpng/spring-cloud-microservice-examples", "none")
+                .stage(DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS), "the next run asks again");
+    }
+
     // ---------- persistence ----------
 
     @Test
@@ -388,7 +522,7 @@ public class AliasAskFlowTest {
         assertTrue(text.contains("# Names resolved by the operator"));
         assertTrue(text.contains("`Shipping Hub` → `shipping`"));
         assertTrue(text.contains("`Netflix Eureka` ignored"));
-        assertTrue(text.contains("`Pricing Engine` added as a new service node"));
+        assertTrue(text.contains("`Pricing Engine` kept as its own service node"));
         assertTrue(text.contains("not written by the language model"));
     }
 }

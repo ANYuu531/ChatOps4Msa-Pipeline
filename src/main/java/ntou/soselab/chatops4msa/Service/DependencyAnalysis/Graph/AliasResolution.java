@@ -170,6 +170,27 @@ public final class AliasResolution {
             byKey.put(k, new Question(name.trim(), origin, seenIn == null ? "" : seenIn, candidates, 1));
         }
 
+        /**
+         * Records a question whose candidates are already known — a suspected duplicate
+         * names exactly the node(s) it duplicates, which a similarity ranking may score
+         * too low to show ({@code cloud-config-server} against {@code configserver}).
+         */
+        public void addWithCandidates(String name, String origin, String seenIn, List<String> candidates) {
+            if (name == null || name.isBlank()) return;
+            String k = key(name);
+            if (k.isEmpty()) return;
+            Question existing = byKey.get(k);
+            if (existing != null) {
+                existing.mentions++;
+                return;
+            }
+            List<String> given = new ArrayList<>();
+            if (candidates != null) {
+                for (String c : candidates) if (c != null && !key(c).equals(k) && given.size() < MAX_CANDIDATES) given.add(c);
+            }
+            byKey.put(k, new Question(name.trim(), origin, seenIn == null ? "" : seenIn, given, 1));
+        }
+
         public List<Question> list() {
             return new ArrayList<>(byKey.values());
         }
@@ -442,7 +463,7 @@ public final class AliasResolution {
     /** How a decision reads back to the operator. */
     public static String describe(String decision) {
         if (IGNORE.equals(decision)) return "ignored (not a service on this graph)";
-        if (NEW.equals(decision)) return "added as a new service node";
+        if (NEW.equals(decision)) return "kept as its own service node";
         return "→ `" + decision + "`";
     }
 }

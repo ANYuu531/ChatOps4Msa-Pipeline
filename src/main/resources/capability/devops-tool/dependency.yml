@@ -826,3 +826,15 @@ low_code:
         - toolkit-depstate-ask-button: {}
 
         - toolkit-depstate-checkpoint: {}
+
+    # Forgets the service-name answers remembered for a repository (the "Resolve
+    # names" form). A name that has an answer is never asked again, so this is the
+    # way to take back a wrong one; the next analysis of the repository asks anew.
+    - name: reset-dependency-aliases
+      parameter:
+        repo_name: GitHub repository in owner/repo format, e.g. "myorg/bookinfo"
+      description: Forget the service-name answers remembered for a repository, so the next analysis asks again.
+      access: public
+      body:
+        - toolkit-depstate-reset-aliases:
+            repo_name: ${repo_name}

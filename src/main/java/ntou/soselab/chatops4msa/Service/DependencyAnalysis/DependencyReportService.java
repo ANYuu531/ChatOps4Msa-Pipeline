@@ -89,9 +89,15 @@ public class DependencyReportService {
         // Build the graph FIRST: it is the deterministic answer, and both the report's
         // dependency section and the posted picture are derived from it.
         DependencyGraph graph = buildGraph(state);
+        AliasResolution.Answers aliasAnswers = AliasResolution.Answers.fromJson(
+                state.stage(DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS));
 
         String prompt = "## Analysis mode (greenfield = static, no cluster; runtime = a namespace was given)\n"
                 + mode + "\n\n"
+                // The notes name services by module or class; the graph by deployment name.
+                // Without these the report said cloud-api-gateway -> cloud-simple-serviceB
+                // while the graph beside it said gateway -> simple-serviceb (2026-10-06).
+                + serviceNamesForPrompt(graph, aliasAnswers)
                 + "## Documentation + code dependency notes\n"
                 + state.stage(DependencyAnalysisStateStore.STAGE_MERGED_NOTES) + "\n\n"
                 + "## Kubernetes / Istio runtime notes\n"
@@ -112,9 +118,8 @@ public class DependencyReportService {
 
         String report = "## Microservice Dependency Analysis Report\n"
                 + "**Repository:** `" + state.repoName + "` | **Namespace:** `" + state.namespace + "`\n\n"
-                + spliceInfrastructureSection(response, graph)
-                + nameResolutionSection(AliasResolution.Answers.fromJson(
-                        state.stage(DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS)));
+                + spliceInfrastructureSection(response, graph, greenfield)
+                + nameResolutionSection(aliasAnswers);
         try {
             // toolkitDiscordText auto-sends as a file when the text is long,
             // matching how the report is delivered from the low-code flow.
@@ -145,7 +150,11 @@ public class DependencyReportService {
      * the facts are never lost to a formatting surprise.
      */
     static String spliceInfrastructureSection(String response, DependencyGraph graph) {
-        String section = infrastructureSection(graph);
+        return spliceInfrastructureSection(response, graph, false);
+    }
+
+    static String spliceInfrastructureSection(String response, DependencyGraph graph, boolean greenfield) {
+        String section = infrastructureSection(graph, greenfield);
         if (response == null || response.isBlank()) return section;
 
         java.util.regex.Matcher six = java.util.regex.Pattern
@@ -176,6 +185,16 @@ public class DependencyReportService {
      * language — applied to the last place that was still ignoring it.
      */
     static String infrastructureSection(DependencyGraph graph) {
+        return infrastructureSection(graph, false);
+    }
+
+    /**
+     * @param greenfield a static run: no cluster was queried, so "deployed" is unknown
+     *                   for that reason and no other — the runtime wording ("externally
+     *                   managed, or a StatefulSet") gave a static report a reason that
+     *                   was not true (2026-10-06)
+     */
+    public static String infrastructureSection(DependencyGraph graph, boolean greenfield) {
         StringBuilder sb = new StringBuilder("# 5. Infrastructure Dependencies\n\n");
         if (graph == null || graph.isEmpty()) {
             sb.append("None resolved from the collected provenance.\n\n");
@@ -227,6 +246,7 @@ public class DependencyReportService {
             sb.append("- Deployed: ").append(
                     Boolean.TRUE.equals(target.deployed) ? "Yes"
                             : Boolean.FALSE.equals(target.deployed) ? "No — referenced but not running"
+                            : greenfield ? "Not determined (static run: no cluster was queried)"
                             : "Not determined (externally managed, or a StatefulSet rather than a Deployment)")
                     .append('\n');
             if (!edge.provenanceRefs.isEmpty()) {
@@ -238,6 +258,36 @@ public class DependencyReportService {
         sb.append("_This section is generated deterministically from the dependency graph, "
                 + "not written by the language model, so it always agrees with the graph "
                 + "posted alongside this report._\n\n");
+        return sb.toString();
+    }
+
+    /**
+     * The graph's service names and the operator's name answers, for the report prompt,
+     * so the prose names each service the way the graph beside it does.
+     */
+    public static String serviceNamesForPrompt(DependencyGraph graph, AliasResolution.Answers answers) {
+        StringBuilder sb = new StringBuilder();
+        if (graph != null && !graph.isEmpty()) {
+            List<String> names = new ArrayList<>();
+            for (DependencyGraph.Node n : graph.getNodes()) {
+                if (n.kind == null || DependencyGraph.KIND_SERVICE.equals(n.kind)
+                        || DependencyGraph.KIND_GATEWAY.equals(n.kind)) names.add(n.id);
+            }
+            java.util.Collections.sort(names);
+            sb.append("## Service names on the graph (use these names)\n")
+                    .append(String.join(", ", names)).append("\n\n");
+        }
+        if (answers != null && !answers.isEmpty()) {
+            sb.append("## Service names resolved by the operator\n");
+            for (Map.Entry<String, String> e : answers.asMap().entrySet()) {
+                String d = e.getValue();
+                sb.append("- ").append(e.getKey()).append(" = ").append(
+                        AliasResolution.IGNORE.equals(d) ? "ignored (not a service)"
+                                : AliasResolution.NEW.equals(d) ? AliasResolution.nodeId(e.getKey()) + " (a service of its own)"
+                                : d).append('\n');
+            }
+            sb.append('\n');
+        }
         return sb.toString();
     }
 

@@ -108,6 +108,23 @@ python3 docs/generalization/external/aliases/agreement_one.py $S/r2/spring-cloud
 - 既有七個專案的對照（`ExternalTruthAgreementTest`，讀的是 `docs/generalization/external/*.summary.md`，**沒有換成帶答案的版本**）逐項不變；整體 91／95 的數字維持原樣，因為那是「不問人」的結果，要跟「問人之後」分開講。
 - 誠實的界線：第三題的候選排序不準（`cloud-eureka-server` 應該是 `discovery`，排序靠詞彙相似度猜不到），操作者要自己打名字；候選只是提示，從來不自動決定。第二、三題答了之後那兩條 config 邊**仍然沒畫**，因為目標是 eureka URL，離線沒有 LLM 對目標——只有來源被改成真名後交給 LLM 的殘餘清單（線上才會接著解）。
 
+## 5.1 第一次 Discord 真跑（2026-10-06，機器 B，greenfield）抓到的問題
+
+操作者是作者本人。問了 8 題（DeepWiki 那層比離線多出 `cloud-simple-serviceB`、`cloud-dummy-service`、`MyAppThriftClient`、`FooService`、`Zipkin Server`），答完後 `hystrix → gateway`、`hystrix → discovery` 都畫出來了，報告最後一節正確列出 8 個答案。但圖與報告暴露六個問題，全部當天修掉：
+
+| # | 問題 | 誰的錯 | 修法 |
+|---|---|---|---|
+| 1 | 表單只接受候選清單裡的 id；最關鍵的 `discovery`、`simple-serviceb` 不在任何候選裡 | 工具 | 問題旁邊存一份「圖上所有服務 id」，答案對它檢查 |
+| 2 | greenfield 的覆蓋率訊息寫「Istio observed 0/23、0%」「the datastore is deployed」 | 工具（違反 pattern ⑤） | greenfield 改貼「Not measured」，宣告的邊列為部署後要驗的 |
+| 3 | 同一服務兩個節點：`cloud-simple-service`／`simple-service` 等四對（模組名 vs 部署名），兩個都是節點所以從沒被問 | 工具 | 只差 ≥3 字前後綴的兩個服務名 → 問「是不是同一個」，兩個都留著直到回答；不自動合併 |
+| 4 | 答過 `cloud-simple-serviceB → simple-serviceb`，程式碼層早已建好的 `cloud-simple-serviceb` 節點沒被改名 | 工具 | 答案也套用到圖上已有的節點 |
+| 5 | 前端 `app.js` 的 `$http.get('users')` 被 LLM 讀成主機，畫出 `simple-ui → users` | 工具 | 前端檔案裡沒有 scheme 與主機的相對 URL 不算呼叫別的服務 |
+| 6 | `Zipkin Server` 答成 `new`（應為 `zipkin`），介面上無法改 | 答案（作者事先沒列到這題） | 新斜線指令 `/reset dependency aliases repo_name:…` 忘掉該 repo 的答案 |
+
+另外兩處報告措辭：LLM 寫的第 2／4／6 節用模組名、程式寫的第 5 節用圖上的名字 → prompt 現在帶「圖上的服務名」與「操作者的答案」，並要求用圖上的名字；第 5 節 greenfield 的 Deployed 理由改成「static run: no cluster was queried」。
+
+修完後離線重跑同一個專案（帶第一次真跑的答案、Zipkin 改正）：第一輪多問 3 題重複名字（`cloud-config-server`、`cloud-simple-service`、`cloud-simple-ui`），答完 **12 個節點、每個服務只出現一次，對照資料集 26/26**。
+
 ## 6. 真環境要驗的事（機器 B）
 
 1. 重編（`--build`），先 grep `Started ChatOps4MsaApplication`。

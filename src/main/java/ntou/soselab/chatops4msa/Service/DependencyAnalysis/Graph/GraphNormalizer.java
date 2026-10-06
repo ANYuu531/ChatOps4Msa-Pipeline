@@ -90,6 +90,8 @@ public final class GraphNormalizer {
         if (graph == null) return;
         AliasResolution.Answers decided = answers == null ? new AliasResolution.Answers() : answers;
 
+        applyAnswersToNodes(graph, decided);
+
         // Snapshot ids + deployment status up front: the pass mutates the graph.
         Map<String, Boolean> deployed = new LinkedHashMap<>();
         for (DependencyGraph.Node n : graph.getNodes()) deployed.put(n.id, n.deployed);
@@ -168,6 +170,70 @@ public final class GraphNormalizer {
         }
         for (DependencyGraph.Node n : new ArrayList<>(graph.getNodes())) {
             if (n.docIntroduced && !Boolean.TRUE.equals(n.deployed) && !touched.contains(n.id)) graph.removeNode(n.id);
+        }
+
+        askAboutDuplicates(graph, decided, questions);
+    }
+
+    /**
+     * The operator's answers applied to nodes already on the graph. The merge steps
+     * apply them where a name is being resolved; a node the code layer had already
+     * created under that name was left alone — spring-cloud-microservice kept a
+     * {@code cloud-simple-serviceb} beside {@code simple-serviceb} after the operator
+     * had said they are one (2026-10-06). A library-named node is decided in the loop
+     * below, and a deployed workload is never touched.
+     */
+    private static void applyAnswersToNodes(DependencyGraph graph, AliasResolution.Answers answers) {
+        if (answers.isEmpty()) return;
+        for (DependencyGraph.Node n : new ArrayList<>(graph.getNodes())) {
+            if (Boolean.TRUE.equals(n.deployed) || LIBRARY_PHANTOMS.contains(n.id.toLowerCase(Locale.ROOT))) continue;
+            String decision = answers.decisionFor(n.id);
+            if (decision == null || AliasResolution.NEW.equals(decision)) continue;
+            if (AliasResolution.IGNORE.equals(decision)) {
+                graph.removeNode(n.id);
+            } else if (!decision.equalsIgnoreCase(n.id) && graph.findNode(decision) != null) {
+                graph.renameNode(n.id, decision);
+            }
+        }
+    }
+
+    /**
+     * Two service nodes whose names differ only by a prefix or suffix of a few letters
+     * — {@code cloud-simple-service} and {@code simple-service}, {@code cloud-config-server}
+     * and {@code configserver}: one is the module's name (what a gateway route or a
+     * Eureka service id says), the other the deployment's. Both are on the graph, so
+     * neither was ever an unresolved name and nothing asked. Merging them by rule is
+     * what the matching rules deliberately do not do (it would fold
+     * {@code cloud-simple-service} onto any {@code simple}); asking is the honest
+     * middle. Both stay on the graph until the operator answers.
+     *
+     * <p>Not asked when the shorter name is under five letters, when the extra part is
+     * under three (simple-service2 and simple-serviceb are distinct services), when
+     * both are running workloads, or when the operator already decided.
+     */
+    private static void askAboutDuplicates(DependencyGraph graph, AliasResolution.Answers answers,
+                                           AliasResolution.Questions questions) {
+        if (questions == null) return;
+        List<DependencyGraph.Node> services = new ArrayList<>();
+        for (DependencyGraph.Node n : graph.getNodes()) {
+            if (n.kind == null || DependencyGraph.KIND_SERVICE.equals(n.kind)
+                    || DependencyGraph.KIND_GATEWAY.equals(n.kind)) services.add(n);
+        }
+        for (DependencyGraph.Node longer : services) {
+            if (answers.has(longer.id)) continue;
+            String la = lettersOnly(longer.id);
+            List<String> sameAs = new ArrayList<>();
+            for (DependencyGraph.Node shorter : services) {
+                if (shorter == longer) continue;
+                String lb = lettersOnly(shorter.id);
+                if (lb.length() < 5 || la.length() - lb.length() < 3) continue;
+                if (!la.endsWith(lb) && !la.startsWith(lb)) continue;
+                if (Boolean.TRUE.equals(longer.deployed) && Boolean.TRUE.equals(shorter.deployed)) continue;
+                sameAs.add(shorter.id);
+            }
+            if (sameAs.isEmpty()) continue;
+            questions.addWithCandidates(longer.id, "graph", "looks like the same service as `" + String.join("`, `", sameAs)
+                    + "` (one name is the other with a prefix or suffix); both stay on the graph until you say", sameAs);
         }
     }
 

@@ -19,6 +19,19 @@ ledgers are EMPTY ON PURPOSE; that is NOT a collection failure. In greenfield yo
     namespace to add runtime observations".
 If the mode is `runtime`, proceed exactly as specified below.
 
+SERVICE NAMES — READ SECOND. The input may contain a section "Service names on the
+graph" and a section "Service names resolved by the operator". The notes often name a
+service by its module or class name (cloud-api-gateway, cloud-simple-serviceB); the
+dependency graph posted beside this report names it by its deployment name (gateway,
+simple-serviceb). Whenever you write a service, use the graph's name:
+  - If the operator mapped a name to a service, write that service's name (you may add
+    the original in parentheses once, e.g. "gateway (cloud-api-gateway)").
+  - If the operator said a name is "ignored", it is not a service: do not list it as a
+    component or as either end of a dependency.
+  - Otherwise, if a name in the notes plainly is a graph name with a prefix such as
+    "cloud-", write the graph name.
+The report and the graph must name the same thing the same way.
+
 Generate a conservative provenance-based microservice dependency report from:
 
 1. DeepWiki Provenance Ledger

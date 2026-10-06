@@ -760,6 +760,12 @@ public class CodeGraphMerger {
             return;
         }
 
+        // A browser call with a relative URL goes back to the page's own origin — the
+        // service that serves the page — not to another service. spring-cloud-microservice's
+        // AngularJS front end does $http.get('users'); read as a host, that drew
+        // simple-ui -> users, a node that does not exist (2026-10-06).
+        if (isRelativeBrowserCall(section, rawTarget, file)) return;
+
         String fullHost = stripToHost(rawTarget);
         // localhost / 127.0.0.1 is the caller itself (a dev profile, a health check),
         // never another workload — piggymetrics and TeaStore both grew a "localhost" node.
@@ -1040,6 +1046,24 @@ public class CodeGraphMerger {
             }
         }
         return unique;
+    }
+
+    private static final java.util.regex.Pattern FRONTEND_FILE =
+            java.util.regex.Pattern.compile("(?i).*\\.(js|jsx|ts|tsx|vue|html|htm)$");
+
+    /**
+     * An HTTP call in browser-side code whose URL has no scheme and no host — a
+     * relative path ({@code 'users'}, {@code '/api/orders'}, {@code './data'}). A
+     * placeholder ({@code ${API}}, {@code process.env.X}) is not relative: it names an
+     * address the rest of the merge may still resolve.
+     */
+    public static boolean isRelativeBrowserCall(String section, String rawTarget, String file) {
+        if (!"http-client".equals(section) || rawTarget == null || file == null) return false;
+        if (!FRONTEND_FILE.matcher(file).matches()) return false;
+        String t = rawTarget.trim();
+        if (t.isEmpty() || t.contains("://") || t.startsWith("//")) return false;
+        if (t.contains("$") || t.contains("{") || t.contains("process.env")) return false;
+        return t.matches("[./]*[A-Za-z0-9_\\-./?=&%#]*");
     }
 
     /** Resolve a host/name to a known workload id, or null. Deterministic only. */

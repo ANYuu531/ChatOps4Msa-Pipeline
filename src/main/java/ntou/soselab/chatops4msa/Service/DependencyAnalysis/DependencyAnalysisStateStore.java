@@ -206,6 +206,22 @@ public class DependencyAnalysisStateStore {
         }
     }
 
+    /**
+     * Forgets the alias answers remembered for a repository, so the next analysis asks
+     * again. The only way to take back a wrong answer: the form never re-asks a name
+     * that has one (2026-10-06, "Zipkin Server" answered {@code new} instead of zipkin).
+     *
+     * @return whether there was anything to forget
+     */
+    public boolean removeProjectAliases(String repoName) {
+        try {
+            Path file = aliasFileOf(repoName);
+            return file != null && Files.deleteIfExists(file);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private Path aliasFileOf(String repoName) {
         if (repoName == null || repoName.isBlank()) return null;
         String safe = repoName.trim().toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9._-]+", "_");

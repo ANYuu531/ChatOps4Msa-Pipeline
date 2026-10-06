@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Checkpointing for the dependency analysis.
@@ -60,6 +61,41 @@ public class DepstateToolkit extends ToolkitFunction {
     }
 
     /**
+     * Forgets the service-name answers remembered for a repository — the way to take
+     * back a wrong answer, since a name that has one is never asked again. Also clears
+     * them from the caller's open checkpoint when it is the same repository, so a
+     * Generate report pressed afterwards does not apply them either.
+     */
+    public String toolkitDepstateResetAliases(String repo_name) {
+        String repo = repo_name == null ? "" : repo_name.trim();
+        if (repo.isEmpty()) return "[ERROR] repo_name is required.";
+
+        String remembered = stateStore.loadProjectAliases(repo);
+        AliasResolution.Answers answers = AliasResolution.Answers.fromJson(remembered);
+        boolean removed = stateStore.removeProjectAliases(repo);
+
+        String userId = requireUser();
+        DependencyAnalysisStateStore.State state = userId == null ? null : stateStore.get(userId);
+        boolean inCheckpoint = state != null && repo.equalsIgnoreCase(state.repoName)
+                && state.has(DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS);
+        if (inCheckpoint) stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS, "");
+
+        StringBuilder message = new StringBuilder();
+        if (!removed && !inCheckpoint) {
+            message.append("No service-name answers are remembered for `").append(repo).append("`; nothing to reset.");
+        } else {
+            message.append("**Forgot ").append(answers.size()).append(" service-name answer(s) for `")
+                    .append(repo).append("`.**\n");
+            for (Map.Entry<String, String> e : answers.asMap().entrySet()) {
+                message.append("• `").append(e.getKey()).append("` ").append(AliasResolution.describe(e.getValue())).append('\n');
+            }
+            message.append("\nThe next `/get dependency analysis` of this repository asks about these names again.");
+        }
+        jdaService.sendChatOpsChannelMessage(message.toString());
+        return message.toString();
+    }
+
+    /**
      * Posts the "Resolve names" button — the alias counterpart of the Tier 3 ask.
      *
      * The documentation and the residual code edges name services in their own words.
@@ -91,10 +127,11 @@ public class DepstateToolkit extends ToolkitFunction {
         StringBuilder message = new StringBuilder();
         message.append("**").append(list.size()).append(" name(s) in the docs/code do not match any "
                         + "service on the graph**\n")
-                .append("The tool does not guess which service a name means: each one is left off "
-                        + "the graph until you say. For each, answer with the service it refers to "
-                        + "(a candidate's number or the service id), `new` if it is a real service the "
-                        + "other layers missed, or `ignore` if it is not a service (a library, a "
+                .append("The tool does not guess which service a name means: a name it could not place "
+                        + "is left off the graph, and a suspected duplicate stays as it is, until you say. "
+                        + "For each, answer with the service it refers to "
+                        + "(a candidate's number or the service id), `new` if it is a service of its own, "
+                        + "or `ignore` if it is not a service (a library, a "
                         + "grouping, a technology label).\n\n");
         int shown = 0;
         for (AliasResolution.Question q : list) {
