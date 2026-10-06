@@ -7,6 +7,7 @@ finished deck weighs:
 
     {{LOGO}} {{CAT}} {{WAVE}}   the base64 assets from assets.json
     {{CHART:<name>}}            docs/charts/<name>.svg, inlined as a live <svg>
+    {{IMG:<file>}}              docs/deck-tools/img/<file>, inlined as a data URI (use in <img src>)
 
 Charts are inlined rather than linked so the deck is one portable file, and inlined as
 SVG rather than base64 so they stay vector in the printed PDF and scale with the slide.
@@ -34,12 +35,21 @@ def chart(name: str) -> str:
     return svg.replace("<svg ", '<svg class="chart" preserveAspectRatio="xMidYMid meet" ', 1)
 
 
+def image(name: str) -> str:
+    """A screenshot under docs/deck-tools/img/, inlined as a data URI for an <img src>."""
+    path = HERE / "img" / name
+    mime = "image/png" if path.suffix.lower() == ".png" else "image/jpeg"
+    import base64
+    return f"data:{mime};base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+
+
 def main(body_path: str, out_path: str) -> None:
     assets = json.loads((HERE / "assets.json").read_text())
     body = pathlib.Path(body_path).read_text()
     for key in ("LOGO", "CAT", "WAVE"):
         body = body.replace("{{%s}}" % key, assets[key.lower()])
     body = re.sub(r"\{\{CHART:([a-z0-9-]+)\}\}", lambda m: chart(m.group(1)), body)
+    body = re.sub(r"\{\{IMG:([A-Za-z0-9_.-]+)\}\}", lambda m: image(m.group(1)), body)
 
     missing = sorted(set(re.findall(r"\{\{[^}]+\}\}", body)))
     if missing:

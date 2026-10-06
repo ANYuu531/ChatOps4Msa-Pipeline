@@ -1,0 +1,927 @@
+<title>DepWeaver 上次反饋進度（三點）＋ pattern 草稿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+  /* SOSEL weekly-meeting deck style (docs/deck-template.html). Single theme on purpose. */
+  :root {
+    --coral: #ff7b7b; --pink: #f86bc5;
+    --grad: linear-gradient(90deg, #ff7b7b 0%, #f86bc5 100%);
+    --ink: #1c1c1c; --grey: #6f6f6f; --line: #e3e3e3; --paper: #ffffff; --ground: #f2f2f2;
+    --green: #2e8b57; --bubble: #d9d9d9;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; background: var(--ground); }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "Nunito", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; font-size: 18px; line-height: 1.55; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .9em; }
+  h1, h2, h3, h4 { margin: 0; font-weight: 800; }
+  p { margin: 0; }
+  ul { margin: .2rem 0 0; padding-left: 1.4em; }
+  ul ul { margin-top: .1rem; }
+  li { margin: .18rem 0; }
+  .id { color: var(--green); font-weight: 700; }
+  .k { font-weight: 800; }
+
+  .slide { position: relative; width: min(100vw, 1280px); aspect-ratio: 16 / 9; margin: 24px auto; background: var(--paper);
+    scroll-snap-align: center; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.08); display: grid; grid-template-rows: 64px 1fr 34px; }
+  .hdr { display: flex; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--line); box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+  .hdr img { height: 44px; }
+  .hdr .t { font-size: 24px; font-weight: 900; }
+  .hdr .t small { font-size: 13px; font-weight: 700; margin-left: 10px; color: var(--ink); }
+  .burger { margin-left: auto; width: 30px; display: grid; gap: 6px; }
+  .burger i { display: block; height: 3px; background: var(--coral); border-radius: 2px; }
+  .bd { padding: 18px 40px 10px; overflow: hidden; }
+  .ftr { background: var(--grad); }
+  .num { position: absolute; right: 22px; bottom: 16px; width: 54px; height: 54px; border-radius: 50%; background: var(--bubble);
+    color: #fff; font-weight: 800; font-size: 20px; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+
+  .sec { font-size: 22px; font-weight: 900; margin: 2px 0 8px; }
+  .sec::before { content: "丨"; margin-right: 2px; }
+  .sub { font-size: 19px; font-weight: 900; margin-top: 12px; }
+  .sub:first-child { margin-top: 0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; }
+  .two.w64 { grid-template-columns: 1.15fr .85fr; }
+  .two.w46 { grid-template-columns: .9fr 1.1fr; }
+  .two.w73 { grid-template-columns: 1.5fr 1fr; }
+  .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 26px; align-items: start; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 17px; }
+  th, td { border: 1px solid #222; padding: 7px 12px; text-align: left; vertical-align: top; }
+  th { font-weight: 800; text-align: center; background: #fff; }
+  td.c, th.c { text-align: center; }
+  table.sm { font-size: 15px; } table.sm th, table.sm td { padding: 5px 10px; }
+  table.xs { font-size: 14px; line-height: 1.45; } table.xs th, table.xs td { padding: 4px 8px; }
+  tr.hot td { background: #fff1f4; font-weight: 700; }
+  .tag { display: inline-block; padding: 1px 10px; border-radius: 6px; font-size: 14px; font-weight: 800; color: #fff; white-space: nowrap; }
+  .tag.code { background: #2f5fb3; } .tag.ai { background: #a24fd1; } .tag.mix { background: var(--grad); }
+  .ok { color: var(--green); font-weight: 800; } .bad { color: #d0342c; font-weight: 800; }
+
+  .box { border: 2.5px solid var(--coral); border-radius: 44px; padding: 26px 30px; background: #fff; min-height: 300px; font-size: 17px; }
+  .box h3 { text-align: center; font-size: 21px; margin-bottom: 12px; }
+  .box.hot { background: var(--grad); border: 0; color: #fff; }
+  .box.hot .id { color: #fff; text-decoration: underline; }
+  .note { border-left: 4px solid var(--coral); background: #fff6f6; padding: 8px 14px; font-size: 16px; margin-top: 12px; }
+  .stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 4px 0 12px; }
+  .stat div { border: 2px solid var(--coral); border-radius: 18px; padding: 8px 14px; text-align: center; }
+  .stat b { display: block; font-size: 30px; font-weight: 900; line-height: 1.2; color: #f0617f; }
+  .stat span { font-size: 14px; color: #333; }
+  .fig { text-align: center; }
+  .fig img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; }
+  .cap { font-size: 13px; color: var(--grey); margin-top: 4px; text-align: center; }
+  .pill2 { display: inline-block; background: var(--grad); color: #fff; font-weight: 800; padding: 1px 10px; border-radius: 6px; font-size: 14px; }
+  a { color: inherit; text-decoration: underline; text-decoration-color: var(--coral); text-decoration-thickness: 1.5px; text-underline-offset: 2.5px; }
+  a:hover { color: #d0347c; }
+  .box.hot a, .tag a { color: #fff; text-decoration-color: rgba(255,255,255,.8); }
+  .srcs { font-size: 12.5px; color: var(--grey); margin-top: 8px; line-height: 1.5; }
+  .srcs a { color: var(--grey); }
+  pre.code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.45; background: #f7f7f7; border-radius: 8px; padding: 9px 13px; margin: 6px 0; overflow: hidden; white-space: pre; }
+
+  /* A pattern section as it stands in the paper: the draft on the left, what to say on the right. */
+  .draft { border-left: 5px solid var(--pink); background: #fbfbfb; padding: 14px 20px; font-size: 17px; line-height: 1.65; border-radius: 0 10px 10px 0; }
+  .draft p { margin: 0 0 .55em; } .draft p:last-child { margin-bottom: 0; }
+  .draft ul, .draft ol { margin: .2em 0 .4em; padding-left: 1.3em; } .draft li { margin: .12em 0; }
+  .draft .lbl { display: inline-block; font-size: 12px; font-weight: 800; color: #fff; background: var(--pink); border-radius: 5px; padding: 0 8px; margin-bottom: 6px; letter-spacing: .04em; }
+  .draft blockquote { margin: 0 0 .5em; padding: 6px 12px; border-left: 3px solid var(--coral); background: #fff; font-weight: 700; }
+  .hl { background: #fff1a8; padding: 0 2px; border-radius: 3px; }
+  .pts { font-size: 17px; }
+  .pts h4 { font-size: 19px; margin-bottom: 6px; }
+  .pts h4::before { content: "◆ "; color: var(--coral); }
+  .pts ul { padding-left: 1.2em; } .pts li { margin: .3em 0; }
+  .pts .ask { margin-top: 12px; border: 1.5px dashed var(--coral); border-radius: 10px; padding: 8px 14px; font-size: 16px; }
+  .pts .ask b { color: #d0347c; }
+
+  /* A Discord exchange, drawn as a chat. */
+  .chat { display: grid; grid-template-columns: 74px 1fr; gap: 6px 12px; font-size: 13px; line-height: 1.45; }
+  .chat .who { font-weight: 800; color: var(--grey); text-align: right; padding-top: 7px; font-size: 12.5px; }
+  .chat .who.bot { color: #f0617f; }
+  .chat .msg { background: #f7f7f7; border-radius: 10px; padding: 7px 12px; }
+  .chat .msg.me { background: #eef6ff; }
+  .chat .btn { display: inline-block; border: 1.5px solid #5865f2; color: #5865f2; border-radius: 5px; padding: 0 9px; font-weight: 800; font-size: 12.5px; margin-top: 4px; }
+  .chat .form { border: 1.5px dashed #999; border-radius: 8px; padding: 6px 10px; margin-top: 2px; background: #fff; }
+  .chat .form label { display: block; font-size: 12px; color: var(--grey); margin-top: 3px; }
+  .chat .form input { display: block; width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 1px 8px; font: inherit; font-size: 13px; background: #fff; }
+
+  .cover { display: block; }
+  .cover .wave { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .cover .logo { position: absolute; left: 80px; top: 205px; height: 60px; }
+  .cover h1 { position: absolute; left: 80px; top: 285px; font-size: 62px; font-weight: 900; letter-spacing: .02em; }
+  .cover .when { position: absolute; left: 82px; top: 380px; color: var(--grey); font-size: 18px; }
+  .cover .pill { position: absolute; left: 70px; bottom: 96px; background: var(--grad); color: #fff; font-weight: 800; padding: 6px 18px; border-radius: 8px; font-size: 20px; }
+  .cover .cat { position: absolute; right: 120px; bottom: 90px; width: 380px; }
+  .cover .burger { position: absolute; right: 56px; top: 50px; width: 32px; }
+  .cover .ftr { display: none; }
+
+  .notes { display: none; position: absolute; left: 40px; right: 100px; bottom: 44px; background: rgba(255,255,255,.96); border-left: 4px solid var(--pink);
+    padding: 8px 14px; font-size: 14px; color: #333; box-shadow: 0 -2px 10px rgba(0,0,0,.1); }
+  body.show-notes .notes { display: block; }
+  .hud { position: fixed; right: 14px; top: 12px; display: flex; gap: .5rem; font-size: 13px; z-index: 5; }
+  .hud button { font: inherit; border: 1px solid #ccc; background: #fff; color: #333; border-radius: 6px; padding: .3em .7em; cursor: pointer; }
+  .hud button:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+  @page { size: 1280px 720px; margin: 0; }
+  @media print { html { scroll-snap-type: none; background: #fff; } .slide { margin: 0; box-shadow: none; page-break-after: always; width: 100%; } .hud { display: none; } }
+</style>
+
+<!-- 1 · 封面 -->
+<section class="slide cover" id="s1">
+  <img class="wave" src="{{WAVE}}" alt="">
+  <div class="burger"><i></i><i></i><i></i></div>
+  <img class="logo" src="{{LOGO}}" alt="SOSEL">
+  <h1>碩一週進度會議</h1>
+  <p class="when">會議時間：2026/10/9　·　主題：上次的反饋（三點）＋ pattern 草稿逐段</p>
+  <span class="pill">學生：李安喻</span>
+  <img class="cat" src="{{CAT}}" alt="">
+  <div class="notes"><b>講稿</b>　上次三點反饋都做完了，而且第一點「別名改成中途問使用者」在 Discord 真環境跑了五次，每次都抓到問題、當天修掉。後半段把 pattern ① 的草稿一段一段攤開，請老師直接看原文。</div>
+</section>
+
+<!-- 2 · 總覽 -->
+<section class="slide" id="s2">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 本週總覽 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">上次的三點反饋：都做完，第一點在真環境跑了五次</p>
+    <table class="sm">
+      <tr><th style="width:4%">#</th><th style="width:24%">反饋</th><th style="width:36%">做了什麼</th><th>結果</th></tr>
+      <tr><td class="c">1</td><td><b>別名</b>的問題像補流量那樣<b>在中間問使用者</b>；可以研究 langchain4j</td><td>找出工具<b>四個默默丟掉名字</b>的地方；沿用補流量「按鈕 → 表單 → 存檢查點 → 下一步套用」的路，對象換成名字。langchain4j 實測後<b>決定不用</b>（第 7 頁）</td><td><span class="mono">Resolve names</span> 按鈕；答案<b>程式解析、不經 LLM</b>、記在專案層級、寫進報告。<b>同一個專案</b>（上次簡報漏 2 條那個）離線 24/26 → 26/26；Discord 真跑 <b>5 次</b>，抓到 <b>13</b> 個問題全修</td></tr>
+      <tr><td class="c">2</td><td>不要用 <b>evidence</b>，用 <b>confidence</b></td><td>先查：程式碼早就有 <span class="mono">confidence</span>（三級）又有 <span class="mono">evidence</span>（出處清單）——<b>兩個概念</b>。分級叫 confidence，出處叫 <b>provenance</b>；碩論題目改 <b>Multi-Source</b> Fusion</td><td>程式與 prompt 70 個檔、論文全文；舊 JSON 鍵仍認。另外照上次說的：<b>分級由低到高講</b>、<b>「遙測」白話定義</b>（第 8 頁）</td></tr>
+      <tr><td class="c">3</td><td>pattern language 要<b>完整的中英文主名稱</b>；每個 pattern <b>寫得更完整</b></td><td>定名稱、寫命名理由；欄位 8 → <b>13</b>（別名、一句話、範例獨立成節…）；Context／Problem／Resulting Context／Related 擴寫</td><td><b>可信依賴視圖 / Trustworthy Dependency Views</b>；全文 647 → <b>858 行</b>；第 11–19 頁 <b>① 逐段放原文</b>，20–23 頁 ②–⑤ 各一頁</td></tr>
+    </table>
+    <p class="sub" style="margin-top:12px">這次最值得講的一件事</p>
+    <div class="note" style="margin-top:6px"><b>真環境每跑一次就抓到一兩個問題，五次都是。</b>上個月補流量的 Tier 3 也是真環境逼出六個 bug。這次最有代表性的一個：greenfield 模式沒有量任何東西，覆蓋率訊息卻寫「Istio observed 0 / 23 — 0%」——這正是 pattern ⑤「未量測不是零」在講的失敗，而且是我們自己的工具犯的。所以 pattern 不是事後整理出來的漂亮話，是每一次真跑都會再撞到一次的東西。</div>
+    <p class="cap" style="text-align:left;margin-top:8px">文件：docs/alias-ask-design-2026-10-02.md · docs/langchain4j-spike-2026-10-02.md · docs/asianplop-paper-zh.md</p>
+    <div class="notes"><b>講稿</b>　三點一句話各講一次。第一點不只實作，還在真環境跑了五次，每次都抓到問題。第二點改名之前先發現程式碼裡兩個概念都在，所以是分清楚不是換字。第三點名稱定了、欄位補到十三個，後半段直接看原文。下面那格是最值得講的：真環境每跑一次就抓到問題，其中一個正好是我們自己的 pattern 在講的失敗。</div>
+  </div>
+  <div class="ftr"></div><div class="num">2</div>
+</section>
+
+<!-- 3 · ① 四個丟掉的地方 -->
+<section class="slide" id="s3">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 別名改成問人 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">先找出工具「對不上名字就丟掉」的地方：有四個，都不留痕跡</p>
+    <table class="sm">
+      <tr><th style="width:5%">#</th><th style="width:28%">在哪裡</th><th style="width:34%">什麼情況</th><th>原本的行為</th></tr>
+      <tr><td class="c">1</td><td><span class="mono">DocGraphMerger</span> 第 4 步</td><td>文件（DeepWiki）提到一個服務名，kebab、去 <span class="mono">-client</span>、模組目錄後綴三條規則<b>都對不上</b></td><td>回傳 null，<b>這條邊消失</b></td></tr>
+      <tr><td class="c">2</td><td><span class="mono">CodeGraphMerger</span> 模糊比對</td><td>程式碼裡的短名字<b>同時符合多個節點</b></td><td>回傳 null，進殘餘清單交給 LLM</td></tr>
+      <tr><td class="c">3</td><td>LLM 殘餘邊對齊</td><td>LLM 也對不上（prompt 要它寧可 DROP 也不要猜）</td><td>那一列<b>丟掉，沒有紀錄</b></td></tr>
+      <tr class="hot"><td class="c">4</td><td><span class="mono">GraphNormalizer</span> 函式庫名單</td><td>節點名在函式庫名單裡，但程式碼／部署層在它身上畫了邊——<b>上次簡報漏的那 2 條就是這個</b>：Compose 的 <span class="id">hystrix</span> 是 dashboard 服務，被當 Hystrix 函式庫刪掉</td><td>整個節點連邊<b>刪掉，沒有紀錄</b></td></tr>
+    </table>
+    <p class="sub" style="margin-top:12px">為什麼不自己猜：兩個自動的選項都是錯的</p>
+    <div class="two" style="gap:22px;margin-top:4px">
+      <div class="box" style="min-height:0;padding:14px 22px;font-size:16px"><h3 style="font-size:18px;margin-bottom:6px">丟掉</h3>等於把<b>文件主張的依賴藏起來</b>，讀者不知道有東西被藏——違反我們自己 pattern ④「排除但揭露」。</div>
+      <div class="box" style="min-height:0;padding:14px 22px;font-size:16px"><h3 style="font-size:18px;margin-bottom:6px">模糊比對</h3>等於<b>憑相似度發明一條邊</b>。<span class="mono">Customer API</span> 配 <span class="id">customers-service</span> 看起來對，<span class="mono">cloud-simple-service</span> 配 <span class="id">simple</span> 就錯——上次第 7 頁講過為什麼不放寬。</div>
+    </div>
+    <div class="note" style="margin-top:12px;font-size:16px">跟補流量的 Tier 3 <b>結構相同</b>：自動的（規則、LLM）都試過之後剩下的，<b>是文件寫的別名、函式庫標籤，還是其他層都沒看到的真服務</b>——工具分不出來，人一眼就知道。</div>
+    <div class="notes"><b>講稿</b>　先找問題在哪。四個地方會把對不上的名字默默丟掉；第四個就是上次簡報說 spring-cloud-microservice 漏兩條、「工具的剩餘邊界、不修」的那個——這次重跑發現根因更單純：Compose 的 hystrix 是 dashboard 服務，但函式庫名單裡有 hystrix，整個節點被刪掉。「hystrix 是函式庫還是服務」規則分不出來，人一眼就知道，所以這正是該問人的地方。下面兩格是為什麼不猜。</div>
+  </div>
+  <div class="ftr"></div><div class="num">3</div>
+</section>
+
+<!-- 4 · ① 流程與真實對話 -->
+<section class="slide" id="s4">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 別名改成問人 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w46" style="gap:24px">
+      <div>
+        <p class="sec">沿用補流量那條路，對象換成名字</p>
+        <table class="xs">
+          <tr><th style="width:24%"></th><th>補流量（上個月）</th><th>合圖（這次）</th></tr>
+          <tr><td>問的東西</td><td>流量需要、推不出來的<b>值</b></td><td>文件／程式碼用的<b>名字</b>是圖上哪個服務</td></tr>
+          <tr><td>什麼時候</td><td colspan="2">收集結束、bot 閒置時；名字排在值前面</td></tr>
+          <tr><td>怎麼問</td><td colspan="2">訊息＋按鈕 → Discord 表單，一題一格，<b>最多五格</b>；答完回覆裡附下一輪按鈕</td></tr>
+          <tr><td>答案怎麼讀</td><td>原樣帶進請求</td><td><b>確定性解析</b>：候選編號、圖上任一服務 id、<span class="mono">new</span>、<span class="mono">ignore</span>；<b>看不懂就留著並回報</b></td></tr>
+          <tr><td>答完之後</td><td>重打一輪流量</td><td><b>不重跑</b>：按 Generate report 建圖時套用</td></tr>
+          <tr><td>記多久</td><td>這次 run</td><td><b>專案層級</b>：下次分析同一個 repo 不再問</td></tr>
+          <tr class="hot"><td>greenfield</td><td>不問</td><td><b>照問</b>——純靜態的 run 只有名字可依靠</td></tr>
+        </table>
+        <p class="srcs">實作：<span class="mono">AliasResolution</span>（問題、答案、候選排序、解析）、<span class="mono">toolkit-depstate-alias-button</span>、<span class="mono">ButtonListener</span>／<span class="mono">ModalListener</span>。報告最後多一節「Names resolved by the operator」，由程式從答案產生。</p>
+      </div>
+      <div>
+        <p class="sec">真實對話（10/6 第一次真跑，原文）</p>
+        <div class="chat">
+          <div class="who bot">DepWeaver</div>
+          <div class="msg"><b>8 name(s) in the docs/code do not match any service on the graph</b><br>• <span class="mono">cloud-eureka-server</span> — code, module directory of cloud-eureka-server/…/application.yaml · closest: 1 cloud-config-server · 2 cloud-simple-service · 3 cloud-simple-ui<br>• <span class="mono">cloud-hystrix-dashboard</span> — code · closest: 1 <span class="mono">hystrix</span><br>• <span class="mono">cloud-simple-serviceB</span> — doc, synchronous: cloud-api-gateway → cloud-simple-serviceB (+2 more)<br>• <span class="mono">MyAppThriftClient</span> — doc, synchronous: MyAppThriftClient → FooService<br>(3 more will be asked in the next round — Discord allows five per form.)<br><span class="btn">Resolve names</span></div>
+          <div class="who">我</div>
+          <div class="msg me"><div class="form"><label>cloud-eureka-server</label><input value="discovery"><label>cloud-hystrix-dashboard</label><input value="1"><label>cloud-simple-serviceB</label><input value="simple-serviceb"><label>MyAppThriftClient</label><input value="ignore"></div></div>
+          <div class="who bot">DepWeaver</div>
+          <div class="msg"><b>Got it — names resolved:</b> cloud-eureka-server → discovery · cloud-hystrix-dashboard → hystrix · cloud-simple-serviceB → simple-serviceb · MyAppThriftClient ignored<br>Still open: 3 name(s) — click <b>Resolve names</b> below. <span class="btn">Resolve names</span></div>
+        </div>
+        <p class="cap" style="text-align:left;margin-top:6px">候選排序（第一題給的三個都不對，正確答案是 discovery）只是提示、不決定；答案打圖上任一服務 id 都收。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　左邊跟補流量逐項對照，三處不同：答案要經過確定性解析，因為它會變成圖上的邊；答完不重跑；記在專案層級。右邊是真實的對話，第一題的候選三個都不對、正確答案是 discovery——這就是為什麼候選只能當提示，真正的判斷是人做的。</div>
+  </div>
+  <div class="ftr"></div><div class="num">4</div>
+</section>
+
+<!-- 5 · ① 五次真跑 -->
+<section class="slide" id="s5">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 同一個專案，Discord 真跑五次 <small>3</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w73" style="gap:22px">
+      <div>
+        <table class="xs">
+          <tr><th style="width:6%">跑</th><th style="width:10%">問了</th><th>抓到什麼（全部當天修掉）</th></tr>
+          <tr><td class="c">離線</td><td class="c">3</td><td><span class="id">hystrix</span> 被當函式庫刪掉（第 4 個丟掉點）→ 問前 <b>24/26</b>，答 3 題後 <b>26/26</b></td></tr>
+          <tr><td class="c">1</td><td class="c">8</td><td>表單只認候選清單，<b>正確答案 discovery 不在裡面</b>；覆蓋率寫「<b>0 / 23 — 0%</b>」但根本沒量；<b>模組名／部署名同一服務出現兩次</b>（四對）；答案沒套到既有節點；前端 <span class="mono">$http.get('users')</span> 畫出假邊；答錯了無法改</td></tr>
+          <tr><td class="c">2</td><td class="c">11</td><td>圖乾淨了。報告：答「hystrix」顯示成「hystrix → hystrix」；LLM 寫的第 4 節<b>仍列出已答 ignore 的名字</b>（prompt 明說不要）；<span class="mono">simple-ui → simple-service</span> 報告有、圖沒有（<span class="mono">"http://" + 常數</span> 沒解析）；第 6 節 <span class="mono">hystrix-turbine</span> 沒改名</td></tr>
+          <tr><td class="c">3</td><td class="c">5</td><td>只問 DeepWiki 新冒出的名字（答案記憶有效）。程式產生的段落：Protocol 一律寫 HTTP（圖沒記協定）；第 5 節 greenfield 寫「Runtime observed: No」</td></tr>
+          <tr><td class="c">4</td><td class="c">4</td><td>wiki 把多個消費者寫在同一欄「a, b」，工具當成一個名字問</td></tr>
+          <tr><td class="c">5</td><td class="c">2</td><td>wiki 把 <b>repo 自己的名字</b>當成元件來源</td></tr>
+        </table>
+        <div class="note" style="margin-top:10px;font-size:15px"><b>兩個教訓：</b>①「prompt 明說不要，LLM 還是寫」——第 4 節因此改由程式從圖產生，跟第 5 節一樣（pattern ③ 的第二個真實事件）。②「程式寫的段落也會把沒量的寫成確定值」（0%、No、HTTP）——而且標著 deterministic 反而更像真的（pattern ⑤）。</div>
+      </div>
+      <div>
+        <div class="fig"><img src="{{IMG:scm-graph-run1.png}}" alt="第一次真跑的圖"><p class="cap">第一次真跑：同一服務兩種拼法（cloud-simple-service／simple-service 等四對）、假節點 users、zipkin-server</p></div>
+        <div class="fig" style="margin-top:8px"><img src="{{IMG:scm-graph-final.png}}" alt="第五次真跑的圖"><p class="cap">第五次：16 節點每個服務一次，資料集 26 條全在，多 5 條 repo 真的有的（thrift、dummy、uaa、simple-ui→simple-service）</p></div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　同一個專案、同一個 commit，離線先跑一次，再在 Discord 真跑五次。表裡是每一次抓到什麼，全部當天修掉。右邊兩張圖是第一次和第五次的對比。兩個教訓要講：第 4 節原本給 LLM 寫，prompt 明說不要列 ignore 的名字它還是列，所以改由程式產生；但程式寫的段落也會犯 pattern ⑤ 的錯，把沒量的寫成 0%、No、HTTP，而且標著 deterministic 反而更像真的。</div>
+  </div>
+  <div class="ftr"></div><div class="num">5</div>
+</section>
+
+<!-- 6 · ① 界線 -->
+<section class="slide" id="s6">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 這個驗證能主張什麼、不能主張什麼 <small>4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">先講最重要的：操作者是我</p>
+        <div class="box" style="min-height:0;padding:16px 22px;font-size:16px">五次真跑的答案都是<b>我填的</b>，而且<b>我看過資料集的期望邊</b>。所以這些結果證明的是<b>機制走得通</b>：問題會被提出、答案會被套用、只有被答的邊出現、答錯了可以改、下次不再問。<br><br>它<b>不證明</b>「問人會得到正確答案」。那是上次「標準答案是我給的」同一類問題。要主張那一點，得找<b>沒看過這個 repo 的人</b>照同樣步驟答一次——這是下一步，不是這次做到的。</div>
+        <p class="sub" style="margin-top:12px">機制本身的界線</p>
+        <ul style="font-size:15.5px">
+          <li><b>DeepWiki 每次用詞都不一樣</b>（ZooKeeper ServerSets → ZooKeeper），新名字會零星一直冒出來；答案累積、問得越來越少，但不保證某次之後完全不問</li>
+          <li>問的是「<b>這個名字是哪個服務</b>」，不問「這條邊存不存在」；邊的存在仍由來源決定</li>
+          <li>答 <span class="mono">new</span> 時<b>無法指定節點名</b>（ZooKeeper 會變成 zoo-keeper），還沒修</li>
+          <li>Discord 一張表單最多五格；超過分輪</li>
+        </ul>
+      </div>
+      <div>
+        <p class="sec">測試釘住的性質（26 個，離線）</p>
+        <ul style="font-size:15px">
+          <li>對不上的名字<b>變問題而不是消失</b>，圖上<b>不多出</b>節點或邊；函式庫名有邊才問、沒邊照舊靜默刪</li>
+          <li>答案三種效力：對應既有節點（邊帶 doc 出處）／<span class="mono">new</span> 建節點／<span class="mono">ignore</span>；答一個圖上沒有的 id <b>不會造節點</b>；答案也套用到<b>既有</b>節點</li>
+          <li>只差前後綴的兩個服務名 → 問「是不是同一個」，<b>兩個都留著</b>直到回答</li>
+          <li>看不懂的答案（<span class="mono">9</span>、空白、<span class="mono">maybe</span>）→ <b>不是合併</b>；答題目自己的名字＝<span class="mono">new</span></li>
+          <li>wiki 一欄多個名字拆開逐個對；repo 自己的名字不問；前端相對 URL 不算呼叫別的服務</li>
+          <li>專案層級記憶：另一個使用者、檢查點過期後同一 repo <b>不再問</b>；<span class="mono">reset</span> 可忘掉重問</li>
+          <li>報告第 4／5 節由程式從圖產生；greenfield 寫「未量測」不寫 0％／No／HTTP</li>
+        </ul>
+        <p class="srcs">全套 <b>280</b> 個測試，唯一失敗的是要連 MCP server 的那個（跟之前一樣）。探針 <span class="mono">GreenfieldProbeTest</span> 吃 <span class="mono">-Dprobe.aliases=</span> 答案檔，是「Resolve names」的離線形式；對照用的答案檔與輸出在 <span class="mono">docs/generalization/external/aliases/</span>。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　這頁先講操作者是我、而且看過答案——所以只證明機制走得通，不證明問人會答對；要主張後者要找沒看過 repo 的人。然後是機制的界線，最重要的是 DeepWiki 每次用詞不一樣，新名字會一直零星冒出來，這是常態不是 bug。右邊是測試釘住的性質。</div>
+  </div>
+  <div class="ftr"></div><div class="num">6</div>
+</section>
+
+<!-- 7 · ① langchain4j -->
+<section class="slide" id="s7">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① langchain4j：實測過，這次不用 <small>5</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:24px">
+      <div>
+        <p class="sec">實測，不是只查文件</p>
+        <table class="xs">
+          <tr><th style="width:26%">項目</th><th>結果</th></tr>
+          <tr><td>核心</td><td><span class="mono">langchain4j</span> 1.20.2 穩定線：chat model、<span class="mono">AiServices</span>、結構化輸出——<b>成熟</b>，升小版不破壞 API</td></tr>
+          <tr class="hot"><td>我們要的那塊</td><td>「中間問使用者」的 HumanInTheLoop 在 <span class="mono">langchain4j-agentic</span> <b>1.20.2-beta30</b>：官方政策 beta 模組<b>版本之間可以有破壞性變動</b>；一年多仍是 beta、迭代到 beta30</td></tr>
+          <tr><td>Spring Boot</td><td>starter 要 Boot 3.5+，我們 3.0.6；但要求只來自 starter，<b>不用 starter 就不用升版</b>，實測零衝突、66 個測試零回歸</td></tr>
+          <tr><td>HITL 三種形態</td><td><span class="mono">responseProvider</span> 與 <span class="mono">PendingResponse</span> 都是<b>阻塞</b>的，會把單執行緒的分析 runner 卡在 Discord 表單上；<span class="mono">SuspendedResponse</span> 非阻塞可續跑——<b>和我們「JSON 檢查點＋答案觸發新 run」一比一同構</b></td></tr>
+        </table>
+        <p class="sub" style="margin-top:10px">為什麼不用（三個理由，按重要性）</p>
+        <ol style="font-size:15.5px;margin:0;padding-left:1.4em">
+          <li><b>要的那塊是 beta。</b>綁上去之後它的 API 一改，分析流程的骨架就要跟著改。</li>
+          <li><b>接進來不是加一個依賴，是重寫整條流程</b>成它的 agentic sequence、檢查點換成它的格式——而現有流程已經在 Bank of Anthos 真環境驗證過，六個 bug 都是在那裡修出來的。</li>
+          <li><b>它沒有給我們現在做不到的能力。</b>唯一可用的形態做的事和我們已經做的一樣。</li>
+        </ol>
+      </div>
+      <div>
+        <div class="box hot" style="min-height:0;padding:18px 22px;font-size:16px">
+          <h3 style="margin-bottom:8px">結論</h3>
+          <p>核心成熟、我們要的那塊不成熟。「問人」維持現有機制；它和框架的非阻塞形態<b>不約而同走到同一個形態</b>，這點可以寫進論文當佐證，而我們沒綁在 beta 上。</p>
+        </div>
+        <p class="sub" style="margin-top:12px">什麼時候值得接</p>
+        <ul style="font-size:15px">
+          <li>穩定線的<b>結構化輸出</b>現在就能用，可取代手刻的 RestTemplate ＋ JSON 解析（殘餘邊、DeepWiki notes 都是手刻解析）——跟這次三點無關，所以沒接</li>
+          <li>HITL 等 agentic 出穩定版、而且本來就要重構流程時再評估；屆時用非阻塞形態</li>
+        </ul>
+        <div class="note" style="margin-top:12px;font-size:14.5px">spike 的程式碼留在獨立分支沒合進主線；報告 <span class="mono">docs/langchain4j-spike-2026-10-02.md</span>（版本、pom 差異、阻塞分析）。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　langchain4j 我有在獨立分支實測。結論分兩半：核心是穩定線，成熟；但「中間問使用者」那塊在 agentic 模組，還是 beta30，官方允許版本間破壞性變動。三個不用的理由：綁 beta、要重寫驗證過的流程、而且它可用的那種形態跟我們已經做的一模一樣。這點反而可以寫進論文：我們和框架不約而同走到同一個形態。</div>
+  </div>
+  <div class="ftr"></div><div class="num">7</div>
+</section>
+
+<!-- 8 · ② confidence + 老師兩點 -->
+<section class="slide" id="s8">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② evidence → confidence，還有上次的兩個提醒 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w46" style="gap:24px">
+      <div>
+        <p class="sec">動手前先查：程式碼早就兩個都有</p>
+        <table class="xs">
+          <tr><th style="width:28%">東西</th><th style="width:34%">它回答的問題</th><th>改成</th></tr>
+          <tr class="hot"><td><b>分級</b>（三級）</td><td>這條關係<b>可以多相信</b></td><td><b>confidence</b>——程式碼本來就是；文件、報告、pattern 名稱沒跟上</td></tr>
+          <tr><td><b>來源層</b></td><td>哪幾層<b>說過</b>（runtime／code／doc）</td><td><span class="mono">provenance</span>，不動</td></tr>
+          <tr class="hot"><td><b>出處清單</b></td><td>在哪裡<b>看到的</b>（file:line、查詢）</td><td><b>provenanceRefs</b>；直接叫 provenance 會撞上一列</td></tr>
+        </table>
+        <p style="font-size:14.5px;margin-top:8px">改到的：pattern ① → <b>信心分級的關係 / Confidence-Graded Relations</b>（舊名記在別名欄）；論文 61 處「證據分級」→「信心分級」；報告 <span class="mono">Evidence:</span> → <span class="mono">Provenance:</span>；<span class="mono">isThinlyEvidenced</span> → <span class="mono">isLowConfidence</span>；問答路由保留「what's the evidence」這句（使用者會這樣問）。磁碟上的舊 JSON 鍵讀取時仍認。</p>
+        <div class="note" style="margin-top:8px;font-size:14.5px"><b>順勢多一個論據：</b>GRADE 從 2011 年起就把「證據品質」定義為「<b>對效果估計的信心</b>」（Guyatt 等人）。改叫 confidence 是跟醫學分級的定義對齊。<br><b>碩論題目</b>同步改：<i>A Multi-<b>Source</b> Fusion Approach…</i>（原本 Multi-Evidence）。</div>
+      </div>
+      <div>
+        <p class="sec">上次提醒的兩件事，論文都改了</p>
+        <div class="draft" style="font-size:14.5px">
+          <span class="lbl">分級由低到高</span>
+          <p>定義<b>小而有序</b>的信心等級。建議三級，<span class="hl">由低到高</span>：</p>
+          <ul>
+            <li><b>只被提到</b>（inferred）：只有設定值、文件敘述，或由名字推測。圖上畫<b>點線</b>。</li>
+            <li><b>有使用證據</b>（documented）：有真的會發出呼叫的程式碼、有持久化程式碼搭配連線設定。圖上畫<b>虛線</b>。</li>
+            <li><b>量測到</b>（observed）：執行期的遙測直接記到這個關係發生過。圖上畫<b>實線</b>。</li>
+          </ul>
+          <p><span class="hl">由低到高講，是因為每往上一級都多了一種來源的佐證</span>：被提到 → 程式碼裡真的有呼叫 → 呼叫真的發生了。</p>
+        </div>
+        <div class="draft" style="font-size:14.5px;margin-top:10px">
+          <span class="lbl">「遙測」是什麼（§1.1 新增）</span>
+          <p>「量測」指的是<b>執行期遙測</b>（telemetry）：系統跑起來之後，<span class="hl">每個服務旁邊都有一個代理（Istio 的 sidecar），服務之間每一次呼叫都會經過它，它自動記下「誰呼叫了誰、幾次、成功與否」</span>，寫進 Prometheus。我們查的就是這些計數，例如 <span class="mono">istio_requests_total{source="web", destination="orders"} = 95</span>。它不是讀程式碼推出來的，是呼叫真的發生時被記下來的，所以精確；但只有真的被呼叫過的關係才會出現，所以看不全。</p>
+        </div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　左邊：改名之前先查，發現 confidence 早就在，evidence 其實是出處清單，所以是三個概念分清楚。右邊是上次兩個提醒：分級改成由低到高講，理由是每往上一級多一種佐證；遙測在第一次出現就白話定義——每個服務旁邊有個代理，每次呼叫經過它就記一筆，我們查的是這些計數。</div>
+  </div>
+  <div class="ftr"></div><div class="num">8</div>
+</section>
+
+<!-- 9 · ③ 名稱 -->
+<section class="slide" id="s9">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ pattern language 的正式名稱 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <table>
+      <tr><th style="width:20%"></th><th style="width:40%">中文</th><th>English</th></tr>
+      <tr class="hot"><td><b>主名稱</b>（平常這樣叫）</td><td style="font-size:24px"><b>可信依賴視圖</b></td><td style="font-size:24px"><b>Trustworthy Dependency Views</b></td></tr>
+      <tr><td><b>簡稱</b></td><td colspan="2">TDV</td></tr>
+      <tr><td><b>完整名</b>（論文標題）</td><td>可信依賴視圖：由可靠度不一的來源合成依賴圖、指標與報告的 Pattern Language</td><td>Trustworthy Dependency Views: A Pattern Language for Synthesizing Dependency Graphs, Metrics, and Reports from Sources of Unequal Confidence</td></tr>
+    </table>
+    <div class="two" style="gap:24px;margin-top:18px">
+      <div>
+        <p class="sub" style="margin-top:0">命名理由（寫進論文開頭）</p>
+        <ul style="font-size:17px">
+          <li>用<b>讀者要的結果</b>（視圖可信）命名，不用手段（分級、單一模型、程式寫事實）——五個 pattern 各是手段，「視圖可信」是<b>唯一共同的目的</b></li>
+          <li>說「依賴<b>視圖</b>」不說「依賴<b>圖</b>」：指標與報告也是視圖，<b>一半的 pattern 在講圖以外的產物</b>（③④⑤）</li>
+          <li>副標三件事對應 §6.1 的三個適用條件：輸入是<b>可靠度不一的來源</b>、輸出是<b>圖、指標、報告</b>、動詞是<b>合成</b>不是抽取</li>
+        </ul>
+      </div>
+      <div>
+        <p class="sub" style="margin-top:0">沒選的名字，也寫下來</p>
+        <table class="sm">
+          <tr><th style="width:44%">候選</th><th>為什麼不選</th></tr>
+          <tr><td>多來源證據融合</td><td>講的是手段；「證據」這個字現在只留給來源本身</td></tr>
+          <tr><td>誠實的依賴圖</td><td>漏掉指標與報告</td></tr>
+          <tr><td>依賴分析的信心 pattern</td><td>只涵蓋 ①④；② 與 ③ 跟信心無關</td></tr>
+          <tr><td>9 月的標題 <i>Trustworthy Dependency Views: A Pattern Language</i></td><td>主名稱其實沒變；缺的是副標說清楚輸入、輸出、動詞，以及<b>把它當名字來用</b>——9 月的簡報從頭到尾沒出現過</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　名稱定了：可信依賴視圖、Trustworthy Dependency Views、簡稱 TDV，完整名加副標。三條理由：用結果命名、說視圖不說圖、副標對應三個適用條件。右邊最後一列要誠實講：九月的標題已經是這個主名稱，差的是我從來沒把它當名字用。</div>
+  </div>
+  <div class="ftr"></div><div class="num">9</div>
+</section>
+
+<!-- 10 · ③ 欄位 -->
+<section class="slide" id="s10">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ 每個 pattern 的欄位從 8 個補到 13 個 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:24px">
+      <div>
+        <table class="xs">
+          <tr><th style="width:26%">欄位</th><th style="width:36%">要回答的問題</th><th>寫法</th></tr>
+          <tr><td><b>名稱</b></td><td>這個 pattern 叫什麼</td><td>中英各一個主名稱，名詞片語，用讀者會遇到的問題命名，不用類別名</td></tr>
+          <tr class="hot"><td><b>別名</b> <span class="pill2">新</span></td><td>誰用別的名字講過同一件事</td><td>含本文自己改過的<b>舊名</b>、祈使句版本</td></tr>
+          <tr class="hot"><td><b>一句話</b> <span class="pill2">新</span></td><td>沒時間讀全文的人該記住什麼</td><td>一句話講完 Solution，不講 Context</td></tr>
+          <tr><td>Context</td><td>你是誰、手上有什麼、正要做什麼</td><td>具體到讀者能判斷「是不是在講我」；接前一個的 Resulting Context</td></tr>
+          <tr><td>Problem</td><td>兩難是什麼</td><td>第一句粗體兩難句，再說為什麼顯而易見的做法都不行</td></tr>
+          <tr><td>Forces</td><td>哪些力量互相拉扯</td><td>只列真的拉扯的，每條寫「不這樣做會怎樣」</td></tr>
+          <tr><td>Solution</td><td>因此該怎麼做</td><td>可照著做的步驟</td></tr>
+          <tr><td>實作要點</td><td>做的時候注意什麼</td><td>不是 force 的工程細節</td></tr>
+          <tr class="hot"><td><b>範例</b> <span class="pill2">新</span></td><td>套用前後長什麼樣</td><td>用 §2 的 running example，前後對照</td></tr>
+          <tr><td>Resulting Context</td><td>之後世界變成什麼樣、新問題是什麼</td><td>接下一個的 Context；<b>也要說沒解掉什麼</b></td></tr>
+          <tr><td>Consequences</td><td>好處與代價</td><td>代價寫得和好處一樣具體</td></tr>
+          <tr><td>Known Uses</td><td>誰真的這樣做了</td><td>DepWeaver 的具體事件＋至少兩個查證過的外部實例</td></tr>
+          <tr><td>Related Patterns</td><td>和哪些 pattern 有關、怎麼有關</td><td>條列，每條說是接前、接後、互補還是容易混淆</td></tr>
+        </table>
+      </div>
+      <div>
+        <p class="sec">接下來怎麼看</p>
+        <p style="font-size:16px">第 11–19 頁把 <b>pattern ①</b> 的草稿<b>一段一段照原文放</b>（左邊），右邊是我標的重點與想請老師看的地方。寫法對了，②–⑤ 照同一套；第 20–23 頁各一頁只放名稱、一句話、Problem、Solution。</p>
+        <div class="note" style="margin-top:12px;font-size:15px"><b>左邊的原文是論文 <span class="mono">docs/asianplop-paper-zh.md</span> 現在的樣子</b>，不是摘要。黃底是我覺得最該被檢查的句子；虛線框是我自己還不確定、想問的。</div>
+        <p class="sub" style="margin-top:12px">和 9 月版的差別</p>
+        <ul style="font-size:15px">
+          <li>新增三欄（別名、一句話、範例獨立成節）</li>
+          <li>Context、Problem、Resulting Context、Related Patterns 從一段擴成完整敘述</li>
+          <li>每個 Resulting Context 多一段「<b>這個 pattern 沒有解掉的事</b>」</li>
+          <li>全文 647 → 858 行</li>
+        </ul>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　欄位表，新增三欄用粉紅標出。接下來九頁是 pattern ① 的原文逐段放，右邊是重點與想問的。原文就是論文現在的樣子，不是摘要，黃底是最該檢查的句子，虛線框是我不確定的。</div>
+  </div>
+  <div class="ftr"></div><div class="num">10</div>
+</section>
+
+<!-- 11 · ① 名稱・別名・一句話 -->
+<section class="slide" id="s11">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ① 草稿 · 名稱、別名、一句話 <small>1/9</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:19px">
+        <span class="lbl">名稱</span>
+        <p style="font-size:19px;font-weight:900">① 信心分級的關係（Confidence-Graded Relations）</p>
+        <span class="lbl">別名</span>
+        <p>證據分級的邊（Evidence-Graded Edges，<span class="hl">本文 9 月版與 pattern 目錄 P4 的名字；改稱「信心」是因為等級描述的是讀者可以多相信這條關係，不是有幾件證據——後者是 provenance 的事</span>）；信心取最高（Highest Confidence Wins，只講合併規則那一半）；三線型圖（Three-Line-Style Graph，只講呈現那一半）；祈使句版：<b>把每條線分級</b>（Grade Every Edge）。</p>
+        <span class="lbl">一句話</span>
+        <p>每條關係帶一個小而有序的信心等級（<span class="hl">由低到高：只被提到、有使用證據、量測到</span>）與一份來源清單；多來源合併時等級取最高、來源取聯集；畫圖時把最醒目的視覺通道給等級，而且下游只能照抄或降級。</p>
+      </div>
+      <div class="pts" style="font-size:18.5px">
+        <h4>重點</h4>
+        <ul>
+          <li><b>主名稱用名詞片語</b>，講讀者遇到的東西（關係要分級），不講工具的類別名。</li>
+          <li>別名欄做兩件事：<b>舊名留著</b>讓看過 9 月版的人對得上；<b>祈使句版</b>給喜歡那種風格的讀者——目錄裡「名詞還是祈使句」那題，用別名欄兩種都給。</li>
+          <li>一句話只講 Solution 的核心，四件事：等級＋來源、取最高＋聯集、通道給等級、下游不升級。</li>
+        </ul>
+        <h4>為什麼從 evidence 改成 confidence</h4>
+        <ul>
+          <li>等級回答「<b>可以多相信</b>」，不是「有幾件證據」。有幾件、在哪裡，是 provenance。</li>
+          <li>GRADE 自己就把證據品質定義為「對估計的信心」。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>別名欄把「改名的理由」寫在括號裡，會不會太長？另一個做法是理由移到 §1.6 用詞那段，別名欄只列名字。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　名稱用名詞片語。別名欄兩個用途：舊名、祈使句版。一句話只講 Solution 四件事。改名的理由：等級回答的是可以多相信，不是有幾件證據。想問的是別名欄的括號會不會太長。</div>
+  </div>
+  <div class="ftr"></div><div class="num">11</div>
+</section>
+
+<!-- 12 · ① Context -->
+<section class="slide" id="s12">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ① 草稿 · Context <small>2/9</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:19px">
+        <span class="lbl">Context</span>
+        <p>你在做一個會自動產出依賴視圖的工具，正在做第一件事：把系統元件之間的關係收集起來，畫成一張圖給人看。關係來自好幾個來源，而且<span class="hl">你刻意要用多個來源，因為單一來源已經被證明不夠</span>（§1.1）：執行期遙測告訴你這段期間真的發生過哪些呼叫；程式碼與設定檔告訴你哪些呼叫寫在那裡、不管有沒有跑到；部署描述告訴你誰被佈線到誰；專案文件（README、架構說明，可能經過 LLM 整理）告訴你前三者都看不到的東西，例如一條只在特殊流程才走的呼叫。</p>
+        <p><span class="hl">讀者是會拿這張圖做決定的人</span>：排部署順序、評估改動影響、決定下一輪要補哪些測試。他們通常不會回頭看原始來源，圖就是他們看到的全部。而你手上這幾個來源的可靠度差很多，而且常常對同一條關係說不同的話：遙測說 <span class="mono">web → orders</span> 走了 95 次，程式碼說 <span class="mono">orders → payment</span> 有一個 HTTP client 但這次沒人呼叫它，文件說 <span class="mono">orders → shipping</span> 存在但程式碼和遙測都找不到。</p>
+      </div>
+      <div class="pts" style="font-size:18.5px">
+        <h4>重點</h4>
+        <ul>
+          <li>Context 要回答三件事：<b>你是誰</b>（做依賴視圖工具的人）、<b>手上有什麼</b>（四種來源）、<b>正要做什麼</b>（畫一張圖）。</li>
+          <li>第二段加了「<b>讀者是誰</b>」。這是 9 月版沒有的：pattern 的 forces 很多來自讀者（要一眼看懂、會拿去決策），讀者不先講，後面的 forces 站不住。</li>
+          <li>四種來源各一句「它告訴你什麼」，順序是遙測 → 程式碼 → 部署 → 文件。</li>
+          <li>最後一句用 running example 的三條關係<b>先把衝突演出來</b>，Problem 才接得上。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>四種來源的順序，這裡是遙測先講（因為讀者最熟）；§1.1 的表和 Solution 改成由低到高了。Context 要不要也改成由低到高，全篇一致？</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　Context 三件事：你是誰、手上有什麼、正要做什麼。第二段新增讀者是誰，因為後面的 forces 很多來自讀者。最後一句先把三條關係的衝突演出來。想問的是來源順序要不要跟 Solution 一樣改成由低到高。</div>
+  </div>
+  <div class="ftr"></div><div class="num">12</div>
+</section>
+
+<!-- 13 · ① Problem -->
+<section class="slide" id="s13">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ① 草稿 · Problem <small>3/9</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:16px">
+        <span class="lbl">Problem</span>
+        <blockquote>來源的可靠度差很多。全部畫成同一種線，讀者會以為每條都一樣真；只畫最可靠的（量測到的），又會丟掉那些量測不到、但確實存在的依賴。</blockquote>
+        <p>兩個顯而易見的做法都不行。第一個是「<b>全部畫上去</b>」：把每個來源找到的關係聯集起來畫成一樣的線。這張圖最完整，但<span class="hl">等級被抹平了</span>——文件裡提過一句的關係和遙測量到幾千次的關係長得一模一樣，讀者沒有辦法分辨哪一條可以據以決策、哪一條只是有人這樣寫過。更糟的是，這張圖會被下游當成事實：產部署順序的程式會把文件幻覺出來的邊當成硬依賴，LLM 寫報告時會把「只被提到」講成「確認存在」。</p>
+        <p>第二個是「<b>只畫量測到的</b>」：只信遙測。這張圖每一條都是真的，但它是<b>流量圖</b>而不是依賴圖——沒走到的路徑、非 HTTP 的協定、這次沒部署的元件全都不在上面。它回答「這段期間誰呼叫了誰」，而讀者要的是「誰依賴誰」。<span class="hl">工具開發早期我們正是交出這樣的圖，被看圖的人一句話點破：這比較像流量圖。</span></p>
+        <p>所以問題不是「選哪個來源」，而是：<b>同一張圖上要同時容納可靠度不同的關係，又要讓讀者一眼分得出哪條是哪種，而且這個差別要能活過合併、摘要、報告、問答這些下游步驟。</b></p>
+      </div>
+      <div class="pts">
+        <h4>重點</h4>
+        <ul>
+          <li>第一句是<b>兩難</b>：全畫 → 分不出真假；只畫最可靠的 → 丟掉真的依賴。兩邊都不行，才叫 problem。</li>
+          <li>後面兩段各走一個「顯而易見的做法」到底，說它為什麼不行。這是 9 月版沒有的；只有一句兩難，審稿人會問「那為什麼不乾脆…」。</li>
+          <li>「只畫量測到的」那段的例子<b>就是我們自己</b>：7 月那張只有遙測的圖被說「比較像流量圖」。</li>
+          <li>最後一句把問題重述成 Solution 要回答的形狀：容納、分得出、<b>活過下游</b>。第三點是 ② 的伏筆。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>「被看圖的人一句話點破」——這是老師說的話，寫進論文時用「the first reader of the graph」這種第三人稱可以嗎？Known Uses 那邊也有同一件事。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　Problem 第一句是兩難。後面兩段各走一個顯而易見的做法到底，這是九月版沒有的。第二段的例子就是我們自己七月那張流量圖。最後一句重述成 Solution 要回答的形狀，「活過下游」是第二個 pattern 的伏筆。想問的是論文裡怎麼稱呼說那句話的人。</div>
+  </div>
+  <div class="ftr"></div><div class="num">13</div>
+</section>
+
+<!-- 14 · ① Forces -->
+<section class="slide" id="s14">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ① 草稿 · Forces <small>4/9</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:16px">
+        <span class="lbl">Forces</span>
+        <ul>
+          <li><b>可靠度與完整度方向相反。</b>遙測 precision 高、recall 低；結構分析 recall 高、precision 中等；文字兩者都低。<span class="hl">只取其中一個，一定犧牲另一個。</span></li>
+          <li><b>讀者要一眼看懂。</b>分級太多看不懂；只有兩級（真／假）又把「有程式碼證據但這次沒跑到」和「文件隨口提過」混為一談。</li>
+          <li><b>同一條關係會被多個來源重複提到。</b>不能畫成多條平行線，也不能讓後到的弱來源蓋掉先到的強來源。</li>
+          <li><b>下游會偷偷升級。</b>摘要、報告、問答都很容易把「只被提到」講成「確定存在」——尤其當下游是 LLM。</li>
+          <li><b>視覺通道有限。</b>線型、顏色、粗細、標籤要分給信心等級、關係類型（同步呼叫／資料庫／佇列／外部）、流量大小。<span class="hl">研究指出同時編碼「主屬性」與「不確定性」的視覺變數會互相干擾（Guo et al., IEEE TVCG 2015）</span>，所以通道的分配是有代價的選擇，不是想加就加。</li>
+          <li><b>誠實揭露不確定性可能反過來降低信任。</b>主題地圖的研究顯示不確定性視覺化是雙面刃：可能因為誠實而提升可信度，也可能被讀成「這份東西不可靠」（CHI 2026）。所以分級要能被讀懂，而不只是把懷疑丟給讀者。</li>
+        </ul>
+      </div>
+      <div class="pts">
+        <h4>重點</h4>
+        <ul>
+          <li>六條，<b>每條都是兩個東西在拉</b>：可靠 vs 完整、看懂 vs 分細、合併 vs 覆蓋、誠實 vs 信任。沒有張力的條目（例如「三級要離散」）移到實作要點。</li>
+          <li>每條都寫「<b>不這樣做會怎樣</b>」：犧牲另一個、混為一談、蓋掉、偷偷升級、互相干擾、被讀成不可靠。</li>
+          <li>兩條有文獻：視覺通道（TVCG 2015 的受控實驗）、誠實的代價（CHI 2026）。後者對我們<b>不利</b>，刻意放進來。</li>
+          <li>「下游會偷偷升級」這條是 Solution 第 5 步「只能照抄或降級」的來源。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>第一條用 precision／recall 講，是不是太像評估術語？可以換成「看得準 vs 看得全」。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　六條 forces，每條都是兩個東西在拉，每條都寫不這樣做會怎樣。沒有張力的條目移到實作要點。兩條有文獻，其中誠實的代價那篇對我們不利，刻意放。想問的是第一條用 precision／recall 會不會太像評估術語。</div>
+  </div>
+  <div class="ftr"></div><div class="num">14</div>
+</section>
+
+<!-- 15 · ① Solution -->
+<section class="slide" id="s15">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ① 草稿 · Solution、實作要點 <small>5/9</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:15.5px">
+        <span class="lbl">Solution</span>
+        <p>因此：</p>
+        <ol>
+          <li>定義<b>小而有序</b>的信心等級。建議三級，<span class="hl">由低到高</span>：<b>只被提到</b>（inferred；點線）、<b>有使用證據</b>（documented；虛線）、<b>量測到</b>（observed；實線）。由低到高講，是因為每往上一級都多了一種來源的佐證。</li>
+          <li><span class="hl"><b>等級（有多可信）與來源（誰說的）分開存。</b></span>一條關係可以有多個來源，但只有一個等級。</li>
+          <li>以（來源元件, 目標元件）為鍵<b>合併</b>：等級<b>取最高</b>，來源與佐證<b>取聯集</b>。</li>
+          <li>視覺上把<b>最醒目的通道給信心等級</b>：實線／虛線／點線。關係類型用顏色或短標籤，流量大小降級成線寬或不畫。</li>
+          <li>所有下游讀取等級時，<b>只能照抄或降級，不能升級</b>。</li>
+        </ol>
+        <span class="lbl">實作要點</span>
+        <ul>
+          <li>三級是離散的而不是 0–1 的連續信心值。離散的好處是<b>沒有自由參數要校準</b>、可以直接對應三種線型、「取最高」不需要加權公式。代價是無法表達「兩個弱來源互相佐證」——這一點要寫進 Consequences。</li>
+          <li>「什麼算使用證據」是領域知識：每種語言與框架各要一份判準（例如資料庫要同時看到連線設定<b>與</b>持久化標記）。這份判準會成為工具最需要維護的部分。</li>
+        </ul>
+      </div>
+      <div class="pts">
+        <h4>重點</h4>
+        <ul>
+          <li>五步，<b>可以照著做</b>：定等級 → 分開存 → 合併規則 → 通道分配 → 下游規則。</li>
+          <li>第 1 步照上次說的<b>由低到高</b>，而且每級附圖上的線型，讀者看圖時順序一樣。</li>
+          <li>第 2 步是整個 pattern 的核心：<b>等級與來源是兩個欄位</b>。這也是 evidence 改 confidence 的根據——等級講多可信，來源講誰說的。</li>
+          <li>第 3 步「取最高、取聯集」簡單到沒有參數，這是刻意的；代價寫在實作要點與 Consequences。</li>
+          <li>實作要點放的是<b>沒有張力的工程細節</b>：離散 vs 連續、判準是領域知識。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>第 1 步的英文名 inferred／documented／observed 和中文「只被提到／有使用證據／量測到」對不太整齊（documented 其實是「有使用證據」）。要不要英文也改成 mentioned／used／observed？程式碼裡的常數名可以不動。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　五步可以照著做。第一步由低到高，每級附線型。第二步是核心：等級與來源是兩個欄位，這也是改名的根據。第三步取最高取聯集沒有參數，代價寫在後面。想問的是英文名要不要改成 mentioned／used／observed，跟中文對齊。</div>
+  </div>
+  <div class="ftr"></div><div class="num">15</div>
+</section>
+
+<!-- 16 · ① 範例 -->
+<section class="slide" id="s16">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ① 草稿 · 範例 <small>6/9</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:18.5px">
+        <span class="lbl">範例</span>
+        <p>套用前，§2 的商店畫出來是五條一樣的線；套用後，同一組關係變成三種線型，而且每條線都帶著「誰說的」：</p>
+<pre class="code" style="font-size:12.5px;margin:4px 0 8px">套用前（五條線長一樣）        套用後（線型＝信心等級，由低到高；括號＝來源）
+orders ── shipping           orders ······ shipping     只被提到  （架構文件一句）
+catalog ── catalog-db        catalog ······ catalog-db  db?  只被提到（只有連線設定）
+orders ── payment            orders ┄┄┄┄ payment       有使用證據（OrderService.java:42）
+orders ── orders-db          orders ┄┄┄┄ orders-db     有使用證據（連線設定＋持久化程式碼）
+web ──── orders              web ━━━━ orders          量測到   （遙測：95 次請求）</pre>
+        <p>讀者現在可以做到套用前做不到的三件事：<span class="hl">排部署順序時知道 <span class="mono">orders → shipping</span> 只是文件說的，可以先不當硬依賴；看到 <span class="mono">catalog-db</span> 旁邊的 <span class="mono">db?</span>，知道該去確認那個連線設定是不是殘留的；下一輪補流量時，知道要讓哪幾條虛線變實線。</span>而 <span class="mono">orders → payment</span> 這條線同時保有「程式碼在 42 行」這個來源，之後報告或問答要引用時不必重新找。</p>
+      </div>
+      <div class="pts" style="font-size:18.5px">
+        <h4>重點</h4>
+        <ul>
+          <li>範例從 Solution 裡的一行斜體<b>獨立成節</b>，而且是<b>前後對照</b>：左邊五條一樣，右邊三種線型。</li>
+          <li>順序也是<b>由低到高</b>：點線 → 虛線 → 實線，跟 Solution 第 1 步一致。</li>
+          <li>最後一段講「讀者<b>多做到了什麼</b>」：三件套用前做不到的事。這是範例存在的理由，不只是畫給人看。</li>
+          <li>用的是 §2 中性的線上商店，不是 DepWeaver；DepWeaver 的真實事件放 Known Uses。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>範例用中性商店還是直接用 spring-cloud-microservice（有真的圖、真的 26 條邊）？投稿前待辦裡本來就有這題；這次真跑之後，真實案例的材料齊了。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　範例獨立成節，前後對照，順序由低到高。最後一段講讀者多做到了什麼，這是範例存在的理由。想問的是要不要把中性商店換成這次真跑的 spring-cloud-microservice，材料齊了。</div>
+  </div>
+  <div class="ftr"></div><div class="num">16</div>
+</section>
+
+<!-- 17 · ① Resulting Context -->
+<section class="slide" id="s17">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ① 草稿 · Resulting Context <small>7/9</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:19px">
+        <span class="lbl">Resulting Context</span>
+        <p>每條關係都有一個信心等級和一份來源清單了，而且合併規則簡單到不需要調參數。圖上的線型現在是有意義的：實線可以據以決策，虛線是「程式碼說有、這次沒量到」，點線是「有人提過、沒有別的佐證」。</p>
+        <p>但這個 pattern 只處理了<b>一張圖</b>。同一次分析還有別的產物：覆蓋率數字、LLM 寫的文字報告、之後的互動問答，之後可能還有部署順序。<span class="hl">如果每個產物各自讀原始來源、各自合併、各自判等級，它們很快就會對同一條關係說出不同的話——報告寫「未量測」而圖畫實線，就是這樣來的。</span>等級要活過下游，前提是下游讀的是同一份已經分好級的東西。→ ②</p>
+        <p><span class="hl">這個 pattern <b>沒有</b>解掉的事</span>：兩個弱來源互相佐證時等級不會上升（三級沒有加總）；強來源誤判時沒有降級機制；也沒有說「什麼算使用證據」——那是每種語言與框架各一份的領域判準，本文只要求它存在。</p>
+      </div>
+      <div class="pts" style="font-size:18.5px">
+        <h4>重點</h4>
+        <ul>
+          <li>三段：<b>世界變成什麼樣</b>（線型有意義了）、<b>新問題是什麼</b>（多個產物會各說各話 → ②）、<b>沒解掉什麼</b>。</li>
+          <li>第二段是 language 和 catalog 的差別所在：套用 ① 之後<b>才會出現</b> ② 的情境。「報告寫未量測而圖畫實線」是 8 月真的發生過的事。</li>
+          <li>「沒解掉的事」是這次新加的欄位，五個 pattern 都有。目的是讓 language 的接續是誠實的，不是每個 pattern 都萬能。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>「沒解掉的事」和 Consequences 的「－」有部分重疊（例如「強來源誤判沒有降級」兩邊都有）。保留重疊、還是 Consequences 只留好處與代價、「沒解掉」只留範圍之外的？</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　三段：世界變成什麼樣、新問題是什麼、沒解掉什麼。第二段是 language 跟 catalog 的差別：套用一之後才會出現二的情境，例子是八月真的發生過的報告與圖矛盾。「沒解掉的事」是新加的欄位。想問的是它跟 Consequences 的負項重疊怎麼處理。</div>
+  </div>
+  <div class="ftr"></div><div class="num">17</div>
+</section>
+
+<!-- 18 · ① Consequences + Related -->
+<section class="slide" id="s18">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ① 草稿 · Consequences、Related Patterns <small>8/9</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:15.5px">
+        <span class="lbl">Consequences</span>
+        <ul>
+          <li>＋ 量測不到的真依賴仍然在圖上，但不會被誤認為已確認。</li>
+          <li>＋ 多來源合併只需要「取最高」，不需要特殊邏輯，也不需要調參數。</li>
+          <li>＋ 下游可以依等級決定要不要計分（→ ④）。</li>
+          <li>＋ <span class="hl">同一條關係的等級<b>上升</b>本身就是有用的訊號：它代表「這次的流量終於走到這裡了」。</span></li>
+          <li>－ 「什麼算使用證據」需要領域知識，每種語言或框架各要一份判準。</li>
+          <li>－ <span class="hl">強來源誤判時會蓋掉弱來源的正確判斷（取最高沒有降級機制）。</span></li>
+          <li>－ 讀者要學會看圖例；不確定性的呈現也可能被讀成「這份圖不可靠」。</li>
+          <li>－ 三級無法表達「多個弱來源互相佐證」。</li>
+        </ul>
+        <span class="lbl">Related Patterns</span>
+        <ul>
+          <li><b>接在後面：② 單一標準模型、多個視圖。</b>等級與來源要被所有產物看到，前提是所有產物讀同一份模型。</li>
+          <li><b>被它使用：④ 誠實分母。</b>等級是分母的過濾條件：「只被提到」的關係不計分。</li>
+          <li><b>互補、容易混淆：⑤ 未量測不是零。</b>等級講「這條關係有多可信」，⑤ 講「這件事根本沒被查過」。<span class="hl">一條「只被提到」的關係是有弱證據的；一個「部署狀態未知」的節點是完全沒有證據的。兩者不能共用同一個欄位，否則「未知」會被讀成「最低等級」。</span></li>
+          <li><b>language 之外：</b>Admiralty Code 的來源可靠度／資訊可信度兩軸、GRADE 的證據品質／建議強度兩軸（§5.1）。</li>
+        </ul>
+      </div>
+      <div class="pts">
+        <h4>重點</h4>
+        <ul>
+          <li>四個好處、四個代價，<b>代價寫得和好處一樣具體</b>。「取最高沒有降級機制」是真的限制，不是客套。</li>
+          <li>「等級上升本身是訊號」是這次 Bank of Anthos 的經驗：同一條邊三次實驗從不存在 → 虛線 → 實線。</li>
+          <li>Related Patterns 改成<b>條列，每條先說關係是哪一種</b>：接後、被使用、互補、language 之外。</li>
+          <li>和 ⑤ 的那條最重要：<b>「只被提到」是弱證據，「未知」是沒證據</b>，不能共用欄位。這是 10/6 真跑又撞到的事（greenfield 把沒量的寫成 0%）。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>Related Patterns 的「language 之外」一條，放這裡還是只放 §5 相關研究？PLoP 的慣例好像兩邊都可以。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　四好處四代價，代價一樣具體。等級上升是訊號那條來自 Bank of Anthos。Related Patterns 改成條列，每條先說關係種類。和 ⑤ 那條最重要：只被提到是弱證據，未知是沒證據，這次真跑又撞到。想問的是 language 之外那條放哪。</div>
+  </div>
+  <div class="ftr"></div><div class="num">18</div>
+</section>
+
+<!-- 19 · ① Known Uses -->
+<section class="slide" id="s19">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ① 草稿 · Known Uses <small>9/9</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:15px">
+        <span class="lbl">Known Uses（6 條，這裡放 4 條）</span>
+        <ol>
+          <li><b>DepWeaver</b>（本研究）：三級 <span class="mono">inferred／documented／observed</span>；<span class="mono">addEdge()</span> 以（source, target）為鍵取最高等級並聯集來源與佐證；實線／虛線／點線繪製，加 <span class="mono">db?</span> 標籤與圖例。<br><b>事件（等級被抹平）</b>：<span class="hl">指導老師看了只有遙測的圖，說它「比較像流量圖，不像依賴圖」。</span>於是程式碼與文件的關係成為一等公民，信心等級成為主要編碼，請求數降級成線寬（2026-07-21）。之後又被提醒「資料庫是否真的有使用要注意」，於是只有連線設定、沒有持久化程式碼的資料庫邊畫成點線 <span class="mono">db?</span>（2026-07-23）。<br><b>事件（等級上升）</b>：Bank of Anthos 部署真實資料庫並補上 TCP 查詢後，<span class="mono">userservice → accounts-db</span> 由虛線升為實線；同一條 <span class="mono">transactionhistory → ledger-db</span> 在三次實驗中分別是「不存在」→「虛線、誠實說沒量到」→「實線、5 191 次連線」，三次的回答品質完全跟著等級走。</li>
+          <li><b>Kiali</b>（Istio 的服務圖）：<i>Idle Edges</i> 把「曾有流量、查詢期間沒流量」的邊以灰色畫出，預設關閉——不同證據狀態用不同視覺呈現。</li>
+          <li><b>Admiralty Code</b>（NATO AJP-2.1）：<span class="hl">來源可靠度 A–F 與資訊可信度 1–6 分開評級</span>——「等級與來源分開存」最古老的先例。</li>
+          <li><b>OWASP CycloneDX</b> component evidence：每個元件記方法與各自的 confidence 0–1。差別：它用連續值，我們用離散三級。<span style="color:var(--grey)">（另有 SLSA、W3C PROV-DM）</span></li>
+        </ol>
+      </div>
+      <div class="pts">
+        <h4>重點</h4>
+        <ul>
+          <li>Hillside checklist 要求<b>跨實例的通用性證據</b>：DepWeaver 以外至少兩個查證過的外部實例，這裡有五個，橫跨服務網格、情報分析、SBOM、供應鏈、資料溯源。</li>
+          <li>DepWeaver 的部分不是「我們也這樣做」，是<b>兩個具體事件</b>（日期、commit）：pattern 的力量來自它解掉的真實失敗。</li>
+          <li>Admiralty Code 是「等級與來源分開存」的直接先例，比我們早幾十年。</li>
+          <li>CycloneDX 和我們的差別（連續 vs 離散）<b>主動講</b>，不藏。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>事件裡寫「指導老師看了…說它比較像流量圖」，投稿版要改成怎樣的說法？另外 Admiralty Code 目前只有二手來源，要引 AJP-2.1 原文。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　Known Uses 六條放四條。重點是 DepWeaver 那段不是「我們也這樣做」，是兩個具體事件；外部實例橫跨五個領域；和 CycloneDX 的差別主動講。想問的是事件裡提到老師那句話投稿版怎麼寫，以及 Admiralty Code 要引原文。</div>
+  </div>
+  <div class="ftr"></div><div class="num">19</div>
+</section>
+
+<!-- 20 · ② 一頁 -->
+<section class="slide" id="s20">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ② 草稿（精簡） <small>1/4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:16px">
+        <p style="font-size:18px;font-weight:900">② 單一標準模型、多個視圖（One Model, Many Views）</p>
+        <span class="lbl">別名</span><p>Single Canonical Model, Many Views（目錄 P6）；分析快照（Analysis Snapshot）；祈使句版：<b>先建模型，再產視圖</b>。</p>
+        <span class="lbl">一句話</span><p>每次分析先建一個可序列化的標準模型，圖、指標、報告裡的事實段落、問答、匯出全都是這個模型的純函式；衍生計算只實作一次。</p>
+        <span class="lbl">Problem</span>
+        <blockquote>每個產物各自從原始證據推導時，推導邏輯會分岔；讀者會看到「報告說 A、圖畫 B」，而且無從判斷誰對。</blockquote>
+        <span class="lbl">Solution</span>
+        <ol>
+          <li>每次執行<b>先建一個標準模型，再產所有視圖</b>；模型只建一次。</li>
+          <li>每個視圖都是模型的<b>純函式</b>：繪圖、指標、事實段落（→ ③）、查詢、匯出。</li>
+          <li><b>衍生計算只實作一次</b>（分數、分層、拓樸排序），所有視圖呼叫同一個實作。</li>
+          <li>模型可以<b>序列化與還原</b>。晚發生的視圖（幾天後的追問）讀回同一份模型。</li>
+          <li>需要給 LLM 的事實，<b>也由模型產生文字給它</b>，不讓它讀原始證據自己推。</li>
+        </ol>
+      </div>
+      <div class="pts">
+        <h4>重點</h4>
+        <ul>
+          <li>Problem 的兩難：各自推導 → 分岔；事後對齊 → 永遠修不完；只交一個產物 → 讀者需要三種。</li>
+          <li>Known Uses：Pandoc 的 AST、MVC（Reenskaug 1978）、Backstage catalog。和 MVC 的差別要講清楚：<b>這裡的 model 是一次執行的快照</b>，不是長駐狀態，而且要能序列化給晚到的視圖。</li>
+          <li>沒解掉的事：schema 是共同介面、模型沒收的資訊所有視圖都拿不到、模型失敗全部失敗（→ ⑤）。</li>
+          <li>這次真跑的佐證：報告第 4、5 節改由程式從圖產生之後，<b>報告和圖不可能再對不起來</b>。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>§6.2 說 ② 最接近既有知識（MVC 的變體）。新的部分寫成「一次性分析產物的快照模型 ＋ 晚到的視圖讀回同一份」夠不夠？</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　②只放名稱、一句話、Problem、Solution。重點是和 MVC 的差別：這裡的 model 是一次執行的快照，要能序列化給晚到的視圖。這次真跑第四第五節改由程式產生就是它的佐證。</div>
+  </div>
+  <div class="ftr"></div><div class="num">20</div>
+</section>
+
+<!-- 21 · ③ 一頁 -->
+<section class="slide" id="s21">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ③ 草稿（精簡） <small>2/4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:16px">
+        <p style="font-size:18px;font-weight:900">③ 事實由程式寫（Code-Authored Facts）</p>
+        <span class="lbl">別名</span><p>權威段落由程式碼產生（目錄 P7）；先算後寫（Compute, Then Narrate）；事實段落不給 LLM；祈使句版：<b>讓程式寫事實，讓模型寫詮釋</b>。</p>
+        <span class="lbl">一句話</span><p>把報告分成事實段落與詮釋段落；事實段落由程式從模型產生、措辭固定，再以結構錨點拼進 LLM 寫的報告；LLM 拿到同一份事實清單只負責詮釋，它若自己也寫了事實段落，丟掉它的版本。</p>
+        <span class="lbl">Problem</span>
+        <blockquote>LLM 重述事實時會漂移，而且收緊 prompt 通常只是把錯誤換個樣子。怎麼保有 LLM 報告的可讀性，又讓事實不出錯？</blockquote>
+        <span class="lbl">Solution</span>
+        <ol>
+          <li>把報告段落分成<b>事實型</b>（有正確答案、模型裡都有）與<b>詮釋型</b>。</li>
+          <li>事實型段落<b>由程式從模型產生</b>，措辭固定且精確（寫「連線數」不寫「請求數」）。</li>
+          <li><b>告訴 LLM 跳過事實段落</b>；同時把同樣的事實以「已確認清單」給它，讓詮釋不會和事實矛盾。</li>
+          <li>用<b>結構錨點</b>把程式段落拼進報告；LLM 若自己也寫了，<b>丟掉它的版本</b>；找不到錨點就附在最後。</li>
+          <li>段落末尾註明「本段由程式從模型產生」。</li>
+        </ol>
+      </div>
+      <div class="pts">
+        <h4>重點</h4>
+        <ul>
+          <li>漂移三種形態都真的發生過：<b>漏</b>（五條寫四條）、<b>加</b>（把函式庫列成依賴）、<b>改措辭</b>（連線數寫成請求數）。</li>
+          <li><b>這次真跑的第二個事件</b>：報告第 4 節 prompt 明說「不要列 ignore 的名字」，LLM 還是列了 <span class="mono">MyAppThriftClient → FooService</span>。改 prompt 沒用，改成程式產生才有用——pattern 的 Known Uses 多了一條。</li>
+          <li>代價也真的付了：程式產生的第 4 節<b>沒有 LLM 原本會寫的 Method／Endpoint</b>，因為圖沒記這些。</li>
+          <li>外部實例：Satyrn（先算後寫，正確主張 86% vs 57%）、SymGen、knitr、OpenAPI 文件。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>這次還發現「程式寫的段落也會把沒量的寫成確定值」（Protocol: HTTP、Runtime observed: No）。這該算 ③ 的代價，還是 ⑤ 的事件？我目前放 ⑤。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　③最有這次真跑的佐證：第四節 prompt 明說不要列 ignore 的名字，LLM 還是列，改成程式產生才有用。代價也付了：程式產生的段落沒有 Method、Endpoint。想問的是程式段落把沒量的寫成確定值這件事該歸三還是五。</div>
+  </div>
+  <div class="ftr"></div><div class="num">21</div>
+</section>
+
+<!-- 22 · ④ 一頁 -->
+<section class="slide" id="s22">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ④ 草稿（精簡） <small>3/4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:16px">
+        <p style="font-size:18px;font-weight:900">④ 誠實分母（Honest Denominator）</p>
+        <span class="lbl">別名</span><p>排除但揭露（Exclude but Disclose）；分母只算量得到的；祈使句版：<b>說清楚你沒算進去的</b>（Say What You Left Out）。</p>
+        <span class="lbl">一句話</span><p>比率的分母只算「量測機制做得到、而且信心高於只被提到」的項目；性質不同的項目分開算；被排除的數量與理由一定寫在分數旁邊，排除的比計分的多時加警告。</p>
+        <span class="lbl">Problem</span>
+        <blockquote>把量不到的項目算進分母，分數會被永久壓低，讀者被推去修一個修不好的缺口；把弱證據的項目算進去，文件多說幾句就會稀釋分數；排除太多又會虛高。而讀者只看到一個百分比，分不出是哪一種。</blockquote>
+        <span class="lbl">Solution</span>
+        <ol>
+          <li>分母只算<b>同時</b>滿足兩個條件的項目：<b>量測機制做得到</b>，且<b>信心高於「只被提到」</b>（①）。已經量測到的一律算。</li>
+          <li>性質不同的項目用<b>獨立的比率</b>（業務呼叫、資料層分開報）。</li>
+          <li>分數旁邊<b>一定揭露</b>「未計分：N 項，理由」。</li>
+          <li>被排除的比計分的多時，加「此分數建立在很小的基礎上」的警告。</li>
+          <li>同時列出<b>未覆蓋清單</b>，讓分數可以直接變成下一步行動。</li>
+          <li>排除規則寫在一處，所有產生這個數字的視圖共用（②）。</li>
+        </ol>
+      </div>
+      <div class="pts">
+        <h4>重點</h4>
+        <ul>
+          <li>三次分母事故對應三種錯：45% 假分數（控制面混進來）、7/7 → 7/10（文件多講三條）、5/6 卡住（程序內快取）。<b>每次都是分母錯，不是量測錯</b>。</li>
+          <li>紅線用兩個反例劃：JaCoCo（排除就消失）、Istanbul（排除灌進分子）。正例：CONSORT 逐階段寫排除人數與理由、coverage.py 的 excluded_lines。</li>
+          <li>沒解掉的事：排除規則是會長大的清單；分母定義改了歷史數字不可比；讀者可能只看百分比。</li>
+          <li>和 ① 的關係：「信心高於只被提到」是分母的過濾條件之一。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>警告的門檻「未計分的比計分的多」刻意不用百分比（沒有自由參數）。這個理由寫在實作要點夠嗎，還是該升到 Solution？</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　④的三次事故每次都是分母錯不是量測錯。紅線用兩個反例劃。想問的是警告門檻不用百分比的理由放實作要點夠不夠。</div>
+  </div>
+  <div class="ftr"></div><div class="num">22</div>
+</section>
+
+<!-- 23 · ⑤ 一頁 -->
+<section class="slide" id="s23">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] pattern ⑤ 草稿（精簡） <small>4/4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div class="draft" style="font-size:16px">
+        <p style="font-size:18px;font-weight:900">⑤ 未量測不是零（Unmeasured Is Not Zero）</p>
+        <span class="lbl">別名</span><p>未知是一個值（Unknown Is a Value）；三值狀態；沒查過不是沒有；祈使句版：<b>預設為未知</b>（Default to Unknown）。</p>
+        <span class="lbl">一句話</span><p>狀態欄位預設是「未知」而不是 false 或 0，只在證據明確時才設為否定；這次沒收集哪些證據當成執行模式隨模型傳到每個視圖；視圖遇到未知寫一句話說明為什麼未知、補什麼才會知道，而且絕不把數值佔位交給 LLM。</p>
+        <span class="lbl">Problem</span>
+        <blockquote>沒收集的資料在程式裡變成 0 或 false，在 LLM 手上變成猜測；失敗的步驟看起來和「什麼都沒找到」一模一樣。讀者把一個從未發生的量測當成結果。</blockquote>
+        <span class="lbl">Solution</span>
+        <ol>
+          <li>狀態欄位用<b>三值</b>，預設是「未知」而不是 false。</li>
+          <li><b>執行模式</b>（這次沒收集哪些證據）當成中繼資料，隨模型傳到每一個視圖。</li>
+          <li>視圖遇到未知時<b>寫一句話</b>：為什麼未知，以及補什麼證據才會知道。</li>
+          <li><b>絕不用 0、0/N、0% 這種數值佔位代表未量測</b>，尤其不要交給 LLM。</li>
+          <li>步驟失敗時記錄<b>失敗狀態與原因</b>，不要回傳空結果。</li>
+          <li>空段落寫成「無，原因是……」，不留白。</li>
+        </ol>
+      </div>
+      <div class="pts">
+        <h4>重點</h4>
+        <ul>
+          <li><b>這次真跑的第一個事件就是它</b>：greenfield 什麼都沒量，覆蓋率訊息寫「Istio observed 0 / 23 — 0% runtime coverage」「the datastore is deployed」。修成「Not measured… unknown, not 0%」。</li>
+          <li>而且不只 LLM 會犯：<b>程式產生的段落</b>也把沒量的寫成 Protocol: HTTP、Runtime observed: No——標著 deterministic 反而更像真的。這條要加進 Known Uses 的事件。</li>
+          <li>外部實例三個領域各自得到同一結論：SQL 的 NULL、Kubernetes 的 <span class="mono">Unknown</span>、Grafana 的 No Data。</li>
+          <li>最脆弱的 pattern：<b>要求全面實施</b>，漏一個讀取點幻覺就從那裡回來。這次就是漏了 greenfield 的覆蓋率訊息。</li>
+        </ul>
+        <div class="ask"><b>想問：</b>Resulting Context 說這是 language 的終點，接下來是「補證」的另一個 language（分段檢查點、補證迴圈、<b>最後才問人</b>）。這次做的「問名字」是「最後才問人」的第二個實例——要不要在這篇就先把那組 pattern 的名字列出來？</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　⑤這次真跑的第一個事件就是它：沒量卻寫 0%。而且程式產生的段落也會犯，標著 deterministic 更像真的。它最脆弱，要求全面實施，這次就是漏了一個讀取點。想問的是接下來那組補證的 pattern 要不要在這篇先列名字。</div>
+  </div>
+  <div class="ftr"></div><div class="num">23</div>
+</section>
+
+<!-- 24 · 還空著 -->
+<section class="slide" id="s24">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 還空著的地方 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">四個缺口，都是我自己標出來的</p>
+    <table>
+      <tr><th style="width:28%">缺口</th><th style="width:36%">為什麼還空著</th><th>最小的補法</th></tr>
+      <tr class="hot"><td><b>問人的答案都是我給的</b></td><td>五次真跑操作者都是我，而且看過資料集</td><td>找一位沒看過這個 repo 的同學，照同樣步驟答一次；比對他的答案和我的</td></tr>
+      <tr><td><b>答 <span class="mono">new</span> 無法指定節點名</b></td><td>節點名由題目字面產生，ZooKeeper 變 zoo-keeper</td><td>表單接受 <span class="mono">new:zookeeper</span> 這種寫法，半天</td></tr>
+      <tr><td><b>論文還是中文</b></td><td>先把中文補完整，比先翻再補省一輪</td><td>pattern ① 的寫法這次確認後，翻英文、套 ACM 模板；加範例節後一定超過 10 頁，投 Regular paper</td></tr>
+      <tr><td><b>⑤ 的 Known Uses 要加這次的事件</b></td><td>「程式產生的段落也會把沒量的寫成確定值」是新發現</td><td>加一條事件，附 commit</td></tr>
+    </table>
+    <div class="note" style="margin-top:12px;font-size:16px"><b>為什麼要自己先講：</b>第一個是這次最該被問的——它和上次「標準答案是我給的」是同一類問題，而且這次我連答案都是自己填的。第二個是機制的小缺口。後兩個是排程。</div>
+    <p class="sub" style="margin-top:12px">上次留下、這次沒碰的</p>
+    <ul style="font-size:16px">
+      <li><b>TeaStore 跑 runtime</b>、<b>純 AI 對照第四輪</b>、<b>top-k 換一份 archive</b>——都要機器 B 或叢集</li>
+      <li><b>真實使用者問句樣本</b>、<b>截斷揭露的小型使用者實驗</b>——補法不變</li>
+    </ul>
+    <div class="notes"><b>講稿</b>　四個缺口。第一個最該被問：答案都是我給的，和上次標準答案是我給的同一類，補法是找沒看過 repo 的同學答一次。第二個是機制小缺口。後兩個排程。</div>
+  </div>
+  <div class="ftr"></div><div class="num">24</div>
+</section>
+
+<!-- 25 · 參考資料與產出 -->
+<section class="slide" id="s25">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 參考資料與產出 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">這次引用的資料</p>
+        <ul style="font-size:15px">
+          <li><a href="https://docs.langchain4j.dev/tutorials/agents/">langchain4j · Agents and Agentic AI</a>（human-in-the-loop 三種形態）、<a href="https://docs.langchain4j.dev/tutorials/spring-boot-integration/">Spring Boot Integration</a>（starter 要 Boot 3.5+）、<a href="https://github.com/langchain4j/langchain4j/blob/main/langchain4j-agentic/src/main/java/dev/langchain4j/agentic/declarative/HumanInTheLoop.java">HumanInTheLoop 原始碼</a></li>
+          <li><a href="https://doi.org/10.1016/j.jclinepi.2010.04.026">Guyatt 等人，<i>GRADE guidelines: 1. Introduction</i></a>，J Clin Epidemiol 64(4), 2011（證據品質＝對估計的信心）</li>
+          <li><a href="https://ieeexplore.ieee.org/abstract/document/7089294">Guo, Huang &amp; Laidlaw</a>，IEEE TVCG 2015（邊的不確定性視覺變數會互相干擾）；<a href="https://doi.org/10.1145/3772318.3790743">CHI 2026</a>（不確定性視覺化對信任是雙面刃）</li>
+          <li><a href="https://hillside.net/index.php/pattern-writing-checklist">Hillside Pattern Writing Checklist</a>、<a href="https://plopcon.org/asianplop2026/submissions/">AsianPLoP 徵稿</a></li>
+          <li><a href="https://ceur-ws.org/Vol-2520/paper1a.pdf">MicroDepGraph 資料集</a>（spring-cloud-microservice 的 26 條參考邊）</li>
+        </ul>
+        <p class="sub" style="margin-top:10px">怎麼重跑（都不需要叢集）</p>
+        <pre class="code" style="font-size:12px">mvn -o test -Dtest=AliasAskFlowTest                      # 別名問人 26 個
+mvn -o test -Dtest=GreenfieldProbeTest -Dprobe.repo=&lt;checkout&gt; \
+  -Dprobe.aliases=docs/generalization/external/aliases/spring-cloud-microservice.answers.json
+mvn -o test                                              # 全套 280（1 個要叢集）</pre>
+      </div>
+      <div>
+        <p class="sec">這次的產出</p>
+        <table class="xs">
+          <tr><th style="width:46%">文件</th><th>內容</th></tr>
+          <tr><td><span class="mono">docs/alias-ask-design-2026-10-02.md</span></td><td>反饋 ①：四個丟掉點、流程、設計決定、離線驗證、<b>五次真跑各抓到什麼</b></td></tr>
+          <tr><td><span class="mono">docs/langchain4j-spike-2026-10-02.md</span></td><td>反饋 ①：版本、pom 差異、阻塞分析、不用的理由</td></tr>
+          <tr><td><span class="mono">docs/asianplop-paper-zh.md</span></td><td>反饋 ②③：名稱表、用詞、13 欄位、五個 pattern 擴寫、分級低→高、遙測定義（858 行）</td></tr>
+          <tr><td><span class="mono">docs/confidence-grading-related-work.md</span><br><span class="mono">docs/diagrams/fig2-confidence-merge-chain.*</span></td><td>反饋 ②：改檔名與標題</td></tr>
+        </table>
+        <p class="sub" style="margin-top:10px">程式與測試</p>
+        <ul style="font-size:14.5px">
+          <li>新類別 <span class="mono">AliasResolution</span>、新步驟 <span class="mono">toolkit-depstate-alias-button</span>、新指令 <span class="mono">reset-dependency-aliases</span>；改到的既有類別 9 個</li>
+          <li>改名：Java 55 檔、prompt 14 檔、文件 4 檔改檔名；舊鍵相容</li>
+          <li>報告第 4、5 節由程式從圖產生；greenfield 覆蓋率改「Not measured」</li>
+          <li>新測試 <b>26</b> 個；全套 <b>280</b>，唯一失敗的是要叢集的那個；<b>17 個 commit</b> 都在 <span class="mono">feat/greenfield-static-dependency-graph</span></li>
+        </ul>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　引用的資料都附了可點的連結。右邊是產出：四份文件、程式與測試。</div>
+  </div>
+  <div class="ftr"></div><div class="num">25</div>
+</section>
