@@ -108,6 +108,8 @@ public class DependencyAnalysisStateStore {
      */
     public static final String STAGE_PENDING_ALIASES = "pending_aliases";
     public static final String STAGE_ALIAS_ANSWERS = "alias_answers";
+    /** The service ids an alias answer may name (JSON array), written when the questions are posted. */
+    public static final String STAGE_ALIAS_VOCABULARY = "alias_vocabulary";
 
     public static class State {
         public String repoName = "";

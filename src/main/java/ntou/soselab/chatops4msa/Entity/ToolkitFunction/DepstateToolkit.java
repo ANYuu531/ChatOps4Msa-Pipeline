@@ -84,6 +84,8 @@ public class DepstateToolkit extends ToolkitFunction {
             return "every documented/coded name aligned; nothing to ask.";
         }
         stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_PENDING_ALIASES, questions.toJson());
+        stateStore.putStage(userId, DependencyAnalysisStateStore.STAGE_ALIAS_VOCABULARY,
+                AliasResolution.Questions.vocabularyToJson(questions.vocabulary()));
 
         List<AliasResolution.Question> list = questions.list();
         StringBuilder message = new StringBuilder();

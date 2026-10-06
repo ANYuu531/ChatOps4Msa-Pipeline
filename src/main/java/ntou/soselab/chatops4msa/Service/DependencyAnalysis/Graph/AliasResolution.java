@@ -108,6 +108,45 @@ public final class AliasResolution {
     /** The unresolved names collected while the graph was being merged, de-duplicated by key. */
     public static final class Questions {
         private final Map<String, Question> byKey = new LinkedHashMap<>();
+        /**
+         * Every service id an answer may name: the services on the built graph plus
+         * every candidate offered. Kept beside the questions so the form can accept
+         * "discovery" for cloud-eureka-server although no ranking put it forward —
+         * the operator knows names the ranking cannot guess (2026-10-06, first
+         * Discord run: the two answers that mattered were in no candidate list).
+         */
+        private final Set<String> vocabulary = new LinkedHashSet<>();
+
+        public void addVocabulary(Collection<String> ids) {
+            if (ids == null) return;
+            for (String id : ids) if (id != null && !id.isBlank()) vocabulary.add(id);
+        }
+
+        /** The service ids an answer may name, candidates included. */
+        public Set<String> vocabulary() {
+            Set<String> out = new LinkedHashSet<>(vocabulary);
+            for (Question q : byKey.values()) out.addAll(q.candidates);
+            return out;
+        }
+
+        public static String vocabularyToJson(Collection<String> ids) {
+            return new JSONArray(ids == null ? List.of() : new ArrayList<>(ids)).toString();
+        }
+
+        public static Set<String> vocabularyFromJson(String json) {
+            Set<String> out = new LinkedHashSet<>();
+            if (json == null || json.isBlank()) return out;
+            try {
+                JSONArray array = new JSONArray(json);
+                for (int i = 0; i < array.length(); i++) {
+                    String id = array.optString(i, "");
+                    if (!id.isBlank()) out.add(id);
+                }
+            } catch (Exception ignored) {
+                // unreadable: an empty vocabulary, which the form treats as "unknown"
+            }
+            return out;
+        }
 
         /**
          * Records one unresolved name. The same name seen again only counts another
@@ -393,6 +432,11 @@ public final class AliasResolution {
         }
         for (String c : candidates) if (key(c).equals(k)) return c;
         return null;
+    }
+
+    /** A typed answer shaped like a service id (lower-case letters, digits, hyphens). */
+    public static boolean looksLikeServiceId(String typed) {
+        return typed != null && typed.trim().toLowerCase(Locale.ROOT).matches("[a-z0-9][a-z0-9-]{0,62}");
     }
 
     /** How a decision reads back to the operator. */

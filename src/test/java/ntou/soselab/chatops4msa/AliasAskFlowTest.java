@@ -279,6 +279,30 @@ public class AliasAskFlowTest {
         assertEquals("http://localhost:8761/eureka/", rest.get(0).rawTarget);
     }
 
+    @Test
+    void theAnswerMayNameAnyServiceOnTheGraphNotOnlyACandidate() {
+        // First Discord run: "discovery" was the right answer for cloud-eureka-server and
+        // was in no candidate list, so the form rejected it as not understood.
+        AliasResolution.Questions questions = new AliasResolution.Questions();
+        questions.add("cloud-eureka-server", "code", "config", List.of("cloud-config-server", "cloud-simple-ui"));
+        questions.addVocabulary(List.of("discovery", "gateway", "simple-serviceb"));
+        AliasResolution.Question q = questions.list().get(0);
+        assertFalse(q.candidates.contains("discovery"));
+
+        java.util.Set<String> vocabulary = AliasResolution.Questions.vocabularyFromJson(
+                AliasResolution.Questions.vocabularyToJson(questions.vocabulary()));
+        assertTrue(vocabulary.contains("discovery"));
+        assertTrue(vocabulary.contains("cloud-config-server"), "candidates are part of it");
+
+        assertEquals("discovery", AliasResolution.parseAnswer("discovery", q, vocabulary));
+        assertEquals("simple-serviceb", AliasResolution.parseAnswer("simple-serviceB", q, vocabulary));
+        assertNull(AliasResolution.parseAnswer("eureka", q, vocabulary), "not a service on the graph");
+
+        assertTrue(AliasResolution.looksLikeServiceId("discovery"));
+        assertFalse(AliasResolution.looksLikeServiceId("not a service"));
+        assertTrue(AliasResolution.Questions.vocabularyFromJson("garbage").isEmpty());
+    }
+
     // ---------- persistence ----------
 
     @Test

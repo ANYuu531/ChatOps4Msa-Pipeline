@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.DepstateToolkit;
 import ntou.soselab.chatops4msa.Service.CapabilityOrchestrator.CapabilityOrchestrator;
@@ -143,9 +144,15 @@ public class ModalListener extends ListenerAdapter {
         AliasResolution.Answers answers = AliasResolution.Answers.fromJson(
                 stateStore.getStage(testerId, DependencyAnalysisStateStore.STAGE_ALIAS_ANSWERS));
 
-        // The candidates offered are the only service ids the form knows about; an id
-        // typed in full is accepted when it is one of them or appears in any question.
-        java.util.Set<String> knownIds = new java.util.LinkedHashSet<>();
+        // The service ids an answer may name: every service on the graph that raised the
+        // questions, plus every candidate. The operator often knows a name the ranking
+        // could not put forward ("discovery" for cloud-eureka-server).
+        java.util.Set<String> knownIds = AliasResolution.Questions.vocabularyFromJson(
+                stateStore.getStage(testerId, DependencyAnalysisStateStore.STAGE_ALIAS_VOCABULARY));
+        // A checkpoint whose questions were posted before the vocabulary was kept has
+        // none: then a typed id is taken as written and checked when the graph is built
+        // (an answer naming a service the graph does not have conjures nothing).
+        boolean vocabularyKnown = !knownIds.isEmpty();
         for (AliasResolution.Question q : pending) knownIds.addAll(q.candidates);
 
         List<String> understood = new ArrayList<>();
@@ -164,12 +171,18 @@ public class ModalListener extends ListenerAdapter {
             String typed = mapping.getAsString();
             if (typed == null || typed.isBlank()) continue;          // left blank: still pending
             String decision = AliasResolution.parseAnswer(typed, q, knownIds);
+            boolean unchecked = false;
+            if (decision == null && !vocabularyKnown && AliasResolution.looksLikeServiceId(typed)) {
+                decision = typed.trim().toLowerCase(java.util.Locale.ROOT);
+                unchecked = true;
+            }
             if (decision == null) {
                 notUnderstood.add("`" + q.name + "` ← \"" + typed.trim() + "\"");
                 continue;
             }
             answers.put(q.name, decision);
-            understood.add("`" + q.name + "` " + AliasResolution.describe(decision));
+            understood.add("`" + q.name + "` " + AliasResolution.describe(decision)
+                    + (unchecked ? " _(not checked yet: applied only if that service is on the graph)_" : ""));
         }
 
         if (understood.isEmpty()) {
@@ -200,11 +213,19 @@ public class ModalListener extends ListenerAdapter {
         }
         if (!stillPending.isEmpty()) {
             sb.append("\nStill open: ").append(stillPending.size())
-                    .append(" name(s) — click **Resolve names** again, or leave them off the graph.\n");
+                    .append(" name(s) — click **Resolve names** below for the next form, or leave them off the graph.\n");
         }
         sb.append("\nThese are applied when you click **Generate report**, and remembered for `")
                 .append(state.repoName).append("` so the next analysis does not ask again.");
-        event.reply(sb.toString()).queue();
+        // A fresh button right here when names remain, so the next five are one click
+        // away instead of a scroll back up to the original question.
+        if (stillPending.isEmpty()) {
+            event.reply(sb.toString()).queue();
+        } else {
+            event.reply(sb.toString())
+                    .addActionRow(Button.primary(DepstateToolkit.RESOLVE_ALIASES_BUTTON_ID, "Resolve names"))
+                    .queue();
+        }
 
         System.out.println("<<< end of current alias modal interaction event");
     }

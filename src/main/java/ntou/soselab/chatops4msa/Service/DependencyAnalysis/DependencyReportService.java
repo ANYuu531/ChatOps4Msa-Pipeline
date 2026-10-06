@@ -390,6 +390,14 @@ public class DependencyReportService {
             // deployment layer drew edges on (Compose's "hystrix" dashboard) is a question
             // for the operator, not a silent drop.
             GraphNormalizer.normalize(graph, answers, questions);
+            if (questions != null) {
+                List<String> services = new ArrayList<>();
+                for (DependencyGraph.Node n : graph.getNodes()) {
+                    if (n.kind == null || DependencyGraph.KIND_SERVICE.equals(n.kind)
+                            || DependencyGraph.KIND_GATEWAY.equals(n.kind)) services.add(n.id);
+                }
+                questions.addVocabulary(services);
+            }
 
             // Tier the nodes (ingress -> services by call depth -> data stores), so a
             // graph the size of train-ticket's reads as a system instead of a hairball.
