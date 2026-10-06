@@ -127,7 +127,7 @@
   <div class="burger"><i></i><i></i><i></i></div>
   <img class="logo" src="{{LOGO}}" alt="SOSEL">
   <h1>碩一週進度會議</h1>
-  <p class="when">會議時間：2026/10/9　·　主題：上次的反饋（三點）＋ pattern 草稿逐段</p>
+  <p class="when">會議時間：2026/10/9　·　主題：langchain4j 的決定、別名問人、pattern 草稿逐段</p>
   <span class="pill">學生：李安喻</span>
   <img class="cat" src="{{CAT}}" alt="">
   <div class="notes"><b>講稿</b>　上次三點反饋都做完了，而且第一點「別名改成中途問使用者」在 Discord 真環境跑了五次，每次都抓到問題、當天修掉。後半段把 pattern ① 的草稿一段一段攤開，請老師直接看原文。</div>
@@ -135,148 +135,24 @@
 
 <!-- 2 · 總覽 -->
 <section class="slide" id="s2">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 本週總覽 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 本週三件事 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
   <div class="bd">
-    <p class="sec">上次的三點反饋：都做完，第一點在真環境跑了五次</p>
-    <table class="sm">
-      <tr><th style="width:4%">#</th><th style="width:24%">反饋</th><th style="width:36%">做了什麼</th><th>結果</th></tr>
-      <tr><td class="c">1</td><td><b>別名</b>的問題像補流量那樣<b>在中間問使用者</b>；可以研究 langchain4j</td><td>找出工具<b>四個默默丟掉名字</b>的地方；沿用補流量「按鈕 → 表單 → 存檢查點 → 下一步套用」的路，對象換成名字。langchain4j 實測後<b>決定不用</b>（第 7 頁）</td><td><span class="mono">Resolve names</span> 按鈕；答案<b>程式解析、不經 LLM</b>、記在專案層級、寫進報告。<b>同一個專案</b>（上次簡報漏 2 條那個）離線 24/26 → 26/26；Discord 真跑 <b>5 次</b>，抓到 <b>13</b> 個問題全修</td></tr>
-      <tr><td class="c">2</td><td>不要用 <b>evidence</b>，用 <b>confidence</b></td><td>先查：程式碼早就有 <span class="mono">confidence</span>（三級）又有 <span class="mono">evidence</span>（出處清單）——<b>兩個概念</b>。分級叫 confidence，出處叫 <b>provenance</b>；碩論題目改 <b>Multi-Source</b> Fusion</td><td>程式與 prompt 70 個檔、論文全文；舊 JSON 鍵仍認。另外照上次說的：<b>分級由低到高講</b>、<b>「執行期觀測」白話定義（原「遙測」）</b>（第 8 頁）</td></tr>
-      <tr><td class="c">3</td><td>pattern language 要<b>完整的中英文主名稱</b>；每個 pattern <b>寫得更完整</b></td><td>定名稱、寫命名理由；欄位 8 → <b>13</b>（別名、一句話、範例獨立成節…）；Context／Problem／Resulting Context／Related 擴寫</td><td>名稱定為 <b>DepWeaver</b>＋碩論中英文題目；全文 647 → <b>858 行</b>；第 11–19 頁 <b>① 逐段放原文</b>，20–23 頁 ②–⑤ 各一頁</td></tr>
+    <table>
+      <tr><th style="width:4%">#</th><th style="width:26%">事情</th><th style="width:40%">結果</th><th>在哪幾頁</th></tr>
+      <tr><td class="c">1</td><td><b>langchain4j</b>：上次建議研究，<b>實測後決定不用</b></td><td>核心是穩定線；我們要的「中間問使用者」在 <b>beta</b> 模組；它唯一可用的非阻塞形態和現有的檢查點機制<b>一比一同構</b>，所以沒有換的理由</td><td>第 3 頁</td></tr>
+      <tr class="hot"><td class="c">2</td><td><b>別名改成問使用者</b>：之前、之後、怎麼做、怎麼用</td><td>之前：四個地方把對不上的名字<b>默默丟掉</b>，同一個專案漏 2 條。之後：變成問題貼在頻道，人答、程式套用、記住、寫進報告；同一個專案 <b>24/26 → 26/26</b>，Discord 真跑五次，每次抓到的問題當天修掉</td><td>第 4–7 頁</td></tr>
+      <tr><td class="c">3</td><td><b>pattern 講解</b>：名稱、欄位、① 逐段原文、②–⑤ 各一頁</td><td>名稱用 <b>DepWeaver</b>＋碩論題目；欄位 8 → 13；上次兩個提醒（分級由低到高、「執行期觀測」白話定義）都改進論文；① 的原文逐段放左邊、重點與想問的放右邊</td><td>第 8–23 頁</td></tr>
     </table>
-    <p class="sub" style="margin-top:12px">這次最值得講的一件事</p>
-    <div class="note" style="margin-top:6px"><b>真環境每跑一次就抓到一兩個問題，五次都是。</b>上個月補流量的 Tier 3 也是真環境逼出六個 bug。這次最有代表性的一個：greenfield 模式沒有量任何東西，覆蓋率訊息卻寫「Istio observed 0 / 23 — 0%」——這正是 pattern ⑤「未量測不是零」在講的失敗，而且是我們自己的工具犯的。所以 pattern 不是事後整理出來的漂亮話，是每一次真跑都會再撞到一次的東西。</div>
-    <p class="cap" style="text-align:left;margin-top:8px">文件：docs/alias-ask-design-2026-10-02.md · docs/langchain4j-spike-2026-10-02.md · docs/asianplop-paper-zh.md</p>
-    <div class="notes"><b>講稿</b>　三點一句話各講一次。第一點不只實作，還在真環境跑了五次，每次都抓到問題。第二點改名之前先發現程式碼裡兩個概念都在，所以是分清楚不是換字。第三點名稱定了、欄位補到十三個，後半段直接看原文。下面那格是最值得講的：真環境每跑一次就抓到問題，其中一個正好是我們自己的 pattern 在講的失敗。</div>
+    <p class="sub" style="margin-top:14px">這次最值得講的一件事</p>
+    <div class="note" style="margin-top:6px"><b>真環境每跑一次就抓到一兩個問題，五次都是。</b>最有代表性的一個：greenfield 模式沒有量任何東西，覆蓋率訊息卻寫「Istio observed 0 / 23 — 0%」——這正是 pattern ⑤「未量測不是零」在講的失敗，而且是我們自己的工具犯的。所以 pattern 不是事後整理出來的漂亮話，是每一次真跑都會再撞到一次的東西。</div>
+    <div class="notes"><b>講稿</b>　三件事各一句。langchain4j 實測後決定不用，第 3 頁講理由。別名問人是主軸：之前默默丟掉、之後變成問題，同一個專案從 24/26 到 26/26，真跑五次。pattern 後半段直接看原文。下面那格是最值得講的：真環境每跑一次就抓到問題，其中一個正好是我們自己的 pattern 在講的失敗。</div>
   </div>
   <div class="ftr"></div><div class="num">2</div>
 </section>
 
-<!-- 3 · ① 四個丟掉的地方 -->
+<!-- 3 · ① langchain4j -->
 <section class="slide" id="s3">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 別名改成問人 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
-  <div class="bd">
-    <p class="sec">先找出工具「對不上名字就丟掉」的地方：有四個，都不留痕跡</p>
-    <table class="sm">
-      <tr><th style="width:5%">#</th><th style="width:28%">在哪裡</th><th style="width:34%">什麼情況</th><th>原本的行為</th></tr>
-      <tr><td class="c">1</td><td><span class="mono">DocGraphMerger</span> 第 4 步</td><td>文件（DeepWiki）提到一個服務名，kebab、去 <span class="mono">-client</span>、模組目錄後綴三條規則<b>都對不上</b></td><td>回傳 null，<b>這條邊消失</b></td></tr>
-      <tr><td class="c">2</td><td><span class="mono">CodeGraphMerger</span> 模糊比對</td><td>程式碼裡的短名字<b>同時符合多個節點</b></td><td>回傳 null，進殘餘清單交給 LLM</td></tr>
-      <tr><td class="c">3</td><td>LLM 殘餘邊對齊</td><td>LLM 也對不上（prompt 要它寧可 DROP 也不要猜）</td><td>那一列<b>丟掉，沒有紀錄</b></td></tr>
-      <tr class="hot"><td class="c">4</td><td><span class="mono">GraphNormalizer</span> 函式庫名單</td><td>節點名在函式庫名單裡，但程式碼／部署層在它身上畫了邊——<b>上次簡報漏的那 2 條就是這個</b>：Compose 的 <span class="id">hystrix</span> 是 dashboard 服務，被當 Hystrix 函式庫刪掉</td><td>整個節點連邊<b>刪掉，沒有紀錄</b></td></tr>
-    </table>
-    <p class="sub" style="margin-top:12px">為什麼不自己猜：兩個自動的選項都是錯的</p>
-    <div class="two" style="gap:22px;margin-top:4px">
-      <div class="box" style="min-height:0;padding:14px 22px;font-size:16px"><h3 style="font-size:18px;margin-bottom:6px">丟掉</h3>等於把<b>文件主張的依賴藏起來</b>，讀者不知道有東西被藏——違反我們自己 pattern ④「排除但揭露」。</div>
-      <div class="box" style="min-height:0;padding:14px 22px;font-size:16px"><h3 style="font-size:18px;margin-bottom:6px">模糊比對</h3>等於<b>憑相似度發明一條邊</b>。<span class="mono">Customer API</span> 配 <span class="id">customers-service</span> 看起來對，<span class="mono">cloud-simple-service</span> 配 <span class="id">simple</span> 就錯——上次第 7 頁講過為什麼不放寬。</div>
-    </div>
-    <div class="note" style="margin-top:12px;font-size:16px">跟補流量的 Tier 3 <b>結構相同</b>：自動的（規則、LLM）都試過之後剩下的，<b>是文件寫的別名、函式庫標籤，還是其他層都沒看到的真服務</b>——工具分不出來，人一眼就知道。</div>
-    <div class="notes"><b>講稿</b>　先找問題在哪。四個地方會把對不上的名字默默丟掉；第四個就是上次簡報說 spring-cloud-microservice 漏兩條、「工具的剩餘邊界、不修」的那個——這次重跑發現根因更單純：Compose 的 hystrix 是 dashboard 服務，但函式庫名單裡有 hystrix，整個節點被刪掉。「hystrix 是函式庫還是服務」規則分不出來，人一眼就知道，所以這正是該問人的地方。下面兩格是為什麼不猜。</div>
-  </div>
-  <div class="ftr"></div><div class="num">3</div>
-</section>
-
-<!-- 4 · ① 流程與真實對話 -->
-<section class="slide" id="s4">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 別名改成問人 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
-  <div class="bd">
-    <div class="two w46" style="gap:24px">
-      <div>
-        <p class="sec">沿用補流量那條路，對象換成名字</p>
-        <table class="xs">
-          <tr><th style="width:24%"></th><th>補流量（上個月）</th><th>合圖（這次）</th></tr>
-          <tr><td>問的東西</td><td>流量需要、推不出來的<b>值</b></td><td>文件／程式碼用的<b>名字</b>是圖上哪個服務</td></tr>
-          <tr><td>什麼時候</td><td colspan="2">收集結束、bot 閒置時；名字排在值前面</td></tr>
-          <tr><td>怎麼問</td><td colspan="2">訊息＋按鈕 → Discord 表單，一題一格，<b>最多五格</b>；答完回覆裡附下一輪按鈕</td></tr>
-          <tr><td>答案怎麼讀</td><td>原樣帶進請求</td><td><b>確定性解析</b>：候選編號、圖上任一服務 id、<span class="mono">new</span>、<span class="mono">ignore</span>；<b>看不懂就留著並回報</b></td></tr>
-          <tr><td>答完之後</td><td>重打一輪流量</td><td><b>不重跑</b>：按 Generate report 建圖時套用</td></tr>
-          <tr><td>記多久</td><td>這次 run</td><td><b>專案層級</b>：下次分析同一個 repo 不再問</td></tr>
-          <tr class="hot"><td>greenfield</td><td>不問</td><td><b>照問</b>——純靜態的 run 只有名字可依靠</td></tr>
-        </table>
-        <p class="srcs">實作：<span class="mono">AliasResolution</span>（問題、答案、候選排序、解析）、<span class="mono">toolkit-depstate-alias-button</span>、<span class="mono">ButtonListener</span>／<span class="mono">ModalListener</span>。報告最後多一節「Names resolved by the operator」，由程式從答案產生。</p>
-      </div>
-      <div>
-        <p class="sec">真實對話（10/6 第一次真跑，原文）</p>
-        <div class="chat">
-          <div class="who bot">DepWeaver</div>
-          <div class="msg"><b>8 name(s) in the docs/code do not match any service on the graph</b><br>• <span class="mono">cloud-eureka-server</span> — code, module directory of cloud-eureka-server/…/application.yaml · closest: 1 cloud-config-server · 2 cloud-simple-service · 3 cloud-simple-ui<br>• <span class="mono">cloud-hystrix-dashboard</span> — code · closest: 1 <span class="mono">hystrix</span><br>• <span class="mono">cloud-simple-serviceB</span> — doc, synchronous: cloud-api-gateway → cloud-simple-serviceB (+2 more)<br>• <span class="mono">MyAppThriftClient</span> — doc, synchronous: MyAppThriftClient → FooService<br>(3 more will be asked in the next round — Discord allows five per form.)<br><span class="btn">Resolve names</span></div>
-          <div class="who">我</div>
-          <div class="msg me"><div class="form"><label>cloud-eureka-server</label><input value="discovery"><label>cloud-hystrix-dashboard</label><input value="1"><label>cloud-simple-serviceB</label><input value="simple-serviceb"><label>MyAppThriftClient</label><input value="ignore"></div></div>
-          <div class="who bot">DepWeaver</div>
-          <div class="msg"><b>Got it — names resolved:</b> cloud-eureka-server → discovery · cloud-hystrix-dashboard → hystrix · cloud-simple-serviceB → simple-serviceb · MyAppThriftClient ignored<br>Still open: 3 name(s) — click <b>Resolve names</b> below. <span class="btn">Resolve names</span></div>
-        </div>
-        <p class="cap" style="text-align:left;margin-top:6px">候選排序（第一題給的三個都不對，正確答案是 discovery）只是提示、不決定；答案打圖上任一服務 id 都收。</p>
-      </div>
-    </div>
-    <div class="notes"><b>講稿</b>　左邊跟補流量逐項對照，三處不同：答案要經過確定性解析，因為它會變成圖上的邊；答完不重跑；記在專案層級。右邊是真實的對話，第一題的候選三個都不對、正確答案是 discovery——這就是為什麼候選只能當提示，真正的判斷是人做的。</div>
-  </div>
-  <div class="ftr"></div><div class="num">4</div>
-</section>
-
-<!-- 5 · ① 五次真跑 -->
-<section class="slide" id="s5">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 同一個專案，Discord 真跑五次 <small>3</small></span><div class="burger"><i></i><i></i><i></i></div></div>
-  <div class="bd">
-    <div class="two w73" style="gap:22px">
-      <div>
-        <table class="xs">
-          <tr><th style="width:6%">跑</th><th style="width:10%">問了</th><th>抓到什麼（全部當天修掉）</th></tr>
-          <tr><td class="c">離線</td><td class="c">3</td><td><span class="id">hystrix</span> 被當函式庫刪掉（第 4 個丟掉點）→ 問前 <b>24/26</b>，答 3 題後 <b>26/26</b></td></tr>
-          <tr><td class="c">1</td><td class="c">8</td><td>表單只認候選清單，<b>正確答案 discovery 不在裡面</b>；覆蓋率寫「<b>0 / 23 — 0%</b>」但根本沒量；<b>模組名／部署名同一服務出現兩次</b>（四對）；答案沒套到既有節點；前端 <span class="mono">$http.get('users')</span> 畫出假邊；答錯了無法改</td></tr>
-          <tr><td class="c">2</td><td class="c">11</td><td>圖乾淨了。報告：答「hystrix」顯示成「hystrix → hystrix」；LLM 寫的第 4 節<b>仍列出已答 ignore 的名字</b>（prompt 明說不要）；<span class="mono">simple-ui → simple-service</span> 報告有、圖沒有（<span class="mono">"http://" + 常數</span> 沒解析）；第 6 節 <span class="mono">hystrix-turbine</span> 沒改名</td></tr>
-          <tr><td class="c">3</td><td class="c">5</td><td>只問 DeepWiki 新冒出的名字（答案記憶有效）。程式產生的段落：Protocol 一律寫 HTTP（圖沒記協定）；第 5 節 greenfield 寫「Runtime observed: No」</td></tr>
-          <tr><td class="c">4</td><td class="c">4</td><td>wiki 把多個消費者寫在同一欄「a, b」，工具當成一個名字問</td></tr>
-          <tr><td class="c">5</td><td class="c">2</td><td>wiki 把 <b>repo 自己的名字</b>當成元件來源</td></tr>
-        </table>
-        <div class="note" style="margin-top:10px;font-size:15px"><b>兩個教訓：</b>①「prompt 明說不要，LLM 還是寫」——第 4 節因此改由程式從圖產生，跟第 5 節一樣（pattern ③ 的第二個真實事件）。②「程式寫的段落也會把沒量的寫成確定值」（0%、No、HTTP）——而且標著 deterministic 反而更像真的（pattern ⑤）。</div>
-      </div>
-      <div>
-        <div class="fig"><img src="{{IMG:scm-graph-run1.png}}" alt="第一次真跑的圖"><p class="cap">第一次真跑：同一服務兩種拼法（cloud-simple-service／simple-service 等四對）、假節點 users、zipkin-server</p></div>
-        <div class="fig" style="margin-top:8px"><img src="{{IMG:scm-graph-final.png}}" alt="第五次真跑的圖"><p class="cap">第五次：16 節點每個服務一次，資料集 26 條全在，多 5 條 repo 真的有的（thrift、dummy、uaa、simple-ui→simple-service）</p></div>
-      </div>
-    </div>
-    <div class="notes"><b>講稿</b>　同一個專案、同一個 commit，離線先跑一次，再在 Discord 真跑五次。表裡是每一次抓到什麼，全部當天修掉。右邊兩張圖是第一次和第五次的對比。兩個教訓要講：第 4 節原本給 LLM 寫，prompt 明說不要列 ignore 的名字它還是列，所以改由程式產生；但程式寫的段落也會犯 pattern ⑤ 的錯，把沒量的寫成 0%、No、HTTP，而且標著 deterministic 反而更像真的。</div>
-  </div>
-  <div class="ftr"></div><div class="num">5</div>
-</section>
-
-<!-- 6 · ① 界線 -->
-<section class="slide" id="s6">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 這個驗證能主張什麼、不能主張什麼 <small>4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
-  <div class="bd">
-    <div class="two" style="gap:26px">
-      <div>
-        <p class="sec">先講最重要的：操作者是我</p>
-        <div class="box" style="min-height:0;padding:16px 22px;font-size:16px">五次真跑的答案都是<b>我填的</b>，而且<b>我看過資料集的期望邊</b>。所以這些結果證明的是<b>機制走得通</b>：問題會被提出、答案會被套用、只有被答的邊出現、答錯了可以改、下次不再問。<br><br>它<b>不證明</b>「問人會得到正確答案」。那是上次「標準答案是我給的」同一類問題。要主張那一點，得找<b>沒看過這個 repo 的人</b>照同樣步驟答一次——這是下一步，不是這次做到的。</div>
-        <p class="sub" style="margin-top:12px">機制本身的界線</p>
-        <ul style="font-size:15.5px">
-          <li><b>DeepWiki 每次用詞都不一樣</b>（ZooKeeper ServerSets → ZooKeeper），新名字會零星一直冒出來；答案累積、問得越來越少，但不保證某次之後完全不問</li>
-          <li>問的是「<b>這個名字是哪個服務</b>」，不問「這條邊存不存在」；邊的存在仍由來源決定</li>
-          <li>答 <span class="mono">new</span> 時<b>無法指定節點名</b>（ZooKeeper 會變成 zoo-keeper），還沒修</li>
-          <li>Discord 一張表單最多五格；超過分輪</li>
-        </ul>
-      </div>
-      <div>
-        <p class="sec">測試釘住的性質（26 個，離線）</p>
-        <ul style="font-size:15px">
-          <li>對不上的名字<b>變問題而不是消失</b>，圖上<b>不多出</b>節點或邊；函式庫名有邊才問、沒邊照舊靜默刪</li>
-          <li>答案三種效力：對應既有節點（邊帶 doc 出處）／<span class="mono">new</span> 建節點／<span class="mono">ignore</span>；答一個圖上沒有的 id <b>不會造節點</b>；答案也套用到<b>既有</b>節點</li>
-          <li>只差前後綴的兩個服務名 → 問「是不是同一個」，<b>兩個都留著</b>直到回答</li>
-          <li>看不懂的答案（<span class="mono">9</span>、空白、<span class="mono">maybe</span>）→ <b>不是合併</b>；答題目自己的名字＝<span class="mono">new</span></li>
-          <li>wiki 一欄多個名字拆開逐個對；repo 自己的名字不問；前端相對 URL 不算呼叫別的服務</li>
-          <li>專案層級記憶：另一個使用者、檢查點過期後同一 repo <b>不再問</b>；<span class="mono">reset</span> 可忘掉重問</li>
-          <li>報告第 4／5 節由程式從圖產生；greenfield 寫「未量測」不寫 0％／No／HTTP</li>
-        </ul>
-        <p class="srcs">全套 <b>280</b> 個測試，唯一失敗的是要連 MCP server 的那個（跟之前一樣）。探針 <span class="mono">GreenfieldProbeTest</span> 吃 <span class="mono">-Dprobe.aliases=</span> 答案檔，是「Resolve names」的離線形式；對照用的答案檔與輸出在 <span class="mono">docs/generalization/external/aliases/</span>。</p>
-      </div>
-    </div>
-    <div class="notes"><b>講稿</b>　這頁先講操作者是我、而且看過答案——所以只證明機制走得通，不證明問人會答對；要主張後者要找沒看過 repo 的人。然後是機制的界線，最重要的是 DeepWiki 每次用詞不一樣，新名字會一直零星冒出來，這是常態不是 bug。右邊是測試釘住的性質。</div>
-  </div>
-  <div class="ftr"></div><div class="num">6</div>
-</section>
-
-<!-- 7 · ① langchain4j -->
-<section class="slide" id="s7">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① langchain4j：實測過，這次不用 <small>5</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ① 為什麼不用 langchain4j <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
   <div class="bd">
     <div class="two w64" style="gap:24px">
       <div>
@@ -310,57 +186,140 @@
     </div>
     <div class="notes"><b>講稿</b>　langchain4j 我有在獨立分支實測。結論分兩半：核心是穩定線，成熟；但「中間問使用者」那塊在 agentic 模組，還是 beta30，官方允許版本間破壞性變動。三個不用的理由：綁 beta、要重寫驗證過的流程、而且它可用的那種形態跟我們已經做的一模一樣。這點反而可以寫進論文：我們和框架不約而同走到同一個形態。</div>
   </div>
-  <div class="ftr"></div><div class="num">7</div>
+  <div class="ftr"></div><div class="num">3</div>
 </section>
 
-<!-- 8 · ② confidence + 老師兩點 -->
-<section class="slide" id="s8">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② evidence → confidence，還有上次的兩個提醒 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+<!-- 4 · ① 四個丟掉的地方 -->
+<section class="slide" id="s4">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 別名改成問人 · 之前的工具 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <p class="sec">先找出工具「對不上名字就丟掉」的地方：有四個，都不留痕跡</p>
+    <table class="sm">
+      <tr><th style="width:5%">#</th><th style="width:28%">在哪裡</th><th style="width:34%">什麼情況</th><th>原本的行為</th></tr>
+      <tr><td class="c">1</td><td><span class="mono">DocGraphMerger</span> 第 4 步</td><td>文件（DeepWiki）提到一個服務名，kebab、去 <span class="mono">-client</span>、模組目錄後綴三條規則<b>都對不上</b></td><td>回傳 null，<b>這條邊消失</b></td></tr>
+      <tr><td class="c">2</td><td><span class="mono">CodeGraphMerger</span> 模糊比對</td><td>程式碼裡的短名字<b>同時符合多個節點</b></td><td>回傳 null，進殘餘清單交給 LLM</td></tr>
+      <tr><td class="c">3</td><td>LLM 殘餘邊對齊</td><td>LLM 也對不上（prompt 要它寧可 DROP 也不要猜）</td><td>那一列<b>丟掉，沒有紀錄</b></td></tr>
+      <tr class="hot"><td class="c">4</td><td><span class="mono">GraphNormalizer</span> 函式庫名單</td><td>節點名在函式庫名單裡，但程式碼／部署層在它身上畫了邊——<b>上次簡報漏的那 2 條就是這個</b>：Compose 的 <span class="id">hystrix</span> 是 dashboard 服務，被當 Hystrix 函式庫刪掉</td><td>整個節點連邊<b>刪掉，沒有紀錄</b></td></tr>
+    </table>
+    <p class="sub" style="margin-top:12px">為什麼不自己猜：兩個自動的選項都是錯的</p>
+    <div class="two" style="gap:22px;margin-top:4px">
+      <div class="box" style="min-height:0;padding:14px 22px;font-size:16px"><h3 style="font-size:18px;margin-bottom:6px">丟掉</h3>等於把<b>文件主張的依賴藏起來</b>，讀者不知道有東西被藏——違反我們自己 pattern ④「排除但揭露」。</div>
+      <div class="box" style="min-height:0;padding:14px 22px;font-size:16px"><h3 style="font-size:18px;margin-bottom:6px">模糊比對</h3>等於<b>憑相似度發明一條邊</b>。<span class="mono">Customer API</span> 配 <span class="id">customers-service</span> 看起來對，<span class="mono">cloud-simple-service</span> 配 <span class="id">simple</span> 就錯——上次第 7 頁講過為什麼不放寬。</div>
+    </div>
+    <div class="note" style="margin-top:12px;font-size:16px">跟補流量的 Tier 3 <b>結構相同</b>：自動的（規則、LLM）都試過之後剩下的，<b>是文件寫的別名、函式庫標籤，還是其他層都沒看到的真服務</b>——工具分不出來，人一眼就知道。</div>
+    <div class="notes"><b>講稿</b>　先找問題在哪。四個地方會把對不上的名字默默丟掉；第四個就是上次簡報說 spring-cloud-microservice 漏兩條、「工具的剩餘邊界、不修」的那個——這次重跑發現根因更單純：Compose 的 hystrix 是 dashboard 服務，但函式庫名單裡有 hystrix，整個節點被刪掉。「hystrix 是函式庫還是服務」規則分不出來，人一眼就知道，所以這正是該問人的地方。下面兩格是為什麼不猜。</div>
+  </div>
+  <div class="ftr"></div><div class="num">4</div>
+</section>
+
+<!-- 5 · ① 流程與真實對話 -->
+<section class="slide" id="s5">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 別名改成問人 · 怎麼實作、怎麼使用 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
   <div class="bd">
     <div class="two w46" style="gap:24px">
       <div>
-        <p class="sec">動手前先查：程式碼早就兩個都有</p>
+        <p class="sec">沿用補流量那條路，對象換成名字</p>
         <table class="xs">
-          <tr><th style="width:28%">東西</th><th style="width:34%">它回答的問題</th><th>改成</th></tr>
-          <tr class="hot"><td><b>分級</b>（三級）</td><td>這條關係<b>可以多相信</b></td><td><b>confidence</b>——程式碼本來就是；文件、報告、pattern 名稱沒跟上</td></tr>
-          <tr><td><b>來源層</b></td><td>哪幾層<b>說過</b>（runtime／code／doc）</td><td><span class="mono">provenance</span>，不動</td></tr>
-          <tr class="hot"><td><b>出處清單</b></td><td>在哪裡<b>看到的</b>（file:line、查詢）</td><td><b>provenanceRefs</b>；直接叫 provenance 會撞上一列</td></tr>
+          <tr><th style="width:24%"></th><th>補流量（上個月）</th><th>合圖（這次）</th></tr>
+          <tr><td>問的東西</td><td>流量需要、推不出來的<b>值</b></td><td>文件／程式碼用的<b>名字</b>是圖上哪個服務</td></tr>
+          <tr><td>什麼時候</td><td colspan="2">收集結束、bot 閒置時；名字排在值前面</td></tr>
+          <tr><td>怎麼問</td><td colspan="2">訊息＋按鈕 → Discord 表單，一題一格，<b>最多五格</b>；答完回覆裡附下一輪按鈕</td></tr>
+          <tr><td>答案怎麼讀</td><td>原樣帶進請求</td><td><b>確定性解析</b>：候選編號、圖上任一服務 id、<span class="mono">new</span>、<span class="mono">ignore</span>；<b>看不懂就留著並回報</b></td></tr>
+          <tr><td>答完之後</td><td>重打一輪流量</td><td><b>不重跑</b>：按 Generate report 建圖時套用</td></tr>
+          <tr><td>記多久</td><td>這次 run</td><td><b>專案層級</b>：下次分析同一個 repo 不再問</td></tr>
+          <tr class="hot"><td>greenfield</td><td>不問</td><td><b>照問</b>——純靜態的 run 只有名字可依靠</td></tr>
         </table>
-        <p style="font-size:14.5px;margin-top:8px">改到的：pattern ① → <b>信心分級的關係 / Confidence-Graded Relations</b>（舊名記在別名欄）；論文 61 處「證據分級」→「信心分級」；報告 <span class="mono">Evidence:</span> → <span class="mono">Provenance:</span>；<span class="mono">isThinlyEvidenced</span> → <span class="mono">isLowConfidence</span>；問答路由保留「what's the evidence」這句（使用者會這樣問）。磁碟上的舊 JSON 鍵讀取時仍認。</p>
-        <div class="note" style="margin-top:8px;font-size:14.5px"><b>順勢多一個論據：</b>GRADE 從 2011 年起就把「證據品質」定義為「<b>對效果估計的信心</b>」（Guyatt 等人）。改叫 confidence 是跟醫學分級的定義對齊。<br><b>碩論題目</b>同步改：<i>A Multi-<b>Source</b> Fusion Approach…</i>（原本 Multi-Evidence）。</div>
+        <p class="srcs">實作：<span class="mono">AliasResolution</span>（問題、答案、候選排序、解析）、<span class="mono">toolkit-depstate-alias-button</span>、<span class="mono">ButtonListener</span>／<span class="mono">ModalListener</span>。報告最後多一節「Names resolved by the operator」，由程式從答案產生。</p>
       </div>
       <div>
-        <p class="sec">上次提醒的兩件事，論文都改了</p>
-        <div class="draft" style="font-size:14.5px">
-          <span class="lbl">分級由低到高</span>
-          <p>定義<b>小而有序</b>的信心等級。建議三級，<span class="hl">由低到高</span>：</p>
-          <ul>
-            <li><b>只被提到</b>（inferred）：只有設定值、文件敘述，或由名字推測。圖上畫<b>點線</b>。</li>
-            <li><b>有使用證據</b>（documented）：有真的會發出呼叫的程式碼、有持久化程式碼搭配連線設定。圖上畫<b>虛線</b>。</li>
-            <li><b>量測到</b>（observed）：執行期觀測直接記到這個關係發生過。圖上畫<b>實線</b>。</li>
-          </ul>
-          <p><span class="hl">由低到高講，是因為每往上一級都多了一種來源的佐證</span>：被提到 → 程式碼裡真的有呼叫 → 呼叫真的發生了。</p>
+        <p class="sec">真實對話（10/6 第一次真跑，原文）</p>
+        <div class="chat">
+          <div class="who bot">DepWeaver</div>
+          <div class="msg"><b>8 name(s) in the docs/code do not match any service on the graph</b><br>• <span class="mono">cloud-eureka-server</span> — code, module directory of cloud-eureka-server/…/application.yaml · closest: 1 cloud-config-server · 2 cloud-simple-service · 3 cloud-simple-ui<br>• <span class="mono">cloud-hystrix-dashboard</span> — code · closest: 1 <span class="mono">hystrix</span><br>• <span class="mono">cloud-simple-serviceB</span> — doc, synchronous: cloud-api-gateway → cloud-simple-serviceB (+2 more)<br>• <span class="mono">MyAppThriftClient</span> — doc, synchronous: MyAppThriftClient → FooService<br>(3 more will be asked in the next round — Discord allows five per form.)<br><span class="btn">Resolve names</span></div>
+          <div class="who">我</div>
+          <div class="msg me"><div class="form"><label>cloud-eureka-server</label><input value="discovery"><label>cloud-hystrix-dashboard</label><input value="1"><label>cloud-simple-serviceB</label><input value="simple-serviceb"><label>MyAppThriftClient</label><input value="ignore"></div></div>
+          <div class="who bot">DepWeaver</div>
+          <div class="msg"><b>Got it — names resolved:</b> cloud-eureka-server → discovery · cloud-hystrix-dashboard → hystrix · cloud-simple-serviceB → simple-serviceb · MyAppThriftClient ignored<br>Still open: 3 name(s) — click <b>Resolve names</b> below. <span class="btn">Resolve names</span></div>
         </div>
-        <div class="draft" style="font-size:14.5px;margin-top:10px">
-          <span class="lbl">「執行期觀測」是什麼（§1.1 新增；原本寫「遙測」）</span>
-          <p>「量測」指的是<b>執行期觀測</b>：系統跑起來之後，<span class="hl">每個服務旁邊都有一個代理（Istio 的 sidecar），服務之間每一次呼叫都會經過它，它自動記下「誰呼叫了誰、幾次、成功與否」</span>，寫進 Prometheus。我們查的就是這些計數，例如 <span class="mono">istio_requests_total{source="web", destination="orders"} = 95</span>。它不是讀程式碼推出來的，是呼叫真的發生時被記下來的，所以精確；但只有真的被呼叫過的關係才會出現，所以看不全。<br><b>用詞</b>：這類資料英文叫 telemetry，國教院譯「遙測」——「遙」是量測在系統裡發生、讀數送到外面讀，不是機器遠近；文獻把這一側叫動態分析。本文一律用「執行期觀測」。</p>
-        </div>
+        <p class="cap" style="text-align:left;margin-top:6px">候選排序（第一題給的三個都不對，正確答案是 discovery）只是提示、不決定；答案打圖上任一服務 id 都收。</p>
       </div>
     </div>
-    <div class="notes"><b>講稿</b>　左邊：改名之前先查，發現 confidence 早就在，evidence 其實是出處清單，所以是三個概念分清楚。右邊是上次兩個提醒：分級改成由低到高講，理由是每往上一級多一種佐證；執行期觀測在第一次出現就白話定義——每個服務旁邊有個代理，每次呼叫經過它就記一筆，我們查的是這些計數。</div>
+    <div class="notes"><b>講稿</b>　左邊跟補流量逐項對照，三處不同：答案要經過確定性解析，因為它會變成圖上的邊；答完不重跑；記在專案層級。右邊是真實的對話，第一題的候選三個都不對、正確答案是 discovery——這就是為什麼候選只能當提示，真正的判斷是人做的。</div>
   </div>
-  <div class="ftr"></div><div class="num">8</div>
+  <div class="ftr"></div><div class="num">5</div>
 </section>
 
-<!-- 9 · ③ 名稱 -->
-<section class="slide" id="s9">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ pattern language 的正式名稱 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+<!-- 6 · ① 五次真跑 -->
+<section class="slide" id="s6">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 別名改成問人 · 之前與之後，同一個專案真跑五次 <small>3</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w73" style="gap:22px">
+      <div>
+        <table class="xs">
+          <tr><th style="width:6%">跑</th><th style="width:10%">問了</th><th>抓到什麼（全部當天修掉）</th></tr>
+          <tr><td class="c">離線</td><td class="c">3</td><td><span class="id">hystrix</span> 被當函式庫刪掉（第 4 個丟掉點）→ 問前 <b>24/26</b>，答 3 題後 <b>26/26</b></td></tr>
+          <tr><td class="c">1</td><td class="c">8</td><td>表單只認候選清單，<b>正確答案 discovery 不在裡面</b>；覆蓋率寫「<b>0 / 23 — 0%</b>」但根本沒量；<b>模組名／部署名同一服務出現兩次</b>（四對）；答案沒套到既有節點；前端 <span class="mono">$http.get('users')</span> 畫出假邊；答錯了無法改</td></tr>
+          <tr><td class="c">2</td><td class="c">11</td><td>圖乾淨了。報告：答「hystrix」顯示成「hystrix → hystrix」；LLM 寫的第 4 節<b>仍列出已答 ignore 的名字</b>（prompt 明說不要）；<span class="mono">simple-ui → simple-service</span> 報告有、圖沒有（<span class="mono">"http://" + 常數</span> 沒解析）；第 6 節 <span class="mono">hystrix-turbine</span> 沒改名</td></tr>
+          <tr><td class="c">3</td><td class="c">5</td><td>只問 DeepWiki 新冒出的名字（答案記憶有效）。程式產生的段落：Protocol 一律寫 HTTP（圖沒記協定）；第 5 節 greenfield 寫「Runtime observed: No」</td></tr>
+          <tr><td class="c">4</td><td class="c">4</td><td>wiki 把多個消費者寫在同一欄「a, b」，工具當成一個名字問</td></tr>
+          <tr><td class="c">5</td><td class="c">2</td><td>wiki 把 <b>repo 自己的名字</b>當成元件來源</td></tr>
+        </table>
+        <div class="note" style="margin-top:10px;font-size:15px"><b>兩個教訓：</b>①「prompt 明說不要，LLM 還是寫」——第 4 節因此改由程式從圖產生，跟第 5 節一樣（pattern ③ 的第二個真實事件）。②「程式寫的段落也會把沒量的寫成確定值」（0%、No、HTTP）——而且標著 deterministic 反而更像真的（pattern ⑤）。</div>
+      </div>
+      <div>
+        <div class="fig"><img src="{{IMG:scm-graph-run1.png}}" alt="第一次真跑的圖"><p class="cap">第一次真跑：同一服務兩種拼法（cloud-simple-service／simple-service 等四對）、假節點 users、zipkin-server</p></div>
+        <div class="fig" style="margin-top:8px"><img src="{{IMG:scm-graph-final.png}}" alt="第五次真跑的圖"><p class="cap">第五次：16 節點每個服務一次，資料集 26 條全在，多 5 條 repo 真的有的（thrift、dummy、uaa、simple-ui→simple-service）</p></div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　同一個專案、同一個 commit，離線先跑一次，再在 Discord 真跑五次。表裡是每一次抓到什麼，全部當天修掉。右邊兩張圖是第一次和第五次的對比。兩個教訓要講：第 4 節原本給 LLM 寫，prompt 明說不要列 ignore 的名字它還是列，所以改由程式產生；但程式寫的段落也會犯 pattern ⑤ 的錯，把沒量的寫成 0%、No、HTTP，而且標著 deterministic 反而更像真的。</div>
+  </div>
+  <div class="ftr"></div><div class="num">6</div>
+</section>
+
+<!-- 7 · ① 界線 -->
+<section class="slide" id="s7">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ② 別名改成問人 · 能主張什麼、不能主張什麼 <small>4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">先講最重要的：操作者是我</p>
+        <div class="box" style="min-height:0;padding:16px 22px;font-size:16px">五次真跑的答案都是<b>我填的</b>，而且<b>我看過資料集的期望邊</b>。所以這些結果證明的是<b>機制走得通</b>：問題會被提出、答案會被套用、只有被答的邊出現、答錯了可以改、下次不再問。<br><br>它<b>不證明</b>「問人會得到正確答案」。那是上次「標準答案是我給的」同一類問題。要主張那一點，得找<b>沒看過這個 repo 的人</b>照同樣步驟答一次——這是下一步，不是這次做到的。</div>
+        <p class="sub" style="margin-top:12px">機制本身的界線</p>
+        <ul style="font-size:15.5px">
+          <li><b>DeepWiki 每次用詞都不一樣</b>（ZooKeeper ServerSets → ZooKeeper），新名字會零星一直冒出來；答案累積、問得越來越少，但不保證某次之後完全不問</li>
+          <li>問的是「<b>這個名字是哪個服務</b>」，不問「這條邊存不存在」；邊的存在仍由來源決定</li>
+          <li>答 <span class="mono">new</span> 時<b>無法指定節點名</b>（ZooKeeper 會變成 zoo-keeper），還沒修</li>
+          <li>Discord 一張表單最多五格；超過分輪</li>
+        </ul>
+      </div>
+      <div>
+        <p class="sec">測試釘住的性質（26 個，離線）</p>
+        <ul style="font-size:15px">
+          <li>對不上的名字<b>變問題而不是消失</b>，圖上<b>不多出</b>節點或邊；函式庫名有邊才問、沒邊照舊靜默刪</li>
+          <li>答案三種效力：對應既有節點（邊帶 doc 出處）／<span class="mono">new</span> 建節點／<span class="mono">ignore</span>；答一個圖上沒有的 id <b>不會造節點</b>；答案也套用到<b>既有</b>節點</li>
+          <li>只差前後綴的兩個服務名 → 問「是不是同一個」，<b>兩個都留著</b>直到回答</li>
+          <li>看不懂的答案（<span class="mono">9</span>、空白、<span class="mono">maybe</span>）→ <b>不是合併</b>；答題目自己的名字＝<span class="mono">new</span></li>
+          <li>wiki 一欄多個名字拆開逐個對；repo 自己的名字不問；前端相對 URL 不算呼叫別的服務</li>
+          <li>專案層級記憶：另一個使用者、檢查點過期後同一 repo <b>不再問</b>；<span class="mono">reset</span> 可忘掉重問</li>
+          <li>報告第 4／5 節由程式從圖產生；greenfield 寫「未量測」不寫 0％／No／HTTP</li>
+        </ul>
+        <p class="srcs">全套 <b>280</b> 個測試，唯一失敗的是要連 MCP server 的那個（跟之前一樣）。探針 <span class="mono">GreenfieldProbeTest</span> 吃 <span class="mono">-Dprobe.aliases=</span> 答案檔，是「Resolve names」的離線形式；對照用的答案檔與輸出在 <span class="mono">docs/generalization/external/aliases/</span>。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　這頁先講操作者是我、而且看過答案——所以只證明機制走得通，不證明問人會答對；要主張後者要找沒看過 repo 的人。然後是機制的界線，最重要的是 DeepWiki 每次用詞不一樣，新名字會一直零星冒出來，這是常態不是 bug。右邊是測試釘住的性質。</div>
+  </div>
+  <div class="ftr"></div><div class="num">7</div>
+</section>
+
+<!-- 8 · ③ 名稱 -->
+<section class="slide" id="s8">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ pattern · 名稱 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
   <div class="bd">
     <table>
       <tr><th style="width:18%"></th><th style="width:41%">中文</th><th>English</th></tr>
       <tr class="hot"><td><b>主名稱</b></td><td style="font-size:24px"><b>DepWeaver</b></td><td style="font-size:24px"><b>DepWeaver</b></td></tr>
       <tr><td><b>完整名</b></td><td>DepWeaver：基於多來源融合與對話式補值的微服務相依圖自動建構方法</td><td>DepWeaver: A Multi-Source Fusion Approach to Automated Microservice Dependency Graph Construction with Conversational Gap-Filling</td></tr>
-      <tr><td><b>這篇的定位</b></td><td colspan="2">上面那個方法的 <b>pattern language</b>：從 DepWeaver 三個月（2026 年 7 月到 10 月）的開發與真環境驗證裡抽出來、別人也能用的設計知識</td></tr>
+      <tr><td><b>這篇的定位</b></td><td colspan="2">上面那個方法的 <b>pattern language</b>：從 DepWeaver 的開發與真環境驗證裡抽出來、別人也能用的設計知識</td></tr>
     </table>
     <div class="two" style="gap:24px;margin-top:16px">
       <div>
@@ -384,12 +343,12 @@
     </div>
     <div class="notes"><b>講稿</b>　名稱定了：就用工具和碩論的名字 DepWeaver，完整名是碩論的中英文題目。理由：language 和碩論是同一件工作的兩種寫法，同一個名字讀者一看就知道關係；碩論之後會做更深，名字先統一。weave 本身就是 language 的主軸。右邊是曾用過的名字，都留在論文裡當別名。兩件投稿前要處理：標題形式、相依與依賴統一。</div>
   </div>
-  <div class="ftr"></div><div class="num">9</div>
+  <div class="ftr"></div><div class="num">8</div>
 </section>
 
-<!-- 10 · ③ 欄位 -->
-<section class="slide" id="s10">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ 每個 pattern 的欄位從 8 個補到 13 個 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+<!-- 9 · ③ 欄位 -->
+<section class="slide" id="s9">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ pattern · 欄位從 8 個補到 13 個 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
   <div class="bd">
     <div class="two w64" style="gap:24px">
       <div>
@@ -424,6 +383,39 @@
       </div>
     </div>
     <div class="notes"><b>講稿</b>　欄位表，新增三欄用粉紅標出。接下來九頁是 pattern ① 的原文逐段放，右邊是重點與想問的。原文就是論文現在的樣子，不是摘要，黃底是最該檢查的句子，虛線框是我不確定的。</div>
+  </div>
+  <div class="ftr"></div><div class="num">9</div>
+</section>
+
+<!-- 10 · ③ 上次的兩個提醒 -->
+<section class="slide" id="s10">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] ③ 上次的兩個提醒，論文都改了 <small>3</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">分級要從最低講到最高</p>
+        <div class="draft" style="font-size:16px">
+          <span class="lbl">Solution 第 1 步（論文原文）</span>
+          <p>定義<b>小而有序</b>的信心等級。建議三級，<span class="hl">由低到高</span>：</p>
+          <ul>
+            <li><b>只被提到</b>（inferred）：只有設定值、文件敘述，或由名字推測。圖上畫<b>點線</b>。</li>
+            <li><b>有使用證據</b>（documented）：有真的會發出呼叫的程式碼、有持久化程式碼搭配連線設定。圖上畫<b>虛線</b>。</li>
+            <li><b>量測到</b>（observed）：執行期觀測直接記到這個關係發生過。圖上畫<b>實線</b>。</li>
+          </ul>
+          <p><span class="hl">由低到高講，是因為每往上一級都多了一種來源的佐證</span>：被提到 → 程式碼裡真的有呼叫 → 呼叫真的發生了。讀者看圖也是這樣讀的：點線最弱，實線最強。</p>
+        </div>
+        <p class="srcs">同步改了 §1.1 的來源表（文字 → 結構分析 → 量測）、§2 的 running example 表、§3 的 language 地圖、① 的一句話與範例。另外依上次「不用 evidence」：分級一律稱 <b>confidence</b>，pattern ① 改名「信心分級的關係 / Confidence-Graded Relations」，出處清單稱 provenance。</p>
+      </div>
+      <div>
+        <p class="sec">「執行期遙測」改稱「執行期觀測」，第一次出現就定義</p>
+        <div class="draft" style="font-size:15.5px">
+          <span class="lbl">§1.1（論文原文）</span>
+          <p>「量測」這一類在本文裡稱為<b>執行期觀測</b>：系統跑起來之後，<span class="hl">每個服務旁邊都有一個代理（在 Istio 服務網格裡是 sidecar），服務之間每一次呼叫都會經過它，它自動記下「誰呼叫了誰、幾次、成功與否」</span>，寫進 Prometheus 這類時序資料庫。我們查的就是這些計數，例如 <span class="mono">istio_requests_total{source="web", destination="orders"} = 95</span>。它不是讀程式碼推出來的，是呼叫真的發生時被記下來的，所以精確；但只有真的被呼叫過的關係才會出現，所以看不全。</p>
+          <p><b>用詞對照</b>：這類資料在 Istio 與監控領域叫 <b>telemetry</b>，國教院的標準譯名是「遙測」——<span class="hl">「遙」指的是量測在系統裡面發生、讀數送到外面讀，不是指機器遠近</span>；架構回復的文獻把靠這類資料的方法叫<b>動態分析</b>（dynamic／runtime analysis）。本文一律稱「執行期觀測」。</p>
+        </div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　上次的兩個提醒。左邊：分級改成由低到高講，理由寫進論文——每往上一級多一種佐證。右邊：「遙測」查過了，是 telemetry 的標準譯名，但「遙」指的是量在系統裡、讀在系統外，不是機器遠近；文獻叫動態分析。論文全部改稱「執行期觀測」，第一次出現就用這段定義。</div>
   </div>
   <div class="ftr"></div><div class="num">10</div>
 </section>
@@ -907,15 +899,14 @@ mvn -o test                                              # 全套 280（1 個要
         <p class="sec">這次的產出</p>
         <table class="xs">
           <tr><th style="width:46%">文件</th><th>內容</th></tr>
-          <tr><td><span class="mono">docs/alias-ask-design-2026-10-02.md</span></td><td>反饋 ①：四個丟掉點、流程、設計決定、離線驗證、<b>五次真跑各抓到什麼</b></td></tr>
-          <tr><td><span class="mono">docs/langchain4j-spike-2026-10-02.md</span></td><td>反饋 ①：版本、pom 差異、阻塞分析、不用的理由</td></tr>
-          <tr><td><span class="mono">docs/asianplop-paper-zh.md</span></td><td>反饋 ②③：名稱表、用詞、13 欄位、五個 pattern 擴寫、分級低→高、執行期觀測定義（原「遙測」）</td></tr>
-          <tr><td><span class="mono">docs/confidence-grading-related-work.md</span><br><span class="mono">docs/diagrams/fig2-confidence-merge-chain.*</span></td><td>反饋 ②：改檔名與標題</td></tr>
+          <tr><td><span class="mono">docs/alias-ask-design-2026-10-02.md</span></td><td>別名問人：四個丟掉點、流程、設計決定、離線驗證、<b>五次真跑各抓到什麼</b></td></tr>
+          <tr><td><span class="mono">docs/langchain4j-spike-2026-10-02.md</span></td><td>langchain4j：版本、pom 差異、阻塞分析、不用的理由</td></tr>
+          <tr><td><span class="mono">docs/asianplop-paper-zh.md</span></td><td>pattern：名稱表、用詞、13 欄位、五個 pattern 擴寫、分級低→高、執行期觀測定義</td></tr>
+          <tr><td><span class="mono">docs/confidence-grading-related-work.md</span><br><span class="mono">docs/diagrams/fig2-confidence-merge-chain.*</span></td><td>改檔名與標題</td></tr>
         </table>
         <p class="sub" style="margin-top:10px">程式與測試</p>
         <ul style="font-size:14.5px">
           <li>新類別 <span class="mono">AliasResolution</span>、新步驟 <span class="mono">toolkit-depstate-alias-button</span>、新指令 <span class="mono">reset-dependency-aliases</span>；改到的既有類別 9 個</li>
-          <li>改名：Java 55 檔、prompt 14 檔、文件 4 檔改檔名；舊鍵相容</li>
           <li>報告第 4、5 節由程式從圖產生；greenfield 覆蓋率改「Not measured」</li>
           <li>新測試 <b>26</b> 個；全套 <b>280</b>，唯一失敗的是要叢集的那個；<b>17 個 commit</b> 都在 <span class="mono">feat/greenfield-static-dependency-graph</span></li>
         </ul>
