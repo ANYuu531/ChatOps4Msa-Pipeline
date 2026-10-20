@@ -21,7 +21,7 @@ COMPSAC 稿目前的對照（§IV-B RQ2、threshold-design §9）比的是**問�
 
 - 模型與參數：`gpt-4.1-mini`（和問答層對照同一個），temperature 0，JSON mode，max_tokens 12,000（第一批 9 次呼叫未設，見 findings.md 的參數表），n=1、無 seed、無 system prompt；每組每專案跑 3 次，報平均與最小–最大。完整參數表在 `findings.md`「模型與參數」。
 - 元件清單給 `knowledge`／`files` 是**偏袒 LLM** 的設計：它不用猜名字，只要畫邊。這樣輸了才有說服力；`files-nonames` 則是不偏袒的版本。
-- **預算寫死在程式裡**（`BUDGET`）：部署描述檔與設定檔整檔給、上限 300 KB；原始碼上限 500 KB、單檔 20 KB、檔名有 client/service/controller/config 等線索的優先；測試、vendor、產生的程式碼不給。`--dry-run` 會把每個專案實際給了哪些檔寫進 `budget.md`。7 個專案裡 5 個的原始碼**全部**塞得進預算（見 budget.md 的「給／有」欄），只有 TeaStore 與 bank-of-anthos 的描述檔有截斷。
+- **預算寫死在程式裡**（`BUDGET`）：部署描述檔與設定檔整檔給、上限 300 KB；原始碼上限 500 KB、單檔 20 KB、檔名有 client/service/controller/config 等線索的優先；測試、vendor、產生的程式碼不給。`--dry-run` 會把每個專案實際給了哪些檔寫進 `budget.md`。7 個專案裡 6 個的原始碼**全部**塞得進預算（見 budget.md 的「給／有」欄）；TeaStore 原始碼給了 162/174 個檔，bank-of-anthos 是描述檔截在 300 KB。
 - 方向：呼叫端 → 被呼叫端；佇列消費者也寫成 consumer → broker（和參考邊集一致）。`variant` 類的邊不計。
 
 ## 預期要寫進論文的三件事

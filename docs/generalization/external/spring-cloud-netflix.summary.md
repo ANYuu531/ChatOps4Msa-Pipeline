@@ -26,7 +26,7 @@
 - zipkin  [service, L4]
 - zuul  [service, L1]
 
-## edges (type, confidence, provenance)
+## edges (type, confidence, provenance ref)
 - admin-dashboard -> config-server  (sync-http, documented)  code: docker-compose.yml
 - admin-dashboard -> eureka-server  (sync-http, documented)  code: docker-compose.yml
 - admin-dashboard -> hystrix-dashboard  (sync-http, documented)  code: docker-compose.yml
@@ -57,6 +57,12 @@
 - zuul -> zipkin  (sync-http, documented)  code: docker-compose.yml
 
 ## unresolved (source hint / raw target / file:line), first 40
+
+## alias questions (name [origin] seen in | candidates)
+- none
+
+## alias answers applied
+- none
 
 ## mermaid
 ```mermaid

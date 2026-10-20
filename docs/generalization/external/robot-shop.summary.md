@@ -1,68 +1,68 @@
 ## stacks
-- java/spring (FRAMEWORK, from pom.xml)
-- php (LLM, from 11 .php files)   <-- skipped (LLM tier)
 - javascript (LLM, from 7 .js/.jsx/.ts/.tsx files)   <-- skipped (LLM tier)
+- java (GENERIC, from pom.xml)
 - python/web (FRAMEWORK, from requirements.txt)
+- php (LLM, from 3 .php files)   <-- skipped (LLM tier)
 - go (LLM, from 1 .go files)   <-- skipped (LLM tier)
 
 ## ledger sections
-- http-server = 10
 - url = 11
-- jpa = 4
-- config = 8
-- compose-service = 18
-- compose-dependency = 16
-- env-address = 2
-- workload-env = 2
-- k8s-workload = 2
-- service-root = 12
-- TOTAL = 85 | files with syntax errors = 0
+- config = 9
+- http-server = 3
+- compose-service = 17
+- compose-dependency = 15
+- k8s-workload = 13
+- env-address = 1
+- workload-env = 1
+- service-root = 11
+- TOTAL = 81 | files with syntax errors = 0
 
 ## graph
-- after merge: 17 nodes / 18 edges | after normalize: 17 nodes / 18 edges | unresolved code edges = 1
-- persistence services: [shipping]
+- after merge: 13 nodes / 17 edges | after normalize: 13 nodes / 17 edges | unresolved code edges = 1
+- persistence services: []
 
 ## nodes (kind, layer)
-- cart  [service, L3]
-- catalogue  [service, L2]
+- cart  [service, L2]
+- catalogue  [service, L1]
 - dispatch  [service, L0]
-- html  [service, L6]
-- load  [service, L0]
-- load-gen  [service, L6]
-- mongo  [db, L6]
-- mongodb  [db, L4]
-- mysql  [db, L4]
-- payment  [service, L2]
-- paypal.com  [external, L5]
-- rabbitmq  [queue, L4]
-- ratings  [service, L2]
-- redis  [db, L4]
-- shipping  [service, L2]
-- user  [service, L3]
-- web  [service, L1]
+- mongodb  [db, L3]
+- mysql  [db, L3]
+- payment  [service, L1]
+- paypal.com  [external, L4]
+- rabbitmq  [queue, L3]
+- ratings  [service, L1]
+- redis  [db, L3]
+- shipping  [service, L1]
+- user  [service, L2]
+- web  [service, L0]
 
-## edges (type, confidence, provenance)
+## edges (type, confidence, provenance ref)
 - cart -> redis  (db, documented)  code: docker-compose.yaml
 - catalogue -> mongodb  (db, documented)  code: docker-compose.yaml
 - dispatch -> rabbitmq  (async, documented)  code: docker-compose.yaml
-- load -> web  (sync-http, documented)  code: docker-compose-load.yaml
-- payment -> cart  (sync-http, documented)  code: payment/payment.py:123
-- payment -> paypal.com  (external, documented)  code: payment/payment.py:28
+- payment -> cart  (sync-http, documented)  code: payment/payment.py:120
+- payment -> paypal.com  (external, documented)  code: payment/payment.py:25
 - payment -> rabbitmq  (async, documented)  code: docker-compose.yaml
-- payment -> user  (sync-http, documented)  code: payment/payment.py:71
+- payment -> user  (sync-http, documented)  code: payment/payment.py:68
 - ratings -> mysql  (db, documented)  code: docker-compose.yaml
 - shipping -> mysql  (db, documented)  code: docker-compose.yaml
 - user -> mongodb  (db, documented)  code: docker-compose.yaml
 - user -> redis  (db, documented)  code: docker-compose.yaml
-- web -> cart  (sync-http, inferred)  code: web/default.conf.template:65
+- web -> cart  (sync-http, inferred)  code: web/default.conf.template:57
 - web -> catalogue  (sync-http, documented)  code: docker-compose.yaml
 - web -> payment  (sync-http, documented)  code: docker-compose.yaml
-- web -> ratings  (sync-http, inferred)  code: web/default.conf.template:77
+- web -> ratings  (sync-http, inferred)  code: web/default.conf.template:69
 - web -> shipping  (sync-http, documented)  code: docker-compose.yaml
 - web -> user  (sync-http, documented)  code: docker-compose.yaml
 
 ## unresolved (source hint / raw target / file:line), first 40
-- shipping  =>  http://%s/shipping/   @ shipping/src/main/java/com/instana/robotshop/shipping/Controller.java:23
+- shipping  =>  http://%s/shipping/   @ shipping/src/main/java/org/steveww/spark/Main.java:40
+
+## alias questions (name [origin] seen in | candidates)
+- none
+
+## alias answers applied
+- none
 
 ## mermaid
 ```mermaid
@@ -73,45 +73,34 @@ flowchart TB
   subgraph layer0 ["entry services"]
     direction LR
     dispatch["dispatch"]
-    load["load"]
+    web["web"]
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
-    web["web"]
+    ratings["ratings"]
+    payment["payment"]
+    catalogue["catalogue"]
+    shipping["shipping"]
   end
   subgraph layer2 ["services · depth 2"]
     direction LR
-    payment["payment"]
-    ratings["ratings"]
-    shipping["shipping"]
-    catalogue["catalogue"]
-  end
-  subgraph layer3 ["services · depth 3"]
-    direction LR
-    user["user"]
     cart["cart"]
+    user["user"]
   end
-  subgraph layer4 ["data stores"]
+  subgraph layer3 ["data stores"]
     direction LR
+    rabbitmq{{"rabbitmq"}}:::queue
     mysql[("mysql")]:::db
     mongodb[("mongodb")]:::db
     redis[("redis")]:::db
-    rabbitmq{{"rabbitmq"}}:::queue
   end
-  subgraph layer5 ["external"]
+  subgraph layer4 ["external"]
     direction LR
     paypal_com[/"paypal.com"/]:::external
-  end
-  subgraph layer6 ["no dependencies found"]
-    direction LR
-    html["html"]
-    mongo[("mongo")]:::db
-    load_gen["load-gen"]
   end
   payment -. ext .-> paypal_com
   payment -.-> user
   payment -.-> cart
-  load -.-> web
   catalogue -. db .-> mongodb
   user -. db .-> mongodb
   user -. db .-> redis

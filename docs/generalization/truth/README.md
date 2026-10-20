@@ -21,7 +21,7 @@ mvn -o test -Dtest=TruthProvenanceResolvesTest -Dsurefire.failIfNoSpecifiedTests
   -Dtruth.repos=<放各專案 checkout 的目錄>
 ```
 
-  目前 92 條有檔案出處的條目全部打得開。2026-09-25 第一次跑這道檢查時抓到 **2 條寫錯的出處**（`dispatch/src/main.go` 實際是 `dispatch/main.go`；robot-shop 根本沒有 `ratings/html/API.php`，真正的呼叫點是 `ratings/html/src/Service/CatalogueService.php:27`）——邊是對的，出處不可用，而在舊的寫法下沒有人會發現。
+  2026-10-20 對七個 repo 當日 HEAD 重跑：114 條有檔案出處的條目全部打得開（9/25 時是 92 條，之後參考邊集有增補）。2026-09-25 第一次跑這道檢查時抓到 **2 條寫錯的出處**（`dispatch/src/main.go` 實際是 `dispatch/main.go`；robot-shop 根本沒有 `ratings/html/API.php`，真正的呼叫點是 `ratings/html/src/Service/CatalogueService.php:27`）——邊是對的，出處不可用，而在舊的寫法下沒有人會發現。
 
 - 同名檔案用**邊的來源服務**消歧（`<來源服務>/src/main/resources/bootstrap.yml`），不要寫成 `bootstrap.yml`。
 - **出處指「哪裡發出呼叫」，不是「host 從哪來」。** 這個慣例是 2026-09-26 的第二標註者實驗逼出來的：同一條 `cart → catalogue`，獨立標註者引 `cart/server.js:30`（`catalogueHost = process.env.CATALOGUE_HOST`），本檔的慣例是引 `:362`（真正發出請求的那一行）。兩邊都查得住，但不寫下來就會有分歧。host 的來源寫在同一格的說明文字裡。

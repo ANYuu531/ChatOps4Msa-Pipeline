@@ -5,45 +5,34 @@ flowchart TB
   subgraph layer0 ["entry services"]
     direction LR
     dispatch["dispatch"]
-    load["load"]
+    web["web"]
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
-    web["web"]
+    ratings["ratings"]
+    payment["payment"]
+    catalogue["catalogue"]
+    shipping["shipping"]
   end
   subgraph layer2 ["services · depth 2"]
     direction LR
-    payment["payment"]
-    ratings["ratings"]
-    shipping["shipping"]
-    catalogue["catalogue"]
-  end
-  subgraph layer3 ["services · depth 3"]
-    direction LR
-    user["user"]
     cart["cart"]
+    user["user"]
   end
-  subgraph layer4 ["data stores"]
+  subgraph layer3 ["data stores"]
     direction LR
+    rabbitmq{{"rabbitmq"}}:::queue
     mysql[("mysql")]:::db
     mongodb[("mongodb")]:::db
     redis[("redis")]:::db
-    rabbitmq{{"rabbitmq"}}:::queue
   end
-  subgraph layer5 ["external"]
+  subgraph layer4 ["external"]
     direction LR
     paypal_com[/"paypal.com"/]:::external
-  end
-  subgraph layer6 ["no dependencies found"]
-    direction LR
-    html["html"]
-    mongo[("mongo")]:::db
-    load_gen["load-gen"]
   end
   payment -. ext .-> paypal_com
   payment -.-> user
   payment -.-> cart
-  load -.-> web
   catalogue -. db .-> mongodb
   user -. db .-> mongodb
   user -. db .-> redis

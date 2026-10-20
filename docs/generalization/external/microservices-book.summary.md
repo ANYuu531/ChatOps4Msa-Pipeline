@@ -25,7 +25,7 @@
 - turbine  [service, L0]
 - zuul  [service, L0]
 
-## edges (type, confidence, provenance)
+## edges (type, confidence, provenance ref)
 - catalog -> eureka  (sync-http, documented)  code: docker/docker-compose.yml
 - customer -> eureka  (sync-http, documented)  code: docker/docker-compose.yml
 - microservice-demo-turbine-server -> eureka  (sync-http, documented)  code: microservice-demo/microservice-demo-turbine-server/src/main/resources/application.yml
@@ -37,6 +37,12 @@
 - zuul -> eureka  (sync-http, documented)  code: docker/docker-compose.yml
 
 ## unresolved (source hint / raw target / file:line), first 40
+
+## alias questions (name [origin] seen in | candidates)
+- none
+
+## alias answers applied
+- none
 
 ## mermaid
 ```mermaid

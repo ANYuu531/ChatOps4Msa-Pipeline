@@ -4,14 +4,15 @@ flowchart TB
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
   subgraph layer0 ["entry services"]
     direction LR
+    vets_service["vets-service"]
     api_gateway["api-gateway"]
     admin_server["admin-server"]
+    hystrix_dashboard["hystrix-dashboard"]
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
     customers_service["customers-service"]
     visits_service["visits-service"]
-    vets_service["vets-service"]
   end
   subgraph layer2 ["services · depth 2"]
     direction LR
@@ -21,11 +22,7 @@ flowchart TB
     direction LR
     config_server["config-server"]
   end
-  subgraph layer4 ["external"]
-    direction LR
-    github_com[/"github.com"/]:::external
-  end
-  subgraph layer5 ["no dependencies found"]
+  subgraph layer4 ["no dependencies found"]
     direction LR
     tracing_server["tracing-server"]
     grafana_server["grafana-server"]
@@ -33,8 +30,6 @@ flowchart TB
   end
   api_gateway -.-> customers_service
   api_gateway -.-> visits_service
-  config_server -. ext .-> github_com
-  api_gateway -.-> vets_service
   discovery_server -.-> config_server
   customers_service -.-> config_server
   customers_service -.-> discovery_server
@@ -46,4 +41,5 @@ flowchart TB
   api_gateway -.-> discovery_server
   admin_server -.-> config_server
   admin_server -.-> discovery_server
-classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
+  hystrix_dashboard -.-> config_server
+  hystrix_dashboard -.-> discovery_server

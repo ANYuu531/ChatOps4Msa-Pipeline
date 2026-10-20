@@ -1,3 +1,5 @@
+> **2026-10-20 更正**：資料集 repo（clowee/MicroserviceDataset）的相依圖檔只在 **2019-08-19** 提交過一次，2021-02-26 的 commit 只改 README。本文件下面寫的「對齊 2021-02-26」是對齊錯了日期。已把 spring-petclinic、microservices-book、spring-cloud-netflix、robot-shop 四個 repo 改 checkout 到 2019-08-19 之前的最後一個 commit 重跑探針（tap-and-eat、spring-cloud-microservice 原本就在之前；LakesideMutual 公開歷史始於 2021-02-26，無法再往前），`ExternalTruthAgreementTest` 重算：**95 條畫到 93＝0.98**（舊 91＝0.96）。差異全在 spring-petclinic：對齊正確後 hystrix-dashboard 模組還在，先前「repo 演進」造成的 2 條遺漏消失，剩下的 2 條都是 spring-cloud-microservice 的 hystrix 函式庫名單問題。新的表與逐條差異見 `docs/generalization/external-agreement.md`；下文數字未改，保留當時紀錄。
+
 # 標準答案不是我給的：對照第三方資料集、逐條可複驗、第二標註者（2026-09-25）
 
 > 回應 2026-09-25 反饋第 2 點：**「程式評分的部分，因為標準答案是我給的，所以可靠度會降低一點，這部分要改說法或是用別的方式。」**

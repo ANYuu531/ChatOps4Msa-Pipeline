@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * is a construct-validity problem — the same person decided what the answer was and built
  * the thing being measured. Seven of the projects the dataset covers can be scored without
  * that dependence: the dataset's authors published their graphs, and the tool is run on the
- * same repositories at a commit from before the dataset was captured (2021-02-26), so the
+ * same repositories at a commit from before the dataset's graph files were committed (2019-08-19), so the
  * two describe the same code.
  *
  * <p>The two are not measuring quite the same thing and the report must say so. MicroDepGraph
@@ -64,19 +64,19 @@ public class ExternalTruthAgreementTest {
     /** The dataset's project list resolves to these repositories (its README's short links). */
     private static final List<Case> CASES = List.of(
             new Case("spring-petclinic", "spring-petclinic", "spring-petclinic/spring-petclinic-microservices",
-                    "8e446ae7218392af7a897fdcec82be6b1db49518", "2021-02-06"),
+                    "1860fffc083d351da5a1bdf308402246c8c98269", "2019-05-14"),
             new Case("microservices-book", "Microservices_book", "ewolff/microservice",
-                    "99d9d07d1b68285d2ceefd8a811f31788ee43d75", "2020-09-17"),
+                    "c445384002c912e196cf967cfb4d39b82867ba3c", "2019-01-28"),
             new Case("tap-and-eat", "Tap-And-Eat-MicroServices", "jferrater/Tap-And-Eat-MicroServices",
                     "3ad20b8fa421dc837ef423270a9bf9ece1615a03", "2017-01-04"),
             new Case("spring-cloud-netflix", "spring-cloud-netflix", "yidongnan/spring-cloud-netflix-example",
-                    "3b86bf0e20a7c7da8f4e3e7e2cb15bf4cd407743", "2020-09-11"),
+                    "f0e57c3fe0e421a99ffd58601f88c93bc48432f3", "2018-08-25"),
             new Case("spring-cloud-microservice", "spring-cloud-microservice", "zpng/spring-cloud-microservice-examples",
                     "6938297335e924f8066f5558b79ee82fa204c4ee", "2017-03-23"),
             new Case("lakeside-mutual", "Lakeside", "Microservice-API-Patterns/LakesideMutual",
                     "4fc6b430da8a8c5db9a8d5918117e3c7a6a89c6d", "2021-02-26"),
             new Case("robot-shop", "Robot_Shop", "instana/robot-shop",
-                    "2fcc0c9835dbb8c0c2db54f888608891f72aa308", "2021-02-24"));
+                    "5939f27e27facc2f1a96661dc04a652c20a9ca4b", "2019-07-16"));
 
     /**
      * Projects whose node names the dataset and the tool spell identically and where every
@@ -96,7 +96,7 @@ public class ExternalTruthAgreementTest {
         md.append("# 對照第三方資料集的邊集（程式計分，標準答案不是我們寫的）\n\n")
           .append("由 `ExternalTruthAgreementTest` 產生。參考邊集＝MicroDepGraph 資料集（Rahman, Panichella & Taibi, ")
           .append("SattoSE 2019）**自己發表的依賴圖**，不是本專案作者標註的 `truth/*.tsv`。\n")
-          .append("工具跑的是同一個 repo 在**資料集擷取日（2021-02-26）之前**的 commit，所以兩邊看的是同一份程式碼。\n\n")
+          .append("工具跑的是同一個 repo 在**資料集相依圖檔提交日（2019-08-19）之前**的 commit，所以兩邊看的是同一份程式碼。\n\n")
           .append("兩邊的「依賴」定義不同（資料集＝Compose `depends_on`/`links` ＋ 內部 API 呼叫，")
           .append("基礎設施當一般節點，沒有外部主機與證據等級），所以這裡報的是**一致度**而不是 precision：")
           .append("資料集的邊工具畫到多少（漏了就是工具的問題），以及只有一邊有的邊**逐條列出**，每條都要能追到原因。\n\n")
