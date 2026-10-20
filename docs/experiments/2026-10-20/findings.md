@@ -60,6 +60,24 @@
 - **DepWeaver 的定位要跟著調**：不是「取代 LLM」，是「LLM 當成管線裡的一個來源」——它在沒有文法的語言上本來就是這樣用（III-B 的 LLM 層），這次結果說明 enum 動態分派也可以交給它，但輸出要進同一個等級／出處框架、名字要走同一個確認流程。這是一個具體的未來工作，而且有數字支持。
 - **AsianPLoP 那篇不受影響**：④「先算事實，再讓 AI 解釋」講的是「事實算好了之後不讓 LLM 重述」，這次實驗是「事實還沒算之前讓 LLM 自己讀」，兩回事；倒是 ③ 多了一個 Known Use 以外的佐證——LLM 自己取名時有 85 個名字對不上。
 
+## 模型與參數（論文要附的）
+
+| 項目 | 值 | 出處 |
+|---|---|---|
+| 模型 | `gpt-4.1-mini`（OpenAI Chat Completions API；63 次回應的 `model` 欄位都是這個別名；實際快照名當時沒存，10/20 之後的版本會存 `response_model`） | `raw/*.json` |
+| temperature | 0 | `pure_llm_graph.py` `chat()` |
+| 輸出格式 | `response_format={"type":"json_object"}`（JSON mode） | 同上 |
+| max_tokens | 前 9 次呼叫（bank-of-anthos 三組）沒設，模型預設上限 32,768，其中 2 次撞到；之後的 54 次設 12,000，沒有再撞到 | `raw/*.json` 的 `completion_tokens`；commit `fa6c353` |
+| 其他 | n=1、無 seed、無 system prompt、無 tool；4 個並行 worker | `chat()`、`--workers 4` |
+| 重複 | 每組每專案 3 次（`--runs 3`），同一個 prompt | `pure-llm-graph.csv` 的 run 欄 |
+| 輸入預算 | 部署描述檔＋設定檔 300,000 bytes、原始碼 500,000 bytes、單檔 20,000 bytes、最多 400 檔；原始碼依檔名線索（client/service/controller/config…）優先、小檔先；略過 test、vendor、node_modules、產生的 proto 等目錄 | `BUDGET`、`SKIP_DIR`、`SOURCE_HINT`；實際給了什麼在 `budget.md` |
+| prompt | 三組的完整模板在 `build_prompt()`；邊的四類定義在 `CLASS_TEXT`；`prompts/` 可由 `--dry-run` 重新產生 | `pure_llm_graph.py` |
+| 受測 checkout | 7 個 repo 2026-10-20 的 HEAD（commit 在 `budget.md`） | `budget.md` |
+| 參考邊集 | `docs/generalization/truth/<name>.tsv`，`variant` 類不計 | `truth/README.md` |
+| 計分 | 與 `GeneralizationScoreTest` 相同（`--selfcheck` 逐格相等）；files-nonames 的名稱比對＝小寫去非英數後完全相等 | `score()`、`canon()` |
+| 用量 | 63 次呼叫，3,260,592 prompt token（其中 1,955,456 是同一 prompt 第 2、3 次呼叫命中的 prompt cache）＋ 105,074 completion token | `raw/*.json` 的 `usage` |
+| 機器 | 機器 B（Ubuntu、Python 3.12），2026-10-20 | commit `f6f1072` |
+
 ## 限制
 
 - 參考邊集是作者整理的（truth/README.md 說明了為什麼不叫 ground truth）；MicroDepGraph 的第三方邊集還沒接進來。

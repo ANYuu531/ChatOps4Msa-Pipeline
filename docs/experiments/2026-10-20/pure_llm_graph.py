@@ -331,7 +331,11 @@ def chat(key: str, model: str, prompt: str, retries: int = 4):
             with urllib.request.urlopen(req, timeout=600) as r:
                 data = json.load(r)
             choice = data["choices"][0]
-            return choice["message"]["content"], data.get("usage", {}), choice.get("finish_reason", "")
+            # 回應裡的 model 是實際的快照名（例如 gpt-4.1-mini-2025-04-14），和我們送的別名不同；一起存
+            usage = dict(data.get("usage", {}))
+            usage["response_model"] = data.get("model", "")
+            usage["request_params"] = {k: v for k, v in body.items() if k != "messages"}
+            return choice["message"]["content"], usage, choice.get("finish_reason", "")
         except urllib.error.HTTPError as e:
             msg = e.read().decode(errors="replace")
             if e.code == 429 and "insufficient_quota" in msg:
