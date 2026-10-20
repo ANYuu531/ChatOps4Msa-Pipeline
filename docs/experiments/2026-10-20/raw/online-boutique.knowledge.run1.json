@@ -1,0 +1,19 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 336,
+  "completion_tokens": 322,
+  "total_tokens": 658,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "content": "{\n  \"edges\": [\n    {\"source\": \"frontend\", \"target\": \"adservice\", \"class\": \"business\"},\n    {\"source\": \"frontend\", \"target\": \"productcatalogservice\", \"class\": \"business\"},\n    {\"source\": \"frontend\", \"target\": \"currencyservice\", \"class\": \"business\"},\n    {\"source\": \"frontend\", \"target\": \"recommendationservice\", \"class\": \"business\"},\n    {\"source\": \"frontend\", \"target\": \"cartservice\", \"class\": \"business\"},\n    {\"source\": \"cartservice\", \"target\": \"redis-cart\", \"class\": \"data\"},\n    {\"source\": \"checkoutservice\", \"target\": \"cartservice\", \"class\": \"business\"},\n    {\"source\": \"checkoutservice\", \"target\": \"paymentservice\", \"class\": \"business\"},\n    {\"source\": \"checkoutservice\", \"target\": \"shippingservice\", \"class\": \"business\"},\n    {\"source\": \"checkoutservice\", \"target\": \"emailservice\", \"class\": \"business\"},\n    {\"source\": \"paymentservice\", \"target\": \"external\", \"class\": \"external\"},\n    {\"source\": \"shippingservice\", \"target\": \"external\", \"class\": \"external\"},\n    {\"source\": \"loadgenerator\", \"target\": \"frontend\", \"class\": \"business\"},\n    {\"source\": \"shoppingassistantservice\", \"target\": \"productcatalogservice\", \"class\": \"business\"},\n    {\"source\": \"shoppingassistantservice\", \"target\": \"recommendationservice\", \"class\": \"business\"}\n  ]\n}"
+}

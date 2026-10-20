@@ -1,0 +1,19 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 141371,
+  "completion_tokens": 493,
+  "total_tokens": 141864,
+  "prompt_tokens_details": {
+   "cached_tokens": 141184,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "content": "{\n  \"components\": [\n    {\"name\": \"registry\", \"kind\": \"service\"},\n    {\"name\": \"db\", \"kind\": \"database\"},\n    {\"name\": \"persistence\", \"kind\": \"service\"},\n    {\"name\": \"auth\", \"kind\": \"service\"},\n    {\"name\": \"image\", \"kind\": \"service\"},\n    {\"name\": \"recommender\", \"kind\": \"service\"},\n    {\"name\": \"webui\", \"kind\": \"service\"},\n    {\"name\": \"rabbitmq\", \"kind\": \"broker\"}\n  ],\n  \"edges\": [\n    {\"source\": \"persistence\", \"target\": \"registry\", \"class\": \"control\"},\n    {\"source\": \"auth\", \"target\": \"registry\", \"class\": \"control\"},\n    {\"source\": \"image\", \"target\": \"registry\", \"class\": \"control\"},\n    {\"source\": \"recommender\", \"target\": \"registry\", \"class\": \"control\"},\n    {\"source\": \"webui\", \"target\": \"registry\", \"class\": \"control\"},\n    {\"source\": \"persistence\", \"target\": \"db\", \"class\": \"data\"},\n    {\"source\": \"persistence\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n    {\"source\": \"auth\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n    {\"source\": \"image\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n    {\"source\": \"recommender\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n    {\"source\": \"webui\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n    {\"source\": \"auth\", \"target\": \"persistence\", \"class\": \"business\"},\n    {\"source\": \"image\", \"target\": \"persistence\", \"class\": \"business\"},\n    {\"source\": \"recommender\", \"target\": \"persistence\", \"class\": \"business\"},\n    {\"source\": \"webui\", \"target\": \"auth\", \"class\": \"business\"},\n    {\"source\": \"webui\", \"target\": \"persistence\", \"class\": \"business\"},\n    {\"source\": \"webui\", \"target\": \"image\", \"class\": \"business\"},\n    {\"source\": \"webui\", \"target\": \"recommender\", \"class\": \"business\"}\n  ]\n}"
+}

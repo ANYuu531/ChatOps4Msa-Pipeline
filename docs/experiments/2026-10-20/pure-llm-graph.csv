@@ -1,0 +1,71 @@
+project,arm,run,drawn,right,wrong,missed,P,R,business,data,control,raw_edges,truncated,unmatched_names
+bank-of-anthos,files,1,12,12,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,12,0,
+bank-of-anthos,files,2,12,12,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,12,0,
+bank-of-anthos,files,3,12,12,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,12,0,
+bank-of-anthos,files-nonames,1,12,12,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,21,0,external-internet;istio-ingressgateway;jwt-key
+bank-of-anthos,files-nonames,2,12,12,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,1417,1,istio-ingressgateway;jwt-key
+bank-of-anthos,files-nonames,3,12,12,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,1417,1,istio-ingressgateway;jwt-key
+bank-of-anthos,knowledge,1,11,8,3,4,0.727,0.667,0.83 / 0.83,0.50 / 0.40,— / 1.00,11,0,
+bank-of-anthos,knowledge,2,11,8,3,4,0.727,0.667,0.83 / 0.83,0.50 / 0.40,— / 1.00,11,0,
+bank-of-anthos,knowledge,3,12,8,4,4,0.667,0.667,0.67 / 0.67,0.60 / 0.60,— / 1.00,12,0,
+ecommerce,files,1,44,37,7,1,0.841,0.974,0.63 / 1.00,—,— / 0.96,44,0,
+ecommerce,files,2,36,35,1,3,0.972,0.921,0.92 / 1.00,—,— / 0.88,36,0,
+ecommerce,files,3,28,28,0,10,1.000,0.737,1.00 / 1.00,—,— / 0.60,28,0,
+ecommerce,files-nonames,1,0,0,0,38,0.000,0.000,— / 0.00,—,— / 0.00,56,0,api-gateway-container;cloud-config-container;ecommerce_dev_db;ecommerce_stage_db;favourite-service-container;order-service-container;payment-service-container;product-service-container;proxy-client-container;service-discovery-container;shipping-service-container;user-service-container;zipkin-container
+ecommerce,files-nonames,2,0,0,0,38,0.000,0.000,— / 0.00,—,— / 0.00,56,0,api-gateway-container;cloud-config-container;ecommerce_dev_db;ecommerce_stage_db;favourite-service-container;order-service-container;payment-service-container;product-service-container;proxy-client-container;service-discovery-container;shipping-service-container;user-service-container;zipkin-container
+ecommerce,files-nonames,3,0,0,0,38,0.000,0.000,— / 0.00,—,— / 0.00,58,0,api-gateway-container;cloud-config-container;ecommerce_dev_db;ecommerce_stage_db;favourite-service-container;order-service-container;payment-service-container;product-service-container;proxy-client-container;service-discovery-container;shipping-service-container;user-service-container;zipkin-container
+ecommerce,knowledge,1,27,23,4,15,0.852,0.605,0.43 / 0.25,—,— / 0.80,27,0,
+ecommerce,knowledge,2,27,23,4,15,0.852,0.605,0.43 / 0.25,—,— / 0.80,27,0,
+ecommerce,knowledge,3,27,23,4,15,0.852,0.605,0.43 / 0.25,—,— / 0.80,27,0,
+ewolff-k8s,files,1,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
+ewolff-k8s,files,2,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
+ewolff-k8s,files,3,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
+ewolff-k8s,files-nonames,1,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
+ewolff-k8s,files-nonames,2,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
+ewolff-k8s,files-nonames,3,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
+ewolff-k8s,knowledge,1,3,3,0,2,1.000,0.600,1.00 / 1.00,—,— / 0.33,3,0,
+ewolff-k8s,knowledge,2,3,3,0,2,1.000,0.600,1.00 / 1.00,—,— / 0.33,3,0,
+ewolff-k8s,knowledge,3,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
+online-boutique,files,1,29,17,12,0,0.586,1.000,0.56 / 1.00,1.00 / 1.00,— / 1.00,31,0,
+online-boutique,files,2,23,17,6,0,0.739,1.000,0.75 / 1.00,0.50 / 1.00,— / 1.00,23,0,
+online-boutique,files,3,29,17,12,0,0.586,1.000,0.56 / 1.00,1.00 / 1.00,— / 1.00,31,0,
+online-boutique,files-nonames,1,21,17,4,0,0.810,1.000,0.79 / 1.00,1.00 / 1.00,— / 1.00,35,0,allow-egress-google-metadata;allow-egress-googleapis;alloydb;external-google-apis;istio-gateway;metadata.google.internal;opentelemetrycollector;spanner
+online-boutique,files-nonames,2,17,17,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,51,0,allow-egress-google-metadata;allow-egress-googleapis;alloydb;external;istio-gateway;opentelemetrycollector;spanner
+online-boutique,files-nonames,3,17,17,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,50,0,allow-egress-google-metadata;allow-egress-googleapis;alloydb;external;istio-gateway;opentelemetrycollector;spanner
+online-boutique,knowledge,1,15,11,4,6,0.733,0.647,0.69 / 0.60,1.00 / 1.00,— / 1.00,15,0,
+online-boutique,knowledge,2,15,12,3,5,0.800,0.706,0.77 / 0.67,1.00 / 1.00,— / 1.00,15,0,
+online-boutique,knowledge,3,15,14,1,3,0.933,0.824,0.92 / 0.80,1.00 / 1.00,— / 1.00,15,0,
+piggymetrics,files,1,22,20,2,14,0.909,0.588,0.75 / 0.60,0.88 / 0.88,— / 0.42,22,0,
+piggymetrics,files,2,29,27,2,7,0.931,0.794,1.00 / 0.60,0.78 / 0.88,— / 0.79,30,0,
+piggymetrics,files,3,25,25,0,9,1.000,0.735,1.00 / 0.60,1.00 / 0.63,— / 0.79,25,0,
+piggymetrics,files-nonames,1,30,29,1,5,0.967,0.853,1.00 / 0.60,0.88 / 0.88,— / 1.00,31,0,external-rates-api
+piggymetrics,files-nonames,2,22,20,2,14,0.909,0.588,0.60 / 0.60,1.00 / 0.75,— / 0.58,24,0,external-rates-api;external-smtp-server
+piggymetrics,files-nonames,3,30,29,1,5,0.967,0.853,1.00 / 0.60,0.88 / 0.88,— / 1.00,31,0,external-rates-api
+piggymetrics,knowledge,1,30,22,8,12,0.733,0.647,0.00 / 0.00,1.00 / 0.63,— / 0.84,30,0,
+piggymetrics,knowledge,2,25,24,1,10,0.960,0.706,0.00 / 0.00,1.00 / 0.63,— / 0.95,25,0,
+piggymetrics,knowledge,3,27,21,6,13,0.778,0.618,0.00 / 0.00,1.00 / 0.63,— / 0.74,27,0,
+robot-shop,files,1,20,20,0,1,1.000,0.952,1.00 / 1.00,1.00 / 1.00,— / 0.86,20,0,
+robot-shop,files,2,19,19,0,2,1.000,0.905,1.00 / 1.00,1.00 / 1.00,— / 0.71,19,0,
+robot-shop,files,3,21,20,1,1,0.952,0.952,1.00 / 1.00,0.89 / 1.00,— / 0.86,21,0,
+robot-shop,files-nonames,1,20,20,0,1,1.000,0.952,1.00 / 1.00,1.00 / 1.00,— / 0.86,27,0,istio-ingressgateway;robotshop-gateway
+robot-shop,files-nonames,2,20,20,0,1,1.000,0.952,1.00 / 1.00,1.00 / 1.00,— / 0.86,22,0,istio-ingressgateway;robotshop-gateway
+robot-shop,files-nonames,3,20,20,0,1,1.000,0.952,1.00 / 1.00,1.00 / 1.00,— / 0.86,25,0,istio-ingressgateway;robotshop-gateway
+robot-shop,knowledge,1,23,12,11,9,0.522,0.571,0.00 / 0.00,0.50 / 0.50,— / 1.00,23,0,
+robot-shop,knowledge,2,17,12,5,9,0.706,0.571,0.00 / 0.00,0.50 / 0.50,— / 1.00,17,0,
+robot-shop,knowledge,3,16,12,4,9,0.750,0.571,— / 0.00,0.56 / 0.63,— / 0.86,22,0,
+teastore,files,1,14,13,1,0,0.929,1.000,1.00 / 1.00,0.50 / 1.00,— / 1.00,21,0,
+teastore,files,2,13,13,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,198,0,
+teastore,files,3,7,6,1,7,0.857,0.462,— / 0.00,0.50 / 1.00,— / 1.00,73,0,
+teastore,files-nonames,1,14,13,1,0,0.929,1.000,1.00 / 1.00,0.50 / 1.00,— / 1.00,18,0,
+teastore,files-nonames,2,14,13,1,0,0.929,1.000,1.00 / 1.00,0.50 / 1.00,— / 1.00,18,0,
+teastore,files-nonames,3,0,0,0,13,0.000,0.000,— / 0.00,— / 0.00,— / 0.00,18,0,auth;db;image;persistence;recommender;registry;webui
+teastore,knowledge,1,22,10,12,3,0.455,0.769,0.36 / 0.57,0.17 / 1.00,— / 1.00,22,0,
+teastore,knowledge,2,22,10,12,3,0.455,0.769,0.36 / 0.57,0.17 / 1.00,— / 1.00,22,0,
+teastore,knowledge,3,22,10,12,3,0.455,0.769,0.36 / 0.57,0.17 / 1.00,— / 1.00,22,0,
+bank-of-anthos,depweaver-static,1,12,12,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,12,0,
+ewolff-k8s,depweaver-static,1,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
+ecommerce,depweaver-static,1,20,20,0,18,1.000,0.530,1.00 / 1.00,—,— / 0.28,20,0,
+piggymetrics,depweaver-static,1,41,34,7,0,0.830,1.000,0.63 / 1.00,0.67 / 1.00,— / 1.00,41,0,
+teastore,depweaver-static,1,6,6,0,7,1.000,0.460,— / 0.00,1.00 / 1.00,— / 1.00,6,0,
+online-boutique,depweaver-static,1,17,17,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,17,0,
+robot-shop,depweaver-static,1,18,18,0,3,1.000,0.860,1.00 / 0.40,1.00 / 1.00,— / 1.00,18,0,

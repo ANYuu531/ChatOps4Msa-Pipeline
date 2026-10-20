@@ -1,0 +1,19 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 141371,
+  "completion_tokens": 620,
+  "total_tokens": 141991,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "content": "{\n  \"components\": [\n    {\"name\": \"teastore-webui\", \"kind\": \"service\"},\n    {\"name\": \"teastore-auth\", \"kind\": \"service\"},\n    {\"name\": \"teastore-image\", \"kind\": \"service\"},\n    {\"name\": \"teastore-persistence\", \"kind\": \"service\"},\n    {\"name\": \"teastore-recommender\", \"kind\": \"service\"},\n    {\"name\": \"teastore-registry\", \"kind\": \"control\"},\n    {\"name\": \"teastore-db\", \"kind\": \"database\"},\n    {\"name\": \"teastore-kieker-rabbitmq\", \"kind\": \"broker\"}\n  ],\n  \"edges\": [\n    {\"source\": \"teastore-webui\", \"target\": \"teastore-registry\", \"class\": \"control\"},\n    {\"source\": \"teastore-webui\", \"target\": \"teastore-auth\", \"class\": \"business\"},\n    {\"source\": \"teastore-webui\", \"target\": \"teastore-persistence\", \"class\": \"business\"},\n    {\"source\": \"teastore-webui\", \"target\": \"teastore-image\", \"class\": \"business\"},\n    {\"source\": \"teastore-webui\", \"target\": \"teastore-recommender\", \"class\": \"business\"},\n\n    {\"source\": \"teastore-auth\", \"target\": \"teastore-registry\", \"class\": \"control\"},\n    {\"source\": \"teastore-auth\", \"target\": \"teastore-persistence\", \"class\": \"business\"},\n    {\"source\": \"teastore-auth\", \"target\": \"teastore-kieker-rabbitmq\", \"class\": \"data\"},\n\n    {\"source\": \"teastore-image\", \"target\": \"teastore-registry\", \"class\": \"control\"},\n    {\"source\": \"teastore-image\", \"target\": \"teastore-persistence\", \"class\": \"business\"},\n    {\"source\": \"teastore-image\", \"target\": \"teastore-kieker-rabbitmq\", \"class\": \"data\"},\n\n    {\"source\": \"teastore-persistence\", \"target\": \"teastore-registry\", \"class\": \"control\"},\n    {\"source\": \"teastore-persistence\", \"target\": \"teastore-db\", \"class\": \"data\"},\n    {\"source\": \"teastore-persistence\", \"target\": \"teastore-kieker-rabbitmq\", \"class\": \"data\"},\n\n    {\"source\": \"teastore-recommender\", \"target\": \"teastore-registry\", \"class\": \"control\"},\n    {\"source\": \"teastore-recommender\", \"target\": \"teastore-persistence\", \"class\": \"business\"},\n    {\"source\": \"teastore-recommender\", \"target\": \"teastore-kieker-rabbitmq\", \"class\": \"data\"},\n\n    {\"source\": \"teastore-kieker-rabbitmq\", \"target\": \"teastore-kieker-rabbitmq\", \"class\": \"data\"}\n  ]\n}"
+}

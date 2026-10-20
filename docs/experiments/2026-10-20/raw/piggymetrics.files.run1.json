@@ -1,0 +1,19 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 25164,
+  "completion_tokens": 476,
+  "total_tokens": 25640,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "content": "{\"edges\": [\n  {\"source\": \"account-service\", \"target\": \"config\", \"class\": \"control\"},\n  {\"source\": \"account-service\", \"target\": \"auth-service\", \"class\": \"business\"},\n  {\"source\": \"account-service\", \"target\": \"statistics-service\", \"class\": \"business\"},\n  {\"source\": \"account-service\", \"target\": \"account-mongodb\", \"class\": \"data\"},\n\n  {\"source\": \"auth-service\", \"target\": \"config\", \"class\": \"control\"},\n  {\"source\": \"auth-service\", \"target\": \"auth-mongodb\", \"class\": \"data\"},\n\n  {\"source\": \"config\", \"target\": \"config\", \"class\": \"control\"},\n\n  {\"source\": \"gateway\", \"target\": \"config\", \"class\": \"control\"},\n\n  {\"source\": \"monitoring\", \"target\": \"config\", \"class\": \"control\"},\n\n  {\"source\": \"notification-service\", \"target\": \"config\", \"class\": \"control\"},\n  {\"source\": \"notification-service\", \"target\": \"account-service\", \"class\": \"business\"},\n  {\"source\": \"notification-service\", \"target\": \"notification-mongodb\", \"class\": \"data\"},\n  {\"source\": \"notification-service\", \"target\": \"smtp.gmail.com\", \"class\": \"external\"},\n\n  {\"source\": \"registry\", \"target\": \"config\", \"class\": \"control\"},\n\n  {\"source\": \"statistics-service\", \"target\": \"config\", \"class\": \"control\"},\n  {\"source\": \"statistics-service\", \"target\": \"statistics-mongodb\", \"class\": \"data\"},\n  {\"source\": \"statistics-service\", \"target\": \"api.exchangeratesapi.io\", \"class\": \"external\"},\n\n  {\"source\": \"turbine-stream-service\", \"target\": \"config\", \"class\": \"control\"},\n\n  {\"source\": \"account-service\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n  {\"source\": \"auth-service\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n  {\"source\": \"statistics-service\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n  {\"source\": \"notification-service\", \"target\": \"rabbitmq\", \"class\": \"data\"}\n]}"
+}

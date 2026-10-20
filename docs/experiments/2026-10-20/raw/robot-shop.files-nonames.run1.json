@@ -1,0 +1,19 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 34380,
+  "completion_tokens": 779,
+  "total_tokens": 35159,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "content": "{\n  \"components\": [\n    {\"name\": \"cart\", \"kind\": \"service\"},\n    {\"name\": \"catalogue\", \"kind\": \"service\"},\n    {\"name\": \"dispatch\", \"kind\": \"service\"},\n    {\"name\": \"mongodb\", \"kind\": \"database\"},\n    {\"name\": \"mysql\", \"kind\": \"database\"},\n    {\"name\": \"payment\", \"kind\": \"service\"},\n    {\"name\": \"rabbitmq\", \"kind\": \"broker\"},\n    {\"name\": \"ratings\", \"kind\": \"service\"},\n    {\"name\": \"redis\", \"kind\": \"broker\"},\n    {\"name\": \"shipping\", \"kind\": \"service\"},\n    {\"name\": \"user\", \"kind\": \"service\"},\n    {\"name\": \"web\", \"kind\": \"service\"},\n    {\"name\": \"load\", \"kind\": \"service\"},\n    {\"name\": \"paypal.com\", \"kind\": \"external\"},\n    {\"name\": \"robotshop-gateway\", \"kind\": \"control\"},\n    {\"name\": \"istio-ingressgateway\", \"kind\": \"control\"}\n  ],\n  \"edges\": [\n    {\"source\": \"cart\", \"target\": \"redis\", \"class\": \"data\"},\n    {\"source\": \"cart\", \"target\": \"catalogue\", \"class\": \"business\"},\n    {\"source\": \"catalogue\", \"target\": \"mongodb\", \"class\": \"data\"},\n    {\"source\": \"dispatch\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n    {\"source\": \"payment\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n    {\"source\": \"payment\", \"target\": \"user\", \"class\": \"business\"},\n    {\"source\": \"payment\", \"target\": \"cart\", \"class\": \"business\"},\n    {\"source\": \"payment\", \"target\": \"paypal.com\", \"class\": \"external\"},\n    {\"source\": \"payment\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n    {\"source\": \"ratings\", \"target\": \"mysql\", \"class\": \"data\"},\n    {\"source\": \"ratings\", \"target\": \"catalogue\", \"class\": \"business\"},\n    {\"source\": \"redis\", \"kind\": \"broker\"},\n    {\"source\": \"shipping\", \"target\": \"mysql\", \"class\": \"data\"},\n    {\"source\": \"shipping\", \"target\": \"cart\", \"class\": \"business\"},\n    {\"source\": \"user\", \"target\": \"mongodb\", \"class\": \"data\"},\n    {\"source\": \"user\", \"target\": \"redis\", \"class\": \"data\"},\n    {\"source\": \"web\", \"target\": \"catalogue\", \"class\": \"business\"},\n    {\"source\": \"web\", \"target\": \"user\", \"class\": \"business\"},\n    {\"source\": \"web\", \"target\": \"shipping\", \"class\": \"business\"},\n    {\"source\": \"web\", \"target\": \"payment\", \"class\": \"business\"},\n    {\"source\": \"web\", \"target\": \"ratings\", \"class\": \"business\"},\n    {\"source\": \"load\", \"target\": \"web\", \"class\": \"business\"},\n    {\"source\": \"dispatch\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n    {\"source\": \"cart\", \"target\": \"redis\", \"class\": \"data\"},\n    {\"source\": \"user\", \"target\": \"mongodb\", \"class\": \"data\"},\n    {\"source\": \"user\", \"target\": \"redis\", \"class\": \"data\"},\n    {\"source\": \"web\", \"target\": \"robotshop-gateway\", \"class\": \"control\"},\n    {\"source\": \"robotshop-gateway\", \"target\": \"istio-ingressgateway\", \"class\": \"control\"}\n  ]\n}"
+}

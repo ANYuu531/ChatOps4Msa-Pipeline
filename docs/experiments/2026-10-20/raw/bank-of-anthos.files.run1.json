@@ -1,0 +1,19 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 120002,
+  "completion_tokens": 259,
+  "total_tokens": 120261,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "content": "{\n  \"edges\": [\n    {\"source\": \"balancereader\", \"target\": \"ledger-db\", \"class\": \"data\"},\n    {\"source\": \"transactionhistory\", \"target\": \"ledger-db\", \"class\": \"data\"},\n    {\"source\": \"ledgerwriter\", \"target\": \"ledger-db\", \"class\": \"data\"},\n    {\"source\": \"contacts\", \"target\": \"accounts-db\", \"class\": \"data\"},\n    {\"source\": \"userservice\", \"target\": \"accounts-db\", \"class\": \"data\"},\n    {\"source\": \"frontend\", \"target\": \"balancereader\", \"class\": \"business\"},\n    {\"source\": \"frontend\", \"target\": \"transactionhistory\", \"class\": \"business\"},\n    {\"source\": \"frontend\", \"target\": \"contacts\", \"class\": \"business\"},\n    {\"source\": \"frontend\", \"target\": \"userservice\", \"class\": \"business\"},\n    {\"source\": \"frontend\", \"target\": \"ledgerwriter\", \"class\": \"business\"},\n    {\"source\": \"ledgerwriter\", \"target\": \"balancereader\", \"class\": \"business\"},\n    {\"source\": \"loadgenerator\", \"target\": \"frontend\", \"class\": \"business\"}\n  ]\n}"
+}

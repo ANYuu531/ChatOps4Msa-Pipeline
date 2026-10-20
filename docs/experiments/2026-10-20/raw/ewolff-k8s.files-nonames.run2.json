@@ -1,0 +1,19 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 8821,
+  "completion_tokens": 163,
+  "total_tokens": 8984,
+  "prompt_tokens_details": {
+   "cached_tokens": 8704,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "content": "{\n  \"components\": [\n    {\"name\": \"apache\", \"kind\": \"control\"},\n    {\"name\": \"order\", \"kind\": \"service\"},\n    {\"name\": \"customer\", \"kind\": \"service\"},\n    {\"name\": \"catalog\", \"kind\": \"service\"}\n  ],\n  \"edges\": [\n    {\"source\": \"apache\", \"target\": \"order\", \"class\": \"control\"},\n    {\"source\": \"apache\", \"target\": \"catalog\", \"class\": \"control\"},\n    {\"source\": \"apache\", \"target\": \"customer\", \"class\": \"control\"},\n    {\"source\": \"order\", \"target\": \"customer\", \"class\": \"business\"},\n    {\"source\": \"order\", \"target\": \"catalog\", \"class\": \"business\"}\n  ]\n}"
+}

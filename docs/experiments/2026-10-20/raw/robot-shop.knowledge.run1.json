@@ -1,0 +1,19 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 348,
+  "completion_tokens": 452,
+  "total_tokens": 800,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "content": "{\n  \"edges\": [\n    {\"source\": \"web\", \"target\": \"catalogue\", \"class\": \"business\"},\n    {\"source\": \"web\", \"target\": \"user\", \"class\": \"business\"},\n    {\"source\": \"web\", \"target\": \"cart\", \"class\": \"business\"},\n    {\"source\": \"web\", \"target\": \"payment\", \"class\": \"business\"},\n    {\"source\": \"web\", \"target\": \"shipping\", \"class\": \"business\"},\n    {\"source\": \"web\", \"target\": \"ratings\", \"class\": \"business\"},\n    {\"source\": \"cart\", \"target\": \"mongodb\", \"class\": \"data\"},\n    {\"source\": \"catalogue\", \"target\": \"mongodb\", \"class\": \"data\"},\n    {\"source\": \"user\", \"target\": \"mongodb\", \"class\": \"data\"},\n    {\"source\": \"ratings\", \"target\": \"mongodb\", \"class\": \"data\"},\n    {\"source\": \"payment\", \"target\": \"mysql\", \"class\": \"data\"},\n    {\"source\": \"payment\", \"target\": \"paypal.com\", \"class\": \"external\"},\n    {\"source\": \"shipping\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n    {\"source\": \"dispatch\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n    {\"source\": \"dispatch\", \"target\": \"shipping\", \"class\": \"business\"},\n    {\"source\": \"load\", \"target\": \"web\", \"class\": \"business\"},\n    {\"source\": \"load\", \"target\": \"cart\", \"class\": \"business\"},\n    {\"source\": \"load\", \"target\": \"catalogue\", \"class\": \"business\"},\n    {\"source\": \"load\", \"target\": \"user\", \"class\": \"business\"},\n    {\"source\": \"load\", \"target\": \"payment\", \"class\": \"business\"},\n    {\"source\": \"load\", \"target\": \"shipping\", \"class\": \"business\"},\n    {\"source\": \"load\", \"target\": \"ratings\", \"class\": \"business\"},\n    {\"source\": \"cart\", \"target\": \"redis\", \"class\": \"data\"}\n  ]\n}"
+}

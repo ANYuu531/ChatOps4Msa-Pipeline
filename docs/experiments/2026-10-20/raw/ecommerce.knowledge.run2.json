@@ -1,0 +1,19 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 339,
+  "completion_tokens": 595,
+  "total_tokens": 934,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "content": "{\n  \"edges\": [\n    {\"source\": \"api-gateway\", \"target\": \"user-service\", \"class\": \"business\"},\n    {\"source\": \"api-gateway\", \"target\": \"product-service\", \"class\": \"business\"},\n    {\"source\": \"api-gateway\", \"target\": \"order-service\", \"class\": \"business\"},\n    {\"source\": \"api-gateway\", \"target\": \"payment-service\", \"class\": \"business\"},\n    {\"source\": \"api-gateway\", \"target\": \"shipping-service\", \"class\": \"business\"},\n    {\"source\": \"api-gateway\", \"target\": \"favourite-service\", \"class\": \"business\"},\n    {\"source\": \"user-service\", \"target\": \"service-discovery\", \"class\": \"control\"},\n    {\"source\": \"product-service\", \"target\": \"service-discovery\", \"class\": \"control\"},\n    {\"source\": \"order-service\", \"target\": \"service-discovery\", \"class\": \"control\"},\n    {\"source\": \"payment-service\", \"target\": \"service-discovery\", \"class\": \"control\"},\n    {\"source\": \"shipping-service\", \"target\": \"service-discovery\", \"class\": \"control\"},\n    {\"source\": \"favourite-service\", \"target\": \"service-discovery\", \"class\": \"control\"},\n    {\"source\": \"user-service\", \"target\": \"cloud-config\", \"class\": \"control\"},\n    {\"source\": \"product-service\", \"target\": \"cloud-config\", \"class\": \"control\"},\n    {\"source\": \"order-service\", \"target\": \"cloud-config\", \"class\": \"control\"},\n    {\"source\": \"payment-service\", \"target\": \"cloud-config\", \"class\": \"control\"},\n    {\"source\": \"shipping-service\", \"target\": \"cloud-config\", \"class\": \"control\"},\n    {\"source\": \"favourite-service\", \"target\": \"cloud-config\", \"class\": \"control\"},\n    {\"source\": \"order-service\", \"target\": \"payment-service\", \"class\": \"business\"},\n    {\"source\": \"order-service\", \"target\": \"shipping-service\", \"class\": \"business\"},\n    {\"source\": \"order-service\", \"target\": \"user-service\", \"class\": \"business\"},\n    {\"source\": \"order-service\", \"target\": \"product-service\", \"class\": \"business\"},\n    {\"source\": \"favourite-service\", \"target\": \"user-service\", \"class\": \"business\"},\n    {\"source\": \"favourite-service\", \"target\": \"product-service\", \"class\": \"business\"},\n    {\"source\": \"payment-service\", \"target\": \"github.com\", \"class\": \"external\"},\n    {\"source\": \"proxy-client\", \"target\": \"service-discovery\", \"class\": \"control\"},\n    {\"source\": \"api-gateway\", \"target\": \"proxy-client\", \"class\": \"control\"}\n  ]\n}"
+}

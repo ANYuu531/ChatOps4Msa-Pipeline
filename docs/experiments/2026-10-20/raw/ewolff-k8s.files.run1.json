@@ -1,0 +1,19 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 8788,
+  "completion_tokens": 94,
+  "total_tokens": 8882,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "content": "{\"edges\": [{\"source\": \"apache\", \"target\": \"order\", \"class\": \"control\"}, {\"source\": \"apache\", \"target\": \"catalog\", \"class\": \"control\"}, {\"source\": \"apache\", \"target\": \"customer\", \"class\": \"control\"}, {\"source\": \"order\", \"target\": \"customer\", \"class\": \"business\"}, {\"source\": \"order\", \"target\": \"catalog\", \"class\": \"business\"}]}"
+}

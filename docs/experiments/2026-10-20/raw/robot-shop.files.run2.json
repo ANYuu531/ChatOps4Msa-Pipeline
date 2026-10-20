@@ -1,0 +1,19 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 34428,
+  "completion_tokens": 373,
+  "total_tokens": 34801,
+  "prompt_tokens_details": {
+   "cached_tokens": 34304,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  }
+ },
+ "content": "{\"edges\": [\n  {\"source\": \"catalogue\", \"target\": \"mongodb\", \"class\": \"data\"},\n  {\"source\": \"user\", \"target\": \"mongodb\", \"class\": \"data\"},\n  {\"source\": \"user\", \"target\": \"redis\", \"class\": \"data\"},\n  {\"source\": \"cart\", \"target\": \"redis\", \"class\": \"data\"},\n  {\"source\": \"cart\", \"target\": \"catalogue\", \"class\": \"business\"},\n  {\"source\": \"shipping\", \"target\": \"mysql\", \"class\": \"data\"},\n  {\"source\": \"shipping\", \"target\": \"cart\", \"class\": \"business\"},\n  {\"source\": \"dispatch\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n  {\"source\": \"payment\", \"target\": \"rabbitmq\", \"class\": \"data\"},\n  {\"source\": \"payment\", \"target\": \"user\", \"class\": \"business\"},\n  {\"source\": \"payment\", \"target\": \"cart\", \"class\": \"business\"},\n  {\"source\": \"payment\", \"target\": \"paypal.com\", \"class\": \"external\"},\n  {\"source\": \"ratings\", \"target\": \"catalogue\", \"class\": \"business\"},\n  {\"source\": \"ratings\", \"target\": \"mysql\", \"class\": \"data\"},\n  {\"source\": \"web\", \"target\": \"catalogue\", \"class\": \"business\"},\n  {\"source\": \"web\", \"target\": \"user\", \"class\": \"business\"},\n  {\"source\": \"web\", \"target\": \"shipping\", \"class\": \"business\"},\n  {\"source\": \"web\", \"target\": \"payment\", \"class\": \"business\"},\n  {\"source\": \"load\", \"target\": \"web\", \"class\": \"business\"}\n]}"
+}
