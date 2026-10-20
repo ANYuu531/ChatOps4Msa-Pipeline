@@ -317,8 +317,12 @@ def load_api():
     return key, (model or "gpt-4.1-mini")
 
 
+MAX_OUTPUT_TOKENS = 12000  # 最大的參考邊集 40 多條邊，幾百 token 就夠；上限是為了擋住重複輸出的迴圈
+
+
 def chat(key: str, model: str, prompt: str, retries: int = 4):
     body = {"model": model, "temperature": 0, "response_format": {"type": "json_object"},
+            "max_tokens": MAX_OUTPUT_TOKENS,
             "messages": [{"role": "user", "content": prompt}]}
     req = urllib.request.Request("https://api.openai.com/v1/chat/completions", data=json.dumps(body).encode(),
                                  headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
@@ -326,7 +330,8 @@ def chat(key: str, model: str, prompt: str, retries: int = 4):
         try:
             with urllib.request.urlopen(req, timeout=600) as r:
                 data = json.load(r)
-            return data["choices"][0]["message"]["content"], data.get("usage", {})
+            choice = data["choices"][0]
+            return choice["message"]["content"], data.get("usage", {}), choice.get("finish_reason", "")
         except urllib.error.HTTPError as e:
             msg = e.read().decode(errors="replace")
             if e.code == 429 and "insufficient_quota" in msg:
@@ -337,19 +342,26 @@ def chat(key: str, model: str, prompt: str, retries: int = 4):
             raise SystemExit(f"OpenAI HTTP {e.code}: {msg[:400]}")
 
 
+EDGE_OBJ = re.compile(r'\{[^{}]*?"source"\s*:\s*"([^"]+)"[^{}]*?"target"\s*:\s*"([^"]+)"[^{}]*?\}', re.S)
+COMP_OBJ = re.compile(r'\{[^{}]*?"name"\s*:\s*"([^"]+)"[^{}]*?"kind"\s*:\s*"[^"]*"[^{}]*?\}', re.S)
+
+
 def parse_edges(text: str):
+    """回傳 (edges, components, salvaged)。JSON 壞掉（通常是輸出被截斷）時改用 regex 把完整的
+    edge 物件撿回來，不讓一次壞回應中斷整個實驗；salvaged=True 會寫進結果。"""
+    salvaged = False
     try:
         obj = json.loads(text)
-    except json.JSONDecodeError:
-        m = re.search(r"\{.*\}", text, re.S)
-        obj = json.loads(m.group(0)) if m else {"edges": []}
-    edges = []
-    for e in obj.get("edges", []) or []:
-        s, t = str(e.get("source", "")).strip(), str(e.get("target", "")).strip()
-        if s and t:
-            edges.append((s, t))
-    comps = [str(c.get("name", "")).strip() for c in (obj.get("components", []) or []) if c.get("name")]
-    return edges, comps
+        raw_edges = obj.get("edges", []) or []
+        raw_comps = obj.get("components", []) or []
+        edges = [(str(e.get("source", "")).strip(), str(e.get("target", "")).strip()) for e in raw_edges if isinstance(e, dict)]
+        comps = [str(c.get("name", "")).strip() for c in raw_comps if isinstance(c, dict) and c.get("name")]
+    except (json.JSONDecodeError, AttributeError):
+        salvaged = True
+        edges = [(s.strip(), t.strip()) for s, t in EDGE_OBJ.findall(text)]
+        comps = [n.strip() for n in COMP_OBJ.findall(text)]
+    edges = [(s, t) for s, t in edges if s and t]
+    return edges, comps, salvaged
 
 
 # ---------------------------------------------------------------- main
@@ -447,17 +459,18 @@ def main():
         raw_path = raw_dir / f"{name}.{arm}.run{run}.json"
         if raw_path.exists():  # 可續跑
             data = json.loads(raw_path.read_text(encoding="utf-8"))
-            return job, data["content"], data.get("usage", {})
-        content, usage = chat(key, model, prompt)
-        raw_path.write_text(json.dumps({"model": model, "usage": usage, "content": content}, ensure_ascii=False, indent=1), encoding="utf-8")
-        return job, content, usage
+            return job, data["content"], data.get("usage", {}), data.get("finish_reason", "")
+        content, usage, finish = chat(key, model, prompt)
+        raw_path.write_text(json.dumps({"model": model, "usage": usage, "finish_reason": finish, "content": content},
+                                       ensure_ascii=False, indent=1), encoding="utf-8")
+        return job, content, usage, finish
 
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
-        for job, content, usage in ex.map(work, jobs):
+        for job, content, usage, finish in ex.map(work, jobs):
             name, arm, run, prompt, vocab, truth = job
             usage_total["prompt_tokens"] += usage.get("prompt_tokens", 0)
             usage_total["completion_tokens"] += usage.get("completion_tokens", 0)
-            edges, comps = parse_edges(content)
+            edges, comps, salvaged = parse_edges(content)
             if arm == "files-nonames":
                 name_map = {canon(n): n for n in vocab}
                 sc = score(truth, edges, name_map)
@@ -465,23 +478,29 @@ def main():
             else:
                 sc = score(truth, edges)
             sc["run"] = run
+            sc["raw_edges"] = len(edges)           # 去重前；遠大於 drawn 就是模型在重複輸出
+            sc["truncated"] = finish == "length" or salvaged
             results.setdefault((name, arm), []).append(sc)
-            print(f"{name:16s} {arm:14s} run{run}: P {sc['P']:.2f} R {sc['R']:.2f} (drawn {sc['drawn']} right {sc['right']} wrong {sc['wrong']} missed {sc['missed']})", flush=True)
+            note = ""
+            if sc["truncated"]:
+                note = f"  [輸出被截斷：finish_reason={finish or '?'}，{'regex 撿回' if salvaged else 'JSON 完整'}，原始 {len(edges)} 條邊、去重後 {sc['drawn']}]"
+            print(f"{name:16s} {arm:14s} run{run}: P {sc['P']:.2f} R {sc['R']:.2f} (drawn {sc['drawn']} right {sc['right']} wrong {sc['wrong']} missed {sc['missed']}){note}", flush=True)
 
     # ---- 寫結果
     csv_path = OUT_DIR / "pure-llm-graph.csv"
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["project", "arm", "run", "drawn", "right", "wrong", "missed", "P", "R", "business", "data", "control", "unmatched_names"])
+        w.writerow(["project", "arm", "run", "drawn", "right", "wrong", "missed", "P", "R", "business", "data", "control",
+                    "raw_edges", "truncated", "unmatched_names"])
         for (name, arm), runs in sorted(results.items()):
             for sc in sorted(runs, key=lambda s: s["run"]):
                 w.writerow([name, arm, sc["run"], sc["drawn"], sc["right"], sc["wrong"], sc["missed"], f"{sc['P']:.3f}", f"{sc['R']:.3f}",
-                            sc["business"], sc["data"], sc["control"], ";".join(sc["unmatched_names"])])
+                            sc["business"], sc["data"], sc["control"], sc["raw_edges"], int(sc["truncated"]), ";".join(sc["unmatched_names"])])
         for name in projects:
             ref = scores_md_row(name)
             if ref:
                 w.writerow([name, "depweaver-static", 1, ref["drawn"], ref["right"], ref["wrong"], ref["missed"], f"{ref['P']:.3f}", f"{ref['R']:.3f}",
-                            ref["business"], ref["data"], ref["control"], ""])
+                            ref["business"], ref["data"], ref["control"], ref["drawn"], 0, ""])
 
     md = [f"# 純 LLM 抽相依圖 vs DepWeaver 靜態層", "",
           f"- model: `{model}`, temperature 0, JSON mode; {args.runs} runs × {len(arms)} arms × {len(projects)} projects",
@@ -505,6 +524,10 @@ def main():
         if ref:
             md.append(f"| {name} | **depweaver-static** | {ref['drawn']} | {ref['right']} | {ref['wrong']} | {ref['missed']} | "
                       f"**{ref['P']:.2f}** | **{ref['R']:.2f}** | {ref['business']} | {ref['data']} | {ref['control']} |")
+    truncated_runs = [f"{n} {a} run{s['run']}（原始 {s['raw_edges']} 條、去重後 {s['drawn']}）"
+                      for (n, a), rs in sorted(results.items()) for s in rs if s["truncated"]]
+    md += ["", f"輸出被截斷的 run（模型重複輸出同樣的邊直到上限；邊以 regex 撿回、去重後計分）：{len(truncated_runs)} 次"
+           + ("".join(f"\n- {t}" for t in truncated_runs) if truncated_runs else "")]
     md += ["", "## 每一組的錯與漏（run 1）", ""]
     for (name, arm), runs in sorted(results.items()):
         sc = sorted(runs, key=lambda s: s["run"])[0]
