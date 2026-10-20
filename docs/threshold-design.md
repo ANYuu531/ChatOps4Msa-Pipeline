@@ -730,7 +730,9 @@ depweaver 組拿到的正是「標準答案那條查詢」的執行結果，所�
 4. gold 裡出現 **`accountsdb`、`ledgerdb`、`postgresql`** 三個節點：DeepWiki 用**去連字號的拼法**又造了一份資料庫（`userservice → accountsdb`、`ledgerwriter → ledgerdb`……五條重複邊），再加兩條**資料庫依賴自己引擎**的邊（`accounts-db → postgresql`）。這些節點**有邊**，所以 9.4b 的幽靈規則抓不到。depweaver 在 `db-users` 那題只列了 5 條真的（recall 0.70 是因為 gold 被污染），在 `startup-needs` 那題則把假的也照念——兩種都不對，錯在圖。修法（2026-09-23，`GraphNormalizer`）：①文件層引入的節點，若去掉標點後和一個非文件層的節點同名，併回去（`accountsdb → accounts-db`，邊的證據合併到真節點）；②資料庫指向資料庫、且目標是文件層引入的邊，刪除——之後 `postgresql` 沒有邊，被 9.4b 的規則收掉。**這一輪的數字是修正前的；需要第四輪才會反映。**
 5. 三輪下來的共同結論，也是這一節要放進論文的一句話：**對照實驗量到的不是 LLM 的好壞，是圖的好壞。每一輪接地組的失分都能追到圖上的一個具體缺陷，修掉就消失；沒有接地的兩組則在圖對的時候也會漏、會填清單。**
 
-### 9.5 抽圖層（第二輪，尚未實作）
+### 9.5 抽圖層（2026-10-20 已實作，待帳號加值後執行）
+
+> **2026-10-20**：老師 10/19 說「實驗要有假想敵：不讓 AI 基於事實，是否真的畫不出正確的圖」，就是這一節。實作在 `docs/experiments/2026-10-20/`（`pure_llm_graph.py` ＋ README）：四組 `knowledge`（零檔案）／`files`（預算內的檔案＋元件清單）／`files-nonames`（檔案、名字自己取）／`depweaver-static`，7 個專案、同一份參考邊集、同一套計分（`--selfcheck` 與 `scores.md` 逐格相等）。預算寫死並由 `--dry-run` 產出 `budget.md`。**OpenAI 帳號額度為 0，還沒跑。**下面是原本的設計文字。
 
 「純 AI 抽依賴圖」對照 DepWeaver 的抽取管線：同一個 repo，A 組把原始碼（或檔案清單＋摘錄）餵給 LLM，直接要它輸出服務與邊；B 組跑現行的 tree-sitter ＋ 設定解析 ＋ 文件層。以 BoA（真實架構已知、runtime 驗證過 7/7 業務邊 + 5/5 資料層邊）與 train-ticket 官方架構文件為 ground truth，比邊的 precision／recall。要先定兩件事：①ground truth 的邊清單要逐條寫下來並標出處；②A 組的預算（讀幾個檔、幾 KB）必須說明，否則比較不公平。這一輪的成本明顯較高（大量長 prompt），排在問答層之後。
 
