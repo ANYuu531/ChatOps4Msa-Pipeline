@@ -152,7 +152,7 @@
       <tr><td class="c">RQ3</td><td>自動手段用盡後問人，補回多少、問幾題</td><td>BoA 流量；spring-cloud-microservice 名稱</td><td>5/7 → 7/7；24/26 → 26/26，五次真跑</td><td>4 份存檔；流量那次只有紀錄</td></tr>
       <tr><td class="c">RQ4</td><td>設計規則擋住了哪些實際發生過的錯</td><td>八個事件</td><td>八列表格</td><td>commit、存檔；第 1 列只有紀錄</td></tr>
     </table>
-    <div class="note" style="margin-top:12px">上次的反饋「實驗要有假想敵」就是 <b>RQ0</b>（第 3–6 頁）；之後是查核時更正的數字（第 7 頁）與產物盤點（第 8 頁）。RQ1–RQ4 的內容上次都講過，這裡只列狀態。</div>
+    <div class="note" style="margin-top:12px">上次反饋「實驗要有假想敵」對應 <b>RQ0</b>（第 3–6 頁）；第 7 頁為查核更正，第 8 頁為產物對照。RQ1–RQ4 已於先前報告，僅列狀態。</div>
     <div class="notes"><b>講稿</b>　五個 RQ 一張表。RQ0 是新的，就是上次說的假想敵。RQ1 的 0.96 變 0.98 是查核更正的，第 7 頁講。右欄是每個數字背後有沒有產物，兩個「只有紀錄」的，第 8 頁說明怎麼寫。</div>
   </div>
   <div class="ftr"></div><div class="num">2</div>
@@ -166,32 +166,32 @@
       <div>
         <p class="sec">同一批專案、同一份參考邊集、同一套計分，比四組</p>
         <table class="xs">
-          <tr><th style="width:24%">組別</th><th style="width:40%">給 LLM 什麼</th><th>回答老師的哪一半</th></tr>
-          <tr><td><b>零檔案</b></td><td>只有 repo 網址＋元件清單</td><td>「不讓 AI 基於事實」：靠記憶畫</td></tr>
-          <tr><td><b>給檔案</b></td><td>元件清單＋預算內的部署描述檔、設定檔、原始碼</td><td>「AI 看得到事實但沒有工具」</td></tr>
-          <tr><td><b>給檔案、不給名稱</b></td><td>同上，但名字自己取</td><td>最接近「把 repo 丟給 AI」；對不到的名字另外列</td></tr>
-          <tr><td><b>DepWeaver 靜態層</b></td><td>14 條規則，不呼叫 LLM</td><td>現行工具，數字直接取 scores.md</td></tr>
+          <tr><th style="width:24%">組別</th><th style="width:44%">輸入</th><th>對應的條件</th></tr>
+          <tr><td><b>零檔案</b></td><td>repo 網址＋元件清單，無任何檔案</td><td>不基於事實（僅靠模型記憶）</td></tr>
+          <tr><td><b>給檔案</b></td><td>元件清單＋預算內的部署描述檔、設定檔、原始碼</td><td>有事實、無工具</td></tr>
+          <tr><td><b>給檔案、不給名稱</b></td><td>同上，元件名稱由模型自訂</td><td>有事實、無名稱；不匹配的名稱另列</td></tr>
+          <tr><td><b>DepWeaver 靜態層</b></td><td>14 條規則，不呼叫 LLM</td><td>現行工具；數字取自 scores.md</td></tr>
         </table>
-        <p class="sub" style="margin-top:10px">三個刻意的設計</p>
+        <p class="sub" style="margin-top:10px">三項設計決定</p>
         <ul style="font-size:17px">
-          <li><b>元件清單偏袒 LLM</b>：它不用猜有哪些節點，只要畫邊。輸了才有說服力</li>
-          <li><b>預算寫死在程式裡</b>：描述檔與設定檔 300 KB、原始碼 500 KB、單檔 20 KB；7 個專案裡 <b>6 個原始碼全部給完</b>，每個專案實際給了哪些檔有紀錄</li>
-          <li><b>計分器和 RQ1 同一套</b>：先用 DepWeaver 自己的圖重算一遍，和 scores.md 逐格相等才開始</li>
+          <li><b>元件清單提供給 LLM</b>：排除節點辨識的影響，只比較邊；比較條件對 LLM 有利</li>
+          <li><b>輸入預算固定於程式</b>：描述檔與設定檔 300 KB、原始碼 500 KB、單檔 20 KB；7 個專案中 <b>6 個原始碼全數納入</b>；每專案的檔案清單留檔</li>
+          <li><b>計分與 RQ1 同一套</b>：以 DepWeaver 自身的圖自我檢查，與 scores.md 逐格相等</li>
         </ul>
       </div>
       <div>
         <div class="box" style="min-height:0;padding:16px 22px;font-size:17px">
           <h3 style="font-size:18px;margin-bottom:8px">模型與參數</h3>
           <ul style="margin:0;padding-left:1.2em">
-            <li>gpt-4.1-mini（和問答對照同一個），temperature 0，JSON mode</li>
-            <li>max_tokens 12,000（第一批 9 次沒設，2 次撞到模型上限 32,768 → 重複輸出同樣的邊 1,417 次）</li>
-            <li>每組每專案 3 次，報平均與最小–最大</li>
-            <li>63 次呼叫、326 萬 prompt token，在機器 B 跑</li>
+            <li>gpt-4.1-mini（與問答對照相同），temperature 0，JSON mode</li>
+            <li>max_tokens 12,000（首批 9 次未設；2 次達模型上限 32,768，為同組邊重複輸出 1,417 次）</li>
+            <li>每組每專案 3 次；報平均與最小–最大</li>
+            <li>63 次呼叫、326 萬 prompt token</li>
           </ul>
         </div>
         <p class="sub" style="margin-top:12px">參考邊集</p>
         <p style="font-size:17px">RQ1 那 7 個有作者參考邊集的專案（Bank of Anthos、ewolff、ecommerce、piggymetrics、TeaStore、Online Boutique、robot-shop）；variant 類不計；邊＝（來源，目標）。</p>
-        <p class="srcs">文獻對照點：Liljas 等人（ESEM 2026）讓 LLM agent 自己重建微服務架構，GPT-4o 平均 F1 0.604。本實驗是同一個問題、用我們的參考邊集再量一次。</p>
+        <p class="srcs">文獻對照：Liljas 等人（ESEM 2026）以 LLM agent 重建微服務架構，GPT-4o 平均 F1 0.604。</p>
       </div>
     </div>
     <div class="notes"><b>講稿</b>　四組。關鍵是左下三個刻意的設計：元件清單給 LLM 是偏袒它，預算寫死而且六個專案原始碼全給，計分器先自我檢查過。右邊是模型和參數，第一批沒設輸出上限，兩次撞到迴圈，後來補上。</div>
@@ -214,9 +214,9 @@
         </table>
         <p class="srcs">7 個專案、每格 3 次的 macro 平均。斜線後：給檔案＝濾除「X → X」自迴圈邊（45 條錯邊裡 32 條是它）；不給名稱＝寬鬆對名（去 -container 字尾、唯一前後綴吻合）。</p>
         <div class="box hot" style="min-height:0;padding:14px 20px;font-size:17px;margin-top:10px">
-          <h3 style="font-size:19px;margin-bottom:6px">兩句話</h3>
-          <p><b>不給事實，LLM 畫不出正確的圖</b>：七個專案全有漏邊、六個另有錯邊。</p>
-          <p style="margin-top:6px"><b>給了事實，LLM 和規則各有輸贏</b>，召回甚至比靜態層高。所以主張不能是「LLM 做不到」。</p>
+          <h3 style="font-size:19px;margin-bottom:6px">結論</h3>
+          <p><b>不給事實：LLM 無法畫出正確的圖</b>。7 個專案全有遺漏，6 個另有錯誤。</p>
+          <p style="margin-top:6px"><b>給事實：LLM 與規則各有勝負</b>，recall 高於靜態層。論文主張不能是「LLM 做不到」。</p>
         </div>
       </div>
       <div>{{CHART:pure-llm-graph}}</div>
@@ -232,17 +232,17 @@
   <div class="bd">
     <div class="two" style="gap:26px">
       <div>
-        <p class="sec">零檔案組的三種錯法</p>
+        <p class="sec">零檔案組的三類錯誤</p>
         <table class="xs">
           <tr><th style="width:30%">錯法</th><th>例子</th></tr>
           <tr><td>套別人的架構</td><td>robot-shop 畫了 11 條錯邊，6 條是 <span class="mono">load → 每個服務</span>（把負載產生器當入口）；TeaStore 把 <span class="mono">teastore-all</span>（全部裝在一個 pod 的部署變體）畫成呼叫者</td></tr>
           <tr><td>資料庫接錯</td><td>Bank of Anthos 把 ledgerwriter、balancereader 接到 accounts-db（實際是 ledger-db）；robot-shop 把 ratings 接到 mongodb（實際是 mysql）</td></tr>
           <tr><td>方向反</td><td>piggymetrics 4 條、ecommerce 2 條：gateway → service 畫成 service → gateway</td></tr>
         </table>
-        <p class="srcs">漏的是最平常的邊（Bank of Anthos 漏 frontend → ledgerwriter、userservice → accounts-db）。七個都是 GitHub 公開專案、很可能在訓練資料裡；對私有系統這組只會更差。</p>
+        <p class="srcs">遺漏的是最常見的邊（Bank of Anthos：frontend → ledgerwriter、userservice → accounts-db）。7 個皆為公開專案；私有系統的結果預期更差。</p>
       </div>
       <div>
-        <p class="sec">給檔案組 vs 靜態層：在三個已知邊界上它贏</p>
+        <p class="sec">給檔案組 vs 靜態層：三個已知邊界</p>
         <table class="xs">
           <tr><th style="width:32%">專案與邊界</th><th class="c">LLM 給檔案</th><th class="c">DepWeaver</th></tr>
           <tr><td>TeaStore：enum 動態分派（業務邊）</td><td class="c"><span class="ok">1.00 / 1.00</span></td><td class="c"><span class="bad">0 / 7</span></td></tr>
@@ -250,8 +250,8 @@
           <tr><td>robot-shop：Node／PHP（業務邊 R）</td><td class="c"><span class="ok">1.00</span></td><td class="c"><span class="bad">0.40</span></td></tr>
           <tr class="hot"><td>piggymetrics：共用設定套到每個服務（R）</td><td class="c"><span class="bad">0.71</span></td><td class="c"><span class="ok">1.00</span></td></tr>
         </table>
-        <p style="font-size:17px;margin-top:8px">它讀得懂 <span class="mono">Service.PERSISTENCE</span> 是誰、看得懂 <span class="mono">${EUREKA_HOST:localhost}</span> 會連去哪、也讀得了沒有文法的 Node 與 PHP。輸的那個是它沒把共用 application.yml 攤到每個 config client。</p>
-        <div class="note" style="margin-top:8px;font-size:16.5px">這正好是靜態層三個「單靠加規則解不了」的邊界，說明 LLM 適合當管線裡的<b>一個來源</b>（無文法語言那層本來就是），不是取代管線。</div>
+        <p style="font-size:17px;margin-top:8px">LLM 能解析 enum 常數 <span class="mono">Service.PERSISTENCE</span>、<span class="mono">${EUREKA_HOST:localhost}</span> 的預設值，以及無文法支援的 Node 與 PHP；未將共用 application.yml 套用到各 config client。</p>
+        <div class="note" style="margin-top:8px;font-size:16.5px">三個邊界即靜態規則的已知極限 → LLM 宜作為管線中的<b>一個來源</b>（無文法語言層已如此），而非取代管線。</div>
       </div>
     </div>
     <div class="notes"><b>講稿</b>　左邊是零檔案組怎麼錯：套別的系統的架構、資料庫接錯、方向反。右邊是給檔案組贏在哪：正好是靜態層三個已知邊界，enum、localhost、Node/PHP；輸在 piggymetrics 的共用設定。結論是 LLM 應該當管線裡的一個來源。</div>
@@ -261,16 +261,16 @@
 
 <!-- 6 · B · RQ0 分數看不到的 -->
 <section class="slide" id="s6">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] RQ0 分數看不到的三件事，也是 DepWeaver 真正的貢獻 <small>4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] RQ0 分數未呈現的三點：DepWeaver 的貢獻所在 <small>4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
   <div class="bd">
     <div class="three" style="gap:22px">
-      <div class="box" style="min-height:0;padding:16px 20px;font-size:17px"><h3 style="font-size:18px">沒有出處</h3>63 次輸出裡沒有一條邊能回答「哪個檔案哪一行」。DepWeaver 每條邊都有，而且 114 筆出處用測試逐條檢查過打得開。要它附行號，就回到「LLM 重述事實會錯」的問題。</div>
-      <div class="box" style="min-height:0;padding:16px 20px;font-size:17px"><h3 style="font-size:18px">不穩定</h3>temperature 0、同一個 prompt：TeaStore 給檔案組 recall <b>0.46–1.00</b>；不給名稱組三次裡一次把元件取名 <span class="mono">registry／db／persistence</span>（少了 teastore- 前綴）整組對不上；Bank of Anthos 兩次陷入迴圈，12 條邊重複吐 1,417 次。DepWeaver 同一份 checkout 跑幾次都一樣。</div>
-      <div class="box" style="min-height:0;padding:16px 20px;font-size:17px"><h3 style="font-size:18px">名字</h3>一不給元件清單，ecommerce 三次都 <b>0.00</b>：它用 Compose 的 <span class="mono">container_name</span>（user-service-container）；寬鬆對名後 0.96。共 85 個名字對不上。這正是 pattern ③「請人確認名稱對應」要解的問題：不只規則對不上要問人，LLM 對不上也一樣。</div>
+      <div class="box" style="min-height:0;padding:16px 20px;font-size:17px"><h3 style="font-size:18px">沒有出處</h3>63 次輸出無一條邊附檔案與行號；DepWeaver 每條邊附出處，114 筆經測試可開啟。要求 LLM 附行號，即回到「重述事實會錯」的問題。</div>
+      <div class="box" style="min-height:0;padding:16px 20px;font-size:17px"><h3 style="font-size:18px">不穩定</h3>temperature 0、同一 prompt：TeaStore 給檔案組 recall <b>0.46–1.00</b>；一次將元件命名為 <span class="mono">registry／db／persistence</span>（缺 teastore- 前綴）致整組不匹配；Bank of Anthos 兩次迴圈輸出 1,417 條。DepWeaver 同一 checkout 結果確定。</div>
+      <div class="box" style="min-height:0;padding:16px 20px;font-size:17px"><h3 style="font-size:18px">名稱</h3>不給元件清單時 ecommerce 三次皆 <b>0.00</b>：採用 Compose 的 <span class="mono">container_name</span>（user-service-container）；寬鬆對名後 0.96。共 85 個名稱不匹配。即 pattern ③「請人確認名稱對應」的問題。</div>
     </div>
     <div class="box hot" style="min-height:0;padding:16px 24px;font-size:18px;margin-top:16px">
       <h3 style="font-size:18px;margin-bottom:6px">論文主張因此調整</h3>
-      <p>不是「LLM 做不到」，是「LLM 要餵事實，餵了之後給的圖<b>沒法查證、不穩定、名字對不上</b>」——而出處、確定性規則、名稱確認正好是 DepWeaver 在做的三件事。反過來，LLM 在動態分派與無文法語言上的表現，是把它當成管線中一個來源（等級不高於「有使用證據」、出處記「LLM 自某檔推得」、名字走同一個確認流程）的具體依據。</p>
+      <p>LLM 需要事實；給事實後的圖<b>無法查證、不穩定、名稱不匹配</b>，對應 DepWeaver 的出處、確定性規則、名稱確認。LLM 在動態分派與無文法語言的表現，支持將其作為管線中的一個來源：等級不高於「有使用證據」、出處標示為 LLM 推得、名稱走同一確認流程。</p>
     </div>
     <div class="notes"><b>講稿</b>　三個框是分數看不到、但 63 次裡都發生了的事：沒出處、不穩定、名字。這三件正好對應我們的出處、確定性規則、問人確認。所以 RQ0 的結論寫成下面那段：DepWeaver 的貢獻不在 P/R，在這三件事；LLM 則該當一個來源併進來。</div>
   </div>
@@ -283,18 +283,18 @@
   <div class="bd">
     <div class="two w64" style="gap:24px">
       <div>
-        <p class="sec">最重要的一條：第三方對照的對齊日期錯了</p>
-        <p style="font-size:17.5px">MicroDepGraph 資料集的相依圖檔只在 <b>2019-08-19</b> 提交過一次；之前寫的 2021-02-26 只是 README 的最後修改日。四個 repo 重新 checkout 到 2019-08-19 之前重跑：</p>
+        <p class="sec">主要更正：第三方對照的對齊日期</p>
+        <p style="font-size:17.5px">MicroDepGraph 的相依圖檔僅於 <b>2019-08-19</b> 提交一次；原對齊日 2021-02-26 為 README 的最後修改日。四個 repo 重新 checkout 至 2019-08-19 之前重跑：</p>
         <table class="xs" style="margin-top:8px">
           <tr><th></th><th class="c">舊（對齊 2021-02-26）</th><th class="c">新（對齊 2019-08-19）</th></tr>
           <tr><td>95 條參考邊畫到</td><td class="c">91（0.96）</td><td class="c"><b>93（0.98）</b></td></tr>
           <tr><td>spring-petclinic</td><td class="c">11/13</td><td class="c"><b>13/13</b></td></tr>
           <tr><td>其他六個</td><td class="c" colspan="2">不變（剩下的 2 條都是 spring-cloud-microservice 的 hystrix，RQ3 問人後補回）</td></tr>
         </table>
-        <p class="srcs">petclinic 那 2 條原本寫「repo 演進造成」，對齊正確後 hystrix-dashboard 模組還在，遺漏消失。LakesideMutual 的公開歷史從 2021-02-26 開始，無法再往前，論文有註明。</p>
+        <p class="srcs">petclinic 原遺漏的 2 條曾歸因於「repo 演進」；正確對齊後 hystrix-dashboard 模組仍在，遺漏消失。LakesideMutual 公開歷史始於 2021-02-26，無法前移，論文已註明。</p>
       </div>
       <div>
-        <p class="sec">其他改掉的</p>
+        <p class="sec">其他更正</p>
         <table class="xs">
           <tr><th style="width:36%">原本</th><th>實跑或產物顯示</th></tr>
           <tr><td>測試 280／269 過／10 略過</td><td>280／<b>270</b> 過／<b>9</b> 略過／1 失敗</td></tr>
@@ -303,7 +303,7 @@
           <tr><td>RQ4 第 7 列「問答把未量測說成 0%」</td><td>有紀錄的是<b>覆蓋率訊息</b>寫 0/23、0%，不是問答</td></tr>
           <tr><td>RQ0「七個全有錯邊」</td><td>七個全有<b>漏</b>邊，六個另有錯邊（ewolff 只漏不錯）</td></tr>
         </table>
-        <div class="note" style="margin-top:10px;font-size:16.5px">三個「同一個事實、三個數字」的情況（113／92／114）都是因為沒有重跑就抄前一份文件。以後改數字先找產物。</div>
+        <div class="note" style="margin-top:10px;font-size:16.5px">同一事實三個數字（113／92／114）的原因：未重跑即沿用前一份文件。改數字先找產物。</div>
       </div>
     </div>
     <div class="notes"><b>講稿</b>　對齊日期這條是查文獻時抓到的：資料集的圖是 2019 年 8 月提交的，我們對到的是 README 修改日。重跑後 petclinic 從 11/13 變 13/13，總吻合率 0.98，而且原本寫的「repo 演進」那個解釋是錯的。右邊是其他更正，都是重跑或找到產物後改的。</div>
@@ -313,11 +313,11 @@
 
 <!-- 8 · B · 產物盤點 -->
 <section class="slide" id="s8">
-  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 每個數字背後有沒有產物 <small>6</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 每個數字的產物對照 <small>6</small></span><div class="burger"><i></i><i></i><i></i></div></div>
   <div class="bd">
     <div class="two w64" style="gap:24px">
       <div>
-        <p class="sec">機器 B 的 15 份分析存檔搬進 repo 之後</p>
+        <p class="sec">15 份分析存檔納入 repo 後的對照</p>
         <table class="xs">
           <tr><th style="width:30%">數字</th><th style="width:44%">產物</th><th>狀態</th></tr>
           <tr><td>RQ2 業務 7/7、資料層 5/5</td><td>5 份 Bank of Anthos 執行期存檔（9/6–9/22），覆蓋率訊息原文</td><td><span class="ok">有</span></td></tr>
@@ -331,15 +331,15 @@
         </table>
       </div>
       <div>
-        <p class="sec">沒有產物的三個怎麼寫</p>
+        <p class="sec">無存檔的三項：處理方式</p>
         <ul style="font-size:17px">
-          <li>正文照寫數字，但<b>明講</b>「依當時對話中的覆蓋率訊息與操作者紀錄，分析存檔未保留」</li>
-          <li>效度威脅的內部效度加一句：這三個數字無法由第三方事後重算</li>
-          <li>對照寫出哪些是有存檔的，讓審稿人知道不是全部都只有紀錄</li>
+          <li>正文保留數字，註明「依當時對話中的覆蓋率訊息與操作者紀錄，分析存檔未保留」</li>
+          <li>效度威脅（內部效度）：三個數字無法由第三方事後重算</li>
+          <li>對照列出有存檔的項目</li>
         </ul>
-        <p class="sub" style="margin-top:12px">順帶發現</p>
-        <p style="font-size:17px">9/14 那份存檔的資料層寫 <b>5/10</b>：文件層用去連字號的拼法（accountsdb、ledgerdb）另造了一份資料庫節點，分母被稀釋。這就是 9/23 加併名規則的現場，可以當 RQ4 的佐證。</p>
-        <div class="note" style="margin-top:12px;font-size:16.5px">存檔原本 7 天輪替、不進 git。現在搬進 <span class="mono">docs/experiments/archives/</span>，以後每次真跑完就 commit。</div>
+        <p class="sub" style="margin-top:12px">另一發現</p>
+        <p style="font-size:17px">9/14 存檔的資料層為 <b>5/10</b>：文件層以去連字號拼法（accountsdb、ledgerdb）另建資料庫節點，分母被稀釋；為 9/23 併名規則的直接證據，可作 RQ4 佐證。</p>
+        <div class="note" style="margin-top:12px;font-size:16.5px">存檔原為 7 天輪替、不進 git；現納入 <span class="mono">docs/experiments/archives/</span>，每次真跑後 commit。</div>
       </div>
     </div>
     <div class="notes"><b>講稿</b>　查核的另一半是每個數字找產物。把機器 B 的存檔搬進來之後，大部分都有了，包括 RQ4 第 7 列修正前後的覆蓋率訊息原文。三個沒了的，正文會明講只有紀錄，並寫進效度威脅。</div>
@@ -353,21 +353,21 @@
   <div class="bd">
     <div class="two" style="gap:26px">
       <div>
-        <p class="sec">接下來（照上次反饋的順序）</p>
+        <p class="sec">下一步（依上次反饋順序）</p>
         <ol style="font-size:17.5px;margin:0;padding-left:1.4em">
-          <li><b>DeepWiki 的引用</b>：加主頁，找「DeepWiki 與其他 AI 比較」的學術論文</li>
-          <li><b>COMPSAC 的 related work 重寫</b>：改成「就這個問題（多來源重建微服務相依圖）別人目前怎麼做」，逐篇說差在哪</li>
-          <li><b>設計過程再補</b>：三級信心為什麼是三級、問人為什麼放最後——寫考慮過的替代方案</li>
-          <li><b>COMPSAC 頁數</b>：Word 匯出實數 <b>14 頁</b>（上限 10 頁含參考文獻）：正文到討論約 10 頁、附錄表 3 頁、參考文獻 1.5 頁 → 一定要砍</li>
+          <li><b>DeepWiki 的引用</b>：加入主頁；尋找 DeepWiki 與其他 AI 比較的學術論文</li>
+          <li><b>COMPSAC related work 重寫</b>：針對「多來源重建微服務相依圖」逐篇比較既有做法與差異</li>
+          <li><b>設計過程補述</b>：三級信心、問人時機的設計理由與替代方案</li>
+          <li><b>COMPSAC 頁數</b>：Word 匯出 <b>14 頁</b>（上限 10 頁含參考文獻）：正文至討論約 10 頁、附錄表 3 頁、參考文獻 1.5 頁；須刪減</li>
           <li>AsianPLoP 12/7 截止，COMPSAC 2027-01-31 截止（官方站已上線，東京）</li>
         </ol>
       </div>
       <div>
         <p class="sec">想問老師</p>
         <div class="pts">
-          <div class="ask"><b>RQ0 的模型</b>　只用 gpt-4.1-mini。要不要再補一組 gpt-4.1 或 o4-mini？成本約這次的 5 倍。</div>
-          <div class="ask"><b>LLM 當來源</b>　RQ0 顯示它在 enum 與無文法語言上贏過規則。要寫成未來工作，還是這學期就把它併進融合模型當第四個來源？</div>
-          <div class="ask"><b>附錄的 14 條規則</b>　為了「說明怎麼設計」加的，在雙欄版面佔 3 頁。縮成半頁文字、移到 artifact，還是連同 RQ4 的事件表一起砍？英文版再縮一成之後還要再砍約 2 頁。</div>
+          <div class="ask"><b>RQ0 的模型</b>　目前僅 gpt-4.1-mini。是否補 gpt-4.1 或 o4-mini（成本約 5 倍）？</div>
+          <div class="ask"><b>LLM 作為來源</b>　RQ0 顯示其在 enum 與無文法語言優於規則。列為未來工作，或本學期併入融合模型作第四個來源？</div>
+          <div class="ask"><b>附錄 14 條規則</b>　雙欄版面佔 3 頁。縮為半頁文字、移至 artifact，或連同 RQ4 事件表刪除？英文版仍需再刪約 2 頁。</div>
         </div>
       </div>
     </div>
