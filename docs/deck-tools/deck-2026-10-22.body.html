@@ -1,0 +1,540 @@
+<title>pattern 稿帶讀（四個）＋ COMPSAC 的假想敵實驗</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+  /* SOSEL weekly-meeting deck style (docs/deck-template.html). Single theme on purpose. */
+  :root {
+    --coral: #ff7b7b; --pink: #f86bc5;
+    --grad: linear-gradient(90deg, #ff7b7b 0%, #f86bc5 100%);
+    --ink: #1c1c1c; --grey: #6f6f6f; --line: #e3e3e3; --paper: #ffffff; --ground: #f2f2f2;
+    --green: #2e8b57; --bubble: #d9d9d9;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; background: var(--ground); }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "Nunito", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; font-size: 18px; line-height: 1.55; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .9em; }
+  h1, h2, h3, h4 { margin: 0; font-weight: 800; }
+  p { margin: 0; }
+  ul { margin: .2rem 0 0; padding-left: 1.4em; }
+  ul ul { margin-top: .1rem; }
+  li { margin: .18rem 0; }
+  .id { color: var(--green); font-weight: 700; }
+  .k { font-weight: 800; }
+
+  .slide { position: relative; width: min(100vw, 1280px); aspect-ratio: 16 / 9; margin: 24px auto; background: var(--paper);
+    scroll-snap-align: center; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.08); display: grid; grid-template-rows: 64px 1fr 34px; }
+  .hdr { display: flex; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--line); box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+  .hdr img { height: 44px; }
+  .hdr .t { font-size: 24px; font-weight: 900; }
+  .hdr .t small { font-size: 13px; font-weight: 700; margin-left: 10px; color: var(--ink); }
+  .burger { margin-left: auto; width: 30px; display: grid; gap: 6px; }
+  .burger i { display: block; height: 3px; background: var(--coral); border-radius: 2px; }
+  .bd { padding: 18px 40px 10px; overflow: hidden; }
+  .ftr { background: var(--grad); }
+  .num { position: absolute; right: 22px; bottom: 16px; width: 54px; height: 54px; border-radius: 50%; background: var(--bubble);
+    color: #fff; font-weight: 800; font-size: 20px; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+
+  .sec { font-size: 22px; font-weight: 900; margin: 2px 0 8px; }
+  .sec::before { content: "丨"; margin-right: 2px; }
+  .sub { font-size: 19px; font-weight: 900; margin-top: 12px; }
+  .sub:first-child { margin-top: 0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; }
+  .two.w64 { grid-template-columns: 1.15fr .85fr; }
+  .two.w46 { grid-template-columns: .9fr 1.1fr; }
+  .two.w73 { grid-template-columns: 1.5fr 1fr; }
+  .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 26px; align-items: start; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 17px; }
+  th, td { border: 1px solid #222; padding: 7px 12px; text-align: left; vertical-align: top; }
+  th { font-weight: 800; text-align: center; background: #fff; }
+  td.c, th.c { text-align: center; }
+  table.sm { font-size: 15px; } table.sm th, table.sm td { padding: 5px 10px; }
+  table.xs { font-size: 14px; line-height: 1.45; } table.xs th, table.xs td { padding: 4px 8px; }
+  tr.hot td { background: #fff1f4; font-weight: 700; }
+  .tag { display: inline-block; padding: 1px 10px; border-radius: 6px; font-size: 14px; font-weight: 800; color: #fff; white-space: nowrap; }
+  .tag.code { background: #2f5fb3; } .tag.ai { background: #a24fd1; } .tag.mix { background: var(--grad); }
+  .ok { color: var(--green); font-weight: 800; } .bad { color: #d0342c; font-weight: 800; }
+
+  .box { border: 2.5px solid var(--coral); border-radius: 44px; padding: 26px 30px; background: #fff; min-height: 300px; font-size: 17px; }
+  .box h3 { text-align: center; font-size: 21px; margin-bottom: 12px; }
+  .box.hot { background: var(--grad); border: 0; color: #fff; }
+  .box.hot .id { color: #fff; text-decoration: underline; }
+  .note { border-left: 4px solid var(--coral); background: #fff6f6; padding: 8px 14px; font-size: 16px; margin-top: 12px; }
+  .stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 4px 0 12px; }
+  .stat div { border: 2px solid var(--coral); border-radius: 18px; padding: 8px 14px; text-align: center; }
+  .stat b { display: block; font-size: 30px; font-weight: 900; line-height: 1.2; color: #f0617f; }
+  .stat span { font-size: 14px; color: #333; }
+  .fig { text-align: center; }
+  .fig img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; }
+  .cap { font-size: 13px; color: var(--grey); margin-top: 4px; text-align: center; }
+  .pill2 { display: inline-block; background: var(--grad); color: #fff; font-weight: 800; padding: 1px 10px; border-radius: 6px; font-size: 14px; }
+  a { color: inherit; text-decoration: underline; text-decoration-color: var(--coral); text-decoration-thickness: 1.5px; text-underline-offset: 2.5px; }
+  a:hover { color: #d0347c; }
+  .box.hot a, .tag a { color: #fff; text-decoration-color: rgba(255,255,255,.8); }
+  .srcs { font-size: 12.5px; color: var(--grey); margin-top: 8px; line-height: 1.5; }
+  .srcs a { color: var(--grey); }
+  pre.code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.45; background: #f7f7f7; border-radius: 8px; padding: 9px 13px; margin: 6px 0; overflow: hidden; white-space: pre; }
+
+  /* A pattern section as it stands in the paper: the draft on the left, what to say on the right. */
+  .draft { border-left: 5px solid var(--pink); background: #fbfbfb; padding: 14px 20px; font-size: 17px; line-height: 1.65; border-radius: 0 10px 10px 0; }
+  .draft p { margin: 0 0 .55em; } .draft p:last-child { margin-bottom: 0; }
+  .draft ul, .draft ol { margin: .2em 0 .4em; padding-left: 1.3em; } .draft li { margin: .12em 0; }
+  .draft .lbl { display: inline-block; font-size: 12px; font-weight: 800; color: #fff; background: var(--pink); border-radius: 5px; padding: 0 8px; margin-bottom: 6px; letter-spacing: .04em; }
+  .draft blockquote { margin: 0 0 .5em; padding: 6px 12px; border-left: 3px solid var(--coral); background: #fff; font-weight: 700; }
+  .hl { background: #fff1a8; padding: 0 2px; border-radius: 3px; }
+  .pts { font-size: 17px; }
+  .pts h4 { font-size: 19px; margin-bottom: 6px; }
+  .pts h4::before { content: "◆ "; color: var(--coral); }
+  .pts ul { padding-left: 1.2em; } .pts li { margin: .3em 0; }
+  .pts .ask { margin-top: 12px; border: 1.5px dashed var(--coral); border-radius: 10px; padding: 8px 14px; font-size: 16px; }
+  .pts .ask b { color: #d0347c; }
+
+  /* A Discord exchange, drawn as a chat. */
+  .chat { display: grid; grid-template-columns: 74px 1fr; gap: 6px 12px; font-size: 13px; line-height: 1.45; }
+  .chat .who { font-weight: 800; color: var(--grey); text-align: right; padding-top: 7px; font-size: 12.5px; }
+  .chat .who.bot { color: #f0617f; }
+  .chat .msg { background: #f7f7f7; border-radius: 10px; padding: 7px 12px; }
+  .chat .msg.me { background: #eef6ff; }
+  .chat .btn { display: inline-block; border: 1.5px solid #5865f2; color: #5865f2; border-radius: 5px; padding: 0 9px; font-weight: 800; font-size: 12.5px; margin-top: 4px; }
+  .chat .form { border: 1.5px dashed #999; border-radius: 8px; padding: 6px 10px; margin-top: 2px; background: #fff; }
+  .chat .form label { display: block; font-size: 12px; color: var(--grey); margin-top: 3px; }
+  .chat .form input { display: block; width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 1px 8px; font: inherit; font-size: 13px; background: #fff; }
+
+  .cover { display: block; }
+  .cover .wave { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .cover .logo { position: absolute; left: 80px; top: 205px; height: 60px; }
+  .cover h1 { position: absolute; left: 80px; top: 285px; font-size: 62px; font-weight: 900; letter-spacing: .02em; }
+  .cover .when { position: absolute; left: 82px; top: 380px; color: var(--grey); font-size: 18px; }
+  .cover .pill { position: absolute; left: 70px; bottom: 96px; background: var(--grad); color: #fff; font-weight: 800; padding: 6px 18px; border-radius: 8px; font-size: 20px; }
+  .cover .cat { position: absolute; right: 120px; bottom: 90px; width: 380px; }
+  .cover .burger { position: absolute; right: 56px; top: 50px; width: 32px; }
+  .cover .ftr { display: none; }
+
+  .notes { display: none; position: absolute; left: 40px; right: 100px; bottom: 44px; background: rgba(255,255,255,.96); border-left: 4px solid var(--pink);
+    padding: 8px 14px; font-size: 14px; color: #333; box-shadow: 0 -2px 10px rgba(0,0,0,.1); }
+  body.show-notes .notes { display: block; }
+  .hud { position: fixed; right: 14px; top: 12px; display: flex; gap: .5rem; font-size: 13px; z-index: 5; }
+  .hud button { font: inherit; border: 1px solid #ccc; background: #fff; color: #333; border-radius: 6px; padding: .3em .7em; cursor: pointer; }
+  .hud button:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+  @page { size: 1280px 720px; margin: 0; }
+  @media print { html { scroll-snap-type: none; background: #fff; } .slide { margin: 0; box-shadow: none; page-break-after: always; width: 100%; } .hud { display: none; } }
+
+  /* 2026-10-22：整體放大一級 */
+  table.xs { font-size: 15.5px; } table.xs th, table.xs td { padding: 6px 10px; }
+  table.sm { font-size: 17px; } table.sm th, table.sm td { padding: 7px 12px; }
+  .srcs { font-size: 14px; }
+  .bd ul, .bd ol { font-size: 17px; }
+  .box h3 { font-size: 20px; }
+</style>
+
+<!-- 1 · 封面 -->
+<section class="slide cover" id="s1">
+  <img class="wave" src="{{WAVE}}" alt="">
+  <div class="burger"><i></i><i></i><i></i></div>
+  <img class="logo" src="{{LOGO}}" alt="SOSEL">
+  <h1>碩一週進度會議</h1>
+  <p class="when">會議時間：2026/10/22　·　主題：pattern 稿帶讀（四個 pattern）＋ COMPSAC 的假想敵實驗</p>
+  <span class="pill">學生：李安喻</span>
+  <img class="cat" src="{{CAT}}" alt="">
+  <div class="notes"><b>講稿</b>　今天兩段。前半段請老師直接看 AsianPLoP 那份稿：上次說 pattern 要變少、不要提 DepWeaver，這版改成四個。後半段不看 COMPSAC 的稿，只用投影片講假想敵實驗跑出來的結果，還有查核時抓到並更正的數字。</div>
+</section>
+
+<!-- 2 · 總覽 -->
+<section class="slide" id="s2">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 上次的反饋：六點的狀態 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <table class="sm">
+      <tr><th style="width:4%">#</th><th style="width:30%">上次的反饋</th><th style="width:48%">這週做了什麼</th><th>在哪幾頁</th></tr>
+      <tr><td class="c">1</td><td><b>pattern 要變少</b></td><td>7 個 → <b>4 個</b>：「以流量走遍路徑」變成混合重建的前提；「一份目錄」「無資料不等於零」併進「先算事實，再讓 AI 解釋」；③④ 維持分開</td><td>第 3–5 頁、稿本身</td></tr>
+      <tr><td class="c">2</td><td><b>pattern 裡不提 DepWeaver</b></td><td>全文搜不到 DepWeaver；納入標準從三個條件改成<b>兩個</b>（論文＋業界官方文件），Known Uses 只剩兩列，效度威脅重寫</td><td>第 3 頁</td></tr>
+      <tr class="hot"><td class="c">3</td><td><b>實驗要有假想敵</b></td><td>做了：純 LLM 直接畫圖，7 個專案 × 3 組 × 3 次，63 次呼叫。<b>零檔案 F1 0.70、給檔案 0.90、DepWeaver 靜態層 0.88</b>，結論要誠實寫成兩半</td><td>第 7–11 頁</td></tr>
+      <tr><td class="c">4</td><td><b>自創的方法要說明怎麼設計</b></td><td>部分：14 條規則全表進附錄、每條寫觸發它的系統；模型與參數一段；RQ0 的設計另成一節。三級信心與問人時機的「為什麼這樣設計」還要再寫</td><td>第 12 頁</td></tr>
+      <tr><td class="c">5</td><td><b>DeepWiki 的引用</b></td><td><span class="bad">未做</span>：主頁與比較論文還沒加</td><td>第 14 頁</td></tr>
+      <tr><td class="c">6</td><td><b>COMPSAC 單獨寫 related work</b></td><td><span class="bad">未做</span>：現在的第 II 節是背景式的，還不是「就這個問題別人怎麼做」</td><td>第 14 頁</td></tr>
+    </table>
+    <div class="note" style="margin-top:12px"><b>另外做的一件事：</b>兩份稿逐條查核。38 筆學術文獻與 19 筆業界文件全部上網對過原文，COMPSAC 每個數字對回 repo 裡的產物。抓到一個會影響結果的錯（第三方資料集的對齊日期），改正後數字反而變好：0.96 → <b>0.98</b>（第 12 頁）。</div>
+    <div class="notes"><b>講稿</b>　六點裡前三點做完，第四點做一半，五、六還沒動。今天先看 pattern 稿，再講實驗。最下面那格是額外做的查核，抓到對齊日期錯了，改正後吻合率變 0.98。</div>
+  </div>
+  <div class="ftr"></div><div class="num">2</div>
+</section>
+
+<!-- 3 · A · 這版改了什麼 -->
+<section class="slide" id="s3">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] A · pattern 稿這版改了什麼 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:26px">
+      <div>
+        <p class="sec">7 個怎麼變 4 個（照上次說的合）</p>
+        <table class="xs">
+          <tr><th style="width:38%">上一版（7 個）</th><th>這一版（4 個）</th></tr>
+          <tr><td>① 以流量走遍路徑</td><td><b>不算 pattern</b>：只有一種顯而易見的做法、沒有 forces → 寫成 ① 混合重建的<b>前提</b>段落</td></tr>
+          <tr><td>② 混合重建</td><td><span class="id">① 混合重建</span>（前提：先以流量走遍路徑）</td></tr>
+          <tr><td>③ 實測優先於推測</td><td><span class="id">② 實測優先於推測</span>（不變）</td></tr>
+          <tr><td>④ 請人確認名稱對應</td><td><span class="id">③ 請人確認名稱對應</span>（不變）</td></tr>
+          <tr><td>⑤ 一份目錄、多個視圖</td><td rowspan="3"><span class="id">④ 先算事實，再讓 AI 解釋</span>：⑤ 變成 Solution 第 1 步（事實從同一份模型算），⑦ 變成第 2、4 步（預設未知、不用 0 代表未量測）</td></tr>
+          <tr><td>⑥ 先算事實，再讓 AI 解釋</td></tr>
+          <tr><td>⑦ 無資料不等於零</td></tr>
+        </table>
+        <p class="srcs">篩選紀錄（表 9）多了三列說明：流量是 ① 的前提、⑤⑦ 併入 ④ 並寫為什麼併（三者解的是同一個問題的三個面向：事實從哪算、由誰寫、算不出來寫什麼）。</p>
+      </div>
+      <div>
+        <p class="sec">不提 DepWeaver 連動改的</p>
+        <ul style="font-size:17.5px">
+          <li><b>納入標準兩個條件</b>：至少兩篇論文、至少兩個業界工具的官方文件。原本第三個「我們的工具也實作」拿掉</li>
+          <li>補一個<b>判準</b>：要有自己互相拉扯的 forces 才寫成 pattern，否則是背景或前提。這就是砍 ①、⑦ 的理由，寫進去讀者才知道</li>
+          <li>每個 Known Uses 表刪 DepWeaver 那列；實作要點保留，但不說是誰的經驗</li>
+          <li>效度威脅：原本「順序只在 DepWeaver 上走過一遍」改成「銜接順序是從文獻與文件歸納的，沒有實證驗證」</li>
+        </ul>
+        <div class="note" style="margin-top:10px;font-size:16.5px">頁數：合併後約 17 頁（規則 20 頁內），是用字數估的，請老師看 Word 時順便確認。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　左邊是合併對照表，完全照上次講的：流量當前提、無資料併掉、⑤⑥合併、③④不合。右邊是因為不能提 DepWeaver 而連動的四處，最重要的是條件從三個變兩個，還補了「有 forces 才算 pattern」這個判準。</div>
+  </div>
+  <div class="ftr"></div><div class="num">3</div>
+</section>
+
+<!-- 4 · A · 全貌 -->
+<section class="slide" id="s4">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] A · 四個 pattern 的全貌（稿裡的圖 2 與表 4） <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="fig"><img src="{{IMG:p_map2.png}}" alt="四個 pattern 的全貌" style="max-height:230px"></div>
+    <table class="sm" style="margin-top:10px">
+      <tr><th style="width:26%">Pattern</th><th style="width:34%">Problem</th><th>Solution</th></tr>
+      <tr><td><span class="id">① 混合重建</span> Hybrid Reconstruction</td><td>每個來源都不完整，看不到的地方各不相同</td><td>先以流量把執行期觀測補齊，再以「來源 → 目標」為鍵合併，每條邊保留它來自哪些來源</td></tr>
+      <tr><td><span class="id">② 實測優先於推測</span> Observed over Inferred</td><td>全部畫成一樣，讀者分不出哪條可信</td><td>每條邊帶「實測／推測」標記並畫成不同樣子，更強的證據取代較弱的</td></tr>
+      <tr><td><span class="id">③ 請人確認名稱對應</span> Human-Confirmed Mapping</td><td>規則判斷不了的名稱，丟掉或模糊比對都會出錯</td><td>變成附候選的具體問題交給熟悉系統的人，答案存下來</td></tr>
+      <tr><td><span class="id">④ 先算事實，再讓 AI 解釋</span> Compute, Then Explain</td><td>產出物各自推導而矛盾；LLM 重述事實會錯；沒收集的被當成 0</td><td>先建一份統一模型，事實由程式從它產生，LLM 只寫詮釋；沒收集的寫「未量測」</td></tr>
+    </table>
+    <div class="notes"><b>講稿</b>　上排建圖三個、下排交付一個。箭頭上的字是前一個留下、下一個接手的問題：每個來源都不完整 → 等級被抹平 → 名稱對不上 → 產出物不只一種。接下來請老師直接看稿。</div>
+  </div>
+  <div class="ftr"></div><div class="num">4</div>
+</section>
+
+<!-- 5 · A · 帶讀路線 -->
+<section class="slide" id="s5">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] A · 帶讀路線：看哪裡、想問什麼 <small>3</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <table class="xs">
+      <tr><th style="width:17%">稿的哪裡</th><th style="width:45%">看什麼</th><th>想問老師</th></tr>
+      <tr><td>§1.3 表 2</td><td>兩個條件；條件之外的判準「有 forces 才算 pattern」</td><td>這個判準寫在這裡夠不夠清楚？</td></tr>
+      <tr><td>§2 背景</td><td>讀部署描述檔、抽呼叫點、看執行期服務圖——通過條件但不寫成 pattern 的三個</td><td>—</td></tr>
+      <tr><td>§3 表 3</td><td>線上商店六條關係在四個來源裡長什麼樣（全文例子）</td><td>—</td></tr>
+      <tr><td>§4 圖 2、表 4</td><td>四個 pattern 的銜接與一句話摘要</td><td>四個名稱可以嗎？合併那個叫「先算事實，再讓 AI 解釋」</td></tr>
+      <tr class="hot"><td>§5.1 ①</td><td><b>「前提：先以流量走遍路徑」那一段</b>——把原本一整個 pattern 壓成一段，附三個引用與三件注意事項</td><td>壓成一段會不會太長？要不要再砍</td></tr>
+      <tr><td>§5.2 ②、§5.3 ③</td><td>內容沒變，只改編號與 Related Patterns</td><td>—</td></tr>
+      <tr class="hot"><td>§5.4 ④</td><td><b>合併後的 Solution 六步</b>：統一模型 → 三值預設未知 → 分事實與詮釋 → 事實由程式寫 → LLM 看得到事實但丟掉它寫的版本 → 失敗留紀錄；Known Uses 九列</td><td>Known Uses 九列會不會太多？要不要砍到六列</td></tr>
+      <tr><td>§6 表 9</td><td>篩選紀錄：背景三個、前提一個、併入兩個、不收一個</td><td>—</td></tr>
+      <tr><td>§8 效度威脅</td><td>三點：順序沒有實證、官方文件不等於產品行為、LLM 行為會變</td><td>第一點這樣寫可以嗎（因為不能說在工具上走過）</td></tr>
+    </table>
+    <div class="notes"><b>講稿</b>　帶老師看稿時照這張表的順序。兩個粗體列是這版真正新寫的東西：① 的前提段落，和 ④ 合併後的六步 Solution。其他是編號和交叉引用的調整。</div>
+  </div>
+  <div class="ftr"></div><div class="num">5</div>
+</section>
+
+<!-- 6 · A · 查核 -->
+<section class="slide" id="s6">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] A · 文獻與業界文件逐條查核 <small>4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="stat">
+      <div><b>38</b><span>學術文獻（兩篇合計）：書目與被引用的主張都對回原文或摘要</span></div>
+      <div><b>19</b><span>業界文件：網址全部可開、標題相符、主張有原文支撐</span></div>
+      <div><b>0</b><span>書目不存在或主張無支撐的高嚴重度問題</span></div>
+    </div>
+    <p class="sec">改了什麼（都是細節）</p>
+    <table class="xs">
+      <tr><th style="width:26%">項目</th><th>怎麼改</th></tr>
+      <tr><td>Murphy 等人（reflexion model）</td><td>稿裡那句「工程師定義高階模型並指定對應」逐字出自 1995 年 FSE 會議版，不是 2001 期刊版 → 兩篇都補引 FSE 1995</td></tr>
+      <tr><td>MsdoBot（ICEBE 2022）</td><td>出版標題真的印成「Chabot」→ 照錄加 [sic]</td></tr>
+      <tr><td>AsianPLoP 2025 日誌 pattern 論文</td><td>PDF 裡的 ACM DOI 是佔位符，沒有真的 DOI → 改附論文集層級 DOI、作者名補連字號</td></tr>
+      <tr><td>Service Mesh Patterns（EuroPLoP 2022）</td><td>摘要只談 sidecar 與 control plane，不談遙測 → 引用理由從「執行期觀測的資料來源」改成「service mesh 這組 pattern 的定義出處」</td></tr>
+      <tr><td>Dynatrace、Istio、Backstage</td><td>四處措辭比原文強（「平台各處都讀它」「只在解釋時使用」「服務圖才有東西」「以目錄為中心」）→ 對齊原文</td></tr>
+      <tr><td>PLoP 2023 Prompt Pattern Catalog</td><td>DOI 前綴 10.64346 看起來奇怪，查證是 Hillside 自己的前綴，能解析，<b>不用改</b></td></tr>
+    </table>
+    <div class="notes"><b>講稿</b>　兩篇的參考文獻都上網逐條對過，沒有大問題，改的都是細節。最值得講的是 Murphy 那條，稿裡的句子其實出自會議版，所以兩篇都補引。</div>
+  </div>
+  <div class="ftr"></div><div class="num">6</div>
+</section>
+
+<!-- 7 · B · 實驗總覽 -->
+<section class="slide" id="s7">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] B · COMPSAC 的實驗（不看稿，只講數字） <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <table class="sm">
+      <tr><th style="width:7%"></th><th style="width:30%">問的問題</th><th style="width:22%">受測</th><th style="width:22%">數字</th><th>產物</th></tr>
+      <tr class="hot"><td class="c"><b>RQ0</b></td><td><b>假想敵</b>：不用工具，LLM 直接畫圖畫得多對？不給事實 vs 給事實</td><td>7 個專案 × 3 組 × 3 次</td><td>零檔案 F1 <b>0.70</b>；給檔案 <b>0.90</b>；DepWeaver 靜態 0.88</td><td>63 份原始回應、CSV、報告</td></tr>
+      <tr><td class="c">RQ1</td><td>靜態層在沒調校過的系統上能重建多少</td><td>7＋7 個專案</td><td>第三方邊集吻合率 <b>0.98</b>（更正前 0.96）；作者邊集 7 個中 6 個 P 1.00</td><td>scores.md、agreement.csv</td></tr>
+      <tr><td class="c">RQ2</td><td>加入執行期觀測後等級與覆蓋率怎麼變</td><td>Bank of Anthos 真部署</td><td>業務 7/7、資料層 5/5；同一條邊三種狀態</td><td>5 份執行期存檔</td></tr>
+      <tr><td class="c">RQ3</td><td>自動手段用盡後問人，補回多少、問幾題</td><td>BoA 流量；spring-cloud-microservice 名稱</td><td>5/7 → 7/7；24/26 → 26/26，五次真跑</td><td>4 份存檔；流量那次只有紀錄</td></tr>
+      <tr><td class="c">RQ4</td><td>設計規則擋住了哪些實際發生過的錯</td><td>八個事件</td><td>八列表格</td><td>commit、存檔；第 1 列只有紀錄</td></tr>
+    </table>
+    <div class="note" style="margin-top:12px">今天主要講 <b>RQ0</b>（第 8–11 頁），然後是查核時更正的數字（第 12 頁）與產物盤點（第 13 頁）。RQ1–RQ4 的內容上次都講過，這裡只列狀態。</div>
+    <div class="notes"><b>講稿</b>　五個 RQ 一張表。RQ0 是新的，就是上次說的假想敵。RQ1 的 0.96 變 0.98 是查核更正的，第 12 頁講。右欄是每個數字背後有沒有產物，兩個「只有紀錄」的，第 13 頁說明怎麼寫。</div>
+  </div>
+  <div class="ftr"></div><div class="num">7</div>
+</section>
+
+<!-- 8 · B · RQ0 設計 -->
+<section class="slide" id="s8">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] B · RQ0 假想敵：怎麼設計 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:24px">
+      <div>
+        <p class="sec">同一批專案、同一份參考邊集、同一套計分，比四組</p>
+        <table class="xs">
+          <tr><th style="width:24%">組別</th><th style="width:40%">給 LLM 什麼</th><th>回答老師的哪一半</th></tr>
+          <tr><td><b>零檔案</b></td><td>只有 repo 網址＋元件清單</td><td>「不讓 AI 基於事實」：靠記憶畫</td></tr>
+          <tr><td><b>給檔案</b></td><td>元件清單＋預算內的部署描述檔、設定檔、原始碼</td><td>「AI 看得到事實但沒有工具」</td></tr>
+          <tr><td><b>給檔案、不給名稱</b></td><td>同上，但名字自己取</td><td>最接近「把 repo 丟給 AI」；對不到的名字另外列</td></tr>
+          <tr><td><b>DepWeaver 靜態層</b></td><td>14 條規則，不呼叫 LLM</td><td>現行工具，數字直接取 scores.md</td></tr>
+        </table>
+        <p class="sub" style="margin-top:10px">三個刻意的設計</p>
+        <ul style="font-size:17px">
+          <li><b>元件清單偏袒 LLM</b>：它不用猜有哪些節點，只要畫邊。輸了才有說服力</li>
+          <li><b>預算寫死在程式裡</b>：描述檔與設定檔 300 KB、原始碼 500 KB、單檔 20 KB；7 個專案裡 <b>6 個原始碼全部給完</b>，每個專案實際給了哪些檔有紀錄</li>
+          <li><b>計分器和 RQ1 同一套</b>：先用 DepWeaver 自己的圖重算一遍，和 scores.md 逐格相等才開始</li>
+        </ul>
+      </div>
+      <div>
+        <div class="box" style="min-height:0;padding:16px 22px;font-size:17px">
+          <h3 style="font-size:18px;margin-bottom:8px">模型與參數</h3>
+          <ul style="margin:0;padding-left:1.2em">
+            <li>gpt-4.1-mini（和問答對照同一個），temperature 0，JSON mode</li>
+            <li>max_tokens 12,000（第一批 9 次沒設，2 次撞到模型上限 32,768 → 重複輸出同樣的邊 1,417 次）</li>
+            <li>每組每專案 3 次，報平均與最小–最大</li>
+            <li>63 次呼叫、326 萬 prompt token，在機器 B 跑</li>
+          </ul>
+        </div>
+        <p class="sub" style="margin-top:12px">參考邊集</p>
+        <p style="font-size:17px">RQ1 那 7 個有作者參考邊集的專案（Bank of Anthos、ewolff、ecommerce、piggymetrics、TeaStore、Online Boutique、robot-shop）；variant 類不計；邊＝（來源，目標）。</p>
+        <p class="srcs">文獻對照點：Liljas 等人（ESEM 2026）讓 LLM agent 自己重建微服務架構，GPT-4o 平均 F1 0.604。本實驗是同一個問題、用我們的參考邊集再量一次。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　四組。關鍵是左下三個刻意的設計：元件清單給 LLM 是偏袒它，預算寫死而且六個專案原始碼全給，計分器先自我檢查過。右邊是模型和參數，第一批沒設輸出上限，兩次撞到迴圈，後來補上。</div>
+  </div>
+  <div class="ftr"></div><div class="num">8</div>
+</section>
+
+<!-- 9 · B · RQ0 結果 -->
+<section class="slide" id="s9">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] B · RQ0 結果：答案分兩半 <small>3</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w46" style="gap:22px">
+      <div>
+        <table class="xs" style="white-space:nowrap">
+          <tr><th>組別</th><th class="c">P</th><th class="c">R</th><th class="c">F1</th></tr>
+          <tr><td>零檔案</td><td class="c">0.76</td><td class="c">0.68</td><td class="c"><b>0.70</b></td></tr>
+          <tr><td>給檔案</td><td class="c">0.92／0.97</td><td class="c">0.91</td><td class="c"><b>0.90／0.93</b></td></tr>
+          <tr><td>給檔案、不給名稱</td><td class="c">0.79／0.98</td><td class="c">0.77／0.95</td><td class="c">0.77／0.96</td></tr>
+          <tr class="hot"><td>DepWeaver 靜態層</td><td class="c">0.98</td><td class="c">0.84</td><td class="c">0.88</td></tr>
+        </table>
+        <p class="srcs">7 個專案、每格 3 次的 macro 平均。斜線後：給檔案＝濾除「X → X」自迴圈邊（45 條錯邊裡 32 條是它）；不給名稱＝寬鬆對名（去 -container 字尾、唯一前後綴吻合）。</p>
+        <div class="box hot" style="min-height:0;padding:14px 20px;font-size:17px;margin-top:10px">
+          <h3 style="font-size:19px;margin-bottom:6px">兩句話</h3>
+          <p><b>不給事實，LLM 畫不出正確的圖</b>：七個專案全有漏邊、六個另有錯邊。</p>
+          <p style="margin-top:6px"><b>給了事實，LLM 和規則各有輸贏</b>，召回甚至比靜態層高。所以主張不能是「LLM 做不到」。</p>
+        </div>
+      </div>
+      <div>{{CHART:pure-llm-graph}}</div>
+    </div>
+    <div class="notes"><b>講稿</b>　左上是總表。零檔案 0.70，七個專案沒有一個 P、R 同時到 1。給檔案之後 0.90，去掉自迴圈邊 0.93，比 DepWeaver 靜態層的 0.88 高。這點要誠實寫：論文的主張不能是 LLM 做不到。右邊是每個專案的 F1，ecommerce 不給名稱那組是 0，第 11 頁講為什麼。</div>
+  </div>
+  <div class="ftr"></div><div class="num">9</div>
+</section>
+
+<!-- 10 · B · RQ0 邊界案例 -->
+<section class="slide" id="s10">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] B · RQ0 逐案看：零檔案怎麼錯、給檔案在哪贏在哪輸 <small>4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">零檔案組的三種錯法</p>
+        <table class="xs">
+          <tr><th style="width:30%">錯法</th><th>例子</th></tr>
+          <tr><td>套別人的架構</td><td>robot-shop 畫了 11 條錯邊，6 條是 <span class="mono">load → 每個服務</span>（把負載產生器當入口）；TeaStore 把 <span class="mono">teastore-all</span>（全部裝在一個 pod 的部署變體）畫成呼叫者</td></tr>
+          <tr><td>資料庫接錯</td><td>Bank of Anthos 把 ledgerwriter、balancereader 接到 accounts-db（實際是 ledger-db）；robot-shop 把 ratings 接到 mongodb（實際是 mysql）</td></tr>
+          <tr><td>方向反</td><td>piggymetrics 4 條、ecommerce 2 條：gateway → service 畫成 service → gateway</td></tr>
+        </table>
+        <p class="srcs">漏的是最平常的邊（Bank of Anthos 漏 frontend → ledgerwriter、userservice → accounts-db）。七個都是 GitHub 公開專案、很可能在訓練資料裡；對私有系統這組只會更差。</p>
+      </div>
+      <div>
+        <p class="sec">給檔案組 vs 靜態層：在三個已知邊界上它贏</p>
+        <table class="xs">
+          <tr><th style="width:32%">專案與邊界</th><th class="c">LLM 給檔案</th><th class="c">DepWeaver</th></tr>
+          <tr><td>TeaStore：enum 動態分派（業務邊）</td><td class="c"><span class="ok">1.00 / 1.00</span></td><td class="c"><span class="bad">0 / 7</span></td></tr>
+          <tr><td>ecommerce：localhost 預設值（控制面 R）</td><td class="c"><span class="ok">0.96</span></td><td class="c"><span class="bad">0.28</span></td></tr>
+          <tr><td>robot-shop：Node／PHP（業務邊 R）</td><td class="c"><span class="ok">1.00</span></td><td class="c"><span class="bad">0.40</span></td></tr>
+          <tr class="hot"><td>piggymetrics：共用設定套到每個服務（R）</td><td class="c"><span class="bad">0.71</span></td><td class="c"><span class="ok">1.00</span></td></tr>
+        </table>
+        <p style="font-size:17px;margin-top:8px">它讀得懂 <span class="mono">Service.PERSISTENCE</span> 是誰、看得懂 <span class="mono">${EUREKA_HOST:localhost}</span> 會連去哪、也讀得了沒有文法的 Node 與 PHP。輸的那個是它沒把共用 application.yml 攤到每個 config client。</p>
+        <div class="note" style="margin-top:8px;font-size:16.5px">這正好是靜態層三個「單靠加規則解不了」的邊界，說明 LLM 適合當管線裡的<b>一個來源</b>（無文法語言那層本來就是），不是取代管線。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　左邊是零檔案組怎麼錯：套別的系統的架構、資料庫接錯、方向反。右邊是給檔案組贏在哪：正好是靜態層三個已知邊界，enum、localhost、Node/PHP；輸在 piggymetrics 的共用設定。結論是 LLM 應該當管線裡的一個來源。</div>
+  </div>
+  <div class="ftr"></div><div class="num">10</div>
+</section>
+
+<!-- 11 · B · RQ0 分數看不到的 -->
+<section class="slide" id="s11">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] B · RQ0 分數看不到的三件事，也是 DepWeaver 真正的貢獻 <small>5</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="three" style="gap:22px">
+      <div class="box" style="min-height:0;padding:16px 20px;font-size:17px"><h3 style="font-size:18px">沒有出處</h3>63 次輸出裡沒有一條邊能回答「哪個檔案哪一行」。DepWeaver 每條邊都有，而且 114 筆出處用測試逐條檢查過打得開。要它附行號，就回到「LLM 重述事實會錯」的問題。</div>
+      <div class="box" style="min-height:0;padding:16px 20px;font-size:17px"><h3 style="font-size:18px">不穩定</h3>temperature 0、同一個 prompt：TeaStore 給檔案組 recall <b>0.46–1.00</b>；不給名稱組三次裡一次把元件取名 <span class="mono">registry／db／persistence</span>（少了 teastore- 前綴）整組對不上；Bank of Anthos 兩次陷入迴圈，12 條邊重複吐 1,417 次。DepWeaver 同一份 checkout 跑幾次都一樣。</div>
+      <div class="box" style="min-height:0;padding:16px 20px;font-size:17px"><h3 style="font-size:18px">名字</h3>一不給元件清單，ecommerce 三次都 <b>0.00</b>：它用 Compose 的 <span class="mono">container_name</span>（user-service-container）；寬鬆對名後 0.96。共 85 個名字對不上。這正是 pattern ③「請人確認名稱對應」要解的問題：不只規則對不上要問人，LLM 對不上也一樣。</div>
+    </div>
+    <div class="box hot" style="min-height:0;padding:16px 24px;font-size:18px;margin-top:16px">
+      <h3 style="font-size:18px;margin-bottom:6px">論文主張因此調整</h3>
+      <p>不是「LLM 做不到」，是「LLM 要餵事實，餵了之後給的圖<b>沒法查證、不穩定、名字對不上</b>」——而出處、確定性規則、名稱確認正好是 DepWeaver 在做的三件事。反過來，LLM 在動態分派與無文法語言上的表現，是把它當成管線中一個來源（等級不高於「有使用證據」、出處記「LLM 自某檔推得」、名字走同一個確認流程）的具體依據。</p>
+    </div>
+    <div class="notes"><b>講稿</b>　三個框是分數看不到、但 63 次裡都發生了的事：沒出處、不穩定、名字。這三件正好對應我們的出處、確定性規則、問人確認。所以 RQ0 的結論寫成下面那段：DepWeaver 的貢獻不在 P/R，在這三件事；LLM 則該當一個來源併進來。</div>
+  </div>
+  <div class="ftr"></div><div class="num">11</div>
+</section>
+
+<!-- 12 · B · 更正 -->
+<section class="slide" id="s12">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] B · 查核時抓到並更正的數字 <small>6</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:24px">
+      <div>
+        <p class="sec">最重要的一條：第三方對照的對齊日期錯了</p>
+        <p style="font-size:17.5px">MicroDepGraph 資料集的相依圖檔只在 <b>2019-08-19</b> 提交過一次；之前寫的 2021-02-26 只是 README 的最後修改日。四個 repo 重新 checkout 到 2019-08-19 之前重跑：</p>
+        <table class="xs" style="margin-top:8px">
+          <tr><th></th><th class="c">舊（對齊 2021-02-26）</th><th class="c">新（對齊 2019-08-19）</th></tr>
+          <tr><td>95 條參考邊畫到</td><td class="c">91（0.96）</td><td class="c"><b>93（0.98）</b></td></tr>
+          <tr><td>spring-petclinic</td><td class="c">11/13</td><td class="c"><b>13/13</b></td></tr>
+          <tr><td>其他六個</td><td class="c" colspan="2">不變（剩下的 2 條都是 spring-cloud-microservice 的 hystrix，RQ3 問人後補回）</td></tr>
+        </table>
+        <p class="srcs">petclinic 那 2 條原本寫「repo 演進造成」，對齊正確後 hystrix-dashboard 模組還在，遺漏消失。LakesideMutual 的公開歷史從 2021-02-26 開始，無法再往前，論文有註明。</p>
+      </div>
+      <div>
+        <p class="sec">其他改掉的</p>
+        <table class="xs">
+          <tr><th style="width:36%">原本</th><th>實跑或產物顯示</th></tr>
+          <tr><td>測試 280／269 過／10 略過</td><td>280／<b>270</b> 過／<b>9</b> 略過／1 失敗</td></tr>
+          <tr><td>出處檢查 113 筆（README 寫 92）</td><td><b>114</b> 筆，今日 HEAD 全部打得開</td></tr>
+          <tr><td>表 I 例子 ingress → api-gateway 95 次</td><td>7/29 交付包的執行期邊清單是 <b>121</b> 次</td></tr>
+          <tr><td>RQ4 第 7 列「問答把未量測說成 0%」</td><td>有紀錄的是<b>覆蓋率訊息</b>寫 0/23、0%，不是問答</td></tr>
+          <tr><td>RQ0「七個全有錯邊」</td><td>七個全有<b>漏</b>邊，六個另有錯邊（ewolff 只漏不錯）</td></tr>
+        </table>
+        <div class="note" style="margin-top:10px;font-size:16.5px">三個「同一個事實、三個數字」的情況（113／92／114）都是因為沒有重跑就抄前一份文件。以後改數字先找產物。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　對齊日期這條是查文獻時抓到的：資料集的圖是 2019 年 8 月提交的，我們對到的是 README 修改日。重跑後 petclinic 從 11/13 變 13/13，總吻合率 0.98，而且原本寫的「repo 演進」那個解釋是錯的。右邊是其他更正，都是重跑或找到產物後改的。</div>
+  </div>
+  <div class="ftr"></div><div class="num">12</div>
+</section>
+
+<!-- 13 · B · 產物盤點 -->
+<section class="slide" id="s13">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] B · 每個數字背後有沒有產物 <small>7</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two w64" style="gap:24px">
+      <div>
+        <p class="sec">機器 B 的 15 份分析存檔搬進 repo 之後</p>
+        <table class="xs">
+          <tr><th style="width:30%">數字</th><th style="width:44%">產物</th><th>狀態</th></tr>
+          <tr><td>RQ2 業務 7/7、資料層 5/5</td><td>5 份 Bank of Anthos 執行期存檔（9/6–9/22），覆蓋率訊息原文</td><td><span class="ok">有</span></td></tr>
+          <tr><td>RQ4 第 7 列：0% → Not measured</td><td>9/8 純靜態存檔寫「0/7 — 0%」，10/6 之後寫「Not measured」</td><td><span class="ok">有，修正前後都在</span></td></tr>
+          <tr><td>RQ3 名稱：五次真跑</td><td>10/6 四份存檔，報告末節累計答案 8、11、16、20 個</td><td><span class="ok">四次有</span></td></tr>
+          <tr><td>RQ0 全部</td><td>63 份原始回應、CSV、預算清單</td><td><span class="ok">有</span></td></tr>
+          <tr><td>RQ1 全部</td><td>scores.md、agreement.csv、出處測試</td><td><span class="ok">有，都是程式產生</span></td></tr>
+          <tr class="hot"><td>RQ3 流量 5/7 → 6/7 → 7/7（8/26）</td><td>只有當時 Discord 對話與講稿</td><td><span class="bad">沒了</span></td></tr>
+          <tr class="hot"><td>RQ4 第 1 列 petclinic 45% → 4/4</td><td>7/29 交付包裡沒有覆蓋率訊息</td><td><span class="bad">沒了</span></td></tr>
+          <tr class="hot"><td>RQ3 第五次真跑（問 2 題）</td><td>沒按 Generate report 或已輪替</td><td><span class="bad">沒了</span></td></tr>
+        </table>
+      </div>
+      <div>
+        <p class="sec">沒有產物的三個怎麼寫</p>
+        <ul style="font-size:17px">
+          <li>正文照寫數字，但<b>明講</b>「依當時對話中的覆蓋率訊息與操作者紀錄，分析存檔未保留」</li>
+          <li>效度威脅的內部效度加一句：這三個數字無法由第三方事後重算</li>
+          <li>對照寫出哪些是有存檔的，讓審稿人知道不是全部都只有紀錄</li>
+        </ul>
+        <p class="sub" style="margin-top:12px">順帶發現</p>
+        <p style="font-size:17px">9/14 那份存檔的資料層寫 <b>5/10</b>：文件層用去連字號的拼法（accountsdb、ledgerdb）另造了一份資料庫節點，分母被稀釋。這就是 9/23 加併名規則的現場，可以當 RQ4 的佐證。</p>
+        <div class="note" style="margin-top:12px;font-size:16.5px">存檔原本 7 天輪替、不進 git。現在搬進 <span class="mono">docs/experiments/archives/</span>，以後每次真跑完就 commit。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　查核的另一半是每個數字找產物。把機器 B 的存檔搬進來之後，大部分都有了，包括 RQ4 第 7 列修正前後的覆蓋率訊息原文。三個沒了的，正文會明講只有紀錄，並寫進效度威脅。</div>
+  </div>
+  <div class="ftr"></div><div class="num">13</div>
+</section>
+
+<!-- 14 · 下一步與想問 -->
+<section class="slide" id="s14">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 下一步，以及想問老師的 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">接下來（照上次反饋的順序）</p>
+        <ol style="font-size:17.5px;margin:0;padding-left:1.4em">
+          <li><b>DeepWiki 的引用</b>：加主頁，找「DeepWiki 與其他 AI 比較」的學術論文</li>
+          <li><b>COMPSAC 的 related work 重寫</b>：改成「就這個問題（多來源重建微服務相依圖）別人目前怎麼做」，逐篇說差在哪</li>
+          <li><b>設計過程再補</b>：三級信心為什麼是三級、問人為什麼放最後——寫考慮過的替代方案</li>
+          <li>Word 裡確認兩篇頁數（AsianPLoP 估 17／上限 20；COMPSAC 加了附錄，估接近 10）</li>
+          <li>AsianPLoP 12/7 截止，COMPSAC 2027-01-31 截止（官方站已上線，東京）</li>
+        </ol>
+      </div>
+      <div>
+        <p class="sec">想問老師</p>
+        <div class="pts">
+          <div class="ask"><b>RQ0 的模型</b>　只用 gpt-4.1-mini。要不要再補一組 gpt-4.1 或 o4-mini？成本約這次的 5 倍。</div>
+          <div class="ask"><b>LLM 當來源</b>　RQ0 顯示它在 enum 與無文法語言上贏過規則。要寫成未來工作，還是這學期就把它併進融合模型當第四個來源？</div>
+          <div class="ask"><b>附錄的 14 條規則</b>　為了「說明怎麼設計」加進去的，但會吃頁數。保留，還是縮成文字？</div>
+          <div class="ask"><b>pattern ④ 的名稱</b>　合併後叫「先算事實，再讓 AI 解釋」。另兩個候選：「唯一事實來源」「一份目錄、多個視圖」。</div>
+        </div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　左邊是接下來要做的，前兩項就是上次還沒動的第五、六點。右邊四個問題，第二個最重要：LLM 當來源要不要這學期做。</div>
+  </div>
+  <div class="ftr"></div><div class="num">14</div>
+</section>
+
+<!-- 15 · 參考資料與產出 -->
+<section class="slide" id="s15">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 參考資料與產出 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">這次引用的資料</p>
+        <ul style="font-size:16.5px">
+          <li><a href="https://doi.org/10.4230/LIPIcs.ESEM.2026.62">Liljas 等人，<i>Can Agents Reconstruct Microservice Architecture?</i></a>，ESEM 2026（GPT-4o 平均 F1 0.604）</li>
+          <li><a href="https://doi.org/10.1007/s10664-025-10686-2">Schneider 等人</a>，EMSE 2025（13 個靜態工具、最佳單一 F1 0.86、四工具組合 0.91）</li>
+          <li><a href="https://github.com/clowee/MicroserviceDataset/commits?path=MicroDepGraphDataset">MicroDepGraph 資料集的 commit 歷史</a>（相依圖檔 2019-08-19 唯一一次提交）；<a href="https://ceur-ws.org/Vol-2520/paper1a.pdf">Rahman 等人 2019</a></li>
+          <li><a href="https://doi.org/10.1145/222124.222136">Murphy, Notkin &amp; Sullivan，FSE 1995</a>（reflexion model 原始出處）</li>
+          <li><a href="https://doi.org/10.64346/PLoP2023p05">White 等人，PLoP 2023</a>（Hillside 的 DOI 前綴 10.64346）</li>
+          <li><a href="https://plopcon.org/asianplop2027/">AsianPLoP 2027</a>（12/7 截止、收中文稿）；<a href="https://ieeecompsac.computer.org/2027/">COMPSAC 2027</a>（1/31 截止、10 頁含參考文獻）</li>
+        </ul>
+        <p class="sub" style="margin-top:8px">怎麼重跑</p>
+        <pre class="code" style="font-size:12px">python3 -I docs/experiments/2026-10-20/pure_llm_graph.py --selfcheck
+python3 -I docs/experiments/2026-10-20/pure_llm_graph.py --repos &lt;checkouts&gt; --runs 3
+mvn -o test -Dtest=ExternalTruthAgreementTest        # 吻合率 93/95
+mvn -o test -Dtest=TruthProvenanceResolvesTest -Dtruth.repos=&lt;checkouts&gt;</pre>
+      </div>
+      <div>
+        <p class="sec">這次的產出</p>
+        <table class="xs">
+          <tr><th style="width:48%">檔案</th><th>內容</th></tr>
+          <tr><td><span class="mono">docs/papers/asianplop-2027-zh.docx</span></td><td>四個 pattern、兩個條件、不提 DepWeaver（來源 <span class="mono">src/plop.txt</span>）</td></tr>
+          <tr><td><span class="mono">docs/experiments/2026-10-20/</span></td><td>假想敵實驗：腳本、63 份原始回應、CSV、<b>findings.md</b>（結論、敏感度、模型與參數）</td></tr>
+          <tr><td><span class="mono">docs/experiments/archives/</span></td><td>15 份分析存檔＋索引（哪份支撐哪個數字）</td></tr>
+          <tr><td><span class="mono">docs/generalization/external-agreement.md</span></td><td>重新對齊後的第三方吻合率 93/95</td></tr>
+          <tr><td><span class="mono">docs/charts/pure-llm-graph.svg</span></td><td>第 9 頁的圖（從 CSV 產生）</td></tr>
+        </table>
+        <p class="sub" style="margin-top:10px">程式與資料</p>
+        <ul style="font-size:16.5px">
+          <li>實驗腳本只用標準函式庫，金鑰讀該機器的設定檔；計分器與 <span class="mono">GeneralizationScoreTest</span> 逐格相等</li>
+          <li><span class="mono">ExternalTruthAgreementTest</span> 的七個 commit 改到 2019-08-19 之前</li>
+          <li>全套測試 280：270 過、9 略過、1 要叢集</li>
+        </ul>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　引用的資料都附連結。右邊是這次的產出，實驗資料和存檔都已經在 repo 裡，論文資料夾還沒 commit，等老師看過。</div>
+  </div>
+  <div class="ftr"></div><div class="num">15</div>
+</section>
+
+<div class="hud"><button type="button" onclick="document.body.classList.toggle('show-notes')">講稿</button><button type="button" onclick="window.print()">列印</button></div>
