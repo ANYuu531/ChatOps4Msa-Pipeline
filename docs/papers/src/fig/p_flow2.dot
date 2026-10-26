@@ -1,0 +1,23 @@
+digraph G {
+ graph [splines=true, outputorder=edgesfirst];
+ node [fontname="PingFang TC", fontsize=10, color="#777777", margin="0.08,0.04"];
+ edge [color="#555555", arrowsize=0.6, fontname="PingFang TC", fontsize=9, fontcolor="#555555"];
+ start [shape=ellipse, style=filled, fillcolor=white, label="合併後的一條邊\n（或節點）", pos="0,0!"];
+ d1 [shape=diamond, style=filled, fillcolor=white, margin="0.02,0.01", label="執行期觀測\n記錄到了？", pos="138,0!"];
+ a [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="1. 標記為「實測」", pos="276,0!"];
+ b [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="1. 標記為「推測」\n（只來自程式碼、\n設定或文件）", pos="276,-74!"];
+ s2 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="2. 出處另存（可多筆），\n標記只有一個", pos="414,0!"];
+ s3 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="3. 同一條邊有多個標記時\n留較強的：實測取代推測", pos="414,-140.6!"];
+ s4 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="4. 實測＝實線、推測＝虛線；\n圖例跟著圖走", pos="276,-140.6!"];
+ s5 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="5. 下游的摘要與報告\n只能照抄或降級", pos="138,-140.6!"];
+ end [shape=ellipse, style=filled, fillcolor=white, label="分得出哪條\n可信的圖（→ ③）", pos="0,-140.6!"];
+ start->d1;
+ d1->a [label="是"];
+ d1->b [label="否"];
+ a->s2;
+ b->s2;
+ s2->s3;
+ s3->s4;
+ s4->s5;
+ s5->end;
+}

@@ -1,0 +1,29 @@
+digraph G {
+ graph [splines=true, outputorder=edgesfirst];
+ node [fontname="PingFang TC", fontsize=10, color="#777777", margin="0.08,0.04"];
+ edge [color="#555555", arrowsize=0.6, fontname="PingFang TC", fontsize=9, fontcolor="#555555"];
+ start [shape=ellipse, style=filled, fillcolor=white, label="這次分析\n收集到的結果", pos="0,0!"];
+ s1 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="1. 建一份統一模型\n並存檔", pos="138,0!"];
+ v [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="1. 圖、數字、問答、匯出\n都從模型產生", pos="138,-81.4!"];
+ s2 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="2. 記下收集了哪些來源；\n狀態三值，預設「未知」", pos="276,0!"];
+ s3 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="3. 報告內容分成\n事實與詮釋", pos="414,0!"];
+ f [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="4. 事實由程式從模型產生；\n未知寫「未量測」與原因，\n不寫 0", pos="414,-81.4!"];
+ i [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="5. 詮釋：LLM 讀同一份\n事實，寫角色、風險、建議", pos="552,-81.4!"];
+ d2 [shape=diamond, style=filled, fillcolor=white, margin="0.02,0.01", label="LLM 也寫了\n事實段落？", pos="552,-162.8!"];
+ drop [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="丟掉 LLM 的版本", pos="552,-236.8!"];
+ s6 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="6. 拼成報告，標出程式\n產生的段落；失敗要記錄", pos="414,-162.8!"];
+ end [shape=ellipse, style=filled, fillcolor=white, label="各產出物\n說同一件事", pos="276,-162.8!"];
+ start->s1;
+ s1->s2;
+ s1->v;
+ s2->s3;
+ s3->f;
+ s3->i;
+ f->s6;
+ i->d2;
+ d2->drop [label="是"];
+ d2->s6 [label="否"];
+ drop->s6;
+ s6->end;
+ v->end;
+}

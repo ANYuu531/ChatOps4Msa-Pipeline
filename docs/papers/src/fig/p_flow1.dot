@@ -1,0 +1,35 @@
+digraph G {
+ graph [splines=true, outputorder=edgesfirst];
+ node [fontname="PingFang TC", fontsize=10, color="#777777", margin="0.08,0.04"];
+ edge [color="#555555", arrowsize=0.6, fontname="PingFang TC", fontsize=9, fontcolor="#555555"];
+ note [shape=plaintext, fontcolor="#555555", fontsize=9, label="前提：先以流量走遍路徑（虛線框）", pos="207.0,40.7!"];
+ start [shape=ellipse, style=filled, fillcolor=white, label="三個來源\n各自的結果", pos="0,0!"];
+ t1 [shape=box, style="rounded,filled,dashed", fillcolor="#fbfbfb", label="送流量（先走\n主要使用者流程）", pos="138,0!"];
+ t2 [shape=box, style="rounded,filled,dashed", fillcolor="#fbfbfb", label="列出「靜態有、\n執行期還沒量到」的邊", pos="276,0!"];
+ t3 [shape=diamond, style=filled, fillcolor=white, margin="0.02,0.01", label="清單還在\n縮短？", pos="414,0!"];
+ t4 [shape=box, style="rounded,filled,dashed", fillcolor="#fbfbfb", label="依清單設計下一輪請求\n（需要人知道的值 → ③）", pos="276,-74!"];
+ s1 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="1. 以部署描述檔的\n服務清單建節點", pos="552,0!"];
+ d1 [shape=diamond, style=filled, fillcolor=white, margin="0.02,0.01", label="名稱對得上\n部署裡的服務？", pos="552,-74!"];
+ h3 [shape=box, style="rounded,dashed", fillcolor=white, label="交給 ③", pos="414,-74!"];
+ s2 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="2. 以（來源，目標）\n為鍵合併各來源的邊", pos="552,-148!"];
+ s3 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="3. 保留所有支持它的\n來源與出處", pos="414,-148!"];
+ d2 [shape=diamond, style=filled, fillcolor=white, margin="0.02,0.01", label="只有弱來源、\n目標不在部署裡？", pos="276,-148!"];
+ s4 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="4. 不新增節點，\n只補強既有節點", pos="276,-222!"];
+ s5 [shape=box, style="rounded,filled", fillcolor="#f4f4f4", label="5. 記錄這次收集了\n哪些來源（→ ④）", pos="138,-148!"];
+ end [shape=ellipse, style=filled, fillcolor=white, label="每條邊都有\n出處的圖（→ ②）", pos="0,-148!"];
+ start->t1;
+ t1->t2;
+ t2->t3;
+ t3->t4 [label="是"];
+ t4->t1;
+ t3->s1 [label="否"];
+ s1->d1;
+ d1->h3 [label="否"];
+ d1->s2 [label="是"];
+ s2->s3;
+ s3->d2;
+ d2->s5 [label="否"];
+ d2->s4 [label="是"];
+ s4->s5;
+ s5->end;
+}

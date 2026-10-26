@@ -1,0 +1,6 @@
+digraph G { rankdir=LR; nodesep=0.15; ranksep=0.35;
+ node [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled", fillcolor="#f4f4f4", color="#777777"]; edge [fontname="PingFang TC", fontsize=8.5, arrowsize=0.6];
+ a1 [label="catalog"]; b1 [label="catalog-db", shape=cylinder, fillcolor="#e8f0ff"]; a1->b1 [style=dotted, penwidth=1.6, label="僅推測\n(連線設定)"];
+ a2 [label="orders"]; b2 [label="payment"]; a2->b2 [style=dashed, penwidth=1.4, label="有使用證據\n(PaymentClient.java:42)"];
+ a3 [label="web"]; b3 [label="orders "]; a3->b3 [style=solid, penwidth=1.8, label="量測到\n(95 次請求)"];
+}

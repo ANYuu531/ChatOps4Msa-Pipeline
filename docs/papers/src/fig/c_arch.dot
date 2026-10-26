@@ -1,0 +1,14 @@
+digraph G { rankdir=TB; nodesep=0.18; ranksep=0.22;
+ graph [fontname="PingFang TC", fontsize=10]; node [fontname="PingFang TC", fontsize=9.5, shape=box, style="rounded,filled", fillcolor="#f4f4f4", color="#777777", margin="0.08,0.04"]; edge [fontname="PingFang TC", fontsize=8, color="#555555", arrowsize=0.6, fontcolor="#444444"];
+ op [label="操作者：/get dependency analysis", shape=box, style="rounded", fillcolor="white"];
+ subgraph cluster_s { label="① 收集"; style="rounded,dashed"; color="#999999";
+   s1 [label="靜態：tree-sitter＋\n設定檔＋部署描述檔"]; s2 [label="文件：DeepWiki\n五個固定問題"]; s3 [label="叢集：Service／\nDeployment／Pod"]; }
+ tr [label="② 產生流量 → 查詢量測指標\n(Istio 請求數、TCP 連線數)"]; 
+ ck [label="檢查點（JSON）", shape=cylinder, fillcolor="#fff6e5"];
+ ask [label="③ 缺口補齊：詢問操作者\n(缺少的值、對不上的名稱)", fillcolor="#fde9e9"];
+ fu [label="④ 融合 → 正規化 → 未對應的邊交 LLM → 分層"];
+ m [label="統一模型\n(邊＝信心等級＋出處)", fillcolor="#e8f0ff"];
+ o1 [label="分層相依圖"]; o2 [label="覆蓋率"]; o3 [label="報告"]; o4 [label="事後問答"];
+ op->s1; op->s2; op->s3; s1->tr; s2->tr; s3->tr; tr->ck; ck->ask [dir=both, label=" 暫停／回答後繼續"]; ck->tr [label=" 覆蓋不足：針對缺口再送一輪流量", style=dashed, constraint=false, tailport=e, headport=e]; ck->fu [label=" Generate report"]; fu->m; m->o1; m->o2; m->o3; m->o4;
+ {rank=same; o1; o2; o3; o4;}
+}

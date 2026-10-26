@@ -1,0 +1,12 @@
+digraph G { rankdir=LR; nodesep=0.35; ranksep=0.45; newrank=true; forcelabels=true;
+ graph [fontname="PingFang TC", fontsize=12]; node [fontname="PingFang TC", fontsize=11, shape=box, style="rounded,filled", fillcolor="#f4f4f4", color="#777777", width=1.6, height=0.55]; edge [color="#555555", arrowsize=0.6, fontname="PingFang TC", fontsize=9, fontcolor="#555555"];
+ src [label="背景：三個證據來源\n部署描述檔・程式碼\n執行期觀測", style="rounded,dashed", fillcolor="white"];
+ subgraph cluster_a { label="建圖"; style="rounded,dashed"; color="#999999";
+   p1 [label="① 混合重建\n（前提：先以流量走遍路徑）", width=2.3]; p2 [label="② 實測優先\n於推測"]; p3 [label="③ 請人確認\n名稱對應"];
+   p1->p2 [label="等級被抹平"]; p2->p3 [label="名稱對不上"]; }
+ subgraph cluster_c { label="交付"; style="rounded,dashed"; color="#999999";
+   p4 [label="④ 基於事實\n的解釋", width=2.3]; }
+ src->p1 [label="每個來源都不完整"];
+ {rank=same; p1; p4;}
+ p3->p4 [constraint=false, style=dashed, xlabel="產出物不只一種"];
+}

@@ -1,0 +1,5 @@
+digraph G { rankdir=LR; nodesep=0.25; ranksep=0.5;
+ node [fontname="Helvetica", fontsize=11, shape=box, style="rounded,filled", fillcolor="#f4f4f4", color="#777777"]; edge [fontname="Helvetica", fontsize=9, color="#333333", arrowsize=0.7];
+ web; orders; payment; shipping; queue [shape=cylinder, fillcolor="#e8f0ff"]; "orders-db" [shape=cylinder, fillcolor="#e8f0ff"]; catalog; "catalog-db" [shape=cylinder, fillcolor="#e8f0ff"]; cart;
+ web->orders; orders->payment; orders->shipping; shipping->queue; orders->"orders-db"; web->catalog; catalog->"catalog-db"; web->cart;
+}
