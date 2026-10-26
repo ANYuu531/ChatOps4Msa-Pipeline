@@ -1,0 +1,41 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    shopping["shopping"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    yarpapigateway["yarpapigateway"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    catalog["catalog"]
+    basket["basket"]
+    ordering["ordering"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    catalogdb["catalogdb"]
+    basketdb["basketdb"]
+    distributedcache["distributedcache"]
+    orderdb["orderdb"]
+    messagebroker["messagebroker"]
+    discount["discount"]
+    ecommerce_mq["ecommerce-mq"]
+  end
+  catalog -.-> catalogdb
+  basket -.-> basketdb
+  basket -.-> distributedcache
+  basket -.-> discount
+  basket -.-> messagebroker
+  ordering -.-> orderdb
+  ordering -.-> messagebroker
+  yarpapigateway -.-> catalog
+  yarpapigateway -.-> basket
+  yarpapigateway -.-> ordering
+  shopping -.-> yarpapigateway
+  basket -. declared? .-> ecommerce_mq
+  ordering -. declared? .-> ecommerce_mq

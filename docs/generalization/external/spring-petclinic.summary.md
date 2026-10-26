@@ -10,7 +10,8 @@
 - compose-service = 11
 - compose-dependency = 13
 - service-root = 10
-- TOTAL = 62 | files with syntax errors = 0
+- module-deps = 8
+- TOTAL = 70 | files with syntax errors = 0
 
 ## graph
 - after merge: 11 nodes / 15 edges | after normalize: 11 nodes / 15 edges | unresolved code edges = 0
@@ -30,21 +31,21 @@
 - visits-service  [service, L1]
 
 ## edges (type, confidence, provenance ref)
-- admin-server -> config-server  (sync-http, documented)  code: docker-compose.yml
-- admin-server -> discovery-server  (sync-http, documented)  code: docker-compose.yml
-- api-gateway -> config-server  (sync-http, documented)  code: docker-compose.yml
+- admin-server -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- admin-server -> discovery-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- api-gateway -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
 - api-gateway -> customers-service  (sync-http, documented)  code: spring-petclinic-api-gateway/src/main/java/org/springframework/samples/petclinic/api/application/CustomersServiceClient.java:33
-- api-gateway -> discovery-server  (sync-http, documented)  code: docker-compose.yml
+- api-gateway -> discovery-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
 - api-gateway -> visits-service  (sync-http, documented)  code: spring-petclinic-api-gateway/src/main/java/org/springframework/samples/petclinic/api/application/VisitsServiceClient.java:46
-- customers-service -> config-server  (sync-http, documented)  code: docker-compose.yml
-- customers-service -> discovery-server  (sync-http, documented)  code: docker-compose.yml
-- discovery-server -> config-server  (sync-http, documented)  code: docker-compose.yml
-- hystrix-dashboard -> config-server  (sync-http, documented)  code: docker-compose.yml
-- hystrix-dashboard -> discovery-server  (sync-http, documented)  code: docker-compose.yml
-- vets-service -> config-server  (sync-http, documented)  code: docker-compose.yml
-- vets-service -> discovery-server  (sync-http, documented)  code: docker-compose.yml
-- visits-service -> config-server  (sync-http, documented)  code: docker-compose.yml
-- visits-service -> discovery-server  (sync-http, documented)  code: docker-compose.yml
+- customers-service -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- customers-service -> discovery-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- discovery-server -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- hystrix-dashboard -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- hystrix-dashboard -> discovery-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- vets-service -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- vets-service -> discovery-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- visits-service -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- visits-service -> discovery-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
 
 ## unresolved (source hint / raw target / file:line), first 40
 
@@ -88,18 +89,18 @@ flowchart TB
   end
   api_gateway -.-> customers_service
   api_gateway -.-> visits_service
-  discovery_server -.-> config_server
-  customers_service -.-> config_server
-  customers_service -.-> discovery_server
-  visits_service -.-> config_server
-  visits_service -.-> discovery_server
-  vets_service -.-> config_server
-  vets_service -.-> discovery_server
-  api_gateway -.-> config_server
-  api_gateway -.-> discovery_server
-  admin_server -.-> config_server
-  admin_server -.-> discovery_server
-  hystrix_dashboard -.-> config_server
-  hystrix_dashboard -.-> discovery_server
+  discovery_server -. declared? .-> config_server
+  customers_service -. declared? .-> config_server
+  customers_service -. declared? .-> discovery_server
+  visits_service -. declared? .-> config_server
+  visits_service -. declared? .-> discovery_server
+  vets_service -. declared? .-> config_server
+  vets_service -. declared? .-> discovery_server
+  api_gateway -. declared? .-> config_server
+  api_gateway -. declared? .-> discovery_server
+  admin_server -. declared? .-> config_server
+  admin_server -. declared? .-> discovery_server
+  hystrix_dashboard -. declared? .-> config_server
+  hystrix_dashboard -. declared? .-> discovery_server
 
 ```

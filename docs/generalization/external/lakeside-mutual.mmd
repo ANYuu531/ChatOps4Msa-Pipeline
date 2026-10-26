@@ -43,11 +43,12 @@ flowchart TB
   policy_management_frontend -.-> policy_management_backend
   spring_boot_admin -.-> eureka_server
   risk_management_server -.-> policy_management_backend
-  customer_management_backend -. declared? .-> eureka_server
-  customer_self_service_backend -. declared? .-> eureka_server
-  policy_management_backend -. declared? .-> eureka_server
   customer_core -. declared? .-> spring_boot_admin
   customer_management_backend -. declared? .-> spring_boot_admin
   policy_management_backend -. declared? .-> spring_boot_admin
   customer_self_service_backend -. declared? .-> spring_boot_admin
+  customer_management_frontend -. declared? .-> customer_self_service_backend
+  customer_management_backend -. declared? .-> eureka_server
+  customer_self_service_backend -. declared? .-> eureka_server
+  policy_management_backend -. declared? .-> eureka_server
   risk_management_server -. declared? .-> policy_management_backend_queue

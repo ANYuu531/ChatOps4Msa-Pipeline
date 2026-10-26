@@ -3,22 +3,26 @@
 - javascript (LLM, from 97 .js/.jsx/.ts/.tsx files)   <-- skipped (LLM tier)
 
 ## ledger sections
+- name-constant = 8
 - url = 8
 - jpa = 51
+- name-ref = 35
 - http-server = 45
 - url-constant = 1
 - feign = 2
-- config = 52
+- config = 57
 - compose-service = 39
 - compose-dependency = 33
-- env-address = 23
+- env-address = 38
 - workload-env = 38
 - k8s-workload = 9
+- k8s-service = 10
 - service-root = 12
-- TOTAL = 313 | files with syntax errors = 0
+- module-deps = 6
+- TOTAL = 392 | files with syntax errors = 0
 
 ## graph
-- after merge: 11 nodes / 20 edges | after normalize: 11 nodes / 20 edges | unresolved code edges = 1
+- after merge: 11 nodes / 21 edges | after normalize: 11 nodes / 21 edges | unresolved code edges = 1
 - persistence services: [customer-core, customer-management-backend, policy-management-backend, customer-self-service-backend]
 
 ## nodes (kind, layer)
@@ -34,30 +38,38 @@
 - risk-management-server  [service, L0]
 - spring-boot-admin  [service, L4]
 
-## edges (type, confidence, provenance)
-- customer-core -> eureka-server  (sync-http, documented)  code: docker-compose-eureka.yml
-- customer-core -> spring-boot-admin  (sync-http, inferred)  code: docker-compose.yml
+## edges (type, confidence, provenance ref)
+- customer-core -> eureka-server  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
+- customer-core -> spring-boot-admin  (sync-http, inferred)  code: customer-core/src/main/resources/application-default.properties
 - customer-management-backend -> customer-core  (sync-http, documented)  code: customer-management-backend/src/main/java/com/lakesidemutual/customermanagement/infrastructure/CustomerCoreClient.java:20
 - customer-management-backend -> eureka-server  (sync-http, inferred)  code: docker-compose-eureka.yml
-- customer-management-backend -> spring-boot-admin  (sync-http, inferred)  code: docker-compose.yml
-- customer-management-frontend -> customer-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml
+- customer-management-backend -> spring-boot-admin  (sync-http, inferred)  code: customer-management-backend/src/main/resources/application-default.properties
+- customer-management-frontend -> customer-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
+- customer-management-frontend -> customer-self-service-backend  (sync-http, inferred)  code: customer-management-frontend/.env
 - customer-self-service-backend -> customer-core  (sync-http, documented)  code: customer-self-service-backend/src/main/java/com/lakesidemutual/customerselfservice/infrastructure/CustomerCoreRemoteProxy.java:33
 - customer-self-service-backend -> eureka-server  (sync-http, inferred)  code: docker-compose-eureka.yml
-- customer-self-service-backend -> policy-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml
-- customer-self-service-backend -> spring-boot-admin  (sync-http, inferred)  code: docker-compose.yml
-- customer-self-service-frontend -> customer-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml
-- customer-self-service-frontend -> customer-self-service-backend  (sync-http, documented)  code: docker-compose-eureka.yml
-- customer-self-service-frontend -> policy-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml
+- customer-self-service-backend -> policy-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
+- customer-self-service-backend -> spring-boot-admin  (sync-http, inferred)  code: customer-self-service-backend/src/main/resources/application-default.properties
+- customer-self-service-frontend -> customer-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
+- customer-self-service-frontend -> customer-self-service-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
+- customer-self-service-frontend -> policy-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
 - policy-management-backend -> customer-core  (sync-http, documented)  code: policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/infrastructure/CustomerCoreRemoteProxy.java:29
 - policy-management-backend -> eureka-server  (sync-http, inferred)  code: docker-compose-eureka.yml
-- policy-management-backend -> spring-boot-admin  (sync-http, inferred)  code: docker-compose.yml
-- policy-management-frontend -> policy-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml
-- risk-management-server -> policy-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml
+- policy-management-backend -> spring-boot-admin  (sync-http, inferred)  code: policy-management-backend/src/main/resources/application-default.properties
+- policy-management-frontend -> policy-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
+- risk-management-server -> policy-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
 - risk-management-server -> policy-management-backend-queue  (sync-http, inferred)  code: kubernetes/manifests/risk-management-server.yaml
-- spring-boot-admin -> eureka-server  (sync-http, documented)  code: docker-compose-eureka.yml
+- spring-boot-admin -> eureka-server  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
 
 ## unresolved (source hint / raw target / file:line), first 40
 - nginx  =>  http://app_servers   @ customer-core/nginx-loadbalancing/nginx/nginx.conf:19
+
+## alias questions (name [origin] seen in | candidates)
+- policy-management-backend-queue  [graph]  looks like the same service as `policy-management-backend` (one name is the other with a prefix or suffix); both stay on the graph until you say   | candidates: policy-management-backend
+- nginx  [code]  the module directory of url at customer-core/nginx-loadbalancing/nginx/nginx.conf:19 — no service on the graph has this name   | candidates: -
+
+## alias answers applied
+- none
 
 ## mermaid
 ```mermaid
@@ -106,13 +118,14 @@ flowchart TB
   policy_management_frontend -.-> policy_management_backend
   spring_boot_admin -.-> eureka_server
   risk_management_server -.-> policy_management_backend
-  customer_management_backend -. declared? .-> eureka_server
-  customer_self_service_backend -. declared? .-> eureka_server
-  policy_management_backend -. declared? .-> eureka_server
   customer_core -. declared? .-> spring_boot_admin
   customer_management_backend -. declared? .-> spring_boot_admin
   policy_management_backend -. declared? .-> spring_boot_admin
   customer_self_service_backend -. declared? .-> spring_boot_admin
+  customer_management_frontend -. declared? .-> customer_self_service_backend
+  customer_management_backend -. declared? .-> eureka_server
+  customer_self_service_backend -. declared? .-> eureka_server
+  policy_management_backend -. declared? .-> eureka_server
   risk_management_server -. declared? .-> policy_management_backend_queue
 
 ```

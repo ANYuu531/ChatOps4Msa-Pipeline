@@ -4,22 +4,35 @@ flowchart TB
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
   subgraph layer0 ["entry services"]
     direction LR
-    teastore_persistence["teastore-persistence"]
-    teastore_auth["teastore-auth"]
-    teastore_image["teastore-image"]
-    teastore_recommender["teastore-recommender"]
     teastore_webui["teastore-webui"]
     teastore_all["teastore-all"]
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
+    teastore_auth["teastore-auth"]
+    teastore_image["teastore-image"]
+    teastore_recommender["teastore-recommender"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    teastore_persistence["teastore-persistence"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
     teastore_registry["teastore-registry"]
   end
-  subgraph layer2 ["data stores"]
+  subgraph layer4 ["data stores"]
     direction LR
     teastore_db[("teastore-db")]:::db
     teastore_kieker_rabbitmq{{"teastore-kieker-rabbitmq"}}:::queue
   end
+  teastore_webui -.-> teastore_persistence
+  teastore_webui -.-> teastore_recommender
+  teastore_webui -.-> teastore_auth
+  teastore_webui -.-> teastore_image
+  teastore_recommender -.-> teastore_persistence
+  teastore_image -.-> teastore_persistence
+  teastore_auth -.-> teastore_persistence
   teastore_persistence -. declared? .-> teastore_registry
   teastore_persistence -. db .-> teastore_db
   teastore_auth -. declared? .-> teastore_registry

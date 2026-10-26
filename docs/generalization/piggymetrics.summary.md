@@ -5,36 +5,39 @@
 ## ledger sections
 - jpa = 4
 - http-server = 16
+- name-ref = 11
 - feign = 5
-- config = 45
+- name-constant = 2
+- config = 51
 - compose-service = 28
 - compose-dependency = 8
 - service-root = 10
-- TOTAL = 116 | files with syntax errors = 0
+- module-deps = 9
+- TOTAL = 144 | files with syntax errors = 0
 
 ## graph
-- after merge: 16 nodes / 41 edges | after normalize: 16 nodes / 41 edges | unresolved code edges = 0
+- after merge: 16 nodes / 33 edges | after normalize: 16 nodes / 33 edges | unresolved code edges = 0
 - persistence services: [statistics-service, account-service, notification-service, auth-service]
 
 ## nodes (kind, layer)
-- account-mongodb  [db, L6]
+- account-mongodb  [db, L7]
 - account-service  [service, L2]
-- api.exchangeratesapi.io  [external, L7]
-- auth-mongodb  [db, L6]
+- api.exchangeratesapi.io  [external, L8]
+- auth-mongodb  [db, L7]
 - auth-service  [service, L4]
-- config  [service, L5]
+- config  [service, L6]
 - gateway  [service, L0]
 - monitoring  [service, L0]
-- notification-mongodb  [db, L6]
+- notification-mongodb  [db, L7]
 - notification-service  [service, L1]
-- rabbitmq  [queue, L6]
-- registry  [service, L4]
-- smtp.gmail.com  [external, L7]
-- statistics-mongodb  [db, L6]
+- rabbitmq  [queue, L7]
+- registry  [service, L5]
+- smtp.gmail.com  [external, L8]
+- statistics-mongodb  [db, L7]
 - statistics-service  [service, L3]
 - turbine-stream-service  [service, L0]
 
-## edges (type, confidence, provenance)
+## edges (type, confidence, provenance ref)
 - account-service -> account-mongodb  (db, documented)  code: config/src/main/resources/shared/account-service.yml
 - account-service -> auth-service  (sync-http, documented)  code: account-service/src/main/java/com/piggymetrics/account/client/AuthServiceClient.java:9
 - account-service -> config  (sync-http, documented)  code: account-service/src/main/resources/bootstrap.yml
@@ -42,20 +45,15 @@
 - account-service -> registry  (sync-http, documented)  code: config/src/main/resources/shared/application.yml
 - account-service -> statistics-service  (sync-http, documented)  code: account-service/src/main/java/com/piggymetrics/account/client/StatisticsServiceClient.java:10
 - auth-service -> auth-mongodb  (db, documented)  code: config/src/main/resources/shared/auth-service.yml
-- auth-service -> config  (sync-http, documented)  code: docker-compose.yml
-- auth-service -> rabbitmq  (async, documented)  code: config/src/main/resources/shared/application.yml
+- auth-service -> config  (sync-http, documented)  code: docker-compose.yml#depends_on
 - auth-service -> registry  (sync-http, documented)  code: config/src/main/resources/shared/application.yml
 - gateway -> account-service  (sync-http, documented)  code: config/src/main/resources/shared/gateway.yml
 - gateway -> auth-service  (sync-http, documented)  code: config/src/main/resources/shared/gateway.yml
-- gateway -> config  (sync-http, documented)  code: docker-compose.yml
+- gateway -> config  (sync-http, documented)  code: docker-compose.yml#depends_on
 - gateway -> notification-service  (sync-http, documented)  code: config/src/main/resources/shared/gateway.yml
-- gateway -> rabbitmq  (async, documented)  code: config/src/main/resources/shared/application.yml
 - gateway -> registry  (sync-http, documented)  code: config/src/main/resources/shared/application.yml
 - gateway -> statistics-service  (sync-http, documented)  code: config/src/main/resources/shared/gateway.yml
-- monitoring -> auth-service  (sync-http, documented)  code: config/src/main/resources/shared/application.yml
-- monitoring -> config  (sync-http, documented)  code: docker-compose.yml
-- monitoring -> rabbitmq  (async, documented)  code: config/src/main/resources/shared/application.yml
-- monitoring -> registry  (sync-http, documented)  code: config/src/main/resources/shared/application.yml
+- monitoring -> config  (sync-http, documented)  code: docker-compose.yml#depends_on
 - notification-service -> account-service  (sync-http, documented)  code: notification-service/src/main/java/com/piggymetrics/notification/client/AccountServiceClient.java:9
 - notification-service -> auth-service  (sync-http, documented)  code: config/src/main/resources/shared/notification-service.yml
 - notification-service -> config  (sync-http, documented)  code: notification-service/src/main/resources/bootstrap.yml
@@ -63,21 +61,24 @@
 - notification-service -> rabbitmq  (async, documented)  code: config/src/main/resources/shared/application.yml
 - notification-service -> registry  (sync-http, documented)  code: config/src/main/resources/shared/application.yml
 - notification-service -> smtp.gmail.com  (external, documented)  code: config/src/main/resources/shared/notification-service.yml
-- registry -> auth-service  (sync-http, documented)  code: config/src/main/resources/shared/application.yml
 - registry -> config  (sync-http, documented)  code: registry/src/main/resources/bootstrap.yml
-- registry -> rabbitmq  (async, documented)  code: config/src/main/resources/shared/application.yml
 - statistics-service -> api.exchangeratesapi.io  (external, documented)  code: statistics-service/src/main/java/com/piggymetrics/statistics/client/ExchangeRatesClient.java:10
 - statistics-service -> auth-service  (sync-http, documented)  code: config/src/main/resources/shared/statistics-service.yml
 - statistics-service -> config  (sync-http, documented)  code: statistics-service/src/main/resources/bootstrap.yml
 - statistics-service -> rabbitmq  (async, documented)  code: config/src/main/resources/shared/application.yml
 - statistics-service -> registry  (sync-http, documented)  code: config/src/main/resources/shared/application.yml
 - statistics-service -> statistics-mongodb  (db, documented)  code: config/src/main/resources/shared/statistics-service.yml
-- turbine-stream-service -> auth-service  (sync-http, documented)  code: config/src/main/resources/shared/application.yml
 - turbine-stream-service -> config  (sync-http, documented)  code: turbine-stream-service/src/main/resources/bootstrap.yml
 - turbine-stream-service -> rabbitmq  (async, documented)  code: config/src/main/resources/shared/application.yml
 - turbine-stream-service -> registry  (sync-http, documented)  code: config/src/main/resources/shared/application.yml
 
 ## unresolved (source hint / raw target / file:line), first 40
+
+## alias questions (name [origin] seen in | candidates)
+- none
+
+## alias answers applied
+- none
 
 ## mermaid
 ```mermaid
@@ -105,14 +106,17 @@ flowchart TB
   end
   subgraph layer4 ["services · depth 4"]
     direction LR
-    registry["registry"]
     auth_service["auth-service"]
   end
   subgraph layer5 ["services · depth 5"]
     direction LR
+    registry["registry"]
+  end
+  subgraph layer6 ["services · depth 6"]
+    direction LR
     config["config"]
   end
-  subgraph layer6 ["data stores"]
+  subgraph layer7 ["data stores"]
     direction LR
     rabbitmq{{"rabbitmq"}}:::queue
     auth_mongodb[("auth-mongodb")]:::db
@@ -120,7 +124,7 @@ flowchart TB
     statistics_mongodb[("statistics-mongodb")]:::db
     notification_mongodb[("notification-mongodb")]:::db
   end
-  subgraph layer7 ["external"]
+  subgraph layer8 ["external"]
     direction LR
     api_exchangeratesapi_io[/"api.exchangeratesapi.io"/]:::external
     smtp_gmail_com[/"smtp.gmail.com"/]:::external
@@ -146,20 +150,12 @@ flowchart TB
   account_service -.-> registry
   notification_service -.-> registry
   turbine_stream_service -.-> registry
-  monitoring -.-> registry
   auth_service -.-> registry
   gateway -.-> registry
-  turbine_stream_service -.-> auth_service
-  registry -.-> auth_service
-  monitoring -.-> auth_service
   statistics_service -. async .-> rabbitmq
   account_service -. async .-> rabbitmq
   notification_service -. async .-> rabbitmq
   turbine_stream_service -. async .-> rabbitmq
-  registry -. async .-> rabbitmq
-  monitoring -. async .-> rabbitmq
-  auth_service -. async .-> rabbitmq
-  gateway -. async .-> rabbitmq
   account_service -. db .-> account_mongodb
   turbine_stream_service -.-> config
   registry -.-> config

@@ -5,10 +5,12 @@
 - feign = 1
 - http-server = 3
 - url = 4
+- url-metadata = 2
 - compose-service = 11
 - compose-dependency = 26
 - service-root = 7
-- TOTAL = 52 | files with syntax errors = 0
+- module-deps = 7
+- TOTAL = 61 | files with syntax errors = 0
 
 ## graph
 - after merge: 10 nodes / 28 edges | after normalize: 10 nodes / 28 edges | unresolved code edges = 0
@@ -27,34 +29,34 @@
 - zuul  [service, L1]
 
 ## edges (type, confidence, provenance ref)
-- admin-dashboard -> config-server  (sync-http, documented)  code: docker-compose.yml
-- admin-dashboard -> eureka-server  (sync-http, documented)  code: docker-compose.yml
-- admin-dashboard -> hystrix-dashboard  (sync-http, documented)  code: docker-compose.yml
-- admin-dashboard -> rabbitmq  (async, documented)  code: docker-compose.yml
-- admin-dashboard -> service-a  (sync-http, documented)  code: docker-compose.yml
-- admin-dashboard -> service-b  (sync-http, documented)  code: docker-compose.yml
-- admin-dashboard -> zuul  (sync-http, documented)  code: docker-compose.yml
-- config-server -> eureka-server  (sync-http, documented)  code: docker-compose.yml
-- config-server -> rabbitmq  (async, documented)  code: docker-compose.yml
-- hystrix-dashboard -> eureka-server  (sync-http, documented)  code: docker-compose.yml
-- service-a -> config-server  (sync-http, documented)  code: docker-compose.yml
-- service-a -> eureka-server  (sync-http, documented)  code: docker-compose.yml
+- admin-dashboard -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- admin-dashboard -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- admin-dashboard -> hystrix-dashboard  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- admin-dashboard -> rabbitmq  (async, inferred)  code: docker-compose.yml#depends_on
+- admin-dashboard -> service-a  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- admin-dashboard -> service-b  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- admin-dashboard -> zuul  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- config-server -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- config-server -> rabbitmq  (async, inferred)  code: docker-compose.yml#depends_on
+- hystrix-dashboard -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- service-a -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- service-a -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
 - service-a -> github.com  (external, documented)  code: service-a/src/main/java/net/devh/A1ServiceApplication.java:44
-- service-a -> hystrix-dashboard  (sync-http, documented)  code: docker-compose.yml
-- service-a -> rabbitmq  (async, documented)  code: docker-compose.yml
+- service-a -> hystrix-dashboard  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- service-a -> rabbitmq  (async, inferred)  code: docker-compose.yml#depends_on
 - service-a -> service-b  (sync-http, documented)  code: service-a/src/main/java/net/devh/feign/ServiceBClient.java:12
-- service-a -> zipkin  (sync-http, documented)  code: docker-compose.yml
-- service-b -> config-server  (sync-http, documented)  code: docker-compose.yml
-- service-b -> eureka-server  (sync-http, documented)  code: docker-compose.yml
+- service-a -> zipkin  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- service-b -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- service-b -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
 - service-b -> github.com  (external, documented)  code: service-b/src/main/java/net/devh/B1ServiceApplication.java:41
-- service-b -> hystrix-dashboard  (sync-http, documented)  code: docker-compose.yml
-- service-b -> rabbitmq  (async, documented)  code: docker-compose.yml
-- service-b -> zipkin  (sync-http, documented)  code: docker-compose.yml
-- zuul -> config-server  (sync-http, documented)  code: docker-compose.yml
-- zuul -> eureka-server  (sync-http, documented)  code: docker-compose.yml
-- zuul -> rabbitmq  (async, documented)  code: docker-compose.yml
-- zuul -> service-a  (sync-http, documented)  code: docker-compose.yml
-- zuul -> zipkin  (sync-http, documented)  code: docker-compose.yml
+- service-b -> hystrix-dashboard  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- service-b -> rabbitmq  (async, inferred)  code: docker-compose.yml#depends_on
+- service-b -> zipkin  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- zuul -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- zuul -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- zuul -> rabbitmq  (async, inferred)  code: docker-compose.yml#depends_on
+- zuul -> service-a  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- zuul -> zipkin  (sync-http, inferred)  code: docker-compose.yml#depends_on
 
 ## unresolved (source hint / raw target / file:line), first 40
 
@@ -107,31 +109,31 @@ flowchart TB
   service_a -.-> service_b
   service_a -. ext .-> github_com
   service_b -. ext .-> github_com
-  config_server -.-> eureka_server
-  config_server -. async .-> rabbitmq
-  service_b -.-> eureka_server
-  service_b -.-> config_server
-  service_b -.-> hystrix_dashboard
-  service_b -. async .-> rabbitmq
-  service_b -.-> zipkin
-  service_a -.-> eureka_server
-  service_a -.-> config_server
-  service_a -.-> hystrix_dashboard
-  service_a -. async .-> rabbitmq
-  service_a -.-> zipkin
-  admin_dashboard -.-> eureka_server
-  admin_dashboard -. async .-> rabbitmq
-  admin_dashboard -.-> config_server
-  admin_dashboard -.-> service_a
-  admin_dashboard -.-> service_b
-  admin_dashboard -.-> zuul
-  admin_dashboard -.-> hystrix_dashboard
-  zuul -.-> eureka_server
-  zuul -.-> config_server
-  zuul -.-> service_a
-  zuul -. async .-> rabbitmq
-  zuul -.-> zipkin
-  hystrix_dashboard -.-> eureka_server
+  config_server -. declared? .-> eureka_server
+  config_server -. async? .-> rabbitmq
+  service_b -. declared? .-> eureka_server
+  service_b -. declared? .-> config_server
+  service_b -. declared? .-> hystrix_dashboard
+  service_b -. async? .-> rabbitmq
+  service_b -. declared? .-> zipkin
+  service_a -. declared? .-> eureka_server
+  service_a -. declared? .-> config_server
+  service_a -. declared? .-> hystrix_dashboard
+  service_a -. async? .-> rabbitmq
+  service_a -. declared? .-> zipkin
+  admin_dashboard -. declared? .-> eureka_server
+  admin_dashboard -. async? .-> rabbitmq
+  admin_dashboard -. declared? .-> config_server
+  admin_dashboard -. declared? .-> service_a
+  admin_dashboard -. declared? .-> service_b
+  admin_dashboard -. declared? .-> zuul
+  admin_dashboard -. declared? .-> hystrix_dashboard
+  zuul -. declared? .-> eureka_server
+  zuul -. declared? .-> config_server
+  zuul -. declared? .-> service_a
+  zuul -. async? .-> rabbitmq
+  zuul -. declared? .-> zipkin
+  hystrix_dashboard -. declared? .-> eureka_server
 classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;
 classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 

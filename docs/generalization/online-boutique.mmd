@@ -31,6 +31,7 @@ flowchart TB
     redis_cart[("redis-cart")]:::db
   end
   recommendationservice -.-> productcatalogservice
+  cartservice -. db .-> redis_cart
   checkoutservice -. declared? .-> productcatalogservice
   checkoutservice -. declared? .-> shippingservice
   checkoutservice -. declared? .-> paymentservice
@@ -45,6 +46,5 @@ flowchart TB
   frontend -. declared? .-> checkoutservice
   frontend -. declared? .-> adservice
   frontend -. declared? .-> shoppingassistantservice
-  cartservice -. db? .-> redis_cart
   loadgenerator -. declared? .-> frontend
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;

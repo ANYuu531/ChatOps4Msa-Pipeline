@@ -1,0 +1,145 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    otel_ebpf_profiler["otel-ebpf-profiler"]
+    frontend_proxy["frontend-proxy"]
+    frontendtests["frontendtests"]
+    accounting["accounting"]
+    fraud_detection["fraud-detection"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    load_generator["load-generator"]
+    flagd_ui["flagd-ui"]
+    telemetry_docs["telemetry-docs"]
+    grafana["grafana"]
+    chatbot["chatbot"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    agent["agent"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    mcp["mcp"]
+    vcr["vcr"]
+  end
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    frontend["frontend"]
+  end
+  subgraph layer5 ["services · depth 5"]
+    direction LR
+    ad["ad"]
+    checkout["checkout"]
+    image_provider["image-provider"]
+    quote["quote"]
+    recommendation["recommendation"]
+  end
+  subgraph layer6 ["services · depth 6"]
+    direction LR
+    cart["cart"]
+    currency["currency"]
+    email["email"]
+    payment["payment"]
+    product_catalog["product-catalog"]
+    shipping["shipping"]
+  end
+  subgraph layer7 ["services · depth 7"]
+    direction LR
+    flagd["flagd"]
+    valkey_cart["valkey-cart"]
+    otel_collector["otel-collector"]
+  end
+  subgraph layer8 ["services · depth 8"]
+    direction LR
+    jaeger["jaeger"]
+    opensearch["opensearch"]
+    opamp_server["opamp-server"]
+  end
+  subgraph layer9 ["data stores"]
+    direction LR
+    astronomy_db[("astronomy-db")]:::db
+    kafka{{"kafka"}}:::queue
+  end
+  subgraph layer10 ["no dependencies found"]
+    direction LR
+    firepit["firepit"]
+    prometheus["prometheus"]
+  end
+  agent -.-> vcr
+  otel_ebpf_profiler -.-> otel_collector
+  ad -.-> otel_collector
+  ad -.-> flagd
+  cart -.-> valkey_cart
+  cart -.-> otel_collector
+  cart -.-> flagd
+  checkout -.-> cart
+  checkout -.-> currency
+  checkout -.-> email
+  checkout -.-> payment
+  checkout -.-> product_catalog
+  checkout -.-> shipping
+  checkout -.-> otel_collector
+  checkout -.-> flagd
+  currency -.-> otel_collector
+  email -.-> otel_collector
+  frontend -.-> ad
+  frontend -.-> cart
+  frontend -.-> checkout
+  frontend -.-> currency
+  frontend -.-> product_catalog
+  frontend -.-> quote
+  frontend -.-> recommendation
+  frontend -.-> shipping
+  frontend -.-> otel_collector
+  frontend -.-> image_provider
+  frontend -.-> flagd
+  frontend_proxy -.-> frontend
+  frontend_proxy -.-> load_generator
+  frontend_proxy -.-> flagd_ui
+  frontend_proxy -.-> telemetry_docs
+  image_provider -.-> otel_collector
+  load_generator -.-> frontend
+  load_generator -.-> flagd
+  payment -.-> otel_collector
+  payment -.-> flagd
+  product_catalog -.-> otel_collector
+  product_catalog -.-> flagd
+  product_catalog -. db .-> astronomy_db
+  quote -.-> otel_collector
+  recommendation -.-> product_catalog
+  recommendation -.-> otel_collector
+  recommendation -.-> flagd
+  shipping -.-> otel_collector
+  shipping -.-> flagd
+  flagd_ui -.-> otel_collector
+  flagd_ui -.-> flagd
+  frontendtests -.-> frontend
+  frontend_proxy -.-> jaeger
+  frontend_proxy -.-> grafana
+  frontend_proxy -.-> opamp_server
+  otel_collector -.-> jaeger
+  otel_collector -.-> opensearch
+  otel_collector -.-> opamp_server
+  cart -.-> opamp_server
+  product_catalog -.-> opamp_server
+  agent -.-> otel_collector
+  agent -.-> product_catalog
+  agent -.-> mcp
+  agent -.-> flagd
+  mcp -.-> frontend
+  chatbot -.-> agent
+  chatbot -.-> opamp_server
+  frontend_proxy -.-> chatbot
+  load_generator -.-> agent
+  accounting -.-> otel_collector
+  accounting -. async .-> kafka
+  fraud_detection -.-> otel_collector
+  fraud_detection -. async .-> kafka
+  checkout -. async .-> kafka
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;

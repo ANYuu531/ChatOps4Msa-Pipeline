@@ -4,19 +4,26 @@
 - javascript (LLM, from 11 .js/.jsx/.ts/.tsx files)   <-- skipped (LLM tier)
 
 ## ledger sections
-- config = 42
+- config = 46
 - http-server = 39
 - jpa = 12
+- name-constant = 20
 - url = 8
+- name-ref = 5
+- http-client = 4
+- import = 116
 - persistence = 2
+- k8s-service = 41
 - k8s-workload = 40
 - workload-env = 87
-- env-address = 37
+- env-address = 33
+- k8s-namespace = 3
 - service-root = 10
-- TOTAL = 277 | files with syntax errors = 0
+- module-deps = 4
+- TOTAL = 470 | files with syntax errors = 0
 
 ## graph
-- after merge: 10 nodes / 12 edges | after normalize: 10 nodes / 12 edges | unresolved code edges = 6
+- after merge: 10 nodes / 12 edges | after normalize: 10 nodes / 12 edges | unresolved code edges = 8
 - persistence services: [balancereader, ledgerwriter, transactionhistory, contacts, userservice]
 
 ## nodes (kind, layer)
@@ -31,7 +38,7 @@
 - transactionhistory  [service, L2]
 - userservice  [service, L2]
 
-## edges (type, confidence, provenance)
+## edges (type, confidence, provenance ref)
 - balancereader -> ledger-db  (db, documented)  code: kubernetes-manifests/balance-reader.yaml
 - contacts -> accounts-db  (db, documented)  code: kubernetes-manifests/contacts.yaml
 - frontend -> balancereader  (sync-http, documented)  code: src/frontend/frontend.py:667
@@ -46,12 +53,20 @@
 - userservice -> accounts-db  (db, documented)  code: kubernetes-manifests/userservice.yaml
 
 ## unresolved (source hint / raw target / file:line), first 40
+- frontend  =>  null   @ src/frontend/frontend.py:364
+- frontend  =>  null   @ src/frontend/frontend.py:541
 - frontend  =>  http://{}/transactions   @ src/frontend/frontend.py:662
 - frontend  =>  http://{}/users   @ src/frontend/frontend.py:664
 - frontend  =>  http://{}/balances   @ src/frontend/frontend.py:666
 - frontend  =>  http://{}/transactions   @ src/frontend/frontend.py:668
 - frontend  =>  http://{}/login   @ src/frontend/frontend.py:670
 - frontend  =>  http://   @ src/frontend/frontend.py:685
+
+## alias questions (name [origin] seen in | candidates)
+- none
+
+## alias answers applied
+- none
 
 ## mermaid
 ```mermaid

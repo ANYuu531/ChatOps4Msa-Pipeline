@@ -1,0 +1,3 @@
+name	repo	commit	commit_date	probe_root	public_check
+yas	nashtech-garage/yas	179e813568c345bad3fce985088b5535e57481aa	2026-06-12T08:44:04Z	.	gh api repos/nashtech-garage/yas → private=false, archived=false, default_branch=main, language=Java (2026-10-26)
+run-aspnetcore-microservices	aspnetrun/run-aspnetcore-microservices	e3549abf009c71e8c2550f292f3a8edf110550a1	2026-03-09T14:56:46Z	.	gh api repos/aspnetrun/run-aspnetcore-microservices → private=false, archived=false, default_branch=master, language=C# (2026-10-26)

@@ -40,6 +40,9 @@ public class ExternalHostDetector {
         Map<String, ExternalHost> found = new LinkedHashMap<>();
 
         for (EdgeLedger.Edge edge : ledger.getEdges()) {
+            // A URL nothing calls (an unreferenced constant, an XML namespace, OpenAPI
+            // metadata) is no egress to declare; the row itself says so.
+            if ("true".equals(edge.fields.get("unreferenced"))) continue;
             for (String value : edge.fields.values()) {
                 Matcher matcher = URL.matcher(value);
                 while (matcher.find()) {
@@ -90,6 +93,11 @@ public class ExternalHostDetector {
         // In-cluster DNS suffixes.
         if (host.endsWith(".svc.cluster.local") || host.endsWith(".cluster.local")
                 || host.endsWith(".svc") || host.endsWith(".local")) {
+            return false;
+        }
+        // Documentation / testing TLDs (RFC 2606, 6761): a placeholder, not an egress.
+        if (host.endsWith(".test") || host.endsWith(".example") || host.endsWith(".invalid")
+                || host.endsWith(".localhost") || host.matches("(.*\\.)?example\\.(com|net|org)")) {
             return false;
         }
         return true;

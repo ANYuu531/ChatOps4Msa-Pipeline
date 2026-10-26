@@ -1,0 +1,22 @@
+# aspnetrun/run-aspnetcore-microservices @ e3549abf009c71e8c2550f292f3a8edf110550a1（2026-03-09）。.NET 8 全 C#；唯一的部署描述檔是 src/docker-compose.yml ＋ src/docker-compose.override.yml（沒有 k8s）。
+# 節點名＝compose 服務名：應用 catalog.api、basket.api、discount.grpc、ordering.api、yarpapigateway、shopping.web；基礎設施 catalogdb、basketdb（postgres）、distributedcache（redis）、orderdb（mssql）、messagebroker（rabbitmq）。
+# 位址全部由 docker-compose.override.yml 的 environment 以 .NET 設定鍵（ConnectionStrings__Database、GrpcSettings__DiscountUrl、MessageBroker__Host、ApiSettings__GatewayAddress）覆蓋；appsettings.json 裡一律是 localhost。
+# 陷阱：messagebroker 這個 compose 服務宣告 `hostname: ecommerce-mq`（src/docker-compose.override.yml:45），兩個服務的 MessageBroker__Host 寫的是 amqp://ecommerce-mq:5672（:77、:111）——主機名是 compose 的 hostname 別名，不是服務名；參考邊集的節點名照慣例用服務名 messagebroker。
+# discount.grpc 的資料庫是 SQLite 檔案（src/Services/Discount/Discount.Grpc/appsettings.json:3 `Data Source=discountdb`、src/Services/Discount/Discount.Grpc/Program.cs:10 UseSqlite）＝程序內，不是網路相依，不列邊。
+# shopping.web（Razor Pages 前端）用 Refit 經 API gateway 呼叫三個後端；它是應用程式碼發出的 HTTP 呼叫，列 business（同 ecommerce 的 proxy-client）；gateway 的路由表列 control（同 piggymetrics/mall-swarm）。
+# 出處＝發出呼叫那一行；位址的設定鍵與 compose 覆蓋行寫在括號裡。沒有遙測管線，無 variant。
+#
+# ---- business：服務→服務 ----
+basket.api	discount.grpc	business	src/Services/Basket/Basket.API/Basket/StoreBasket/StoreBasketHandler.cs:35 discountProto.GetDiscountAsync(...)（gRPC client 於 src/Services/Basket/Basket.API/Program.cs:39 options.Address = GrpcSettings:DiscountUrl；src/docker-compose.override.yml:76 GrpcSettings__DiscountUrl=https://discount.grpc:8081）
+shopping.web	yarpapigateway	business	src/WebApps/Shopping.Web/Program.cs:9 c.BaseAddress = ApiSettings:GatewayAddress（Refit ICatalogService/IBasketService/IOrderingService 三個 client 同址 :9/:14/:19；src/docker-compose.override.yml:146 ApiSettings__GatewayAddress=http://yarpapigateway:8080）
+# ---- data：服務→資料庫 / 快取 / 佇列 ----
+catalog.api	catalogdb	data	src/Services/Catalog/Catalog.API/Program.cs:20 opts.Connection(GetConnectionString("Database"))（Marten/PostgreSQL；src/docker-compose.override.yml:59 ConnectionStrings__Database=Server=catalogdb;Port=5432;…）
+basket.api	basketdb	data	src/Services/Basket/Basket.API/Program.cs:23 opts.Connection(GetConnectionString("Database"))（Marten/PostgreSQL；src/docker-compose.override.yml:74 Server=basketdb）
+basket.api	distributedcache	data	src/Services/Basket/Basket.API/Data/CachedBasketRepository.cs:12 cache.GetStringAsync（IDistributedCache；src/Services/Basket/Basket.API/Program.cs:32 AddStackExchangeRedisCache Configuration=ConnectionStrings:Redis；src/docker-compose.override.yml:75 ConnectionStrings__Redis=distributedcache:6379）
+basket.api	messagebroker	data	src/Services/Basket/Basket.API/Basket/CheckoutBasket/CheckoutBasketHandler.cs:41 publishEndpoint.Publish(eventMessage)（MassTransit；src/BuildingBlocks/BuildingBlocks.Messaging/MassTransit/Extentions.cs:21 configurator.Host(MessageBroker:Host)；src/docker-compose.override.yml:77 MessageBroker__Host=amqp://ecommerce-mq:5672，ecommerce-mq＝messagebroker 的 hostname :45）
+ordering.api	orderdb	data	src/Services/Ordering/Ordering.Infrastructure/DependencyInjection.cs:21 options.UseSqlServer(connectionString)（EF Core；src/docker-compose.override.yml:110 ConnectionStrings__Database=Server=orderdb;Database=OrderDb;…）
+ordering.api	messagebroker	data	src/Services/Ordering/Ordering.Application/Orders/EventHandlers/Integration/BasketCheckoutEventHandler.cs:10 Consume(ConsumeContext<BasketCheckoutEvent>)（MassTransit consumer，src/Services/Ordering/Ordering.Application/DependencyInjection.cs:22 AddMessageBroker(…, Assembly)；src/docker-compose.override.yml:111 MessageBroker__Host=amqp://ecommerce-mq:5672）
+# ---- control：YARP gateway 路由 ----
+yarpapigateway	catalog.api	control	src/ApiGateways/YarpApiGateway/appsettings.json:38 Clusters.catalog-cluster Address http://catalog.api:8080（route :14 /catalog-service/{**catch-all}）
+yarpapigateway	basket.api	control	src/ApiGateways/YarpApiGateway/appsettings.json:45 Clusters.basket-cluster Address http://basket.api:8080（route :21 /basket-service/）
+yarpapigateway	ordering.api	control	src/ApiGateways/YarpApiGateway/appsettings.json:52 Clusters.ordering-cluster Address http://ordering.api:8080（route :29 /ordering-service/）

@@ -168,18 +168,34 @@ public class DependencyGraphTest {
     }
 
     @Test
-    void asyncBrokerBecomesQueueNode() {
+    void asyncCodeDrawsServiceToTheBrokerItIsConfiguredWith() {
+        // 2026-10-26 (rule 30): an exchange / topic / queue name is a destination, not a
+        // host. The edge goes to the broker the service is configured with; the name
+        // itself is never a node.
         DependencyGraph g = runtimeGraph();
         String code = """
                 {"repo":"r","failed":false,"edges":[
+                  {"section":"config","fields":{"key":"spring.rabbitmq.host","value":"rabbitmq"},"file":"spring-petclinic-vets-service/src/main/resources/application.yml","line":4,"confidence":"High"},
                   {"section":"rabbit-produce","fields":{"exchange":"vets.updates"},"file":"spring-petclinic-vets-service/src/main/java/org/x/Pub.java","line":3,"confidence":"High"}
                 ]}
                 """;
         CodeGraphMerger.merge(g, code, "r");
-        assertEquals(DependencyGraph.KIND_QUEUE, kindOf(g, "vets.updates"));
-        DependencyGraph.Edge e = edge(g, "vets-service", "vets.updates");
+        assertNull(node(g, "vets.updates"));
+        assertEquals(DependencyGraph.KIND_QUEUE, kindOf(g, "rabbitmq"));
+        DependencyGraph.Edge e = edge(g, "vets-service", "rabbitmq");
         assertNotNull(e);
         assertEquals("async", e.type);
+
+        // With no broker anywhere in the deployment the row is residue, not a phantom node.
+        DependencyGraph bare = runtimeGraph();
+        String noBroker = """
+                {"repo":"r","failed":false,"edges":[
+                  {"section":"rabbit-produce","fields":{"exchange":"vets.updates"},"file":"spring-petclinic-vets-service/src/main/java/org/x/Pub.java","line":3,"confidence":"High"}
+                ]}
+                """;
+        List<CodeGraphMerger.Unresolved> residue = CodeGraphMerger.merge(bare, noBroker, "r");
+        assertNull(node(bare, "vets.updates"));
+        assertTrue(residue.stream().anyMatch(u -> "rabbit-produce".equals(u.section) && "vets.updates".equals(u.rawTarget)));
     }
 
     @Test

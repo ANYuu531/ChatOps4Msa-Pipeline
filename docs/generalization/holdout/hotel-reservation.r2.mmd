@@ -1,0 +1,59 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    frontend["frontend"]
+    profile["profile"]
+    search["search"]
+    geo["geo"]
+    rate["rate"]
+    review["review"]
+    attractions["attractions"]
+    recommendation["recommendation"]
+    user["user"]
+    reservation["reservation"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    consul["consul"]
+    memcached_profile["memcached-profile"]
+    memcached_rate["memcached-rate"]
+    memcached_review["memcached-review"]
+    memcached_reserve["memcached-reserve"]
+  end
+  subgraph layer2 ["data stores"]
+    direction LR
+    mongodb_profile[("mongodb-profile")]:::db
+    mongodb_geo[("mongodb-geo")]:::db
+    mongodb_rate[("mongodb-rate")]:::db
+    mongodb_review[("mongodb-review")]:::db
+    mongodb_attractions[("mongodb-attractions")]:::db
+    mongodb_recommendation[("mongodb-recommendation")]:::db
+    mongodb_user[("mongodb-user")]:::db
+    mongodb_reservation[("mongodb-reservation")]:::db
+  end
+  frontend -. declared? .-> consul
+  profile -. db? .-> mongodb_profile
+  profile -. declared? .-> memcached_profile
+  profile -. declared? .-> consul
+  search -. declared? .-> consul
+  geo -. db? .-> mongodb_geo
+  geo -. declared? .-> consul
+  rate -. db? .-> mongodb_rate
+  rate -. declared? .-> memcached_rate
+  rate -. declared? .-> consul
+  review -. db? .-> mongodb_review
+  review -. declared? .-> memcached_review
+  review -. declared? .-> consul
+  attractions -. db? .-> mongodb_attractions
+  attractions -. declared? .-> consul
+  recommendation -. db? .-> mongodb_recommendation
+  recommendation -. declared? .-> consul
+  user -. db? .-> mongodb_user
+  user -. declared? .-> consul
+  reservation -. db? .-> mongodb_reservation
+  reservation -. declared? .-> memcached_reserve
+  reservation -. declared? .-> consul
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;

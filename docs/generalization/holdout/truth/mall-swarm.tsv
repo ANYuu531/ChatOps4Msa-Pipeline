@@ -1,0 +1,50 @@
+# macrozheng/mall-swarm @ 04c442fe318356bae4445a109dde7af297ce1e84（2026-05-21）
+# 節點名：應用服務＝document/k8s/*-deployment.yaml 與 document/docker/docker-compose-app.yml 的名字（mall-admin、mall-auth、mall-gateway、mall-portal、mall-search、mall-monitor）；
+# 基礎設施＝document/docker/docker-compose-env.yml 的服務名（mysql、redis、mongo、rabbitmq、elasticsearch、nacos-registry、logstash）。
+# prod 設定裡的主機名是 compose-app external_links 的別名：db→mysql、es→elasticsearch、rabbit→rabbitmq（docker-compose-app.yml 第 14、27、38 行一類的 `mysql:db`）。
+# mall-demo 是「微服務遠端呼叫測試服務」（README:65），k8s 與 compose-app 都沒部署它 → 它的邊列 variant。
+# minio 沒有任何 manifest（prod 設定給的是 IP 192.168.3.101:9090、dev 是 localhost:9000），節點名暫用 minio。
+# 遙測（每個服務 → logstash）沿既有慣例列 variant。mall-monitor（Spring Boot Admin）對各服務的 actuator 輪詢沒有靜態主機名，依 piggymetrics 的 monitoring 先例不列。
+#
+# ---- business ----
+mall-auth	mall-admin	business	mall-auth/src/main/java/com/macro/mall/auth/service/UmsAdminService.java:16 @FeignClient("mall-admin")（目標由 Nacos 解析）
+mall-auth	mall-portal	business	mall-auth/src/main/java/com/macro/mall/auth/service/UmsMemberService.java:14 @FeignClient("mall-portal")
+# ---- data ----
+mall-admin	mysql	data	mall-admin/src/main/java/com/macro/mall/config/MyBatisConfig.java:13 @MapperScan（MyBatis）；config/admin/mall-admin-prod.yaml:15 jdbc:mysql://db:3306/mall（db＝compose-app external_links 的 mysql 別名，document/docker/docker-compose-app.yml:14）
+mall-admin	redis	data	mall-admin/src/main/java/com/macro/mall/config/RedisConfig.java:17（RedisTemplate）；config/admin/mall-admin-prod.yaml:20 spring.data.redis.host: redis
+mall-admin	minio	data	mall-admin/src/main/java/com/macro/mall/controller/MinioController.java:47 MinioClient.builder().endpoint(ENDPOINT)（:32 ${minio.endpoint}；config/admin/mall-admin-prod.yaml:25 http://192.168.3.101:9090）
+mall-portal	mysql	data	mall-portal/src/main/java/com/macro/mall/portal/config/MyBatisConfig.java:13 @MapperScan；config/portal/mall-portal-prod.yaml:3 jdbc:mysql://db:3306/mall
+mall-portal	redis	data	mall-portal/src/main/java/com/macro/mall/portal/config/RedisConfig.java（RedisTemplate；驗證碼／會員快取）；config/portal/mall-portal-prod.yaml:12 spring.data.redis.host: redis
+mall-portal	mongo	data	mall-portal/src/main/java/com/macro/mall/portal/repository/MemberReadHistoryRepository.java:14 MongoRepository；config/portal/mall-portal-prod.yaml:8 spring.data.mongodb.host: mongo
+mall-portal	rabbitmq	data	mall-portal/src/main/java/com/macro/mall/portal/component/CancelOrderSender.java:25 amqpTemplate.convertAndSend ＋ CancelOrderReceiver.java:16 @RabbitListener；config/portal/mall-portal-prod.yaml:17 spring.rabbitmq.host: rabbit（rabbit＝rabbitmq 的別名，docker-compose-app.yml:44）
+mall-search	mysql	data	mall-search/src/main/java/com/macro/mall/search/config/MyBatisConfig.java:11 @MapperScan；config/search/mall-search-prod.yaml:3 jdbc:mysql://db:3306/mall
+mall-search	elasticsearch	data	mall-search/src/main/java/com/macro/mall/search/repository/EsProductRepository.java:12 ElasticsearchRepository；config/search/mall-search-prod.yaml:7 spring.elasticsearch.uris: es:9200（es＝elasticsearch 的別名）
+mall-gateway	redis	data	mall-gateway/src/main/java/com/macro/mall/config/SaTokenConfig.java:34 RedisTemplate（Sa-Token 的 token 存 Redis）；config/gateway/mall-gateway-prod.yaml:4 spring.data.redis.host: redis
+# ---- external ----
+mall-admin	oss-cn-shenzhen.aliyuncs.com	external	mall-admin/src/main/java/com/macro/mall/config/OssConfig.java:22 new OSSClient(ALIYUN_OSS_ENDPOINT,…)（config/admin/mall-admin-prod.yaml:3 與 mall-admin/src/main/resources/application.yml:61 aliyun.oss.endpoint: oss-cn-shenzhen.aliyuncs.com）
+mall-portal	openapi-sandbox.dl.alipaydev.com	external	mall-portal/src/main/java/com/macro/mall/portal/config/AlipayClientConfig.java:19 new DefaultAlipayClient(config.getGatewayUrl(),…)（config/portal/mall-portal-prod.yaml alipay.gatewayUrl: https://openapi-sandbox.dl.alipaydev.com/gateway.do）
+# ---- control：gateway 路由、Nacos 註冊／設定中心 ----
+mall-gateway	mall-auth	control	mall-gateway/src/main/resources/application.yml:21 uri: lb://mall-auth
+mall-gateway	mall-admin	control	mall-gateway/src/main/resources/application.yml:27 uri: lb://mall-admin
+mall-gateway	mall-portal	control	mall-gateway/src/main/resources/application.yml:33 uri: lb://mall-portal
+mall-gateway	mall-search	control	mall-gateway/src/main/resources/application.yml:39 uri: lb://mall-search
+mall-admin	nacos-registry	control	mall-admin/src/main/resources/application-prod.yml:5 spring.cloud.nacos.discovery.server-addr: nacos-registry:8848（:7 config.server-addr 同）
+mall-auth	nacos-registry	control	mall-auth/src/main/resources/application-prod.yml:5 spring.cloud.nacos.discovery.server-addr: nacos-registry:8848
+mall-gateway	nacos-registry	control	mall-gateway/src/main/resources/application-prod.yml:5 spring.cloud.nacos.discovery.server-addr: nacos-registry:8848
+mall-portal	nacos-registry	control	mall-portal/src/main/resources/application-prod.yml:5 spring.cloud.nacos.discovery.server-addr: nacos-registry:8848
+mall-search	nacos-registry	control	mall-search/src/main/resources/application-prod.yml:5 spring.cloud.nacos.discovery.server-addr: nacos-registry:8848
+mall-monitor	nacos-registry	control	mall-monitor/src/main/resources/application-prod.yml:5 spring.cloud.nacos.discovery.server-addr: http://nacos-registry:8848
+# ---- variant：未部署的 mall-demo、遙測 ----
+mall-gateway	mall-demo	variant	mall-gateway/src/main/resources/application.yml:45 uri: lb://mall-demo（mall-demo 沒有 manifest）
+mall-demo	mall-admin	variant	mall-demo/src/main/java/com/macro/mall/demo/service/FeignAdminService.java:13 @FeignClient("mall-admin")
+mall-demo	mall-portal	variant	mall-demo/src/main/java/com/macro/mall/demo/service/FeignPortalService.java:12 @FeignClient("mall-portal")
+mall-demo	mall-search	variant	mall-demo/src/main/java/com/macro/mall/demo/service/FeignSearchService.java:11 @FeignClient("mall-search")
+mall-demo	mysql	variant	config/demo/mall-demo-prod.yaml:3 jdbc:mysql://db:3306/mall
+mall-demo	nacos-registry	variant	mall-demo/src/main/resources/application-prod.yml:5
+mall-admin	logstash	variant	config/admin/mall-admin-prod.yaml logstash.host: logstash（遙測）
+mall-portal	logstash	variant	config/portal/mall-portal-prod.yaml logstash.host: logstash（遙測）
+mall-search	logstash	variant	config/search/mall-search-prod.yaml logstash.host: logstash（遙測）
+mall-gateway	logstash	variant	config/gateway/mall-gateway-prod.yaml logstash.host: logstash（遙測）
+mall-demo	logstash	variant	config/demo/mall-demo-prod.yaml logstash.host: logstash（遙測）
+logstash	elasticsearch	variant	document/docker/docker-compose-env.yml:64 depends_on elasticsearch ＋ :66 links elasticsearch:es（ELK 遙測；2026-10-23 計分後補：標註時只列了服務→logstash，漏了 ELK 內部）
+kibana	elasticsearch	variant	document/docker/docker-compose-env.yml:76 links elasticsearch:es、:80 elasticsearch.hosts=http://es:9200（ELK 遙測；2026-10-23 計分後補）

@@ -1,0 +1,88 @@
+# mehdihadeli/food-delivery-microservices @ a5750a994acfb64c8d939a3b622bbd0504ce1796（2026-10-14）
+# 語言／框架：全部 C#（.NET 10，Directory.Build.props:4 net10.0），ASP.NET Core minimal API；訊息用 Wolverine + RabbitMQ（不是 MassTransit）；寫入端 EF Core/Npgsql、讀取端 MongoDB、快取 Redis；
+# 認證是 Duende IdentityServer（identity 服務，IdentityServerExtensions.cs:15）；gateway 與三個 BFF 都是 YARP。本機開發用 .NET Aspire AppHost（src/Aspire/FoodDelivery.AppHost/AppHost.cs）編排，
+# 它只是開發期的編排器、不是部署產物，不當節點；但它的 WithReference 鏈（AppHost.cs:121–267）是服務→基礎設施相依的第二份佐證。
+# 共用的 building blocks（Squirrel.*，含真正開連線的 AddPostgresDbContext／AddMongoDbContext／AddWolverineEventBus／AddCustomCaching／IEmailSender 實作）是 git submodule
+# src/BuildingBlocks → https://github.com/mehdihadeli/Squirrel.git（.gitmodules），tarball 裡是空目錄；所以資料邊的出處寫「服務端呼叫 building block 的那一行」。
+#
+# 節點名＝compose 服務名。主要部署描述檔依 readme.md:398–413：deployments/docker-compose/docker-compose.services.yaml（gateway:7、catalogs:40、identity:72、customers:104）
+# ＋ docker-compose.infrastructure.yaml（rabbitmq:12、postgres:29、mongo:46、eventstore:65、aspire-dashboard:99、jaeger:116、zipkin:137、otel-collector:153、prometheus:190、
+# node-exporter:214、grafana:237、tempo:264、loki:285、elastic-search:302、kibana:334、redis:350）。另一份 docker-compose.yaml 是同四個服務＋舊版基礎設施（服務名相同，elasticsearch 在那裡叫 elasticsearch）。
+# deployments/k8s/kubernetes/{catalogs,customers,identity,orders}.yaml 是 105 bytes 的空殼（只有註解），infrastructure.yaml 只有 rabbitmq 與 mongo；kustomize 的 base 指向不存在的 deployment.yaml → k8s 不是可用的描述檔。
+# src/Services/ 下 16 個目錄只有 Catalogs、Customers、Identity、Orders 有程式碼（其餘 Billing、Carts、Checkouts、GroceryStores、Pricing、Recommendations、Restaurants、Reviews、Search、Shippings、Stocks 各 2 個 .cs 的空殼，不列）。
+# Orders 有完整程式碼、有 Aspire 資源，但沒有任何 compose 條目 → 它的邊列 variant（節點名用 Aspire 的 orders）。BFF（api-bff、spa-bff、mobile-bff）、Blazor UI（blazor-ui）、healthchecksui 同樣只在 Aspire／YARP 設定裡出現，沒有 compose 條目 → variant。
+# eventstore、elastic-search、kibana、node-exporter 在 compose 裡有，但沒有任何服務程式碼連它們（grep AddEventStore/AddElastic 為空）→ 不是邊。
+#
+# 位址的靜態來源：所有 appsettings*.json 的主機都是 localhost（Aspire 執行期注入 ConnectionStrings:<name>）；compose 情境只有 .env.{catalogs,cutomers,identity}.sample:1 把 Postgres 改成 Server=postgres，
+# Mongo／RabbitMQ／Redis 在 compose 裡沒有任何檔案給出容器名（服務要靠 Aspire 或手動環境變數才連得到）。因此這個系統的「主機名」幾乎都不在靜態字串裡，節點名靠 compose 服務名＋程式碼的連線型態對上。
+# 出處＝發出呼叫（或向 building block 註冊連線）的那一行；位址來源寫在括號裡。
+# JWT：每個服務的 Authority 是 https://localhost:3001/auth（gateway 的 HTTPS 埠 3001，/auth 路由由 YARP 轉到 identity，gateway appsettings.json:87–100、:143–150），
+# 也就是 OIDC metadata/JWKS 的網路跳點是 gateway、簽發者是 identity；本檔記成 → identity（control），下面 customers → identity 因為同一對節點已經有 business 邊，JWT 這層併進那一條的說明。
+# 非同步流（Wolverine，consumer 也寫 consumer → rabbitmq，不寫 service → service）：identity 發 UserRegisteredV1 → customers 收（Users/WolverineExtensions.cs:11）；
+# catalogs 發 ProductCreatedV1／ProductStockReplenishedV1 → customers 收（Products/WolverineExtensions.cs:11–12）；customers 發 CustomerCreatedV1 → orders 收（Orders Customers/WolverineExtensions.cs:12）。
+# 遙測（→ otel-collector、→ aspire-dashboard、collector → 後端、grafana → 資料源、prometheus 抓 collector、kibana → elastic-search）沿既有慣例列 variant。
+#
+# ---- business：服務→服務（同步 REST） ----
+customers	identity	business	src/Services/Customers/FoodDelivery.Services.Customers/Shared/Clients/Rest/Identity/Rest/IIdentityRestClientBase.cs:31 httpClient.GetFromJsonAsync（:61 PostAsJsonAsync；BaseAddress＝IdentityRestClientOptions，appsettings.json:41 http://localhost:7000；註冊 HttpClientExtensions.cs:36；健康檢查 InfrastructureExtensions.cs:88 {BaseAddress}/healthz；另 JWT Authority AuthenticationExtensions.cs:18 → appsettings.json:21 https://localhost:3001/auth）
+customers	catalogs	business	src/Services/Customers/FoodDelivery.Services.Customers/Shared/Clients/Rest/Catalogs/Rest/CatalogsRestClient.cs:64 httpClient.GetFromJsonAsync（:40 分頁查詢；BaseAddress＝CatalogsRestClientOptions，appsettings.json:46 http://localhost:4000；註冊 HttpClientExtensions.cs:44；健康檢查 InfrastructureExtensions.cs:81 {BaseAddress}/healthz）
+# ---- data：服務→資料庫 / 佇列 / 快取 ----
+catalogs	postgres	data	src/Services/Catalogs/FoodDelivery.Services.Catalogs/Shared/Extensions/HostApplicationBuilderExtensions/StorageExtensions.cs:38 builder.AddPostgresDbContext<CatalogDbContext>（connectionStringName pg-catalogsdb；appsettings.development.json:6 Server=localhost；deployments/docker-compose/.env.catalogs.sample:1 Server=postgres；Wolverine durability 也用同一庫 InfrastructureExtensions.cs:61）
+catalogs	mongo	data	src/Services/Catalogs/FoodDelivery.Services.Catalogs/Shared/Extensions/HostApplicationBuilderExtensions/StorageExtensions.cs:61 builder.AddMongoDbContext<CatalogReadDbContext>（mongo-catalogsdb；appsettings.development.json:3 mongodb://admin:admin@localhost:27017/catalogs；compose 無容器名設定）
+catalogs	rabbitmq	data	src/Services/Catalogs/FoodDelivery.Services.Catalogs/Shared/Extensions/HostApplicationBuilderExtensions/InfrastructureExtensions.cs:51 builder.AddWolverineEventBus（發 ProductCreatedV1 等，Products/WolverineExtensions.cs:9；appsettings.development.json:13 amqp://guest:guest@localhost:5672）
+catalogs	redis	data	src/Services/Catalogs/FoodDelivery.Services.Catalogs/Shared/Extensions/HostApplicationBuilderExtensions/InfrastructureExtensions.cs:71 builder.AddCustomCaching(redisConnectionStringName: AspireResources.Redis)（appsettings.development.json:17 http://localhost:6379）
+customers	postgres	data	src/Services/Customers/FoodDelivery.Services.Customers/Shared/Extensions/HostApplicationBuilderExtensions/StorageExtensions.cs:41 builder.AddPostgresDbContext<CustomersDbContext>（pg-customersdb；appsettings.development.json:6；deployments/docker-compose/.env.cutomers.sample:1 Server=postgres；durability InfrastructureExtensions.cs:65）
+customers	mongo	data	src/Services/Customers/FoodDelivery.Services.Customers/Shared/Extensions/HostApplicationBuilderExtensions/StorageExtensions.cs:64 builder.AddMongoDbContext<CustomersReadDbContext>（mongo-customersdb；appsettings.development.json:3）
+customers	rabbitmq	data	src/Services/Customers/FoodDelivery.Services.Customers/Shared/Extensions/HostApplicationBuilderExtensions/InfrastructureExtensions.cs:52 builder.AddWolverineEventBus（consumer：Users/WolverineExtensions.cs:11 UserRegisteredV1、Products/WolverineExtensions.cs:11–12；publisher：Customers/WolverineExtensions.cs:9；appsettings.development.json:13）
+customers	redis	data	src/Services/Customers/FoodDelivery.Services.Customers/Shared/Extensions/HostApplicationBuilderExtensions/InfrastructureExtensions.cs:95 builder.AddCustomCaching（appsettings.development.json:17）
+identity	postgres	data	src/Services/Identity/FoodDelivery.Services.Identity/Shared/Extensions/HostApplicationBuilderExtensions/IdentityStorageExtensions.cs:29 builder.AddPostgresDbContext<IdentityContext>（pg-identitydb；appsettings.development.json:16；deployments/docker-compose/.env.identity.sample:1 Server=postgres；durability InfrastructureExtensions.cs:58）
+identity	rabbitmq	data	src/Services/Identity/FoodDelivery.Services.Identity/Shared/Extensions/HostApplicationBuilderExtensions/InfrastructureExtensions.cs:48 builder.AddWolverineEventBus（發 UserRegisteredV1，Users/WolverineExtensions.cs:9；appsettings.development.json:20 amqp://guest:guest@localhost:5672）
+identity	redis	data	src/Services/Identity/FoodDelivery.Services.Identity/Shared/Extensions/HostApplicationBuilderExtensions/InfrastructureExtensions.cs:65 builder.AddCustomCaching（appsettings.development.json:24 http://localhost:6379）
+# ---- external：SMTP（ethereal 假信箱，readme.md:417；EmailOptions.Enable=true）。catalogs 也註冊了 AddEmailService（InfrastructureExtensions.cs:73）但沒有任何地方呼叫 IEmailSender → 不列 ----
+customers	smtp.ethereal.email	external	src/Services/Customers/FoodDelivery.Services.Customers/RestockSubscriptions/Features/SendingRestockNotification/v1/SendRestockNotification.cs:46 emailSender.SendAsync（appsettings.json:56 EmailOptions.MimeKitOptions.Host: smtp.ethereal.email:587）
+identity	smtp.ethereal.email	external	src/Services/Identity/FoodDelivery.Services.Identity/Identity/Features/SendingEmailVerificationCode/v1/SendEmailVerificationCode.cs:54 emailSender.SendAsync(emailObject)（appsettings.json:61 MimeKitOptions.Host: smtp.ethereal.email）
+# ---- control：gateway 路由、JWT 簽發者 ----
+gateway	identity	control	src/ApiGateway/FoodDelivery.ApiGateway/appsettings.json:87 Yarp route identity /auth/{**remainder} → cluster identity（:147 Address https://localhost:7001/；Program.cs:14 AddReverseProxy().LoadFromConfig）
+catalogs	identity	control	src/Services/Catalogs/FoodDelivery.Services.Catalogs/Shared/Extensions/HostApplicationBuilderExtensions/AuthenticationExtensions.cs:18 options.Authority = oauthOptions.Authority（appsettings.json:21 https://localhost:3001/auth；網路跳點是 gateway 的 /auth 路由，簽發者是 identity）
+# ---- variant：沒有 compose 條目的 orders／BFF／UI，以及遙測 ----
+orders	postgres	variant	src/Services/Orders/FoodDelivery.Services.Orders/Shared/Extensions/HostApplicationBuilderExtensions/StorageExtensions.cs:38 AddPostgresDbContext<OrdersDbContext>（pg-ordersdb；appsettings.development.json:6；orders 只在 Aspire AppHost.cs:232，沒有 compose 條目）
+orders	mongo	variant	src/Services/Orders/FoodDelivery.Services.Orders/Shared/Extensions/HostApplicationBuilderExtensions/StorageExtensions.cs:61 AddMongoDbContext<OrderReadDbContext>（appsettings.development.json:3）
+orders	rabbitmq	variant	src/Services/Orders/FoodDelivery.Services.Orders/Shared/Extensions/HostApplicationBuilderExtensions/InfrastructureExtensions.cs:43 AddWolverineEventBus（consumer：Customers/WolverineExtensions.cs:12 CustomerCreatedV1；appsettings.development.json:13）
+orders	redis	variant	src/Services/Orders/FoodDelivery.Services.Orders/Shared/Extensions/HostApplicationBuilderExtensions/InfrastructureExtensions.cs:63 AddCustomCaching（appsettings.development.json:17）
+orders	identity	variant	src/Services/Orders/FoodDelivery.Services.Orders/Shared/Extensions/HostApplicationBuilderExtensions/AuthenticationExtensions.cs:10 AddCustomAuthentication → Authority（appsettings.json:21 https://localhost:3001/auth）
+gateway	spa-bff	variant	src/ApiGateway/FoodDelivery.ApiGateway/appsettings.json:36 route spa-bff → cluster :123 https://localhost:5001/（spa-bff 只在 Aspire AppHost.cs:276）
+gateway	api-bff	variant	src/ApiGateway/FoodDelivery.ApiGateway/appsettings.json:53 route api-bff → cluster :131 https://localhost:2001/（AppHost.cs:269）
+gateway	mobile-bff	variant	src/ApiGateway/FoodDelivery.ApiGateway/appsettings.json:70 route mobile-bff → cluster :139 https://localhost:6005/（mobile-bff 連 Aspire 都沒有）
+gateway	healthchecksui	variant	src/ApiGateway/FoodDelivery.ApiGateway/appsettings.json:102 route healthchecksui → cluster :155 http://localhost:4872/（AppHost.cs:358）
+spa-bff	catalogs	variant	src/Bffs/Spa.Bff/FoodDelivery.Spa.Bff/Program.cs:89 AddHttpClient<ICatalogsClient>（Clients:CatalogsClient；appsettings.json:18）＋ YARP route appsettings.json:71 → cluster :139/:143 localhost:1001/1000
+spa-bff	customers	variant	src/Bffs/Spa.Bff/FoodDelivery.Spa.Bff/Program.cs:99 AddHttpClient<ICustomersClient>（appsettings.json:19）＋ YARP route appsettings.json:110 → cluster :164/:168 localhost:8001/8000
+spa-bff	identity	variant	src/Bffs/Spa.Bff/FoodDelivery.Spa.Bff/appsettings.json:95 YARP route identity → cluster :155 https://localhost:7001（Authority appsettings.json:45）
+api-bff	catalogs	variant	src/Bffs/Api.Bff/FoodDelivery.Api.Bff/Program.cs:69 AddHttpClient<ICatalogsClient>（appsettings.json:12）＋ YARP route appsettings.json:52 → cluster :124/:128
+api-bff	customers	variant	src/Bffs/Api.Bff/FoodDelivery.Api.Bff/Program.cs:80 AddHttpClient<ICustomersClient>（appsettings.json:13）＋ YARP route appsettings.json:96 → cluster :146/:150
+api-bff	identity	variant	src/Bffs/Api.Bff/FoodDelivery.Api.Bff/appsettings.json:75 YARP route identity → cluster :137 https://localhost:7001/（Authority :16）
+mobile-bff	catalogs	variant	src/Bffs/Mobile.Bff/FoodDelivery.Mobile.Bff/appsettings.json:59 YARP route catalogs → cluster :119 https://localhost:4001/
+mobile-bff	identity	variant	src/Bffs/Mobile.Bff/FoodDelivery.Mobile.Bff/appsettings.json:79 YARP route identity → cluster :131 https://localhost:7001/
+mobile-bff	customers	variant	src/Bffs/Mobile.Bff/FoodDelivery.Mobile.Bff/appsettings.json:94 YARP route customers → cluster :139 https://localhost:8001/
+blazor-ui	gateway	variant	src/UIs/BlazorWebApp/FoodDelivery.BlazorWebApp/Program.cs:31 client.BaseAddress = new Uri(gatewayWebAppBff)（:29 ApiGatewayAddress；appsettings.json:9 https://localhost:3001；blazor-ui 只在 AppHost.cs:307）
+gateway	otel-collector	variant	src/ApiGateway/FoodDelivery.ApiGateway/appsettings.json:16 OpenTelemetryCollectorOptions.OTLPGrpExporterEndpoint http://localhost:4317（遙測）
+catalogs	otel-collector	variant	src/Services/Catalogs/FoodDelivery.Services.Catalogs.Api/appsettings.json:78 OTLPGrpExporterEndpoint http://localhost:4317（:91 UseOTLPExporter true；遙測）
+customers	otel-collector	variant	src/Services/Customers/FoodDelivery.Services.Customers.Api/appsettings.json:93 OTLPGrpExporterEndpoint（遙測）
+identity	otel-collector	variant	src/Services/Identity/FoodDelivery.Services.Identity.Api/appsettings.json:96 OTLPGrpExporterEndpoint（遙測）
+gateway	aspire-dashboard	variant	src/ApiGateway/FoodDelivery.ApiGateway/appsettings.json:19 AspireDashboardOTLPOptions http://localhost:4319（infrastructure.yaml:107 4319→18889；遙測）
+catalogs	aspire-dashboard	variant	src/Services/Catalogs/FoodDelivery.Services.Catalogs.Api/appsettings.json:81 AspireDashboardOTLPOptions（:92 UseAspireOTLPExporter true；遙測）
+customers	aspire-dashboard	variant	src/Services/Customers/FoodDelivery.Services.Customers.Api/appsettings.json:96 AspireDashboardOTLPOptions（遙測）
+identity	aspire-dashboard	variant	src/Services/Identity/FoodDelivery.Services.Identity.Api/appsettings.json:99 AspireDashboardOTLPOptions（遙測）
+otel-collector	prometheus	variant	deployments/configs/otel-collector-config.yaml:68 prometheusremotewrite endpoint http://prometheus:9090/api/v1/write（遙測）
+otel-collector	loki	variant	deployments/configs/otel-collector-config.yaml:80 otlphttp/loki endpoint http://loki:3100/otlp（遙測）
+otel-collector	jaeger	variant	deployments/configs/otel-collector-config.yaml:91 otlp/jaeger endpoint http://jaeger:4317（遙測）
+otel-collector	tempo	variant	deployments/configs/otel-collector-config.yaml:96 otlp/tempo endpoint http://tempo:4317（遙測）
+otel-collector	aspire-dashboard	variant	deployments/configs/otel-collector-config.yaml:102 otlp/aspire endpoint ${env:ASPIRE_OTLP_ENDPOINT}（infrastructure.yaml:170 http://aspire-dashboard:18889；遙測）
+otel-collector	zipkin	variant	deployments/configs/otel-collector-config.yaml:115 zipkin endpoint http://zipkin:9411/api/v2/spans（遙測）
+otel-collector	elastic-search	variant	deployments/configs/otel-collector-config.yaml:112 elasticsearch endpoint http://elasticsearch:9200（寫的是舊名 elasticsearch，infrastructure.yaml:302 的服務名是 elastic-search；而且 :145/:149 的 pipelines 沒有掛這個 exporter；遙測）
+prometheus	otel-collector	variant	deployments/configs/prometheus.yaml:21 targets otel-collector:8889（:22 :8888；遙測）
+grafana	prometheus	variant	deployments/configs/grafana/provisioning/datasources/datasource.yml:15 url http://prometheus:9090（遙測）
+grafana	jaeger	variant	deployments/configs/grafana/provisioning/datasources/datasource.yml:29 url http://jaeger:16686（遙測）
+grafana	zipkin	variant	deployments/configs/grafana/provisioning/datasources/datasource.yml:36 url http://zipkin:9411（遙測）
+grafana	tempo	variant	deployments/configs/grafana/provisioning/datasources/datasource.yml:45 url http://tempo:3200（遙測）
+grafana	loki	variant	deployments/configs/grafana/provisioning/datasources/datasource.yml:64 url http://loki:3100（遙測）
+grafana	elastic-search	variant	deployments/configs/grafana/provisioning/datasources/datasource.yml:77 url http://elastic-search:9200（遙測）
+kibana	elastic-search	variant	deployments/docker-compose/docker-compose.infrastructure.yaml:339 ELASTICSEARCH_HOSTS=http://elasticsearch:9200（寫的是舊名；服務名 elastic-search；遙測）

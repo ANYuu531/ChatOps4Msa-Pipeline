@@ -1,0 +1,4 @@
+name	repo	commit	commit_date	probe_root	public_check
+opentelemetry-demo	open-telemetry/opentelemetry-demo	ad06a6f9df40abde6c1f0c58b29b92f1076a74ec	2026-10-22T12:20:43Z	.	gh api repos/open-telemetry/opentelemetry-demo → private=false, archived=false, default_branch=main (2026-10-23)
+mall-swarm	macrozheng/mall-swarm	04c442fe318356bae4445a109dde7af297ce1e84	2026-05-21T07:19:12Z	.	gh api repos/macrozheng/mall-swarm → private=false, archived=false, default_branch=master (2026-10-23)
+hotel-reservation	delimitrou/DeathStarBench	6ecb09706140f8730b5385c08f1386c654c3c526	2024-06-27T20:13:08Z	hotelReservation/	gh api repos/delimitrou/DeathStarBench → private=false, archived=false, default_branch=master (2026-10-23)

@@ -7,7 +7,6 @@ flowchart TB
     ts_voucher_service["ts-voucher-service"]
     ts_ui_dashboard["ts-ui-dashboard"]
     ts_wait_order_service["ts-wait-order-service"]
-    ts_common["ts-common"]
     ts_food_delivery_service["ts-food-delivery-service"]
     ts_delivery_service["ts-delivery-service"]
   end
@@ -99,7 +98,6 @@ flowchart TB
   end
   subgraph layer9 ["external"]
     direction LR
-    github_com[/"github.com"/]:::external
     smtp_163_com[/"smtp.163.com"/]:::external
   end
   subgraph layer10 ["no dependencies found"]
@@ -162,7 +160,6 @@ flowchart TB
   ts_preserve_other_service -.-> ts_order_other_service
   ts_preserve_other_service -.-> ts_food_service
   ts_preserve_other_service -.-> ts_consign_service
-  ts_common -. ext .-> github_com
   ts_user_service -.-> ts_auth_service
   ts_route_plan_service -.-> ts_travel_service
   ts_route_plan_service -.-> ts_travel2_service
@@ -207,7 +204,7 @@ flowchart TB
   ts_food_delivery_service -. db .-> ts_food_delivery_mysql
   ts_consign_price_service -. db .-> ts_consign_price_mysql
   ts_station_service -. db .-> ts_station_mysql
-  ts_voucher_service -. db .-> ts_voucher_mysql
+  ts_voucher_service -. db? .-> ts_voucher_mysql
   ts_auth_service -. db .-> ts_auth_mysql
   ts_user_service -. db .-> ts_user_mysql
   ts_gateway_service -.-> ts_admin_basic_info_service

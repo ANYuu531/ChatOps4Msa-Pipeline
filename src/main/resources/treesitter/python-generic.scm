@@ -35,6 +35,39 @@
  (#eq? @_a "environ")
  (#eq? @_m "get"))
 
+; ---------- Imports (who uses a library module) ----------
+; `from pkg.sub import f` / `import pkg.sub`. A lookup signal, not an edge: a Python
+; distribution with no image of its own runs inside the services that import it, so a
+; call in pkg/sub.py is attributed to the modules importing pkg.sub (CodeGraphMerger).
+((import_from_statement
+   module_name: (dotted_name) @import.module
+   name: (dotted_name) @import.name))
+
+((import_from_statement
+   module_name: (dotted_name) @import.module
+   name: (aliased_import name: (dotted_name) @import.name)))
+
+; from . import x / from .sub import y — resolved against the importing file's package
+((import_from_statement
+   module_name: (relative_import) @import.relative
+   name: (dotted_name) @import.name))
+
+((import_statement
+   name: (dotted_name) @import.module))
+
+((import_statement
+   name: (aliased_import name: (dotted_name) @import.module)))
+
+; ---------- Data-store clients whose host is a default parameter ----------
+; def __init__(self, host='redis-service.aics.svc.cluster.local', port=6379): the
+; library's connection helper names the store in a parameter default. Emitted as a
+; config row under a host-shaped key so the merger reads it like DB_HOST.
+((default_parameter
+   name: (identifier) @config.key
+   value: (string (string_content) @config.value))
+ (#match? @config.key "(?i)^(host|hostname|db_host|redis_host|mongo_host)$")
+ (#match? @config.value "^[a-z][a-z0-9.-]*[a-z0-9]$"))
+
 ; ---------- Persistence / ORM models (proves the service really uses a DB) ----------
 ; The language-neutral persistence signal: a mapped model class is emitted into the
 ; `persistence` section, exactly like Java's @Entity is emitted into `jpa` — the merger

@@ -1,8 +1,8 @@
 project,commit,date,dataset_edges,drawn,agreement,tool_only
 spring-petclinic,1860fff,2019-05-14,13,13,1.0000,2
-microservices-book,c445384,2019-01-28,5,5,1.0000,4
-tap-and-eat,3ad20b8,2017-01-04,4,4,1.0000,3
+microservices-book,c445384,2019-01-28,5,5,1.0000,2
+tap-and-eat,3ad20b8,2017-01-04,4,4,1.0000,10
 spring-cloud-netflix,f0e57c3,2018-08-25,26,26,1.0000,2
-spring-cloud-microservice,6938297,2017-03-23,26,24,0.9231,5
-lakeside-mutual,4fc6b43,2021-02-26,9,9,1.0000,11
-robot-shop,5939f27,2019-07-16,12,12,1.0000,5
+spring-cloud-microservice,6938297,2017-03-23,26,24,0.9231,19
+lakeside-mutual,4fc6b43,2021-02-26,9,9,1.0000,12
+robot-shop,5939f27,2019-07-16,12,12,1.0000,6

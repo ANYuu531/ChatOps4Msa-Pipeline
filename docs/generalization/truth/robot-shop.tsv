@@ -16,6 +16,6 @@ payment	cart	business	payment/payment.py:116 http://{cart}:8080/cart/
 payment	rabbitmq	data	payment/rabbitmq.py:6 AMQP_HOST
 payment	paypal.com	external	payment/payment.py:26 PAYMENT_GATEWAY
 ratings	mysql	data	ratings/html/src/Database.php（mysql）
-ratings	catalogue	business	ratings/html/src/Service/CatalogueService.php:27 sprintf('%s/product/%s', $this->catalogueUrl)（host 由 config/services.yaml 的 CATALOGUE_URL 注入）
+ratings	catalogue	business	ratings/html/src/Service/CatalogueService.php:27 sprintf('%s/product/%s', $this->catalogueUrl)（host 由 ratings/html/src/Kernel.php:76 的 getenv('CATALOGUE_URL') ?: 'http://catalogue:8080' 注入；repo 沒有 config/services.yaml）
 dispatch	rabbitmq	data	dispatch/main.go（consumer）
 load	web	control	docker-compose-load.yaml HOST=http://web:8080

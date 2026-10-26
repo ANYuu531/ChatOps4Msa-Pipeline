@@ -1,0 +1,102 @@
+# open-telemetry/opentelemetry-demo @ ad06a6f9df40abde6c1f0c58b29b92f1076a74ec（2026-10-22）
+# 節點名＝compose 服務名（HEAD 的 repo 沒有 k8s manifest，manifest 在 opentelemetry-helm-charts）。
+# 出處＝發出呼叫那一行；位址來源（.env / compose）寫在括號裡。
+# 慣例（沿用既有七份參考邊集）：遙測管線的邊（→ otel-collector、collector → jaeger/prometheus/opensearch、grafana → 資料源）
+# 不是業務相依，列為 variant：工具畫了不算錯、沒畫不算漏。compose.observability / compose.agent / compose.profiling 覆蓋層只在那個變體才有，也是 variant。
+#
+# ---- business：服務→服務 ----
+frontend	ad	business	src/frontend/gateways/rpc/Ad.gateway.ts:9 new AdServiceClient(AD_ADDR)（.env:57 AD_ADDR=ad:9555，compose.yaml frontend.environment）
+frontend	cart	business	src/frontend/gateways/rpc/Cart.gateway.ts:9 new CartServiceClient(CART_ADDR)（.env CART_ADDR=cart:7070）
+frontend	checkout	business	src/frontend/gateways/rpc/Checkout.gateway.ts:9 new CheckoutServiceClient(CHECKOUT_ADDR)（.env CHECKOUT_ADDR=checkout:5050）
+frontend	currency	business	src/frontend/gateways/rpc/Currency.gateway.ts:9 new CurrencyServiceClient(CURRENCY_ADDR)（.env CURRENCY_ADDR=currency:7001）
+frontend	product-catalog	business	src/frontend/gateways/rpc/ProductCatalog.gateway.ts:9 new ProductCatalogServiceClient(PRODUCT_CATALOG_ADDR)（.env PRODUCT_CATALOG_ADDR=product-catalog:3550）
+frontend	recommendation	business	src/frontend/gateways/rpc/Recommendations.gateway.ts:9 new RecommendationServiceClient(RECOMMENDATION_ADDR)（.env RECOMMENDATION_ADDR=recommendation:9001）
+frontend	shipping	business	src/frontend/gateways/http/Shipping.gateway.ts:31 fetch(`${SHIPPING_ADDR}/get-quote`)（.env SHIPPING_ADDR=http://shipping:50050）
+checkout	shipping	business	src/checkout/main.go:219 mustCreateClient(svc.shippingSvcAddr)（:218 SHIPPING_ADDR）
+checkout	product-catalog	business	src/checkout/main.go:224 mustCreateClient(svc.productCatalogSvcAddr)（:223 PRODUCT_CATALOG_ADDR）
+checkout	cart	business	src/checkout/main.go:229 mustCreateClient(svc.cartSvcAddr)（:228 CART_ADDR）
+checkout	currency	business	src/checkout/main.go:234 mustCreateClient(svc.currencySvcAddr)（:233 CURRENCY_ADDR）
+checkout	email	business	src/checkout/main.go:604 http.NewRequestWithContext(… "POST", cs.emailSvcAddr+"/send_order_confirmation")（:238 EMAIL_ADDR；.env:79 EMAIL_ADDR=http://email:6060）
+checkout	payment	business	src/checkout/main.go:244 mustCreateClient(svc.paymentSvcAddr)（:243 PAYMENT_ADDR）
+recommendation	product-catalog	business	src/recommendation/src/main/resources/application.yaml:13 grpc client channel product-catalog target ${PRODUCT_CATALOG_ADDR}；stub 注入 src/recommendation/src/main/java/oteldemo/recommendation/RecommendationService.java:55
+shipping	quote	business	src/shipping/src/shipping_service/quote.rs:69 client.post(quote_service_addr)（:52 QUOTE_ADDR，預設 http://quote:8090；.env:126）
+# ---- data：服務→資料庫 / 佇列 ----
+cart	valkey-cart	data	src/cart/src/cartstore/ValkeyCartStore.cs:96 ConnectionMultiplexer.Connect（src/cart/src/Program.cs:33 VALKEY_ADDR；.env:161 VALKEY_ADDR=valkey-cart:6379）
+product-catalog	astronomy-db	data	src/product-catalog/main.go:78 otelsql.Open("postgres", connStr)（:68 DB_CONNECTION_STRING；compose.yaml:546 postgres://…@${POSTGRES_HOST}/…，.env:164 POSTGRES_HOST=astronomy-db）
+accounting	astronomy-db	data	src/accounting/Consumer.cs:24 UseNpgsql(connectionString)（:22 DB_CONNECTION_STRING；compose.full.yaml:33 Host=${POSTGRES_HOST}）
+checkout	kafka	data	src/checkout/main.go:251 kafka.CreateKafkaProducer([]string{svc.kafkaBrokerSvcAddr})（:248 KAFKA_ADDR；compose.full.yaml:132 補進 checkout；.env:155 KAFKA_ADDR=kafka:9092）
+accounting	kafka	data	src/accounting/Consumer.cs:42 KAFKA_ADDR（consumer；compose.full.yaml:26）
+fraud-detection	kafka	data	src/fraud-detection/src/main/kotlin/frauddetection/main.kt:50 System.getenv("KAFKA_ADDR") → BOOTSTRAP_SERVERS_CONFIG（consumer；compose.full.yaml:65）
+# ---- control：反向代理路由、負載產生器、feature-flag 服務（flagd 等同設定中心） ----
+frontend-proxy	frontend	control	src/frontend-proxy/envoy.tmpl.yaml:96 route cluster frontend（cluster 位址 :210 ${FRONTEND_HOST}；.env FRONTEND_HOST=frontend）
+frontend-proxy	image-provider	control	src/frontend-proxy/envoy.tmpl.yaml:68 /images/ → cluster image-provider（:223 ${IMAGE_PROVIDER_HOST}）
+frontend-proxy	flagd	control	src/frontend-proxy/envoy.tmpl.yaml:72 /flagservice/ → cluster flagservice（:236 ${FLAGD_HOST}；瀏覽器端的 feature flag 走這條）
+frontend-proxy	flagd-ui	control	src/frontend-proxy/envoy.tmpl.yaml:78 /feature → cluster flagd-ui（:249 ${FLAGD_UI_HOST}）
+frontend-proxy	load-generator	control	src/frontend-proxy/envoy.tmpl.yaml:42 /loadgen/ → cluster loadgen（:262 ${LOCUST_WEB_HOST}；.env LOCUST_WEB_HOST=load-generator）
+frontend-proxy	telemetry-docs	control	src/frontend-proxy/envoy.tmpl.yaml:65 /telemetry/ → cluster telemetry-docs（:315 ${TELEMETRY_DOCS_HOST}）
+load-generator	frontend-proxy	control	.env:106 LOCUST_HOST=http://${FRONTEND_PROXY_ADDR}（locust 直接讀 LOCUST_HOST 當 host；compose.yaml:438 傳入；.env:90 FRONTEND_PROXY_ADDR=frontend-proxy:8080）
+load-generator	flagd	control	src/load-generator/locustfile.py:95 OFREPProvider(base_url=http://{FLAGD_HOST}:{FLAGD_OFREP_PORT})
+ad	flagd	control	src/ad/src/main/java/oteldemo/AdService.java:118 new FlagdProvider(options)（provider 讀 FLAGD_HOST/FLAGD_PORT env；compose.yaml ad.environment）
+cart	flagd	control	src/cart/src/Program.cs:54 .AddProvider(_ => new FlagdProvider())（FLAGD_HOST env）
+checkout	flagd	control	src/checkout/main.go:199 flagd.NewProvider()（FLAGD_HOST env）
+email	flagd	control	src/email/email_server.rb:23 config.host = ENV.fetch("FLAGD_HOST")
+fraud-detection	flagd	control	src/fraud-detection/src/main/kotlin/frauddetection/main.kt:35 FlagdProvider(options)（FLAGD_HOST env；compose.full.yaml）
+payment	flagd	control	src/payment/charge.js:10 new FlagdProvider()（FLAGD_HOST env）
+product-catalog	flagd	control	src/product-catalog/main.go:153 flagd.NewProvider()（FLAGD_HOST env）
+recommendation	flagd	control	src/recommendation/src/main/java/oteldemo/recommendation/FeatureFlagConfiguration.java:22 flagdProvider bean（FLAGD_HOST env）
+shipping	flagd	control	src/shipping/src/main.rs:50 FlagdProvider::new(FlagdOptions{..Default::default()})（預設讀 FLAGD_HOST/FLAGD_PORT env）
+# ---- variant：觀測性 / agent / profiling 覆蓋層，與遙測管線 ----
+frontend-proxy	otel-collector	variant	src/frontend-proxy/envoy.tmpl.yaml:46 /otlp-http/ → opentelemetry_collector_http；:25 tracer grpc（遙測）
+frontend-proxy	grafana	variant	src/frontend-proxy/envoy.tmpl.yaml:56（compose.observability.yaml）
+frontend-proxy	jaeger	variant	src/frontend-proxy/envoy.tmpl.yaml:52（compose.observability.yaml）
+frontend-proxy	opamp-server	variant	src/frontend-proxy/envoy.tmpl.yaml:60（compose.observability.yaml）
+frontend-proxy	firepit	variant	src/frontend-proxy/envoy.tmpl.yaml:85 /profiles/（compose.profiling.yaml）
+frontend-proxy	chatbot	variant	src/frontend-proxy/envoy.tmpl.yaml:90 /chatbot/（compose.agent.yaml）
+otel-collector	jaeger	variant	src/otel-collector/otelcol-config-observability.yml:21 endpoint jaeger:4317
+otel-collector	prometheus	variant	src/otel-collector/otelcol-config-observability.yml:27
+otel-collector	opensearch	variant	src/otel-collector/otelcol-config-observability.yml:36
+otel-collector	firepit	variant	src/otel-collector/otelcol-config-observability.yml:42
+otel-collector	opamp-server	variant	src/otel-collector/otelcol-config-observability.yml:50
+otel-collector	kafka	variant	src/otel-collector/otelcol-config-full.yml:17 kafkametrics receiver
+otel-collector	astronomy-db	variant	src/otel-collector/otelcol-config.yml:54 postgresql receiver ${POSTGRES_HOST}
+otel-collector	valkey-cart	variant	src/otel-collector/otelcol-config.yml:50 redis receiver valkey-cart:6379
+otel-collector	frontend-proxy	variant	src/otel-collector/otelcol-config.yml:28 httpcheck
+otel-collector	image-provider	variant	src/otel-collector/otelcol-config.yml:30 httpcheck
+grafana	prometheus	variant	src/grafana/provisioning/datasources/default.yaml:11
+grafana	jaeger	variant	src/grafana/provisioning/datasources/jaeger.yaml:11
+grafana	opensearch	variant	src/grafana/provisioning/datasources/opensearch.yaml:10
+cart	opamp-server	variant	compose.observability.yaml:207 OPAMP_SERVER_ENDPOINT（src/cart/src/Program.cs:103）
+product-catalog	opamp-server	variant	compose.observability.yaml:215 OPAMP_SERVER_ENDPOINT
+chatbot	agent	variant	src/chatbot/src/chat_interface/chat_interface.py:151 http://{AGENT_ENDPOINT}:{AGENT_PORT}/prompt（compose.agent.yaml）
+chatbot	opamp-server	variant	src/chatbot/src/opamp.py:136 OPAMP_SERVER_ENDPOINT（compose.agent.yaml）
+agent	mcp	variant	src/agent/src/agents/agents.py:45 http://{MCP_ENDPOINT}:{MCP_PORT}/mcp（compose.agent.yaml）
+agent	flagd	variant	src/agent/src/agents/feature_flags.py:16（compose.agent.yaml）
+load-generator	agent	variant	src/load-generator/locustfile.py:138 AGENT_ENDPOINT（compose.agent.yaml 才給）
+mcp	frontend	variant	src/shared/tools.py:42 http://{BASE_URL}/api/data（:16 BASE_URL=APPLICATION_ENDPOINT=frontend:8080；Dockerfile 把 tools.py 複製進 mcp；compose.agent.yaml）—— 2026-10-23 計分後補：工具從 depends_on 畫到，標註時漏了 shared/ 這支共用檔
+otel-ebpf-profiler	otel-collector	variant	compose.profiling.yaml otel-ebpf-profiler（遙測；2026-10-23 計分後補：profiling 覆蓋層標註時漏）
+ad	otel-collector	variant	compose.yaml ad.environment OTEL_EXPORTER_OTLP_ENDPOINT=http://${OTEL_COLLECTOR_HOST}:…（遙測）
+cart	otel-collector	variant	compose.yaml cart.environment OTEL_EXPORTER_OTLP_ENDPOINT（.env:48，遙測）
+checkout	otel-collector	variant	compose.yaml checkout.environment（遙測）
+currency	otel-collector	variant	compose.yaml currency.environment（遙測）
+email	otel-collector	variant	compose.yaml email.environment（遙測）
+frontend	otel-collector	variant	compose.yaml frontend.environment（遙測）
+image-provider	otel-collector	variant	compose.yaml image-provider.environment OTEL_COLLECTOR_HOST（遙測）
+load-generator	otel-collector	variant	compose.yaml load-generator.environment（遙測）
+payment	otel-collector	variant	compose.yaml payment.environment（遙測）
+product-catalog	otel-collector	variant	compose.yaml product-catalog.environment（遙測）
+quote	otel-collector	variant	compose.yaml quote.environment（遙測）
+recommendation	otel-collector	variant	compose.yaml recommendation.environment（遙測）
+shipping	otel-collector	variant	compose.yaml shipping.environment（遙測）
+flagd	otel-collector	variant	compose.yaml flagd.environment（遙測）
+flagd-ui	otel-collector	variant	compose.yaml flagd-ui.environment（遙測）
+telemetry-docs	otel-collector	variant	compose.yaml telemetry-docs.environment OTEL_COLLECTOR_HOST（遙測）
+accounting	otel-collector	variant	compose.full.yaml accounting.environment（遙測）
+fraud-detection	otel-collector	variant	compose.full.yaml fraud-detection.environment（遙測）
+kafka	otel-collector	variant	compose.full.yaml kafka.environment（遙測）
+agent	otel-collector	variant	compose.agent.yaml TRACELOOP_BASE_URL（遙測）
+mcp	otel-collector	variant	compose.agent.yaml TRACELOOP_BASE_URL（遙測）
+chatbot	otel-collector	variant	compose.agent.yaml chatbot.environment（遙測）
+jaeger	otel-collector	variant	compose.observability.yaml jaeger.environment OTEL_COLLECTOR_HOST（遙測）
+agent	frontend	variant	src/shared/tools.py:42 http://{BASE_URL}/api/data（src/agent/Dockerfile:19 把 shared/tools.py 複製進 agent，與 mcp 同一支共用檔；compose.agent.yaml 給 agent APPLICATION_ENDPOINT）—— 2026-10-26 計分後補：第二輪工具從 agent 自己 env 的 APPLICATION_ENDPOINT 畫到，標註時只記了 mcp 那份複本
+agent	local-llm.com	variant	.env:202 LLM_BASE_URL=https://local-llm.com（compose.agent.yaml:39 轉發給 agent；OpenAI 相容端點的預設佔位網域，部署者會覆蓋）—— 2026-10-26 計分後補：agent 覆蓋層才有的外部端點，工具畫成 external／inferred
+jaeger	prometheus	variant	compose.observability.yaml:17 PROMETHEUS_ADDR（.env:190 prometheus:9090；Jaeger SPM 向 Prometheus 查指標，遙測）—— 2026-10-26 計分後補：observability 覆蓋層標註時漏

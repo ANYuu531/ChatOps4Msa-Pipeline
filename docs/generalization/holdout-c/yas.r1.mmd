@@ -1,0 +1,153 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    keycloak["keycloak"]
+    payment_paypal["payment-paypal"]
+    webhook["webhook"]
+    recommendation["recommendation"]
+    collector["collector"]
+    common_library["common-library"]
+    storefront_bff["storefront-bff"]
+    backoffice_bff["backoffice-bff"]
+    search["search"]
+    delivery["delivery"]
+    zookeeper["zookeeper"]
+    kafka_ui["kafka-ui"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    tempo["tempo"]
+    prometheus["prometheus"]
+    nginx["nginx"]
+    storefront_nextjs["storefront-nextjs"]
+    backoffice_nextjs["backoffice-nextjs"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    backoffice["backoffice"]
+    swagger_ui["swagger-ui"]
+    product["product"]
+    payment["payment"]
+    promotion["promotion"]
+    order["order"]
+    rating["rating"]
+    sampledata["sampledata"]
+    location["location"]
+    tax["tax"]
+    customer["customer"]
+    cart["cart"]
+    inventory["inventory"]
+    pgadmin["pgadmin"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    storefront["storefront"]
+    media["media"]
+  end
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    jaeger["jaeger"]
+    api["api"]
+    identity["identity"]
+  end
+  subgraph layer5 ["data stores"]
+    direction LR
+    postgres[("postgres")]:::db
+    redis[("redis")]:::db
+    kafka{{"kafka"}}:::queue
+    kafka_connect{{"kafka-connect"}}:::queue
+  end
+  payment -.-> api
+  payment_paypal -.-> storefront
+  promotion -.-> identity
+  promotion -.-> api
+  webhook -. db .-> postgres
+  webhook -.-> api
+  webhook -.-> identity
+  recommendation -.-> api
+  recommendation -.-> identity
+  collector -.-> tempo
+  collector -.-> prometheus
+  order -.-> identity
+  order -.-> api
+  backoffice -.-> storefront
+  rating -.-> identity
+  rating -.-> api
+  common_library -.-> identity
+  sampledata -.-> identity
+  location -.-> identity
+  payment -.-> storefront
+  payment -.-> identity
+  storefront_bff -.-> nginx
+  storefront_bff -.-> storefront_nextjs
+  storefront_bff -. declared? .-> payment
+  storefront_bff -.-> api
+  storefront_bff -.-> identity
+  storefront_bff -. db? .-> redis
+  tax -.-> api
+  tax -.-> identity
+  product -.-> identity
+  product -.-> api
+  backoffice_bff -.-> nginx
+  backoffice_bff -.-> backoffice_nextjs
+  backoffice_bff -. declared? .-> order
+  backoffice_bff -.-> api
+  backoffice_bff -.-> identity
+  backoffice_bff -. db? .-> redis
+  search -.-> identity
+  search -.-> api
+  payment_paypal -.-> identity
+  nginx -.-> media
+  nginx -.-> swagger_ui
+  nginx -.-> product
+  nginx -.-> customer
+  nginx -.-> cart
+  nginx -.-> rating
+  nginx -.-> order
+  nginx -.-> location
+  nginx -.-> inventory
+  nginx -.-> tax
+  nginx -.-> promotion
+  nginx -.-> payment
+  nginx -.-> sampledata
+  nginx -.-> backoffice
+  nginx -.-> storefront
+  nginx -.-> pgadmin
+  nginx -.-> identity
+  nginx -. async .-> kafka
+  inventory -.-> identity
+  inventory -.-> api
+  cart -.-> identity
+  cart -.-> api
+  delivery -.-> identity
+  kafka -.-> zookeeper
+  kafka_connect -. async .-> kafka
+  kafka_ui -. async .-> kafka
+  kafka_ui -. async .-> kafka_connect
+  customer -.-> identity
+  customer -.-> api
+  media -.-> identity
+  storefront -. declared? .-> jaeger
+  backoffice -. declared? .-> jaeger
+  swagger_ui -. declared? .-> api
+  media -. db .-> postgres
+  media -. declared? .-> api
+  media -. declared? .-> jaeger
+  product -. db .-> postgres
+  product -. declared? .-> media
+  product -. declared? .-> jaeger
+  keycloak -. db? .-> postgres
+  customer -. db .-> postgres
+  cart -. db .-> postgres
+  rating -. db .-> postgres
+  payment -. db .-> postgres
+  location -. db .-> postgres
+  inventory -. db .-> postgres
+  promotion -. db .-> postgres
+  tax -. db .-> postgres
+  sampledata -. db? .-> postgres
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;

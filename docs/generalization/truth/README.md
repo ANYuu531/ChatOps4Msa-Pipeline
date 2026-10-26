@@ -34,3 +34,8 @@ mvn -o test -Dtest=TruthProvenanceResolvesTest -Dsurefire.failIfNoSpecifiedTests
 3. `GeneralizationScoreTest` 計分、`TruthProvenanceResolvesTest` 檢查出處。
 4. 每一條差異追到「一條通用規則」或「一個明確的語言／呼叫型態邊界」，寫進報告。
 5. 如果這個專案也在 MicroDepGraph 資料集裡，順便加進 `ExternalTruthAgreementTest.CASES`——那一份對照不需要本檔案。
+
+## 參考邊集的更正紀錄
+
+- 2026-10-23 ecommerce：刪 `service-discovery → cloud-config`（service-discovery 的 pom 只有 eureka-server，沒有 config starter，也沒有 `config.import`；查無證據）。`api-gateway → service-discovery` 與 robot-shop `ratings → catalogue` 的出處改寫成實際的檔案與行（原本引的 `k8s/` 目錄與 `config/services.yaml` 都不存在）。
+- 2026-10-26 piggymetrics：刪 `monitoring → registry`。monitoring 的 pom 只有 `spring-cloud-starter-config` 與 `hystrix-dashboard`，沒有 Eureka client，`src/main` 也沒有任何 eureka 字樣；原本那條是共用 `application.yml` 的 `defaultZone` 被攤到每個 config client 的結果，和同檔其他 7 條被刪掉的錯邊是同一個成因。

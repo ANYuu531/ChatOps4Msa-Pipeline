@@ -1,0 +1,132 @@
+# nashtech-garage/yas @ 179e813568c345bad3fce985088b5535e57481aa（2026-06-12）。Spring Boot 3 ＋ Spring Cloud Gateway（BFF）＋ Keycloak ＋ Debezium/Kafka ＋ Elasticsearch ＋ Next.js。
+# 主要部署描述檔＝根目錄 docker compose（README「Getting started with Docker Compose」；.env:91 COMPOSE_FILE 把 docker-compose.yml、docker-compose.search.yml、docker-compose.o11y.yml 三份合在一起）。
+# 節點名＝compose 服務名：nginx、identity（Keycloak）、backoffice（＝backoffice-bff）、backoffice-nextjs、storefront（＝storefront-bff）、storefront-nextjs、media、product、customer、cart、rating、order、payment、location、inventory、promotion、tax、sampledata、swagger-ui、postgres、pgadmin、zookeeper、kafka、kafka-connect、kafka-ui、redis、search、elasticsearch、collector、prometheus、grafana、loki、tempo。
+# k8s/charts 的 Helm chart 名字不同（backoffice-bff、storefront-bff、backoffice-ui、storefront-ui）且多了 webhook、recommendation、payment-paypal（compose 裡沒有或被註解掉）；這三個服務的邊列 variant。delivery、automation-ui 沒有任何 manifest，不列。
+# 服務間位址：application.properties 預設是 http://api.yas.local/<svc>（nginx 的 server_name，開發機用），compose 用鍵名 `- YAS_SERVICES_X` 轉發 .env:72–84 的值 http://x/x 覆蓋成直連；DB 位址由 compose 的 SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/<db> 覆蓋（application.properties 裡是 localhost）。order 的 compose 沒傳 YAS_SERVICES_PROMOTION，PromotionService 的目標停在 api.yas.local，邊仍照程式碼列。
+# 出處＝發出呼叫那一行（restClient.get()/post()… 或 @KafkaListener/Repository）；位址的設定行與 compose 行寫在括號裡。
+# 認證：每個資源伺服器的 spring.security.oauth2.resourceserver.jwt.issuer-uri=http://identity/realms/Yas（啟動時抓 OIDC 探索文件與 JWKS）列 control；customer 另外用 Keycloak admin client 管理使用者，是它的核心功能，列 business。
+# 不列的：storefront-bff 的 compose 環境傳了十個 YAS_SERVICES_*（docker-compose.yml:66–75）、application.yaml:51–55 也宣告了 yas.services.*，但 BFF 程式碼沒有任何 RestClient/WebClient 呼叫（只有 Spring Cloud Gateway 路由），所以 storefront → customer/cart/… 不是邊（工具若從 manifest 畫出來算錯，原因記 truth 存疑）；webhook 的目標 URL 存在資料庫（WebhookApi.java:24 .uri(url)）、recommendation 的 Azure OpenAI endpoint 來自環境變數、payment 的 provider configureUrl 存在資料庫——都沒有靜態主機名，不列。
+# 遙測（每個 Java 服務 → collector、collector → prometheus/tempo/loki、grafana → 資料源、prometheus → collector、nginx → grafana）與管理工具（kafka-ui）沿既有慣例列 variant。
+# 根目錄另有 yaslocal.yaml：一份沒被 README 引用、過時的部分 k8s manifest（只有 storefront/backoffice/swagger-ui/media/product 五個 Deployment、Keycloak 16 叫 keycloak、追蹤送 jaeger）。它獨有的邊（→ jaeger、keycloak → postgres）列 variant；它把 identity 叫 keycloak，是同一個 Keycloak。
+#
+# ---- business：服務→服務（直連，位址來自 .env 經 compose 覆蓋） ----
+cart	product	business	cart/src/main/java/com/yas/cart/service/ProductService.java:31 restClient.get()（:26 fromUriString(serviceUrlConfig.product())；docker-compose.yml:189 YAS_SERVICES_PRODUCT；.env:74 http://product/product）
+customer	location	business	customer/src/main/java/com/yas/customer/service/LocationService.java:39 restClient.get()（:33 serviceUrlConfig.location()；docker-compose.yml:161 YAS_SERVICES_LOCATION；.env:78 http://location/location）
+customer	identity	business	customer/src/main/java/com/yas/customer/service/CustomerService.java:55 keycloak.realm(...).users()（Keycloak admin client；customer/src/main/java/com/yas/customer/config/KeycloakClientConfig.java:22 serverUrl；customer/src/main/resources/application.properties:31 keycloak.auth-server-url=http://identity；JWT issuer :13 同主機）
+inventory	product	business	inventory/src/main/java/com/yas/inventory/service/ProductService.java:40 restClient.get()（:36 serviceUrlConfig.product()；docker-compose.yml:338）
+inventory	location	business	inventory/src/main/java/com/yas/inventory/service/LocationService.java:35 restClient.get()（:30 serviceUrlConfig.location()；docker-compose.yml:339）
+order	cart	business	order/src/main/java/com/yas/order/service/CartService.java:41 restClient.post()（:36 serviceUrlConfig.cart()；docker-compose.yml:250；.env:72 http://cart/cart）
+order	customer	business	order/src/main/java/com/yas/order/service/CustomerService.java:31 restClient.get()（:27 serviceUrlConfig.customer()；docker-compose.yml:251）
+order	product	business	order/src/main/java/com/yas/order/service/ProductService.java:44 restClient.get()（:39 serviceUrlConfig.product()；docker-compose.yml:252）
+order	tax	business	order/src/main/java/com/yas/order/service/TaxService.java:33 webClient.get()（:23 serviceUrlConfig.tax()；docker-compose.yml:253；.env:75 http://tax/tax）
+order	promotion	business	order/src/main/java/com/yas/order/service/PromotionService.java:34 restClient.post()（:29 serviceUrlConfig.promotion()；compose 沒傳 YAS_SERVICES_PROMOTION，值停在 order/src/main/resources/application.properties:18 http://api.yas.local/promotion ＝ nginx 的 server_name）
+payment	order	business	payment/src/main/java/com/yas/payment/service/OrderService.java:39 restClient.put()（:32 serviceUrlConfig.order()；docker-compose.yml:280；.env:76 http://order/order）
+payment	media	business	payment/src/main/java/com/yas/payment/service/MediaService.java:47 restClient.get()（:67 fromUriString(serviceUrlConfig.media())；docker-compose.yml:281；.env:79 http://media/media）
+product	media	business	product/src/main/java/com/yas/product/service/MediaService.java:36 restClient.post()（:27 serviceUrlConfig.media()；docker-compose.yml:134）
+promotion	product	business	promotion/src/main/java/com/yas/promotion/service/ProductService.java:40 restClient.get()（:34 serviceUrlConfig.product()；docker-compose.yml:367）
+rating	customer	business	rating/src/main/java/com/yas/rating/service/CustomerService.java:32 restClient.get()（:28 serviceUrlConfig.customer()；docker-compose.yml:218；.env:73 http://customer/customer）
+rating	order	business	rating/src/main/java/com/yas/rating/service/OrderService.java:33 restClient.get()（:28 serviceUrlConfig.order()；docker-compose.yml:219）
+search	product	business	search/src/main/java/com/yas/search/service/ProductSyncDataService.java:30 restClient.get()（:29 serviceUrlConfig.product()；docker-compose.search.yml:11 YAS_SERVICES_PRODUCT）
+tax	location	business	tax/src/main/java/com/yas/tax/service/LocationService.java:31 restClient.get()（:26 serviceUrlConfig.location()；docker-compose.yml:395）
+storefront-nextjs	storefront	business	storefront/modules/catalog/services/ProductService.ts:21 apiClientService.get(`${serverSideRenderUrl}/product/${slug}`)（SSR 端；:13 serverSideRenderUrl=${process.env.API_BASE_PATH}/product/storefront；storefront/.env.production:1 API_BASE_PATH=http://storefront/api）
+# ---- data：服務→PostgreSQL / Redis / Kafka / Elasticsearch ----
+media	postgres	data	media/src/main/java/com/yas/media/repository/MediaRepository.java:10 JpaRepository（docker-compose.yml:104 SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/media）
+product	postgres	data	product/src/main/java/com/yas/product/repository/ProductAttributeTemplateRepository.java:9 JpaRepository（docker-compose.yml:132 jdbc:postgresql://postgres:5432/product）
+customer	postgres	data	customer/src/main/java/com/yas/customer/repository/UserAddressRepository.java:8 JpaRepository（docker-compose.yml:159 jdbc:postgresql://postgres:5432/customer）
+cart	postgres	data	cart/src/main/java/com/yas/cart/repository/CartItemRepository.java:14 JpaRepository（docker-compose.yml:186 jdbc:postgresql://postgres:5432/cart）
+rating	postgres	data	rating/src/main/java/com/yas/rating/repository/RatingRepository.java:14 JpaRepository（docker-compose.yml:214 jdbc:postgresql://postgres:5432/rating）
+order	postgres	data	order/src/main/java/com/yas/order/repository/CheckoutItemRepository.java:9 JpaRepository（docker-compose.yml:244 jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/order；.env:41 POSTGRES_HOST=postgres）
+payment	postgres	data	payment/src/main/java/com/yas/payment/repository/PaymentProviderRepository.java:10 JpaRepository（docker-compose.yml:277 jdbc:postgresql://postgres:5432/payment）
+location	postgres	data	location/src/main/java/com/yas/location/repository/AddressRepository.java:7 JpaRepository（docker-compose.yml:308 jdbc:postgresql://postgres:5432/location）
+inventory	postgres	data	inventory/src/main/java/com/yas/inventory/repository/WarehouseRepository.java:9 JpaRepository（docker-compose.yml:335 jdbc:postgresql://postgres:5432/inventory）
+promotion	postgres	data	promotion/src/main/java/com/yas/promotion/repository/PromotionUsageRepository.java:6 JpaRepository（docker-compose.yml:364 jdbc:postgresql://postgres:5432/promotion）
+tax	postgres	data	tax/src/main/java/com/yas/tax/repository/TaxRateRepository.java:12 JpaRepository（docker-compose.yml:392 jdbc:postgresql://postgres:5432/tax）
+sampledata	postgres	data	sampledata/src/main/java/com/yas/sampledata/config/DataSourceConfig.java:17 @Value spring.datasource.product.url（:19 media.url；兩個 DataSource 直接寫 product 與 media 兩個庫；docker-compose.yml:420–421 jdbc:postgresql://postgres:5432/product、/media）
+identity	postgres	data	docker-compose.yml:21 KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak（Keycloak 官方映像，沒有程式碼）
+backoffice	redis	data	backoffice-bff/src/main/resources/application.yaml:28 spring.session.store-type: redis（Spring Session；:25 spring.data.redis.host: redis）
+storefront	redis	data	storefront-bff/src/main/resources/application.yaml:28 spring.session.store-type: redis（:25 spring.data.redis.host: redis）
+search	elasticsearch	data	search/src/main/java/com/yas/search/config/ImperativeClientConfig.java:21 connectedTo(elasticsearchConfig.getUrl())（search/src/main/java/com/yas/search/repository/ProductRepository.java:8 ElasticsearchRepository；search/src/main/resources/application.properties:1 elasticsearch.url=elasticsearch；docker-compose.search.yml:7 wait-for-it elasticsearch:9200）
+search	kafka	data	search/src/main/java/com/yas/search/kafka/consumer/ProductSyncDataConsumer.java:34 @KafkaListener(topics=${product.topic.name})（consumer；search/src/main/resources/application.properties:28 spring.kafka.consumer.bootstrap-servers=kafka:9092、:30 dbproduct.public.product）
+kafka-connect	kafka	data	docker-compose.yml:576 BOOTSTRAP_SERVERS=kafka:9092（Debezium connect 映像；:574 depends_on kafka）
+kafka-connect	postgres	data	kafka/connects/debezium-product.json:7 database.hostname: postgres（Debezium PostgresConnector 讀 WAL；kafka/connects/debezium-order.json:7 同；由 start-source-connectors.sh:2–8 PUT 進 kafka-connect）
+# ---- control：nginx 反向代理路由、BFF 路由、JWT issuer、ZooKeeper ----
+nginx	media	control	nginx/templates/default.conf.template:8 proxy_pass http://media
+nginx	swagger-ui	control	nginx/templates/default.conf.template:11 proxy_pass http://swagger-ui:8080
+nginx	product	control	nginx/templates/default.conf.template:14 proxy_pass http://product
+nginx	customer	control	nginx/templates/default.conf.template:17 proxy_pass http://customer
+nginx	cart	control	nginx/templates/default.conf.template:20 proxy_pass http://cart
+nginx	rating	control	nginx/templates/default.conf.template:23 proxy_pass http://rating
+nginx	order	control	nginx/templates/default.conf.template:26 proxy_pass http://order
+nginx	location	control	nginx/templates/default.conf.template:29 proxy_pass http://location
+nginx	inventory	control	nginx/templates/default.conf.template:32 proxy_pass http://inventory
+nginx	tax	control	nginx/templates/default.conf.template:35 proxy_pass http://tax
+nginx	promotion	control	nginx/templates/default.conf.template:38 proxy_pass http://promotion
+nginx	search	control	nginx/templates/default.conf.template:43 proxy_pass http://$docker_search_host（:42 set $docker_search_host "search"）
+nginx	payment	control	nginx/templates/default.conf.template:46 proxy_pass http://payment
+nginx	sampledata	control	nginx/templates/default.conf.template:53 proxy_pass http://sampledata
+nginx	backoffice	control	nginx/templates/default.conf.template:64 proxy_pass http://backoffice
+nginx	storefront	control	nginx/templates/default.conf.template:71 proxy_pass http://storefront
+nginx	pgadmin	control	nginx/templates/default.conf.template:78 proxy_pass http://pgadmin
+nginx	identity	control	nginx/templates/default.conf.template:86 proxy_pass http://identity
+nginx	elasticsearch	control	nginx/templates/default.conf.template:117 proxy_pass http://$docker_elasticsearch_host:9200（:116 set … "elasticsearch"）
+nginx	kafka	control	nginx/templates/default.conf.template:127 proxy_pass http://kafka:9092
+backoffice	nginx	control	backoffice-bff/src/main/resources/application-prod.yaml:10 spring.cloud.gateway route api uri: http://nginx（Path=/api/**）
+backoffice	backoffice-nextjs	control	backoffice-bff/src/main/resources/application-prod.yaml:18 route nextjs uri: http://backoffice-nextjs:3000
+storefront	nginx	control	storefront-bff/src/main/resources/application-prod.yaml:10 route api uri: http://nginx（Path=/api/**）
+storefront	storefront-nextjs	control	storefront-bff/src/main/resources/application-prod.yaml:18 route nextjs uri: http://storefront-nextjs:3000
+backoffice	identity	control	backoffice-bff/src/main/resources/application.yaml:16 spring.security.oauth2.client.provider.keycloak.issuer-uri: http://identity/realms/Yas（OAuth2 code flow）
+storefront	identity	control	storefront-bff/src/main/resources/application.yaml:16 spring.security.oauth2.client.provider.keycloak.issuer-uri: http://identity/realms/Yas
+cart	identity	control	cart/src/main/resources/application.properties:9 spring.security.oauth2.resourceserver.jwt.issuer-uri=http://identity/realms/Yas
+inventory	identity	control	inventory/src/main/resources/application.properties:13 jwt.issuer-uri=http://identity/realms/Yas
+location	identity	control	location/src/main/resources/application.properties:13 jwt.issuer-uri=http://identity/realms/Yas
+media	identity	control	media/src/main/resources/application.properties:13 jwt.issuer-uri=http://identity/realms/Yas
+order	identity	control	order/src/main/resources/application.properties:12 jwt.issuer-uri=http://identity/realms/Yas
+payment	identity	control	payment/src/main/resources/application.properties:13 jwt.issuer-uri=http://identity/realms/Yas
+product	identity	control	product/src/main/resources/application.properties:13 jwt.issuer-uri=http://identity/realms/Yas
+promotion	identity	control	promotion/src/main/resources/application.properties:13 jwt.issuer-uri=http://identity/realms/Yas
+rating	identity	control	rating/src/main/resources/application.properties:13 jwt.issuer-uri=http://identity/realms/Yas
+sampledata	identity	control	sampledata/src/main/resources/application.properties:10 jwt.issuer-uri=http://identity/realms/Yas
+search	identity	control	search/src/main/resources/application.properties:17 jwt.issuer-uri=http://identity/realms/Yas
+tax	identity	control	tax/src/main/resources/application.properties:16 jwt.issuer-uri=http://identity/realms/Yas
+kafka	zookeeper	control	.env:32 KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181（docker-compose.yml:560 傳入、:553 depends_on zookeeper）
+# ---- variant：遙測、管理工具、只在 Helm 有的服務 ----
+backoffice	collector	variant	.env:9 OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:5555（docker-compose.yml:39 轉發；javaagent 遙測）
+storefront	collector	variant	.env:9（docker-compose.yml:79；遙測）
+media	collector	variant	.env:9（docker-compose.yml:110；遙測）
+product	collector	variant	.env:9（docker-compose.yml:138；遙測）
+customer	collector	variant	.env:9（docker-compose.yml:165；遙測）
+cart	collector	variant	.env:9（docker-compose.yml:193；遙測）
+rating	collector	variant	.env:9（docker-compose.yml:223；遙測）
+order	collector	variant	.env:9（docker-compose.yml:254；遙測）
+payment	collector	variant	.env:9（docker-compose.yml:285；遙測）
+location	collector	variant	.env:9（docker-compose.yml:314；遙測）
+inventory	collector	variant	.env:9（docker-compose.yml:343；遙測）
+promotion	collector	variant	.env:9（docker-compose.yml:371；遙測）
+tax	collector	variant	.env:9（docker-compose.yml:399；遙測）
+sampledata	collector	variant	.env:9（docker-compose.yml:428；遙測）
+search	collector	variant	.env:9（docker-compose.search.yml:15；遙測）
+collector	prometheus	variant	docker/otel-collector/otelcol-config.yml:27 prometheusremotewrite endpoint http://prometheus:9090/api/v1/write（遙測）
+collector	tempo	variant	docker/otel-collector/otelcol-config.yml:31 otlp endpoint tempo:4317（遙測）
+collector	loki	variant	docker/otel-collector/otelcol-config.yml:35 loki endpoint http://loki:3100/loki/api/v1/push（遙測）
+prometheus	collector	variant	docker/prometheus/prometheus.yml:9 scrape target collector:8888（遙測）
+grafana	prometheus	variant	docker/grafana/provisioning/datasources/datasource.yml:8 url: http://prometheus:9090（遙測）
+grafana	tempo	variant	docker/grafana/provisioning/datasources/datasource.yml:25 url: http://tempo:3200（遙測）
+grafana	loki	variant	docker/grafana/provisioning/datasources/datasource.yml:43 url: http://loki:3100（遙測）
+nginx	grafana	variant	nginx/templates/default.conf.template:106 proxy_pass http://$docker_grafana_host:3000（遙測入口）
+kafka-ui	kafka	variant	docker-compose.yml:587 KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092（管理工具）
+storefront	jaeger	variant	yaslocal.yaml:186 OTEL_EXPORTER_OTLP_ENDPOINT value: http://jaeger:4317（過時的 k8s manifest；遙測）
+backoffice	jaeger	variant	yaslocal.yaml:221 value: http://jaeger:4317（過時的 k8s manifest；遙測）
+media	jaeger	variant	yaslocal.yaml:291 value: http://jaeger:4317（過時的 k8s manifest；遙測）
+product	jaeger	variant	yaslocal.yaml:325 value: http://jaeger:4317（過時的 k8s manifest；遙測）
+keycloak	postgres	variant	yaslocal.yaml:378 DB_ADDR value: "postgres"（過時的 k8s manifest 把 Keycloak 16 的 Deployment 叫 keycloak；compose 裡同一個東西叫 identity，見 data 段 identity → postgres）
+nginx	webhook	variant	nginx/templates/default.conf.template:50 proxy_pass http://$docker_webhook_host（webhook 在 docker-compose.yml:445 被註解掉，只有 Helm chart）
+nginx	recommendation	variant	nginx/templates/default.conf.template:57 proxy_pass http://$docker_recommendation_host（recommendation 在 docker-compose.yml:473 被註解掉，只有 Helm chart）
+webhook	kafka	variant	webhook/src/main/java/com/yas/webhook/integration/inbound/OrderEventInbound.java:15 @KafkaListener（webhook/src/main/resources/application.properties:32 spring.kafka.bootstrap-servers=kafka:9092；只有 Helm）
+webhook	postgres	variant	webhook/src/main/java/com/yas/webhook/repository/WebhookRepository.java:8 JpaRepository（Helm：k8s/charts/backend/values.yaml:41 jdbc:postgresql://postgresql.postgres:5432）
+webhook	identity	variant	webhook/src/main/resources/application.properties:16 jwt.issuer-uri=http://identity/realms/Yas
+recommendation	product	variant	recommendation/src/main/java/com/yas/recommendation/service/ProductService.java:34 restClient.get()（recommendation/src/main/java/com/yas/recommendation/configuration/RecommendationConfig.java:11 ${yas.services.product}；.env:84 YAS_SERVICES_RECOMMENDATION 只有自己的；只有 Helm）
+recommendation	kafka	variant	recommendation/src/main/java/com/yas/recommendation/kafka/consumer/ProductSyncDataConsumer.java:30 @KafkaListener（recommendation/src/main/resources/application.properties:49 kafka:9092；只有 Helm）
+recommendation	postgres	variant	recommendation/src/main/java/com/yas/recommendation/configuration/VectorStoreConfiguration.java:31 vectorStore(JdbcTemplate …)（pgvector；recommendation/src/main/resources/application.properties:19；只有 Helm）
+recommendation	identity	variant	recommendation/src/main/resources/application.properties:41 jwt.issuer-uri=http://identity/realms/Yas
+payment-paypal	identity	variant	payment-paypal/src/main/resources/application.properties:13 jwt.issuer-uri=http://identity/realms/Yas（只有 Helm）
+payment-paypal	api.sandbox.paypal.com	variant	payment-paypal/src/main/java/com/yas/payment/paypal/service/PayPalHttpClientInitializer.java:22 new PayPalHttpClient(new PayPalEnvironment.Sandbox(…))（主機名在 PayPal SDK 裡，程式碼沒有字面值；:24 Live 對應 api.paypal.com；只有 Helm）

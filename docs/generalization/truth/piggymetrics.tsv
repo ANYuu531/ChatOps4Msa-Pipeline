@@ -28,7 +28,6 @@ turbine-stream-service	config	control	turbine-stream-service/src/main/resources/
 account-service	registry	control	config/src/main/resources/shared/application.yml eureka.client.serviceUrl.defaultZone（所有 config client）
 auth-service	registry	control	同上
 gateway	registry	control	同上
-monitoring	registry	control	同上
 notification-service	registry	control	同上
 statistics-service	registry	control	同上
 turbine-stream-service	registry	control	同上

@@ -4,11 +4,14 @@
 ## ledger sections
 - http-server = 20
 - jpa = 5
-- config = 2
+- config = 5
+- name-ref = 4
 - url = 8
 - k8s-workload = 4
+- k8s-service = 4
 - service-root = 4
-- TOTAL = 43 | files with syntax errors = 0
+- module-deps = 3
+- TOTAL = 57 | files with syntax errors = 0
 
 ## graph
 - after merge: 4 nodes / 5 edges | after normalize: 4 nodes / 5 edges | unresolved code edges = 0
@@ -20,7 +23,7 @@
 - customer  [service, L2]
 - order  [service, L1]
 
-## edges (type, confidence, provenance)
+## edges (type, confidence, provenance ref)
 - apache -> catalog  (sync-http, documented)  code: microservice-kubernetes-demo/apache/000-default.conf:17
 - apache -> customer  (sync-http, documented)  code: microservice-kubernetes-demo/apache/000-default.conf:20
 - apache -> order  (sync-http, documented)  code: microservice-kubernetes-demo/apache/000-default.conf:14
@@ -28,6 +31,12 @@
 - order -> customer  (sync-http, documented)  code: microservice-kubernetes-demo/microservice-kubernetes-demo-order/src/main/java/com/ewolff/microservice/order/clients/CustomerClient.java:38
 
 ## unresolved (source hint / raw target / file:line), first 40
+
+## alias questions (name [origin] seen in | candidates)
+- none
+
+## alias answers applied
+- none
 
 ## mermaid
 ```mermaid

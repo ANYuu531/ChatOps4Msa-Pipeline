@@ -1,0 +1,58 @@
+# 每條錯／漏的人工歸因。欄位：name<TAB>wrong|missed<TAB>edge<TAB>類別<TAB>說明
+# 類別：框架慣例（工具沒學過這個框架的寫法）／缺文法（語言沒有 tree-sitter pattern）／規則邊界（既有規則的已知邊界）／bug（規則本身不對）／truth 存疑
+# 2026-10-26 第二輪（規則 24–35）之後只剩下面標 [r2 仍在] 的兩條；其餘每條的歸因後面標了修它的規則號。hotel-reservation 的 9 條是 Consul srv-* 註冊解析，刻意不做（文件化的邊界）。
+# ---- opentelemetry-demo ----
+opentelemetry-demo	wrong	agent -> product-catalog	規則邊界	只有 compose.agent.yaml 的 depends_on，程式碼裡 agent 不呼叫 product-catalog（走 mcp → frontend API）。depends_on 是啟動順序，不是呼叫　→ 規則 35
+opentelemetry-demo	wrong	agent -> vcr	bug	src/agent/src/agents/patch_vcr.py:47 把錄製請求的 uri 改寫成假網址 https://vcr.local/（測試用 VCR 卡匣），不是對外呼叫；URL 字面值在測試輔助程式裡　→ 規則 33
+opentelemetry-demo	wrong	flagd-ui -> flagd	規則邊界	只有 depends_on；flagd-ui 用共用 volume 改 flagd 的 JSON 檔，沒有網路連線　→ 規則 35
+opentelemetry-demo	wrong	frontend -> flagd	truth 存疑	frontend 的 feature flag 由瀏覽器經 frontend-proxy /flagservice 連 flagd（src/frontend/pages/_app.tsx:35 註解），frontend 容器本身不連；但 compose.yaml 確實把 FLAGD_HOST 給了 frontend。工具靠的是 depends_on　→ [r2 仍在] depends_on＋compose 把 FLAGD_HOST 給了 frontend，工具畫 documented；truth 存疑未改
+opentelemetry-demo	wrong	frontend -> image-provider	規則邊界	只有 depends_on（healthcheck 順序）；圖片由瀏覽器經 frontend-proxy /images/ 取　→ 規則 35
+opentelemetry-demo	wrong	frontend -> quote	規則邊界	只有 depends_on；quote 的呼叫端是 shipping　→ 規則 35
+opentelemetry-demo	wrong	frontendtests -> frontend	規則邊界	來自 compose.tests.yaml 的測試容器；規則 2 把 *-tests 目錄排除，但 compose 覆蓋層裡的測試服務沒有同樣處理　→ 規則 31
+opentelemetry-demo	wrong	load-generator -> frontend	規則邊界	只有 depends_on；真正的目標是 LOCUST_HOST=http://frontend-proxy:8080（見漏的那條）　→ 規則 35
+opentelemetry-demo	missed	shipping -> quote	缺文法	Rust 沒有 pattern；compose 只寫 `- QUOTE_ADDR`（鍵名，值在 .env），工具的 compose environment 只收 K=V 形式（ConfigExtractor.extractComposeEnvironment），.env 的值又沒有來源服務　→ 規則 24（inferred，Rust 仍無文法）
+opentelemetry-demo	missed	accounting -> astronomy-db	框架慣例	.NET Npgsql 連線字串 `Host=${POSTGRES_HOST};Username=…`（compose.full.yaml:33）不是 URL，而且 ${POSTGRES_HOST} 要從 .env 內插；C# 無文法　→ 規則 24＋32
+opentelemetry-demo	missed	frontend-proxy -> image-provider	框架慣例	Envoy 設定（envoy.tmpl.yaml 的 route → cluster → socket_address）沒有解析器；工具只認 nginx/Apache 的 proxy_pass。畫到的 4 條 frontend-proxy 邊全來自 depends_on　→ 規則 34
+opentelemetry-demo	missed	frontend-proxy -> flagd	框架慣例	同上（Envoy cluster flagservice → ${FLAGD_HOST}）　→ 規則 34
+opentelemetry-demo	missed	load-generator -> frontend-proxy	規則邊界	compose 用 `- LOCUST_HOST` 鍵名轉發，值 http://${FRONTEND_PROXY_ADDR} 在 .env，需要兩層內插；.env 讀進來的列 source 是 null（unresolved 列出 `null => http://frontend-proxy @ .env`）　→ 規則 24
+opentelemetry-demo	missed	email -> flagd	缺文法	Ruby 沒有 pattern；compose 只給 `- FLAGD_HOST` 鍵名；email 沒有 depends_on flagd　→ 規則 24（inferred，Ruby 仍無文法）
+opentelemetry-demo	missed	fraud-detection -> flagd	缺文法	Kotlin（.kt）不在 java pattern 的副檔名裡，雖然 build.gradle 讓它被判成 java/spring；compose.full.yaml 只給 `- FLAGD_HOST` 鍵名；沒有 depends_on flagd　→ 規則 24（＋規則 28 讓 fraud-detection → kafka 由程式碼層畫出）
+# ---- mall-swarm ----
+mall-swarm	wrong	mall-admin -> db	規則邊界	compose-app 的 `external_links: - mysql:db`（document/docker/docker-compose-app.yml:14）宣告 db 是 mysql 的別名；工具不讀 external_links，links 也只取冒號前的服務名、不登記別名，所以 prod 設定的 jdbc:mysql://db 變成獨立節點 db。另外 jdbc: URL 被標成 sync-http 而不是 db（bug）　→ 規則 25＋26
+mall-swarm	wrong	mall-demo -> db	規則邊界	同上（且 mall-demo 未部署，truth 列 variant）　→ 規則 25＋26
+mall-swarm	wrong	mall-portal -> db	規則邊界	同上　→ 規則 25＋26
+mall-swarm	wrong	mall-search -> db	規則邊界	同上　→ 規則 25＋26
+mall-swarm	wrong	mall-portal -> rabbit	規則邊界	`external_links: - rabbitmq:rabbit`（docker-compose-app.yml:44）的別名，同 db　→ 規則 25
+mall-swarm	wrong	mall.order.cancel -> mall-portal	bug	@RabbitListener(queues="mall.order.cancel") 的 queue 名被當成 broker 節點、方向 queue→consumer；參考邊集慣例是 consumer → broker 主機（rabbitmq）　→ 規則 30
+mall-swarm	wrong	mall-admin -> github.com	bug	SpringDocConfig.java:32 是 OpenAPI License().url(...)，文件中繼資料，不是呼叫；五個模組各兩條，共 10 條假外部邊　→ 規則 29
+mall-swarm	wrong	mall-admin -> www.macrozheng.com	bug	SpringDocConfig.java:35 ExternalDocumentation().url(...)，同上　→ 規則 29
+mall-swarm	wrong	mall-auth -> github.com	bug	同上　→ 規則 29
+mall-swarm	wrong	mall-auth -> www.macrozheng.com	bug	同上　→ 規則 29
+mall-swarm	wrong	mall-demo -> github.com	bug	同上　→ 規則 29
+mall-swarm	wrong	mall-demo -> www.macrozheng.com	bug	同上　→ 規則 29
+mall-swarm	wrong	mall-portal -> github.com	bug	同上　→ 規則 29
+mall-swarm	wrong	mall-portal -> www.macrozheng.com	bug	同上　→ 規則 29
+mall-swarm	wrong	mall-search -> github.com	bug	同上　→ 規則 29
+mall-swarm	wrong	mall-search -> www.macrozheng.com	bug	同上　→ 規則 29
+mall-swarm	missed	mall-admin -> mysql	規則邊界	畫成 mall-admin -> db（別名未解析，見上）　→ 規則 25
+mall-swarm	missed	mall-portal -> mysql	規則邊界	畫成 mall-portal -> db　→ 規則 25
+mall-swarm	missed	mall-search -> mysql	規則邊界	畫成 mall-search -> db　→ 規則 25
+mall-swarm	missed	mall-portal -> rabbitmq	規則邊界	畫成 mall-portal -> rabbit　→ 規則 25＋30
+mall-swarm	missed	mall-search -> elasticsearch	規則邊界	config/search/mall-search-prod.yaml:7 `spring.elasticsearch.uris: es:9200`：es 是 external_links 別名，且 `uris` 不在工具認得的位址鍵名裡；elasticsearch 節點是從 compose-env 的 ELK depends_on 來的　→ 規則 25＋27
+mall-swarm	missed	mall-admin -> minio	truth 存疑	prod 設定 minio.endpoint 是 IP http://192.168.3.101:9090（unresolved 有列），沒有任何 manifest 叫 minio；參考邊集的節點名 minio 本來就對不上任何靜態字串　→ [r2 仍在] 位址是 IP、沒有任何 manifest 叫 minio，靜態層無從對上
+mall-swarm	missed	mall-admin -> oss-cn-shenzhen.aliyuncs.com	規則邊界	aliyun.oss.endpoint 的值是裸 FQDN、沒有 scheme、鍵名是 endpoint 不是 host/url；工具的 addressHost 不收這個形狀（同檔 alipay.gatewayUrl 有 https:// 就畫到了）　→ 規則 27
+mall-swarm	missed	mall-admin -> nacos-registry	框架慣例	Spring Cloud Alibaba：spring.cloud.nacos.discovery.server-addr: nacos-registry:8848（host:port、無 scheme）；工具只認 eureka.*、spring.cloud.consul、spring.cloud.config.uri。mall-monitor 那條有 http:// 所以畫到了　→ 規則 27
+mall-swarm	missed	mall-auth -> nacos-registry	框架慣例	同上　→ 規則 27
+mall-swarm	missed	mall-gateway -> nacos-registry	框架慣例	同上　→ 規則 27
+mall-swarm	missed	mall-portal -> nacos-registry	框架慣例	同上　→ 規則 27
+mall-swarm	missed	mall-search -> nacos-registry	框架慣例	同上　→ 規則 27
+# ---- hotel-reservation ----
+hotel-reservation	missed	frontend -> search	缺文法	Go 沒有 pattern；呼叫目標是 Consul 服務名 "srv-search"（dialer.Dial 經 registry 解析），程式碼與 manifest 都沒有主機名——與 TeaStore 的 registry 邊界同型
+hotel-reservation	missed	frontend -> profile	缺文法	同上
+hotel-reservation	missed	frontend -> recommendation	缺文法	同上
+hotel-reservation	missed	frontend -> user	缺文法	同上
+hotel-reservation	missed	frontend -> reservation	缺文法	同上
+hotel-reservation	missed	frontend -> review	缺文法	同上
+hotel-reservation	missed	frontend -> attractions	缺文法	同上
+hotel-reservation	missed	search -> geo	缺文法	同上
+hotel-reservation	missed	search -> rate	缺文法	同上

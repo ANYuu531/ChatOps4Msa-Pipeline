@@ -18,7 +18,7 @@ payment-service	order-service	business	payment-service/src/main/java/com/selimho
 shipping-service	order-service	business	shipping-service/src/main/java/com/selimhorri/app/service/impl/OrderItemServiceImpl.java:42
 shipping-service	product-service	business	shipping-service/src/main/java/com/selimhorri/app/service/impl/OrderItemServiceImpl.java:40
 cloud-config	github.com	external	cloud-config/src/main/resources/application.yml（spring.cloud.config.server.git.uri）
-api-gateway	service-discovery	control	README「service registry (Eureka)」；api-gateway/src/main/resources/application.yml（每個服務都有同型設定） eureka.client（主機名只在缺席的 k8s 目錄）
+api-gateway	service-discovery	control	api-gateway/src/main/java/com/selimhorri/app/ApiGatewayApplication.java:8 @EnableEurekaClient；pom.xml 引 spring-cloud-starter-netflix-eureka-client（repo 內外都沒有 eureka.client.* 設定，位址是 Spring Cloud 隱含預設 localhost:8761；README:154 也只寫 localhost:8761/eureka；其餘 client 同型）
 proxy-client	service-discovery	control	同上
 user-service	service-discovery	control	同上
 product-service	service-discovery	control	同上
@@ -35,4 +35,3 @@ order-service	cloud-config	control	同上
 payment-service	cloud-config	control	同上
 shipping-service	cloud-config	control	同上
 favourite-service	cloud-config	control	同上
-service-discovery	cloud-config	control	同上

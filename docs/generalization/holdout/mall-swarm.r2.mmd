@@ -1,0 +1,81 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    mall_monitor["mall-monitor"]
+    mall_gateway["mall-gateway"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    mall_auth["mall-auth"]
+    mall_demo["mall-demo"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    mall_admin["mall-admin"]
+    mall_portal["mall-portal"]
+    mall_search["mall-search"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    nacos_registry["nacos-registry"]
+    logstash["logstash"]
+  end
+  subgraph layer4 ["data stores"]
+    direction LR
+    mysql[("mysql")]:::db
+    mongo[("mongo")]:::db
+    redis[("redis")]:::db
+    rabbitmq{{"rabbitmq"}}:::queue
+    elasticsearch[("elasticsearch")]:::db
+  end
+  subgraph layer5 ["external"]
+    direction LR
+    oss_cn_shenzhen_aliyuncs_com[/"oss-cn-shenzhen.aliyuncs.com"/]:::external
+    openapi_sandbox_dl_alipaydev_com[/"openapi-sandbox.dl.alipaydev.com"/]:::external
+  end
+  subgraph layer6 ["no dependencies found"]
+    direction LR
+    mall_mbg["mall-mbg"]
+    mall_common["mall-common"]
+  end
+  mall_auth -.-> mall_portal
+  mall_auth -.-> mall_admin
+  mall_demo -.-> mall_search
+  mall_demo -.-> mall_portal
+  mall_demo -.-> mall_admin
+  mall_admin -.-> nacos_registry
+  mall_admin -. ext .-> oss_cn_shenzhen_aliyuncs_com
+  mall_portal -.-> nacos_registry
+  mall_auth -.-> nacos_registry
+  mall_demo -. db .-> mysql
+  mall_demo -.-> logstash
+  mall_portal -. db .-> mysql
+  mall_portal -. db .-> mongo
+  mall_portal -. db .-> redis
+  mall_portal -. async .-> rabbitmq
+  mall_portal -.-> logstash
+  mall_portal -. ext .-> openapi_sandbox_dl_alipaydev_com
+  mall_admin -. db .-> mysql
+  mall_admin -. db .-> redis
+  mall_admin -.-> logstash
+  mall_search -. db .-> mysql
+  mall_search -. db .-> elasticsearch
+  mall_search -.-> logstash
+  mall_gateway -. db? .-> redis
+  mall_gateway -.-> logstash
+  mall_monitor -.-> nacos_registry
+  mall_search -.-> nacos_registry
+  mall_gateway -.-> nacos_registry
+  logstash -. db? .-> elasticsearch
+  mall_demo -.-> nacos_registry
+  mall_gateway -.-> mall_auth
+  mall_gateway -.-> mall_admin
+  mall_gateway -.-> mall_portal
+  mall_gateway -.-> mall_search
+  mall_gateway -.-> mall_demo
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;
+classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

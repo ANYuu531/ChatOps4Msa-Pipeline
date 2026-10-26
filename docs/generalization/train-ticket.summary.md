@@ -6,24 +6,30 @@
 
 ## ledger sections
 - jpa = 59
+- name-ref = 433
 - http-server = 201
 - http-client = 65
 - url = 31
-- config = 178
+- name-constant = 115
+- config = 260
+- url-metadata = 1
+- import = 29
 - compose-service = 142
 - compose-dependency = 2
 - k8s-workload = 272
+- k8s-service = 319
+- k8s-namespace = 1
 - env-address = 4
 - workload-env = 3
 - service-root = 50
-- TOTAL = 1007 | files with syntax errors = 0
+- module-deps = 47
+- TOTAL = 2034 | files with syntax errors = 0
 
 ## graph
-- after merge: 100 nodes / 121 edges | after normalize: 100 nodes / 121 edges | unresolved code edges = 31
+- after merge: 98 nodes / 120 edges | after normalize: 98 nodes / 120 edges | unresolved code edges = 66
 - persistence services: [ts-contacts-service, ts-notification-service, ts-config-service, ts-assurance-service, ts-order-other-service, ts-route-service, ts-price-service, ts-security-service, ts-consign-service, ts-train-service, ts-order-service, ts-food-service, ts-station-food-service, ts-train-food-service, ts-food-delivery-service, ts-consign-price-service, ts-wait-order-service, ts-common, ts-station-service, ts-auth-service, ts-user-service, ts-payment-service, ts-inside-payment-service, ts-delivery-service, ts-travel2-service, ts-travel-service]
 
 ## nodes (kind, layer)
-- github.com  [external, L9]
 - jaeger  [service, L10]
 - redis  [db, L10]
 - rest-service-external  [service, L4]
@@ -43,7 +49,6 @@
 - ts-avatar-service  [service, L2]
 - ts-basic-service  [service, L5]
 - ts-cancel-service  [service, L2]
-- ts-common  [service, L0]
 - ts-config-mongo  [db, L10]
 - ts-config-mysql  [db, L8]
 - ts-config-service  [service, L2]
@@ -124,7 +129,7 @@
 - ts-voucher-service  [service, L0]
 - ts-wait-order-service  [service, L0]
 
-## edges (type, confidence, provenance)
+## edges (type, confidence, provenance ref)
 - ts-admin-basic-info-service -> ts-contacts-service  (sync-http, documented)  code: ts-admin-basic-info-service/src/main/java/adminbasic/service/AdminBasicInfoServiceImpl.java:44
 - ts-admin-order-service -> ts-order-other-service  (sync-http, documented)  code: ts-admin-order-service/src/main/java/adminorder/service/AdminOrderServiceImpl.java:66
 - ts-admin-order-service -> ts-order-service  (sync-http, documented)  code: ts-admin-order-service/src/main/java/adminorder/service/AdminOrderServiceImpl.java:48
@@ -143,7 +148,6 @@
 - ts-cancel-service -> ts-notification-service  (sync-http, documented)  code: ts-cancel-service/src/main/java/cancel/service/CancelServiceImpl.java:148
 - ts-cancel-service -> ts-order-other-service  (sync-http, documented)  code: ts-cancel-service/src/main/java/cancel/service/CancelServiceImpl.java:269
 - ts-cancel-service -> ts-order-service  (sync-http, documented)  code: ts-cancel-service/src/main/java/cancel/service/CancelServiceImpl.java:245
-- ts-common -> github.com  (external, documented)  code: ts-common/src/main/java/edu/fudan/common/config/SwaggerConfig.java:40
 - ts-config-service -> ts-config-mysql  (db, documented)  code: ts-config-service/src/main/resources/application.yml
 - ts-consign-price-service -> ts-consign-price-mysql  (db, documented)  code: ts-consign-price-service/src/main/resources/application.yml
 - ts-consign-service -> ts-consign-mysql  (db, documented)  code: ts-consign-service/src/main/resources/application.yml
@@ -244,7 +248,7 @@
 - ts-user-service -> ts-user-mysql  (db, documented)  code: ts-user-service/src/main/resources/application.yaml
 - ts-voucher-service -> ts-order-other-service  (sync-http, documented)  code: ts-voucher-service/server.py:52
 - ts-voucher-service -> ts-order-service  (sync-http, documented)  code: ts-voucher-service/server.py:51
-- ts-voucher-service -> ts-voucher-mysql  (db, documented)  code: deployment/docker-compose-manifests/docker-compose-with-jaeger.yml
+- ts-voucher-service -> ts-voucher-mysql  (db, inferred)  code: deployment/docker-compose-manifests/docker-compose-with-jaeger.yml#depends_on
 - ts-wait-order-service -> ts-preserve-service  (sync-http, documented)  code: ts-wait-order-service/src/main/java/waitorder/utils/PollThread.java:75
 
 ## unresolved (source hint / raw target / file:line), first 40
@@ -274,11 +278,26 @@
 - ts-admin-order-service  =>  http://   @ ts-admin-order-service/src/main/java/adminorder/service/AdminOrderServiceImpl.java:35
 - ts-admin-travel-service  =>  http://   @ ts-admin-travel-service/src/main/java/admintravel/service/AdminTravelServiceImpl.java:38
 - ts-admin-route-service  =>  http://   @ ts-admin-route-service/src/main/java/adminroute/service/AdminRouteServiceImpl.java:32
+- ts-contacts-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-contacts-service/src/main/resources/application.yml:-1
+- ts-admin-user-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-admin-user-service/src/main/resources/application.yml:-1
+- ts-notification-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-notification-service/src/main/resources/application.yml:-1
+- ts-cancel-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-cancel-service/src/main/resources/application.yml:-1
+- ts-config-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-config-service/src/main/resources/application.yml:-1
+- ts-assurance-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-assurance-service/src/main/resources/application.yml:-1
+- ts-order-other-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-order-other-service/src/main/resources/application.yml:-1
 - ts-route-service  =>  jdbc:mysql://10.176.122.1:3306/ts?useSSL=false   @ ts-route-service/src/main/resources/application.yml:-1
 - ts-price-service  =>  jdbc:mysql://10.176.122.1:3306/ts?useSSL=false   @ ts-price-service/src/main/resources/application.yml:-1
+- ts-preserve-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-preserve-service/src/main/resources/application.yml:-1
+- ts-security-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-security-service/src/main/resources/application.yml:-1
+- ts-consign-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-consign-service/src/main/resources/application.yml:-1
+- ts-train-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-train-service/src/main/resources/application.yml:-1
 - ts-order-service  =>  jdbc:mysql://10.176.122.1:3306/ts?useSSL=false   @ ts-order-service/src/main/resources/application.yml:-1
-- ts-station-food-service  =>  jdbc:mysql://10.176.122.1:3306/ts?useSSL=false   @ ts-station-food-service/src/main/resources/application.yml:-1
-- ts-wait-order-service  =>  jdbc:mysql://10.176.122.1:3306/ts?useSSL=false   @ ts-wait-order-service/src/main/resources/application.yml:-1
+
+## alias questions (name [origin] seen in | candidates)
+- none
+
+## alias answers applied
+- none
 
 ## mermaid
 ```mermaid
@@ -291,7 +310,6 @@ flowchart TB
     ts_voucher_service["ts-voucher-service"]
     ts_ui_dashboard["ts-ui-dashboard"]
     ts_wait_order_service["ts-wait-order-service"]
-    ts_common["ts-common"]
     ts_food_delivery_service["ts-food-delivery-service"]
     ts_delivery_service["ts-delivery-service"]
   end
@@ -383,7 +401,6 @@ flowchart TB
   end
   subgraph layer9 ["external"]
     direction LR
-    github_com[/"github.com"/]:::external
     smtp_163_com[/"smtp.163.com"/]:::external
   end
   subgraph layer10 ["no dependencies found"]
@@ -446,7 +463,6 @@ flowchart TB
   ts_preserve_other_service -.-> ts_order_other_service
   ts_preserve_other_service -.-> ts_food_service
   ts_preserve_other_service -.-> ts_consign_service
-  ts_common -. ext .-> github_com
   ts_user_service -.-> ts_auth_service
   ts_route_plan_service -.-> ts_travel_service
   ts_route_plan_service -.-> ts_travel2_service
@@ -491,7 +507,7 @@ flowchart TB
   ts_food_delivery_service -. db .-> ts_food_delivery_mysql
   ts_consign_price_service -. db .-> ts_consign_price_mysql
   ts_station_service -. db .-> ts_station_mysql
-  ts_voucher_service -. db .-> ts_voucher_mysql
+  ts_voucher_service -. db? .-> ts_voucher_mysql
   ts_auth_service -. db .-> ts_auth_mysql
   ts_user_service -. db .-> ts_user_mysql
   ts_gateway_service -.-> ts_admin_basic_info_service

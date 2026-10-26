@@ -25,9 +25,16 @@ public final class SourceScanner {
             ".venv", "venv", "__pycache__", ".gradle", ".mvn", ".idea",
             "site-packages", "third_party", "generated", "testdata");
 
-    /** Path segments indicating tests: excluded, since test code invents fake dependencies. */
+    /**
+     * Path segments indicating tests: excluded, since test code invents fake dependencies.
+     * {@code src/it} is Maven Failsafe's integration-test tree ({@code payment/src/it/resources/
+     * application.properties} pointed payment at a browser return URL), {@code e2e} and
+     * {@code automation-ui} are end-to-end suites whose sub-modules borrow the services' names
+     * (yas's {@code automation-ui/backoffice}; 2026-10-26).
+     */
     private static final List<String> TEST_SEGMENTS = List.of(
-            "/test/", "/tests/", "/testing/", "/src/test/", "/spec/", "/__tests__/");
+            "/test/", "/tests/", "/testing/", "/src/test/", "/spec/", "/__tests__/",
+            "/src/it/", "/src/integration-test/", "/src/integrationtest/", "/e2e/", "/automation-ui/");
 
     /** Files larger than this are skipped (minified bundles, generated sources). */
     public static final long MAX_FILE_BYTES = 512 * 1024;

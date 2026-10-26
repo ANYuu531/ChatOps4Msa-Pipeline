@@ -1,18 +1,22 @@
 ## stacks
 - go (LLM, from 29 .go files)   <-- skipped (LLM tier)
 - python/web (FRAMEWORK, from requirements.txt)
-- csharp (LLM, from 8 .cs files)   <-- skipped (LLM tier)
+- csharp (GENERIC, from 8 .cs files; thin regex surface, no tree-sitter grammar offline)
 - javascript (LLM, from 6 .js/.jsx/.ts/.tsx files)   <-- skipped (LLM tier)
 - java (GENERIC, from build.gradle)
 
 ## ledger sections
+- import = 85
 - http-server = 1
-- config = 18
+- config = 31
+- name-ref = 4
 - k8s-workload = 39
-- env-address = 46
+- k8s-service = 39
+- env-address = 51
 - workload-env = 51
 - service-root = 12
-- TOTAL = 167 | files with syntax errors = 0
+- module-deps = 5
+- TOTAL = 318 | files with syntax errors = 0
 
 ## graph
 - after merge: 13 nodes / 17 edges | after normalize: 13 nodes / 17 edges | unresolved code edges = 0
@@ -33,8 +37,8 @@
 - shippingservice  [service, L3]
 - shoppingassistantservice  [service, L2]
 
-## edges (type, confidence, provenance)
-- cartservice -> redis-cart  (db, inferred)  code: kubernetes-manifests/cartservice.yaml
+## edges (type, confidence, provenance ref)
+- cartservice -> redis-cart  (db, documented)  code: src/cartservice/src/Startup.cs:29
 - checkoutservice -> cartservice  (sync-http, inferred)  code: kubernetes-manifests/checkoutservice.yaml
 - checkoutservice -> currencyservice  (sync-http, inferred)  code: kubernetes-manifests/checkoutservice.yaml
 - checkoutservice -> emailservice  (sync-http, inferred)  code: kubernetes-manifests/checkoutservice.yaml
@@ -53,6 +57,12 @@
 - recommendationservice -> productcatalogservice  (sync-http, documented)  code: src/recommendationservice/recommendation_server.py:131
 
 ## unresolved (source hint / raw target / file:line), first 40
+
+## alias questions (name [origin] seen in | candidates)
+- none
+
+## alias answers applied
+- none
 
 ## mermaid
 ```mermaid
@@ -89,6 +99,7 @@ flowchart TB
     redis_cart[("redis-cart")]:::db
   end
   recommendationservice -.-> productcatalogservice
+  cartservice -. db .-> redis_cart
   checkoutservice -. declared? .-> productcatalogservice
   checkoutservice -. declared? .-> shippingservice
   checkoutservice -. declared? .-> paymentservice
@@ -103,7 +114,6 @@ flowchart TB
   frontend -. declared? .-> checkoutservice
   frontend -. declared? .-> adservice
   frontend -. declared? .-> shoppingassistantservice
-  cartservice -. db? .-> redis_cart
   loadgenerator -. declared? .-> frontend
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
 

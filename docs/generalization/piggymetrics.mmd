@@ -22,14 +22,17 @@ flowchart TB
   end
   subgraph layer4 ["services · depth 4"]
     direction LR
-    registry["registry"]
     auth_service["auth-service"]
   end
   subgraph layer5 ["services · depth 5"]
     direction LR
+    registry["registry"]
+  end
+  subgraph layer6 ["services · depth 6"]
+    direction LR
     config["config"]
   end
-  subgraph layer6 ["data stores"]
+  subgraph layer7 ["data stores"]
     direction LR
     rabbitmq{{"rabbitmq"}}:::queue
     auth_mongodb[("auth-mongodb")]:::db
@@ -37,7 +40,7 @@ flowchart TB
     statistics_mongodb[("statistics-mongodb")]:::db
     notification_mongodb[("notification-mongodb")]:::db
   end
-  subgraph layer7 ["external"]
+  subgraph layer8 ["external"]
     direction LR
     api_exchangeratesapi_io[/"api.exchangeratesapi.io"/]:::external
     smtp_gmail_com[/"smtp.gmail.com"/]:::external
@@ -63,20 +66,12 @@ flowchart TB
   account_service -.-> registry
   notification_service -.-> registry
   turbine_stream_service -.-> registry
-  monitoring -.-> registry
   auth_service -.-> registry
   gateway -.-> registry
-  turbine_stream_service -.-> auth_service
-  registry -.-> auth_service
-  monitoring -.-> auth_service
   statistics_service -. async .-> rabbitmq
   account_service -. async .-> rabbitmq
   notification_service -. async .-> rabbitmq
   turbine_stream_service -. async .-> rabbitmq
-  registry -. async .-> rabbitmq
-  monitoring -. async .-> rabbitmq
-  auth_service -. async .-> rabbitmq
-  gateway -. async .-> rabbitmq
   account_service -. db .-> account_mongodb
   turbine_stream_service -.-> config
   registry -.-> config

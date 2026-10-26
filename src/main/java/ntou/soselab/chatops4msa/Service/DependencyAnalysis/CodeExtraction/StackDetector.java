@@ -28,6 +28,11 @@ public class StackDetector {
             "java", List.of(".java"),
             "python", List.of(".py"));
 
+    /** Languages read deterministically with a thin regex surface because no grammar is bundled. */
+    private static final Map<String, List<String>> THIN_LANGUAGES = Map.of(
+            "kotlin", List.of(".kt", ".kts"),
+            "csharp", List.of(".cs"));
+
     /** Languages we can recognise but have no grammar for — these go to the LLM tier. */
     private static final Map<String, List<String>> LLM_LANGUAGES = new LinkedHashMap<>();
 
@@ -35,7 +40,6 @@ public class StackDetector {
         LLM_LANGUAGES.put("go", List.of(".go"));
         LLM_LANGUAGES.put("javascript", List.of(".js", ".jsx", ".ts", ".tsx"));
         LLM_LANGUAGES.put("ruby", List.of(".rb"));
-        LLM_LANGUAGES.put("csharp", List.of(".cs"));
         LLM_LANGUAGES.put("rust", List.of(".rs"));
         LLM_LANGUAGES.put("php", List.of(".php"));
     }
@@ -66,6 +70,30 @@ public class StackDetector {
                     framework != null ? DetectedStack.Tier.FRAMEWORK : DetectedStack.Tier.GENERIC,
                     GRAMMAR_LANGUAGES.get("java"),
                     manifest == null ? ".java sources" : manifest));
+        }
+
+        // --- Kotlin: Java's sibling on the JVM, same build manifests, same frameworks. No
+        // tree-sitter grammar is bundled (the bonede Kotlin artifact is not in the offline
+        // repository), so it is read with a thin regex surface: getenv reads, URL literals,
+        // listener annotations. The limitation is stated on the stack (2026-10-26).
+        if (fileCounts.getOrDefault("kotlin", 0) > 0) {
+            String manifest = firstPresent(manifests, "build.gradle.kts", "build.gradle", "pom.xml");
+            stacks.add(new DetectedStack(
+                    "kotlin", null, DetectedStack.Tier.GENERIC,
+                    THIN_LANGUAGES.get("kotlin"),
+                    (manifest == null ? ".kt sources" : manifest) + "; thin regex surface, no tree-sitter grammar offline"));
+        }
+
+        // --- C#: no tree-sitter grammar bundled either. Its configuration reads are
+        // textual and regular (GetConnectionString("Database"), Configuration["A:B"],
+        // GetEnvironmentVariable("X")), and the keys they name are the ones appsettings.json
+        // and the Compose environment (A__B) carry, so the thin regex surface sees the call
+        // sites that make a compose-declared address a documented dependency (2026-10-26).
+        if (fileCounts.getOrDefault("csharp", 0) > 0) {
+            stacks.add(new DetectedStack(
+                    "csharp", null, DetectedStack.Tier.GENERIC,
+                    THIN_LANGUAGES.get("csharp"),
+                    fileCounts.get("csharp") + " .cs files; thin regex surface, no tree-sitter grammar offline"));
         }
 
         // --- Python ---
@@ -140,6 +168,7 @@ public class StackDetector {
     private Map<String, Integer> countSourceFiles(Path root) {
         Map<String, String> extensionToLanguage = new LinkedHashMap<>();
         GRAMMAR_LANGUAGES.forEach((lang, exts) -> exts.forEach(e -> extensionToLanguage.put(e, lang)));
+        THIN_LANGUAGES.forEach((lang, exts) -> exts.forEach(e -> extensionToLanguage.put(e, lang)));
         LLM_LANGUAGES.forEach((lang, exts) -> exts.forEach(e -> extensionToLanguage.put(e, lang)));
 
         Map<String, Integer> counts = new LinkedHashMap<>();

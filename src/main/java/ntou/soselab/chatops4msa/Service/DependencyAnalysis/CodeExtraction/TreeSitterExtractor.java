@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -39,7 +40,11 @@ public class TreeSitterExtractor {
     /** Section caps, so one noisy repository cannot flood the report. */
     private static final Map<String, Integer> SECTION_CAPS = Map.of(
             "url", 60,
-            "config", 80);
+            "config", 80,
+            // Lookup rows, not report entries: every reference matters for resolution.
+            "name-ref", 5000,
+            "name-constant", 2000,
+            "import", 5000);
 
     private static final int DEFAULT_SECTION_CAP = 200;
 
@@ -84,7 +89,8 @@ public class TreeSitterExtractor {
     }
 
     public boolean supports(String language) {
-        return "java".equals(language) || "python".equals(language);
+        return "java".equals(language) || "python".equals(language) || "kotlin".equals(language)
+                || "csharp".equals(language);
     }
 
     /**
@@ -92,6 +98,10 @@ public class TreeSitterExtractor {
      * the resulting edges to the ledger.
      */
     public void extract(Path root, DetectedStack stack, EdgeLedger ledger) {
+        if ("kotlin".equals(stack.language) || "csharp".equals(stack.language)) {
+            extractThinSurface(root, stack, ledger);
+            return;
+        }
         List<TreeSitterQueryEngine> engines = new ArrayList<>();
         for (String pack : stack.queryPacks()) {
             try {
@@ -143,7 +153,13 @@ public class TreeSitterExtractor {
         ledger.addFilesParsed(parsed);
         resolveConstantHosts(ledger, sources);
         dropNonAddressUrls(ledger, sources);
+        dropMetadataUrls(ledger);
         markUnreferencedUrlConstants(root, ledger, sources);
+        dropPlainTwinsOfFormatUrls(ledger);
+        if ("python".equals(stack.language)) {
+            resolvePythonUrlRefs(ledger, sources);
+            markDeadPythonCode(root, ledger, sources);
+        }
 
         for (TreeSitterQueryEngine engine : engines) {
             for (String error : engine.getPredicateErrors()) ledger.addWarning(error);
@@ -155,6 +171,121 @@ public class TreeSitterExtractor {
                         + " entries (" + entry.getValue() + " found in " + stack.language + ")");
             }
         }
+    }
+
+    /** {@code System.getenv("KAFKA_ADDR")}, with an optional Kotlin elvis default {@code ?: "kafka:9092"}. */
+    private static final java.util.regex.Pattern KT_GETENV = java.util.regex.Pattern.compile(
+            "System\\.getenv\\(\\s*\"([A-Za-z_][A-Za-z0-9_]*)\"\\s*\\)(?:\\s*\\?:\\s*\"([^\"]*)\")?");
+    private static final java.util.regex.Pattern KT_URL = java.util.regex.Pattern.compile("\"(https?://[^\"\\s$]+)\"");
+    /** {@code @KafkaListener(topics = ["orders"])} / {@code @RabbitListener(queues = ["q"])}, Kotlin array or single literal. */
+    private static final java.util.regex.Pattern KT_LISTENER = java.util.regex.Pattern.compile(
+            "@(KafkaListener|RabbitListener)\\s*\\([^)]*?(?:topics|queues|queuesToDeclare|topicPattern)\\s*=\\s*\\[?\\s*\"([^\"]+)\"");
+
+    /**
+     * The thin regex surface for a JVM language with no bundled grammar (Kotlin): the
+     * same framework-neutral signals the Java generic pack reads — environment reads,
+     * absolute URL literals and messaging listener annotations — matched textually,
+     * comment lines skipped. Everything a grammar would add (call receivers, constant
+     * resolution, dead-code checks) is absent, and the ledger says so, so the graph's
+     * reader knows a Kotlin module's code layer is shallower than a Java module's.
+     */
+    private void extractThinSurface(Path root, DetectedStack stack, EdgeLedger ledger) {
+        boolean csharp = "csharp".equals(stack.language);
+        List<Path> files = SourceScanner.filesWithExtensions(root, stack.extensions);
+        int parsed = 0;
+        Map<String, Integer> sectionCounts = new LinkedHashMap<>();
+        for (Path file : files) {
+            // .NET build output (obj/, bin/) holds generated .cs files, not the project's source.
+            String relative = SourceScanner.relative(root, file);
+            if (csharp && ("/" + relative).matches("(?i).*/(obj|bin)/.*")) continue;
+            String source;
+            try {
+                source = Files.readString(file, StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                continue;
+            }
+            parsed++;
+            String[] lines = source.split("\n", -1);
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i];
+                String code = line.trim().startsWith("//") || line.trim().startsWith("*") ? "" : line;
+                int comment = code.indexOf("//");
+                if (comment >= 0 && code.indexOf('"') > comment) code = code.substring(0, comment);
+                java.util.regex.Matcher env = (csharp ? CS_GETENV : KT_GETENV).matcher(code);
+                while (env.find()) {
+                    Map<String, String> fields = new LinkedHashMap<>();
+                    fields.put("env", env.group(1));
+                    if (env.group(2) != null && !env.group(2).isBlank()) fields.put("envdefault", env.group(2));
+                    emitThin("config", fields, relative, i + 1, ledger, sectionCounts);
+                }
+                if (csharp) {
+                    // IConfiguration reads. GetConnectionString("X") is ConnectionStrings:X; an
+                    // indexer / GetValue / GetSection key "A:B" is the same key the environment
+                    // spells A__B — so the row carries the env spelling and the merger's env
+                    // table (filled from appsettings.json and the Compose override) resolves it.
+                    java.util.regex.Matcher conn = CS_CONNECTION_STRING.matcher(code);
+                    while (conn.find()) {
+                        Map<String, String> fields = new LinkedHashMap<>();
+                        fields.put("env", "ConnectionStrings__" + conn.group(1));
+                        fields.put("dotnetkey", "ConnectionStrings:" + conn.group(1));
+                        emitThin("config", fields, relative, i + 1, ledger, sectionCounts);
+                    }
+                    java.util.regex.Matcher key = CS_CONFIG_KEY.matcher(code);
+                    while (key.find()) {
+                        String k = key.group(1) != null ? key.group(1) : key.group(2);
+                        if (k == null || k.isBlank()) continue;
+                        Map<String, String> fields = new LinkedHashMap<>();
+                        fields.put("env", k.replace(":", "__"));
+                        fields.put("dotnetkey", k);
+                        emitThin("config", fields, relative, i + 1, ledger, sectionCounts);
+                    }
+                }
+                java.util.regex.Matcher url = KT_URL.matcher(code);
+                while (url.find()) {
+                    Map<String, String> fields = new LinkedHashMap<>();
+                    fields.put("value", url.group(1));
+                    emitThin("url", fields, relative, i + 1, ledger, sectionCounts);
+                }
+                if (!csharp) {
+                    java.util.regex.Matcher listener = KT_LISTENER.matcher(code);
+                    while (listener.find()) {
+                        boolean kafka = listener.group(1).startsWith("Kafka");
+                        Map<String, String> fields = new LinkedHashMap<>();
+                        fields.put(kafka ? "topic" : "queue", listener.group(2));
+                        emitThin(kafka ? "kafka-consume" : "rabbit-consume", fields, relative, i + 1, ledger, sectionCounts);
+                    }
+                }
+            }
+        }
+        ledger.addFilesParsed(parsed);
+        if (parsed > 0 && csharp) {
+            ledger.addWarning(parsed + " C# file(s) read with the thin regex surface (IConfiguration reads, "
+                    + "GetEnvironmentVariable, URL literals): no tree-sitter grammar is bundled for C#, so call "
+                    + "sites whose host comes from a variable or a constant are not seen, and MassTransit / gRPC "
+                    + "client wiring is only seen through the configuration key it reads.");
+        } else if (parsed > 0) {
+            ledger.addWarning(parsed + " Kotlin file(s) read with the thin regex surface (getenv, URL literals, "
+                    + "listener annotations): no tree-sitter grammar is bundled for Kotlin, so call sites whose "
+                    + "host comes from a variable or a constant are not seen.");
+        }
+    }
+
+    /** {@code Environment.GetEnvironmentVariable("X")}, with an optional {@code ?? "default"}. */
+    private static final java.util.regex.Pattern CS_GETENV = java.util.regex.Pattern.compile(
+            "GetEnvironmentVariable\\(\\s*\"([A-Za-z_][A-Za-z0-9_]*)\"\\s*\\)(?:\\s*\\?\\?\\s*\"([^\"]*)\")?");
+    /** {@code GetConnectionString("Database")}. */
+    private static final java.util.regex.Pattern CS_CONNECTION_STRING = java.util.regex.Pattern.compile(
+            "GetConnectionString\\(\\s*\"([A-Za-z0-9_:.-]+)\"\\s*\\)");
+    /** {@code Configuration["A:B"]} / {@code config["A:B"]}, {@code GetValue<T>("A:B")}, {@code GetSection("A:B")}. */
+    private static final java.util.regex.Pattern CS_CONFIG_KEY = java.util.regex.Pattern.compile(
+            "(?i)(?:configuration|config|settings|conf)\\s*\\[\\s*\"([A-Za-z0-9_:.-]+)\"\\s*\\]"
+                    + "|(?:GetValue<[^>]+>|GetSection)\\(\\s*\"([A-Za-z0-9_:.-]+)\"");
+
+    private void emitThin(String section, Map<String, String> fields, String file, int line,
+                          EdgeLedger ledger, Map<String, Integer> sectionCounts) {
+        int count = sectionCounts.merge(section, 1, Integer::sum);
+        if (count > SECTION_CAPS.getOrDefault(section, DEFAULT_SECTION_CAP)) return;
+        ledger.add(section, fields, file, line, confidenceOf(section, fields));
     }
 
     /**
@@ -254,6 +385,36 @@ public class TreeSitterExtractor {
     }
 
     /**
+     * A URL that is an argument of an OpenAPI / Swagger metadata builder ({@code new
+     * License().url(…)}, {@code new ExternalDocumentation().url(…)}, {@code @Info(termsOfService
+     * = …)}) documents the API; nothing calls it. The query pack emits such literals as
+     * {@code url-metadata}; the {@code url} row for the same literal (same file, line and
+     * value) is marked not an address, so the merger draws no edge and keeps no residue.
+     * The test is the builder, never the domain (2026-10-26, mall-swarm).
+     */
+    static void dropMetadataUrls(EdgeLedger ledger) {
+        List<EdgeLedger.Edge> metadata = new ArrayList<>();
+        for (EdgeLedger.Edge e : ledger.getEdges()) if ("url-metadata".equals(e.section)) metadata.add(e);
+        if (metadata.isEmpty()) return;
+        int dropped = 0;
+        for (EdgeLedger.Edge m : metadata) {
+            for (EdgeLedger.Edge e : ledger.getEdges()) {
+                if ("url".equals(e.section) && e.file.equals(m.file) && e.line == m.line
+                        && java.util.Objects.equals(e.fields.get("value"), m.fields.get("value"))
+                        && !"true".equals(e.fields.get("unreferenced"))) {
+                    e.fields.put("unreferenced", "true");
+                    e.fields.put("not-an-address", "openapi-metadata");
+                    dropped++;
+                }
+            }
+        }
+        if (dropped > 0) {
+            ledger.addWarning(dropped + " URL literal(s) are OpenAPI/Swagger metadata (license, contact, "
+                    + "external docs, terms of service), not call targets; they are drawn as no edge.");
+        }
+    }
+
+    /**
      * A URL literal that lives in a static constant is a dependency only if the
      * constant is used. For every {@code url-constant} row, the constant's name is
      * searched in the source of its own module (the nearest directory up from the file
@@ -295,6 +456,240 @@ public class TreeSitterExtractor {
             ledger.addWarning(unreferenced + " URL constant(s) are declared but never referenced in their module; "
                     + "their url rows are marked unreferenced and drawn as no edge.");
         }
+    }
+
+    /**
+     * A {@code String.format("http://%s/…", getenv(…))} literal is emitted twice: once by
+     * the bare URL-literal rule and once, with its env name and default, by the format rule.
+     * The plain twin would only ever be residue, so it is marked as drawn as no edge.
+     */
+    private static void dropPlainTwinsOfFormatUrls(EdgeLedger ledger) {
+        for (EdgeLedger.Edge withEnv : ledger.getEdges()) {
+            if (!"url".equals(withEnv.section) || !withEnv.fields.containsKey("env")) continue;
+            for (EdgeLedger.Edge e : ledger.getEdges()) {
+                if (e != withEnv && "url".equals(e.section) && !e.fields.containsKey("env")
+                        && e.file.equals(withEnv.file) && e.line == withEnv.line
+                        && java.util.Objects.equals(e.fields.get("value"), withEnv.fields.get("value"))) {
+                    e.fields.put("unreferenced", "true");
+                    e.fields.put("twin-of", "format-url");
+                }
+            }
+        }
+    }
+
+    private static final java.util.regex.Pattern PY_GETENV = java.util.regex.Pattern.compile(
+            "os\\.(?:getenv|environ\\.get)\\(\\s*[\"']([A-Za-z_][A-Za-z0-9_]*)[\"']\\s*(?:,\\s*[\"']([^\"']*)[\"'])?"
+                    + "|os\\.environ\\[\\s*[\"']([A-Za-z_][A-Za-z0-9_]*)[\"']\\s*]");
+    private static final java.util.regex.Pattern PY_URL_LITERAL = java.util.regex.Pattern.compile("[\"'](https?://[^\"'{}]+)[\"']");
+    private static final java.util.regex.Pattern PY_IDENT = java.util.regex.Pattern.compile("\\b([A-Za-z_][A-Za-z0-9_]*)\\b");
+
+    /**
+     * Fills in an http-client row whose URL is a variable ({@code requests.get(url=req_url)},
+     * {@code requests.get(f"{PREFIX}/x")}) by following the variable through the same file's
+     * assignments, up to three hops: {@code req_url = f"{PREFIX}/…"} → {@code PREFIX =
+     * os.getenv("X_API_PREFIX")} yields {@code env=X_API_PREFIX} (plus the getenv default);
+     * an assignment to a URL literal yields {@code url}. The row's line is the call site, so
+     * the edge's provenance is where the call is made — the convention the reference edge
+     * sets follow — and the getenv row it supersedes is marked so it draws nothing twice.
+     * A variable nothing assigns, or assigned from anything else, stays unresolved and
+     * draws no edge (2026-10-23).
+     */
+    static void resolvePythonUrlRefs(EdgeLedger ledger, Map<String, String> sources) {
+        List<EdgeLedger.Edge> consumed = new ArrayList<>();
+        for (EdgeLedger.Edge e : ledger.getEdges()) {
+            if (!"http-client".equals(e.section) || e.fields.containsKey("url") || e.fields.containsKey("env")) continue;
+            String ref = e.fields.get("urlref");
+            String source = ref == null ? null : sources.get(e.file);
+            if (source == null) continue;
+            Map<String, String> resolved = followAssignment(source, ref.trim(), 0);
+            if (resolved == null) continue;
+            e.fields.putAll(resolved);
+            if (resolved.containsKey("env")) consumed.add(e);
+        }
+        for (EdgeLedger.Edge call : consumed) {
+            for (EdgeLedger.Edge c : ledger.getEdges()) {
+                if ("config".equals(c.section) && c.file.equals(call.file)
+                        && call.fields.get("env").equals(c.fields.get("env"))) {
+                    c.fields.put("superseded", "true");
+                }
+            }
+        }
+    }
+
+    /** {@code env}/{@code envdefault} or {@code url} for a variable, following plain assignments; null if none. */
+    private static Map<String, String> followAssignment(String source, String name, int depth) {
+        if (depth > 3 || name.isEmpty()) return null;
+        java.util.regex.Matcher assign = java.util.regex.Pattern.compile(
+                "(?m)^\\s*" + java.util.regex.Pattern.quote(name) + "\\s*(?::\\s*[A-Za-z_][\\w\\[\\], ]*)?=\\s*(.+)$").matcher(source);
+        if (!assign.find()) return null;
+        String rhs = assign.group(1).trim();
+        Map<String, String> out = new LinkedHashMap<>();
+        java.util.regex.Matcher env = PY_GETENV.matcher(rhs);
+        if (env.find()) {
+            String envName = env.group(1) != null ? env.group(1) : env.group(3);
+            out.put("env", envName);
+            if (env.group(2) != null && !env.group(2).isBlank()) out.put("envdefault", env.group(2).trim());
+            return out;
+        }
+        java.util.regex.Matcher url = PY_URL_LITERAL.matcher(rhs);
+        if (url.find()) {
+            out.put("url", url.group(1));
+            return out;
+        }
+        // f"{OTHER}/path", OTHER + "/path", "{}/path".format(OTHER): one hop to OTHER.
+        // Inside string literals only an f-string interpolation {OTHER} is a reference.
+        String stripped = java.util.regex.Pattern.compile("[\"'][^\"']*[\"']").matcher(rhs).replaceAll(m -> {
+            java.util.regex.Matcher inner = java.util.regex.Pattern.compile("\\{([A-Za-z_][A-Za-z0-9_]*)").matcher(m.group());
+            return inner.find() ? " " + inner.group(1) + " " : " ";
+        });
+        java.util.regex.Matcher ident = PY_IDENT.matcher(stripped);
+        while (ident.find()) {
+            String candidate = ident.group(1);
+            if (candidate.equals(name) || candidate.equals("f") || candidate.equals("format") || candidate.equals("str")) continue;
+            Map<String, String> hop = followAssignment(source, candidate, depth + 1);
+            if (hop != null) return hop;
+        }
+        return null;
+    }
+
+    private static final java.util.regex.Pattern PY_DEF = java.util.regex.Pattern.compile("^(\\s*)(?:async\\s+)?def\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\(");
+    private static final java.util.regex.Pattern PY_ENV_ASSIGN = java.util.regex.Pattern.compile(
+            "^\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*(?::[^=]*)?=\\s*os\\.(?:getenv|environ)");
+
+    /** A Python function definition: where it is, and whether anything decorates it. */
+    private record PyDef(String file, String name, int start, int end, boolean decorated) {
+        boolean contains(String f, int line) {
+            return file.equals(f) && line >= start && line <= end;
+        }
+    }
+
+    /**
+     * Declared, not used — for Python. A function nothing in its module ever references
+     * (transitively: a function called only from such functions is as dead), and a
+     * module-level {@code NAME = os.getenv(…)} nothing live references, are declarations;
+     * the getenv and request rows inside them are marked {@code unreferenced} and draw no
+     * edge. The module is the nearest directory with a build marker, as for Java constants.
+     * A decorated function (a route handler, a scheduled job, an event hook) is live by
+     * definition — the framework calls it — and so is anything dunder/private-named, since
+     * those are called by protocol. AICS's user-service keeps a complete communicator for
+     * config-service whose only entry point nobody calls (2026-10-23).
+     */
+    private void markDeadPythonCode(Path root, EdgeLedger ledger, Map<String, String> sources) {
+        // Group files by module.
+        Map<String, List<String>> filesByModule = new LinkedHashMap<>();
+        for (String file : sources.keySet()) {
+            if (!file.endsWith(".py")) continue;
+            filesByModule.computeIfAbsent(moduleOf(root, file), k -> new ArrayList<>()).add(file);
+        }
+        int marked = 0;
+        for (Map.Entry<String, List<String>> module : filesByModule.entrySet()) {
+            List<PyDef> defs = new ArrayList<>();
+            Map<String, String[]> lines = new LinkedHashMap<>();
+            for (String file : module.getValue()) {
+                String[] ls = sources.get(file).split("\n", -1);
+                lines.put(file, ls);
+                for (int i = 0; i < ls.length; i++) {
+                    java.util.regex.Matcher m = PY_DEF.matcher(ls[i]);
+                    if (!m.find()) continue;
+                    int indent = m.group(1).length();
+                    int end = ls.length;
+                    for (int j = i + 1; j < ls.length; j++) {
+                        String t = ls[j];
+                        if (t.isBlank()) continue;
+                        int ind = t.length() - t.stripLeading().length();
+                        if (ind <= indent) {
+                            end = j;
+                            break;
+                        }
+                    }
+                    boolean decorated = false;
+                    for (int j = i - 1; j >= 0; j--) {
+                        if (ls[j].isBlank()) continue;
+                        decorated = ls[j].trim().startsWith("@");
+                        break;
+                    }
+                    defs.add(new PyDef(file, m.group(2), i + 1, end, decorated));
+                }
+            }
+            if (defs.isEmpty()) continue;
+
+            // Fixpoint: a def is live when referenced from a line outside every dead def.
+            Set<PyDef> dead = new java.util.HashSet<>();
+            for (PyDef d : defs) if (!d.decorated && !d.name.startsWith("_")) dead.add(d);
+            boolean changed = true;
+            while (changed) {
+                changed = false;
+                for (PyDef d : new ArrayList<>(dead)) {
+                    if (referencedFromLiveCode(d.name, d, lines, dead)) {
+                        dead.remove(d);
+                        changed = true;
+                    }
+                }
+            }
+            if (dead.isEmpty() && module.getValue().stream().noneMatch(f -> hasEnvAssignment(sources.get(f)))) continue;
+
+            for (EdgeLedger.Edge e : ledger.getEdges()) {
+                if (!("config".equals(e.section) || "http-client".equals(e.section))) continue;
+                if (!lines.containsKey(e.file) || e.line <= 0) continue;
+                boolean unreferenced = false;
+                for (PyDef d : dead) {
+                    if (d.contains(e.file, e.line)) {
+                        unreferenced = true;
+                        break;
+                    }
+                }
+                if (!unreferenced && "config".equals(e.section) && e.fields.containsKey("env")) {
+                    String[] ls = lines.get(e.file);
+                    if (e.line <= ls.length) {
+                        java.util.regex.Matcher m = PY_ENV_ASSIGN.matcher(ls[e.line - 1]);
+                        if (m.find()) {
+                            String var = m.group(1);
+                            boolean live = referencedFromLiveCode(var, new PyDef(e.file, var, e.line, e.line, false), lines, dead);
+                            if (!live) unreferenced = true;
+                        }
+                    }
+                }
+                if (unreferenced && !"true".equals(e.fields.get("unreferenced"))) {
+                    e.fields.put("unreferenced", "true");
+                    e.fields.put("dead-code", "python");
+                    marked++;
+                }
+            }
+        }
+        if (marked > 0) {
+            ledger.addWarning(marked + " Python getenv/request row(s) sit in code nothing calls, or read a variable "
+                    + "nothing uses; they are declared, not used, and drawn as no edge.");
+        }
+    }
+
+    private static boolean hasEnvAssignment(String source) {
+        for (String l : source.split("\n")) if (PY_ENV_ASSIGN.matcher(l).find()) return true;
+        return false;
+    }
+
+    /** Whether {@code name} occurs, outside its own declaration and outside every dead def, anywhere in the module. */
+    private static boolean referencedFromLiveCode(String name, PyDef self, Map<String, String[]> lines, Set<PyDef> dead) {
+        java.util.regex.Pattern ref = java.util.regex.Pattern.compile("\\b" + java.util.regex.Pattern.quote(name) + "\\b");
+        for (Map.Entry<String, String[]> f : lines.entrySet()) {
+            String[] ls = f.getValue();
+            for (int i = 0; i < ls.length; i++) {
+                int line = i + 1;
+                if (self.contains(f.getKey(), line)) continue; // its own body, or the declaration
+                String text = ls[i];
+                int hash = text.indexOf('#');
+                if (hash >= 0) text = text.substring(0, hash);
+                if (!ref.matcher(text).find()) continue;
+                boolean inDead = false;
+                for (PyDef d : dead) {
+                    if (d != self && d.contains(f.getKey(), line)) {
+                        inDead = true;
+                        break;
+                    }
+                }
+                if (!inDead) return true;
+            }
+        }
+        return false;
     }
 
     /**

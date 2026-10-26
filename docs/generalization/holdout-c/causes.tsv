@@ -1,0 +1,110 @@
+# 每條錯／漏的人工歸因（set C，round-1 快照 r1）。欄位：name<TAB>wrong|missed<TAB>edge<TAB>類別<TAB>說明
+# 類別：框架慣例（工具沒學過這個框架的寫法）／缺文法（語言沒有 tree-sitter pattern）／規則邊界（既有規則的已知邊界）／bug（規則本身不對）／truth 存疑
+# 2026-10-26 第三輪（規則 36–46）之後：每條歸因後面標了修它的規則號；標 [r3 仍在] 的是還在的（dev profile、瀏覽器導回網址、server_name、Next.js、Debezium，見 docs/generalization-2026-09-22.md §3c）。r2 之後才出現、r1 快照沒有的錯邊補在檔尾。
+# ---- run-aspnetcore-microservices ----
+# 核心發現：六個 compose 服務名都含點（catalog.api、basket.api、discount.grpc、ordering.api、shopping.web），工具把每個主機／名字都在第一個點截斷（ConfigExtractor.hostOf 第 490 行與 CodeGraphMerger 第 1676 行的「<svc>.<ns>.svc.cluster.local → <svc>」規則），
+# 節點變成 catalog/basket/discount/ordering/shopping；13 條畫的邊裡 11 條在改名後與參考邊集完全一致，所以 P=R=0.00 幾乎全是命名造成的。另外 2 條是 compose `hostname:` 別名。
+run-aspnetcore-microservices	wrong	basket -> basketdb	bug	compose 服務名 basket.api 被在點截斷成 basket（ConfigExtractor.hostOf:490、CodeGraphMerger:1676 的 k8s DNS 短名規則對任何含點的名字生效）；邊本身對（參考邊集 basket.api -> basketdb）　→ 規則 36（帶點名字不再截到第一段；保留 TLD 先判斷）
+run-aspnetcore-microservices	wrong	basket -> discount	bug	同上；discount.grpc → discount。邊本身對（basket.api -> discount.grpc，來源是 compose override 的 GrpcSettings__DiscountUrl=https://discount.grpc:8081）
+run-aspnetcore-microservices	wrong	basket -> distributedcache	bug	同上（basket.api 改名）；邊本身對　→ 規則 36（帶點名字不再截到第一段；保留 TLD 先判斷）
+run-aspnetcore-microservices	wrong	basket -> messagebroker	bug	同上（basket.api 改名）；邊本身對（來自 depends_on messagebroker）　→ 規則 36（帶點名字不再截到第一段；保留 TLD 先判斷）
+run-aspnetcore-microservices	wrong	catalog -> catalogdb	bug	同上（catalog.api → catalog）；邊本身對
+run-aspnetcore-microservices	wrong	ordering -> messagebroker	bug	同上（ordering.api → ordering）；邊本身對
+run-aspnetcore-microservices	wrong	ordering -> orderdb	bug	同上（ordering.api → ordering）；邊本身對
+run-aspnetcore-microservices	wrong	shopping -> yarpapigateway	bug	同上（shopping.web → shopping）；邊本身對（ApiSettings__GatewayAddress=http://yarpapigateway:8080）
+run-aspnetcore-microservices	wrong	yarpapigateway -> basket	bug	同上（目標 basket.api → basket）；邊本身對。注意來源是 compose depends_on，不是 appsettings.json 的 ReverseProxy.Clusters（C# JSON 設定沒解析）
+run-aspnetcore-microservices	wrong	yarpapigateway -> catalog	bug	同上（catalog.api → catalog）；邊本身對，來源同為 depends_on
+run-aspnetcore-microservices	wrong	yarpapigateway -> ordering	bug	同上（ordering.api → ordering）；邊本身對，來源同為 depends_on
+run-aspnetcore-microservices	wrong	basket -> ecommerce-mq	規則邊界	src/docker-compose.override.yml:45 `hostname: ecommerce-mq` 是 messagebroker 的容器主機名；:77 MessageBroker__Host=amqp://ecommerce-mq:5672 用的是這個別名。工具不讀 compose 的 hostname: 鍵，別名變成獨立節點（與 mall-swarm 的 external_links 別名同一家族）　→ 規則 37（hostname: 全域別名）
+run-aspnetcore-microservices	wrong	ordering -> ecommerce-mq	規則邊界	同上（:111）　→ 規則 37
+run-aspnetcore-microservices	missed	basket.api -> discount.grpc	bug	畫成 basket -> discount（名字在點截斷，見上）　→ 規則 36 ＋ 44（Basket.API ↔ basket.api）＋ 40（documented）
+run-aspnetcore-microservices	missed	shopping.web -> yarpapigateway	bug	畫成 shopping -> yarpapigateway　→ 規則 36 ＋ 44 ＋ 40
+run-aspnetcore-microservices	missed	catalog.api -> catalogdb	bug	畫成 catalog -> catalogdb　→ 規則 36 ＋ 39（連線字串＝資料庫）＋ 40
+run-aspnetcore-microservices	missed	basket.api -> basketdb	bug	畫成 basket -> basketdb　→ 規則 36 ＋ 39 ＋ 40
+run-aspnetcore-microservices	missed	basket.api -> distributedcache	bug	畫成 basket -> distributedcache　→ 規則 36 ＋ 39 ＋ 40
+run-aspnetcore-microservices	missed	basket.api -> messagebroker	bug	畫成 basket -> messagebroker（另外多畫了 basket -> ecommerce-mq）　→ 規則 36 ＋ 37 ＋ 39（amqp://＝broker）
+run-aspnetcore-microservices	missed	ordering.api -> orderdb	bug	畫成 ordering -> orderdb　→ 規則 36 ＋ 39 ＋ 40
+run-aspnetcore-microservices	missed	ordering.api -> messagebroker	bug	畫成 ordering -> messagebroker　→ 規則 36 ＋ 37 ＋ 39
+run-aspnetcore-microservices	missed	yarpapigateway -> catalog.api	bug	畫成 yarpapigateway -> catalog　→ 規則 36 ＋ 38（YARP 路由表）
+run-aspnetcore-microservices	missed	yarpapigateway -> basket.api	bug	畫成 yarpapigateway -> basket　→ 規則 36 ＋ 38
+run-aspnetcore-microservices	missed	yarpapigateway -> ordering.api	bug	畫成 yarpapigateway -> ordering　→ 規則 36 ＋ 38
+# ---- yas ----
+# 三個主因：(1) 服務間位址 compose 只寫鍵名 `- YAS_SERVICES_X`、值在 .env（unresolved 列出 `null => http://product/product @ .env:-1`），與第一組 hold-out 的 shipping -> quote 同一邊界，17 條 business 邊因此全漏；
+# (2) application.properties 的預設 http://api.yas.local/<svc> 是 nginx 的 server_name（虛擬主機），hostOf 在點截斷成 api，長出一個假節點 api 與 15 條假邊；
+# (3) Maven 模組名 backoffice-bff／storefront-bff 與 compose 服務名 backoffice／storefront 不同，工具有提出別名問題但 probe 沒答，8 條邊各算一錯一漏。
+yas	wrong	backoffice -> storefront	規則邊界	automation-ui/backoffice/src/main/resources/application.properties:2 app.url=http://storefront/ 是 Selenium 自動化測試專案（automation-ui）的設定，它的子模組目錄剛好叫 backoffice／storefront，撞到 compose 服務名；TEST_DIR 規則只認結尾 test(s)/e2e/spec 的目錄名，不認 automation-ui　→ 規則 42（automation-ui 是測試樹）
+yas	wrong	backoffice-bff -> api	規則邊界	api＝http://api.yas.local 在第一個點截斷（hostOf:490）；api.yas.local 是 nginx/templates/default.conf.template:2 的 server_name，不是 workload。另外來源是 application-dev.yaml（dev profile）　→ 規則 36（帶點名字不再截到第一段；保留 TLD 先判斷）
+yas	wrong	backoffice-bff -> backoffice-nextjs	規則邊界	邊對（參考邊集 backoffice -> backoffice-nextjs），但來源用了 Maven 模組名 backoffice-bff 而不是 compose 服務名 backoffice（docker-compose.yml:30–32 build: ./backoffice-bff）；工具有提出別名問題（alias questions：backoffice-bff ≈ backoffice），probe 沒答　→ 規則 44（build: ./backoffice-bff ＝ backoffice）
+yas	wrong	backoffice-bff -> identity	規則邊界	同上（別名未答）；邊本身對　→ 規則 44
+yas	wrong	backoffice-bff -> nginx	規則邊界	同上（別名未答）；邊本身對　→ 規則 44
+yas	wrong	backoffice-bff -> order	規則邊界	backoffice-bff/src/main/resources/application-dev.yaml:11 的 dev 路由 uri: http://localhost:8085（註解寫「local development should not be committed」），loopback 埠號反查到 server.port=8085 的 order 模組（inferred）；dev profile 與 prod profile 被一視同仁　→ [r3 仍在，現為 backoffice -> order] dev profile 的 localhost:8085 由規則 15 讀回 order；是否排除 dev／local profile 記為待決
+yas	wrong	backoffice-bff -> redis	規則邊界	同別名未答；邊本身對（backoffice -> redis）　→ 規則 44
+yas	wrong	cart -> api	規則邊界	cart/src/main/resources/application.properties:10–11 yas.services.*=http://api.yas.local/… 的預設值；compose 覆蓋值在 .env 沒接上（見漏的 cart -> product），假節點 api 取代了真目標　→ r2 規則 24（.env 轉發）已修；餘下的 api.yas.local 由規則 36 整個丟掉
+yas	wrong	common-library -> identity	規則邊界	common-library 是共用程式庫模組（被各服務當 dependency），不是 workload；它的 application.properties 只給自己的測試用。工具把任何有 pom.xml＋application.properties 的目錄當服務根　→ 規則 41（JVM 函式庫不是服務）
+yas	wrong	customer -> api	規則邊界	同 cart -> api（customer/src/main/resources/application.properties:15）　→ r2 規則 24（.env 轉發）已修
+yas	wrong	delivery -> identity	bug	delivery 沒有任何 manifest，而且 delivery/src/main/resources/application.properties 裡指到 identity 的只有 :10–11 springdoc.oauthflow.authorization-url/token-url——Swagger UI 瀏覽器端的 OAuth 流程網址，不是服務呼叫（沒有 issuer-uri、pom 沒有 oauth2 依賴）；與 mall-swarm 的 SpringDocConfig URL 同一類假邊　→ 規則 43（springdoc.* 不是呼叫）
+yas	wrong	inventory -> api	規則邊界	同 cart -> api（inventory/src/main/resources/application.properties:15–16）　→ r2 規則 24（.env 轉發）已修
+yas	wrong	kafka-ui -> kafka-connect	規則邊界	只有 docker-compose.yml:592 depends_on；kafka-ui 沒有任何指到 kafka-connect 的設定（KAFKA_CLUSTERS_0_KAFKACONNECT_* 不存在）。depends_on 是啟動順序不是呼叫　→ r2 規則 35（depends_on 分級）已修
+yas	wrong	media -> api	規則邊界	yaslocal.yaml:287 YAS_PUBLIC_URL=http://api.yas.local/media 是 media 自己對外的公開網址（給回傳 URL 用），不是呼叫；又被截成 api　→ 規則 36（帶點名字不再截到第一段；保留 TLD 先判斷）
+yas	wrong	order -> api	規則邊界	同 cart -> api（order/src/main/resources/application.properties:14–18；其中 promotion 連 compose 都沒覆蓋）　→ r2 規則 24（.env 轉發）已修
+yas	wrong	payment -> api	規則邊界	來源是整合測試 payment/src/it/java/com/yas/payment/service/MediaServiceIT.java:42 的字串 "http://api.yas.local/medias"；src/it（Maven failsafe 慣例）不在排除規則裡，TEST_DIR 只認目錄名結尾 test(s)　→ 規則 42（src/it 是測試樹）
+yas	wrong	payment -> storefront	規則邊界	payment/src/it/resources/application.properties:11（main 的 :17 同）yas.public.url=http://storefront/complete-payment 是付款完成後把瀏覽器導回 storefront 的網址，不是 payment 發出的呼叫；鍵名以 .url 結尾就被收　→ [r3 仍在] yas.public.url 是瀏覽器導回網址；main 的 application.properties 也有同一行，規則 42 只拿掉 src/it 那份
+yas	wrong	payment-paypal -> storefront	規則邊界	payment-paypal/src/main/java/com/yas/payment/paypal/service/PaypalService.java:34 @Value("${yas.public.url}/capture") 是交給 PayPal 的 return_url／cancel_url（瀏覽器導回），同上；且 payment-paypal 只在 Helm 有　→ [r3 仍在] 同上（@Value 的 return_url）
+yas	wrong	product -> api	規則邊界	同 cart -> api（product/src/main/resources/application.properties:15–16）　→ r2 規則 24（.env 轉發）已修
+yas	wrong	promotion -> api	規則邊界	同 cart -> api（promotion/src/main/resources/application.properties:15）　→ r2 規則 24（.env 轉發）已修
+yas	wrong	rating -> api	規則邊界	同 cart -> api（rating/src/main/resources/application.properties:15–17）　→ r2 規則 24（.env 轉發）已修
+yas	wrong	recommendation -> api	規則邊界	同 cart -> api，且來源是 recommendation/src/it/resources（整合測試資源）；recommendation 只在 Helm 有　→ r2 規則 24（.env 轉發）已修；src/it 那份由規則 42 拿掉
+yas	wrong	search -> api	規則邊界	同 cart -> api，來源是 search/src/it/resources/application.properties（整合測試資源）　→ 規則 42（src/it）
+yas	wrong	storefront-bff -> api	規則邊界	同 backoffice-bff -> api（storefront-bff/src/main/resources/application-dev.yaml:18）　→ 規則 36（帶點名字不再截到第一段；保留 TLD 先判斷）
+yas	wrong	storefront-bff -> identity	規則邊界	別名未答（storefront-bff ≈ storefront）；邊本身對　→ 規則 44
+yas	wrong	storefront-bff -> nginx	規則邊界	別名未答；邊本身對　→ 規則 44
+yas	wrong	storefront-bff -> payment	規則邊界	storefront-bff/src/main/resources/application-dev.yaml:11 dev 路由 http://localhost:8081 → server.port=8081 的 payment（inferred），同 backoffice-bff -> order
+yas	wrong	storefront-bff -> redis	規則邊界	別名未答；邊本身對　→ 規則 44
+yas	wrong	storefront-bff -> storefront-nextjs	規則邊界	別名未答；邊本身對　→ 規則 44
+yas	wrong	swagger-ui -> api	規則邊界	yaslocal.yaml:253 URLS=[{ url: 'http://api.yas.local/product/v3/api-docs' …}] 是 Swagger UI 在瀏覽器端載入的 OpenAPI 文件網址，不是容器發出的呼叫；又被截成 api　→ 規則 36（帶點名字不再截到第一段；保留 TLD 先判斷）
+yas	wrong	tax -> api	規則邊界	同 cart -> api（tax/src/main/resources/application.properties:14）　→ r2 規則 24（.env 轉發）已修
+yas	wrong	webhook -> api	規則邊界	webhook/src/main/resources/application.properties:14 yas.services.webhook=http://api.yas.local/webhook 是 webhook 自己的公開網址；截成 api；webhook 只在 Helm 有　→ 規則 36（帶點名字不再截到第一段；保留 TLD 先判斷）
+yas	missed	cart -> product	規則邊界	docker-compose.yml:189 只寫 `- YAS_SERVICES_PRODUCT`（鍵名），值在 .env:74；ConfigExtractor.extractComposeEnvironment 只收 K=V 形式，.env 讀進來的列沒有來源服務（unresolved：`null => http://product/product @ .env:-1`）。與第一組 hold-out 的 shipping -> quote、load-generator -> frontend-proxy 同一邊界；application.properties 的預設值則被畫成 cart -> api　→ r2 規則 24（.env 轉發）已修
+yas	missed	customer -> location	規則邊界	同上（docker-compose.yml:161；.env:78）　→ r2 規則 24（.env 轉發）已修
+yas	missed	inventory -> product	規則邊界	同上（docker-compose.yml:338）　→ r2 規則 24（.env 轉發）已修
+yas	missed	inventory -> location	規則邊界	同上（docker-compose.yml:339）　→ r2 規則 24（.env 轉發）已修
+yas	missed	order -> cart	規則邊界	同上（docker-compose.yml:250）　→ r2 規則 24（.env 轉發）已修
+yas	missed	order -> customer	規則邊界	同上（docker-compose.yml:251）　→ r2 規則 24（.env 轉發）已修
+yas	missed	order -> product	規則邊界	同上（docker-compose.yml:252）　→ r2 規則 24（.env 轉發）已修
+yas	missed	order -> tax	規則邊界	同上（docker-compose.yml:253）　→ r2 規則 24（.env 轉發）已修
+yas	missed	order -> promotion	規則邊界	compose 連鍵名都沒傳，值停在 order/src/main/resources/application.properties:18 http://api.yas.local/promotion；要畫到得知道 api.yas.local 是 nginx 的 server_name 再沿 nginx 的 /promotion/ 路由走，工具沒有 server_name 規則　→ [r3 仍在] 要認得 nginx server_name 當虛擬主機；刻意不做
+yas	missed	payment -> order	規則邊界	同 cart -> product（docker-compose.yml:280）　→ r2 規則 24（.env 轉發）已修
+yas	missed	payment -> media	規則邊界	同上（docker-compose.yml:281）　→ r2 規則 24（.env 轉發）已修
+yas	missed	promotion -> product	規則邊界	同上（docker-compose.yml:367）　→ r2 規則 24（.env 轉發）已修
+yas	missed	rating -> customer	規則邊界	同上（docker-compose.yml:218）　→ r2 規則 24（.env 轉發）已修
+yas	missed	rating -> order	規則邊界	同上（docker-compose.yml:219）　→ r2 規則 24（.env 轉發）已修
+yas	missed	search -> product	規則邊界	同上（docker-compose.search.yml:11）　→ r2 規則 24（.env 轉發）已修
+yas	missed	tax -> location	規則邊界	同上（docker-compose.yml:395）　→ r2 規則 24（.env 轉發）已修
+yas	missed	storefront-nextjs -> storefront	缺文法	Next.js（TypeScript）沒有 pattern（stacks 顯示 javascript LLM tier skipped）；位址 API_BASE_PATH=http://storefront/api 在 storefront/.env.production:1，也不是工具會讀的檔　→ [r3 仍在] Next.js／TypeScript 沒有文法；刻意不做
+yas	missed	order -> postgres	規則邊界	docker-compose.yml:244 SPRING_DATASOURCE_URL=jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/order 用 compose 變數內插（值在 .env:41–42）；hostOf 遇到 $ 回 null。其他 11 個服務寫死 postgres:5432 就都畫到了　→ r2 規則 24（.env 轉發）已修
+yas	missed	identity -> postgres	規則邊界	docker-compose.yml:21 KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak（mapping 形式 environment）沒畫出；工具改畫了 keycloak -> postgres（yaslocal.yaml:378 的過時 k8s Deployment）。推測：yaslocal.yaml 的 Service identity（selector app: keycloak）＋ Deployment keycloak 讓 identity 被當成 k8s 定義的 workload，compose 的 environment 沒有接到 identity 上　→ r3 非規則修正：compose 服務不在 k8s 詞彙表時仍是自己 environment 的來源
+yas	missed	backoffice -> redis	規則邊界	畫成 backoffice-bff -> redis（別名未答）　→ 規則 44
+yas	missed	storefront -> redis	規則邊界	畫成 storefront-bff -> redis（別名未答）　→ 規則 44
+yas	missed	search -> elasticsearch	規則邊界	search/src/main/resources/application.properties:1 elasticsearch.url=elasticsearch——值是裸主機名（沒有 scheme 也沒有 port），addressHost 只收 address-shaped 的值或 _HOST/_URL 這類環境變數名；鍵名 elasticsearch.url 兩邊都不符（與 mall-swarm 的 aliyun.oss.endpoint 同形）　→ 規則 45（.url 鍵下的裸單字是 compose 宣告的服務）
+yas	missed	search -> kafka	bug	search/src/main/resources/application.properties:28 spring.kafka.consumer.bootstrap-servers=kafka:9092 符合 isRelevant（spring.kafka 前綴）且值 address-shaped，卻沒有畫成 search -> kafka；工具反而去解 @KafkaListener 的 topics="${product.topic.name}"（unresolved 列出），而同一個 properties 檔的 :30 就有 product.topic.name。webhook 的 spring.kafka.bootstrap-servers=kafka:9092 同樣沒畫（variant）　→ r2（規則 27／30 一併修好；r2 已畫出）
+yas	missed	kafka-connect -> postgres	框架慣例	Debezium source connector 的設定是 kafka/connects/debezium-*.json 的 database.hostname（由 start-source-connectors.sh 用 curl PUT 進 kafka-connect），不是任何工具認得的設定檔格式　→ [r3 仍在] Debezium connector JSON；刻意不做
+yas	missed	nginx -> search	規則邊界	nginx/templates/default.conf.template:42–43 `set $docker_search_host "search"; proxy_pass http://$docker_search_host;`——nginx 變數間接（為了避免啟動時解析不到），PROXY_DIRECTIVE 收到的是 $docker_search_host（unresolved 有列）　→ 規則 46（nginx set $var）
+yas	missed	nginx -> elasticsearch	規則邊界	同上（:116–117 $docker_elasticsearch_host）　→ 規則 46
+yas	missed	backoffice -> nginx	規則邊界	畫成 backoffice-bff -> nginx（別名未答）。compose 的 build: ./backoffice-bff ＋ image yas-backoffice-bff 其實已經把模組目錄接到服務名 backoffice　→ 規則 44
+yas	missed	backoffice -> backoffice-nextjs	規則邊界	畫成 backoffice-bff -> backoffice-nextjs（別名未答）　→ 規則 44
+yas	missed	storefront -> nginx	規則邊界	畫成 storefront-bff -> nginx（別名未答）　→ 規則 44
+yas	missed	storefront -> storefront-nextjs	規則邊界	畫成 storefront-bff -> storefront-nextjs（別名未答）　→ 規則 44
+yas	missed	backoffice -> identity	規則邊界	畫成 backoffice-bff -> identity（別名未答）　→ 規則 44
+yas	missed	storefront -> identity	規則邊界	畫成 storefront-bff -> identity（別名未答）　→ 規則 44
+# ---- yas：r2 才出現（規則 24 把 .env 轉發的位址接上之後）、r3 仍在的錯邊 ----
+yas	wrong	storefront -> cart	truth 存疑	docker-compose.yml:66–75 把 YAS_SERVICES_* 傳給 storefront（-bff），application.yaml 也宣告 yas.services.*，但 BFF 程式碼沒有任何 RestClient／WebClient 呼叫（只有 Gateway 路由）；規則 14 把 workload 自己 env 裡的服務位址畫成 inferred。參考邊集作者自註「工具若從 manifest 畫出來算錯」　→ [r3 仍在] 規則 14 的邊界
+yas	wrong	storefront -> customer	truth 存疑	docker-compose.yml:66–75 把 YAS_SERVICES_* 傳給 storefront（-bff），application.yaml 也宣告 yas.services.*，但 BFF 程式碼沒有任何 RestClient／WebClient 呼叫（只有 Gateway 路由）；規則 14 把 workload 自己 env 裡的服務位址畫成 inferred。參考邊集作者自註「工具若從 manifest 畫出來算錯」　→ [r3 仍在] 規則 14 的邊界
+yas	wrong	storefront -> inventory	truth 存疑	docker-compose.yml:66–75 把 YAS_SERVICES_* 傳給 storefront（-bff），application.yaml 也宣告 yas.services.*，但 BFF 程式碼沒有任何 RestClient／WebClient 呼叫（只有 Gateway 路由）；規則 14 把 workload 自己 env 裡的服務位址畫成 inferred。參考邊集作者自註「工具若從 manifest 畫出來算錯」　→ [r3 仍在] 規則 14 的邊界
+yas	wrong	storefront -> location	truth 存疑	docker-compose.yml:66–75 把 YAS_SERVICES_* 傳給 storefront（-bff），application.yaml 也宣告 yas.services.*，但 BFF 程式碼沒有任何 RestClient／WebClient 呼叫（只有 Gateway 路由）；規則 14 把 workload 自己 env 裡的服務位址畫成 inferred。參考邊集作者自註「工具若從 manifest 畫出來算錯」　→ [r3 仍在] 規則 14 的邊界
+yas	wrong	storefront -> order	truth 存疑	docker-compose.yml:66–75 把 YAS_SERVICES_* 傳給 storefront（-bff），application.yaml 也宣告 yas.services.*，但 BFF 程式碼沒有任何 RestClient／WebClient 呼叫（只有 Gateway 路由）；規則 14 把 workload 自己 env 裡的服務位址畫成 inferred。參考邊集作者自註「工具若從 manifest 畫出來算錯」　→ [r3 仍在] 規則 14 的邊界
+yas	wrong	storefront -> promotion	truth 存疑	docker-compose.yml:66–75 把 YAS_SERVICES_* 傳給 storefront（-bff），application.yaml 也宣告 yas.services.*，但 BFF 程式碼沒有任何 RestClient／WebClient 呼叫（只有 Gateway 路由）；規則 14 把 workload 自己 env 裡的服務位址畫成 inferred。參考邊集作者自註「工具若從 manifest 畫出來算錯」　→ [r3 仍在] 規則 14 的邊界
+yas	wrong	storefront -> rating	truth 存疑	docker-compose.yml:66–75 把 YAS_SERVICES_* 傳給 storefront（-bff），application.yaml 也宣告 yas.services.*，但 BFF 程式碼沒有任何 RestClient／WebClient 呼叫（只有 Gateway 路由）；規則 14 把 workload 自己 env 裡的服務位址畫成 inferred。參考邊集作者自註「工具若從 manifest 畫出來算錯」　→ [r3 仍在] 規則 14 的邊界
+yas	wrong	storefront -> sampledata	truth 存疑	docker-compose.yml:66–75 把 YAS_SERVICES_* 傳給 storefront（-bff），application.yaml 也宣告 yas.services.*，但 BFF 程式碼沒有任何 RestClient／WebClient 呼叫（只有 Gateway 路由）；規則 14 把 workload 自己 env 裡的服務位址畫成 inferred。參考邊集作者自註「工具若從 manifest 畫出來算錯」　→ [r3 仍在] 規則 14 的邊界
+yas	wrong	storefront -> tax	truth 存疑	docker-compose.yml:66–75 把 YAS_SERVICES_* 傳給 storefront（-bff），application.yaml 也宣告 yas.services.*，但 BFF 程式碼沒有任何 RestClient／WebClient 呼叫（只有 Gateway 路由）；規則 14 把 workload 自己 env 裡的服務位址畫成 inferred。參考邊集作者自註「工具若從 manifest 畫出來算錯」　→ [r3 仍在] 規則 14 的邊界
+yas	wrong	cart -> media	truth 存疑	docker-compose.yml:190 YAS_SERVICES_MEDIA 傳給 cart，cart 程式碼不呼叫 media　→ [r3 仍在] 規則 14 的邊界
+yas	wrong	rating -> product	truth 存疑	docker-compose.yml:220 YAS_SERVICES_PRODUCT 傳給 rating，rating 程式碼不呼叫 product　→ [r3 仍在] 規則 14 的邊界

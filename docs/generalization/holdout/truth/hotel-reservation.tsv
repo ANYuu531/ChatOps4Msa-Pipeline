@@ -1,0 +1,51 @@
+# delimitrou/DeathStarBench @ 6ecb09706140f8730b5385c08f1386c654c3c526（2024-06-27），只看 hotelReservation/ 子目錄；出處路徑相對 hotelReservation/。
+# 節點名＝kubernetes/*/*-service.yaml 的名字（frontend、search、geo、profile、rate、recommendation、reservation、user、consul、jaeger、mongodb-*、memcached-*）。
+# review 與 attractions 兩個服務只在 docker-compose.yml 有（kubernetes/ 沒有），但 frontend 啟動時無條件要連它們（services/frontend/server.go:84、:88），所以照 compose 的名字列入正式邊。
+# 服務間呼叫全部是 gRPC，目標寫成 Consul 服務名 "srv-<x>"（dialer/dialer.go:33 Dial(name) 經 Consul 解析），程式碼裡沒有主機名；資料庫／快取位址集中在 config.json（Dockerfile 把它 COPY 進映像，k8s manifest 不帶位址）。
+# 遙測（每個服務 → jaeger）沿既有慣例列 variant。
+#
+# ---- business ----
+frontend	search	business	services/frontend/server.go:64 initSearchClient("srv-search") → dialer.Dial 經 Consul 解析
+frontend	profile	business	services/frontend/server.go:68 initProfileClient("srv-profile")
+frontend	recommendation	business	services/frontend/server.go:72 initRecommendationClient("srv-recommendation")
+frontend	user	business	services/frontend/server.go:76 initUserClient("srv-user")
+frontend	reservation	business	services/frontend/server.go:80 initReservation("srv-reservation")
+frontend	review	business	services/frontend/server.go:84 initReviewClient("srv-review")
+frontend	attractions	business	services/frontend/server.go:88 initAttractionsClient("srv-attractions")
+search	geo	business	services/search/server.go:70 initGeoClient("srv-geo")
+search	rate	business	services/search/server.go:73 initRateClient("srv-rate")
+# ---- data ----
+geo	mongodb-geo	data	cmd/geo/main.go:37 initializeDatabase(result["GeoMongoAddress"])（config.json GeoMongoAddress: mongodb-geo:27017）
+profile	mongodb-profile	data	cmd/profile/main.go:37 initializeDatabase(result["ProfileMongoAddress"])（config.json mongodb-profile:27017）
+profile	memcached-profile	data	cmd/profile/main.go:42 tune.NewMemCClient2(result["ProfileMemcAddress"])（config.json memcached-profile:11211）
+rate	mongodb-rate	data	cmd/rate/main.go:38 initializeDatabase(result["RateMongoAddress"])（config.json mongodb-rate:27017）
+rate	memcached-rate	data	cmd/rate/main.go:43 tune.NewMemCClient2(result["RateMemcAddress"])（config.json memcached-rate:11211）
+recommendation	mongodb-recommendation	data	cmd/recommendation/main.go:38 initializeDatabase(result["RecommendMongoAddress"])（config.json mongodb-recommendation:27017）
+reservation	mongodb-reservation	data	cmd/reservation/main.go:37 initializeDatabase(result["ReserveMongoAddress"])（config.json mongodb-reservation:27017）
+reservation	memcached-reserve	data	cmd/reservation/main.go:42 tune.NewMemCClient2(result["ReserveMemcAddress"])（config.json memcached-reserve:11211）
+user	mongodb-user	data	cmd/user/main.go:38 initializeDatabase(result["UserMongoAddress"])（config.json mongodb-user:27017）
+review	mongodb-review	data	cmd/review/main.go:41 initializeDatabase(result["ReviewMongoAddress"])（config.json mongodb-review:27017；只在 docker-compose.yml）
+review	memcached-review	data	cmd/review/main.go:50 tune.NewMemCClient2(result["ReviewMemcAddress"])（config.json memcached-review:11211；只在 docker-compose.yml）
+attractions	mongodb-attractions	data	cmd/attractions/main.go:41 initializeDatabase(result["AttractionsMongoAddress"])（config.json mongodb-attractions:27017；只在 docker-compose.yml）
+# ---- control：Consul 註冊／解析 ----
+frontend	consul	control	cmd/frontend/main.go:52 registry.NewClient(*consulAddr)（config.json consulAddress: consul:8500）
+search	consul	control	cmd/search/main.go:55 registry.NewClient(*consulAddr)
+geo	consul	control	cmd/geo/main.go:57 registry.NewClient(*consulAddr)
+profile	consul	control	cmd/profile/main.go:62 registry.NewClient(*consulAddr)
+rate	consul	control	cmd/rate/main.go:63 registry.NewClient(*consulAddr)
+recommendation	consul	control	cmd/recommendation/main.go:58 registry.NewClient(*consulAddr)
+reservation	consul	control	cmd/reservation/main.go:62 registry.NewClient(*consulAddr)
+user	consul	control	cmd/user/main.go:58 registry.NewClient(*consulAddr)
+review	consul	control	cmd/review/main.go:74 registry.NewClient(*consuladdr)
+attractions	consul	control	cmd/attractions/main.go:74 registry.NewClient(*consuladdr)
+# ---- variant：遙測 ----
+frontend	jaeger	variant	cmd/frontend/main.go:45 tracing.Init("frontend", *jaegerAddr)（config.json jaegerAddress: jaeger:6831）
+search	jaeger	variant	cmd/search/main.go:48 tracing.Init
+geo	jaeger	variant	cmd/geo/main.go:50 tracing.Init
+profile	jaeger	variant	cmd/profile/main.go:55 tracing.Init
+rate	jaeger	variant	cmd/rate/main.go:56 tracing.Init
+recommendation	jaeger	variant	cmd/recommendation/main.go:51 tracing.Init
+reservation	jaeger	variant	cmd/reservation/main.go:55 tracing.Init
+user	jaeger	variant	cmd/user/main.go:51 tracing.Init
+review	jaeger	variant	cmd/review/main.go:67 tracing.Init
+attractions	jaeger	variant	cmd/attractions/main.go:67 tracing.Init

@@ -8,6 +8,7 @@
 ; ---------- Synchronous HTTP clients ----------
 
 ; requests.get("http://inventory:8000/stock"), httpx.post(...), session.get(...)
+; The literal must look like a URL or a path: a verb name or a dict key is not one.
 ((call
    function: (attribute
      object: (identifier) @_recv
@@ -15,13 +16,75 @@
    arguments: (argument_list . (string (string_content) @http-client.url)))
  (#match? @_recv "(?i)(requests|httpx|aiohttp|session|client|http)")
  (#any-of? @http-client.method
-   "get" "post" "put" "delete" "patch" "head" "options" "request" "stream"))
+   "get" "post" "put" "delete" "patch" "head" "options" "stream")
+ (#match? @http-client.url "^(https?://|/)"))
 
-; urlopen("http://..."), requests.request("GET", "http://...")
+; requests.request("GET", "http://..."): the first positional argument is the HTTP
+; method, the URL is the second. Read as the first, "GET" became a service node (2026-10-23).
+((call
+   function: (attribute
+     object: (identifier) @_recv
+     attribute: (identifier) @http-client.method)
+   arguments: (argument_list . (string) . (string (string_content) @http-client.url)))
+ (#match? @_recv "(?i)(requests|httpx|aiohttp|session|client|http)")
+ (#eq? @http-client.method "request")
+ (#match? @http-client.url "^(https?://|/)"))
+
+; urlopen("http://...")
 ((call
    function: (identifier) @_f
    arguments: (argument_list . (string (string_content) @http-client.url)))
  (#any-of? @_f "urlopen" "urlretrieve"))
+
+; ---------- HTTP calls whose URL is a variable (resolved by TreeSitterExtractor) ----------
+; requests.get(req_url) / requests.get(url=req_url) / requests.get(f"{PREFIX}/path") /
+; requests.get(url=f"{PREFIX}/path") / requests.get(PREFIX + "/path"). Only the variable
+; name is captured (http-client.urlref); the extractor follows it through the file's own
+; assignments to a getenv(...) or a URL literal, so the call site — not the getenv line —
+; is where the edge is read from. A reference nothing resolves yields no edge.
+((call
+   function: (attribute
+     object: (identifier) @_recv
+     attribute: (identifier) @http-client.method)
+   arguments: (argument_list . (identifier) @http-client.urlref))
+ (#match? @_recv "(?i)^(requests|httpx|session|client|http)$")
+ (#any-of? @http-client.method "get" "post" "put" "delete" "patch" "head" "options"))
+
+((call
+   function: (attribute
+     object: (identifier) @_recv
+     attribute: (identifier) @http-client.method)
+   arguments: (argument_list
+     (keyword_argument name: (identifier) @_k value: (identifier) @http-client.urlref)))
+ (#match? @_recv "(?i)^(requests|httpx|session|client|http)$")
+ (#any-of? @http-client.method "get" "post" "put" "delete" "patch" "head" "options")
+ (#eq? @_k "url"))
+
+((call
+   function: (attribute
+     object: (identifier) @_recv
+     attribute: (identifier) @http-client.method)
+   arguments: (argument_list . (string (interpolation (identifier) @http-client.urlref))))
+ (#match? @_recv "(?i)^(requests|httpx|session|client|http)$")
+ (#any-of? @http-client.method "get" "post" "put" "delete" "patch" "head" "options"))
+
+((call
+   function: (attribute
+     object: (identifier) @_recv
+     attribute: (identifier) @http-client.method)
+   arguments: (argument_list
+     (keyword_argument name: (identifier) @_k value: (string (interpolation (identifier) @http-client.urlref)))))
+ (#match? @_recv "(?i)^(requests|httpx|session|client|http)$")
+ (#any-of? @http-client.method "get" "post" "put" "delete" "patch" "head" "options")
+ (#eq? @_k "url"))
+
+((call
+   function: (attribute
+     object: (identifier) @_recv
+     attribute: (identifier) @http-client.method)
+   arguments: (argument_list . (binary_operator left: (identifier) @http-client.urlref)))
+ (#match? @_recv "(?i)^(requests|httpx|session|client|http)$")
+ (#any-of? @http-client.method "get" "post" "put" "delete" "patch" "head" "options"))
 
 ; ---------- Kafka ----------
 
