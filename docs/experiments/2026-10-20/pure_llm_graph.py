@@ -53,6 +53,28 @@ PROJECTS = {
     "robot-shop": ("robot-shop", "instana/robot-shop"),
 }
 
+# --set holdout：兩組 hold-out 系統（規則歸納前選定，見 docs/generalization/holdout{,-c}/heads.tsv）。
+# 每項：(checkout 目錄, GitHub repo, 參考邊集, DepWeaver 靜態層輸出)；路徑相對 repo 根目錄。
+HOLDOUT = {
+    "opentelemetry-demo": ("opentelemetry-demo", "open-telemetry/opentelemetry-demo",
+                           "docs/generalization/holdout/truth/opentelemetry-demo.tsv", "docs/generalization/holdout/opentelemetry-demo.r3.summary.md"),
+    "mall-swarm": ("mall-swarm", "macrozheng/mall-swarm",
+                   "docs/generalization/holdout/truth/mall-swarm.tsv", "docs/generalization/holdout/mall-swarm.r3.summary.md"),
+    "hotel-reservation": ("DeathStarBench/hotelReservation", "delimitrou/DeathStarBench (hotelReservation/)",
+                          "docs/generalization/holdout/truth/hotel-reservation.tsv", "docs/generalization/holdout/hotel-reservation.r3.summary.md"),
+    "yas": ("yas", "nashtech-garage/yas",
+            "docs/generalization/holdout-c/truth/yas.tsv", "docs/generalization/holdout-c/yas.r3.summary.md"),
+    "run-aspnetcore-microservices": ("run-aspnetcore-microservices", "aspnetrun/run-aspnetcore-microservices",
+                                     "docs/generalization/holdout-c/truth/run-aspnetcore-microservices.tsv", "docs/generalization/holdout-c/run-aspnetcore-microservices.r3.summary.md"),
+}
+# --set aics：私有系統，參考邊集與輸出都在 --aics-dir（預設 ~/Documents/aics-eval），不進 git。
+AICS = {
+    "aics": ("aics", "NewKnowledge2022 (private, 13 repos)", "truth/aics.tsv", "out/2026-10-26-r3/aics.summary.md"),
+}
+DEFAULT_PROJECTS = list(PROJECTS)
+TRUTH_PATHS = {}    # name -> Path，--set 時填入
+SUMMARY_PATHS = {}
+
 # ---- 預算（寫死在程式裡，結果檔會原樣印出，審稿人看得到） ----
 BUDGET = {
     "descriptor_bytes": 300_000,  # 部署描述檔＋設定檔，整檔給（超過就截斷）
@@ -86,7 +108,7 @@ CLASS_TEXT = (
 # ---------------------------------------------------------------- truth
 def read_truth(name: str):
     rows = []
-    with open(TRUTH_DIR / f"{name}.tsv", encoding="utf-8") as f:
+    with open(TRUTH_PATHS.get(name, TRUTH_DIR / f"{name}.tsv"), encoding="utf-8") as f:
         for line in f:
             line = line.rstrip("\n")
             if not line.strip() or line.startswith("#"):
@@ -180,7 +202,7 @@ def score(truth, drawn_pairs, name_map=None):
 
 def depweaver_edges(name: str):
     """從 docs/generalization/<name>.summary.md 讀工具畫的邊（GeneralizationScoreTest 讀的同一份）。"""
-    p = GEN_DIR / f"{name}.summary.md"
+    p = SUMMARY_PATHS.get(name, GEN_DIR / f"{name}.summary.md")
     if not p.exists():
         return None
     pat = re.compile(r"^- (\S+) -> (\S+)\s+\(([\w-]+), (\w+)\)")
@@ -189,11 +211,17 @@ def depweaver_edges(name: str):
         m = pat.match(line)
         if m:
             out.append((m.group(1), m.group(2)))
+    if name == "aics":
+        # 跑在 VM 上的 crawler 沒有 manifest，工具用 repo 目錄名當節點；參考邊集用 k8s Service 名（同 ~/Documents/aics-eval/runner/score.py 的對應）
+        out = [(re.sub(r"^newknowledge-", "", s_), re.sub(r"^newknowledge-", "", t_)) for s_, t_ in out]
     return out
 
 
 def scores_md_row(name: str):
-    """docs/generalization/scores.md 裡 DepWeaver 那一列（P、R）。"""
+    """docs/generalization/scores.md 裡 DepWeaver 那一列（P、R）；hold-out／AICS 沒有這一列，改從 summary.md 現算。"""
+    if name in SUMMARY_PATHS:
+        edges = depweaver_edges(name)
+        return score(read_truth(name), edges) if edges is not None else None
     p = GEN_DIR / "scores.md"
     if not p.exists():
         return None
@@ -270,7 +298,8 @@ def render_files(blobs):
 
 # ---------------------------------------------------------------- prompts
 def build_prompt(arm: str, name: str, repo_url: str, vocab: dict, d_blobs, s_blobs) -> str:
-    head = (f"You are reconstructing the service dependency map of the open-source microservice system "
+    kind = "private" if "private" in repo_url else "open-source"
+    head = (f"You are reconstructing the service dependency map of the {kind} microservice system "
             f"`{name}` (GitHub repository {repo_url}).\n{CLASS_TEXT}\n")
     if arm == "knowledge":
         body = ("You are NOT given any file. Answer from what you know about this repository.\n"
@@ -373,16 +402,48 @@ def fmt(x):
     return f"{x:.2f}" if isinstance(x, float) else str(x)
 
 
+def avg_class(runs, k):
+    """Mean of the per-class "P / R" cells over runs; "—" sides (nothing drawn / not in truth) are skipped."""
+    cells = [r[k] for r in runs]
+    if all(c == "—" for c in cells):
+        return "—"
+    sides = []
+    for i in (0, 1):
+        vals = [float(c.split(" / ")[i]) for c in cells if " / " in c and c.split(" / ")[i] != "—"]
+        sides.append(f"{statistics.mean(vals):.2f}" if vals else "—")
+    return " / ".join(sides)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repos", help="directory holding the seven checkouts")
     ap.add_argument("--runs", type=int, default=3)
     ap.add_argument("--arms", default="knowledge,files,files-nonames")
-    ap.add_argument("--projects", default=",".join(PROJECTS))
+    ap.add_argument("--projects", default=",".join(DEFAULT_PROJECTS))
     ap.add_argument("--dry-run", action="store_true", help="write prompts and budgets, call nothing")
     ap.add_argument("--selfcheck", action="store_true", help="re-score DepWeaver's own graphs; must equal scores.md")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--set", choices=["induction", "holdout", "aics"], default="induction",
+                    help="induction＝原本 7 個系統（預設）；holdout＝5 個 hold-out 系統，輸出到 docs/experiments/2026-10-26-holdout/；aics＝私有系統，輸出到 --aics-dir/out/llm/")
+    ap.add_argument("--aics-dir", default=str(Path.home() / "Documents/aics-eval"))
     args = ap.parse_args()
+
+    global PROJECTS, OUT_DIR
+    if args.set == "holdout":
+        PROJECTS = {k: v[:2] for k, v in HOLDOUT.items()}
+        for k, v in HOLDOUT.items():
+            TRUTH_PATHS[k] = ROOT / v[2]; SUMMARY_PATHS[k] = ROOT / v[3]
+        OUT_DIR = ROOT / "docs/experiments/2026-10-26-holdout"
+        if args.projects == ",".join(DEFAULT_PROJECTS):
+            args.projects = ",".join(PROJECTS)
+    elif args.set == "aics":
+        base = Path(args.aics_dir).expanduser()
+        PROJECTS = {k: v[:2] for k, v in AICS.items()}
+        for k, v in AICS.items():
+            TRUTH_PATHS[k] = base / v[2]; SUMMARY_PATHS[k] = base / v[3]
+        OUT_DIR = base / "out/llm"
+        if args.projects == ",".join(DEFAULT_PROJECTS):
+            args.projects = ",".join(PROJECTS)
 
     projects = [p for p in args.projects.split(",") if p]
     if args.selfcheck:
@@ -512,7 +573,7 @@ def main():
           f"- 輸入預算：`{json.dumps(BUDGET)}`，實際給了什麼見 `budget.md`／`prompts/`",
           f"- chat calls: {len(jobs)} ({usage_total['prompt_tokens']} prompt + {usage_total['completion_tokens']} completion tokens)", "",
           "## 總表（P / R 為各 run 平均；括號內為最小–最大）", "",
-          "| 專案 | 組別 | 畫（avg） | 對 | 錯 | 漏 | P | R | business P/R | data P/R | control P/R |", "|---|---|---|---|---|---|---|---|---|---|---|"]
+          "| 專案 | 組別 | 畫（avg） | 對 | 錯 | 漏 | P | R | business P/R（3 次平均） | data P/R（3 次平均） | control P/R（3 次平均） |", "|---|---|---|---|---|---|---|---|---|---|---|"]
     for name in projects:
         for arm in arms:
             runs = results.get((name, arm), [])
@@ -523,7 +584,7 @@ def main():
             avg = lambda k: statistics.mean(s[k] for s in runs)
             md.append(f"| {name} | {arm} | {avg('drawn'):.1f} | {avg('right'):.1f} | {avg('wrong'):.1f} | {avg('missed'):.1f} | "
                       f"{statistics.mean(P):.2f} ({min(P):.2f}–{max(P):.2f}) | {statistics.mean(R):.2f} ({min(R):.2f}–{max(R):.2f}) | "
-                      f"{runs[0]['business']} | {runs[0]['data']} | {runs[0]['control']} |")
+                      f"{avg_class(runs, 'business')} | {avg_class(runs, 'data')} | {avg_class(runs, 'control')} |")
         ref = scores_md_row(name)
         if ref:
             md.append(f"| {name} | **depweaver-static** | {ref['drawn']} | {ref['right']} | {ref['wrong']} | {ref['missed']} | "

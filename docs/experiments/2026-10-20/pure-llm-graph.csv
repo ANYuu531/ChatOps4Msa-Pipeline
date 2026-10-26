@@ -8,15 +8,15 @@ bank-of-anthos,files-nonames,3,12,12,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,—
 bank-of-anthos,knowledge,1,11,8,3,4,0.727,0.667,0.83 / 0.83,0.50 / 0.40,— / 1.00,11,0,
 bank-of-anthos,knowledge,2,11,8,3,4,0.727,0.667,0.83 / 0.83,0.50 / 0.40,— / 1.00,11,0,
 bank-of-anthos,knowledge,3,12,8,4,4,0.667,0.667,0.67 / 0.67,0.60 / 0.60,— / 1.00,12,0,
-ecommerce,files,1,44,37,7,1,0.841,0.974,0.63 / 1.00,—,— / 0.96,44,0,
-ecommerce,files,2,36,35,1,3,0.972,0.921,0.92 / 1.00,—,— / 0.88,36,0,
-ecommerce,files,3,28,28,0,10,1.000,0.737,1.00 / 1.00,—,— / 0.60,28,0,
-ecommerce,files-nonames,1,0,0,0,38,0.000,0.000,— / 0.00,—,— / 0.00,56,0,api-gateway-container;cloud-config-container;ecommerce_dev_db;ecommerce_stage_db;favourite-service-container;order-service-container;payment-service-container;product-service-container;proxy-client-container;service-discovery-container;shipping-service-container;user-service-container;zipkin-container
-ecommerce,files-nonames,2,0,0,0,38,0.000,0.000,— / 0.00,—,— / 0.00,56,0,api-gateway-container;cloud-config-container;ecommerce_dev_db;ecommerce_stage_db;favourite-service-container;order-service-container;payment-service-container;product-service-container;proxy-client-container;service-discovery-container;shipping-service-container;user-service-container;zipkin-container
-ecommerce,files-nonames,3,0,0,0,38,0.000,0.000,— / 0.00,—,— / 0.00,58,0,api-gateway-container;cloud-config-container;ecommerce_dev_db;ecommerce_stage_db;favourite-service-container;order-service-container;payment-service-container;product-service-container;proxy-client-container;service-discovery-container;shipping-service-container;user-service-container;zipkin-container
-ecommerce,knowledge,1,27,23,4,15,0.852,0.605,0.43 / 0.25,—,— / 0.80,27,0,
-ecommerce,knowledge,2,27,23,4,15,0.852,0.605,0.43 / 0.25,—,— / 0.80,27,0,
-ecommerce,knowledge,3,27,23,4,15,0.852,0.605,0.43 / 0.25,—,— / 0.80,27,0,
+ecommerce,files,1,44,37,7,0,0.841,1.000,0.63 / 1.00,—,— / 1.00,44,0,
+ecommerce,files,2,36,34,2,3,0.944,0.919,0.86 / 1.00,—,— / 0.88,36,0,
+ecommerce,files,3,28,27,1,10,0.964,0.730,0.92 / 1.00,—,— / 0.58,28,0,
+ecommerce,files-nonames,1,0,0,0,37,0.000,0.000,— / 0.00,—,— / 0.00,56,0,api-gateway-container;cloud-config-container;ecommerce_dev_db;ecommerce_stage_db;favourite-service-container;order-service-container;payment-service-container;product-service-container;proxy-client-container;service-discovery-container;shipping-service-container;user-service-container;zipkin-container
+ecommerce,files-nonames,2,0,0,0,37,0.000,0.000,— / 0.00,—,— / 0.00,56,0,api-gateway-container;cloud-config-container;ecommerce_dev_db;ecommerce_stage_db;favourite-service-container;order-service-container;payment-service-container;product-service-container;proxy-client-container;service-discovery-container;shipping-service-container;user-service-container;zipkin-container
+ecommerce,files-nonames,3,0,0,0,37,0.000,0.000,— / 0.00,—,— / 0.00,58,0,api-gateway-container;cloud-config-container;ecommerce_dev_db;ecommerce_stage_db;favourite-service-container;order-service-container;payment-service-container;product-service-container;proxy-client-container;service-discovery-container;shipping-service-container;user-service-container;zipkin-container
+ecommerce,knowledge,1,27,23,4,14,0.852,0.622,0.43 / 0.25,—,— / 0.83,27,0,
+ecommerce,knowledge,2,27,23,4,14,0.852,0.622,0.43 / 0.25,—,— / 0.83,27,0,
+ecommerce,knowledge,3,27,23,4,14,0.852,0.622,0.43 / 0.25,—,— / 0.83,27,0,
 ewolff-k8s,files,1,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
 ewolff-k8s,files,2,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
 ewolff-k8s,files,3,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
@@ -35,15 +35,15 @@ online-boutique,files-nonames,3,17,17,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,�
 online-boutique,knowledge,1,15,11,4,6,0.733,0.647,0.69 / 0.60,1.00 / 1.00,— / 1.00,15,0,
 online-boutique,knowledge,2,15,12,3,5,0.800,0.706,0.77 / 0.67,1.00 / 1.00,— / 1.00,15,0,
 online-boutique,knowledge,3,15,14,1,3,0.933,0.824,0.92 / 0.80,1.00 / 1.00,— / 1.00,15,0,
-piggymetrics,files,1,22,20,2,14,0.909,0.588,0.75 / 0.60,0.88 / 0.88,— / 0.42,22,0,
-piggymetrics,files,2,29,27,2,7,0.931,0.794,1.00 / 0.60,0.78 / 0.88,— / 0.79,30,0,
-piggymetrics,files,3,25,25,0,9,1.000,0.735,1.00 / 0.60,1.00 / 0.63,— / 0.79,25,0,
-piggymetrics,files-nonames,1,30,29,1,5,0.967,0.853,1.00 / 0.60,0.88 / 0.88,— / 1.00,31,0,external-rates-api
-piggymetrics,files-nonames,2,22,20,2,14,0.909,0.588,0.60 / 0.60,1.00 / 0.75,— / 0.58,24,0,external-rates-api;external-smtp-server
-piggymetrics,files-nonames,3,30,29,1,5,0.967,0.853,1.00 / 0.60,0.88 / 0.88,— / 1.00,31,0,external-rates-api
-piggymetrics,knowledge,1,30,22,8,12,0.733,0.647,0.00 / 0.00,1.00 / 0.63,— / 0.84,30,0,
-piggymetrics,knowledge,2,25,24,1,10,0.960,0.706,0.00 / 0.00,1.00 / 0.63,— / 0.95,25,0,
-piggymetrics,knowledge,3,27,21,6,13,0.778,0.618,0.00 / 0.00,1.00 / 0.63,— / 0.74,27,0,
+piggymetrics,files,1,22,20,2,13,0.909,0.606,0.75 / 0.60,0.88 / 0.88,— / 0.44,22,0,
+piggymetrics,files,2,29,26,3,7,0.897,0.788,0.75 / 0.60,0.78 / 0.88,— / 0.78,30,0,
+piggymetrics,files,3,25,24,1,9,0.960,0.727,0.75 / 0.60,1.00 / 0.63,— / 0.78,25,0,
+piggymetrics,files-nonames,1,30,28,2,5,0.933,0.848,0.75 / 0.60,0.88 / 0.88,— / 1.00,31,0,external-rates-api
+piggymetrics,files-nonames,2,22,20,2,13,0.909,0.606,0.60 / 0.60,1.00 / 0.75,— / 0.61,24,0,external-rates-api;external-smtp-server
+piggymetrics,files-nonames,3,30,28,2,5,0.933,0.848,0.75 / 0.60,0.88 / 0.88,— / 1.00,31,0,external-rates-api
+piggymetrics,knowledge,1,30,22,8,11,0.733,0.667,0.00 / 0.00,1.00 / 0.63,— / 0.89,30,0,
+piggymetrics,knowledge,2,25,23,2,10,0.920,0.697,0.00 / 0.00,1.00 / 0.63,— / 0.94,25,0,
+piggymetrics,knowledge,3,27,21,6,12,0.778,0.636,0.00 / 0.00,1.00 / 0.63,— / 0.78,27,0,
 robot-shop,files,1,20,20,0,1,1.000,0.952,1.00 / 1.00,1.00 / 1.00,— / 0.86,20,0,
 robot-shop,files,2,19,19,0,2,1.000,0.905,1.00 / 1.00,1.00 / 1.00,— / 0.71,19,0,
 robot-shop,files,3,21,20,1,1,0.952,0.952,1.00 / 1.00,0.89 / 1.00,— / 0.86,21,0,
@@ -64,8 +64,8 @@ teastore,knowledge,2,22,10,12,3,0.455,0.769,0.36 / 0.57,0.17 / 1.00,— / 1.00,2
 teastore,knowledge,3,22,10,12,3,0.455,0.769,0.36 / 0.57,0.17 / 1.00,— / 1.00,22,0,
 bank-of-anthos,depweaver-static,1,12,12,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,12,0,
 ewolff-k8s,depweaver-static,1,5,5,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,5,0,
-ecommerce,depweaver-static,1,20,20,0,18,1.000,0.530,1.00 / 1.00,—,— / 0.28,20,0,
-piggymetrics,depweaver-static,1,41,34,7,0,0.830,1.000,0.63 / 1.00,0.67 / 1.00,— / 1.00,41,0,
-teastore,depweaver-static,1,6,6,0,7,1.000,0.460,— / 0.00,1.00 / 1.00,— / 1.00,6,0,
+ecommerce,depweaver-static,1,37,37,0,0,1.000,1.000,1.00 / 1.00,—,— / 1.00,37,0,
+piggymetrics,depweaver-static,1,33,33,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,33,0,
+teastore,depweaver-static,1,13,13,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,13,0,
 online-boutique,depweaver-static,1,17,17,0,0,1.000,1.000,1.00 / 1.00,1.00 / 1.00,— / 1.00,17,0,
-robot-shop,depweaver-static,1,18,18,0,3,1.000,0.860,1.00 / 0.40,1.00 / 1.00,— / 1.00,18,0,
+robot-shop,depweaver-static,1,19,19,0,2,1.000,0.900,1.00 / 0.60,1.00 / 1.00,— / 1.00,19,0,

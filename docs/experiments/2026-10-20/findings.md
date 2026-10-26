@@ -36,10 +36,10 @@
 而且它漏的是最平常的邊（Bank of Anthos 漏 `frontend → ledgerwriter`、`userservice → accounts-db`）。這七個都是 GitHub 上的公開專案、很可能在訓練資料裡，模型還是只有 0.70；對私有系統，這一組等於 0。
 
 **2. 「那如果讓 AI 基於事實呢？」——它變得很強，這一點要誠實寫。** files 組 macro F1 0.90，去掉自迴圈邊後 P 0.97。在 DepWeaver 靜態層的三個已知邊界上它都贏：
-- TeaStore 的 enum 動態分派：DepWeaver 業務邊 0/7，LLM 讀得懂 `Service.PERSISTENCE` 是誰，業務邊 1.00/1.00。
-- ecommerce 的 localhost 預設值：DepWeaver 控制面邊 R 0.28（規則丟掉 localhost，不編造），LLM 0.96（它把 `${EUREKA_HOST:localhost}` 這種寫法當成「會連到 service-discovery」）。
+- TeaStore 以 enum 常數指定目標：DepWeaver 業務邊 0/7，LLM 讀得懂 `Service.PERSISTENCE` 是誰，業務邊 P/R 3 次平均 1.00/0.67（三次的 R 是 1.00、1.00、0.00）。（10/23 更正：原本寫 1.00/1.00，是只取第 1 次執行；另外這不是動態分派，enum 的字串 `tools.descartes.teastore.persistence` 就是模組名，靜態上可以解析。）
+- ecommerce 的 localhost 預設值：DepWeaver 控制面邊 R 0.28（規則丟掉 localhost，不編造），LLM 3 次平均 0.81（0.96、0.88、0.60）。給 LLM 的檔案裡沒有任何真正的主機名：→ cloud-config 只有 `localhost:9296` 對上 cloud-config 的 `port: 9296`，→ service-discovery 只有 eureka-client 依賴與 `@EnableEurekaClient`（Spring Cloud 隱含預設 `localhost:8761`），LLM 是照框架慣例推出來的。（10/23 更正：原本寫 0.96，是只取第 1 次執行；原本舉的 `${EUREKA_HOST:localhost}` 在 repo 和 prompt 裡都不存在。）
 - robot-shop 的 Node／PHP：DepWeaver 業務邊 R 0.40，LLM 1.00。
-反過來 piggymetrics 它輸：DepWeaver R 1.00（P 0.83，多畫 7 條共用設定造成的邊），LLM R 0.71，漏的是 config client 到 registry 的控制面邊（它沒把共用 application.yml 套到每個服務）。
+反過來 piggymetrics 它輸：DepWeaver R 1.00（P 0.83，多畫 7 條共用設定造成的邊），LLM R 0.71；3 次都漏的 7 條是 gateway 到 4 個服務、notification 與 statistics 到 auth-service（業務邊），以及 turbine 到 rabbitmq；到 registry 的控制面邊只有 1 次漏。（10/23 更正：原本說漏的是控制面邊，是只看第 1 次執行。）
 
 **3. 但 LLM 給的東西有三個 DepWeaver 沒有的問題，每一個都在這次資料裡出現了：**
 - **沒有出處。** 63 次輸出裡沒有一條邊能回答「哪個檔案哪一行」；DepWeaver 每條邊都有，而且 `TruthProvenanceResolvesTest` 檢查過 92 條出處全部打得開。這不是加一句 prompt 就能補的：要它附行號，就回到「LLM 重述事實會錯」的問題。
