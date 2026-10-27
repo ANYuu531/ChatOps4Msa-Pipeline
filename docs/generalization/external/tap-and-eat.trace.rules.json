@@ -5,9 +5,20 @@
     "count": 0
   },
   "44": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 15,
+    "examples": [
+      "image accountservice=accounts",
+      "map accountservice=accounts",
+      "image configservice=configserver",
+      "map configservice=configserver",
+      "image priceservice=prices",
+      "map priceservice=prices",
+      "image storeservice=stores",
+      "map storeservice=stores",
+      "image customerservice=customers",
+      "map customerservice=customers"
+    ],
+    "count": 10
   },
   "23": {
     "hits": 0,
@@ -65,15 +76,9 @@
     "count": 0
   },
   "10": {
-    "hits": 5,
-    "examples": [
-      "drop configserver (Docker)",
-      "drop accounts (Docker)",
-      "drop prices (Docker)",
-      "drop customers (Docker)",
-      "drop stores (Docker)"
-    ],
-    "count": 5
+    "hits": 0,
+    "examples": [],
+    "count": 0
   },
   "32": {
     "hits": 0,
@@ -81,9 +86,18 @@
     "count": 0
   },
   "11": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 8,
+    "examples": [
+      "not-preadded foodtrayservice",
+      "not-preadded discoveryservice",
+      "not-preadded itemservice",
+      "node configserver",
+      "node accounts",
+      "node prices",
+      "node customers",
+      "node stores"
+    ],
+    "count": 8
   },
   "33": {
     "hits": 0,
@@ -134,12 +148,12 @@
   "15": {
     "hits": 13,
     "examples": [
-      "edge accountservice->discoveryservice :8888",
-      "edge configservice->discoveryservice :8888",
+      "edge accounts->discoveryservice :8888",
+      "edge configserver->discoveryservice :8888",
       "edge foodtrayservice->discoveryservice :8888",
-      "edge priceservice->discoveryservice :8888",
-      "edge storeservice->discoveryservice :8888",
-      "edge customerservice->discoveryservice :8888",
+      "edge prices->discoveryservice :8888",
+      "edge stores->discoveryservice :8888",
+      "edge customers->discoveryservice :8888",
       "edge itemservice->discoveryservice :8888"
     ],
     "count": 7
@@ -209,14 +223,18 @@
   "3": {
     "hits": 12,
     "examples": [
-      "config-client accountservice",
+      "config-client accounts",
       "config-client foodtrayservice",
+      "config-client prices",
+      "config-client stores",
+      "config-client customers",
+      "config-client itemservice",
+      "config-client accountservice",
       "config-client priceservice",
       "config-client storeservice",
-      "config-client customerservice",
-      "config-client itemservice"
+      "config-client customerservice"
     ],
-    "count": 6
+    "count": 10
   },
   "4": {
     "hits": 0,
@@ -234,9 +252,9 @@
     "count": 0
   },
   "7": {
-    "hits": 1,
-    "examples": ["node configserver"],
-    "count": 1
+    "hits": 0,
+    "examples": [],
+    "count": 0
   },
   "8": {
     "hits": 8,

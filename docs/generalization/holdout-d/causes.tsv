@@ -40,3 +40,11 @@ skywalking-showcase	missed	rcmd -> rating	規則邊界	畫成 recommendation-ser
 skywalking-showcase	missed	gateway -> rcmd	規則邊界	畫成 gateway-service -> rcmd（同上）；gateway -> songs 之所以算對，是 depends_on 那條（inferred）救的，不是路由表
 skywalking-showcase	missed	frontend -> app	框架慣例	APISIX 的靜態路由檔 deploy/platform/docker/config/apisix/apisix.yaml:54 upstreams nodes "app:80"（compose 用 volumes 掛進容器，docker-compose.agent.yaml:108–110）；工具認的反向代理只有 nginx／Apache 的 proxy_pass、Envoy 的 cluster、YARP 的 appsettings，沒有 APISIX。k8s 那份在 ConfigMap 裡（feature-agent/resources.yaml:342）又是 Helm template，連 YAML 都讀不到
 skywalking-showcase	missed	loadgen -> frontend	規則邊界	畫成 load-gen -> frontend（load-gen vs loadgen，見上）
+# ---- 第四輪（r4，2026-10-27，規則 47–56 之後）：r3 的 32 條錯／漏中 22 條已修，對應規則如下；剩下的錯邊逐條歸因（沒有剩下的漏邊） ----
+# 已修：travels → travels（規則 54：deploy.sh 的 kubectl apply -n 給 namespace，兩個 travels 寫成 travels.travel-portal／travels.travel-agency）；control → viaggi／travels（規則 55）；
+# skywalking：Helm（規則 52，渲染出 64 個資源；compose 仍是詞彙表）；模組名 ≠ compose 名的 6 錯 4 漏（規則 44 的 image 名：${HUB}/gateway-service → gateway…）；app → gateway（規則 47，Node 文法＋綁定解析）；
+# otel-demo-frontend → frontend（規則 25 的 network aliases）；mysql-load／nginx-caller／postgres-load 的 depends_on 錯邊（規則 53，真目標在 command）；app → agent（規則 5：值不像主機）；
+# bookie → metadata-store、broker → zk（規則 36：scheme 鏈取最後的 host:port）；frontend → app（規則 56：APISIX standalone 設定＋compose 掛載）。
+travels	wrong	travel-portal -> travels.travel-agency	規則邊界	travel_portal 模組的程式碼（travel_portal.go:411）由三個 Deployment（voyages、viaggi、travels，travel_portal.yaml:39/113/187 同一個映像 quay.io/kiali/demo_travels_portal）以三個名字執行；映像名 demo_travels_portal 與模組目錄 travel_portal 只在 build.sh:24–31 對上，不是完全相等，規則 44 不猜，所以模組名留著。邊本身是真的（三個 Deployment → 代理商 travels 都由 k8s env 另外畫到）
+skywalking-showcase	wrong	executejob -> jobmanager	規則邊界	deploy/platform/docker/docker-compose.flink-monitor.yaml:64 服務名是 camelCase 的 executeJob，:71 command 的 ./bin/flink run -m jobmanager:8081 由規則 53 讀到、目標正確；參考邊集以 k8s 的名字 execute-flink-job 列 variant，名字對不上
+skywalking-showcase	wrong	songs -> gateway	truth 存疑	同 r3 的 songs-service -> gateway：SongServiceApplication.java:36–39 宣告了 rootUri("http://gateway") 的 RestTemplate bean，但沒有任何類別注入或使用它；r4 起來源改用 compose 名 songs（規則 44 的 image 名）

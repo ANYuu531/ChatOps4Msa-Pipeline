@@ -75,6 +75,18 @@
     "examples": [],
     "count": 0
   },
+  "51": {
+    "hits": 9,
+    "examples": [
+      "browser gateway/src/main/resources/static/js/main.js:871",
+      "browser gateway/src/main/resources/static/js/login.js:1",
+      "browser gateway/src/main/resources/static/js/lib/jquery.min.js:2",
+      "browser gateway/src/main/resources/static/js/lib/extrascripts.js:97",
+      "browser gateway/src/main/resources/static/js/launch.js:17",
+      "browser gateway/src/main/resources/static/js/launch.js:59"
+    ],
+    "count": 6
+  },
   "30": {
     "hits": 0,
     "examples": [],

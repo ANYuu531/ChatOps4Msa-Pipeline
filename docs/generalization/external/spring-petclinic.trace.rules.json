@@ -5,12 +5,28 @@
     "count": 0
   },
   "44": {
-    "hits": 2,
+    "hits": 26,
     "examples": [
       "map grafana=grafana-server",
-      "map prometheus=prometheus-server"
+      "map prometheus=prometheus-server",
+      "image spring-petclinic-config-server=config-server",
+      "map spring-petclinic-config-server=config-server",
+      "image spring-petclinic-discovery-server=discovery-server",
+      "map spring-petclinic-discovery-server=discovery-server",
+      "image spring-petclinic-hystrix-dashboard=hystrix-dashboard",
+      "map spring-petclinic-hystrix-dashboard=hystrix-dashboard",
+      "image spring-petclinic-admin-server=admin-server",
+      "map spring-petclinic-admin-server=admin-server",
+      "image spring-petclinic-vets-service=vets-service",
+      "map spring-petclinic-vets-service=vets-service",
+      "image spring-petclinic-api-gateway=api-gateway",
+      "map spring-petclinic-api-gateway=api-gateway",
+      "image spring-petclinic-customers-service=customers-service",
+      "map spring-petclinic-customers-service=customers-service",
+      "image spring-petclinic-visits-service=visits-service",
+      "map spring-petclinic-visits-service=visits-service"
     ],
-    "count": 2
+    "count": 18
   },
   "23": {
     "hits": 0,
@@ -57,6 +73,23 @@
     "examples": [],
     "count": 0
   },
+  "51": {
+    "hits": 11,
+    "examples": [
+      "browser spring-petclinic-api-gateway/src/main/resources/static/scripts/pet-form/pet-form.js:8",
+      "browser spring-petclinic-api-gateway/src/main/resources/static/scripts/pet-form/pet-form.js:13",
+      "browser spring-petclinic-api-gateway/src/main/resources/static/scripts/visits/visits.controller.js:11",
+      "browser spring-petclinic-api-gateway/src/main/resources/static/scripts/visits/visits.controller.js:21",
+      "browser spring-petclinic-api-gateway/src/main/resources/static/scripts/visits/visits.js:8",
+      "browser spring-petclinic-api-gateway/src/main/resources/static/scripts/owner-list/owner-list.js:8",
+      "browser spring-petclinic-api-gateway/src/main/resources/static/scripts/owner-details/owner-details.js:8",
+      "browser spring-petclinic-api-gateway/src/main/resources/static/scripts/vet-list/vet-list.js:8",
+      "browser spring-petclinic-api-gateway/src/main/resources/static/scripts/owner-form/owner-form.js:8",
+      "browser spring-petclinic-api-gateway/src/main/resources/static/scripts/owner-form/owner-form.js:13",
+      "browser spring-petclinic-api-gateway/src/main/resources/static/scripts/app.js:24"
+    ],
+    "count": 11
+  },
   "30": {
     "hits": 0,
     "examples": [],
@@ -78,16 +111,8 @@
     "count": 0
   },
   "11": {
-    "hits": 19,
+    "hits": 11,
     "examples": [
-      "align spring-petclinic-config-server=config-server",
-      "align spring-petclinic-discovery-server=discovery-server",
-      "align spring-petclinic-hystrix-dashboard=hystrix-dashboard",
-      "align spring-petclinic-admin-server=admin-server",
-      "align spring-petclinic-vets-service=vets-service",
-      "align spring-petclinic-api-gateway=api-gateway",
-      "align spring-petclinic-customers-service=customers-service",
-      "align spring-petclinic-visits-service=visits-service",
       "node config-server",
       "node discovery-server",
       "node customers-service",
@@ -100,7 +125,7 @@
       "node grafana-server",
       "node prometheus-server"
     ],
-    "count": 19
+    "count": 11
   },
   "33": {
     "hits": 0,

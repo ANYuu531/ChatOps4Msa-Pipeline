@@ -1,0 +1,252 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    apisix_otel_collector["apisix-otel-collector"]
+    otel_demo_accounting["otel-demo-accounting"]
+    otel_demo_fraud_detection["otel-demo-fraud-detection"]
+    otel_demo_frontend_proxy["otel-demo-frontend-proxy"]
+    otel_demo_load_generator["otel-demo-load-generator"]
+    satellite["satellite"]
+    loadgen["loadgen"]
+    oap_init["oap-init"]
+    oap1["oap1"]
+    ui["ui"]
+    event_reporter["event-reporter"]
+    otel_collector["otel-collector"]
+    vm1["vm1"]
+    vm2["vm2"]
+    es_mock["es-mock"]
+    bookie["bookie"]
+    produce_perf["produce-perf"]
+    basic_get["basic-get"]
+    basic_get_auto["basic-get-auto"]
+    greedy_consumer["greedy-consumer"]
+    publisher_confirms["publisher-confirms"]
+    slow_consumer_persistent["slow-consumer-persistent"]
+    nack["nack"]
+    unroutable_return["unroutable-return"]
+    unroutable_drop["unroutable-drop"]
+    rocketmq_broker_1["rocketmq-broker-1"]
+    rocketmq_exporter["rocketmq-exporter"]
+    nginx_caller["nginx-caller"]
+    fluent_bit["fluent-bit"]
+    taskmanager["taskmanager"]
+    executejob["executejob"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    otel_demo_image_provider["otel-demo-image-provider"]
+    otel_demo_frontend["otel-demo-frontend"]
+    frontend["frontend"]
+    es_exporter["es-exporter"]
+    consume_perf["consume-perf"]
+    grafana["grafana"]
+    rocketmq_namesrv_1["rocketmq-namesrv-1"]
+    nginx["nginx"]
+    jobmanager["jobmanager"]
+    amqexporter["amqexporter"]
+    jaeger["jaeger"]
+    opamp_server["opamp-server"]
+    firepit["firepit"]
+    flagd_ui["flagd-ui"]
+    telemetry_docs["telemetry-docs"]
+    chatbot["chatbot"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    otel_demo_ad["otel-demo-ad"]
+    otel_demo_checkout["otel-demo-checkout"]
+    otel_demo_recommendation["otel-demo-recommendation"]
+    app["app"]
+    broker["broker"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    otel_demo_cart["otel-demo-cart"]
+    otel_demo_currency["otel-demo-currency"]
+    otel_demo_email["otel-demo-email"]
+    otel_demo_payment["otel-demo-payment"]
+    otel_demo_product_catalog["otel-demo-product-catalog"]
+    otel_demo_shipping["otel-demo-shipping"]
+    gateway["gateway"]
+    songs["songs"]
+    rcmd["rcmd"]
+  end
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    otel_demo_valkey_cart["otel-demo-valkey-cart"]
+    otel_demo_quote["otel-demo-quote"]
+    rating["rating"]
+  end
+  subgraph layer5 ["services · depth 5"]
+    direction LR
+    otel_demo_flagd["otel-demo-flagd"]
+  end
+  subgraph layer6 ["services · depth 6"]
+    direction LR
+    otel_demo_collector["otel-demo-collector"]
+  end
+  subgraph layer7 ["services · depth 7"]
+    direction LR
+    oap["oap"]
+  end
+  subgraph layer8 ["services · depth 8"]
+    direction LR
+    banyandb["banyandb"]
+    zookeeper["zookeeper"]
+  end
+  subgraph layer9 ["services · depth 9"]
+    direction LR
+    banyandb_plugin_carrier["banyandb-plugin-carrier"]
+  end
+  subgraph layer10 ["data stores"]
+    direction LR
+    otel_demo_astronomy_db[("otel-demo-astronomy-db")]:::db
+    otel_demo_kafka{{"otel-demo-kafka"}}:::queue
+    activemq{{"activemq"}}:::queue
+    mysql[("mysql")]:::db
+    mysql_load[("mysql-load")]:::db
+    mysql_service[("mysql-service")]:::db
+    elasticsearch[("elasticsearch")]:::db
+    rmq0{{"rmq0"}}:::queue
+    mongodb_1[("mongodb-1")]:::db
+    mongodb_2[("mongodb-2")]:::db
+    mongodb_repl_setup[("mongodb-repl-setup")]:::db
+    mongodb_exporter_1[("mongodb-exporter-1")]:::db
+    mongodb_exporter_2[("mongodb-exporter-2")]:::db
+    postgres[("postgres")]:::db
+    postgres_load[("postgres-load")]:::db
+    postgres_exporter[("postgres-exporter")]:::db
+  end
+  app -.-> gateway
+  songs -.-> gateway
+  songs -. async .-> activemq
+  rcmd -.-> songs
+  rcmd -.-> rating
+  loadgen -.-> frontend
+  frontend -.-> oap
+  frontend -.-> app
+  otel_demo_collector -. declared? .-> oap
+  otel_demo_kafka -.-> otel_demo_collector
+  otel_demo_ad -.-> otel_demo_collector
+  otel_demo_ad -.-> otel_demo_flagd
+  otel_demo_cart -.-> otel_demo_valkey_cart
+  otel_demo_cart -.-> otel_demo_collector
+  otel_demo_cart -.-> otel_demo_flagd
+  otel_demo_checkout -.-> otel_demo_cart
+  otel_demo_checkout -.-> otel_demo_currency
+  otel_demo_checkout -.-> otel_demo_email
+  otel_demo_checkout -.-> otel_demo_payment
+  otel_demo_checkout -.-> otel_demo_product_catalog
+  otel_demo_checkout -.-> otel_demo_shipping
+  otel_demo_checkout -. async .-> otel_demo_kafka
+  otel_demo_checkout -.-> otel_demo_collector
+  otel_demo_checkout -.-> otel_demo_flagd
+  otel_demo_currency -.-> otel_demo_collector
+  otel_demo_email -.-> otel_demo_collector
+  otel_demo_payment -.-> otel_demo_collector
+  otel_demo_payment -.-> otel_demo_flagd
+  otel_demo_product_catalog -.-> otel_demo_collector
+  otel_demo_product_catalog -.-> otel_demo_flagd
+  otel_demo_product_catalog -. db .-> otel_demo_astronomy_db
+  otel_demo_quote -.-> otel_demo_collector
+  otel_demo_recommendation -.-> otel_demo_product_catalog
+  otel_demo_recommendation -.-> otel_demo_collector
+  otel_demo_recommendation -.-> otel_demo_flagd
+  otel_demo_shipping -.-> otel_demo_collector
+  otel_demo_shipping -.-> otel_demo_flagd
+  otel_demo_accounting -.-> otel_demo_collector
+  otel_demo_accounting -. async .-> otel_demo_kafka
+  otel_demo_accounting -. db .-> otel_demo_astronomy_db
+  otel_demo_fraud_detection -.-> otel_demo_collector
+  otel_demo_fraud_detection -. async .-> otel_demo_kafka
+  otel_demo_image_provider -.-> otel_demo_collector
+  otel_demo_frontend -.-> otel_demo_ad
+  otel_demo_frontend -.-> otel_demo_cart
+  otel_demo_frontend -.-> otel_demo_checkout
+  otel_demo_frontend -.-> otel_demo_currency
+  otel_demo_frontend -.-> otel_demo_product_catalog
+  otel_demo_frontend -.-> otel_demo_recommendation
+  otel_demo_frontend -.-> otel_demo_shipping
+  otel_demo_frontend -.-> otel_demo_collector
+  otel_demo_frontend -.-> otel_demo_flagd
+  otel_demo_frontend_proxy -.-> otel_demo_frontend
+  otel_demo_load_generator -.-> otel_demo_frontend_proxy
+  otel_demo_load_generator -.-> otel_demo_flagd
+  satellite -.-> oap
+  banyandb -. declared? .-> banyandb_plugin_carrier
+  oap -.-> banyandb
+  gateway -. declared? .-> oap
+  gateway -.-> songs
+  rcmd -. declared? .-> oap
+  app -. declared? .-> oap
+  loadgen -. declared? .-> app
+  rating -. declared? .-> oap
+  oap_init -.-> banyandb
+  oap1 -.-> zookeeper
+  oap -.-> zookeeper
+  ui -.-> oap
+  event_reporter -.-> oap
+  mysql_service -. db? .-> mysql
+  vm1 -. declared? .-> oap
+  vm2 -. declared? .-> oap
+  es_exporter -. db .-> elasticsearch
+  es_mock -. db? .-> elasticsearch
+  es_mock -. declared? .-> es_exporter
+  es_mock -. declared? .-> oap
+  bookie -.-> zookeeper
+  broker -.-> zookeeper
+  consume_perf -. declared? .-> broker
+  produce_perf -. declared? .-> broker
+  produce_perf -. declared? .-> consume_perf
+  mongodb_repl_setup -. db? .-> mongodb_1
+  mongodb_repl_setup -. db? .-> mongodb_2
+  mongodb_exporter_1 -. db .-> mongodb_1
+  mongodb_exporter_2 -. db .-> mongodb_2
+  rocketmq_broker_1 -.-> rocketmq_namesrv_1
+  nginx -. declared? .-> oap
+  fluent_bit -. declared? .-> oap
+  fluent_bit -. declared? .-> nginx
+  taskmanager -. declared? .-> jobmanager
+  amqexporter -. async? .-> activemq
+  postgres_exporter -. db .-> postgres
+  gateway -.-> rcmd
+  apisix_otel_collector -. declared? .-> frontend
+  otel_demo_flagd -. declared? .-> otel_demo_collector
+  otel_demo_currency -. declared? .-> otel_demo_flagd
+  otel_demo_email -. declared? .-> otel_demo_flagd
+  otel_demo_quote -. declared? .-> otel_demo_flagd
+  otel_demo_shipping -. declared? .-> otel_demo_quote
+  otel_demo_fraud_detection -. declared? .-> otel_demo_flagd
+  otel_demo_frontend_proxy -. declared? .-> otel_demo_load_generator
+  otel_demo_frontend_proxy -. declared? .-> grafana
+  otel_demo_frontend_proxy -. declared? .-> jaeger
+  otel_demo_frontend_proxy -. declared? .-> opamp_server
+  otel_demo_frontend_proxy -. declared? .-> otel_demo_collector
+  otel_demo_frontend_proxy -. declared? .-> otel_demo_image_provider
+  otel_demo_frontend_proxy -. declared? .-> firepit
+  otel_demo_frontend_proxy -. declared? .-> otel_demo_flagd
+  otel_demo_frontend_proxy -. declared? .-> flagd_ui
+  otel_demo_frontend_proxy -. declared? .-> telemetry_docs
+  otel_demo_frontend_proxy -. declared? .-> chatbot
+  otel_demo_load_generator -. declared? .-> otel_demo_collector
+  oap1 -. declared? .-> banyandb
+  mysql_load -. db? .-> mysql
+  basic_get -. async .-> rmq0
+  basic_get_auto -. async .-> rmq0
+  greedy_consumer -. async .-> rmq0
+  publisher_confirms -. async .-> rmq0
+  slow_consumer_persistent -. async .-> rmq0
+  nack -. async .-> rmq0
+  unroutable_return -. async .-> rmq0
+  unroutable_drop -. async .-> rmq0
+  rocketmq_exporter -. declared? .-> rocketmq_namesrv_1
+  nginx_caller -. declared? .-> nginx
+  executejob -. declared? .-> jobmanager
+  otel_collector -. declared? .-> amqexporter
+  postgres_load -. db? .-> postgres
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;

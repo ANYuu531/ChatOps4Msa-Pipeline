@@ -42,6 +42,16 @@ public final class SourceScanner {
     private static final List<String> RULE_42_SEGMENTS = List.of(
             "/__tests__/", "/src/it/", "/src/integration-test/", "/src/integrationtest/", "/e2e/", "/automation-ui/");
 
+    /**
+     * Test files by the naming convention of their toolchain rather than their directory:
+     * Go's {@code _test.go} (the go tool compiles them only for {@code go test}), and the
+     * {@code .spec.} / {@code .test.} infix every JavaScript/TypeScript runner (Jest, Vitest,
+     * Mocha, Playwright, Cypress) uses. Read once JavaScript and Go had grammars (rule 42
+     * extended, 2026-10-27): a Playwright example spec put demo.playwright.dev on a graph.
+     */
+    private static final java.util.regex.Pattern TEST_FILE_NAME = java.util.regex.Pattern.compile(
+            "(?i).*(_test\\.go|\\.(spec|test|cy)\\.(js|jsx|mjs|cjs|ts|tsx|mts|cts))$");
+
     /** Files larger than this are skipped (minified bundles, generated sources). */
     public static final long MAX_FILE_BYTES = 512 * 1024;
 
@@ -55,6 +65,7 @@ public final class SourceScanner {
         for (String directory : IGNORED_DIRECTORIES) {
             if (lower.contains("/" + directory + "/")) return true;
         }
+        if (RuleTrace.hitIf(TEST_FILE_NAME.matcher(file.getFileName().toString()).matches(), 42, "ignore " + relative)) return true;
         try {
             if (Files.size(file) > MAX_FILE_BYTES) return true;
         } catch (Exception e) {

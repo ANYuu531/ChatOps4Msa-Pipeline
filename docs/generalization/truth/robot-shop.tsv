@@ -19,3 +19,4 @@ ratings	mysql	data	ratings/html/src/Database.php（mysql）
 ratings	catalogue	business	ratings/html/src/Service/CatalogueService.php:27 sprintf('%s/product/%s', $this->catalogueUrl)（host 由 ratings/html/src/Kernel.php:76 的 getenv('CATALOGUE_URL') ?: 'http://catalogue:8080' 注入；repo 沒有 config/services.yaml）
 dispatch	rabbitmq	data	dispatch/main.go（consumer）
 load	web	control	docker-compose-load.yaml HOST=http://web:8080
+istio-ingressgateway	web	control	K8s/Istio/gateway.yaml:30 VirtualService robotshop（gateways: robotshop-gateway；:3 Gateway selector istio: ingressgateway）route destination host: web.robot-shop.svc.cluster.local

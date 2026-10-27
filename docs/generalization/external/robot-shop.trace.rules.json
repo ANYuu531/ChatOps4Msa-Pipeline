@@ -1,25 +1,10 @@
 {"rules": {
-  "22": {
-    "hits": 1,
-    "examples": ["urlref payment/payment.py:88 PAYMENT_GATEWAY"],
-    "count": 1
-  },
   "44": {
     "hits": 1,
     "examples": ["map mongo=mongodb"],
     "count": 1
   },
-  "23": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "45": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "24": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -29,110 +14,74 @@
     "examples": [],
     "count": 0
   },
-  "25": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "47": {
+    "hits": 6,
+    "examples": [
+      "valueref user/server.js:260 mongoURL",
+      "hostref cart/server.js:348 catalogueHost",
+      "valueref cart/server.js:377 redisHost",
+      "valueref catalogue/server.js:140 mongoURL",
+      "urlref payment/payment.py:88 PAYMENT_GATEWAY",
+      "urlref ratings/html/api.php:151 url"
+    ],
+    "count": 6
   },
-  "26": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "48": {
+    "hits": 3,
+    "examples": [
+      "usesite MONGO_URL=mongodb",
+      "usesite REDIS_HOST=redis"
+    ],
+    "count": 2
   },
-  "27": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "28": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "29": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "30": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "31": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "51": {
+    "hits": 8,
+    "examples": [
+      "browser web/static/js/controller.js:101",
+      "browser web/static/js/controller.js:115",
+      "browser web/static/js/controller.js:189",
+      "browser web/static/js/controller.js:207",
+      "browser web/static/js/controller.js:273",
+      "browser web/static/js/controller.js:368",
+      "browser web/static/js/controller.js:460",
+      "browser web/static/js/controller.js:506"
+    ],
+    "count": 8
   },
   "10": {
     "hits": 1,
     "examples": ["drop load (K8s)"],
     "count": 1
   },
-  "32": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "11": {
     "hits": 1,
     "examples": ["k8s-over-compose 12 compose names ignored"],
     "count": 1
-  },
-  "33": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
   },
   "12": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "34": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "56": {
+    "hits": 2,
+    "examples": [
+      "istio robotshop-gateway -> web.robot-shop.svc.cluster.local",
+      "edge istio-ingressgateway->web"
+    ],
+    "count": 2
   },
   "13": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "35": {
-    "hits": 15,
-    "examples": [
-      "inferred catalogue->mongodb",
-      "inferred user->mongodb",
-      "inferred user->redis",
-      "inferred cart->redis",
-      "inferred shipping->mysql",
-      "inferred ratings->mysql",
-      "inferred payment->rabbitmq",
-      "inferred dispatch->rabbitmq",
-      "inferred web->catalogue",
-      "inferred web->user",
-      "inferred web->shipping",
-      "inferred web->payment"
-    ],
-    "count": 12
-  },
   "14": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "36": {
-    "hits": 1,
-    "examples": ["ns-strip github.com"],
-    "count": 1
-  },
   "15": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "37": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -142,17 +91,7 @@
     "examples": [],
     "count": 0
   },
-  "38": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "17": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "39": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -258,18 +197,8 @@
     "examples": [],
     "count": 0
   },
-  "40": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "41": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "20": {
-    "hits": 8,
+    "hits": 10,
     "examples": [
       "scoped CART_ENDPOINT=cart @shipping",
       "scoped DB_HOST=mysql @shipping",
@@ -282,12 +211,128 @@
     ],
     "count": 8
   },
-  "42": {
+  "21": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "21": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 15,
+    "examples": [
+      "inferred catalogue->mongodb",
+      "inferred user->mongodb",
+      "inferred user->redis",
+      "inferred cart->redis",
+      "inferred shipping->mysql",
+      "inferred ratings->mysql",
+      "inferred payment->rabbitmq",
+      "inferred dispatch->rabbitmq",
+      "inferred web->catalogue",
+      "inferred web->user",
+      "inferred web->shipping",
+      "inferred web->payment"
+    ],
+    "count": 12
+  },
+  "36": {
+    "hits": 2,
+    "examples": [
+      "ns-strip github.com",
+      "cluster-suffix web.robot-shop.svc.cluster.local"
+    ],
+    "count": 2
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
     "hits": 0,
     "examples": [],
     "count": 0

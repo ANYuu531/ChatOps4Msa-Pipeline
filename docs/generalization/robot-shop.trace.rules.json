@@ -1,37 +1,26 @@
 {"rules": {
-  "22": {
-    "hits": 1,
-    "examples": ["urlref payment/payment.py:84 PAYMENT_GATEWAY"],
-    "count": 1
-  },
   "44": {
-    "hits": 11,
+    "hits": 16,
     "examples": [
-      "no-workload web=web",
-      "no-workload payment=payment",
-      "no-workload dispatch=dispatch",
-      "no-workload ratings=ratings",
-      "no-workload user=user",
-      "no-workload shipping=shipping",
-      "no-workload mysql=mysql",
-      "no-workload cart=cart",
-      "no-workload mongo=mongodb",
-      "no-workload catalogue=catalogue",
+      "compose-only web=web",
+      "compose-only payment=payment",
+      "compose-only dispatch=dispatch",
+      "compose-only ratings=ratings",
+      "nested html=ratings",
+      "compose-only html=ratings",
+      "map html=ratings",
+      "compose-only user=user",
+      "compose-only shipping=shipping",
+      "compose-only mysql=mysql",
+      "compose-only cart=cart",
+      "compose-only mongo=mongodb",
+      "map mongo=mongodb",
+      "compose-only catalogue=catalogue",
       "map load-gen=load"
     ],
-    "count": 11
-  },
-  "23": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "count": 15
   },
   "45": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "24": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -41,111 +30,100 @@
     "examples": [],
     "count": 0
   },
-  "25": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "47": {
+    "hits": 5,
+    "examples": [
+      "valueref user/server.js:273 mongoURL",
+      "hostref cart/server.js:362 catalogueHost",
+      "valueref cart/server.js:391 redisHost",
+      "valueref catalogue/server.js:158 mongoURL",
+      "urlref payment/payment.py:84 PAYMENT_GATEWAY"
+    ],
+    "count": 5
   },
-  "26": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "48": {
+    "hits": 4,
+    "examples": [
+      "default CATALOGUE_URL=catalogue",
+      "usesite MONGO_URL=mongodb",
+      "usesite REDIS_HOST=redis"
+    ],
+    "count": 3
   },
-  "27": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "51": {
+    "hits": 8,
+    "examples": [
+      "browser web/static/js/controller.js:103",
+      "browser web/static/js/controller.js:117",
+      "browser web/static/js/controller.js:204",
+      "browser web/static/js/controller.js:222",
+      "browser web/static/js/controller.js:288",
+      "browser web/static/js/controller.js:383",
+      "browser web/static/js/controller.js:475",
+      "browser web/static/js/controller.js:521"
+    ],
+    "count": 8
   },
-  "28": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "29": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "30": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "31": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "52": {
+    "hits": 28,
+    "examples": [
+      "render K8s/helm/templates/cart-deployment.yaml",
+      "render K8s/helm/templates/cart-service.yaml",
+      "render K8s/helm/templates/catalogue-deployment.yaml",
+      "render K8s/helm/templates/catalogue-service.yaml",
+      "render K8s/helm/templates/clusterrole.yaml",
+      "render K8s/helm/templates/clusterrolebinding.yaml",
+      "render K8s/helm/templates/dispatch-deployment.yaml",
+      "render K8s/helm/templates/dispatch-service.yaml",
+      "render K8s/helm/templates/mongodb-deployment.yaml",
+      "render K8s/helm/templates/mongodb-service.yaml",
+      "render K8s/helm/templates/mysql-deployment.yaml",
+      "render K8s/helm/templates/mysql-service.yaml",
+      "render K8s/helm/templates/payment-deployment.yaml",
+      "render K8s/helm/templates/payment-service.yaml",
+      "render K8s/helm/templates/podsecuritypolicy.yaml",
+      "render K8s/helm/templates/rabbitmq-deployment.yaml",
+      "render K8s/helm/templates/rabbitmq-service.yaml",
+      "render K8s/helm/templates/ratings-deployment.yaml",
+      "render K8s/helm/templates/ratings-service.yaml",
+      "render K8s/helm/templates/redis-service.yaml"
+    ],
+    "count": 28
   },
   "10": {
     "hits": 1,
     "examples": ["drop payment-fix (K8s/Istio)"],
     "count": 1
   },
-  "32": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "11": {
     "hits": 1,
     "examples": ["k8s-over-compose 13 compose names ignored"],
     "count": 1
-  },
-  "33": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
   },
   "12": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "34": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "56": {
+    "hits": 2,
+    "examples": [
+      "istio robotshop-gateway -> web.robot-shop.svc.cluster.local",
+      "edge istio-ingressgateway->web"
+    ],
+    "count": 2
   },
   "13": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "35": {
-    "hits": 16,
-    "examples": [
-      "documented load->web",
-      "inferred catalogue->mongodb",
-      "inferred user->mongodb",
-      "inferred user->redis",
-      "inferred cart->redis",
-      "inferred shipping->mysql",
-      "inferred ratings->mysql",
-      "inferred payment->rabbitmq",
-      "inferred dispatch->rabbitmq",
-      "inferred web->catalogue",
-      "inferred web->user",
-      "inferred web->shipping",
-      "inferred web->payment"
-    ],
-    "count": 13
-  },
   "14": {
     "hits": 2,
     "examples": ["edge load->web"],
     "count": 1
   },
-  "36": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "15": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "37": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -155,17 +133,7 @@
     "examples": [],
     "count": 0
   },
-  "38": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "17": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "39": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -198,17 +166,16 @@
       "not-preadded payment",
       "not-preadded dispatch",
       "not-preadded ratings",
-      "not-preadded html",
       "not-preadded user",
       "not-preadded shipping",
       "not-preadded mysql",
       "not-preadded cart",
-      "not-preadded mongo",
+      "not-preadded mongodb",
       "not-preadded catalogue",
       "node fluentd",
       "node load"
     ],
-    "count": 13
+    "count": 12
   },
   "2": {
     "hits": 0,
@@ -258,15 +225,14 @@
     "count": 6
   },
   "7": {
-    "hits": 5,
+    "hits": 4,
     "examples": [
       "env load.HOST=web",
       "node web",
-      "node mongodb",
       "node redis",
       "node rabbitmq"
     ],
-    "count": 5
+    "count": 4
   },
   "8": {
     "hits": 0,
@@ -281,18 +247,8 @@
     ],
     "count": 2
   },
-  "40": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "41": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "20": {
-    "hits": 8,
+    "hits": 9,
     "examples": [
       "scoped CART_ENDPOINT=cart @shipping",
       "scoped DB_HOST=mysql @shipping",
@@ -305,12 +261,126 @@
     ],
     "count": 8
   },
-  "42": {
+  "21": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "21": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 16,
+    "examples": [
+      "documented load->web",
+      "inferred catalogue->mongodb",
+      "inferred user->mongodb",
+      "inferred user->redis",
+      "inferred cart->redis",
+      "inferred shipping->mysql",
+      "inferred ratings->mysql",
+      "inferred payment->rabbitmq",
+      "inferred dispatch->rabbitmq",
+      "inferred web->catalogue",
+      "inferred web->user",
+      "inferred web->shipping",
+      "inferred web->payment"
+    ],
+    "count": 13
+  },
+  "36": {
+    "hits": 1,
+    "examples": ["cluster-suffix web.robot-shop.svc.cluster.local"],
+    "count": 1
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
     "hits": 0,
     "examples": [],
     "count": 0

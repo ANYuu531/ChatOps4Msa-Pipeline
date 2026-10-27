@@ -1,32 +1,10 @@
 {"rules": {
-  "22": {
-    "hits": 6,
-    "examples": [
-      "dead build_upload_image.py:33",
-      "dead build_upload_image.py:34",
-      "dead ts-voucher-service/server.py:53",
-      "dead ts-voucher-service/server.py:54",
-      "dead ts-voucher-service/server.py:56",
-      "dead ts-voucher-service/server.py:57"
-    ],
-    "count": 6
-  },
   "44": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "23": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 2,
+    "examples": ["image ts-avatar-service=ts-avatar-service"],
+    "count": 1
   },
   "45": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "24": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -36,44 +14,51 @@
     "examples": [],
     "count": 0
   },
-  "25": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "26": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "27": {
-    "hits": 76,
+  "51": {
+    "hits": 75,
     "examples": [
-      "first-of-list spring.cloud.nacos.discovery.server-addr",
-      "list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local",
-      "list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:127.0.0.1:8848}"
+      "browser ts-ui-dashboard/static/js/route.js:9",
+      "browser ts-ui-dashboard/static/js/route.js:67",
+      "browser ts-ui-dashboard/static/js/route.js:114",
+      "browser ts-ui-dashboard/static/js/order.js:27",
+      "browser ts-ui-dashboard/static/js/order.js:81",
+      "browser ts-ui-dashboard/static/js/jquery-3.2.1.min.js:4",
+      "browser ts-ui-dashboard/static/js/notification.js:64",
+      "browser ts-ui-dashboard/static/js/notification.js:81",
+      "browser ts-ui-dashboard/static/js/notification.js:98",
+      "browser ts-ui-dashboard/static/js/ticketOffice.js:73",
+      "browser ts-ui-dashboard/static/js/ticketOffice.js:114",
+      "browser ts-ui-dashboard/static/js/ticketOffice.js:207",
+      "browser ts-ui-dashboard/static/js/ticketOffice.js:243",
+      "browser ts-ui-dashboard/static/js/ticketOffice.js:287",
+      "browser ts-ui-dashboard/static/js/travelTransit.js:22",
+      "browser ts-ui-dashboard/static/js/flowAdvancedSearch.js:44",
+      "browser ts-ui-dashboard/static/js/flowAdvancedSearch.js:98",
+      "browser ts-ui-dashboard/static/js/flowAdvancedSearch.js:146",
+      "browser ts-ui-dashboard/static/js/flowAdvancedSearch.js:194",
+      "browser ts-ui-dashboard/static/js/flowAdvancedSearch.js:285"
     ],
-    "count": 3
+    "count": 75
   },
-  "28": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "29": {
-    "hits": 1,
-    "examples": ["drop https://github.com/FudanSELab/train-ticket"],
-    "count": 1
-  },
-  "30": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "31": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "52": {
+    "hits": 14,
+    "examples": [
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/configmap.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/secrets.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/service.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/statefulset.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/rabbitmq/templates/configmap.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/rabbitmq/templates/deployment.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/rabbitmq/templates/service.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/mysql/templates/configmap.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/mysql/templates/rbac.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/mysql/templates/secrets.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/mysql/templates/service.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/mysql/templates/serviceaccount.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/mysql/templates/servicemonitor.yaml",
+      "render deployment/kubernetes-manifests/quickstart-k8s/charts/mysql/templates/statefulset.yaml"
+    ],
+    "count": 14
   },
   "10": {
     "hits": 13,
@@ -94,47 +79,56 @@
     ],
     "count": 13
   },
-  "32": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "11": {
     "hits": 1,
     "examples": ["k8s-over-compose 101 compose names ignored"],
     "count": 1
   },
-  "33": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "55": {
+    "hits": 2,
+    "examples": [
+      "list containers.input.conf github",
+      "list containers.input.conf elasticsearch-logging"
+    ],
+    "count": 2
   },
   "12": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "34": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "56": {
+    "hits": 77,
+    "examples": [
+      "istio trainticket-gateway -> ts-ui-dashboard",
+      "istio trainticket-gateway -> ts-auth-service",
+      "istio trainticket-gateway -> ts-verification-code-service",
+      "istio trainticket-gateway -> ts-station-service",
+      "istio trainticket-gateway -> ts-train-service",
+      "istio trainticket-gateway -> ts-config-service",
+      "istio trainticket-gateway -> ts-security-service",
+      "istio trainticket-gateway -> ts-execute-service",
+      "istio trainticket-gateway -> ts-contacts-service",
+      "istio trainticket-gateway -> ts-order-service",
+      "istio trainticket-gateway -> ts-order-other-service",
+      "istio trainticket-gateway -> ts-travel-service",
+      "istio trainticket-gateway -> ts-travel2-service",
+      "istio trainticket-gateway -> ts-preserve-service",
+      "istio trainticket-gateway -> ts-preserve-other-service",
+      "istio trainticket-gateway -> ts-price-service",
+      "istio trainticket-gateway -> ts-basic-service",
+      "istio trainticket-gateway -> ts-ticketinfo-service",
+      "istio trainticket-gateway -> ts-notification-service",
+      "istio trainticket-gateway -> ts-inside-payment-service"
+    ],
+    "count": 77
   },
   "13": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "35": {
-    "hits": 2,
-    "examples": ["inferred ts-voucher-service->ts-voucher-mysql"],
-    "count": 1
-  },
   "14": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "36": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -144,27 +138,12 @@
     "examples": [],
     "count": 0
   },
-  "37": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "16": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "38": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "17": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "39": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -245,13 +224,14 @@
     "count": 126
   },
   "5": {
-    "hits": 7,
+    "hits": 8,
     "examples": [
-      "env rabbitmq_host={{.Release.Name=null}=null}",
+      "not-a-host rabbitmq_host=${helm}",
+      "not-a-host _host=/",
       "key spring.mail.host=smtp.163.com",
       "key spring.rabbitmq.host=${rabbitmq_host:localhost}"
     ],
-    "count": 3
+    "count": 4
   },
   "6": {
     "hits": 1,
@@ -264,8 +244,9 @@
     "count": 0
   },
   "8": {
-    "hits": 132,
+    "hits": 135,
     "examples": [
+      "config-signal url",
       "config-signal server.port",
       "config-signal spring.datasource.username",
       "config-signal spring.datasource.password",
@@ -274,7 +255,7 @@
       "config-signal spring.rabbitmq.port",
       "loopback 127.0.0.1:8848"
     ],
-    "count": 7
+    "count": 8
   },
   "9": {
     "hits": 59,
@@ -301,6 +282,117 @@
       "jpa ts-order-service/src/main/java/order/repository/OrderRepository.java"
     ],
     "count": 48
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 6,
+    "examples": [
+      "dead build_upload_image.py:33",
+      "dead build_upload_image.py:34",
+      "dead ts-voucher-service/server.py:53",
+      "dead ts-voucher-service/server.py:54",
+      "dead ts-voucher-service/server.py:56",
+      "dead ts-voucher-service/server.py:57"
+    ],
+    "count": 6
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 76,
+    "examples": [
+      "first-of-list spring.cloud.nacos.discovery.server-addr",
+      "list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local",
+      "list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:127.0.0.1:8848}"
+    ],
+    "count": 3
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 1,
+    "examples": ["drop https://github.com/FudanSELab/train-ticket"],
+    "count": 1
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 2,
+    "examples": ["inferred ts-voucher-service->ts-voucher-mysql"],
+    "count": 1
+  },
+  "36": {
+    "hits": 2,
+    "examples": ["ns-strip github.com"],
+    "count": 1
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
   },
   "40": {
     "hits": 0,
@@ -333,17 +425,7 @@
     ],
     "count": 27
   },
-  "20": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "42": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "21": {
     "hits": 0,
     "examples": [],
     "count": 0

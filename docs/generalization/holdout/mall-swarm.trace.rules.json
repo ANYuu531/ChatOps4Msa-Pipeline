@@ -5,9 +5,22 @@
     "count": 0
   },
   "44": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 18,
+    "examples": [
+      "image mall-admin=mall-admin",
+      "compose-only mall-admin=mall-admin",
+      "image mall-portal=mall-portal",
+      "compose-only mall-portal=mall-portal",
+      "image mall-auth=mall-auth",
+      "compose-only mall-auth=mall-auth",
+      "image mall-monitor=mall-monitor",
+      "compose-only mall-monitor=mall-monitor",
+      "image mall-gateway=mall-gateway",
+      "compose-only mall-gateway=mall-gateway",
+      "image mall-search=mall-search",
+      "compose-only mall-search=mall-search"
+    ],
+    "count": 12
   },
   "23": {
     "hits": 0,
@@ -90,6 +103,14 @@
     "hits": 0,
     "examples": [],
     "count": 0
+  },
+  "53": {
+    "hits": 2,
+    "examples": [
+      "compose mysql.command --character-set-server=utf8mb4",
+      "bare-undeclared mysql utf8mb4"
+    ],
+    "count": 2
   },
   "10": {
     "hits": 6,
@@ -267,8 +288,10 @@
     "count": 2
   },
   "5": {
-    "hits": 26,
+    "hits": 28,
     "examples": [
+      "env _host=utf8mb4",
+      "not-a-host _host=utf8mb4_unicode_ci",
       "key spring.data.redis.host=localhost",
       "key logstash.host=localhost",
       "key spring.data.mongodb.host=localhost",
@@ -278,7 +301,7 @@
       "key spring.data.redis.host=redis",
       "key spring.rabbitmq.host=rabbit"
     ],
-    "count": 8
+    "count": 10
   },
   "6": {
     "hits": 0,

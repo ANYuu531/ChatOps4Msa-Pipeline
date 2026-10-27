@@ -5,9 +5,26 @@
     "count": 0
   },
   "44": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 24,
+    "examples": [
+      "image cloud-hystrix-dashboard=hystrix",
+      "map cloud-hystrix-dashboard=hystrix",
+      "image cloud-config-server=configserver",
+      "map cloud-config-server=configserver",
+      "image cloud-hystrix-turbine=turbine",
+      "map cloud-hystrix-turbine=turbine",
+      "image cloud-zipkin=zipkin",
+      "map cloud-zipkin=zipkin",
+      "image cloud-eureka-server=discovery",
+      "map cloud-eureka-server=discovery",
+      "image cloud-simple-ui=simple-ui",
+      "map cloud-simple-ui=simple-ui",
+      "image cloud-simple-serviceb=simple-serviceb",
+      "map cloud-simple-serviceb=simple-serviceb",
+      "image cloud-api-gateway=gateway",
+      "map cloud-api-gateway=gateway"
+    ],
+    "count": 16
   },
   "23": {
     "hits": 0,
@@ -33,6 +50,11 @@
     "hits": 0,
     "examples": [],
     "count": 0
+  },
+  "47": {
+    "hits": 1,
+    "examples": ["hostref cloud-simple-ui/src/main/java/cloud/simple/service/UserService.java:32 SERVICE_NAME"],
+    "count": 1
   },
   "26": {
     "hits": 0,
@@ -75,30 +97,27 @@
     "count": 0
   },
   "11": {
-    "hits": 25,
+    "hits": 17,
     "examples": [
-      "align cloud-hystrix-turbine=turbine",
-      "align cloud-zipkin=zipkin",
       "align cloud-simple-service=simple-service",
-      "align cloud-simple-ui=simple-ui",
-      "align cloud-simple-serviceb=simple-serviceb",
-      "align cloud-api-gateway=gateway",
       "not-preadded cloud-thrift-client",
-      "not-preadded cloud-hystrix-dashboard",
       "not-preadded cloud-uaa-service",
-      "not-preadded cloud-config-server",
       "not-preadded cloud-finagle-thrift-client",
       "not-preadded cloud-thrift-server",
-      "not-preadded cloud-eureka-server",
       "not-preadded cloud-dummy-service",
       "not-preadded cloud-finagle-thrift-server",
       "node hystrix",
       "node turbine",
       "node discovery",
       "node configserver",
-      "node gateway"
+      "node gateway",
+      "node simple-service",
+      "node simple-service2",
+      "node simple-serviceb",
+      "node simple-ui",
+      "node zipkin"
     ],
-    "count": 25
+    "count": 17
   },
   "33": {
     "hits": 0,
@@ -180,22 +199,22 @@
   "15": {
     "hits": 17,
     "examples": [
-      "edge cloud-hystrix-dashboard->cloud-config-server :8888",
-      "edge cloud-config-server->cloud-eureka-server :8761",
+      "edge hystrix->configserver :8888",
+      "edge configserver->discovery :8761",
       "edge cloud-finagle-thrift-client->zipkin :9411",
-      "edge turbine->cloud-config-server :8888",
-      "edge turbine->cloud-eureka-server :8761",
-      "edge simple-service->cloud-config-server :8888",
-      "edge simple-service->cloud-eureka-server :8761",
+      "edge turbine->configserver :8888",
+      "edge turbine->discovery :8761",
+      "edge simple-service->configserver :8888",
+      "edge simple-service->discovery :8761",
       "edge simple-service->zipkin :9411",
-      "edge simple-ui->cloud-config-server :8888",
-      "edge simple-ui->cloud-eureka-server :8761",
+      "edge simple-ui->configserver :8888",
+      "edge simple-ui->discovery :8761",
       "edge simple-ui->zipkin :9411",
-      "edge simple-serviceb->cloud-config-server :8888",
-      "edge simple-serviceb->cloud-eureka-server :8761",
+      "edge simple-serviceb->configserver :8888",
+      "edge simple-serviceb->discovery :8761",
       "edge simple-serviceb->zipkin :9411",
       "edge cloud-finagle-thrift-server->zipkin :9411",
-      "edge gateway->cloud-eureka-server :8761",
+      "edge gateway->discovery :8761",
       "edge gateway->zipkin :9411"
     ],
     "count": 17
@@ -259,16 +278,17 @@
   "3": {
     "hits": 10,
     "examples": [
-      "config-client cloud-hystrix-dashboard",
+      "config-client hystrix",
       "config-client turbine",
       "config-client simple-service",
       "config-client simple-ui",
       "config-client simple-serviceb",
+      "config-client cloud-hystrix-dashboard",
       "config-client cloud-simple-service",
       "config-client cloud-simple-ui",
       "config-client cloud-simple-serviceb"
     ],
-    "count": 8
+    "count": 9
   },
   "4": {
     "hits": 5,

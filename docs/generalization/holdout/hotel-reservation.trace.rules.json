@@ -44,6 +44,21 @@
     "examples": [],
     "count": 0
   },
+  "49": {
+    "hits": 9,
+    "examples": [
+      "listed services => srv-review",
+      "listed services => srv-attractions",
+      "listed services => srv-search",
+      "listed services => srv-profile",
+      "listed services => srv-recommendation",
+      "listed services => srv-user",
+      "listed services => srv-reservation",
+      "listed services => srv-geo",
+      "listed services => srv-rate"
+    ],
+    "count": 9
+  },
   "28": {
     "hits": 0,
     "examples": [],
@@ -58,6 +73,32 @@
     "hits": 0,
     "examples": [],
     "count": 0
+  },
+  "52": {
+    "hits": 58,
+    "examples": [
+      "render helm-chart/hotelreservation/charts/consul/templates/deployment.yaml",
+      "render helm-chart/hotelreservation/charts/consul/templates/service.yaml",
+      "render helm-chart/hotelreservation/charts/frontend/templates/configmap.yaml",
+      "render helm-chart/hotelreservation/charts/frontend/templates/deployment.yaml",
+      "render helm-chart/hotelreservation/charts/frontend/templates/service.yaml",
+      "render helm-chart/hotelreservation/charts/geo/templates/configmap.yaml",
+      "render helm-chart/hotelreservation/charts/geo/templates/deployment.yaml",
+      "render helm-chart/hotelreservation/charts/geo/templates/service.yaml",
+      "render helm-chart/hotelreservation/charts/jaeger/templates/deployment.yaml",
+      "render helm-chart/hotelreservation/charts/jaeger/templates/service.yaml",
+      "render helm-chart/hotelreservation/charts/memcached-profile/templates/deployment.yaml",
+      "render helm-chart/hotelreservation/charts/memcached-profile/templates/service.yaml",
+      "render helm-chart/hotelreservation/charts/memcached-rate/templates/deployment.yaml",
+      "render helm-chart/hotelreservation/charts/memcached-rate/templates/service.yaml",
+      "render helm-chart/hotelreservation/charts/memcached-reserve/templates/deployment.yaml",
+      "render helm-chart/hotelreservation/charts/memcached-reserve/templates/service.yaml",
+      "render helm-chart/hotelreservation/charts/mongodb-geo/templates/deployment.yaml",
+      "render helm-chart/hotelreservation/charts/mongodb-geo/templates/persistentVolume.yaml",
+      "render helm-chart/hotelreservation/charts/mongodb-geo/templates/persistentVolumeClaim.yaml",
+      "render helm-chart/hotelreservation/charts/mongodb-geo/templates/service.yaml"
+    ],
+    "count": 58
   },
   "31": {
     "hits": 1,

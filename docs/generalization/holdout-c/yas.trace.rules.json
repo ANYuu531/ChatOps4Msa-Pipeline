@@ -1,63 +1,31 @@
 {"rules": {
-  "22": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "44": {
-    "hits": 13,
+    "hits": 19,
     "examples": [
-      "no-workload promotion=promotion",
-      "no-workload order=order",
-      "no-workload rating=rating",
-      "no-workload sampledata=sampledata",
-      "no-workload location=location",
-      "no-workload payment=payment",
+      "compose-only promotion=promotion",
+      "compose-only order=order",
+      "image storefront=storefront-nextjs",
+      "no-workload storefront=storefront-nextjs",
+      "compose-only rating=rating",
+      "compose-only sampledata=sampledata",
+      "compose-only location=location",
+      "compose-only payment=payment",
       "map storefront-bff=storefront",
-      "no-workload tax=tax",
+      "compose-only tax=tax",
+      "image backoffice=backoffice-nextjs",
+      "no-workload backoffice=backoffice-nextjs",
       "map backoffice-bff=backoffice",
-      "no-workload search=search",
-      "no-workload inventory=inventory",
-      "no-workload cart=cart",
-      "no-workload customer=customer"
+      "compose-only search=search",
+      "compose-only inventory=inventory",
+      "compose-only cart=cart",
+      "compose-only customer=customer"
     ],
-    "count": 13
-  },
-  "23": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "count": 17
   },
   "45": {
     "hits": 1,
     "examples": ["accept elasticsearch.url=elasticsearch"],
     "count": 1
-  },
-  "24": {
-    "hits": 59,
-    "examples": [
-      "interp search.YAS_PUBLIC_URL=api.yas.local",
-      "forward search.YAS_SERVICES_PRODUCT=product",
-      "forward search.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
-      "forward backoffice.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
-      "forward storefront.YAS_SERVICES_CUSTOMER=customer",
-      "forward storefront.YAS_SERVICES_CART=cart",
-      "forward storefront.YAS_SERVICES_RATING=rating",
-      "forward storefront.YAS_SERVICES_ORDER=order",
-      "forward storefront.YAS_SERVICES_LOCATION=location",
-      "forward storefront.YAS_SERVICES_INVENTORY=inventory",
-      "forward storefront.YAS_SERVICES_TAX=tax",
-      "forward storefront.YAS_SERVICES_PROMOTION=promotion",
-      "forward storefront.YAS_SERVICES_PAYMENT=payment",
-      "forward storefront.YAS_SERVICES_SAMPLE_DATA=sampledata",
-      "forward storefront.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
-      "interp media.YAS_PUBLIC_URL=api.yas.local",
-      "forward media.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
-      "forward product.YAS_SERVICES_MEDIA=media",
-      "forward product.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
-      "forward customer.YAS_SERVICES_LOCATION=location"
-    ],
-    "count": 59
   },
   "46": {
     "hits": 5,
@@ -70,55 +38,76 @@
     ],
     "count": 5
   },
-  "25": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "26": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "27": {
-    "hits": 5,
+  "47": {
+    "hits": 151,
     "examples": [
-      "list spring.kafka.bootstrap-servers=kafka:9092",
-      "list spring.kafka.consumer.bootstrap-servers=kafka:9092",
-      "list spring.kafka.producer.bootstrap-servers=kafka:9092"
+      "urlref storefront/modules/order/services/OrderService.ts:10 baseUrl",
+      "urlref storefront/modules/order/services/OrderService.ts:21 baseUrl",
+      "urlref storefront/modules/order/services/OrderService.ts:29 baseUrl",
+      "urlref storefront/modules/order/services/OrderService.ts:37 baseUrl",
+      "urlref storefront/modules/rating/services/RatingService.ts:28 baseUrl",
+      "urlref storefront/modules/rating/services/RatingService.ts:38 url",
+      "urlref storefront/modules/catalog/services/ProductService.ts:16 baseUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:21 serverSideRenderUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:26 serverSideRenderUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:34 baseUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:41 serverSideRenderUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:47 baseUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:53 baseUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:67 baseUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:81 url",
+      "urlref storefront/modules/catalog/services/CategoryService.ts:7 baseUrl",
+      "urlref storefront/modules/catalog/services/CategoryService.ts:12 baseUrl",
+      "urlref storefront/modules/catalog/services/CategoryService.ts:17 baseUrl",
+      "urlref storefront/modules/paymentPaypal/services/PaymentPaypalService.ts:12 baseUrl",
+      "urlref storefront/modules/paymentPaypal/services/PaymentPaypalService.ts:22 baseUrl"
+    ],
+    "count": 151
+  },
+  "50": {
+    "hits": 2,
+    "examples": [
+      "dotenv storefront/.env.production API_BASE_PATH=storefront",
+      "dotenv storefront/.env.development API_BASE_PATH=storefront"
+    ],
+    "count": 2
+  },
+  "52": {
+    "hits": 261,
+    "examples": [
+      "render k8s/deploy/observability/opentelemetry/templates/opentelemetry-collector.yaml",
+      "render k8s/deploy/observability/grafana/templates/dashboards.yaml",
+      "render k8s/deploy/observability/grafana/templates/grafana-credentials.secret.yaml",
+      "render k8s/deploy/observability/grafana/templates/grafana.yaml",
+      "render k8s/deploy/observability/grafana/templates/loki-datasource.yaml",
+      "render k8s/deploy/observability/grafana/templates/tempo-datasource.yaml",
+      "render k8s/deploy/zookeeper/templates/deployment.yaml",
+      "render k8s/deploy/zookeeper/templates/hpa.yaml",
+      "render k8s/deploy/zookeeper/templates/ingress.yaml",
+      "render k8s/deploy/zookeeper/templates/service.yaml",
+      "render k8s/deploy/zookeeper/templates/serviceaccount.yaml",
+      "render k8s/deploy/zookeeper/templates/tests/test-connection.yaml",
+      "render k8s/deploy/postgres/postgresql/templates/credentials.secret.yaml",
+      "render k8s/deploy/postgres/postgresql/templates/postgresql.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/deployment.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/hpa.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/ingress.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/pvc.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/secret.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/service.yaml"
+    ],
+    "count": 89
+  },
+  "53": {
+    "hits": 3,
+    "examples": [
+      "compose search.entrypoint elasticsearch:9200=elasticsearch",
+      "compose backoffice.entrypoint identity:80=identity",
+      "compose storefront.entrypoint identity:80=identity"
     ],
     "count": 3
-  },
-  "28": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "29": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "30": {
-    "hits": 4,
-    "examples": [
-      "edge webhook->kafka",
-      "edge recommendation->kafka",
-      "edge search->kafka"
-    ],
-    "count": 3
-  },
-  "31": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
   },
   "10": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "32": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -128,17 +117,33 @@
     "examples": ["k8s-over-compose 33 compose names ignored"],
     "count": 1
   },
-  "33": {
-    "hits": 41,
-    "examples": ["drop api.yas.local"],
-    "count": 1
+  "55": {
+    "hits": 32,
+    "examples": [
+      "list application.yaml opentelemetry-collector",
+      "list application.yaml identity.yas.local.com",
+      "list application.yaml kafka-cluster-kafka-brokers",
+      "list application.yaml cart",
+      "list application.yaml customer",
+      "list application.yaml inventory",
+      "list application.yaml location",
+      "list application.yaml media",
+      "list application.yaml order",
+      "list application.yaml payment",
+      "list application.yaml payment-paypal",
+      "list application.yaml product",
+      "list application.yaml promotion",
+      "list application.yaml rating",
+      "list application.yaml search",
+      "list application.yaml tax",
+      "list application.yaml sampledata",
+      "list application.yaml recommendation",
+      "list gateway-routes-config.yaml product",
+      "list gateway-routes-config.yaml location"
+    ],
+    "count": 32
   },
   "12": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "34": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -148,20 +153,8 @@
     "examples": [],
     "count": 0
   },
-  "35": {
-    "hits": 6,
-    "examples": [
-      "inferred collector->tempo",
-      "inferred collector->prometheus",
-      "documented kafka->zookeeper",
-      "documented kafka-connect->kafka",
-      "documented kafka-ui->kafka",
-      "drop kafka-ui->kafka-connect"
-    ],
-    "count": 6
-  },
   "14": {
-    "hits": 49,
+    "hits": 51,
     "examples": [
       "edge storefront->jaeger",
       "edge backoffice->jaeger",
@@ -171,6 +164,7 @@
       "edge search->product",
       "edge search->collector",
       "edge backoffice->collector",
+      "edge backoffice->identity",
       "edge storefront->customer",
       "edge storefront->cart",
       "edge storefront->rating",
@@ -181,15 +175,9 @@
       "edge storefront->promotion",
       "edge storefront->payment",
       "edge storefront->sampledata",
-      "edge storefront->collector",
-      "edge media->collector"
+      "edge storefront->collector"
     ],
-    "count": 48
-  },
-  "36": {
-    "hits": 26,
-    "examples": ["keep-dotted api.yas.local"],
-    "count": 1
+    "count": 50
   },
   "15": {
     "hits": 2,
@@ -199,17 +187,7 @@
     ],
     "count": 2
   },
-  "37": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "16": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "38": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -219,15 +197,10 @@
     "examples": [],
     "count": 0
   },
-  "39": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "18": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 4,
+    "examples": ["dockerfile-env API_BASE_PATH=storefront"],
+    "count": 1
   },
   "19": {
     "hits": 0,
@@ -281,11 +254,12 @@
     "count": 4
   },
   "5": {
-    "hits": 17,
+    "hits": 20,
     "examples": [
-      "env BASE_URL=/swagger-ui",
+      "not-a-host BASE_URL=/swagger-ui",
       "env DB_ADDR=postgres",
       "env SPRING_DATA_REDIS_HOST=redis",
+      "key hostname=api.yas.local",
       "key spring.data.redis.host=redis",
       "key otel_collector_host=collector",
       "key kafka_service_host=kafka",
@@ -295,7 +269,7 @@
       "key prometheus_service_host=prometheus",
       "key spring_data_redis_host=redis"
     ],
-    "count": 11
+    "count": 12
   },
   "6": {
     "hits": 23,
@@ -348,9 +322,10 @@
     "count": 18
   },
   "8": {
-    "hits": 95,
+    "hits": 122,
     "examples": [
       "loopback localhost",
+      "config-signal url",
       "config-signal server.port",
       "config-signal spring.datasource.driver-class-name",
       "loopback localhost:5432",
@@ -369,7 +344,7 @@
       "config-signal PROMETHEUS_ADDR",
       "loopback localhost:8083"
     ],
-    "count": 18
+    "count": 19
   },
   "9": {
     "hits": 117,
@@ -397,6 +372,153 @@
     ],
     "count": 77
   },
+  "20": {
+    "hits": 3,
+    "examples": ["scoped API_BASE_PATH=storefront @storefront"],
+    "count": 1
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 59,
+    "examples": [
+      "interp search.YAS_PUBLIC_URL=api.yas.local",
+      "forward search.YAS_SERVICES_PRODUCT=product",
+      "forward search.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward backoffice.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward storefront.YAS_SERVICES_CUSTOMER=customer",
+      "forward storefront.YAS_SERVICES_CART=cart",
+      "forward storefront.YAS_SERVICES_RATING=rating",
+      "forward storefront.YAS_SERVICES_ORDER=order",
+      "forward storefront.YAS_SERVICES_LOCATION=location",
+      "forward storefront.YAS_SERVICES_INVENTORY=inventory",
+      "forward storefront.YAS_SERVICES_TAX=tax",
+      "forward storefront.YAS_SERVICES_PROMOTION=promotion",
+      "forward storefront.YAS_SERVICES_PAYMENT=payment",
+      "forward storefront.YAS_SERVICES_SAMPLE_DATA=sampledata",
+      "forward storefront.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "interp media.YAS_PUBLIC_URL=api.yas.local",
+      "forward media.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward product.YAS_SERVICES_MEDIA=media",
+      "forward product.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward customer.YAS_SERVICES_LOCATION=location"
+    ],
+    "count": 59
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 5,
+    "examples": [
+      "list spring.kafka.bootstrap-servers=kafka:9092",
+      "list spring.kafka.consumer.bootstrap-servers=kafka:9092",
+      "list spring.kafka.producer.bootstrap-servers=kafka:9092"
+    ],
+    "count": 3
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 4,
+    "examples": [
+      "edge webhook->kafka",
+      "edge recommendation->kafka",
+      "edge search->kafka"
+    ],
+    "count": 3
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 42,
+    "examples": ["drop api.yas.local"],
+    "count": 1
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 6,
+    "examples": [
+      "inferred collector->tempo",
+      "inferred collector->prometheus",
+      "documented kafka->zookeeper",
+      "documented kafka-connect->kafka",
+      "documented kafka-ui->kafka",
+      "drop kafka-ui->kafka-connect"
+    ],
+    "count": 6
+  },
+  "36": {
+    "hits": 143,
+    "examples": [
+      "ns-strip postgresql.postgres",
+      "keep-dotted storefront.yas.local.com",
+      "keep-dotted api.yas.local.com",
+      "ns-strip opentelemetry-collector.observability",
+      "keep-dotted identity.yas.local.com",
+      "ns-strip kafka-cluster-kafka-brokers.kafka",
+      "keep-dotted identity.yas.local.com realm",
+      "keep-dotted product-recommendation.openai.azure.com",
+      "keep-dotted product-recommendation.openai.azure.com embedding",
+      "keep-dotted api.yas.local"
+    ],
+    "count": 10
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "40": {
     "hits": 0,
     "examples": [],
@@ -410,11 +532,6 @@
       "no-edge common-library/src/main/resources/application.properties"
     ],
     "count": 3
-  },
-  "20": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
   },
   "42": {
     "hits": 325,
@@ -441,11 +558,6 @@
       "ignore /automation-ui/storefront/pom.xml/"
     ],
     "count": 119
-  },
-  "21": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
   },
   "43": {
     "hits": 104,

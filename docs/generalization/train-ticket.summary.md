@@ -1,135 +1,176 @@
 ## stacks
 - java/spring (FRAMEWORK, from pom.xml)
-- javascript (LLM, from 71 .js/.jsx/.ts/.tsx files)   <-- skipped (LLM tier)
+- javascript (GENERIC, from 71 .js/.mjs/.cjs/.jsx files, package.json; tree-sitter grammar)
 - python/web (FRAMEWORK, from requirements.txt)
-- go (LLM, from 2 .go files)   <-- skipped (LLM tier)
+- go (GENERIC, from 2 .go files; tree-sitter grammar)
 
 ## ledger sections
 - jpa = 59
 - name-ref = 433
-- http-server = 201
+- http-server = 209
 - http-client = 65
 - url = 31
 - name-constant = 115
-- config = 260
+- config = 338
 - url-metadata = 1
 - import = 29
+- k8s-namespace = 2
+- k8s-service = 319
 - compose-service = 142
 - compose-dependency = 2
-- k8s-workload = 272
-- k8s-service = 319
-- k8s-namespace = 1
-- env-address = 4
+- k8s-workload = 270
+- k8s-gateway = 1
+- ingress-route = 39
+- env-address = 6
 - workload-env = 3
 - service-root = 50
-- module-deps = 47
-- TOTAL = 2034 | files with syntax errors = 0
+- module-deps = 48
+- TOTAL = 2162 | files with syntax errors = 0
 
 ## graph
-- after merge: 98 nodes / 120 edges | after normalize: 98 nodes / 120 edges | unresolved code edges = 66
+- after merge: 99 nodes / 158 edges | after normalize: 99 nodes / 158 edges | unresolved code edges = 66
 - persistence services: [ts-contacts-service, ts-notification-service, ts-config-service, ts-assurance-service, ts-order-other-service, ts-route-service, ts-price-service, ts-security-service, ts-consign-service, ts-train-service, ts-order-service, ts-food-service, ts-station-food-service, ts-train-food-service, ts-food-delivery-service, ts-consign-price-service, ts-wait-order-service, ts-common, ts-station-service, ts-auth-service, ts-user-service, ts-payment-service, ts-inside-payment-service, ts-delivery-service, ts-travel2-service, ts-travel-service]
 
 ## nodes (kind, layer)
-- jaeger  [service, L10]
-- redis  [db, L10]
-- rest-service-external  [service, L4]
-- smtp.163.com  [external, L9]
-- ts-account-mongo  [db, L10]
-- ts-admin-basic-info-service  [service, L2]
-- ts-admin-order-service  [service, L2]
-- ts-admin-route-service  [service, L2]
-- ts-admin-travel-service  [service, L2]
-- ts-admin-user-service  [service, L2]
-- ts-assurance-mongo  [db, L10]
-- ts-assurance-mysql  [db, L8]
-- ts-assurance-service  [service, L2]
-- ts-auth-mongo  [db, L10]
-- ts-auth-mysql  [db, L8]
-- ts-auth-service  [service, L3]
-- ts-avatar-service  [service, L2]
-- ts-basic-service  [service, L5]
-- ts-cancel-service  [service, L2]
-- ts-config-mongo  [db, L10]
-- ts-config-mysql  [db, L8]
-- ts-config-service  [service, L2]
-- ts-consign-mongo  [db, L10]
-- ts-consign-mysql  [db, L8]
-- ts-consign-price-mongo  [db, L10]
-- ts-consign-price-mysql  [db, L8]
-- ts-consign-price-service  [service, L2]
-- ts-consign-service  [service, L3]
-- ts-contacts-mongo  [db, L10]
-- ts-contacts-mysql  [db, L8]
-- ts-contacts-service  [service, L3]
-- ts-delivery-mysql  [db, L8]
+- istio-ingressgateway  [gateway, L0]
+- jaeger  [service, L11]
+- redis  [db, L11]
+- rest-service-external  [service, L5]
+- smtp.163.com  [external, L10]
+- ts-account-mongo  [db, L11]
+- ts-admin-basic-info-service  [service, L3]
+- ts-admin-order-service  [service, L3]
+- ts-admin-route-service  [service, L3]
+- ts-admin-travel-service  [service, L3]
+- ts-admin-user-service  [service, L3]
+- ts-assurance-mongo  [db, L11]
+- ts-assurance-mysql  [db, L9]
+- ts-assurance-service  [service, L3]
+- ts-auth-mongo  [db, L11]
+- ts-auth-mysql  [db, L9]
+- ts-auth-service  [service, L4]
+- ts-avatar-service  [service, L3]
+- ts-basic-service  [service, L6]
+- ts-cancel-service  [service, L3]
+- ts-config-mongo  [db, L11]
+- ts-config-mysql  [db, L9]
+- ts-config-service  [service, L3]
+- ts-consign-mongo  [db, L11]
+- ts-consign-mysql  [db, L9]
+- ts-consign-price-mongo  [db, L11]
+- ts-consign-price-mysql  [db, L9]
+- ts-consign-price-service  [service, L3]
+- ts-consign-service  [service, L4]
+- ts-contacts-mongo  [db, L11]
+- ts-contacts-mysql  [db, L9]
+- ts-contacts-service  [service, L4]
+- ts-delivery-mysql  [db, L9]
 - ts-delivery-service  [service, L0]
-- ts-execute-service  [service, L2]
-- ts-food-delivery-mysql  [db, L8]
+- ts-execute-service  [service, L3]
+- ts-food-delivery-mysql  [db, L9]
 - ts-food-delivery-service  [service, L0]
-- ts-food-map-mongo  [db, L10]
-- ts-food-map-service  [service, L10]
-- ts-food-mongo  [db, L10]
-- ts-food-mysql  [db, L8]
-- ts-food-service  [service, L3]
-- ts-gateway-service  [service, L1]
-- ts-inside-payment-mongo  [db, L10]
-- ts-inside-payment-mysql  [db, L8]
-- ts-inside-payment-service  [service, L3]
-- ts-login-service  [service, L10]
-- ts-news-service  [service, L10]
-- ts-notification-mysql  [db, L8]
-- ts-notification-service  [service, L3]
-- ts-order-mongo  [db, L10]
-- ts-order-other-mongo  [db, L10]
-- ts-order-other-mysql  [db, L8]
-- ts-order-other-service  [service, L6]
-- ts-order-service  [service, L6]
-- ts-payment-mongo  [db, L10]
-- ts-payment-mysql  [db, L8]
-- ts-payment-service  [service, L4]
-- ts-preserve-other-service  [service, L2]
-- ts-preserve-service  [service, L2]
-- ts-price-mongo  [db, L10]
-- ts-price-service  [service, L6]
-- ts-rebook-service  [service, L2]
-- ts-register-service  [service, L3]
-- ts-route-mongo  [db, L10]
-- ts-route-plan-service  [service, L3]
-- ts-route-service  [service, L6]
-- ts-seat-service  [service, L5]
-- ts-security-mongo  [db, L10]
-- ts-security-mysql  [db, L8]
-- ts-security-service  [service, L2]
-- ts-sso-service  [service, L10]
-- ts-station-food-service  [service, L4]
-- ts-station-mongo  [db, L10]
-- ts-station-mysql  [db, L8]
-- ts-station-service  [service, L7]
-- ts-ticket-office-mongo  [db, L10]
-- ts-ticket-office-service  [service, L10]
-- ts-ticketinfo-service  [service, L10]
-- ts-train-food-mysql  [db, L8]
-- ts-train-food-service  [service, L4]
-- ts-train-mongo  [db, L10]
-- ts-train-mysql  [db, L8]
-- ts-train-service  [service, L6]
-- ts-travel-mongo  [db, L10]
-- ts-travel-mysql  [db, L8]
-- ts-travel-plan-service  [service, L2]
-- ts-travel-service  [service, L4]
-- ts-travel2-mongo  [db, L10]
-- ts-travel2-mysql  [db, L8]
-- ts-travel2-service  [service, L4]
-- ts-ui-dashboard  [service, L0]
-- ts-user-mongo  [db, L10]
-- ts-user-mysql  [db, L8]
-- ts-user-service  [service, L2]
-- ts-verification-code-service  [service, L2]
-- ts-voucher-mysql  [db, L8]
-- ts-voucher-service  [service, L0]
+- ts-food-map-mongo  [db, L11]
+- ts-food-map-service  [service, L11]
+- ts-food-mongo  [db, L11]
+- ts-food-mysql  [db, L9]
+- ts-food-service  [service, L4]
+- ts-gateway-service  [service, L2]
+- ts-inside-payment-mongo  [db, L11]
+- ts-inside-payment-mysql  [db, L9]
+- ts-inside-payment-service  [service, L4]
+- ts-login-service  [service, L11]
+- ts-news-service  [service, L1]
+- ts-notification-mysql  [db, L9]
+- ts-notification-service  [service, L4]
+- ts-order-mongo  [db, L11]
+- ts-order-other-mongo  [db, L11]
+- ts-order-other-mysql  [db, L9]
+- ts-order-other-service  [service, L7]
+- ts-order-service  [service, L7]
+- ts-payment-mongo  [db, L11]
+- ts-payment-mysql  [db, L9]
+- ts-payment-service  [service, L5]
+- ts-preserve-other-service  [service, L3]
+- ts-preserve-service  [service, L3]
+- ts-price-mongo  [db, L11]
+- ts-price-service  [service, L7]
+- ts-rebook-service  [service, L3]
+- ts-register-service  [service, L4]
+- ts-route-mongo  [db, L11]
+- ts-route-plan-service  [service, L4]
+- ts-route-service  [service, L7]
+- ts-seat-service  [service, L6]
+- ts-security-mongo  [db, L11]
+- ts-security-mysql  [db, L9]
+- ts-security-service  [service, L3]
+- ts-sso-service  [service, L11]
+- ts-station-food-service  [service, L5]
+- ts-station-mongo  [db, L11]
+- ts-station-mysql  [db, L9]
+- ts-station-service  [service, L8]
+- ts-ticket-office-mongo  [db, L11]
+- ts-ticket-office-service  [service, L1]
+- ts-ticketinfo-service  [service, L1]
+- ts-train-food-mysql  [db, L9]
+- ts-train-food-service  [service, L5]
+- ts-train-mongo  [db, L11]
+- ts-train-mysql  [db, L9]
+- ts-train-service  [service, L7]
+- ts-travel-mongo  [db, L11]
+- ts-travel-mysql  [db, L9]
+- ts-travel-plan-service  [service, L3]
+- ts-travel-service  [service, L5]
+- ts-travel2-mongo  [db, L11]
+- ts-travel2-mysql  [db, L9]
+- ts-travel2-service  [service, L5]
+- ts-ui-dashboard  [service, L1]
+- ts-user-mongo  [db, L11]
+- ts-user-mysql  [db, L9]
+- ts-user-service  [service, L3]
+- ts-verification-code-service  [service, L3]
+- ts-voucher-mysql  [db, L9]
+- ts-voucher-service  [service, L1]
 - ts-wait-order-service  [service, L0]
 
 ## edges (type, confidence, provenance ref)
+- istio-ingressgateway -> ts-admin-basic-info-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-admin-order-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-admin-route-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-admin-travel-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-admin-user-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-assurance-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-auth-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-basic-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-cancel-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-config-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-consign-price-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-consign-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-contacts-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-execute-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-food-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-inside-payment-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-news-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-notification-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-order-other-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-order-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-payment-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-preserve-other-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-preserve-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-price-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-rebook-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-route-plan-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-route-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-security-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-station-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-ticket-office-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-ticketinfo-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-train-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-travel-plan-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-travel-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-travel2-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-ui-dashboard  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-verification-code-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
+- istio-ingressgateway -> ts-voucher-service  (sync-http, documented)  code: deployment/kubernetes-manifests/k8s-with-istio/trainticket-gateway.yaml
 - ts-admin-basic-info-service -> ts-contacts-service  (sync-http, documented)  code: ts-admin-basic-info-service/src/main/java/adminbasic/service/AdminBasicInfoServiceImpl.java:44
 - ts-admin-order-service -> ts-order-other-service  (sync-http, documented)  code: ts-admin-order-service/src/main/java/adminorder/service/AdminOrderServiceImpl.java:66
 - ts-admin-order-service -> ts-order-service  (sync-http, documented)  code: ts-admin-order-service/src/main/java/adminorder/service/AdminOrderServiceImpl.java:48
@@ -305,19 +346,26 @@ flowchart TB
 %% DepWeaver — microservice dependency graph
 %% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
-  subgraph layer0 ["entry services"]
+  subgraph layer0 ["ingress"]
     direction LR
-    ts_voucher_service["ts-voucher-service"]
-    ts_ui_dashboard["ts-ui-dashboard"]
     ts_wait_order_service["ts-wait-order-service"]
     ts_food_delivery_service["ts-food-delivery-service"]
+    istio_ingressgateway(["istio-ingressgateway"]):::gateway
     ts_delivery_service["ts-delivery-service"]
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
-    ts_gateway_service["ts-gateway-service"]
+    ts_voucher_service["ts-voucher-service"]
+    ts_news_service["ts-news-service"]
+    ts_ticket_office_service["ts-ticket-office-service"]
+    ts_ticketinfo_service["ts-ticketinfo-service"]
+    ts_ui_dashboard["ts-ui-dashboard"]
   end
   subgraph layer2 ["services · depth 2"]
+    direction LR
+    ts_gateway_service["ts-gateway-service"]
+  end
+  subgraph layer3 ["services · depth 3"]
     direction LR
     ts_admin_basic_info_service["ts-admin-basic-info-service"]
     ts_admin_order_service["ts-admin-order-service"]
@@ -338,7 +386,7 @@ flowchart TB
     ts_verification_code_service["ts-verification-code-service"]
     ts_avatar_service["ts-avatar-service"]
   end
-  subgraph layer3 ["services · depth 3"]
+  subgraph layer4 ["services · depth 4"]
     direction LR
     ts_consign_service["ts-consign-service"]
     ts_contacts_service["ts-contacts-service"]
@@ -349,7 +397,7 @@ flowchart TB
     ts_route_plan_service["ts-route-plan-service"]
     ts_register_service["ts-register-service"]
   end
-  subgraph layer4 ["services · depth 4"]
+  subgraph layer5 ["services · depth 5"]
     direction LR
     ts_payment_service["ts-payment-service"]
     ts_travel2_service["ts-travel2-service"]
@@ -358,12 +406,12 @@ flowchart TB
     ts_train_food_service["ts-train-food-service"]
     ts_station_food_service["ts-station-food-service"]
   end
-  subgraph layer5 ["services · depth 5"]
+  subgraph layer6 ["services · depth 6"]
     direction LR
     ts_basic_service["ts-basic-service"]
     ts_seat_service["ts-seat-service"]
   end
-  subgraph layer6 ["services · depth 6"]
+  subgraph layer7 ["services · depth 7"]
     direction LR
     ts_order_other_service["ts-order-other-service"]
     ts_order_service["ts-order-service"]
@@ -371,11 +419,11 @@ flowchart TB
     ts_route_service["ts-route-service"]
     ts_train_service["ts-train-service"]
   end
-  subgraph layer7 ["services · depth 7"]
+  subgraph layer8 ["services · depth 8"]
     direction LR
     ts_station_service["ts-station-service"]
   end
-  subgraph layer8 ["data stores"]
+  subgraph layer9 ["data stores"]
     direction LR
     ts_voucher_mysql[("ts-voucher-mysql")]:::db
     ts_contacts_mysql[("ts-contacts-mysql")]:::db
@@ -399,16 +447,13 @@ flowchart TB
     ts_travel2_mysql[("ts-travel2-mysql")]:::db
     ts_travel_mysql[("ts-travel-mysql")]:::db
   end
-  subgraph layer9 ["external"]
+  subgraph layer10 ["external"]
     direction LR
     smtp_163_com[/"smtp.163.com"/]:::external
   end
-  subgraph layer10 ["no dependencies found"]
+  subgraph layer11 ["no dependencies found"]
     direction LR
     ts_food_map_service["ts-food-map-service"]
-    ts_news_service["ts-news-service"]
-    ts_ticket_office_service["ts-ticket-office-service"]
-    ts_ticketinfo_service["ts-ticketinfo-service"]
     ts_user_mongo[("ts-user-mongo")]:::db
     ts_auth_mongo[("ts-auth-mongo")]:::db
     ts_route_mongo[("ts-route-mongo")]:::db
@@ -508,6 +553,44 @@ flowchart TB
   ts_consign_price_service -. db .-> ts_consign_price_mysql
   ts_station_service -. db .-> ts_station_mysql
   ts_voucher_service -. db? .-> ts_voucher_mysql
+  istio_ingressgateway -.-> ts_ui_dashboard
+  istio_ingressgateway -.-> ts_auth_service
+  istio_ingressgateway -.-> ts_verification_code_service
+  istio_ingressgateway -.-> ts_station_service
+  istio_ingressgateway -.-> ts_train_service
+  istio_ingressgateway -.-> ts_config_service
+  istio_ingressgateway -.-> ts_security_service
+  istio_ingressgateway -.-> ts_execute_service
+  istio_ingressgateway -.-> ts_contacts_service
+  istio_ingressgateway -.-> ts_order_service
+  istio_ingressgateway -.-> ts_order_other_service
+  istio_ingressgateway -.-> ts_travel_service
+  istio_ingressgateway -.-> ts_travel2_service
+  istio_ingressgateway -.-> ts_preserve_service
+  istio_ingressgateway -.-> ts_preserve_other_service
+  istio_ingressgateway -.-> ts_price_service
+  istio_ingressgateway -.-> ts_basic_service
+  istio_ingressgateway -.-> ts_ticketinfo_service
+  istio_ingressgateway -.-> ts_notification_service
+  istio_ingressgateway -.-> ts_inside_payment_service
+  istio_ingressgateway -.-> ts_payment_service
+  istio_ingressgateway -.-> ts_rebook_service
+  istio_ingressgateway -.-> ts_cancel_service
+  istio_ingressgateway -.-> ts_route_service
+  istio_ingressgateway -.-> ts_assurance_service
+  istio_ingressgateway -.-> ts_ticket_office_service
+  istio_ingressgateway -.-> ts_travel_plan_service
+  istio_ingressgateway -.-> ts_consign_service
+  istio_ingressgateway -.-> ts_consign_price_service
+  istio_ingressgateway -.-> ts_voucher_service
+  istio_ingressgateway -.-> ts_route_plan_service
+  istio_ingressgateway -.-> ts_food_service
+  istio_ingressgateway -.-> ts_news_service
+  istio_ingressgateway -.-> ts_admin_basic_info_service
+  istio_ingressgateway -.-> ts_admin_order_service
+  istio_ingressgateway -.-> ts_admin_route_service
+  istio_ingressgateway -.-> ts_admin_travel_service
+  istio_ingressgateway -.-> ts_admin_user_service
   ts_auth_service -. db .-> ts_auth_mysql
   ts_user_service -. db .-> ts_user_mysql
   ts_gateway_service -.-> ts_admin_basic_info_service
@@ -557,6 +640,60 @@ flowchart TB
   ts_travel_service -.-> ts_order_service
   ts_travel_service -.-> ts_route_service
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef gateway fill:#e9f9ec,stroke:#2e8b57,color:#14351f;
 classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 
 ```
+
+## 規則觸發
+計數＝該規則改變了多少個不同的東西（邊、節點、名稱、檔案；同一個東西重複碰到算一次）；括號內最多列 5 個例子。
+- rule 1: 78 (not-preadded ts-station-food-service; not-preadded ts-train-food-service; not-preadded ts-food-delivery-service; not-preadded ts-wait-order-service; not-preadded ts-gateway-service)
+- rule 2: 2 (test-dir old-docs/ts-ui-test; name Json2Shiviz=json2shiviz)
+- rule 3: 0
+- rule 4: 126 (default email_address=trainticket_notify@163.com; default CONTACTS_MYSQL_HOST=ts-contacts-mysql; default CONTACTS_MYSQL_PORT=3306; default CONTACTS_MYSQL_DATABASE=ts-contacts-mysql; default NOTIFICATION_MYSQL_HOST=ts-notification-mysql)
+- rule 5: 4 (not-a-host rabbitmq_host=${helm}; not-a-host _host=/; key spring.mail.host=smtp.163.com; key spring.rabbitmq.host=${rabbitmq_host:localhost})
+- rule 6: 1 (url http://ts-gateway-service:18888)
+- rule 7: 0
+- rule 8: 8 (config-signal url; config-signal server.port; config-signal spring.datasource.username; config-signal spring.datasource.password; config-signal spring.datasource.driver-class-name)
+- rule 9: 48 (jpa ts-contacts-service/src/main/java/contacts/repository/ContactsRepository.java; jpa ts-contacts-service/src/main/java/contacts/entity/Contacts.java; jpa ts-notification-service/src/main/java/notification/repository/NotifyRepository.java; jpa ts-notification-service/src/main/java/notification/entity/NotifyInfo.java; jpa ts-config-service/src/main/java/config/entity/Config.java)
+- rule 10: 13 (drop fluentd-es-v2.2.0 (deployment/kubernetes-manifests/efk-deployment); drop elasticsearch-logging (deployment/kubernetes-manifests/efk-deployment); drop kibana-logging (deployment/kubernetes-manifests/efk-deployment); drop node-exporter (deployment/kubernetes-manifests/prometheus); drop alertsnitch-mysql (deployment/kubernetes-manifests/prometheus))
+- rule 11: 1 (k8s-over-compose 101 compose names ignored)
+- rule 12: 0
+- rule 13: 0
+- rule 14: 0
+- rule 15: 0
+- rule 16: 0
+- rule 17: 0
+- rule 18: 0
+- rule 19: 1 (version ts-voucher-service-v2=ts-voucher-service)
+- rule 20: 0
+- rule 21: 0
+- rule 22: 6 (dead build_upload_image.py:33; dead build_upload_image.py:34; dead ts-voucher-service/server.py:53; dead ts-voucher-service/server.py:54; dead ts-voucher-service/server.py:56)
+- rule 23: 0
+- rule 24: 0
+- rule 25: 0
+- rule 26: 0
+- rule 27: 3 (first-of-list spring.cloud.nacos.discovery.server-addr; list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local; list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:127.0.0.1:8848})
+- rule 28: 0
+- rule 29: 1 (drop https://github.com/FudanSELab/train-ticket)
+- rule 30: 0
+- rule 31: 0
+- rule 32: 0
+- rule 33: 0
+- rule 34: 0
+- rule 35: 1 (inferred ts-voucher-service->ts-voucher-mysql)
+- rule 36: 1 (ns-strip github.com)
+- rule 37: 0
+- rule 38: 0
+- rule 39: 0
+- rule 40: 0
+- rule 41: 27 (lib ts-common; lib ms-monitoring-core; no-edge ts-common/src/main/java/edu/fudan/common/util/StringUtils.java; no-edge ts-common/src/main/java/edu/fudan/common/security/jwt/JWTFilter.java; no-edge ts-common/src/main/java/edu/fudan/common/entity/Station.java)
+- rule 42: 0
+- rule 43: 1 (drop swagger.controllerpackage)
+- rule 44: 1 (image ts-avatar-service=ts-avatar-service)
+- rule 45: 0
+- rule 46: 0
+- rule 51: 75 (browser ts-ui-dashboard/static/js/route.js:9; browser ts-ui-dashboard/static/js/route.js:67; browser ts-ui-dashboard/static/js/route.js:114; browser ts-ui-dashboard/static/js/order.js:27; browser ts-ui-dashboard/static/js/order.js:81)
+- rule 52: 14 (render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/configmap.yaml; render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/secrets.yaml; render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/service.yaml; render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/statefulset.yaml; render deployment/kubernetes-manifests/quickstart-k8s/charts/rabbitmq/templates/configmap.yaml)
+- rule 55: 2 (list containers.input.conf github; list containers.input.conf elasticsearch-logging)
+- rule 56: 77 (istio trainticket-gateway -> ts-ui-dashboard; istio trainticket-gateway -> ts-auth-service; istio trainticket-gateway -> ts-verification-code-service; istio trainticket-gateway -> ts-station-service; istio trainticket-gateway -> ts-train-service)

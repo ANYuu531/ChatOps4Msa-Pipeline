@@ -5,9 +5,17 @@
     "count": 0
   },
   "44": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 14,
+    "examples": [
+      "image service-a=service-a",
+      "image eureka-server=eureka-server",
+      "image admin-dashboard=admin-dashboard",
+      "image hystrix-dashboard=hystrix-dashboard",
+      "image service-b=service-b",
+      "image zuul=zuul",
+      "image config-server=config-server"
+    ],
+    "count": 7
   },
   "23": {
     "hits": 0,

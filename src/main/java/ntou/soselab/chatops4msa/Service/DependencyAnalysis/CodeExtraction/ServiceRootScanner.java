@@ -94,6 +94,8 @@ public class ServiceRootScanner {
     public void scan(Path root, EdgeLedger ledger) {
         // dir -> the marker file that justified it (first one wins, for stable provenance).
         Map<Path, String> serviceDirs = new LinkedHashMap<>();
+        List<Path[]> markers = new java.util.ArrayList<>(); // {marker's directory, the directory it climbs to}
+        Map<Path, String> markerNames = new LinkedHashMap<>();
         try (Stream<Path> stream = Files.walk(root)) {
             stream.filter(Files::isRegularFile)
                     .filter(p -> !SourceScanner.isIgnored(root, p))
@@ -104,10 +106,28 @@ public class ServiceRootScanner {
                         Path dir = serviceDir(root, p.getParent());
                         if (dir == null) return;
                         RuleTrace.hitIf(!dir.equals(p.getParent()), 2, "climb " + SourceScanner.relative(root, p.getParent()));
-                        serviceDirs.putIfAbsent(dir, p.getFileName().toString());
+                        markers.add(new Path[]{p.getParent(), dir});
+                        markerNames.putIfAbsent(p.getParent(), p.getFileName().toString());
                     });
         } catch (Exception ignored) {
             // unwalkable tree: emit whatever was found
+        }
+        // A generic directory name (server/, app/) is climbed past only into a directory that
+        // is itself one service. When the climb ends in a grouping of several modules
+        // (skywalking-showcase: services/app/server → services, beside services/gateway-service
+        // …), the service is the directory just below the grouping — services/app — not the
+        // grouping, which the aggregator rule would then drop with its code (2026-10-27).
+        Set<Path> climbed = new java.util.LinkedHashSet<>();
+        for (Path[] m : markers) climbed.add(m[1]);
+        for (Path[] m : markers) {
+            Path dir = m[1];
+            if (!dir.equals(m[0]) && !dir.equals(root) && isAggregator(dir, climbed)) {
+                Path d = m[0];
+                while (d.getParent() != null && !d.getParent().equals(dir)) d = d.getParent();
+                RuleTrace.hit(2, "climb-stop " + SourceScanner.relative(root, d));
+                dir = d;
+            }
+            serviceDirs.putIfAbsent(dir, markerNames.get(m[0]));
         }
 
         for (Map.Entry<Path, String> entry : serviceDirs.entrySet()) {
@@ -210,6 +230,28 @@ public class ServiceRootScanner {
                             || text.contains("shadow") || text.contains("jib")) {
                         jvmRunnable = true;
                     }
+                } else if (name.equals("package.json") || name.equals("composer.json")) {
+                    // The package's own name is its artifact, as a pom's artifactId is: npm's
+                    // "name" (scope dropped), Composer's "vendor/name" (vendor dropped). Rule 44
+                    // equates it with a Compose service of the same name (2026-10-27).
+                    if (artifactId == null) {
+                        java.util.regex.Matcher m = JSON_NAME.matcher(Files.readString(p));
+                        if (m.find()) {
+                            String n = m.group(1).trim();
+                            n = n.substring(n.lastIndexOf('/') + 1);
+                            if (!n.isEmpty()) artifactId = n;
+                        }
+                    }
+                } else if (name.equals("go.mod")) {
+                    // The module path's last element (github.com/org/repo/cartservice → cartservice).
+                    if (artifactId == null) {
+                        java.util.regex.Matcher m = GO_MODULE.matcher(Files.readString(p));
+                        if (m.find()) {
+                            String n = m.group(1).trim().replaceAll("/v\\d+$", "");
+                            n = n.substring(n.lastIndexOf('/') + 1);
+                            if (!n.isEmpty()) artifactId = n;
+                        }
+                    }
                 } else if (name.equals("requirements.txt")) {
                     manifest = p.getFileName().toString();
                     for (String line : Files.readAllLines(p)) {
@@ -270,6 +312,10 @@ public class ServiceRootScanner {
         }
     }
 
+    /** The top-level {@code "name"} of a package.json / composer.json (the first one in the file). */
+    private static final java.util.regex.Pattern JSON_NAME = java.util.regex.Pattern.compile("^\\s*\"name\"\\s*:\\s*\"([^\"]+)\"", java.util.regex.Pattern.MULTILINE);
+    /** {@code module github.com/org/repo/x} in a go.mod. */
+    private static final java.util.regex.Pattern GO_MODULE = java.util.regex.Pattern.compile("(?m)^module\\s+(\\S+)");
     private static final java.util.regex.Pattern POM_PACKAGING = java.util.regex.Pattern.compile("<packaging>\\s*([^<\\s]+)\\s*</packaging>");
     private static final java.util.regex.Pattern POM_ANY_ARTIFACT = java.util.regex.Pattern.compile("<artifactId>\\s*([^<\\s]+)\\s*</artifactId>");
     /** A JVM entry point: Java/Kotlin/Scala/Groovy spellings of {@code main}. */

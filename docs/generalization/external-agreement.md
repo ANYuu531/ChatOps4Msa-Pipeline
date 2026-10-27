@@ -11,9 +11,9 @@
 | microservices-book | [`c445384`](https://github.com/ewolff/microservice/tree/c445384002c912e196cf967cfb4d39b82867ba3c) (2019-01-28) | 5 | 5 | **1.00** | 2 |
 | tap-and-eat | [`3ad20b8`](https://github.com/jferrater/Tap-And-Eat-MicroServices/tree/3ad20b8fa421dc837ef423270a9bf9ece1615a03) (2017-01-04) | 4 | 4 | **1.00** | 10 |
 | spring-cloud-netflix | [`f0e57c3`](https://github.com/yidongnan/spring-cloud-netflix-example/tree/f0e57c3fe0e421a99ffd58601f88c93bc48432f3) (2018-08-25) | 26 | 26 | **1.00** | 2 |
-| spring-cloud-microservice | [`6938297`](https://github.com/zpng/spring-cloud-microservice-examples/tree/6938297335e924f8066f5558b79ee82fa204c4ee) (2017-03-23) | 26 | 24 | **0.92** | 19 |
+| spring-cloud-microservice | [`6938297`](https://github.com/zpng/spring-cloud-microservice-examples/tree/6938297335e924f8066f5558b79ee82fa204c4ee) (2017-03-23) | 26 | 24 | **0.92** | 9 |
 | lakeside-mutual | [`4fc6b43`](https://github.com/Microservice-API-Patterns/LakesideMutual/tree/4fc6b430da8a8c5db9a8d5918117e3c7a6a89c6d) (2021-02-26) | 9 | 9 | **1.00** | 12 |
-| robot-shop | [`5939f27`](https://github.com/instana/robot-shop/tree/5939f27e27facc2f1a96661dc04a652c20a9ca4b) (2019-07-16) | 12 | 12 | **1.00** | 6 |
+| robot-shop | [`5939f27`](https://github.com/instana/robot-shop/tree/5939f27e27facc2f1a96661dc04a652c20a9ca4b) (2019-07-16) | 12 | 12 | **1.00** | 9 |
 | **合計** | 7 個專案 | **95** | **93** | **0.98** | — |
 
 ## spring-petclinic
@@ -37,16 +37,16 @@
 資料集的 4 條邊**全部畫到**。
 
 工具畫了、資料集沒有（10 條；資料集看不到外部主機與程式碼層呼叫，所以多出來不等於錯）：
-- accountservice -> discoveryservice  (sync-http, inferred)
-- configservice -> discoveryservice  (sync-http, inferred)
-- configservice -> github.com  (external, documented)
-- customerservice -> discoveryservice  (sync-http, inferred)
+- accounts -> discoveryservice  (sync-http, inferred)
+- configserver -> discoveryservice  (sync-http, inferred)
+- configserver -> github.com  (external, documented)
+- customers -> discoveryservice  (sync-http, inferred)
 - foodtrayservice -> discoveryservice  (sync-http, inferred)
 - foodtrayservice -> item-service  (sync-http, documented)
 - foodtrayservice -> price-service  (sync-http, documented)
 - itemservice -> discoveryservice  (sync-http, inferred)
-- priceservice -> discoveryservice  (sync-http, inferred)
-- storeservice -> discoveryservice  (sync-http, inferred)
+- prices -> discoveryservice  (sync-http, inferred)
+- stores -> discoveryservice  (sync-http, inferred)
 
 ## spring-cloud-netflix
 
@@ -62,26 +62,16 @@
 - hystrix -> discovery
 - hystrix -> gateway
 
-工具畫了、資料集沒有（19 條；資料集看不到外部主機與程式碼層呼叫，所以多出來不等於錯）：
-- cloud-config-server -> cloud-eureka-server  (sync-http, inferred)
-- cloud-config-server -> github.com  (external, documented)
+工具畫了、資料集沒有（9 條；資料集看不到外部主機與程式碼層呼叫，所以多出來不等於錯）：
 - cloud-finagle-thrift-client -> zipkin  (sync-http, inferred)
 - cloud-finagle-thrift-server -> zipkin  (sync-http, inferred)
-- cloud-hystrix-dashboard -> cloud-config-server  (sync-http, inferred)
-- gateway -> cloud-eureka-server  (sync-http, inferred)
+- configserver -> github.com  (external, documented)
 - gateway -> cloud-simple-service  (sync-http, documented)
 - gateway -> cloud-simple-serviceb  (sync-http, documented)
 - gateway -> cloud-simple-ui  (sync-http, documented)
 - gateway -> uaa-service  (sync-http, documented)
-- simple-service -> cloud-config-server  (sync-http, inferred)
-- simple-service -> cloud-eureka-server  (sync-http, inferred)
-- simple-serviceb -> cloud-config-server  (sync-http, inferred)
-- simple-serviceb -> cloud-eureka-server  (sync-http, inferred)
-- simple-ui -> cloud-config-server  (sync-http, inferred)
-- simple-ui -> cloud-eureka-server  (sync-http, inferred)
 - simple-ui -> cloud-simple-service  (sync-http, documented)
-- turbine -> cloud-config-server  (sync-http, inferred)
-- turbine -> cloud-eureka-server  (sync-http, inferred)
+- turbine -> configserver  (sync-http, inferred)
 
 ## lakeside-mutual
 
@@ -105,10 +95,13 @@
 
 資料集的 12 條邊**全部畫到**。
 
-工具畫了、資料集沒有（6 條；資料集看不到外部主機與程式碼層呼叫，所以多出來不等於錯）：
+工具畫了、資料集沒有（9 條；資料集看不到外部主機與程式碼層呼叫，所以多出來不等於錯）：
+- cart -> catalogue  (sync-http, documented)
+- istio-ingressgateway -> web  (sync-http, documented)
 - payment -> cart  (sync-http, documented)
 - payment -> paypal.com  (external, documented)
 - payment -> user  (sync-http, documented)
+- ratings -> catalogue  (sync-http, documented)
 - shipping -> cart  (sync-http, documented)
 - web -> cart  (sync-http, documented)
 - web -> ratings  (sync-http, documented)

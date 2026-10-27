@@ -49,8 +49,10 @@ public class DetectedStack {
 
     /** Base name of the query packs to load, most specific first. */
     public List<String> queryPacks() {
-        if (tier == Tier.FRAMEWORK) return List.of(language + "-" + framework, language + "-generic");
-        if (tier == Tier.GENERIC) return List.of(language + "-generic");
+        // TypeScript is read with the JavaScript packs on its own grammar (a superset).
+        String family = "typescript".equals(language) ? "javascript" : language;
+        if (tier == Tier.FRAMEWORK) return List.of(family + "-" + framework, family + "-generic");
+        if (tier == Tier.GENERIC) return List.of(family + "-generic");
         return List.of();
     }
 }

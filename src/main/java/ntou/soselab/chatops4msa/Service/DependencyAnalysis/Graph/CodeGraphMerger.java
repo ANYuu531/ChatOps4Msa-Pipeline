@@ -78,7 +78,7 @@ public class CodeGraphMerger {
      */
     private static final Set<String> META_SECTIONS = Set.of("service-root", "env-address", "workload-env",
             "k8s-workload", "compose-service", "k8s-service", "k8s-namespace", "module-deps", "name-constant", "import",
-            "compose-alias", "url-metadata");
+            "compose-alias", "url-metadata", "k8s-gateway", "compose-mount");
 
     /** Hosts that name the caller itself, never another workload. */
     private static final Set<String> LOOPBACK = Set.of(
@@ -132,6 +132,8 @@ public class CodeGraphMerger {
      * known service names, with and without a {@code ts-} prefix / {@code service} suffix.
      */
     private final Map<String, String> serviceKeys = new LinkedHashMap<>();
+    /** Whether the vocabulary came from a rendered Helm chart (rule 52: only when nothing more concrete exists). */
+    private boolean helmVocabulary;
     /** Workload names the k8s manifests declare ({@code k8s-workload}); greenfield vocabulary. */
     private final Set<String> workloads = new LinkedHashSet<>();
     /** Module names that are (or align to) a deployable workload; pre-added as nodes in greenfield. */
@@ -155,7 +157,10 @@ public class CodeGraphMerger {
      * workload — four manifests each saying MONGO_CLIENT_HOST — so a read in module X is
      * resolved against X's own scope first (2026-10-23).
      */
-    private record EnvValue(String host, String scope, String kind) {
+    private record EnvValue(String host, String scope, String kind, boolean listed) {
+        EnvValue(String host, String scope, String kind) {
+            this(host, scope, kind, false);
+        }
     }
 
     /**
@@ -170,6 +175,54 @@ public class CodeGraphMerger {
     private final Set<String> namespaces = new LinkedHashSet<>();
     /** Repo-relative module directory → the Compose service built from it ({@code build:` context / dockerfile dir). */
     private final Map<String, String> composeBuildDirs = new LinkedHashMap<>();
+    /** k8s image stem (and the stem with the project's registry prefix cut) → the vocabulary workloads running it. */
+    private final Map<String, Set<String>> k8sImages = new LinkedHashMap<>();
+    private final Map<String, Set<String>> k8sImageRegistries = new LinkedHashMap<>();
+    /** A module whose image several workloads run → those workloads (its code edges are each one's). */
+    private final Map<String, List<String>> moduleFanout = new LinkedHashMap<>();
+
+    /**
+     * The workloads that run the image a module is built into: an image stem (whole, or with
+     * the project's registry prefix cut) equal to the module's directory, name or artifact.
+     */
+    private Set<String> imageWorkloads(String dir, String rawName, String artifact, Set<String> vocabulary) {
+        String last = dir.contains("/") ? dir.substring(dir.lastIndexOf('/') + 1) : dir;
+        for (String key : new String[]{hyphenated(last), hyphenated(rawName), artifact == null ? "" : hyphenated(artifact)}) {
+            if (key.isEmpty()) continue;
+            for (Map.Entry<String, Set<String>> e : k8sImages.entrySet()) {
+                if (hyphenated(e.getKey()).equals(key)) return filterTo(e.getValue(), vocabulary);
+            }
+        }
+        // Exact only: a suffix test on image names cut to their project stem would equate
+        // train-ticket's undeployed ts-train-food-service with ts-food-service's image.
+        return Set.of();
+    }
+
+    private static Set<String> filterTo(Set<String> names, Set<String> vocabulary) {
+        Set<String> out = new LinkedHashSet<>();
+        for (String n : names) if (vocabulary.contains(n)) out.add(n);
+        return out;
+    }
+
+    /** Compose image stem ({@code gateway-service}, and the stem with the project's registry prefix cut) → the services running it. */
+    private final Map<String, Set<String>> composeImages = new LinkedHashMap<>();
+    /** Image registry path → the image stems under it. */
+    private final Map<String, Set<String>> composeImageRegistries = new LinkedHashMap<>();
+
+    private static String commonPrefix(Set<String> names) {
+        String p = null;
+        for (String n : names) {
+            if (p == null) {
+                p = n;
+                continue;
+            }
+            int i = 0;
+            while (i < p.length() && i < n.length() && p.charAt(i) == n.charAt(i)) i++;
+            p = p.substring(0, i);
+        }
+        return p == null ? "" : p;
+    }
+
     /** Compose service names, as declared (dots included), for the artifactId equation. */
     private final Set<String> composeServiceNames = new LinkedHashSet<>();
 
@@ -209,6 +262,8 @@ public class CodeGraphMerger {
      * (2026-10-26, mall-swarm: db→mysql, es→elasticsearch, rabbit→rabbitmq).
      */
     private final Map<String, Map<String, String>> composeAliases = new LinkedHashMap<>();
+    /** Compose network aliases (B3): reader node → (alias → target), consulted only for that reader. */
+    private final Map<String, Map<String, String>> networkAliases = new LinkedHashMap<>();
     /** Async rows (the kafka and rabbit sections), merged after everything else so the broker a service is configured with is known. */
     private final List<JSONObject> asyncRows = new ArrayList<>();
 
@@ -262,6 +317,29 @@ public class CodeGraphMerger {
                 if (!ns.isEmpty()) namespaces.add(ns);
             }
         }
+        // Rule 54: the same Service name in two namespaces is two services (travels in
+        // travel-portal, the portal; travels in travel-agency, the agency). Such a name — and
+        // only such a name — is qualified name.namespace everywhere: as a node, as a reader,
+        // and as a host, where a short name means the reader's own namespace (k8s DNS).
+        Map<String, Set<String>> nsByName = new LinkedHashMap<>();
+        Set<String> unnamespaced = new LinkedHashSet<>();
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null || !"k8s-service".equals(edge.optString("section", ""))) continue;
+            JSONObject fields = edge.optJSONObject("fields");
+            if (fields == null) continue;
+            String name = fields.optString("name", "").trim().toLowerCase(Locale.ROOT);
+            String ns = fields.optString("namespace", "").trim().toLowerCase(Locale.ROOT);
+            if (name.isEmpty()) continue;
+            if (ns.isEmpty()) unnamespaced.add(name);
+            else nsByName.computeIfAbsent(name, k -> new LinkedHashSet<>()).add(ns);
+        }
+        for (Map.Entry<String, Set<String>> e : nsByName.entrySet()) {
+            if (e.getValue().size() >= 2 && !unnamespaced.contains(e.getKey())) {
+                ambiguousNames.add(e.getKey());
+                RuleTrace.hit(54, "qualify " + e.getKey() + " in " + e.getValue());
+            }
+        }
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
             if (edge == null) continue;
@@ -280,18 +358,66 @@ public class CodeGraphMerger {
                 String context = fields.optString("context", "").replace('\\', '/');
                 String built = !dockerfileDir.isBlank() ? dockerfileDir : context;
                 if (!built.isBlank() && !built.equals(".")) composeBuildDirs.putIfAbsent(built, name);
+                String image = fields.optString("image", "").trim();
+                if (!image.isEmpty()) {
+                    composeImages.computeIfAbsent(image, k -> new LinkedHashSet<>()).add(name);
+                    String registry = fields.optString("image_registry", "");
+                    composeImageRegistries.computeIfAbsent(registry, k -> new LinkedHashSet<>()).add(image);
+                }
+            }
+        }
+        // Several images under one registry path name the project the same way (yas-cart,
+        // yas-storefront, yas-media under ghcr.io/nashtech-garage): that shared prefix is the
+        // project's, not the module's, and the module is the rest — an exact equation once the
+        // prefix is the one every image of that path carries (rule 44, 2026-10-27).
+        for (Map.Entry<String, Set<String>> reg : composeImageRegistries.entrySet()) {
+            if (reg.getKey().isEmpty() || reg.getValue().size() < 2) continue;
+            String prefix = commonPrefix(reg.getValue());
+            int cut = Math.max(prefix.lastIndexOf('-'), prefix.lastIndexOf('_'));
+            prefix = cut >= 0 ? prefix.substring(0, cut + 1) : "";
+            if (prefix.isEmpty()) continue;
+            for (String image : reg.getValue()) {
+                String stem = image.substring(prefix.length());
+                if (stem.isEmpty()) continue;
+                for (String svc : composeImages.getOrDefault(image, Set.of())) {
+                    composeImages.computeIfAbsent(stem, k -> new LinkedHashSet<>()).add(svc);
+                }
             }
         }
         if (greenfield) {
-            for (String section : List.of("k8s-workload", "compose-service")) {
+            // Rule 52's precedence: a rendered Helm chart is a template whose names hang on the
+            // release and the values; it is the vocabulary only when the repo states its
+            // deployment nowhere more concretely (no plain manifest, no Compose file). Its env
+            // and routing rows are read either way (2026-10-27).
+            for (String tier : List.of("k8s-workload", "compose-service", "k8s-workload:helm")) {
+                String section = tier.startsWith("k8s-workload") ? "k8s-workload" : tier;
+                boolean helmTier = tier.endsWith(":helm");
                 for (int i = 0; i < edges.length(); i++) {
                     JSONObject edge = edges.optJSONObject(i);
                     if (edge == null || !section.equals(edge.optString("section", ""))) continue;
                     JSONObject fields = edge.optJSONObject("fields");
                     if (fields == null) continue;
+                    if ("k8s-workload".equals(section) && fields.has("helm") != helmTier) continue;
                     String raw = clean(fields.optString("name", ""));
                     String name = "k8s-workload".equals(section) ? unversionedWorkload(raw, k8sServices, rawWorkloadNames) : raw;
+                    String rowNs = fields.optString("namespace", "").trim().toLowerCase(Locale.ROOT);
+                    if ("k8s-workload".equals(section) && ambiguousNames.contains(name) && !rowNs.isEmpty()) {
+                        name = name + "." + rowNs;
+                        workloadAliases.put(raw + "@" + rowNs, name);
+                    }
+                    // An ambiguous name with no namespace (travels-v2.yaml, applied nowhere) cannot be
+                    // placed in either service: it is not a node of its own (rule 54).
+                    if ("k8s-workload".equals(section) && ambiguousNames.contains(name) && rowNs.isEmpty()) {
+                        RuleTrace.hit(54, "unplaceable " + raw);
+                        continue;
+                    }
+                    if ("k8s-workload".equals(section) && !rowNs.isEmpty()) nodeNamespaces.put(name, rowNs);
                     if (!isPlausibleName(name)) continue;
+                    String image = fields.optString("image", "").trim();
+                    if ("k8s-workload".equals(section) && !image.isEmpty()) {
+                        k8sImages.computeIfAbsent(image, k -> new LinkedHashSet<>()).add(name);
+                        k8sImageRegistries.computeIfAbsent(fields.optString("image_registry", ""), k -> new LinkedHashSet<>()).add(image);
+                    }
                     if (RuleTrace.hitIf(!name.equals(raw), 19, "version " + raw + "=" + name)) workloadAliases.put(raw, name);
                     allWorkloads.add(name);
                     workloadsByDir.computeIfAbsent(parentDir(edge.optString("file", "").replace('\\', '/')),
@@ -299,11 +425,28 @@ public class CodeGraphMerger {
                 }
                 if (!allWorkloads.isEmpty()) {
                     k8sVocabulary = "k8s-workload".equals(section);
+                    helmVocabulary = helmTier;
+                    RuleTrace.hitIf(helmTier, 52, "vocabulary " + allWorkloads.size() + " rendered workloads");
                     RuleTrace.hitIf(k8sVocabulary && !composeServiceNames.isEmpty(), 11, "k8s-over-compose " + composeServiceNames.size() + " compose names ignored");
                     break;
                 }
             }
         }
+        // The k8s images, with the project's registry prefix cut as for Compose (demo_travels_
+        // under quay.io/kiali): an image name is the module's, the second alias source a
+        // manifest gives besides the workload's own name (rule 44 extended, 2026-10-27).
+        for (Map.Entry<String, Set<String>> reg : k8sImageRegistries.entrySet()) {
+            if (reg.getKey().isEmpty() || reg.getValue().size() < 2) continue;
+            String prefix = commonPrefix(reg.getValue());
+            int cut = Math.max(prefix.lastIndexOf('-'), prefix.lastIndexOf('_'));
+            prefix = cut >= 0 ? prefix.substring(0, cut + 1) : "";
+            if (prefix.isEmpty()) continue;
+            for (String image : new ArrayList<>(reg.getValue())) {
+                String stem = image.substring(prefix.length());
+                if (!stem.isEmpty()) k8sImages.computeIfAbsent(stem, k -> new LinkedHashSet<>()).addAll(k8sImages.getOrDefault(image, Set.of()));
+            }
+        }
+
         // Which ConfigMaps each workload receives, for scoping env lookups below.
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
@@ -316,7 +459,10 @@ public class CodeGraphMerger {
                 workloadConfigMaps.computeIfAbsent(workload, k -> new LinkedHashSet<>()).add(configMap);
             }
             String host = fields.optString("host", "");
-            if (!host.isBlank() && !workload.isEmpty()) {
+            boolean undeclaredBare = "true".equals(fields.optString("bare", ""))
+                    && composeServiceNames.stream().noneMatch(n -> n.equalsIgnoreCase(host.trim()))
+                    && !rawWorkloadNames.contains(host.trim());
+            if (!host.isBlank() && !workload.isEmpty() && !undeclaredBare) {
                 workloadHosts.computeIfAbsent(workload, k -> new LinkedHashSet<>()).add(host.trim());
             }
         }
@@ -362,6 +508,36 @@ public class CodeGraphMerger {
             // library heuristic alike.
             String deploymentName = composeBuildDirs.get(dir);
             if (deploymentName == null) {
+                // A module nested inside a build context that holds no other module is what that
+                // image is built from (robot-shop: `ratings: build: ratings`, the PHP module in
+                // ratings/html). The deepest such context wins; two modules under one context
+                // say nothing about which is the image (rule 44 extended, 2026-10-27).
+                String best = null;
+                for (Map.Entry<String, String> ctx : composeBuildDirs.entrySet()) {
+                    String c = ctx.getKey();
+                    if (c.isEmpty() || !dir.startsWith(c + "/")) continue;
+                    if (best != null && best.length() >= c.length()) continue;
+                    if (otherModuleUnder(c, dir, edges)) continue;
+                    best = c;
+                }
+                if (RuleTrace.hitIf(best != null, 44, "nested " + rawName + "=" + (best == null ? "" : composeBuildDirs.get(best)))) {
+                    deploymentName = composeBuildDirs.get(best);
+                }
+            }
+            if (deploymentName == null) {
+                // image: with no build: the image's name is this module's (its directory, or its
+                // artifact) — exactly one Compose service runs that image (B2, 2026-10-27).
+                String lastSegment = dir.contains("/") ? dir.substring(dir.lastIndexOf('/') + 1) : dir;
+                for (String key : new String[]{lastSegment.toLowerCase(Locale.ROOT), rawName, moduleArtifactIds.getOrDefault(dir, "").toLowerCase(Locale.ROOT)}) {
+                    Set<String> services = key.isEmpty() ? null : composeImages.get(key);
+                    if (services != null && services.size() == 1) {
+                        deploymentName = services.iterator().next();
+                        RuleTrace.hit(44, "image " + rawName + "=" + deploymentName);
+                        break;
+                    }
+                }
+            }
+            if (deploymentName == null) {
                 String artifact = moduleArtifactIds.get(dir);
                 if (artifact != null && !artifact.equalsIgnoreCase(rawName)) {
                     for (String composeName : composeServiceNames) {
@@ -376,6 +552,15 @@ public class CodeGraphMerger {
             // as rule 11 says, and the module aligns on its own name below.
             String deploymentWorkload = deploymentName == null ? null
                     : (allWorkloads.isEmpty() ? deploymentName : workloadForDeploymentName(deploymentName, allWorkloads));
+            // …but when the manifests do not deploy this module at all (no workload for the
+            // Compose name, none for the module's own name), there is no k8s spelling to lose
+            // to: the Compose name is the only deployment name the repo gives it (robot-shop's
+            // K8s/ holds a load generator only; ratings/html is the Compose service ratings).
+            if (deploymentName != null && deploymentWorkload == null && greenfield
+                    && matchWorkloadForModule(rawName, allWorkloads) == null) {
+                RuleTrace.hit(44, "compose-only " + rawName + "=" + deploymentName);
+                deploymentWorkload = deploymentName;
+            }
             RuleTrace.hitIf(deploymentName != null && deploymentWorkload == null, 44, "no-workload " + rawName + "=" + deploymentName);
             if (deploymentWorkload != null && greenfield) {
                 RuleTrace.hitIf(!deploymentWorkload.equals(rawName), 44, "map " + rawName + "=" + deploymentWorkload);
@@ -388,6 +573,21 @@ public class CodeGraphMerger {
                     name = workload;
                     aligned.add(workload);
                     deployed = true;
+                } else if (!k8sImages.isEmpty()) {
+                    // No workload is named like the module: the image it is built into may be.
+                    // One workload runs it → that workload; several (travels' portal image runs as
+                    // voyages, viaggi and travels) → the module's code belongs to each of them.
+                    Set<String> runs = imageWorkloads(dir, rawName, moduleArtifactIds.get(dir), allWorkloads);
+                    if (runs.size() == 1) {
+                        name = runs.iterator().next();
+                        RuleTrace.hit(44, "k8s-image " + rawName + "=" + name);
+                        aligned.add(name);
+                        deployed = true;
+                    } else if (runs.size() > 1) {
+                        RuleTrace.hit(44, "k8s-image-fanout " + rawName + "=" + runs);
+                        moduleFanout.put(name, new ArrayList<>(runs));
+                        aligned.addAll(runs);
+                    }
                 }
             }
             moduleNodes.put(dir, name);
@@ -440,7 +640,13 @@ public class CodeGraphMerger {
             String name = fields.optString("name", "");
             String host = clean(fields.optString("host", ""));
             if (name.isBlank() || host.isEmpty()) continue;
+            String hostNs = fields.optString("host_ns", "").trim();
+            if (!hostNs.isEmpty() && ambiguousNames.contains(host) && namespaces.contains(hostNs)) host = host + "." + hostNs;
 
+            // A rendered chart that is not the vocabulary only wires names the concrete
+            // deployment has: its own database (yas's k8s `postgresql` beside Compose's
+            // `postgres`) is another variant's node, not this graph's (rule 52).
+            if (RuleTrace.hitIf(fields.has("helm") && !helmVocabulary && matchNode(host) == null, 52, "variant-host " + name + "=" + host)) continue;
             String current = envAddress.get(name);
             if (current == null
                     || (matchNode(host) != null && matchNode(current) == null)) {
@@ -460,7 +666,7 @@ public class CodeGraphMerger {
                 scope = "workload:" + clean(workload);
             }
             String kind = kindField(fields);
-            envValues.computeIfAbsent(name, k -> new ArrayList<>()).add(new EnvValue(host, scope, kind));
+            envValues.computeIfAbsent(name, k -> new ArrayList<>()).add(new EnvValue(host, scope, kind, "true".equals(fields.optString("list", ""))));
         }
 
         // The build manifests: what each module is built with, and who imports a library.
@@ -521,11 +727,47 @@ public class CodeGraphMerger {
             String alias = clean(fields.optString("alias", ""));
             String target = clean(fields.optString("target", ""));
             if (service == null || alias.isEmpty() || target.isEmpty()) continue;
+            // A network alias holds on its network only: it is never taken repo-wide.
+            if (fields.has("network")) {
+                networkAliases.computeIfAbsent(service, k -> new LinkedHashMap<>()).putIfAbsent(alias, target);
+                continue;
+            }
             composeAliases.computeIfAbsent(service, k -> new LinkedHashMap<>()).putIfAbsent(alias, target);
+        }
+
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null) continue;
+            JSONObject fields = edge.optJSONObject("fields");
+            if (fields == null) continue;
+            String section = edge.optString("section", "");
+            if ("compose-mount".equals(section)) {
+                mounts.computeIfAbsent(fields.optString("file", ""), k -> new LinkedHashSet<>()).add(fields.optString("service", ""));
+            } else if ("k8s-gateway".equals(section)) {
+                gatewayWorkloads.computeIfAbsent(fields.optString("name", ""), k -> new LinkedHashSet<>()).add(fields.optString("workload", ""));
+            }
         }
 
         indexImports(edges);
         indexConfig(edges);
+    }
+
+    /** Repo file → the Compose services that mount it. */
+    private final Map<String, Set<String>> mounts = new LinkedHashMap<>();
+    /** Istio Gateway name → the ingress workload its selector names. */
+    private final Map<String, Set<String>> gatewayWorkloads = new LinkedHashMap<>();
+
+    /** Whether a service-root other than {@code dir} lies under the directory {@code context}. */
+    private static boolean otherModuleUnder(String context, String dir, JSONArray edges) {
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null || !"service-root".equals(edge.optString("section", ""))) continue;
+            JSONObject f = edge.optJSONObject("fields");
+            String d = f == null ? "" : f.optString("dir", "").replace('\\', '/');
+            // The context directory's own module (its Dockerfile) is the image, not another module.
+            if (!d.equals(dir) && !d.equals(context) && d.startsWith(context + "/")) return true;
+        }
+        return false;
     }
 
     /**
@@ -534,9 +776,13 @@ public class CodeGraphMerger {
      * service agrees on; null when the host is no alias or the declarations differ.
      */
     private String composeAlias(String host, String source) {
-        if (host == null || composeAliases.isEmpty()) return null;
+        if (host == null || (composeAliases.isEmpty() && networkAliases.isEmpty())) return null;
         String h = clean(host);
         if (h.isEmpty()) return null;
+        if (source != null && networkAliases.containsKey(source)) {
+            String target = networkAliases.get(source).get(h);
+            if (RuleTrace.hitIf(target != null, 25, "network-resolve " + source + ":" + h + "=" + target)) return target;
+        }
         if (source != null && composeAliases.containsKey(source)) {
             String target = composeAliases.get(source).get(h);
             if (RuleTrace.hitIf(target != null, 25, "resolve " + source + ":" + h + "=" + target)) return target;
@@ -731,6 +977,26 @@ public class CodeGraphMerger {
     private String resolveEnv(String name, String source) {
         EnvValue v = resolveEnvValue(name, source);
         return v == null ? null : v.host();
+    }
+
+    /**
+     * Rule 55: every host of a list-valued variable when the reader's own scope declares the
+     * variable as one list (travels' PORTAL_SERVICES); otherwise the single value of
+     * {@link #resolveEnvValue}, or nothing.
+     */
+    private List<EnvValue> resolveEnvValues(String name, String source) {
+        List<EnvValue> values = envValues.get(name);
+        if (values != null && source != null) {
+            List<EnvValue> scoped = new ArrayList<>();
+            for (EnvValue v : values) if (v.scope() != null && scopeIs(v.scope(), source)) scoped.add(v);
+            if (scoped.size() > 1 && scoped.stream().allMatch(EnvValue::listed)
+                    && scoped.stream().map(EnvValue::scope).distinct().count() == 1) {
+                RuleTrace.hit(55, "read-list " + name + " @" + source + " " + scoped.size());
+                return scoped;
+            }
+        }
+        EnvValue one = resolveEnvValue(name, source);
+        return one == null ? List.of() : List.of(one);
     }
 
     /** As {@link #resolveEnv}, with the kind the declaring value's shape stated (or null). */
@@ -1233,7 +1499,13 @@ public class CodeGraphMerger {
             if (edge == null || !"workload-env".equals(edge.optString("section", ""))) continue;
             JSONObject fields = edge.optJSONObject("fields");
             if (fields == null) continue;
+            String rowNs = fields.optString("namespace", "").trim().toLowerCase(Locale.ROOT);
+            readerNamespace = rowNs.isEmpty() ? null : rowNs;
             String rawWorkload = clean(fields.optString("workload", ""));
+            String plainWorkload = cleanHost(fields.optString("workload", ""), namespaces);
+            if (readerNamespace != null && workloadAliases.containsKey(plainWorkload + "@" + readerNamespace)) {
+                rawWorkload = workloadAliases.get(plainWorkload + "@" + readerNamespace);
+            }
             String source = matchNodeLoose(workloadAliases.getOrDefault(rawWorkload, rawWorkload));
             // A Compose service the vocabulary does not know (the manifests are a stale
             // partial set and name it differently, or not at all) is still a service the
@@ -1248,6 +1520,15 @@ public class CodeGraphMerger {
             String configMap = fields.optString("configmap", "");
             for (String h : configMapHosts.getOrDefault(configMap, Set.of())) hosts.putIfAbsent(h, false);
             String literal = fields.optString("host", "");
+            String hostNs = fields.optString("host_ns", "").trim();
+            if (!literal.isBlank() && !hostNs.isEmpty() && ambiguousNames.contains(literal.trim()) && namespaces.contains(hostNs)) {
+                literal = literal.trim() + "." + hostNs;
+            }
+            // A bare word from a command-line flag is a host only when the deployment declares it (rule 53 / 45).
+            if (!literal.isBlank() && "true".equals(fields.optString("bare", "")) && !declaredName(literal)) {
+                RuleTrace.hit(53, "bare-undeclared " + rawWorkload + " " + literal);
+                literal = "";
+            }
             if (!literal.isBlank()) hosts.put(literal, true);
 
             String file = edge.optString("file", "");
@@ -1262,6 +1543,7 @@ public class CodeGraphMerger {
                 // label that would read as an in-cluster service (2026-10-26).
                 if (external(host)) {
                     if (!entry.getValue()) continue;
+                    if (RuleTrace.hitIf(fields.has("helm") && !helmVocabulary, 52, "variant-host " + source + "->" + host)) continue;
                     RuleTrace.hit(36, "external-env " + source + "->" + host);
                     graph.addNode(host, DependencyGraph.KIND_EXTERNAL);
                     addCodeEdge(source, host, "external", file, -1, DependencyGraph.CONF_INFERRED);
@@ -1272,6 +1554,7 @@ public class CodeGraphMerger {
                 // strictly here invented a second node for the same component.
                 String node = matchNodeLoose(host);
                 if (node == null) {
+                    if (RuleTrace.hitIf(fields.has("helm") && !helmVocabulary, 52, "variant-host " + source + "->" + host)) continue;
                     String label = cleanLabel(host);
                     if (label == null || !isPlausibleName(label)) continue;
                     node = label;
@@ -1300,6 +1583,7 @@ public class CodeGraphMerger {
                 addCodeEdge(source, node, edgeType("", kind), file, -1, confidence);
             }
         }
+        readerNamespace = null;
     }
 
     /**
@@ -1384,6 +1668,7 @@ public class CodeGraphMerger {
      *                       to attribute the edge from its file path.
      */
     private void mergeOne(JSONObject edge, List<Unresolved> unresolved, String sourceOverride) {
+        readerNamespace = null;
         String section = edge.optString("section", "");
         JSONObject fields = edge.optJSONObject("fields");
         if (fields == null) fields = new JSONObject();
@@ -1482,6 +1767,13 @@ public class CodeGraphMerger {
             String owner = configFileService.get(file.replace('\\', '/'));
             if (owner != null) source = owner;
         }
+        // A module several workloads run (one image, several Deployments): each runs this code.
+        if (sourceOverride == null && source != null && moduleFanout.containsKey(source)) {
+            for (String w : moduleFanout.get(source)) mergeOne(edge, unresolved, w);
+            return;
+        }
+        // A short host in this reader's code means its own namespace (rule 54).
+        readerNamespace = source == null ? null : nodeNamespaces.get(source);
 
         // Code in a library module runs inside the services that import it: the call is
         // theirs, attributed by the import of this very file; with no importer it is
@@ -1513,6 +1805,36 @@ public class CodeGraphMerger {
             return;
         }
 
+        // Rule 56: ingress routing — the gateway workload to each destination it routes to.
+        if ("ingress-route".equals(section)) {
+            Set<String> gws = gatewayWorkloads.getOrDefault(fields.optString("gateway", ""), Set.of());
+            String rowNs = fields.optString("namespace", "").trim().toLowerCase(Locale.ROOT);
+            readerNamespace = rowNs.isEmpty() ? null : rowNs;
+            String node = matchNodeLoose(fields.optString("host", ""));
+            readerNamespace = null;
+            if (node == null) return;
+            for (String gw : gws) {
+                if (gw.isBlank() || gw.equals(node)) continue;
+                RuleTrace.hit(56, "edge " + gw + "->" + node);
+                graph.addNode(gw, DependencyGraph.KIND_GATEWAY);
+                addCodeEdge(gw, node, "sync-http", file, line);
+            }
+            return;
+        }
+
+        // Rule 49: a registry name (dialer.Dial("srv-rate"), a literal reaching a dial through
+        // a parameter) is resolved by Consul / etcd at run time. Nothing in the repository
+        // maps it to a deployment, so it is never drawn: it is listed as residue, which is
+        // where the "Resolve names" question asks the operator (2026-10-27).
+        if ("registry-ref".equals(section)) {
+            String name = fields.optString("name", "").trim();
+            if (!name.isEmpty() && source != null) {
+                RuleTrace.hit(49, "listed " + source + " => " + name);
+                unresolved.add(new Unresolved(section, source, name, file, line));
+            }
+            return;
+        }
+
         // A code-side config edge is a service reading an env var. When that env var
         // resolves (via the k8s ConfigMap / .env table) to a host that is a known
         // service, the read IS the dependency — this is how an env-indirected target
@@ -1520,6 +1842,19 @@ public class CodeGraphMerger {
         // runtime data. A bare env read that names no host is a signal, not an edge.
         if ("config".equals(section) && fields.has("env")) {
             String env = fields.optString("env", "");
+            List<EnvValue> listed = env.isBlank() || source == null ? List.of() : resolveEnvValues(env, source);
+            if (listed.size() > 1) {
+                for (EnvValue v : listed) {
+                    String h = unalias(v.host(), source);
+                    if (isLoopback(h) || isReservedHost(h)) continue;
+                    String node = matchNode(h);
+                    if (node == null || node.equals(source)) continue;
+                    String kind = v.kind() != null ? v.kind() : DependencyGraph.classifyKind(node);
+                    graph.addNode(node, kind);
+                    addCodeEdge(source, node, edgeType("", kind), file, line);
+                }
+                return;
+            }
             EnvValue value = env.isBlank() ? null : resolveEnvValue(env, source);
             String host = value == null ? null : value.host();
             String statedKind = value == null ? null : value.kind();
@@ -1534,6 +1869,22 @@ public class CodeGraphMerger {
                     statedKind = kindFromScheme(prop);
                     if (statedKind == null && fields.optString("dotnetkey", "").toLowerCase(Locale.ROOT).startsWith("connectionstrings:")) {
                         statedKind = DependencyGraph.KIND_DB;
+                    }
+                }
+            }
+            // The read's own default, when the environment does not set the variable: at a
+            // use site (a client option {host: redisHost}, rule 47) any host-shaped default;
+            // at a bare read only an absolute URL (getenv('CATALOGUE_URL') ?: 'http://catalogue:8080'),
+            // the code's own statement of the address, like a ${key:default} (rule 48).
+            String fallback = fields.optString("envdefault", "").trim();
+            if (host == null && !fallback.isEmpty()) {
+                boolean useSite = "true".equals(fields.optString("usesite", ""));
+                if (useSite || looksLikeUrl(fallback)) {
+                    String h = stripToHost(fallback);
+                    if (h != null && !h.isEmpty()) {
+                        RuleTrace.hit(48, (useSite ? "usesite " : "default ") + env + "=" + h);
+                        host = h;
+                        if (statedKind == null) statedKind = kindFromScheme(fallback);
                     }
                 }
             }
@@ -1557,7 +1908,7 @@ public class CodeGraphMerger {
         // An HTTP call whose URL came from an env var (requests.get(f"{PREFIX}/x") with
         // PREFIX = os.getenv("X_API_PREFIX")): the call site is the use, the env table
         // (this module's scope first) or the getenv default names the host.
-        if ("http-client".equals(section) && fields.has("env") && !fields.has("url")) {
+        if (("http-client".equals(section) || "grpc".equals(section)) && fields.has("env") && !fields.has("url")) {
             String env = fields.optString("env", "");
             String host = env.isBlank() || source == null ? null : resolveEnv(env, source);
             if (host == null) {
@@ -1819,7 +2170,9 @@ public class CodeGraphMerger {
                 return firstNonBlank(fields, "value");
             }
             case "grpc" -> {
-                return firstNonBlank(fields, "value", "target", "host", "name");
+                // gRPC target syntax: dns:///host:port, dns://authority/host:port, passthrough:///…
+                String t = firstNonBlank(fields, "url", "value", "target", "host", "name");
+                return t == null ? null : t.replaceFirst("(?i)^(dns|passthrough|xds):(//[^/]*)?/", "");
             }
             case "config" -> {
                 // A config value that is a URL is a dependency target; so is a bare host
@@ -2178,8 +2531,21 @@ public class CodeGraphMerger {
      * domain cut to its first label reads as a service that does not exist (2026-10-26).
      */
     private String clean(String raw) {
-        return cleanHost(raw, namespaces);
+        String s = cleanHost(raw, namespaces);
+        if (ambiguousNames.isEmpty() || !ambiguousNames.contains(s)) return s;
+        // An ambiguous name (rule 54): its own namespace label says which, else the reader's.
+        String ns = ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ConfigExtractor.namespaceLabel(raw);
+        if (ns != null && namespaces.contains(ns)) return s + "." + ns;
+        if (readerNamespace != null) return s + "." + readerNamespace;
+        return s;
     }
+
+    /** The namespace of the reader whose hosts are being resolved (rule 54), or null. */
+    private String readerNamespace;
+    /** Service names declared in two or more namespaces (rule 54). */
+    private final Set<String> ambiguousNames = new LinkedHashSet<>();
+    /** Workload node → the namespace its manifest puts it in. */
+    private final Map<String, String> nodeNamespaces = new LinkedHashMap<>();
 
     static String cleanHost(String raw, Set<String> namespaces) {
         String s = raw.trim().toLowerCase(Locale.ROOT);
@@ -2189,6 +2555,7 @@ public class CodeGraphMerger {
         if (slash >= 0) s = s.substring(0, slash);       // path
         int at = s.indexOf('@');
         if (at >= 0) s = s.substring(at + 1);            // userinfo
+        s = ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ConfigExtractor.trailingHostPort(s);
         int colon = s.indexOf(':');
         if (colon >= 0) s = s.substring(0, colon);       // port
         // ${...} placeholders and quotes are not a usable host.
@@ -2235,6 +2602,7 @@ public class CodeGraphMerger {
         if (slash >= 0) s = s.substring(0, slash);
         int at = s.indexOf('@');
         if (at >= 0) s = s.substring(at + 1);
+        s = ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ConfigExtractor.trailingHostPort(s);
         int colon = s.indexOf(':');
         if (colon >= 0) s = s.substring(0, colon);
         s = s.replace("\"", "").replace("'", "").trim();
@@ -2299,6 +2667,14 @@ public class CodeGraphMerger {
             String matched = matchNodeForSource(svc);
             if (matched != null) return matched;
             if (greenfield && isPlausibleName(svc) && !SOURCE_STOP.contains(svc)) return svc;
+        }
+        // A file in no module that exactly one Compose service mounts is that service's config.
+        if (svc == null && file != null) {
+            Set<String> by = mounts.get(file.replace('\\', '/'));
+            if (by != null && by.size() == 1) {
+                String mounted = resolveComposeService(by.iterator().next());
+                if (RuleTrace.hitIf(mounted != null, 56, "mount " + file + "=" + mounted)) return mounted;
+            }
         }
 
         String seg = firstPathSegment(file);

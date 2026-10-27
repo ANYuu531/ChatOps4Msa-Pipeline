@@ -637,7 +637,7 @@ public class ExtractionGeneralizationTest {
     }
 
     @Test
-    void kotlinIsReadWithTheThinSurfaceAndSaysSo(@TempDir Path dir) throws Exception {
+    void kotlinIsReadWithItsGrammarAndTheThinSurfaceIsTheFallback(@TempDir Path dir) throws Exception {
         write(dir, "fraud-detection/build.gradle.kts", "plugins { kotlin(\"jvm\") }\n");
         write(dir, "fraud-detection/src/main/kotlin/frauddetection/main.kt", """
                 package frauddetection
@@ -652,19 +652,23 @@ public class ExtractionGeneralizationTest {
                 """);
         List<DetectedStack> stacks = new StackDetector().detect(dir);
         DetectedStack kotlin = stacks.stream().filter(s -> s.language.equals("kotlin")).findFirst().orElse(null);
-        assertTrue(kotlin != null && kotlin.tier == DetectedStack.Tier.GENERIC, "Kotlin is detected as a deterministic (thin) stack");
-        assertTrue(kotlin.provenance.contains("thin regex surface"));
+        assertTrue(kotlin != null && kotlin.tier == DetectedStack.Tier.GENERIC, "Kotlin is a deterministic stack");
+        assertEquals(List.of("kotlin-generic"), kotlin.queryPacks());
 
-        EdgeLedger ledger = new EdgeLedger();
-        TreeSitterExtractor extractor = new TreeSitterExtractor();
-        assertTrue(extractor.supports("kotlin"));
-        extractor.extract(dir, kotlin, ledger);
-        assertTrue(has(ledger, "config", "env", "KAFKA_ADDR"));
-        assertTrue(section(ledger, "config").stream().anyMatch(e -> "KAFKA_TOPIC".equals(e.fields.get("env")) && "orders".equals(e.fields.get("envdefault"))));
-        assertFalse(has(ledger, "config", "env", "IN_A_COMMENT"));
-        assertTrue(has(ledger, "url", "value", "http://flagd:8013/ofrep"));
-        assertTrue(has(ledger, "kafka-consume", "topic", "orders"));
-        assertTrue(ledger.render().contains("thin regex surface"), "the ledger states the limitation");
+        // Rule 28, round 4: grammar-backed.
+        for (boolean grammar : new boolean[]{true, false}) {
+            EdgeLedger ledger = new EdgeLedger();
+            TreeSitterExtractor extractor = grammar ? new TreeSitterExtractor() : new TreeSitterExtractor().withoutGrammar("kotlin");
+            assertTrue(extractor.supports("kotlin"));
+            extractor.extract(dir, kotlin, ledger);
+            assertTrue(has(ledger, "config", "env", "KAFKA_ADDR"), "grammar=" + grammar);
+            assertTrue(section(ledger, "config").stream().anyMatch(e -> "KAFKA_TOPIC".equals(e.fields.get("env")) && "orders".equals(e.fields.get("envdefault"))));
+            assertFalse(has(ledger, "config", "env", "IN_A_COMMENT"));
+            assertTrue(has(ledger, "url", "value", "http://flagd:8013/ofrep"));
+            assertTrue(has(ledger, "kafka-consume", "topic", "orders"));
+            // …and the regex surface only when the grammar does not load, which the ledger says.
+            assertEquals(!grammar, ledger.render().contains("thin regex surface"), "grammar=" + grammar);
+        }
     }
 
     // ---- 2026-10-26, set C (yas, run-aspnetcore-microservices): rules 36–46 ----
@@ -770,7 +774,7 @@ public class ExtractionGeneralizationTest {
     }
 
     @Test
-    void csharpIsReadWithTheThinSurfaceAndItsConfigurationKeysBecomeEnvRows(@TempDir Path dir) throws Exception {
+    void csharpIsReadWithItsGrammarAndItsConfigurationKeysBecomeEnvRows(@TempDir Path dir) throws Exception {
         write(dir, "src/Services/Basket/Basket.API/Dockerfile", "FROM mcr.microsoft.com/dotnet/aspnet:8.0\n");
         write(dir, "src/Services/Basket/Basket.API/Program.cs", """
                 var builder = WebApplication.CreateBuilder(args);
@@ -786,11 +790,13 @@ public class ExtractionGeneralizationTest {
         write(dir, "src/Services/Basket/Basket.API/obj/Generated.cs", "var x = config[\"Generated:Key\"];\n");
         List<DetectedStack> stacks = new StackDetector().detect(dir);
         DetectedStack csharp = stacks.stream().filter(s -> s.language.equals("csharp")).findFirst().orElse(null);
-        assertTrue(csharp != null && csharp.tier == DetectedStack.Tier.GENERIC, "C# is a deterministic (thin) stack, not an LLM stack");
-        assertTrue(csharp.provenance.contains("thin regex surface"));
+        assertTrue(csharp != null && csharp.tier == DetectedStack.Tier.GENERIC, "C# is a deterministic stack, not an LLM stack");
+        assertEquals(List.of("csharp-generic"), csharp.queryPacks());
 
+        // Rule 40, round 4: grammar-backed; the thin surface keeps the same contract as the fallback.
+        for (boolean grammar : new boolean[]{true, false}) {
         EdgeLedger ledger = new EdgeLedger();
-        TreeSitterExtractor extractor = new TreeSitterExtractor();
+        TreeSitterExtractor extractor = grammar ? new TreeSitterExtractor() : new TreeSitterExtractor().withoutGrammar("csharp");
         assertTrue(extractor.supports("csharp"));
         extractor.extract(dir, csharp, ledger);
         assertTrue(section(ledger, "config").stream().anyMatch(e -> "ConnectionStrings__Database".equals(e.fields.get("env"))
@@ -801,7 +807,8 @@ public class ExtractionGeneralizationTest {
         assertTrue(has(ledger, "config", "env", "Feature__Skip"));
         assertFalse(has(ledger, "config", "env", "IN_A_COMMENT"));
         assertFalse(has(ledger, "config", "env", "Generated__Key"), "obj/ is build output");
-        assertTrue(ledger.render().contains("thin regex surface"));
+        assertEquals(!grammar, ledger.render().contains("thin regex surface"));
+        }
     }
 
     @Test

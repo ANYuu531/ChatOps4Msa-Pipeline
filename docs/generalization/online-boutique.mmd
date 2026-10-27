@@ -2,9 +2,10 @@ flowchart TB
 %% DepWeaver — microservice dependency graph
 %% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
-  subgraph layer0 ["entry services"]
+  subgraph layer0 ["ingress"]
     direction LR
     loadgenerator["loadgenerator"]
+    istio_ingressgateway(["istio-ingressgateway"]):::gateway
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
@@ -30,21 +31,23 @@ flowchart TB
     direction LR
     redis_cart[("redis-cart")]:::db
   end
+  frontend -.-> productcatalogservice
+  frontend -.-> currencyservice
+  frontend -.-> cartservice
+  frontend -.-> recommendationservice
+  frontend -.-> checkoutservice
+  frontend -.-> shippingservice
+  frontend -.-> adservice
+  frontend -.-> shoppingassistantservice
+  checkoutservice -.-> shippingservice
+  checkoutservice -.-> productcatalogservice
+  checkoutservice -.-> cartservice
+  checkoutservice -.-> currencyservice
+  checkoutservice -.-> emailservice
+  checkoutservice -.-> paymentservice
   recommendationservice -.-> productcatalogservice
   cartservice -. db .-> redis_cart
-  checkoutservice -. declared? .-> productcatalogservice
-  checkoutservice -. declared? .-> shippingservice
-  checkoutservice -. declared? .-> paymentservice
-  checkoutservice -. declared? .-> emailservice
-  checkoutservice -. declared? .-> currencyservice
-  checkoutservice -. declared? .-> cartservice
-  frontend -. declared? .-> productcatalogservice
-  frontend -. declared? .-> currencyservice
-  frontend -. declared? .-> cartservice
-  frontend -. declared? .-> recommendationservice
-  frontend -. declared? .-> shippingservice
-  frontend -. declared? .-> checkoutservice
-  frontend -. declared? .-> adservice
-  frontend -. declared? .-> shoppingassistantservice
+  istio_ingressgateway -.-> frontend
   loadgenerator -. declared? .-> frontend
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef gateway fill:#e9f9ec,stroke:#2e8b57,color:#14351f;

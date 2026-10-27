@@ -27,6 +27,8 @@ public class ConfigExtractor {
 
     public void extract(Path root, EdgeLedger ledger) {
         namespaces.clear();
+        appliedNamespaces.clear();
+        appliedNamespaces.putAll(appliedNamespaces(root, ledger));
         List<Path> files = SourceScanner.filesWithExtensions(root,
                 List.of(".yml", ".yaml", ".properties", ".env", ".conf", ".conf.template"));
         // A Compose project's .env, interpolated the way Compose does, per project directory.
@@ -39,8 +41,9 @@ public class ConfigExtractor {
             if (!json.getFileName().toString().toLowerCase(Locale.ROOT).startsWith("appsettings")) continue;
             try {
                 extractDotnetAppSettings(json, SourceScanner.relative(root, json), ledger);
-            } catch (Exception ignored) {
-                // malformed JSON (comments, trailing commas): not worth failing the analysis over
+            } catch (Exception e) {
+                // malformed JSON (comments, trailing commas): not worth failing the analysis over, but said
+                ledger.addWarning("unreadable descriptor " + SourceScanner.relative(root, json) + ": " + HelmChartRenderer.firstLine(e.getMessage()));
             }
         }
 
@@ -50,20 +53,53 @@ public class ConfigExtractor {
         for (Path dockerfile : dockerfiles(root)) {
             try {
                 extractDockerfileEnv(dockerfile, SourceScanner.relative(root, dockerfile), ledger);
-            } catch (Exception ignored) {
-                // unreadable: not worth failing the analysis over
+            } catch (Exception e) {
+                ledger.addWarning("unreadable descriptor " + SourceScanner.relative(root, dockerfile) + ": " + HelmChartRenderer.firstLine(e.getMessage()));
+            }
+        }
+
+        // Rule 50: a dotenv file inside a module (.env, .env.production) is that module's own
+        // environment, the way a Dockerfile's ENV is — what dotenv, Next.js and Vite load at
+        // start. A .env beside a Compose file is the Compose project's (read above, per
+        // project) and is not a module scope. Templates (.env.sample / .example) are not an
+        // environment; loopback values are a developer's machine and say nothing.
+        for (Path dotenv : dotenvFiles(root)) {
+            try {
+                Path dir = dotenv.getParent();
+                if (dir != null && hasComposeFile(dir)) continue;
+                String relative = SourceScanner.relative(root, dotenv);
+                for (Map.Entry<String, String> e : readEnvFile(dotenv).entrySet()) {
+                    String host = addressHost(e.getKey(), e.getValue());
+                    if (host == null || LOOPBACK_HOSTS.contains(host)) continue;
+                    RuleTrace.hit(50, "dotenv " + relative + " " + e.getKey() + "=" + host);
+                    recordEnvAddress(e.getKey(), e.getValue(), null, "dockerfile", relative, ledger);
+                }
+            } catch (Exception e) {
+                ledger.addWarning("unreadable descriptor " + SourceScanner.relative(root, dotenv) + ": " + e.getMessage());
+            }
+        }
+
+        // Rule 52: Helm charts are rendered first, and their templates/ are not read as plain YAML.
+        Set<Path> chartTemplates = HelmChartRenderer.templateDirs(root);
+        for (HelmChartRenderer.Rendered r : HelmChartRenderer.render(root, ledger::addWarning)) {
+            try {
+                extractK8sYaml(r.yaml(), r.template(), ledger, r.chart());
+            } catch (Exception e) {
+                ledger.addWarning("unreadable descriptor " + r.template() + " (rendered from chart " + r.chart() + "): "
+                        + HelmChartRenderer.firstLine(e.getMessage()));
             }
         }
 
         for (Path file : files) {
+            if (underAny(file, chartTemplates)) continue;
             if (file.getFileName().toString().endsWith(".conf")
                     || file.getFileName().toString().endsWith(".conf.template")) {
                 // A reverse proxy's routing table is the edge list of the front door:
                 // Apache's ProxyPass and nginx's proxy_pass name the upstreams.
                 try {
                     extractReverseProxy(file, SourceScanner.relative(root, file), ledger);
-                } catch (Exception ignored) {
-                    // unreadable: not worth failing the analysis over
+                } catch (Exception e) {
+                    ledger.addWarning("unreadable descriptor " + SourceScanner.relative(root, file) + ": " + HelmChartRenderer.firstLine(e.getMessage()));
                 }
                 continue;
             }
@@ -111,16 +147,26 @@ public class ConfigExtractor {
                         Object loaded = new Yaml().load(Files.newBufferedReader(file, StandardCharsets.UTF_8));
                         // An Envoy static config is a reverse proxy's routing table in YAML:
                         // its clusters are the upstreams, as nginx's proxy_pass are.
-                        if (!extractEnvoyClusters(loaded, relative, ledger) && looksLikeSpringConfig(loaded)) {
+                        if (!extractEnvoyClusters(loaded, relative, ledger) && !extractApisixRoutes(loaded, relative, ledger)
+                                && looksLikeSpringConfig(loaded)) {
                             RuleTrace.hit(3, "spring-yml " + relative);
                             flatten("", loaded, relative, ledger);
                         }
                     }
                 }
-            } catch (Exception ignored) {
-                // unreadable or malformed config: not worth failing the analysis over
+            } catch (Exception e) {
+                // Unreadable or malformed config does not fail the analysis — but it is said:
+                // a deployment descriptor that silently vanishes is a missing layer the
+                // reader cannot see (skywalking-showcase's whole Helm chart, 2026-10-27).
+                ledger.addWarning("unreadable descriptor " + relative + ": " + HelmChartRenderer.firstLine(e.getMessage()));
             }
         }
+    }
+
+    private static boolean underAny(Path file, Set<Path> dirs) {
+        Path f = file.normalize();
+        for (Path d : dirs) if (f.startsWith(d)) return true;
+        return false;
     }
 
     /**
@@ -132,9 +178,15 @@ public class ConfigExtractor {
      * Multi-document YAML (k8s files routinely use {@code ---}) is fully scanned.
      */
     private boolean extractK8sEnvAddresses(Path file, String relative, EdgeLedger ledger) throws Exception {
+        return extractK8sYaml(Files.readString(file, StandardCharsets.UTF_8), relative, ledger, null);
+    }
+
+    /** @param chart the Helm chart the text was rendered from, or null for a plain manifest */
+    private boolean extractK8sYaml(String text, String relative, EdgeLedger ledger, String chart) throws Exception {
         boolean anyK8s = false;
-        try (var reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-            for (Object doc : new Yaml().loadAll(reader)) {
+        renderingChart = chart;
+        try {
+            for (Object doc : new Yaml().loadAll(text)) {
                 if (!(doc instanceof Map<?, ?> root)) continue;
                 if (root.get("apiVersion") == null || root.get("kind") == null) continue; // not a k8s object
                 anyK8s = true;
@@ -146,6 +198,10 @@ public class ConfigExtractor {
                 // when <ns> is one of these; the merger strips exactly that label and no
                 // other (2026-10-26).
                 String namespace = "Namespace".equals(kind) ? name : metadataNamespace(root);
+                // A manifest with no metadata.namespace goes where the repo's own apply command
+                // puts it (`kubectl apply -f travel_agency.yaml -n travel-agency`, rule 54).
+                if (namespace == null && !"Namespace".equals(kind)) namespace = appliedNamespaces.get(relative);
+                currentNamespace = "Namespace".equals(kind) ? null : namespace;
                 if (namespace != null && namespaces.add(namespace)) {
                     Map<String, String> fields = new LinkedHashMap<>();
                     fields.put("name", namespace);
@@ -156,10 +212,21 @@ public class ConfigExtractor {
                 // runtime graph this is the only vocabulary that carries the real names —
                 // a Maven module called microservice-kubernetes-demo-catalog deploys as
                 // "catalog", and tools.descartes.teastore.webui as "teastore-webui".
+                if (name != null && name.contains("$")) name = null; // a rendered name nothing could fill
                 if (WORKLOAD_KINDS.contains(kind) && name != null) {
                     Map<String, String> fields = new LinkedHashMap<>();
                     fields.put("name", name);
                     fields.put("kind", kind);
+                    if (chart != null) fields.put("helm", chart);
+                    String labels = podLabels(root);
+                    if (labels != null) fields.put("labels", labels);
+                    String image = firstImage(root);
+                    if (image != null && imageStem(image) != null) {
+                        fields.put("image", imageStem(image));
+                        String registry = imageRegistry(image);
+                        if (registry != null) fields.put("image_registry", registry);
+                    }
+                    if (namespace != null) fields.put("namespace", namespace);
                     ledger.add("k8s-workload", fields, relative, -1, "High (k8s manifest)");
                 }
                 // A Service is the name callers use. It is recorded beside the workloads so
@@ -169,9 +236,30 @@ public class ConfigExtractor {
                 if ("Service".equals(kind) && name != null) {
                     Map<String, String> fields = new LinkedHashMap<>();
                     fields.put("name", name);
+                    if (chart != null) fields.put("helm", chart);
+                    Object spec = root.get("spec");
+                    if (spec instanceof Map<?, ?> sp && sp.get("selector") instanceof Map<?, ?> sel && !sel.isEmpty()) {
+                        fields.put("selector", labelString(sel));
+                    }
+                    if (namespace != null) fields.put("namespace", namespace);
                     ledger.add("k8s-service", fields, relative, -1, "High (k8s manifest)");
                 }
 
+                // Rule 56: Istio ingress routing — a Gateway's selector names the ingress workload,
+                // a VirtualService bound to a gateway routes it to its destinations.
+                if ("Gateway".equals(kind) && String.valueOf(root.get("apiVersion")).startsWith("networking.istio.io")) {
+                    String workload = gatewayWorkload(root);
+                    if (name != null && workload != null) {
+                        Map<String, String> fields = new LinkedHashMap<>();
+                        fields.put("name", name);
+                        fields.put("workload", workload);
+                        if (namespace != null) fields.put("namespace", namespace);
+                        ledger.add("k8s-gateway", fields, relative, -1, "High (istio gateway)");
+                    }
+                }
+                if ("VirtualService".equals(kind) && String.valueOf(root.get("apiVersion")).startsWith("networking.istio.io")) {
+                    extractVirtualService(root, namespace, relative, ledger);
+                }
                 if ("ConfigMap".equals(kind) && root.get("data") instanceof Map<?, ?> data) {
                     for (Map.Entry<?, ?> e : data.entrySet()) {
                         recordEnvAddress(String.valueOf(e.getKey()), String.valueOf(e.getValue()), name, null, relative, ledger);
@@ -187,11 +275,21 @@ public class ConfigExtractor {
                         Object v = pair.get("value"); // valueFrom (configMapKeyRef) has no literal here
                         if (k != null && v != null) {
                             recordEnvAddress(String.valueOf(k), String.valueOf(v), null, name, relative, ledger);
-                            String host = addressHost(String.valueOf(k), String.valueOf(v));
-                            if (name != null && host != null) recordWorkloadEnv(name, null, host, String.valueOf(k), String.valueOf(v), relative, ledger);
+                            for (String[] hv : hostsOf(String.valueOf(k), String.valueOf(v), false)) {
+                                if (name != null) recordWorkloadEnv(name, null, hv[0], String.valueOf(k), hv[1], relative, ledger);
+                            }
                         } else if (k != null && pair.get("valueFrom") instanceof Map<?, ?> from
                                 && from.get("configMapKeyRef") instanceof Map<?, ?> ref && ref.get("name") != null) {
                             if (name != null) recordWorkloadEnv(name, String.valueOf(ref.get("name")), null, null, relative, ledger);
+                        }
+                    }
+                    // Rule 53: the containers' command / args.
+                    if (name != null) {
+                        for (Object cmd : containerCommands(root)) {
+                            for (String[] hit : commandAddresses(cmd, null)) {
+                                RuleTrace.hit(53, "k8s " + name + " " + hit[0] + "=" + hit[1]);
+                                recordCommandAddress(name, hit, "command", relative, ledger);
+                            }
                         }
                     }
                     // envFrom: the whole ConfigMap is injected — this is the wiring that says
@@ -201,8 +299,230 @@ public class ConfigExtractor {
                     }
                 }
             }
+        } finally {
+            renderingChart = null;
+            currentNamespace = null;
         }
         return anyK8s;
+    }
+
+    /** The namespace of the k8s object being read (declared, or applied by a script), or null. */
+    private String currentNamespace;
+    /** Repo-relative manifest path → the namespace the repo's own scripts apply it into. */
+    private final Map<String, String> appliedNamespaces = new LinkedHashMap<>();
+
+    /** {@code kubectl apply|create|replace … -f <file> … -n|--namespace <ns>} on one line. */
+    private static final java.util.regex.Pattern KUBECTL_APPLY = java.util.regex.Pattern.compile(
+            "\\bkubectl\\s+(?:[^\\n]*?\\s)?(?:apply|create|replace)\\b([^\\n]*)");
+    private static final java.util.regex.Pattern KUBECTL_FILE = java.util.regex.Pattern.compile(
+            "(?:^|\\s)(?:-f|--filename)(?:=|\\s+)(\\S+)");
+    private static final java.util.regex.Pattern KUBECTL_NS = java.util.regex.Pattern.compile(
+            "(?:^|\\s)(?:-n|--namespace)(?:=|\\s+)([a-z0-9]([a-z0-9-]*[a-z0-9])?)(?=\\s|$)");
+
+    /**
+     * Rule 54: where a manifest that declares no namespace is applied. The repo's deploy
+     * scripts (shell, Makefile) say it: {@code kubectl apply -f travel_agency.yaml -n
+     * travel-agency}. The file is resolved against the script's directory, then the repo root;
+     * a namespace written as a variable is not taken; a file applied into two namespaces has
+     * none. These namespaces are declared namespaces like a Namespace object's.
+     */
+    private Map<String, String> appliedNamespaces(Path root, EdgeLedger ledger) {
+        Map<String, Set<String>> found = new LinkedHashMap<>();
+        List<Path> scripts = new java.util.ArrayList<>();
+        try (java.util.stream.Stream<Path> stream = Files.walk(root)) {
+            stream.filter(Files::isRegularFile)
+                    .filter(p -> {
+                        String n = p.getFileName().toString().toLowerCase(Locale.ROOT);
+                        return n.endsWith(".sh") || n.endsWith(".bash") || n.equals("makefile") || n.endsWith(".mk");
+                    })
+                    .filter(p -> !SourceScanner.isIgnored(root, p))
+                    .forEach(scripts::add);
+        } catch (Exception ignored) {
+            // unwalkable tree: no scripts
+        }
+        for (Path script : scripts) {
+            String text;
+            try {
+                text = Files.readString(script, StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                continue;
+            }
+            java.util.regex.Matcher m = KUBECTL_APPLY.matcher(text);
+            while (m.find()) {
+                String args = m.group(1);
+                java.util.regex.Matcher ns = KUBECTL_NS.matcher(args);
+                if (!ns.find()) continue;
+                java.util.regex.Matcher f = KUBECTL_FILE.matcher(args);
+                while (f.find()) {
+                    String file = f.group(1).replaceAll("^[\"']|[\"']$", "");
+                    if (file.contains("$") || file.contains("://")) continue;
+                    for (Path base : new Path[]{script.getParent(), root}) {
+                        Path p = base.resolve(file).normalize();
+                        if (Files.isRegularFile(p) && p.startsWith(root.normalize())) {
+                            found.computeIfAbsent(SourceScanner.relative(root, p), k -> new java.util.LinkedHashSet<>()).add(ns.group(1));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        Map<String, String> out = new LinkedHashMap<>();
+        for (Map.Entry<String, Set<String>> e : found.entrySet()) {
+            if (e.getValue().size() != 1) continue;
+            String ns = e.getValue().iterator().next();
+            out.put(e.getKey(), ns);
+            RuleTrace.hit(54, "applied " + e.getKey() + " -n " + ns);
+            if (namespaces.add(ns)) {
+                Map<String, String> fields = new LinkedHashMap<>();
+                fields.put("name", ns);
+                fields.put("via", "kubectl -n");
+                ledger.add("k8s-namespace", fields, e.getKey(), -1, "High (deploy script)");
+            }
+        }
+        return out;
+    }
+
+    /** The namespace label of an in-cluster host ({@code travels.travel-agency:8000}, {@code x.ns.svc.cluster.local}), or null. */
+    public static String namespaceLabel(String raw) {
+        String s = raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
+        int scheme = s.indexOf("://");
+        if (scheme >= 0) s = s.substring(scheme + 3);
+        int at = s.indexOf('@');
+        if (at >= 0) s = s.substring(at + 1);
+        int slash = s.indexOf('/');
+        if (slash >= 0) s = s.substring(0, slash);
+        int colon = s.indexOf(':');
+        if (colon >= 0) s = s.substring(0, colon);
+        for (String suffix : CLUSTER_SUFFIXES) {
+            if (s.endsWith(suffix) && s.length() > suffix.length()) {
+                s = s.substring(0, s.length() - suffix.length());
+                break;
+            }
+        }
+        String[] labels = s.split("\\.");
+        return labels.length == 2 && labels[1].matches(DNS_LABEL) ? labels[1] : null;
+    }
+
+    /** The Helm chart the manifest being read was rendered from (rule 52), or null for a plain manifest. */
+    private String renderingChart;
+
+    /**
+     * The workload an Istio Gateway runs on: its {@code spec.selector}. The Istio installation's
+     * convention is the label {@code istio: <x>} on the Deployment {@code istio-<x>} — the
+     * default ingress is {@code istio: ingressgateway} on {@code istio-ingressgateway}; any other
+     * selector names its workload by its {@code app} label (or its single value).
+     */
+    private static String gatewayWorkload(Map<?, ?> root) {
+        Object spec = root.get("spec");
+        if (!(spec instanceof Map<?, ?> sp) || !(sp.get("selector") instanceof Map<?, ?> sel) || sel.isEmpty()) return null;
+        Object istio = sel.get("istio");
+        if (istio != null) return "istio-" + String.valueOf(istio).trim().toLowerCase(Locale.ROOT);
+        Object app = sel.get("app");
+        if (app != null) return String.valueOf(app).trim().toLowerCase(Locale.ROOT);
+        return sel.size() == 1 ? String.valueOf(sel.values().iterator().next()).trim().toLowerCase(Locale.ROOT) : null;
+    }
+
+    /**
+     * Rule 56: a VirtualService bound to a Gateway routes the ingress to each route's
+     * destination host — {@code istio-ingressgateway → frontend} for Online Boutique's and
+     * Bank of Anthos's istio manifests. One bound only to {@code mesh} (or to nothing) is
+     * in-mesh traffic shaping (canaries, fault injection): its destinations are the service
+     * itself, not edges. Graded documented, as declared routing is everywhere else.
+     */
+    private void extractVirtualService(Map<?, ?> root, String namespace, String relative, EdgeLedger ledger) {
+        Object spec = root.get("spec");
+        if (!(spec instanceof Map<?, ?> sp)) return;
+        List<String> gateways = new java.util.ArrayList<>();
+        if (sp.get("gateways") instanceof List<?> gl) for (Object g : gl) if (!"mesh".equals(String.valueOf(g).trim())) gateways.add(String.valueOf(g).trim());
+        if (gateways.isEmpty()) return;
+        Set<String> hosts = new java.util.LinkedHashSet<>();
+        for (String section : List.of("http", "tcp", "tls")) {
+            if (!(sp.get(section) instanceof List<?> routes)) continue;
+            for (Object r : routes) {
+                if (!(r instanceof Map<?, ?> route) || !(route.get("route") instanceof List<?> dests)) continue;
+                for (Object d : dests) {
+                    if (d instanceof Map<?, ?> dm && dm.get("destination") instanceof Map<?, ?> dest && dest.get("host") != null) {
+                        hosts.add(String.valueOf(dest.get("host")).trim());
+                    }
+                }
+            }
+        }
+        for (String gateway : gateways) {
+            for (String host : hosts) {
+                Map<String, String> fields = new LinkedHashMap<>();
+                fields.put("gateway", gateway.contains("/") ? gateway.substring(gateway.indexOf('/') + 1) : gateway);
+                fields.put("host", host);
+                if (namespace != null) fields.put("namespace", namespace);
+                RuleTrace.hit(56, "istio " + gateway + " -> " + host);
+                ledger.add("ingress-route", fields, relative, -1, "High (istio virtualservice)");
+            }
+        }
+    }
+
+    /**
+     * Rule 56: an APISIX standalone configuration ({@code routes:} / {@code upstreams:} whose
+     * entries carry {@code nodes}) is a reverse proxy's routing table, read like nginx's
+     * proxy_pass and Envoy's clusters: one {@code url} row per upstream node. The proxy is the
+     * container the file is mounted into (the merger's mount attribution). Returns whether the
+     * document was one.
+     */
+    private boolean extractApisixRoutes(Object loaded, String relative, EdgeLedger ledger) {
+        if (!(loaded instanceof Map<?, ?> root)) return false;
+        List<Object> upstreams = new java.util.ArrayList<>();
+        if (root.get("upstreams") instanceof List<?> ul) upstreams.addAll(ul);
+        if (root.get("routes") instanceof List<?> rl) {
+            for (Object r : rl) if (r instanceof Map<?, ?> route && route.get("upstream") != null) upstreams.add(route.get("upstream"));
+        }
+        boolean any = false;
+        for (Object u : upstreams) {
+            if (!(u instanceof Map<?, ?> up)) continue;
+            Object nodes = up.get("nodes");
+            List<String> addresses = new java.util.ArrayList<>();
+            if (nodes instanceof Map<?, ?> nm) for (Object k : nm.keySet()) addresses.add(String.valueOf(k).trim());
+            if (nodes instanceof List<?> nl) {
+                for (Object n : nl) {
+                    if (n instanceof Map<?, ?> node && node.get("host") != null) {
+                        addresses.add(String.valueOf(node.get("host")).trim() + (node.get("port") != null ? ":" + node.get("port") : ""));
+                    }
+                }
+            }
+            for (String a : addresses) {
+                if (a.isEmpty()) continue;
+                any = true;
+                Map<String, String> fields = new LinkedHashMap<>();
+                fields.put("value", "http://" + a);
+                fields.put("proxy", "apisix");
+                RuleTrace.hit(56, "apisix " + a);
+                ledger.add("url", fields, relative, -1, "High (apisix routes)");
+            }
+        }
+        return any;
+    }
+
+    /** {@code spec.template.metadata.labels} of a workload (a bare Pod's own labels), as sorted {@code k=v,…}; null if none. */
+    private static String podLabels(Map<?, ?> root) {
+        Object labels = null;
+        if ("Pod".equals(String.valueOf(root.get("kind")))) {
+            Object md = root.get("metadata");
+            labels = md instanceof Map<?, ?> m ? m.get("labels") : null;
+        } else {
+            Object spec = root.get("spec");
+            Object template = spec instanceof Map<?, ?> s ? s.get("template") : null;
+            Object md = template instanceof Map<?, ?> t ? t.get("metadata") : null;
+            labels = md instanceof Map<?, ?> m ? m.get("labels") : null;
+        }
+        return labels instanceof Map<?, ?> l && !l.isEmpty() ? labelString(l) : null;
+    }
+
+    private static String labelString(Map<?, ?> labels) {
+        java.util.TreeMap<String, String> sorted = new java.util.TreeMap<>();
+        for (Map.Entry<?, ?> e : labels.entrySet()) sorted.put(String.valueOf(e.getKey()).trim(), String.valueOf(e.getValue()).trim());
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> e : sorted.entrySet()) {
+            if (sb.length() > 0) sb.append(',');
+            sb.append(e.getKey()).append('=').append(e.getValue());
+        }
+        return sb.toString();
     }
 
     /** k8s kinds that run a container — the inventory of what the cluster would actually run. */
@@ -271,6 +591,31 @@ public class ConfigExtractor {
         return out;
     }
 
+    /** The first container's image of a workload object, or null. */
+    private static String firstImage(Map<?, ?> root) {
+        Map<?, ?> podSpec = podSpec(root);
+        Object containers = podSpec == null ? null : podSpec.get("containers");
+        if (containers instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof Map<?, ?> c && c.get("image") != null) {
+            return String.valueOf(c.get("image"));
+        }
+        return null;
+    }
+
+    /** Every {@code containers[].command} and {@code containers[].args} of a workload object. */
+    private List<Object> containerCommands(Map<?, ?> root) {
+        List<Object> out = new java.util.ArrayList<>();
+        Map<?, ?> podSpec = podSpec(root);
+        Object containers = podSpec == null ? null : podSpec.get("containers");
+        if (containers instanceof List<?> list) {
+            for (Object c : list) {
+                if (!(c instanceof Map<?, ?> container)) continue;
+                if (container.get("command") != null) out.add(container.get("command"));
+                if (container.get("args") != null) out.add(container.get("args"));
+            }
+        }
+        return out;
+    }
+
     /** Every {@code containers[].envFrom[].configMapRef.name} of a workload object. */
     private List<String> containerEnvFromConfigMaps(Map<?, ?> root) {
         List<String> out = new java.util.ArrayList<>();
@@ -312,12 +657,26 @@ public class ConfigExtractor {
         key = key.trim();
         value = value.trim();
         if (key.isEmpty() || value.isEmpty()) return;
+        List<String[]> list = addressList(key, value, keepDomain);
+        if (!list.isEmpty()) {
+            // Rule 55: a value listing several services yields one row per address.
+            for (String[] a : list) {
+                RuleTrace.hit(55, "list " + key + " " + a[0]);
+                recordEnvAddressHost(key, a[0], a[1], configMap, workload, relative, ledger, via, keepDomain, true);
+            }
+            return;
+        }
         String host = addressHost(key, value, keepDomain);
         if (host == null) return;
+        recordEnvAddressHost(key, host, value, configMap, workload, relative, ledger, via, keepDomain, false);
+    }
 
+    private void recordEnvAddressHost(String key, String host, String value, String configMap, String workload,
+                                      String relative, EdgeLedger ledger, String via, boolean keepDomain, boolean listed) {
         Map<String, String> fields = new LinkedHashMap<>();
         fields.put("name", key);
         fields.put("host", host);
+        if (listed) fields.put("list", "true");
         if (configMap != null) fields.put("configmap", configMap);
         // The scope the value holds in: a workload's own env block, or a Dockerfile's
         // module (marked "dockerfile"; the merger resolves the module from the file).
@@ -325,7 +684,43 @@ public class ConfigExtractor {
         if (via != null) fields.put("via", via);
         String kind = kindHint(key, value);
         if (kind != null) fields.put("kind", kind);
+        if (renderingChart != null) fields.put("helm", renderingChart);
+        if (currentNamespace != null) fields.put("namespace", currentNamespace);
+        String hostNs = keepDomain ? null : namespaceLabel(value);
+        if (hostNs != null) fields.put("host_ns", hostNs);
         ledger.add("env-address", fields, relative, -1, "High (k8s manifest)");
+    }
+
+    /** {host, the token it came from} per address of a value: each of a list (rule 55), else the one address; empty if none. */
+    private static List<String[]> hostsOf(String name, String value, boolean keepDomain) {
+        List<String[]> list = addressList(name, value, keepDomain);
+        if (!list.isEmpty()) return list;
+        String host = addressHost(name, value, keepDomain);
+        return host == null ? List.of() : List.<String[]>of(new String[]{host, value});
+    }
+
+    /**
+     * Rule 55: a value that lists several addresses — separated by {@code ,} {@code ;} or
+     * whitespace, as travels' {@code PORTAL_SERVICES="voyages.fr;http://voyages.travel-portal:8000,
+     * viaggi.it;http://viaggi…"} does — names each of them; only the address-shaped tokens (a
+     * URL, a {@code host:port}) count, so the labels between them are not hosts. A list of
+     * replicas of one cluster ({@code nacos-0…, nacos-1…, nacos-2…}: the names differ only in
+     * digits) is one target, as rule 27 has always read it: an empty result leaves the value to
+     * the single-address rules. Returns {host, token} per distinct service.
+     */
+    static List<String[]> addressList(String name, String value, boolean keepDomain) {
+        if (value == null || !value.matches("(?s).*[,;\\s].*")) return List.of();
+        List<String[]> out = new java.util.ArrayList<>();
+        Set<String> seen = new java.util.LinkedHashSet<>();
+        for (String token : splitAddresses(value)) {
+            if (!(token.contains("://") || token.matches("[^\\s/]+:\\d{2,5}(/.*)?"))) continue;
+            String host = addressHost(name, token, keepDomain);
+            if (host != null && seen.add(host)) out.add(new String[]{host, token});
+        }
+        if (out.size() < 2) return List.of();
+        Set<String> stems = new java.util.HashSet<>();
+        for (String[] a : out) stems.add(a[0].replaceAll("\\d+", ""));
+        return stems.size() == 1 ? List.of() : out;
     }
 
     /** Connection schemes that say the target is a database, and the ones that say it is a broker. */
@@ -452,8 +847,46 @@ public class ConfigExtractor {
         }
         boolean addressShaped = v.contains("://") || v.matches("[^\\s/]+:\\d{2,5}(/.*)?");
         if (addressShaped) return hostOf(v, keepDomain);
-        if (RuleTrace.hitIf(name != null && HOST_ENV_NAME.matcher(name.trim()).find(), 5, "env " + name + "=" + v)) return hostOf(v, keepDomain);
+        // The variable's name says it holds a host, so the value must look like one: a DNS
+        // name, optionally with a port. SW_AGENT_NAME_SERVER: agent::app is a SkyWalking
+        // service name, not an address, and its first segment is no host (2026-10-27).
+        if (name != null && HOST_ENV_NAME.matcher(name.trim()).find()) {
+            if (RuleTrace.hitIf(!v.matches("[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?(:\\d{1,5})?"), 5, "not-a-host " + name + "=" + v)) return null;
+            RuleTrace.hit(5, "env " + name + "=" + v);
+            return hostOf(v, keepDomain);
+        }
         return null;
+    }
+
+    private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "0.0.0.0", "host.docker.internal");
+
+    /** {@code .env} and {@code .env.<mode>} files outside ignored trees, templates excluded. */
+    private static List<Path> dotenvFiles(Path root) {
+        List<Path> found = new java.util.ArrayList<>();
+        try (java.util.stream.Stream<Path> stream = Files.walk(root)) {
+            stream.filter(Files::isRegularFile)
+                    .filter(p -> {
+                        String n = p.getFileName().toString().toLowerCase(Locale.ROOT);
+                        return (n.equals(".env") || n.startsWith(".env."))
+                                && !n.matches(".*\\.(sample|example|template|dist|tmpl)$");
+                    })
+                    .filter(p -> !SourceScanner.isIgnored(root, p))
+                    .forEach(found::add);
+        } catch (Exception ignored) {
+            // unwalkable tree: return whatever was collected
+        }
+        return found;
+    }
+
+    private static boolean hasComposeFile(Path dir) {
+        try (java.util.stream.Stream<Path> listing = Files.list(dir)) {
+            return listing.anyMatch(p -> {
+                String n = p.getFileName().toString().toLowerCase(Locale.ROOT);
+                return (n.startsWith("docker-compose") || n.startsWith("compose.")) && (n.endsWith(".yml") || n.endsWith(".yaml"));
+            });
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /** Compose keys that are not services, in either file format. */
@@ -500,6 +933,7 @@ public class ConfigExtractor {
                                         String relative, EdgeLedger ledger) {
         Map<?, ?> services = composeServices(loaded);
         if (services == null) return;
+        extractComposeNetworkAliases(services, projectEnv, relative, ledger);
         if (!(((Map<?, ?>) loaded).get("services") instanceof Map)) RuleTrace.hit(12, "v1 " + relative);
         for (Map.Entry<?, ?> entry : services.entrySet()) {
             String service = String.valueOf(entry.getKey()).trim();
@@ -535,7 +969,38 @@ public class ConfigExtractor {
                     if (dockerfileDir != null) fields.put("dockerfile_dir", dockerfileDir);
                 }
             }
+            // image: with no build: the image is this repo's module only if its name says so —
+            // the last path segment, tag and variables dropped (`${HUB}/gateway-service:${TAG}`
+            // → gateway-service). The merger equates it with a module exactly (rule 44).
+            if (context == null && config.get("image") != null) {
+                String image = imageStem(String.valueOf(config.get("image")));
+                if (image != null) {
+                    fields.put("image", image);
+                    String registry = imageRegistry(String.valueOf(config.get("image")));
+                    if (registry != null) fields.put("image_registry", registry);
+                }
+            }
             ledger.add("compose-service", fields, relative, -1, "High (compose services key)");
+
+            // A file the service mounts (`./config/apisix/apisix.yaml:/usr/local/apisix/conf/apisix.yaml`)
+            // is that container's configuration, wherever it sits in the repo (rule 56's attribution).
+            if (config.get("volumes") instanceof List<?> volumes) {
+                for (Object v : volumes) {
+                    String src = v instanceof Map<?, ?> vm ? String.valueOf(vm.get("source")) : String.valueOf(v).split(":", 2)[0];
+                    src = interpolate(src.trim(), projectEnv, 0);
+                    if (src.isEmpty() || src.contains("$") || !(src.startsWith(".") || src.contains("/"))) continue;
+                    try {
+                        Path p = composeDir.resolve(src).normalize();
+                        if (!p.startsWith(root.normalize()) || !Files.isRegularFile(p)) continue;
+                        Map<String, String> m = new LinkedHashMap<>();
+                        m.put("service", service);
+                        m.put("file", SourceScanner.relative(root, p));
+                        ledger.add("compose-mount", m, relative, -1, "High (compose volume)");
+                    } catch (Exception ignored) {
+                        // an unresolvable mount source names no repository file
+                    }
+                }
+            }
 
             // hostname: the container's own host name, which other services then use as the
             // address (`hostname: ecommerce-mq` on the messagebroker service, and
@@ -552,6 +1017,86 @@ public class ConfigExtractor {
                     aliasFields.put("target", service);
                     RuleTrace.hit(37, "hostname " + alias + "=" + service);
                     ledger.add("compose-alias", aliasFields, relative, -1, "High (compose hostname)");
+                }
+            }
+        }
+    }
+
+    /** The address tokens of a value that may list several (B6): split on {@code ,} {@code ;} and whitespace. */
+    static List<String> splitAddresses(String value) {
+        List<String> out = new java.util.ArrayList<>();
+        for (String p : value.split("[,;\\s]+")) if (!p.isBlank()) out.add(p.trim());
+        return out;
+    }
+
+    /** {@code ghcr.io/org/yas-cart:latest} → {@code yas-cart}; {@code ${HUB}/app:${TAG}} → {@code app}; null if nothing literal is left. */
+    static String imageStem(String image) {
+        String s = image.trim();
+        int at = s.indexOf('@');
+        if (at >= 0) s = s.substring(0, at);                       // digest
+        int slash = s.lastIndexOf('/');
+        String last = slash >= 0 ? s.substring(slash + 1) : s;
+        int colon = last.indexOf(':');
+        if (colon >= 0) last = last.substring(0, colon);           // tag
+        last = last.replaceAll("\\$\\{[^}]*}|\\$[A-Za-z_][A-Za-z0-9_]*", "").trim();
+        last = last.replaceAll("^[-_.]+|[-_.]+$", "").toLowerCase(Locale.ROOT);
+        return last.matches("[a-z0-9][a-z0-9._-]*") ? last : null;
+    }
+
+    /** The registry path of an image before its last segment ({@code ghcr.io/org}), variables kept; null for a bare name. */
+    static String imageRegistry(String image) {
+        String s = image.trim();
+        int slash = s.lastIndexOf('/');
+        return slash > 0 ? s.substring(0, slash).toLowerCase(Locale.ROOT) : null;
+    }
+
+    /**
+     * B3 / rule 25 extended: {@code networks.<n>.aliases} — the third Compose alias source,
+     * beside {@code links} / {@code external_links} (rule 25) and {@code hostname:} (rule 37).
+     * A network alias is a DNS name the service answers to on that network only, so it is
+     * recorded for each service attached to that network (the alias' own service included),
+     * not globally: skywalking-showcase runs a copy of the OpenTelemetry demo whose services
+     * are named otel-demo-&lt;x&gt; and addressed as &lt;x&gt; on their own network, beside a
+     * music application with its own frontend (2026-10-27). A service with no
+     * {@code networks:} is on the file's {@code default} network.
+     */
+    private void extractComposeNetworkAliases(Map<?, ?> services, Map<String, String> projectEnv,
+                                              String relative, EdgeLedger ledger) {
+        Map<String, Set<String>> members = new LinkedHashMap<>();             // network -> services
+        Map<String, Map<String, String>> aliasesByNetwork = new LinkedHashMap<>(); // network -> alias -> service
+        for (Map.Entry<?, ?> entry : services.entrySet()) {
+            String service = String.valueOf(entry.getKey()).trim();
+            if (service.isEmpty() || !(entry.getValue() instanceof Map<?, ?> config)) continue;
+            Object networks = config.get("networks");
+            if (networks == null) {
+                members.computeIfAbsent("default", k -> new java.util.LinkedHashSet<>()).add(service);
+            } else if (networks instanceof List<?> list) {
+                for (Object n : list) members.computeIfAbsent(String.valueOf(n).trim(), k -> new java.util.LinkedHashSet<>()).add(service);
+            } else if (networks instanceof Map<?, ?> map) {
+                for (Map.Entry<?, ?> n : map.entrySet()) {
+                    String net = String.valueOf(n.getKey()).trim();
+                    members.computeIfAbsent(net, k -> new java.util.LinkedHashSet<>()).add(service);
+                    if (n.getValue() instanceof Map<?, ?> opts && opts.get("aliases") instanceof List<?> aliases) {
+                        for (Object a : aliases) {
+                            String alias = interpolate(String.valueOf(a).trim(), projectEnv, 0).toLowerCase(Locale.ROOT);
+                            if (alias.isEmpty() || alias.contains("$") || alias.equalsIgnoreCase(service)) continue;
+                            if (!alias.matches(DNS_LABEL + "|" + DNS_NAME)) continue;
+                            aliasesByNetwork.computeIfAbsent(net, k -> new LinkedHashMap<>()).putIfAbsent(alias, service);
+                        }
+                    }
+                }
+            }
+        }
+        for (Map.Entry<String, Map<String, String>> net : aliasesByNetwork.entrySet()) {
+            for (Map.Entry<String, String> alias : net.getValue().entrySet()) {
+                RuleTrace.hit(25, "network-alias " + net.getKey() + ":" + alias.getKey() + "=" + alias.getValue());
+                for (String reader : members.getOrDefault(net.getKey(), Set.of())) {
+                    Map<String, String> fields = new LinkedHashMap<>();
+                    fields.put("service", reader);
+                    fields.put("alias", alias.getKey());
+                    fields.put("target", alias.getValue());
+                    fields.put("network", net.getKey());
+                    ledger.add("compose-alias", fields, relative, -1, "High (compose network alias)");
                 }
             }
         }
@@ -654,15 +1199,97 @@ public class ConfigExtractor {
                 // merger can see it is external rather than inventing a node from its first label.
                 recordEnvAddress(e.getKey(), e.getValue(), null, service, relative, ledger,
                         forwarded.contains(e.getKey()) ? ".env" : null, true);
-                String host = addressHost(e.getKey(), e.getValue(), true);
                 // Rule 7: the Compose environment is the env → host table. Rule 24: the value
                 // came through a forwarded key, an env_file, or a ${VAR} filled from .env.
                 String via = forwarded.contains(e.getKey()) ? "forward " : fileEnv.containsKey(e.getKey()) && !environmentDeclares(config, e.getKey()) ? "env_file "
                         : interpolated.contains(e.getKey()) ? "interp " : null;
-                if (host != null) RuleTrace.hit(via != null ? 24 : 7, (via != null ? via : "env ") + service + "." + e.getKey() + "=" + host);
-                if (host != null) recordWorkloadEnv(service, null, host, e.getKey(), e.getValue(), relative, ledger);
+                for (String[] hv : hostsOf(e.getKey(), e.getValue(), true)) {
+                    RuleTrace.hit(via != null ? 24 : 7, (via != null ? via : "env ") + service + "." + e.getKey() + "=" + hv[0]);
+                    recordWorkloadEnv(service, null, hv[0], e.getKey(), hv[1], relative, ledger);
+                }
+            }
+            // Rule 53: the command line is wiring too (mysql -h mysql, curl http://nginx:8080).
+            for (String key : List.of("entrypoint", "command")) {
+                for (String[] hit : commandAddresses(config.get(key), projectEnv)) {
+                    RuleTrace.hit(53, "compose " + service + "." + key + " " + hit[0] + "=" + hit[1]);
+                    recordCommandAddress(service, hit, key, relative, ledger);
+                }
             }
         }
+    }
+
+    private void recordCommandAddress(String workload, String[] hit, String key, String relative, EdgeLedger ledger) {
+        Map<String, String> fields = new LinkedHashMap<>();
+        fields.put("workload", workload);
+        fields.put("host", hit[1]);
+        fields.put("name", key);
+        fields.put("via", "command");
+        if ("bare".equals(hit[3])) fields.put("bare", "true");
+        String kind = kindHint(key, hit[2]);
+        if (kind != null) fields.put("kind", kind);
+        if (renderingChart != null) fields.put("helm", renderingChart);
+        ledger.add("workload-env", fields, relative, -1, "High (container command line)");
+    }
+
+    /** A flag whose name says it holds a host, in either spelling ({@code --zk-host=x}, {@code --broker-addr x}). */
+    private static final java.util.regex.Pattern HOST_FLAG = java.util.regex.Pattern.compile(
+            "(?i)^--?[a-z0-9][a-z0-9_.-]*(host|hostname|addr|address|server|servers|url|uri|endpoint)$");
+
+    /**
+     * Rule 53: the addresses a container's command line names — a URL or {@code host:port}
+     * anywhere ({@code ./bin/flink run -m jobmanager:8081}, {@code curl http://nginx:8080/test}),
+     * and a bare host after {@code -h} or after a flag whose name says it holds one ({@code psql
+     * -h postgres}, {@code --broker-addr=broker}) — graded like the environment: they are this
+     * container's own wiring, so rule 35 now sees them too and stops drawing a depends_on that
+     * only orders start-up (skywalking-showcase's monitor loads, 2026-10-27). Returns {flag or
+     * token, host, raw value} per address; a value with an unfilled placeholder or a loopback
+     * host is not one.
+     */
+    static List<String[]> commandAddresses(Object command, Map<String, String> env) {
+        List<String> tokens = new java.util.ArrayList<>();
+        List<Object> items = command instanceof List<?> l ? new java.util.ArrayList<>(l) : command == null ? List.of() : List.of(command);
+        for (Object item : items) {
+            String text = env == null ? String.valueOf(item) : interpolate(String.valueOf(item), env, 0);
+            for (String t : text.split("[\\s;|&]+")) {
+                t = t.replaceAll("^[\"'(]+|[\"')]+$", "");
+                if (!t.isEmpty()) tokens.add(t);
+            }
+        }
+        List<String[]> out = new java.util.ArrayList<>();
+        for (int i = 0; i < tokens.size(); i++) {
+            String t = tokens.get(i);
+            String flag = null, value = null;
+            int eq = t.indexOf('=');
+            if (t.startsWith("-") && eq > 0) {
+                flag = t.substring(0, eq);
+                value = t.substring(eq + 1);
+            } else if (t.startsWith("-") && i + 1 < tokens.size() && !tokens.get(i + 1).startsWith("-")) {
+                flag = t;
+                value = tokens.get(i + 1);
+            }
+            String host = null;
+            String raw = null;
+            if (flag != null && (flag.equals("-h") || HOST_FLAG.matcher(flag).matches())) {
+                host = addressHost("_host", value);
+                raw = value;
+            }
+            if (host == null && !t.startsWith("-")) {
+                for (String part : splitAddresses(t)) {
+                    if (part.contains("://") || part.matches("[A-Za-z0-9][A-Za-z0-9.-]*:\\d{2,5}(/.*)?")) {
+                        String h = addressHost(null, part);
+                        if (h != null && !LOOPBACK_HOSTS.contains(h)) out.add(new String[]{t, h, part, ""});
+                    }
+                }
+                continue;
+            }
+            // A bare word after a host-named flag is a host only if the deployment declares that
+            // name (rule 45's test, applied by the merger): --character-set-server=utf8mb4 is not.
+            if (host != null && !LOOPBACK_HOSTS.contains(host) && !raw.contains("$")) {
+                boolean bare = !raw.contains("://") && !raw.contains(":");
+                out.add(new String[]{flag, host, raw, bare ? "bare" : ""});
+            }
+        }
+        return out;
     }
 
     /** Whether a Compose service's own {@code environment} block names {@code key} (in either form); trace only. */
@@ -941,6 +1568,10 @@ public class ConfigExtractor {
         if (envName != null && !envName.isBlank()) fields.put("name", envName.trim());
         String kind = kindHint(envName, value);
         if (kind != null) fields.put("kind", kind);
+        if (renderingChart != null) fields.put("helm", renderingChart);
+        if (currentNamespace != null) fields.put("namespace", currentNamespace);
+        String hostNs = value == null ? null : namespaceLabel(value);
+        if (hostNs != null) fields.put("host_ns", hostNs);
         ledger.add("workload-env", fields, relative, -1, "High (k8s manifest)");
     }
 
@@ -973,6 +1604,7 @@ public class ConfigExtractor {
         if (at >= 0) s = s.substring(at + 1);      // strip user:pass@
         int slash = s.indexOf('/');
         if (slash >= 0) s = s.substring(0, slash); // strip path
+        s = trailingHostPort(s);
         int colon = s.indexOf(':');
         if (colon >= 0) s = s.substring(0, colon); // strip port
         if (s.isEmpty() || s.contains("$") || s.contains("[") || s.contains("{")) return null;
@@ -997,6 +1629,23 @@ public class ConfigExtractor {
         }
         if (s.matches(DNS_LABEL)) return s;
         return s.matches(DNS_NAME) ? s : null;
+    }
+
+    /**
+     * A URI scheme chain ends in the address: Pulsar's {@code metadata-store:zk:zookeeper:2181}
+     * and {@code zk:zookeeper:2181} name zookeeper, not the scheme in front. When a
+     * scheme-less authority has several colons and ends in a port, the host is the segment
+     * before the port (B7, 2026-10-27).
+     */
+    public static String trailingHostPort(String s) {
+        if (s == null || s.indexOf(':') == s.lastIndexOf(':') || s.contains("[")) return s;
+        String[] parts = s.split(":");
+        if (parts.length < 3 || !parts[parts.length - 1].matches("\\d{1,5}")
+                || !parts[parts.length - 2].matches("[A-Za-z0-9][A-Za-z0-9.-]*")) return s;
+        // Every segment in front of the host must be a scheme name (zk, metadata-store).
+        for (int i = 0; i < parts.length - 2; i++) if (!parts[i].matches("[A-Za-z][A-Za-z0-9+.-]*")) return s;
+        RuleTrace.hit(36, "scheme-chain " + s);
+        return parts[parts.length - 2] + ":" + parts[parts.length - 1];
     }
 
     private static boolean hasReservedTld(String host) {

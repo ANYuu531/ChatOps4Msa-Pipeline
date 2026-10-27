@@ -1,0 +1,331 @@
+{"rules": {
+  "44": {
+    "hits": 2,
+    "examples": ["k8s-image travels=travels.travel-agency"],
+    "count": 1
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "51": {
+    "hits": 1,
+    "examples": ["browser travel_control/html/js/d3.v5.min.js:2"],
+    "count": 1
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "54": {
+    "hits": 7,
+    "examples": [
+      "applied travel_agency.yaml -n travel-agency",
+      "applied travel_portal.yaml -n travel-portal",
+      "applied travel_control.yaml -n travel-control",
+      "qualify travels in [travel-portal, travel-agency]",
+      "unplaceable travels-v2",
+      "unplaceable travels-v3"
+    ],
+    "count": 6
+  },
+  "11": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "55": {
+    "hits": 4,
+    "examples": [
+      "list PORTAL_SERVICES voyages",
+      "list PORTAL_SERVICES viaggi",
+      "list PORTAL_SERVICES travels",
+      "read-list PORTAL_SERVICES @control 3"
+    ],
+    "count": 4
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "14": {
+    "hits": 15,
+    "examples": [
+      "edge voyages->travels.travel-agency",
+      "edge viaggi->travels.travel-agency",
+      "edge travels.travel-portal->travels.travel-agency",
+      "edge loadtester->travels.travel-agency",
+      "edge cars->discounts",
+      "edge flights->discounts",
+      "edge hotels->discounts",
+      "edge insurances->discounts",
+      "edge travels.travel-agency->flights",
+      "edge travels.travel-agency->hotels",
+      "edge travels.travel-agency->cars",
+      "edge travels.travel-agency->insurances",
+      "edge control->voyages",
+      "edge control->viaggi",
+      "edge control->travels.travel-portal"
+    ],
+    "count": 15
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 10,
+    "examples": [
+      "version travels=travels.travel-portal",
+      "version mysqldb-v1=mysqldb",
+      "version cars-v1=cars",
+      "version discounts-v1=discounts",
+      "version flights-v1=flights",
+      "version hotels-v1=hotels",
+      "version insurances-v1=insurances",
+      "version travels-v1=travels.travel-agency",
+      "version mysqldb-v3=mysqldb",
+      "version mysqldb-v2=mysqldb"
+    ],
+    "count": 10
+  },
+  "1": {
+    "hits": 18,
+    "examples": [
+      "align travel-loadtester=loadtester",
+      "align travel-control=control",
+      "not-preadded travel-portal",
+      "not-preadded mysql",
+      "node voyages",
+      "node viaggi",
+      "node travels.travel-portal",
+      "node loadtester",
+      "node mysqldb",
+      "node cars",
+      "node discounts",
+      "node flights",
+      "node hotels",
+      "node insurances",
+      "node travels.travel-agency",
+      "node control"
+    ],
+    "count": 16
+  },
+  "2": {
+    "hits": 5,
+    "examples": [
+      "name travel_loadtester=travel-loadtester",
+      "name travel_portal=travel-portal",
+      "name travel_control=travel-control"
+    ],
+    "count": 3
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "5": {
+    "hits": 22,
+    "examples": ["not-a-host LISTEN_ADDRESS=:8000"],
+    "count": 1
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "8": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "9": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 24,
+    "examples": [
+      "scoped DISCOUNTS_SERVICE=discounts @flights",
+      "scoped MYSQL_SERVICE=mysqldb @flights",
+      "scoped DISCOUNTS_SERVICE=discounts @hotels",
+      "scoped MYSQL_SERVICE=mysqldb @hotels",
+      "scoped DISCOUNTS_SERVICE=discounts @cars",
+      "scoped MYSQL_SERVICE=mysqldb @cars",
+      "scoped FLIGHTS_SERVICE=flights @travels.travel-agency",
+      "scoped HOTELS_SERVICE=hotels @travels.travel-agency",
+      "scoped CARS_SERVICE=cars @travels.travel-agency",
+      "scoped INSURANCES_SERVICE=insurances @travels.travel-agency",
+      "scoped DISCOUNTS_SERVICE=discounts @insurances",
+      "scoped MYSQL_SERVICE=mysqldb @insurances"
+    ],
+    "count": 12
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 105,
+    "examples": [
+      "ns-strip travels.travel-agency",
+      "ns-strip discounts.travel-agency",
+      "ns-strip mysqldb.travel-agency",
+      "ns-strip flights.travel-agency",
+      "ns-strip hotels.travel-agency",
+      "ns-strip cars.travel-agency",
+      "ns-strip insurances.travel-agency",
+      "ns-strip voyages.travel-portal",
+      "ns-strip viaggi.travel-portal",
+      "ns-strip travels.travel-portal"
+    ],
+    "count": 10
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

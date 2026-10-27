@@ -160,3 +160,52 @@ flowchart TB
 classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 
 ```
+
+## 規則觸發
+計數＝該規則改變了多少個不同的東西（邊、節點、名稱、檔案；同一個東西重複碰到算一次）；括號內最多列 5 個例子。
+- rule 1: 0
+- rule 2: 0
+- rule 3: 8 (config-client product-service; config-client api-gateway; config-client shipping-service; config-client payment-service; config-client favourite-service)
+- rule 4: 1 (default SPRING_CONFIG_IMPORT=optional:configserver:http://localhost:9296)
+- rule 5: 0
+- rule 6: 0
+- rule 7: 0
+- rule 8: 28 (feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/order/service/OrderClientService.java:19; feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/order/service/OrderClientService.java:19; feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/order/service/CartClientService.java:19; feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/order/service/CartClientService.java:19; feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/payment/service/PaymentClientService.java:19)
+- rule 9: 29 (jpa product-service/src/main/java/com/selimhorri/app/domain/Product.java; jpa product-service/src/main/java/com/selimhorri/app/domain/Category.java; jpa product-service/src/main/java/com/selimhorri/app/domain/AbstractMappedEntity.java; jpa shipping-service/src/main/java/com/selimhorri/app/domain/OrderItem.java; jpa shipping-service/src/main/java/com/selimhorri/app/domain/AbstractMappedEntity.java)
+- rule 10: 21 (drop product-service-container (product-service); drop cloud-config-container (cloud-config); drop api-gateway-container (api-gateway); drop shipping-service-container (shipping-service); drop payment-service-container (payment-service))
+- rule 11: 0
+- rule 12: 0
+- rule 13: 0
+- rule 14: 0
+- rule 15: 9 (configserver-prefix optional:configserver:http://localhost:9296; edge product-service->cloud-config :9296; edge api-gateway->cloud-config :9296; edge shipping-service->cloud-config :9296; edge payment-service->cloud-config :9296)
+- rule 16: 9 (edge product-service->service-discovery; edge cloud-config->service-discovery; edge api-gateway->service-discovery; edge shipping-service->service-discovery; edge payment-service->service-discovery)
+- rule 17: 0
+- rule 18: 0
+- rule 19: 0
+- rule 20: 0
+- rule 21: 0
+- rule 22: 0
+- rule 23: 0
+- rule 24: 0
+- rule 25: 0
+- rule 26: 0
+- rule 27: 0
+- rule 28: 0
+- rule 29: 0
+- rule 30: 0
+- rule 31: 0
+- rule 32: 0
+- rule 33: 0
+- rule 34: 0
+- rule 35: 0
+- rule 36: 0
+- rule 37: 0
+- rule 38: 0
+- rule 39: 0
+- rule 40: 0
+- rule 41: 0
+- rule 42: 0
+- rule 43: 0
+- rule 44: 0
+- rule 45: 0
+- rule 46: 0

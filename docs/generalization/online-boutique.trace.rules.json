@@ -1,15 +1,5 @@
 {"rules": {
-  "22": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "44": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "23": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -19,67 +9,52 @@
     "examples": [],
     "count": 0
   },
-  "24": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "46": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "25": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "47": {
+    "hits": 3,
+    "examples": [
+      "urlref src/frontend/main.go:229 addr",
+      "valueref src/paymentservice/index.js:48 collectorUrl",
+      "valueref src/currencyservice/server.js:62 collectorUrl"
+    ],
+    "count": 3
   },
-  "26": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "27": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "28": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "29": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "30": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "31": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "52": {
+    "hits": 34,
+    "examples": [
+      "render helm-chart/templates/adservice.yaml",
+      "render helm-chart/templates/cartservice.yaml",
+      "render helm-chart/templates/checkoutservice.yaml",
+      "render helm-chart/templates/common.yaml",
+      "render helm-chart/templates/currencyservice.yaml",
+      "render helm-chart/templates/emailservice.yaml",
+      "render helm-chart/templates/frontend.yaml",
+      "render helm-chart/templates/loadgenerator.yaml",
+      "render helm-chart/templates/opentelemetry-collector.yaml",
+      "render helm-chart/templates/paymentservice.yaml",
+      "render helm-chart/templates/productcatalogservice.yaml",
+      "render helm-chart/templates/recommendationservice.yaml",
+      "render helm-chart/templates/shippingservice.yaml",
+      "variant-host COLLECTOR_SERVICE_ADDR=opentelemetrycollector",
+      "variant-host checkoutservice->opentelemetrycollector",
+      "variant-host currencyservice->opentelemetrycollector",
+      "variant-host emailservice->opentelemetrycollector",
+      "variant-host frontend->opentelemetrycollector",
+      "variant-host paymentservice->opentelemetrycollector",
+      "variant-host productcatalogservice->opentelemetrycollector"
+    ],
+    "count": 21
   },
   "10": {
     "hits": 1,
     "examples": ["drop opentelemetrycollector (kustomize/components/google-cloud-operations)"],
     "count": 1
   },
-  "32": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "11": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "33": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -89,23 +64,22 @@
     "examples": [],
     "count": 0
   },
-  "34": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "56": {
+    "hits": 3,
+    "examples": [
+      "istio asm-ingress/asm-ingressgateway -> frontend",
+      "istio frontend-gateway -> frontend",
+      "edge istio-ingressgateway->frontend"
+    ],
+    "count": 3
   },
   "13": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "35": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "14": {
-    "hits": 48,
+    "hits": 64,
     "examples": [
       "edge checkoutservice->productcatalogservice",
       "edge checkoutservice->shippingservice",
@@ -113,7 +87,6 @@
       "edge checkoutservice->emailservice",
       "edge checkoutservice->currencyservice",
       "edge checkoutservice->cartservice",
-      "edge recommendationservice->productcatalogservice",
       "edge frontend->productcatalogservice",
       "edge frontend->currencyservice",
       "edge frontend->cartservice",
@@ -122,21 +95,12 @@
       "edge frontend->checkoutservice",
       "edge frontend->adservice",
       "edge frontend->shoppingassistantservice",
-      "edge loadgenerator->frontend"
+      "edge loadgenerator->frontend",
+      "edge recommendationservice->productcatalogservice"
     ],
     "count": 16
   },
-  "36": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "15": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "37": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -146,17 +110,7 @@
     "examples": [],
     "count": 0
   },
-  "38": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "17": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "39": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -230,6 +184,123 @@
     "examples": [],
     "count": 0
   },
+  "20": {
+    "hits": 32,
+    "examples": [
+      "scoped PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice @frontend",
+      "scoped CURRENCY_SERVICE_ADDR=currencyservice @frontend",
+      "scoped CART_SERVICE_ADDR=cartservice @frontend",
+      "scoped RECOMMENDATION_SERVICE_ADDR=recommendationservice @frontend",
+      "scoped CHECKOUT_SERVICE_ADDR=checkoutservice @frontend",
+      "scoped SHIPPING_SERVICE_ADDR=shippingservice @frontend",
+      "scoped AD_SERVICE_ADDR=adservice @frontend",
+      "scoped SHOPPING_ASSISTANT_SERVICE_ADDR=shoppingassistantservice @frontend",
+      "scoped SHIPPING_SERVICE_ADDR=shippingservice @checkoutservice",
+      "scoped PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice @checkoutservice",
+      "scoped CART_SERVICE_ADDR=cartservice @checkoutservice",
+      "scoped CURRENCY_SERVICE_ADDR=currencyservice @checkoutservice",
+      "scoped EMAIL_SERVICE_ADDR=emailservice @checkoutservice",
+      "scoped PAYMENT_SERVICE_ADDR=paymentservice @checkoutservice",
+      "scoped PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice @recommendationservice",
+      "scoped REDIS_ADDR=redis-cart @cartservice"
+    ],
+    "count": 16
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "40": {
     "hits": 8,
     "examples": [
@@ -249,23 +320,16 @@
     "examples": [],
     "count": 0
   },
-  "20": {
-    "hits": 2,
-    "examples": [
-      "scoped PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice @recommendationservice",
-      "scoped REDIS_ADDR=redis-cart @cartservice"
-    ],
-    "count": 2
-  },
   "42": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "21": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 15,
+    "examples": [
+      "ignore /src/frontend/validator/validator_test.go/",
+      "ignore /src/frontend/money/money_test.go/",
+      "ignore /src/productcatalogservice/product_catalog_test.go/",
+      "ignore /src/checkoutservice/money/money_test.go/",
+      "ignore /src/shippingservice/shippingservice_test.go/"
+    ],
+    "count": 5
   },
   "43": {
     "hits": 0,

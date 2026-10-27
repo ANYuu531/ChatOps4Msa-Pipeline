@@ -103,11 +103,9 @@ public class CodeExtractionService {
                         methods.add("LLM source reading (" + stack.language + ")");
                         llmCodeExtractor.extract(root, stack, ledger);
                     } else {
-                        // Kotlin and C# have no bundled grammar: the extractor reads them with
-                        // a thin regex surface, and the method list must say so.
-                        methods.add(stack.provenance.contains("thin regex surface")
-                                ? "thin regex surface (" + stack.language + ")"
-                                : "tree-sitter " + String.join("+", stack.queryPacks()));
+                        // When a grammar fails to load, Kotlin and C# fall back to the thin
+                        // regex surface; the ledger's warnings say so (TreeSitterExtractor).
+                        methods.add("tree-sitter " + stack.language + " " + String.join("+", stack.queryPacks()));
                         treeSitterExtractor.extract(root, stack, ledger);
                     }
                 } catch (Exception e) {

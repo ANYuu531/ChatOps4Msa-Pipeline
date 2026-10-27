@@ -7,17 +7,17 @@
   "44": {
     "hits": 18,
     "examples": [
-      "artifact tools-descartes-teastore-webui=webui",
+      "image tools-descartes-teastore-webui=webui",
       "map tools-descartes-teastore-webui=teastore-webui",
-      "artifact tools-descartes-teastore-recommender=recommender",
+      "image tools-descartes-teastore-recommender=recommender",
       "map tools-descartes-teastore-recommender=teastore-recommender",
-      "artifact tools-descartes-teastore-persistence=persistence",
+      "image tools-descartes-teastore-persistence=persistence",
       "map tools-descartes-teastore-persistence=teastore-persistence",
-      "artifact tools-descartes-teastore-registry=registry",
+      "image tools-descartes-teastore-registry=registry",
       "map tools-descartes-teastore-registry=teastore-registry",
-      "artifact tools-descartes-teastore-image=image",
+      "image tools-descartes-teastore-image=image",
       "map tools-descartes-teastore-image=teastore-image",
-      "artifact tools-descartes-teastore-auth=auth",
+      "image tools-descartes-teastore-auth=auth",
       "map tools-descartes-teastore-auth=teastore-auth"
     ],
     "count": 12
@@ -71,6 +71,26 @@
     "hits": 0,
     "examples": [],
     "count": 0
+  },
+  "52": {
+    "hits": 14,
+    "examples": [
+      "render examples/helm/templates/auth-service.yaml",
+      "render examples/helm/templates/auth-statefulset.yaml",
+      "render examples/helm/templates/db-service.yaml",
+      "render examples/helm/templates/db-statefulset.yaml",
+      "render examples/helm/templates/image-service.yaml",
+      "render examples/helm/templates/image-statefulset.yaml",
+      "render examples/helm/templates/persistence-service.yaml",
+      "render examples/helm/templates/persistence-statefulset.yaml",
+      "render examples/helm/templates/recommender-service.yaml",
+      "render examples/helm/templates/recommender-statefulset.yaml",
+      "render examples/helm/templates/registry-service.yaml",
+      "render examples/helm/templates/registry-statefulset.yaml",
+      "render examples/helm/templates/webui-service.yaml",
+      "render examples/helm/templates/webui-statefulset.yaml"
+    ],
+    "count": 14
   },
   "31": {
     "hits": 0,
@@ -233,7 +253,7 @@
     "count": 0
   },
   "5": {
-    "hits": 143,
+    "hits": 155,
     "examples": [
       "env REGISTRY_HOST=127.0.0.1",
       "env DB_HOST=127.0.0.1",
@@ -279,9 +299,9 @@
     "count": 25
   },
   "8": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 1,
+    "examples": ["config-signal url"],
+    "count": 1
   },
   "9": {
     "hits": 58,

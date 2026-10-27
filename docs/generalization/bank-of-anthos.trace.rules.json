@@ -1,13 +1,11 @@
 {"rules": {
   "22": {
-    "hits": 4,
+    "hits": 2,
     "examples": [
-      "urlref src/frontend/frontend.py:691 metadata_url",
-      "urlref src/frontend/frontend.py:707 metadata_url",
       "dead src/frontend/frontend.py:420",
       "dead src/frontend/frontend.py:421"
     ],
-    "count": 4
+    "count": 2
   },
   "44": {
     "hits": 0,
@@ -38,6 +36,14 @@
     "hits": 0,
     "examples": [],
     "count": 0
+  },
+  "47": {
+    "hits": 2,
+    "examples": [
+      "urlref src/frontend/frontend.py:691 metadata_url",
+      "urlref src/frontend/frontend.py:707 metadata_url"
+    ],
+    "count": 2
   },
   "26": {
     "hits": 0,
@@ -105,6 +111,14 @@
     "examples": [],
     "count": 0
   },
+  "56": {
+    "hits": 2,
+    "examples": [
+      "istio frontend-gateway -> frontend",
+      "edge istio-ingressgateway->frontend"
+    ],
+    "count": 2
+  },
   "13": {
     "hits": 0,
     "examples": [],
@@ -132,7 +146,7 @@
     "count": 10
   },
   "36": {
-    "hits": 5,
+    "hits": 14,
     "examples": [
       "keep-dotted www.apache.org",
       "keep-dotted kopf.on.startup() async def startup(**_)"
@@ -227,13 +241,14 @@
     "count": 0
   },
   "8": {
-    "hits": 7,
+    "hits": 9,
     "examples": [
       "loopback metadata.google.internal",
+      "config-signal url",
       "config-signal server.port",
       "config-signal spring.datasource.platform"
     ],
-    "count": 3
+    "count": 4
   },
   "9": {
     "hits": 12,
@@ -260,7 +275,7 @@
     "count": 0
   },
   "20": {
-    "hits": 7,
+    "hits": 13,
     "examples": [
       "scoped BALANCES_API_ADDR=balancereader @ledgerwriter",
       "scoped TRANSACTIONS_API_ADDR=ledgerwriter @frontend",

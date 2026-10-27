@@ -1,0 +1,485 @@
+{"rules": {
+  "44": {
+    "hits": 19,
+    "examples": [
+      "image recommendation-service=rcmd",
+      "map recommendation-service=rcmd",
+      "image rating-service=rating",
+      "map rating-service=rating",
+      "image frontend=frontend",
+      "image app=app",
+      "image gateway-service=gateway",
+      "map gateway-service=gateway",
+      "image songs-service=songs",
+      "map songs-service=songs",
+      "image load-gen=loadgen",
+      "map load-gen=loadgen"
+    ],
+    "count": 12
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "47": {
+    "hits": 4,
+    "examples": [
+      "hostref services/app/server/src/index.agentless.js:37 GATEWAY",
+      "hostref services/app/server/src/index.agentless.js:38 GATEWAY",
+      "hostref services/app/server/src/index.js:47 GATEWAY",
+      "hostref services/app/server/src/index.js:48 GATEWAY"
+    ],
+    "count": 4
+  },
+  "52": {
+    "hits": 103,
+    "examples": [
+      "render deploy/platform/kubernetes/templates/feature-activemq-monitor/opentelemetry-config.yaml",
+      "render deploy/platform/kubernetes/templates/feature-agent/resources.yaml",
+      "render deploy/platform/kubernetes/templates/feature-apisix-monitor/opentelemetry-config.yaml",
+      "render deploy/platform/kubernetes/templates/feature-asz/configmaps.yaml",
+      "render deploy/platform/kubernetes/templates/feature-asz/deployment.yaml",
+      "render deploy/platform/kubernetes/templates/feature-banyandb-monitor/opentelemetry-config.yaml",
+      "render deploy/platform/kubernetes/templates/feature-baseline/deployment.yml",
+      "render deploy/platform/kubernetes/templates/feature-ciilum/policy.yaml",
+      "render deploy/platform/kubernetes/templates/feature-ciilum/resources.yaml",
+      "render deploy/platform/kubernetes/templates/feature-elasticseasrch-monitor/opentelemetry-config.yaml",
+      "render deploy/platform/kubernetes/templates/feature-event/permissions.yaml",
+      "render deploy/platform/kubernetes/templates/feature-event/resources.yaml",
+      "render deploy/platform/kubernetes/templates/feature-event/scaler.yaml",
+      "render deploy/platform/kubernetes/templates/feature-flink/opentelemetry-config.yaml",
+      "render deploy/platform/kubernetes/templates/feature-flink/resource.yaml",
+      "render deploy/platform/kubernetes/templates/feature-grafana/configmaps.yaml",
+      "render deploy/platform/kubernetes/templates/feature-grafana/resources.yaml",
+      "render deploy/platform/kubernetes/templates/feature-istiod-monitor/opentelemetry-config.yaml",
+      "render deploy/platform/kubernetes/templates/feature-kubernetes-monitor/opentelemetry-config.yaml",
+      "render deploy/platform/kubernetes/templates/feature-mongodb/opentelemetry-config.yaml"
+    ],
+    "count": 57
+  },
+  "53": {
+    "hits": 21,
+    "examples": [
+      "k8s execute-flink-job jobmanager:8081=jobmanager",
+      "k8s pulsar-consumer-pref --service-url=pulsar",
+      "k8s pulsar-consumer-pref pulsar://pulsar:6650=pulsar",
+      "compose event-reporter.command --grpc-addr=oap",
+      "compose mysql-load.command -h=mysql",
+      "compose es-exporter.command --es.uri=elasticsearch",
+      "compose broker.command zookeeper:2181=zookeeper",
+      "compose broker.command --web-service-url=broker",
+      "compose broker.command http://broker:8080=broker",
+      "compose broker.command --broker-service-url=broker",
+      "compose broker.command pulsar://broker:6650=broker",
+      "compose mongodb-exporter-1.command --mongodb.uri=mongodb-1",
+      "compose mongodb-exporter-2.command --mongodb.uri=mongodb-2",
+      "compose nginx-caller.command http://nginx:8080/test=nginx",
+      "compose nginx-caller.command http://nginx:8080/test_404=nginx",
+      "compose nginx-caller.command http://nginx:8080/test_500=nginx",
+      "compose executeJob.command jobmanager:8081=jobmanager",
+      "compose postgres-load.command -h=postgres"
+    ],
+    "count": 18
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "54": {
+    "hits": 14,
+    "examples": [
+      "qualify gateway in [sample-services, cilium-services]",
+      "qualify songs in [sample-services, cilium-services]",
+      "qualify rcmd in [sample-services, cilium-services]",
+      "qualify app in [sample-services, cilium-services]",
+      "qualify frontend in [sample-services, cilium-services]",
+      "qualify activemq in [sample-services, cilium-services]",
+      "qualify rating in [sample-services, cilium-services]"
+    ],
+    "count": 7
+  },
+  "11": {
+    "hits": 81,
+    "examples": [
+      "not-preadded asz-scenarios",
+      "node apisix-otel-collector",
+      "node oap",
+      "node otel-demo-collector",
+      "node otel-demo-flagd",
+      "node otel-demo-astronomy-db",
+      "node otel-demo-valkey-cart",
+      "node otel-demo-kafka",
+      "node otel-demo-ad",
+      "node otel-demo-cart",
+      "node otel-demo-checkout",
+      "node otel-demo-currency",
+      "node otel-demo-email",
+      "node otel-demo-payment",
+      "node otel-demo-product-catalog",
+      "node otel-demo-quote",
+      "node otel-demo-recommendation",
+      "node otel-demo-shipping",
+      "node otel-demo-accounting",
+      "node otel-demo-fraud-detection"
+    ],
+    "count": 81
+  },
+  "55": {
+    "hits": 6,
+    "examples": [
+      "list activemq www.springframework.org",
+      "list activemq www.w3.org",
+      "list activemq activemq.apache.org"
+    ],
+    "count": 3
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "56": {
+    "hits": 4,
+    "examples": [
+      "apisix oap:12800",
+      "apisix app:80",
+      "mount deploy/platform/docker/config/apisix/apisix.yaml=frontend"
+    ],
+    "count": 3
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "14": {
+    "hits": 87,
+    "examples": [
+      "edge apisix-otel-collector->frontend",
+      "edge otel-demo-flagd->otel-demo-collector",
+      "edge otel-demo-kafka->otel-demo-collector",
+      "edge otel-demo-ad->otel-demo-flagd",
+      "edge otel-demo-ad->otel-demo-collector",
+      "edge otel-demo-cart->otel-demo-flagd",
+      "edge otel-demo-cart->otel-demo-collector",
+      "edge otel-demo-cart->otel-demo-valkey-cart",
+      "edge otel-demo-checkout->otel-demo-flagd",
+      "edge otel-demo-checkout->otel-demo-collector",
+      "edge otel-demo-checkout->otel-demo-cart",
+      "edge otel-demo-checkout->otel-demo-currency",
+      "edge otel-demo-checkout->otel-demo-email",
+      "edge otel-demo-checkout->otel-demo-payment",
+      "edge otel-demo-checkout->otel-demo-product-catalog",
+      "edge otel-demo-checkout->otel-demo-shipping",
+      "edge otel-demo-currency->otel-demo-flagd",
+      "edge otel-demo-currency->otel-demo-collector",
+      "edge otel-demo-email->otel-demo-flagd",
+      "edge otel-demo-email->otel-demo-collector"
+    ],
+    "count": 75
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "hits": 4,
+    "examples": [
+      "climb services/app/server",
+      "climb-stop services/app"
+    ],
+    "count": 2
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 2,
+    "examples": ["table ACTIVE_MQ_URL=activemq"],
+    "count": 1
+  },
+  "5": {
+    "hits": 68,
+    "examples": [
+      "not-a-host SW_AGENT_NAME_SERVER=agent::app",
+      "env FLAGD_HOST=flagd",
+      "env OTEL_COLLECTOR_HOST=otel-collector",
+      "env FRONTEND_HOST=frontend",
+      "env LOCUST_WEB_HOST=load-generator",
+      "env GRAFANA_HOST=grafana",
+      "env JAEGER_HOST=jaeger",
+      "env OPAMP_SERVER_HOST=opamp-server",
+      "env IMAGE_PROVIDER_HOST=image-provider",
+      "env ENVOY_ADDR=0.0.0.0",
+      "env FIREPIT_HOST=firepit",
+      "env FLAGD_UI_HOST=flagd-ui",
+      "env TELEMETRY_DOCS_HOST=telemetry-docs",
+      "env CHATBOT_HOST=chatbot",
+      "env LOCUST_WEB_HOST=0.0.0.0",
+      "env _host=mysql",
+      "env _host=postgres",
+      "key server.address=0.0.0.0"
+    ],
+    "count": 18
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 107,
+    "examples": [
+      "env apisix-otel-collector.OTEL_TARGET_ADDREESS=frontend",
+      "env otel-demo-flagd.OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector",
+      "env otel-demo-kafka.OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector",
+      "env otel-demo-kafka.KAFKA_ADVERTISED_LISTENERS=kafka",
+      "env otel-demo-kafka.KAFKA_LISTENERS=kafka",
+      "env otel-demo-kafka.KAFKA_CONTROLLER_QUORUM_VOTERS=kafka",
+      "env otel-demo-ad.FLAGD_HOST=flagd",
+      "env otel-demo-ad.OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector",
+      "env otel-demo-cart.FLAGD_HOST=flagd",
+      "env otel-demo-cart.OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector",
+      "env otel-demo-cart.VALKEY_ADDR=valkey-cart",
+      "env otel-demo-checkout.FLAGD_HOST=flagd",
+      "env otel-demo-checkout.OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector",
+      "env otel-demo-checkout.CART_ADDR=cart",
+      "env otel-demo-checkout.CURRENCY_ADDR=currency",
+      "env otel-demo-checkout.EMAIL_ADDR=email",
+      "env otel-demo-checkout.PAYMENT_ADDR=payment",
+      "env otel-demo-checkout.PRODUCT_CATALOG_ADDR=product-catalog",
+      "env otel-demo-checkout.SHIPPING_ADDR=shipping",
+      "env otel-demo-checkout.KAFKA_ADDR=kafka"
+    ],
+    "count": 99
+  },
+  "8": {
+    "hits": 8,
+    "examples": [
+      "config-signal server.port",
+      "loopback 0.0.0.0",
+      "config-signal spring.datasource.url",
+      "config-signal spring.datasource.username",
+      "config-signal spring.datasource.password",
+      "loopback localhost"
+    ],
+    "count": 6
+  },
+  "9": {
+    "hits": 2,
+    "examples": [
+      "jpa services/songs-service/src/main/java/org/apache/skywalking/showcase/services/song/entity/Song.java",
+      "jpa services/songs-service/src/main/java/org/apache/skywalking/showcase/services/song/repo/SongsRepo.java"
+    ],
+    "count": 2
+  },
+  "20": {
+    "hits": 2,
+    "examples": ["scoped ACTIVE_MQ_URL=activemq @songs"],
+    "count": 1
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 251,
+    "examples": [
+      "network-alias otel-demo:otel-collector=otel-demo-collector",
+      "network-alias otel-demo:flagd=otel-demo-flagd",
+      "network-alias otel-demo:astronomy-db=otel-demo-astronomy-db",
+      "network-alias otel-demo:valkey-cart=otel-demo-valkey-cart",
+      "network-alias otel-demo:kafka=otel-demo-kafka",
+      "network-alias otel-demo:ad=otel-demo-ad",
+      "network-alias otel-demo:cart=otel-demo-cart",
+      "network-alias otel-demo:checkout=otel-demo-checkout",
+      "network-alias otel-demo:currency=otel-demo-currency",
+      "network-alias otel-demo:email=otel-demo-email",
+      "network-alias otel-demo:payment=otel-demo-payment",
+      "network-alias otel-demo:product-catalog=otel-demo-product-catalog",
+      "network-alias otel-demo:quote=otel-demo-quote",
+      "network-alias otel-demo:recommendation=otel-demo-recommendation",
+      "network-alias otel-demo:shipping=otel-demo-shipping",
+      "network-alias otel-demo:accounting=otel-demo-accounting",
+      "network-alias otel-demo:fraud-detection=otel-demo-fraud-detection",
+      "network-alias otel-demo:image-provider=otel-demo-image-provider",
+      "network-alias otel-demo:frontend=otel-demo-frontend",
+      "network-alias otel-demo:frontend-proxy=otel-demo-frontend-proxy"
+    ],
+    "count": 80
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 2,
+    "examples": [
+      "skip-service rocketmq-producer-perf-test",
+      "skip-service rocketmq-consumer-perf-test"
+    ],
+    "count": 2
+  },
+  "32": {
+    "hits": 2,
+    "examples": ["connstr DB_CONNECTION_STRING"],
+    "count": 1
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 111,
+    "examples": [
+      "drop apisix-otel-collector->oap",
+      "inferred otel-demo-collector->oap",
+      "documented otel-demo-kafka->otel-demo-collector",
+      "documented otel-demo-ad->otel-demo-collector",
+      "documented otel-demo-ad->otel-demo-flagd",
+      "documented otel-demo-cart->otel-demo-valkey-cart",
+      "documented otel-demo-cart->otel-demo-collector",
+      "documented otel-demo-cart->otel-demo-flagd",
+      "documented otel-demo-checkout->otel-demo-cart",
+      "documented otel-demo-checkout->otel-demo-currency",
+      "documented otel-demo-checkout->otel-demo-email",
+      "documented otel-demo-checkout->otel-demo-payment",
+      "documented otel-demo-checkout->otel-demo-product-catalog",
+      "documented otel-demo-checkout->otel-demo-shipping",
+      "documented otel-demo-checkout->otel-demo-kafka",
+      "documented otel-demo-checkout->otel-demo-collector",
+      "documented otel-demo-checkout->otel-demo-flagd",
+      "documented otel-demo-currency->otel-demo-collector",
+      "documented otel-demo-email->otel-demo-collector",
+      "documented otel-demo-payment->otel-demo-collector"
+    ],
+    "count": 99
+  },
+  "36": {
+    "hits": 70,
+    "examples": [
+      "cluster-suffix sw-demo-oap.default.svc.cluster.local",
+      "cluster-suffix psql.default.svc.cluster.local",
+      "keep-dotted www.springframework.org",
+      "keep-dotted www.w3.org",
+      "keep-dotted activemq.apache.org",
+      "cluster-suffix kubernetes.default.svc",
+      "scheme-chain metadata-store:zk:zookeeper:2181",
+      "scheme-chain zk:zookeeper:2181"
+    ],
+    "count": 8
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 8,
+    "examples": ["kind rmq0=queue"],
+    "count": 1
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

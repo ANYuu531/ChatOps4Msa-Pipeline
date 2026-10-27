@@ -5,12 +5,13 @@
     "count": 0
   },
   "44": {
-    "hits": 2,
+    "hits": 3,
     "examples": [
-      "no-workload eureka-server=eureka-server",
-      "no-workload nginx=proxy"
+      "compose-only eureka-server=eureka-server",
+      "compose-only nginx=proxy",
+      "map nginx=proxy"
     ],
-    "count": 2
+    "count": 3
   },
   "23": {
     "hits": 0,
@@ -213,7 +214,7 @@
     "hits": 12,
     "examples": [
       "not-preadded eureka-server",
-      "not-preadded nginx",
+      "not-preadded proxy",
       "not-preadded risk-management-client",
       "node customer-self-service-backend",
       "node policy-management-backend",
@@ -243,12 +244,14 @@
     "count": 1
   },
   "5": {
-    "hits": 6,
+    "hits": 8,
     "examples": [
       "env ACTIVEMQ_HOST=policy-management-backend",
-      "env ACTIVEMQ_HOST=policy-management-backend-queue"
+      "env ACTIVEMQ_HOST=policy-management-backend-queue",
+      "key host=/",
+      "key host=localhost"
     ],
-    "count": 2
+    "count": 4
   },
   "6": {
     "hits": 1,
@@ -282,10 +285,12 @@
     "count": 20
   },
   "8": {
-    "hits": 39,
+    "hits": 48,
     "examples": [
       "loopback localhost:8110",
       "feign-bean-id customercore",
+      "config-signal url",
+      "loopback localhost",
       "loopback localhost:8761",
       "config-signal eureka.instance.preferIpAddress",
       "config-signal eureka.client.enabled",
@@ -295,10 +300,10 @@
       "config-signal spring.datasource.password",
       "config-signal spring.datasource.driverClassName"
     ],
-    "count": 10
+    "count": 12
   },
   "9": {
-    "hits": 51,
+    "hits": 52,
     "examples": [
       "jpa customer-core/src/main/java/com/lakesidemutual/customercore/domain/customer/CustomerProfileEntity.java",
       "jpa customer-core/src/main/java/com/lakesidemutual/customercore/domain/customer/Address.java",
@@ -321,7 +326,7 @@
       "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/policy/PolicyId.java",
       "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/customer/CustomerId.java"
     ],
-    "count": 29
+    "count": 30
   },
   "40": {
     "hits": 0,
@@ -334,9 +339,9 @@
     "count": 0
   },
   "20": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 2,
+    "examples": ["scoped VUE_APP_POLICY_MANAGEMENT_BACKEND=policy-management-backend @policy-management-frontend"],
+    "count": 1
   },
   "42": {
     "hits": 0,

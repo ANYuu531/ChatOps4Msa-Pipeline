@@ -4,41 +4,39 @@ flowchart TB
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
   subgraph layer0 ["entry services"]
     direction LR
-    accountservice["accountservice"]
-    configservice["configservice"]
-    foodtrayservice["foodtrayservice"]
-    priceservice["priceservice"]
-    storeservice["storeservice"]
-    customerservice["customerservice"]
-    itemservice["itemservice"]
     accounts["accounts"]
     prices["prices"]
     customers["customers"]
     stores["stores"]
+    foodtrayservice["foodtrayservice"]
+    itemservice["itemservice"]
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
-    discoveryservice["discoveryservice"]
+    configserver["configserver"]
     item_service["item-service"]
     price_service["price-service"]
-    configserver["configserver"]
   end
-  subgraph layer2 ["external"]
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    discoveryservice["discoveryservice"]
+  end
+  subgraph layer3 ["external"]
     direction LR
     github_com[/"github.com"/]:::external
   end
   foodtrayservice -.-> item_service
   foodtrayservice -.-> price_service
-  accountservice -. declared? .-> discoveryservice
-  configservice -. declared? .-> discoveryservice
-  configservice -. ext .-> github_com
+  accounts -. declared? .-> discoveryservice
+  configserver -. declared? .-> discoveryservice
+  configserver -. ext .-> github_com
   accounts -. declared? .-> configserver
   prices -. declared? .-> configserver
   customers -. declared? .-> configserver
   stores -. declared? .-> configserver
   foodtrayservice -. declared? .-> discoveryservice
-  priceservice -. declared? .-> discoveryservice
-  storeservice -. declared? .-> discoveryservice
-  customerservice -. declared? .-> discoveryservice
+  prices -. declared? .-> discoveryservice
+  stores -. declared? .-> discoveryservice
+  customers -. declared? .-> discoveryservice
   itemservice -. declared? .-> discoveryservice
 classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

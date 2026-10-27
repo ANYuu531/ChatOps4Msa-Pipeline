@@ -490,34 +490,39 @@ public class AliasAskFlowTest {
     }
 
     @Test
-    void aHostThatIsAStringConstantOfTheSameClassIsResolved() {
-        // cloud-simple-ui's UserService: "http://" + SERVICE_NAME + "/user".
-        String java = """
+    void aHostThatIsAStringConstantOfTheSameClassIsResolved() throws Exception {
+        // cloud-simple-ui's UserService: "http://" + SERVICE_NAME + "/user". Since round 4 the
+        // constant is a var-binding row of the Java pack, resolved by the same resolver every
+        // grammar uses (rule 47); a host nothing in the file binds is left alone.
+        String javaSource = """
                 public class UserService {
                     final String SERVICE_NAME = "cloud-simple-service";
                     public List<User> readUserInfo() {
+                        restTemplate.getForObject("http://" + OTHER_HOST + "/x", List.class);
                         return restTemplate.getForObject("http://" + SERVICE_NAME + "/user", List.class);
                     }
                 }
                 """;
+        java.nio.file.Path root = java.nio.file.Files.createTempDirectory("hostref");
+        java.nio.file.Path file = root.resolve("cloud-simple-ui/src/main/java/UserService.java");
+        java.nio.file.Files.createDirectories(file.getParent());
+        java.nio.file.Files.writeString(file, javaSource);
         ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.EdgeLedger ledger =
                 new ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.EdgeLedger();
-        Map<String, String> fields = new java.util.LinkedHashMap<>();
-        fields.put("method", "getForObject");
-        fields.put("scheme", "http://");
-        fields.put("hostref", "SERVICE_NAME");
-        ledger.add("http-client", fields, "cloud-simple-ui/src/main/java/UserService.java", 4, "High");
-        Map<String, String> unknown = new java.util.LinkedHashMap<>();
-        unknown.put("method", "getForObject");
-        unknown.put("scheme", "http://");
-        unknown.put("hostref", "OTHER_HOST");   // not declared here: left alone
-        ledger.add("http-client", unknown, "cloud-simple-ui/src/main/java/UserService.java", 5, "High");
-
-        ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.TreeSitterExtractor.resolveConstantHosts(
-                ledger, Map.of("cloud-simple-ui/src/main/java/UserService.java", java));
-
-        assertEquals("http://cloud-simple-service", ledger.getEdges().get(0).fields.get("url"));
-        assertFalse(ledger.getEdges().get(1).fields.containsKey("url"));
+        new ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.TreeSitterExtractor().extract(root,
+                new ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.DetectedStack("java", "spring",
+                        ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.DetectedStack.Tier.FRAMEWORK,
+                        List.of(".java"), "test"), ledger);
+        String resolved = null;
+        boolean otherLeftAlone = false;
+        for (var e : ledger.getEdges()) {
+            if (!"http-client".equals(e.section)) continue;
+            if ("SERVICE_NAME".equals(e.fields.get("hostref"))) resolved = e.fields.get("url");
+            if ("OTHER_HOST".equals(e.fields.get("hostref"))) otherLeftAlone = !e.fields.containsKey("url");
+        }
+        assertEquals("http://cloud-simple-service", resolved);
+        assertTrue(otherLeftAlone);
+        assertTrue(ledger.getEdges().stream().noneMatch(e -> "var-binding".equals(e.section)), "bindings are consumed");
     }
 
     @Test

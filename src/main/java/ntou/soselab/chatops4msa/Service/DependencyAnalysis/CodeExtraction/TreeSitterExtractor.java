@@ -9,8 +9,14 @@ import org.treesitter.TSInputEncoding;
 import org.treesitter.TSLanguage;
 import org.treesitter.TSParser;
 import org.treesitter.TSTree;
+import org.treesitter.TreeSitterCSharp;
+import org.treesitter.TreeSitterGo;
 import org.treesitter.TreeSitterJava;
+import org.treesitter.TreeSitterJavascript;
+import org.treesitter.TreeSitterKotlin;
+import org.treesitter.TreeSitterPhp;
 import org.treesitter.TreeSitterPython;
+import org.treesitter.TreeSitterTypescript;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -45,7 +51,11 @@ public class TreeSitterExtractor {
             // Lookup rows, not report entries: every reference matters for resolution.
             "name-ref", 5000,
             "name-constant", 2000,
-            "import", 5000);
+            "import", 5000,
+            // Rule 47's bindings: lookup rows the resolver consumes and removes.
+            BindingResolver.BINDING, 50000,
+            BindingResolver.DEFAULT, 5000,
+            "registry-ref", 500);
 
     private static final int DEFAULT_SECTION_CAP = 200;
 
@@ -80,18 +90,52 @@ public class TreeSitterExtractor {
             for (String pack : List.of("python-web", "python-generic")) {
                 engine("python", pack);
             }
-            System.out.println("[INFO] tree-sitter ready (grammars: java, python; query packs compiled)");
         } catch (Throwable t) {
             throw new IllegalStateException(
                     "tree-sitter failed to initialise. The native library must match the platform: "
                             + "the bundled libs are glibc-linked (an -alpine/musl base image will not work). "
                             + "Cause: " + t, t);
         }
+        // The round-4 grammars are not a startup condition: a platform whose native
+        // library for one of them is missing degrades that language (Kotlin and C# to the
+        // thin regex surface, the others to unread), and the ledger says so per analysis.
+        // A malformed query pack, on the other hand, is a bug and fails startup.
+        List<String> ready = new ArrayList<>(List.of("java", "python"));
+        for (String lang : OPTIONAL_GRAMMARS) {
+            try {
+                language(lang);
+            } catch (Throwable t) {
+                System.out.println("[WARN] tree-sitter grammar '" + lang + "' unavailable on this platform: " + t);
+                continue;
+            }
+            engine(lang, packFamily(lang) + "-generic");
+            ready.add(lang);
+        }
+        System.out.println("[INFO] tree-sitter ready (grammars: " + String.join(", ", ready) + "; query packs compiled)");
     }
 
+    /** Languages this instance treats as if their native grammar failed to load (the fallback's test hook). */
+    private final Set<String> simulatedUnavailable = new java.util.HashSet<>();
+
+    /** Treats {@code language}'s grammar as unavailable on this instance, so the fallback path can be exercised. */
+    public TreeSitterExtractor withoutGrammar(String language) {
+        simulatedUnavailable.add(language);
+        return this;
+    }
+
+    /** Grammars added in round 4 (2026-10-27); each has a generic query pack. */
+    static final List<String> OPTIONAL_GRAMMARS = List.of("javascript", "typescript", "go", "php", "kotlin", "csharp");
+
+    /** Languages that keep the thin regex surface as a fallback when their grammar fails to load (rules 28, 40). */
+    private static final Set<String> THIN_FALLBACK = Set.of("kotlin", "csharp");
+
     public boolean supports(String language) {
-        return "java".equals(language) || "python".equals(language) || "kotlin".equals(language)
-                || "csharp".equals(language);
+        return "java".equals(language) || "python".equals(language) || OPTIONAL_GRAMMARS.contains(language);
+    }
+
+    /** The query-pack family of a language: TypeScript is read with the JavaScript packs (its grammar is a superset). */
+    static String packFamily(String language) {
+        return "typescript".equals(language) ? "javascript" : language;
     }
 
     /**
@@ -99,8 +143,25 @@ public class TreeSitterExtractor {
      * the resulting edges to the ledger.
      */
     public void extract(Path root, DetectedStack stack, EdgeLedger ledger) {
-        if ("kotlin".equals(stack.language) || "csharp".equals(stack.language)) {
-            extractThinSurface(root, stack, ledger);
+        boolean thinFallback = THIN_FALLBACK.contains(stack.language);
+        TSLanguage language;
+        try {
+            if (simulatedUnavailable.contains(stack.language)) {
+                throw new UnsatisfiedLinkError("grammar marked unavailable for this extractor");
+            }
+            language = language(stack.language);
+        } catch (Throwable t) {
+            // A grammar whose native library does not load on this platform: Kotlin and C#
+            // still have the thin regex surface; any other language is left unread, and the
+            // ledger says which, so the graph's reader knows that layer is missing.
+            if (thinFallback) {
+                ledger.addWarning("tree-sitter grammar for " + stack.language + " failed to load (" + t
+                        + "); its files were read with the thin regex surface instead.");
+                extractThinSurface(root, stack, ledger);
+            } else {
+                ledger.addWarning("tree-sitter grammar for " + stack.language + " failed to load (" + t
+                        + "); its source files were not read.");
+            }
             return;
         }
         List<TreeSitterQueryEngine> engines = new ArrayList<>();
@@ -111,11 +172,14 @@ public class TreeSitterExtractor {
                 ledger.addWarning("query pack '" + pack + "' failed to compile: " + e.getMessage());
             }
         }
-        if (engines.isEmpty()) return;
+        if (engines.isEmpty()) {
+            if (thinFallback) extractThinSurface(root, stack, ledger);
+            return;
+        }
 
-        TSLanguage language = language(stack.language);
         TSParser parser = parsers.get();
         parser.setLanguage(language);
+        boolean csharp = "csharp".equals(stack.language);
 
         Map<String, Integer> sectionCounts = new LinkedHashMap<>();
         List<Path> files = SourceScanner.filesWithExtensions(root, stack.extensions);
@@ -123,6 +187,8 @@ public class TreeSitterExtractor {
         Map<String, String> sources = new LinkedHashMap<>(); // relative path -> text, for the reference check
 
         for (Path file : files) {
+            // .NET build output (obj/, bin/) holds generated .cs files, not the project's source.
+            if (csharp && ("/" + SourceScanner.relative(root, file)).matches("(?i).*/(obj|bin)/.*")) continue;
             String source;
             try {
                 source = Files.readString(file, StandardCharsets.UTF_8);
@@ -144,6 +210,9 @@ public class TreeSitterExtractor {
             if (tree.getRootNode().hasError()) ledger.incFilesWithErrors();
 
             String relative = SourceScanner.relative(root, file);
+            // Rules 28 / 40 (Kotlin, C#): now grammar-backed; the regex surface is the fallback.
+            if ("kotlin".equals(stack.language)) RuleTrace.hit(28, "kt-file " + relative);
+            if (csharp) RuleTrace.hit(40, "cs-file " + relative);
             for (TreeSitterQueryEngine engine : engines) {
                 for (TreeSitterQueryEngine.Match match : engine.run(tree, bytes)) {
                     emit(match, relative, ledger, sectionCounts);
@@ -152,15 +221,15 @@ public class TreeSitterExtractor {
         }
 
         ledger.addFilesParsed(parsed);
-        resolveConstantHosts(ledger, sources);
+        if (csharp) normaliseDotnetConfigReads(ledger, sources.keySet());
+        BindingResolver.resolve(ledger);
         dropNonAddressUrls(ledger, sources);
         dropMetadataUrls(ledger);
         markUnreferencedUrlConstants(root, ledger, sources);
         dropPlainTwinsOfFormatUrls(ledger);
-        if ("python".equals(stack.language)) {
-            resolvePythonUrlRefs(ledger, sources);
-            markDeadPythonCode(root, ledger, sources);
-        }
+        if ("python".equals(stack.language)) markDeadPythonCode(root, ledger, sources);
+        if ("go".equals(stack.language)) registryNamesThroughParameters(ledger, sources);
+        if ("javascript".equals(stack.language) || "typescript".equals(stack.language)) markBrowserScripts(root, ledger, sources.keySet());
 
         for (TreeSitterQueryEngine engine : engines) {
             for (String error : engine.getPredicateErrors()) ledger.addWarning(error);
@@ -324,28 +393,222 @@ public class TreeSitterExtractor {
     }
 
     /**
-     * Fills in the url of an http-client row whose host is a constant:
-     * {@code "http://" + SERVICE_NAME + "/user"} with {@code final String SERVICE_NAME =
-     * "cloud-simple-service"} declared in the same file becomes
-     * {@code http://cloud-simple-service}. Only a String constant of the same file with a
-     * literal value counts — a field set at runtime, a property, or a constant from
-     * another class is left alone, and the row stays a hostref the merger cannot place.
+     * C#'s configuration reads in the merger's vocabulary (the thin surface's contract,
+     * rule 40): {@code Configuration["A:B"]} / {@code GetValue("A:B")} carry the key in
+     * {@code dotnetkey} and its environment spelling {@code A__B} in {@code env}, so the env
+     * table (the Compose override) and appsettings.json both resolve it;
+     * {@code GetConnectionString("X")} is the key {@code ConnectionStrings:X}. A MassTransit /
+     * client {@code Host("rabbitmq")} literal is a host under the key {@code host}.
      */
-    public static void resolveConstantHosts(EdgeLedger ledger, Map<String, String> sources) {
+    private static void normaliseDotnetConfigReads(EdgeLedger ledger, Set<String> files) {
         for (EdgeLedger.Edge e : ledger.getEdges()) {
-            if (!"http-client".equals(e.section)) continue;
-            String ref = e.fields.get("hostref");
-            String scheme = e.fields.get("scheme");
-            if (ref == null || ref.isBlank() || scheme == null || e.fields.containsKey("url")) continue;
-            String source = sources.get(e.file);
-            if (source == null) continue;
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile(
-                    "\\bString\\s+" + java.util.regex.Pattern.quote(ref) + "\\s*=\\s*\"([^\"]*)\"").matcher(source);
-            if (!m.find()) continue;
-            String value = m.group(1).trim();
-            if (value.isEmpty() || value.contains("${")) continue;
-            e.fields.put("url", value.matches("(?i)^https?://.*") ? value : scheme + value);
+            if (!"config".equals(e.section) || !files.contains(e.file)) continue;
+            Map<String, String> f = e.fields;
+            String conn = f.remove("connstr");
+            if (conn != null && !conn.isBlank()) f.put("dotnetkey", "ConnectionStrings:" + conn.trim());
+            String key = f.get("dotnetkey");
+            if (key != null && !key.isBlank() && !f.containsKey("env")) f.put("env", key.trim().replace(":", "__"));
+            if (f.containsKey("value") && !f.containsKey("key") && !f.containsKey("env")) f.put("key", "host");
         }
+    }
+
+    /** {@code <script … src="x.js">} in an HTML page. */
+    private static final java.util.regex.Pattern SCRIPT_SRC = java.util.regex.Pattern.compile(
+            "(?is)<script\\b[^>]*\\bsrc\\s*=\\s*[\"']([^\"'>]+)[\"']");
+
+    /**
+     * Rule 51: a script an HTML page of the repository loads ({@code <script src="x.js">},
+     * resolved against the page's directory, or by its path suffix when the src is
+     * root-absolute) runs in the visitor's browser. Its calls are the browser's — to a Google
+     * API, a CDN — not the serving container's, and a browser cannot reach a cluster name
+     * anyway; its http-client / url / config rows are marked not an address and draw nothing.
+     * A bundled single-page app whose page loads only the bundle is not matched: its source
+     * files keep their edges. AICS's frontend loads its sheet page this way (2026-10-27).
+     */
+    private static void markBrowserScripts(Path root, EdgeLedger ledger, Set<String> files) {
+        Set<String> browser = new java.util.HashSet<>();
+        for (Path html : SourceScanner.filesWithExtensions(root, List.of(".html", ".htm"))) {
+            String text;
+            try {
+                text = Files.readString(html, StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                continue;
+            }
+            String dir = html.getParent() == null ? "" : SourceScanner.relative(root, html.getParent());
+            java.util.regex.Matcher m = SCRIPT_SRC.matcher(text);
+            while (m.find()) {
+                String src = m.group(1).trim();
+                if (src.isEmpty() || src.contains("://") || src.startsWith("//") || src.contains("{")) continue;
+                int q = src.indexOf('?');
+                if (q >= 0) src = src.substring(0, q);
+                if (src.startsWith("/")) {
+                    String suffix = src.substring(1);
+                    for (String f : files) if (f.equals(suffix) || f.endsWith("/" + suffix)) browser.add(f);
+                } else {
+                    String resolved = java.nio.file.Paths.get(dir.isEmpty() ? "." : dir).resolve(src).normalize().toString().replace('\\', '/');
+                    if (files.contains(resolved)) browser.add(resolved);
+                }
+            }
+        }
+        if (browser.isEmpty()) return;
+        int marked = 0;
+        for (EdgeLedger.Edge e : ledger.getEdges()) {
+            if (!browser.contains(e.file)) continue;
+            if (!("http-client".equals(e.section) || "url".equals(e.section) || "config".equals(e.section))) continue;
+            if ("true".equals(e.fields.get("unreferenced"))) continue;
+            e.fields.put("unreferenced", "true");
+            e.fields.put("not-an-address", "browser-script");
+            RuleTrace.hit(51, "browser " + e.file + ":" + e.line);
+            marked++;
+        }
+        if (marked > 0) {
+            ledger.addWarning(marked + " call/URL row(s) sit in scripts an HTML page loads (" + browser.size()
+                    + " file(s)): they run in the browser, not in the serving container, and are drawn as no edge.");
+        }
+    }
+
+    /** A Go function header: {@code func (s *Server) initX(name string) error {}. */
+    private static final java.util.regex.Pattern GO_FUNC = java.util.regex.Pattern.compile(
+            "(?m)^func\\s+(?:\\([^)]*\\)\\s*)?([A-Za-z_][A-Za-z0-9_]*)\\s*\\(([^)]*)\\)");
+    /** A registry dial: a {@code Dial} / {@code DialContext} on anything but grpc / net / http (those take addresses). */
+    private static final java.util.regex.Pattern GO_REGISTRY_DIAL = java.util.regex.Pattern.compile(
+            "\\b(?!grpc\\.|net\\.|http\\.)[A-Za-z_][A-Za-z0-9_]*\\.Dial(?:Context)?\\s*\\(");
+
+    /**
+     * Rule 49, through a parameter: a function whose parameter reaches a registry dial
+     * ({@code initReviewClient(name string)} → {@code dialer.Dial(name, …)}, or via another
+     * such function, {@code initUserClient(name)} → {@code s.getGprcConn(name)} →
+     * {@code dialer.Dial(fmt.Sprintf("consul://%s/%s", addr, name))}) is a dial wrapper; a
+     * string literal passed in that parameter's position anywhere in the file is a
+     * registry name, listed like a literal handed to the dial itself. hotelReservation's
+     * frontend wires all seven of its clients this way (2026-10-27). Same-file only, a
+     * fixpoint over the file's functions; nothing is guessed about what the name resolves to.
+     */
+    static void registryNamesThroughParameters(EdgeLedger ledger, Map<String, String> sources) {
+        for (Map.Entry<String, String> src : sources.entrySet()) {
+            String text = src.getValue();
+            if (!text.contains("Dial")) continue;
+            // name -> parameters, and name -> body
+            Map<String, List<String>> params = new LinkedHashMap<>();
+            Map<String, String> bodies = new LinkedHashMap<>();
+            java.util.regex.Matcher fm = GO_FUNC.matcher(text);
+            List<int[]> spans = new ArrayList<>();
+            List<String> names = new ArrayList<>();
+            while (fm.find()) {
+                spans.add(new int[]{fm.start(), fm.end()});
+                names.add(fm.group(1));
+                params.put(fm.group(1), goParamNames(fm.group(2)));
+            }
+            for (int i = 0; i < spans.size(); i++) {
+                int end = i + 1 < spans.size() ? spans.get(i + 1)[0] : text.length();
+                bodies.put(names.get(i), text.substring(spans.get(i)[1], end));
+            }
+            // wrapper name -> the parameter positions that reach a dial
+            Map<String, Set<Integer>> wrappers = new LinkedHashMap<>();
+            boolean changed = true;
+            while (changed) {
+                changed = false;
+                for (String fn : names) {
+                    List<String> ps = params.get(fn);
+                    String body = bodies.get(fn);
+                    for (int i = 0; i < ps.size(); i++) {
+                        if (wrappers.getOrDefault(fn, Set.of()).contains(i)) continue;
+                        if (reachesDial(body, ps.get(i), wrappers, params)) {
+                            wrappers.computeIfAbsent(fn, k -> new java.util.TreeSet<>()).add(i);
+                            changed = true;
+                        }
+                    }
+                }
+            }
+            if (wrappers.isEmpty()) continue;
+            String[] lines = text.split("\n", -1);
+            for (Map.Entry<String, Set<Integer>> w : wrappers.entrySet()) {
+                java.util.regex.Pattern call = java.util.regex.Pattern.compile("\\b" + java.util.regex.Pattern.quote(w.getKey()) + "\\s*\\(");
+                for (int ln = 0; ln < lines.length; ln++) {
+                    java.util.regex.Matcher cm = call.matcher(lines[ln]);
+                    while (cm.find()) {
+                        if (lines[ln].trim().startsWith("func ")) continue; // the declaration itself
+                        List<String> args = goCallArgs(lines[ln], cm.end());
+                        for (int pos : w.getValue()) {
+                            if (pos >= args.size()) continue;
+                            String a = args.get(pos).trim();
+                            if (!a.matches("\"[A-Za-z][A-Za-z0-9-]*\"")) continue;
+                            Map<String, String> fields = new LinkedHashMap<>();
+                            fields.put("name", a.substring(1, a.length() - 1));
+                            fields.put("via", w.getKey());
+                            ledger.add("registry-ref", fields, src.getKey(), ln + 1, "High");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /** Whether {@code param} is an argument (at any depth) of a registry dial or a known wrapper's wrapped position in {@code body}. */
+    private static boolean reachesDial(String body, String param, Map<String, Set<Integer>> wrappers, Map<String, List<String>> params) {
+        if (param.isEmpty() || param.equals("_")) return false;
+        java.util.regex.Pattern ref = java.util.regex.Pattern.compile("\\b" + java.util.regex.Pattern.quote(param) + "\\b");
+        java.util.regex.Matcher dial = GO_REGISTRY_DIAL.matcher(body);
+        while (dial.find()) {
+            String args = balanced(body, dial.end());
+            if (ref.matcher(args).find()) return true;
+        }
+        for (Map.Entry<String, Set<Integer>> w : wrappers.entrySet()) {
+            java.util.regex.Matcher call = java.util.regex.Pattern.compile("\\b" + java.util.regex.Pattern.quote(w.getKey()) + "\\s*\\(").matcher(body);
+            while (call.find()) {
+                List<String> args = goCallArgs(body, call.end());
+                for (int pos : w.getValue()) {
+                    if (pos < args.size() && ref.matcher(args.get(pos)).find()) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** The text inside the parentheses opened just before {@code from}, up to the matching close. */
+    private static String balanced(String text, int from) {
+        int depth = 1;
+        for (int i = from; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '(') depth++;
+            else if (c == ')' && --depth == 0) return text.substring(from, i);
+        }
+        return text.substring(from);
+    }
+
+    /** Top-level comma-separated arguments of the call whose '(' ends just before {@code from}. */
+    private static List<String> goCallArgs(String text, int from) {
+        String inner = balanced(text, from);
+        List<String> out = new ArrayList<>();
+        int depth = 0;
+        boolean str = false;
+        StringBuilder cur = new StringBuilder();
+        for (int i = 0; i < inner.length(); i++) {
+            char c = inner.charAt(i);
+            if (c == '"' && (i == 0 || inner.charAt(i - 1) != '\\')) str = !str;
+            if (!str && (c == '(' || c == '{' || c == '[')) depth++;
+            if (!str && (c == ')' || c == '}' || c == ']')) depth--;
+            if (!str && depth == 0 && c == ',') {
+                out.add(cur.toString());
+                cur.setLength(0);
+            } else {
+                cur.append(c);
+            }
+        }
+        if (cur.length() > 0) out.add(cur.toString());
+        return out;
+    }
+
+    /** The parameter names of a Go parameter list: {@code a, b string, opts ...Option} → [a, b, opts]. */
+    private static List<String> goParamNames(String list) {
+        List<String> out = new ArrayList<>();
+        for (String part : list.split(",")) {
+            String p = part.trim();
+            if (p.isEmpty()) continue;
+            String first = p.split("\\s+")[0];
+            out.add(first.matches("[A-Za-z_][A-Za-z0-9_]*") ? first : "");
+        }
+        return out;
     }
 
     /**
@@ -484,82 +747,6 @@ public class TreeSitterExtractor {
                 }
             }
         }
-    }
-
-    private static final java.util.regex.Pattern PY_GETENV = java.util.regex.Pattern.compile(
-            "os\\.(?:getenv|environ\\.get)\\(\\s*[\"']([A-Za-z_][A-Za-z0-9_]*)[\"']\\s*(?:,\\s*[\"']([^\"']*)[\"'])?"
-                    + "|os\\.environ\\[\\s*[\"']([A-Za-z_][A-Za-z0-9_]*)[\"']\\s*]");
-    private static final java.util.regex.Pattern PY_URL_LITERAL = java.util.regex.Pattern.compile("[\"'](https?://[^\"'{}]+)[\"']");
-    private static final java.util.regex.Pattern PY_IDENT = java.util.regex.Pattern.compile("\\b([A-Za-z_][A-Za-z0-9_]*)\\b");
-
-    /**
-     * Fills in an http-client row whose URL is a variable ({@code requests.get(url=req_url)},
-     * {@code requests.get(f"{PREFIX}/x")}) by following the variable through the same file's
-     * assignments, up to three hops: {@code req_url = f"{PREFIX}/…"} → {@code PREFIX =
-     * os.getenv("X_API_PREFIX")} yields {@code env=X_API_PREFIX} (plus the getenv default);
-     * an assignment to a URL literal yields {@code url}. The row's line is the call site, so
-     * the edge's provenance is where the call is made — the convention the reference edge
-     * sets follow — and the getenv row it supersedes is marked so it draws nothing twice.
-     * A variable nothing assigns, or assigned from anything else, stays unresolved and
-     * draws no edge (2026-10-23).
-     */
-    static void resolvePythonUrlRefs(EdgeLedger ledger, Map<String, String> sources) {
-        List<EdgeLedger.Edge> consumed = new ArrayList<>();
-        for (EdgeLedger.Edge e : ledger.getEdges()) {
-            if (!"http-client".equals(e.section) || e.fields.containsKey("url") || e.fields.containsKey("env")) continue;
-            String ref = e.fields.get("urlref");
-            String source = ref == null ? null : sources.get(e.file);
-            if (source == null) continue;
-            Map<String, String> resolved = followAssignment(source, ref.trim(), 0);
-            if (resolved == null) continue;
-            RuleTrace.hit(22, "urlref " + e.file + ":" + e.line + " " + ref.trim());
-            e.fields.putAll(resolved);
-            if (resolved.containsKey("env")) consumed.add(e);
-        }
-        for (EdgeLedger.Edge call : consumed) {
-            for (EdgeLedger.Edge c : ledger.getEdges()) {
-                if ("config".equals(c.section) && c.file.equals(call.file)
-                        && call.fields.get("env").equals(c.fields.get("env"))) {
-                    c.fields.put("superseded", "true");
-                }
-            }
-        }
-    }
-
-    /** {@code env}/{@code envdefault} or {@code url} for a variable, following plain assignments; null if none. */
-    private static Map<String, String> followAssignment(String source, String name, int depth) {
-        if (depth > 3 || name.isEmpty()) return null;
-        java.util.regex.Matcher assign = java.util.regex.Pattern.compile(
-                "(?m)^\\s*" + java.util.regex.Pattern.quote(name) + "\\s*(?::\\s*[A-Za-z_][\\w\\[\\], ]*)?=\\s*(.+)$").matcher(source);
-        if (!assign.find()) return null;
-        String rhs = assign.group(1).trim();
-        Map<String, String> out = new LinkedHashMap<>();
-        java.util.regex.Matcher env = PY_GETENV.matcher(rhs);
-        if (env.find()) {
-            String envName = env.group(1) != null ? env.group(1) : env.group(3);
-            out.put("env", envName);
-            if (env.group(2) != null && !env.group(2).isBlank()) out.put("envdefault", env.group(2).trim());
-            return out;
-        }
-        java.util.regex.Matcher url = PY_URL_LITERAL.matcher(rhs);
-        if (url.find()) {
-            out.put("url", url.group(1));
-            return out;
-        }
-        // f"{OTHER}/path", OTHER + "/path", "{}/path".format(OTHER): one hop to OTHER.
-        // Inside string literals only an f-string interpolation {OTHER} is a reference.
-        String stripped = java.util.regex.Pattern.compile("[\"'][^\"']*[\"']").matcher(rhs).replaceAll(m -> {
-            java.util.regex.Matcher inner = java.util.regex.Pattern.compile("\\{([A-Za-z_][A-Za-z0-9_]*)").matcher(m.group());
-            return inner.find() ? " " + inner.group(1) + " " : " ";
-        });
-        java.util.regex.Matcher ident = PY_IDENT.matcher(stripped);
-        while (ident.find()) {
-            String candidate = ident.group(1);
-            if (candidate.equals(name) || candidate.equals("f") || candidate.equals("format") || candidate.equals("str")) continue;
-            Map<String, String> hop = followAssignment(source, candidate, depth + 1);
-            if (hop != null) return hop;
-        }
-        return null;
     }
 
     private static final java.util.regex.Pattern PY_DEF = java.util.regex.Pattern.compile("^(\\s*)(?:async\\s+)?def\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\(");
@@ -750,14 +937,22 @@ public class TreeSitterExtractor {
         return languages.computeIfAbsent(name, key -> switch (key) {
             case "java" -> new TreeSitterJava();
             case "python" -> new TreeSitterPython();
+            case "javascript" -> new TreeSitterJavascript();
+            case "typescript" -> new TreeSitterTypescript();
+            case "go" -> new TreeSitterGo();
+            case "php" -> new TreeSitterPhp();
+            case "kotlin" -> new TreeSitterKotlin();
+            case "csharp" -> new TreeSitterCSharp();
             default -> throw new IllegalArgumentException("no tree-sitter grammar bundled for: " + key);
         });
     }
 
     private TreeSitterQueryEngine engine(String language, String pack) {
-        return queryCache.computeIfAbsent(pack, key -> {
-            String source = readQueryPack(key);
-            return new TreeSitterQueryEngine(language(language), source, key);
+        // Keyed by grammar too: TypeScript and JavaScript share a pack but not a grammar,
+        // and a query compiled for one cannot run on the other's trees.
+        return queryCache.computeIfAbsent(language + "/" + pack, key -> {
+            String source = readQueryPack(pack);
+            return new TreeSitterQueryEngine(language(language), source, pack);
         });
     }
 

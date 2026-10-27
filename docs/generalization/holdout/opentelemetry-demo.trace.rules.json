@@ -1,25 +1,25 @@
 {"rules": {
   "22": {
-    "hits": 11,
+    "hits": 2,
     "examples": [
-      "urlref src/shared/tools.py:46 url",
-      "urlref src/shared/tools.py:66 url",
-      "urlref src/shared/tools.py:79 url",
-      "urlref src/shared/tools.py:108 url",
-      "urlref src/shared/tools.py:121 url",
-      "urlref src/shared/tools.py:138 url",
-      "urlref src/shared/tools.py:159 url",
-      "urlref src/shared/tools.py:173 url",
-      "urlref src/shared/tools.py:209 url",
       "dead src/agent/run.py:24",
       "dead src/mcp/run.py:21"
     ],
-    "count": 11
+    "count": 2
   },
   "44": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 12,
+    "examples": [
+      "nested genproto=frontend",
+      "map genproto=frontend",
+      "nested genproto=checkout",
+      "map genproto=checkout",
+      "nested genproto=product-catalog",
+      "map genproto=product-catalog",
+      "nested genproto=currency",
+      "map genproto=currency"
+    ],
+    "count": 8
   },
   "23": {
     "hits": 0,
@@ -70,6 +70,21 @@
     "examples": [],
     "count": 0
   },
+  "47": {
+    "hits": 9,
+    "examples": [
+      "urlref src/shared/tools.py:46 url",
+      "urlref src/shared/tools.py:66 url",
+      "urlref src/shared/tools.py:79 url",
+      "urlref src/shared/tools.py:108 url",
+      "urlref src/shared/tools.py:121 url",
+      "urlref src/shared/tools.py:138 url",
+      "urlref src/shared/tools.py:159 url",
+      "urlref src/shared/tools.py:173 url",
+      "urlref src/shared/tools.py:209 url"
+    ],
+    "count": 9
+  },
   "26": {
     "hits": 0,
     "examples": [],
@@ -115,10 +130,9 @@
     "count": 1
   },
   "11": {
-    "hits": 39,
+    "hits": 35,
     "examples": [
       "not-preadded tools",
-      "not-preadded genproto",
       "not-preadded react-native-app",
       "node otel-ebpf-profiler",
       "node firepit",
@@ -136,9 +150,10 @@
       "node quote",
       "node recommendation",
       "node shipping",
-      "node flagd"
+      "node flagd",
+      "node flagd-ui"
     ],
-    "count": 36
+    "count": 35
   },
   "33": {
     "hits": 1,
@@ -394,7 +409,7 @@
     "count": 0
   },
   "20": {
-    "hits": 25,
+    "hits": 53,
     "examples": [
       "scoped FLAGD_HOST=flagd @load-generator",
       "scoped AGENT_ENDPOINT=agent @load-generator",
@@ -406,28 +421,31 @@
       "scoped KAFKA_ADDR=kafka @accounting",
       "scoped VALKEY_ADDR=valkey-cart @cart",
       "scoped OPAMP_SERVER_ENDPOINT=opamp-server @cart",
+      "scoped SHIPPING_ADDR=shipping @checkout",
+      "scoped PRODUCT_CATALOG_ADDR=product-catalog @checkout",
+      "scoped CART_ADDR=cart @checkout",
+      "scoped CURRENCY_ADDR=currency @checkout",
+      "scoped EMAIL_ADDR=email @checkout",
+      "scoped PAYMENT_ADDR=payment @checkout",
+      "scoped KAFKA_ADDR=kafka @checkout",
+      "scoped DB_CONNECTION_STRING=astronomy-db @product-catalog",
       "scoped KAFKA_ADDR=kafka @fraud-detection",
-      "scoped OTEL_COLLECTOR_HOST=otel-collector @frontend-proxy",
-      "scoped FRONTEND_HOST=frontend @frontend-proxy",
-      "scoped IMAGE_PROVIDER_HOST=image-provider @frontend-proxy",
-      "scoped FLAGD_HOST=flagd @frontend-proxy",
-      "scoped FLAGD_UI_HOST=flagd-ui @frontend-proxy",
-      "scoped LOCUST_WEB_HOST=load-generator @frontend-proxy",
-      "scoped GRAFANA_HOST=grafana @frontend-proxy",
-      "scoped JAEGER_HOST=jaeger @frontend-proxy",
-      "scoped OPAMP_SERVER_HOST=opamp-server @frontend-proxy"
+      "scoped OTEL_COLLECTOR_HOST=otel-collector @frontend-proxy"
     ],
-    "count": 23
+    "count": 31
   },
   "42": {
-    "hits": 8,
+    "hits": 21,
     "examples": [
       "ignore /src/frontend/cypress/e2e/Checkout.cy.ts/",
       "ignore /src/frontend/cypress/e2e/ProductDetail.cy.ts/",
       "ignore /src/frontend/cypress/e2e/Home.cy.ts/",
-      "ignore /src/frontend/cypress/e2e/CheckoutPaymentFailure.cy.ts/"
+      "ignore /src/frontend/cypress/e2e/CheckoutPaymentFailure.cy.ts/",
+      "ignore /src/checkout/money/money_test.go/",
+      "ignore /src/checkout/main_test.go/",
+      "ignore /src/product-catalog/opamp_test.go/"
     ],
-    "count": 4
+    "count": 7
   },
   "21": {
     "hits": 0,

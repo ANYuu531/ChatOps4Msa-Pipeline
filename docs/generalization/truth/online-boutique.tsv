@@ -15,3 +15,4 @@ checkoutservice	emailservice	business	src/checkoutservice/main.go:115 EMAIL_SERV
 recommendationservice	productcatalogservice	business	src/recommendationservice/recommendation_server.py:131；kubernetes-manifests/recommendationservice.yaml:60 PRODUCT_CATALOG_SERVICE_ADDR
 cartservice	redis-cart	data	kubernetes-manifests/cartservice.yaml:50 REDIS_ADDR，值 "redis-cart:6379"
 loadgenerator	frontend	control	kubernetes-manifests/loadgenerator.yaml:82 FRONTEND_ADDR，值 "frontend:80"（locust 的 --host 由它組成，不在 locustfile.py 裡）
+istio-ingressgateway	frontend	control	istio-manifests/frontend-gateway.yaml:42 VirtualService frontend-ingress（gateways: frontend-gateway；:16 Gateway selector istio: ingressgateway）route destination host: frontend

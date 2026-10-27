@@ -2,9 +2,10 @@ flowchart TB
 %% DepWeaver — microservice dependency graph
 %% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
-  subgraph layer0 ["entry services"]
+  subgraph layer0 ["ingress"]
     direction LR
     loadgenerator["loadgenerator"]
+    istio_ingressgateway(["istio-ingressgateway"]):::gateway
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
@@ -36,6 +37,7 @@ flowchart TB
   frontend -.-> balancereader
   frontend -.-> transactionhistory
   frontend -.-> contacts
+  istio_ingressgateway -.-> frontend
   ledgerwriter -. db .-> ledger_db
   transactionhistory -. db .-> ledger_db
   loadgenerator -. declared? .-> frontend
@@ -43,3 +45,4 @@ flowchart TB
   contacts -. db .-> accounts_db
   userservice -. db .-> accounts_db
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef gateway fill:#e9f9ec,stroke:#2e8b57,color:#14351f;

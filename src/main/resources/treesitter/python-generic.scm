@@ -110,3 +110,67 @@
      (call function: (identifier) @_col)))
  (#eq? @_fn "Table")
  (#eq? @_col "Column"))
+
+; ---------- Bindings (rule 47: the call site's variable, followed in the same file) ----------
+; Lookup rows the extractor's BindingResolver consumes: NAME = os.getenv("X", "d"),
+; NAME = "http://…", NAME = f"{OTHER}/x", NAME = OTHER + "/x", NAME = "{}/x".format(OTHER).
+; This replaces the regex resolver rule 22 used for Python only; every grammar emits the
+; same rows, so one resolver serves all languages.
+((assignment
+   left: (identifier) @var-binding.name
+   right: (call
+     function: (attribute object: (identifier) @_o attribute: (identifier) @_m)
+     arguments: (argument_list
+       . (string (string_content) @var-binding.env)
+       . (string (string_content) @var-binding.envdefault)?)))
+ (#eq? @_o "os")
+ (#any-of? @_m "getenv" "environ"))
+
+((assignment
+   left: (identifier) @var-binding.name
+   right: (call
+     function: (attribute
+       object: (attribute object: (identifier) @_o attribute: (identifier) @_a)
+       attribute: (identifier) @_m)
+     arguments: (argument_list
+       . (string (string_content) @var-binding.env)
+       . (string (string_content) @var-binding.envdefault)?)))
+ (#eq? @_o "os")
+ (#eq? @_a "environ")
+ (#eq? @_m "get"))
+
+((assignment
+   left: (identifier) @var-binding.name
+   right: (subscript
+     value: (attribute object: (identifier) @_o attribute: (identifier) @_a)
+     subscript: (string (string_content) @var-binding.env)))
+ (#eq? @_o "os")
+ (#eq? @_a "environ"))
+
+((assignment
+   left: (identifier) @var-binding.name
+   right: (string . (string_start) . (string_content) @var-binding.str . (string_end)))
+ (#match? @var-binding.str "^https?://[^{}]+$"))
+
+((assignment
+   left: (identifier) @var-binding.name
+   right: (string (interpolation expression: (identifier) @var-binding.ref))))
+
+((assignment
+   left: (identifier) @var-binding.name
+   right: (binary_operator left: (identifier) @var-binding.ref)))
+
+((assignment
+   left: (identifier) @var-binding.name
+   right: (binary_operator right: (identifier) @var-binding.ref)))
+
+((assignment
+   left: (identifier) @var-binding.name
+   right: (identifier) @var-binding.ref))
+
+((assignment
+   left: (identifier) @var-binding.name
+   right: (call
+     function: (attribute object: (string) attribute: (identifier) @_f)
+     arguments: (argument_list (identifier) @var-binding.ref)))
+ (#eq? @_f "format"))

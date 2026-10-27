@@ -138,3 +138,52 @@ classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;
 classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 
 ```
+
+## 規則觸發
+計數＝該規則改變了多少個不同的東西（邊、節點、名稱、檔案；同一個東西重複碰到算一次）；括號內最多列 5 個例子。
+- rule 1: 0
+- rule 2: 0
+- rule 3: 0
+- rule 4: 0
+- rule 5: 0
+- rule 6: 0
+- rule 7: 0
+- rule 8: 0
+- rule 9: 0
+- rule 10: 0
+- rule 11: 9 (node rabbitmq; node zipkin; node eureka-server; node config-server; node service-b)
+- rule 12: 28 (v1 docker-compose.yml; links config-server->eureka-server; links config-server->rabbitmq; links service-b->eureka-server; links service-b->config-server)
+- rule 13: 0
+- rule 14: 0
+- rule 15: 0
+- rule 16: 6 (edge service-a->eureka-server; edge admin-dashboard->eureka-server; edge hystrix-dashboard->eureka-server; edge service-b->eureka-server; edge zuul->eureka-server)
+- rule 17: 0
+- rule 18: 0
+- rule 19: 0
+- rule 20: 0
+- rule 21: 0
+- rule 22: 0
+- rule 23: 0
+- rule 24: 0
+- rule 25: 0
+- rule 26: 0
+- rule 27: 0
+- rule 28: 0
+- rule 29: 1 (drop https://github.com/yidongnan)
+- rule 30: 0
+- rule 31: 0
+- rule 32: 0
+- rule 33: 0
+- rule 34: 0
+- rule 35: 26 (inferred config-server->eureka-server; inferred config-server->rabbitmq; inferred service-b->eureka-server; inferred service-b->config-server; inferred service-b->hystrix-dashboard)
+- rule 36: 0
+- rule 37: 0
+- rule 38: 0
+- rule 39: 0
+- rule 40: 0
+- rule 41: 0
+- rule 42: 0
+- rule 43: 0
+- rule 44: 7 (image service-a=service-a; image eureka-server=eureka-server; image admin-dashboard=admin-dashboard; image hystrix-dashboard=hystrix-dashboard; image service-b=service-b)
+- rule 45: 0
+- rule 46: 0

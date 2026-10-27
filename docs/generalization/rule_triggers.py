@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Which of the 46 extraction / merge rules fired on which of the 20 systems.
+"""Which of the extraction / merge rules (56 since round 4) fired on which of the 22 systems.
 
 Reads the rule trace GreenfieldProbeTest writes beside each probe summary
 (`<name>.trace.rules.json`, RuleTrace.toJson) for every system, the rule statements and
@@ -8,7 +8,7 @@ docs/generalization/rule-triggers.md (the full table, the summary and the compac
 appendix version). It also prints the appendix rows with the two new columns so they
 can be pasted into compsac.txt.
 
-    python3 -I docs/generalization/rule_triggers.py [--aics-dir ~/Documents/aics-eval/out/2026-10-27-trace]
+    python3 -I docs/generalization/rule_triggers.py [--aics-dir ~/Documents/aics-eval/out/2026-10-27-r4]
 
 A count is RuleTrace's distinct-token count: how many different things (edges, nodes,
 names, files) the rule changed on that system; the same thing reached twice is one.
@@ -47,6 +47,8 @@ RUNS = [
     ("hotel-reservation", "hotelReservation", "hold-out B", GEN / "holdout" / f"hotel-reservation.{TAG}.rules.json"),
     ("yas", "yas", "hold-out C", GEN / "holdout-c" / f"yas.{TAG}.rules.json"),
     ("run-aspnetcore-microservices", "run-aspnetcore-microservices", "hold-out C", GEN / "holdout-c" / f"run-aspnetcore-microservices.{TAG}.rules.json"),
+    ("travels", "travels", "hold-out D", GEN / "holdout-d" / f"travels.{TAG}.rules.json"),
+    ("skywalking-showcase", "skywalking-showcase", "hold-out D", GEN / "holdout-d" / f"skywalking-showcase.{TAG}.rules.json"),
     ("aics", "AICS (private)", "私有", None),  # path from --aics-dir
 ]
 
@@ -78,39 +80,31 @@ INDUCER_ALIASES = [
                        "spring-cloud-microservice", "lakeside-mutual", "robot-shop"}),
     ("run-aspnetcore-microservices", {"run-aspnetcore-microservices"}),
     ("yas", {"yas"}),
+    ("skywalking-showcase", {"skywalking-showcase"}),
+    ("travels", {"travels"}),
 ]
 
 
-READING = """## 怎麼讀（2026-10-27 這一跑）
+READING = """## 怎麼讀（2026-10-27，第五輪後：56 條規則、22 個系統）
 
-**慣例（20 條，≥5 個系統）**：1、2、3、4、5、6、7、8、9、10、11、12、14、15、20、22、35、36、41、44。這些都離開了歸納它的系統：
-manifest 與 Compose 的名稱清單（1、11）、模組目錄正規化（2）、佔位符解析（4）、裸主機名（5）、反向代理設定（6）、Compose 佈線（7）、
-「不是目標的不畫」（8）、「宣告≠使用」（9）、只認部署了自己模組的 manifest 目錄（10）、Compose v1 與 links（12）、
-workload 自己 env 裡的服務位址（14）、depends_on 分級（35）各在 9–14 個系統上改變結果。值得點名的是在一個系統上歸納、卻轉移得很遠的幾條：
-第 20 條（環境變數在讀取者自己的範圍解析）在私有系統 AICS 上歸納，Bank of Anthos、Online Boutique、robot-shop、opentelemetry-demo、run-aspnetcore-microservices 都用到；
-第 22 條（Python 的呼叫點才算使用、死碼不畫）也來自 AICS，在 Bank of Anthos、robot-shop、train-ticket、opentelemetry-demo 上觸發；
-第 15 條（loopback 以 port 讀回擁有者）在 ecommerce 歸納，Tap-And-Eat、spring-cloud-microservice、LakesideMutual、yas 都有同樣的寫法；
-第 41 條（JVM 函式庫模組不是服務）在 yas 歸納，TeaStore、train-ticket、spring-cloud-microservice、mall-swarm 各有 1–3 個這樣的模組。
+**慣例（23 條，≥5 個系統）**：1、2、3、4、5、6、7、8、9、10、11、12、14、15、20、35、36、41、44、47、51、52、56。第四輪的 20 條全部仍在 ≥5 個系統上觸發，
+第五輪新增的規則有 4 條直接進來：第 47 條（呼叫點變數沿同檔綁定解析，取代第 22 條的 Python 專用解析器）在 8 個系統上改變結果，其中 5 個不是歸納它的；
+第 51 條（HTML 載入的腳本是瀏覽器程式碼）在 AICS 歸納，piggymetrics、robot-shop、train-ticket、spring-petclinic、travels 的 static/ 裡都有同樣的頁面與腳本；
+第 52 條（Helm 先渲染）在 7 個系統上渲染了 chart；第 56 條（入口路由）在 Bank of Anthos、Online Boutique、robot-shop、train-ticket 上都讀到綁 Gateway 的 VirtualService。
+第 44 條（部署名對模組）加了 image 名與 package 名之後由 8 個系統擴大到 16 個。
 
-**部分轉移（15 條，2–4 個系統）**：16、18、19、24、27、29、30、31、32、33、37、40、42、43、45。每一條都至少在一個**非**歸納系統上觸發
-（16 隱含 Eureka → spring-petclinic、spring-cloud-netflix；18 String.format＋Dockerfile ENV → TeaStore；19 版本字尾 → train-ticket；
-24 Compose 鍵名轉發 → yas；27 位址清單 → train-ticket、yas；29 OpenAPI 中繼資料 → spring-cloud-netflix；30 訊息邊 → yas；31 測試 fixture → Bank of Anthos；
-32 連線字串 → run-aspnetcore-microservices；33 保留 TLD → yas；37 Compose hostname → hotelReservation；40 C# 薄表面 → Online Boutique、opentelemetry-demo；
-42 測試樹 → opentelemetry-demo；43 OpenAPI UI 設定鍵 → train-ticket、mall-swarm；45 位址鍵下的裸單字 → opentelemetry-demo）。這些是某種技術或寫法的慣例，語料裡用到那種技術的系統本來就只有兩三個。
+**部分轉移（21 條，2–4 個系統）**：16、18、19、22、24、25、27、29、30、31、32、33、37、39、40、42、43、45、53、54、55。每一條都至少在一個**非**歸納系統上觸發；
+第五輪的 53（命令列位址 → mall-swarm、yas）、54（namespace → skywalking-showcase 的 Helm namespace）、55（多位址值 → train-ticket、yas、skywalking-showcase）都是。
+第 22 條在第五輪只剩死碼那一半，所以由 5 個系統降為 4 個。
 
-**只在歸納它的系統上觸發（10 條）**：13、17、21、23、25、28、34、38、39、46。其中 7 條綁在語料裡只出現一次的技術——Kotlin（28）、Envoy（34）、YARP 與 appsettings（38）、
-.NET 連線字串的形狀（39）、nginx 的 set $var（46）、SOAP／JAXB 的 XML namespace（13）、沒有 Dockerfile 的 Python 套件庫（21）；這份記錄分不出「技術只出現一次」與「專案特例」，
-要再有一個用同樣技術的系統才知道。另外 3 條是真正的單一系統寫法：TeaStore 以 enum 常數經自家 registry 派送（17）、piggymetrics 的共用設定檔要靠建置檔判斷誰綁得到（23）、
-mall-swarm 的 `links: mysql:db` 別名（25；Tap-And-Eat 等系統的 links 沒有別名）。它們沒有錯，但確實是為一個系統寫的。
+**只在歸納它的系統上觸發（11 條）**：13、17、21、23、28、34、38、46、48、49、50。第四輪的 10 條中，第 25 條（Compose 別名）因為加上 network aliases 而在 skywalking-showcase 觸發、離開這一組；
+第 28 條（Kotlin）改為有文法之後仍只有 opentelemetry-demo 有 .kt。新增的 3 條：48（環境變數讀取的預設值，robot-shop）、49（註冊中心名稱，hotelReservation）、50（模組 dotenv，yas）——
+它們是某種寫法在語料裡只出現一次（Consul 名稱經參數傳到 dial、Next.js 的 .env.production、PHP 的 getenv ?: URL），要再有一個系統才知道是慣例還是特例。
 
-**從未觸發（1 條）**：第 26 條（連線 scheme 決定節點種類）。在全部 20 個系統上，jdbc:／mongodb://／amqp:// 指到的主機名稱本身就帶著資料庫或 broker 的判定
-（mysql、*-mongodb、*-db、rabbitmq…），scheme 說的與名稱說的一致，所以沒有一次改變結果；在歸納它的 mall-swarm 上，`jdbc:mysql://db` 的 `db` 先被第 25 條解成 `mysql`，
-第 26 條就用不到了。它只在「主機名沒有任何提示、又沒有別名」時才有作用（單元測試的 fixture 就是這種），在真實語料裡是一條從未用到的保險。
+**從未觸發（1 條）**：第 26 條（連線 scheme 決定節點種類），理由同前：語料裡 scheme 說的與主機名說的一致。
 
-**計數位置的取捨**（規則編號有歧義處，依附錄的措辭對應）：第 9 條把 JPA 標記列與 JAX-RS `@Path` 列也算進去（附錄把這兩句寫在同一條），所以它的命中數偏大；
-第 1 與第 11 條以名稱清單的來源分（manifest → 1，Compose → 11）；第 5、27、45 條以設定鍵的字尾分；第 26 與第 39 條以「scheme 寫在目標裡」與「值的形狀（kindHint、ConnectionStrings、事後改型）」分；
-第 21 與第 41 條以 `library_kind` 分；第 2、31、42 條的測試排除以各自新增的名單分；第 14 條只數服務類的 inferred 邊與共用 ConfigMap 的略過，
-資料庫／broker 的 workload 佈線邊（2026-09-21 Bank of Anthos，早於編號）沒有規則號、不計；第 44 條只數改了名字的對應與被拒的 Compose 名；第 33 條在 ExternalHostDetector 的那一處 probe 不會經過。
+**計數位置的取捨**：同上一版，另外——第 28／40 條數的是以文法（或薄表面）讀的 .kt／.cs 檔；第 47 條數解開的呼叫點；第 52 條數渲染的 template 檔與「渲染的 chart 不是詞彙表時被擋下的主機」；
+第 25 條的 network alias 一個別名算一次（不是每個讀者一次）；第 55 條在抽取時數被拆開的值，所以 train-ticket 的 fluentd ConfigMap 也算進去（它沒有改變任何邊）。
 """
 
 
@@ -123,9 +117,9 @@ def inducers(text):
 
 
 def appendix_rows():
-    """(number, statement, 觸發 text, 位置 text) for the 46 rules, from compsac.txt's appendix table."""
+    """(number, statement, 觸發 text, 位置 text) for every rule, from compsac.txt's appendix table."""
     lines = COMPSAC.read_text(encoding="utf-8").splitlines()
-    start = next(i for i, l in enumerate(lines) if l.startswith("!table 46"))
+    start = next(i for i, l in enumerate(lines) if re.match(r"!table \d+ 條抽取與合併規則", l))
     rows = []
     for l in lines[start + 1:]:
         if l.startswith("!end"):
@@ -136,7 +130,7 @@ def appendix_rows():
         if not cells[0].isdigit():
             continue
         rows.append((int(cells[0]), cells[1], cells[2], cells[3]))
-    assert len(rows) == 46, len(rows)
+    assert len(rows) == int(re.match(r"!table (\d+)", lines[start]).group(1)), len(rows)
     return rows
 
 
@@ -154,7 +148,7 @@ def short(statement, n=38):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--aics-dir", default=os.path.expanduser("~/Documents/aics-eval/out/2026-10-27-trace"))
+    ap.add_argument("--aics-dir", default=os.path.expanduser("~/Documents/aics-eval/out/2026-10-27-r4"))
     ap.add_argument("--out", default=str(GEN / "rule-triggers.md"))
     ap.add_argument("--write-compsac", action="store_true",
                     help="also rewrite the appendix table rows of compsac.txt with the two new columns (系統數, 命中)")
@@ -189,16 +183,16 @@ def main():
         return {SYSTEM_OF[k] for k, c in table[num].items() if c > 0}
 
     md = []
-    md.append("# 46 條規則在 20 個系統上各觸發了幾次（2026-10-27）\n")
+    md.append(f"# {len(rows)} 條規則在 {len(SYSTEMS)} 個系統上各觸發了幾次（2026-10-27，第五輪後）\n")
     md.append("回答「這不就是把例子列舉一遍嗎？」：每條規則都是在 1–3 個系統上歸納出來的；"
               "若它在很多沒參與歸納的系統上也會改變結果，它抓到的是業界的慣例，不是那個系統的特例。"
               "表的每一格是 `RuleTrace` 在該系統的靜態層分析中記到的**不同事物數**（邊、節點、名稱、檔案；同一個東西重複碰到算一次），"
               "由 `GreenfieldProbeTest` 以 tag `trace` 跑在與 r3／現行輸出同一份 checkout 上得到（邊逐條相同，見下方），"
               "原始檔是各目錄下的 `<name>.trace.rules.json`，表由 `docs/generalization/rule_triggers.py` 產生。\n")
     md.append("計數的位置是規則**改變結果**的地方：畫出／不畫／改等級一條邊、建立／合併／壓掉一個節點、解開一個名稱；"
-              "純解析的規則（第 12 條 Compose v1、第 28／40 條薄表面）數它解析的檔案或服務。"
+              "純解析的規則（第 12 條 Compose v1、第 28／40 條 Kotlin／C# 檔案、第 52 條渲染的 template）數它解析的檔案或服務。"
               "每條規則對應的程式位置與 token 形狀列在文末。\n")
-    md.append("robot-shop 有兩個 checkout（歸納用的 2024 版與 MicroDepGraph 對齊的 2019 版），兩欄分開列、「觸發系統數」只算一次，所以欄數是 21、系統數是 20。\n")
+    md.append(f"robot-shop 有兩個 checkout（歸納用的 2024 版與 MicroDepGraph 對齊的 2019 版），兩欄分開列、「觸發系統數」只算一次，所以欄數是 {len(runs)}、系統數是 {len(SYSTEMS)}。\n")
 
     # Full table.
     md.append("## 全表\n")
@@ -215,7 +209,7 @@ def main():
         md.append("| " + " | ".join(cells) + " |")
     md.append("")
     md.append("欄的分組：" + "；".join(f"{g}＝" + "、".join(n for _, n, gg, _, _ in runs if gg == g)
-                              for g in ["歸納", "回歸", "MicroDepGraph", "hold-out B", "hold-out C", "私有"]) + "。\n")
+                              for g in ["歸納", "回歸", "MicroDepGraph", "hold-out B", "hold-out C", "hold-out D", "私有"]) + "。\n")
 
     # Summary buckets.
     ge5, two4, one, only_ind, never = [], [], [], [], []
@@ -276,7 +270,7 @@ def main():
                 for num, statement, trigger, where in rows}
     if args.write_compsac:
         lines = COMPSAC.read_text(encoding="utf-8").splitlines()
-        start = next(i for i, l in enumerate(lines) if l.startswith("!table 46"))
+        start = next(i for i, l in enumerate(lines) if re.match(r"!table \d+ 條抽取與合併規則", l))
         for i in range(start + 1, len(lines)):
             l = lines[i]
             if l.startswith("!end"):

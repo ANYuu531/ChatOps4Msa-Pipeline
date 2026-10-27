@@ -5,7 +5,6 @@ flowchart TB
   subgraph layer0 ["entry services"]
     direction LR
     turbine["turbine"]
-    cloud_hystrix_dashboard["cloud-hystrix-dashboard"]
     cloud_finagle_thrift_client["cloud-finagle-thrift-client"]
     cloud_finagle_thrift_server["cloud-finagle-thrift-server"]
   end
@@ -27,12 +26,10 @@ flowchart TB
     direction LR
     zipkin["zipkin"]
     cloud_simple_service["cloud-simple-service"]
-    cloud_config_server["cloud-config-server"]
   end
   subgraph layer4 ["services · depth 4"]
     direction LR
     configserver["configserver"]
-    cloud_eureka_server["cloud-eureka-server"]
   end
   subgraph layer5 ["services · depth 5"]
     direction LR
@@ -43,7 +40,6 @@ flowchart TB
     github_com[/"github.com"/]:::external
   end
   simple_ui -.-> cloud_simple_service
-  cloud_hystrix_dashboard -. declared? .-> cloud_config_server
   turbine -. declared? .-> gateway
   turbine -. declared? .-> discovery
   configserver -. declared? .-> discovery
@@ -68,21 +64,12 @@ flowchart TB
   simple_ui -. declared? .-> zipkin
   zipkin -. declared? .-> discovery
   zipkin -. declared? .-> configserver
-  cloud_config_server -. ext .-> github_com
-  cloud_config_server -. declared? .-> cloud_eureka_server
+  configserver -. ext .-> github_com
   cloud_finagle_thrift_client -. declared? .-> zipkin
-  turbine -. declared? .-> cloud_config_server
-  turbine -. declared? .-> cloud_eureka_server
-  simple_service -. declared? .-> cloud_config_server
-  simple_service -. declared? .-> cloud_eureka_server
-  simple_ui -. declared? .-> cloud_config_server
-  simple_ui -. declared? .-> cloud_eureka_server
-  simple_serviceb -. declared? .-> cloud_config_server
-  simple_serviceb -. declared? .-> cloud_eureka_server
+  turbine -. declared? .-> configserver
   cloud_finagle_thrift_server -. declared? .-> zipkin
   gateway -.-> cloud_simple_service
   gateway -.-> cloud_simple_serviceb
   gateway -.-> cloud_simple_ui
-  gateway -. declared? .-> cloud_eureka_server
   gateway -.-> uaa_service
 classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

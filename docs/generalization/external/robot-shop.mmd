@@ -2,44 +2,53 @@ flowchart TB
 %% DepWeaver — microservice dependency graph
 %% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
-  subgraph layer0 ["entry services"]
+  subgraph layer0 ["ingress"]
     direction LR
     dispatch["dispatch"]
-    web["web"]
+    istio_ingressgateway(["istio-ingressgateway"]):::gateway
   end
   subgraph layer1 ["services · depth 1"]
     direction LR
-    ratings["ratings"]
-    payment["payment"]
-    catalogue["catalogue"]
-    shipping["shipping"]
+    web["web"]
   end
   subgraph layer2 ["services · depth 2"]
+    direction LR
+    ratings["ratings"]
+    payment["payment"]
+    shipping["shipping"]
+  end
+  subgraph layer3 ["services · depth 3"]
     direction LR
     cart["cart"]
     user["user"]
   end
-  subgraph layer3 ["data stores"]
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    catalogue["catalogue"]
+  end
+  subgraph layer5 ["data stores"]
     direction LR
     rabbitmq{{"rabbitmq"}}:::queue
     mysql[("mysql")]:::db
     mongodb[("mongodb")]:::db
     redis[("redis")]:::db
   end
-  subgraph layer4 ["external"]
+  subgraph layer6 ["external"]
     direction LR
     paypal_com[/"paypal.com"/]:::external
   end
+  user -. db .-> mongodb
+  cart -.-> catalogue
+  cart -. db .-> redis
+  catalogue -. db .-> mongodb
   shipping -.-> cart
   shipping -. db .-> mysql
   payment -. ext .-> paypal_com
   payment -.-> cart
   payment -.-> user
-  catalogue -. db? .-> mongodb
-  user -. db? .-> mongodb
-  user -. db? .-> redis
-  cart -. db? .-> redis
-  ratings -. db? .-> mysql
+  ratings -.-> catalogue
+  user -. db .-> redis
+  ratings -. db .-> mysql
   payment -. async? .-> rabbitmq
   dispatch -. async? .-> rabbitmq
   web -.-> catalogue
@@ -48,6 +57,8 @@ flowchart TB
   web -.-> payment
   web -.-> cart
   web -.-> ratings
+  istio_ingressgateway -.-> web
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
 classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;
+classDef gateway fill:#e9f9ec,stroke:#2e8b57,color:#14351f;
 classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

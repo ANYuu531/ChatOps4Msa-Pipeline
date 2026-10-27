@@ -149,3 +149,11 @@
  (#any-of? @_ann "Info" "License" "Contact" "ExternalDocumentation" "Server" "ApiInfo")
  (#any-of? @_k "url" "termsOfService" "termsOfServiceUrl" "licenseUrl")
  (#match? @url-metadata.value "^https?://"))
+
+; ---------- Bindings (rule 47) ----------
+; String NAME = "cloud-simple-service" (a field or a local): the literal a call site's
+; "http://" + NAME names. Lookup rows for the extractor's BindingResolver — the same
+; resolver every grammar uses; only a literal of the same file counts.
+((variable_declarator
+   name: (identifier) @var-binding.name
+   value: (string_literal (string_fragment) @var-binding.str)))

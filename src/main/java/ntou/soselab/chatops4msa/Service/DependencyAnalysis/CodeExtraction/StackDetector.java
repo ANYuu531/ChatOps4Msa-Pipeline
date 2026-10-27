@@ -28,20 +28,26 @@ public class StackDetector {
             "java", List.of(".java"),
             "python", List.of(".py"));
 
-    /** Languages read deterministically with a thin regex surface because no grammar is bundled. */
-    private static final Map<String, List<String>> THIN_LANGUAGES = Map.of(
-            "kotlin", List.of(".kt", ".kts"),
-            "csharp", List.of(".cs"));
+    /**
+     * Languages whose grammar was added in round 4 (2026-10-27), each read with its generic
+     * query pack. Kotlin and C# were a thin regex surface (rules 28, 40) and keep it as the
+     * fallback when the grammar's native library fails to load; JavaScript, TypeScript, Go
+     * and PHP were LLM-tier, i.e. unread offline.
+     */
+    private static final Map<String, List<String>> GENERIC_GRAMMAR_LANGUAGES = new LinkedHashMap<>();
 
     /** Languages we can recognise but have no grammar for — these go to the LLM tier. */
     private static final Map<String, List<String>> LLM_LANGUAGES = new LinkedHashMap<>();
 
     static {
-        LLM_LANGUAGES.put("go", List.of(".go"));
-        LLM_LANGUAGES.put("javascript", List.of(".js", ".jsx", ".ts", ".tsx"));
+        GENERIC_GRAMMAR_LANGUAGES.put("kotlin", List.of(".kt", ".kts"));
+        GENERIC_GRAMMAR_LANGUAGES.put("csharp", List.of(".cs"));
+        GENERIC_GRAMMAR_LANGUAGES.put("javascript", List.of(".js", ".mjs", ".cjs", ".jsx"));
+        GENERIC_GRAMMAR_LANGUAGES.put("typescript", List.of(".ts", ".tsx", ".mts", ".cts"));
+        GENERIC_GRAMMAR_LANGUAGES.put("go", List.of(".go"));
+        GENERIC_GRAMMAR_LANGUAGES.put("php", List.of(".php"));
         LLM_LANGUAGES.put("ruby", List.of(".rb"));
         LLM_LANGUAGES.put("rust", List.of(".rs"));
-        LLM_LANGUAGES.put("php", List.of(".php"));
     }
 
     private static final int MAX_MANIFEST_BYTES = 512 * 1024;
@@ -72,30 +78,6 @@ public class StackDetector {
                     manifest == null ? ".java sources" : manifest));
         }
 
-        // --- Kotlin: Java's sibling on the JVM, same build manifests, same frameworks. No
-        // tree-sitter grammar is bundled (the bonede Kotlin artifact is not in the offline
-        // repository), so it is read with a thin regex surface: getenv reads, URL literals,
-        // listener annotations. The limitation is stated on the stack (2026-10-26).
-        if (fileCounts.getOrDefault("kotlin", 0) > 0) {
-            String manifest = firstPresent(manifests, "build.gradle.kts", "build.gradle", "pom.xml");
-            stacks.add(new DetectedStack(
-                    "kotlin", null, DetectedStack.Tier.GENERIC,
-                    THIN_LANGUAGES.get("kotlin"),
-                    (manifest == null ? ".kt sources" : manifest) + "; thin regex surface, no tree-sitter grammar offline"));
-        }
-
-        // --- C#: no tree-sitter grammar bundled either. Its configuration reads are
-        // textual and regular (GetConnectionString("Database"), Configuration["A:B"],
-        // GetEnvironmentVariable("X")), and the keys they name are the ones appsettings.json
-        // and the Compose environment (A__B) carry, so the thin regex surface sees the call
-        // sites that make a compose-declared address a documented dependency (2026-10-26).
-        if (fileCounts.getOrDefault("csharp", 0) > 0) {
-            stacks.add(new DetectedStack(
-                    "csharp", null, DetectedStack.Tier.GENERIC,
-                    THIN_LANGUAGES.get("csharp"),
-                    fileCounts.get("csharp") + " .cs files; thin regex surface, no tree-sitter grammar offline"));
-        }
-
         // --- Python ---
         if (fileCounts.getOrDefault("python", 0) > 0) {
             String manifest = firstPresent(manifests,
@@ -113,6 +95,23 @@ public class StackDetector {
                     framework != null ? DetectedStack.Tier.FRAMEWORK : DetectedStack.Tier.GENERIC,
                     GRAMMAR_LANGUAGES.get("python"),
                     manifest == null ? ".py sources" : manifest));
+        }
+
+        // --- round-4 grammars: generic pack, Tier 2 ---
+        for (Map.Entry<String, List<String>> entry : GENERIC_GRAMMAR_LANGUAGES.entrySet()) {
+            String language = entry.getKey();
+            if (fileCounts.getOrDefault(language, 0) == 0) continue;
+            String manifest = switch (language) {
+                case "kotlin" -> firstPresent(manifests, "build.gradle.kts", "build.gradle", "pom.xml");
+                case "javascript", "typescript" -> firstPresent(manifests, "package.json");
+                case "go" -> firstPresent(manifests, "go.mod");
+                case "php" -> firstPresent(manifests, "composer.json");
+                default -> null;
+            };
+            stacks.add(new DetectedStack(
+                    language, null, DetectedStack.Tier.GENERIC, entry.getValue(),
+                    fileCounts.get(language) + " " + String.join("/", entry.getValue()) + " files"
+                            + (manifest == null ? "" : ", " + manifest) + "; tree-sitter grammar"));
         }
 
         // --- languages with no grammar: LLM tier ---
@@ -168,7 +167,7 @@ public class StackDetector {
     private Map<String, Integer> countSourceFiles(Path root) {
         Map<String, String> extensionToLanguage = new LinkedHashMap<>();
         GRAMMAR_LANGUAGES.forEach((lang, exts) -> exts.forEach(e -> extensionToLanguage.put(e, lang)));
-        THIN_LANGUAGES.forEach((lang, exts) -> exts.forEach(e -> extensionToLanguage.put(e, lang)));
+        GENERIC_GRAMMAR_LANGUAGES.forEach((lang, exts) -> exts.forEach(e -> extensionToLanguage.put(e, lang)));
         LLM_LANGUAGES.forEach((lang, exts) -> exts.forEach(e -> extensionToLanguage.put(e, lang)));
 
         Map<String, Integer> counts = new LinkedHashMap<>();

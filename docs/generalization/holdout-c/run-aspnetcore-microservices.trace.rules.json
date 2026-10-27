@@ -146,9 +146,14 @@
     "count": 2
   },
   "36": {
-    "hits": 2,
-    "examples": ["keep-dotted discount.grpc"],
-    "count": 1
+    "hits": 8,
+    "examples": [
+      "keep-dotted discount.grpc",
+      "dotted-name basket-api=basket.api",
+      "dotted-name catalog-api=catalog.api",
+      "dotted-name discount-grpc=discount.grpc"
+    ],
+    "count": 4
   },
   "15": {
     "hits": 0,
@@ -317,7 +322,7 @@
     "count": 0
   },
   "20": {
-    "hits": 13,
+    "hits": 25,
     "examples": [
       "scoped ApiSettings__GatewayAddress=yarpapigateway @shopping.web",
       "scoped ConnectionStrings__Database=basketdb @basket.api",

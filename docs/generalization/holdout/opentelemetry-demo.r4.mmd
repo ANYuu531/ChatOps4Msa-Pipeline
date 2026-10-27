@@ -1,0 +1,143 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    otel_ebpf_profiler["otel-ebpf-profiler"]
+    accounting["accounting"]
+    fraud_detection["fraud-detection"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    ad["ad"]
+    cart["cart"]
+    checkout["checkout"]
+    currency["currency"]
+    email["email"]
+    frontend["frontend"]
+    frontend_proxy["frontend-proxy"]
+    image_provider["image-provider"]
+    load_generator["load-generator"]
+    payment["payment"]
+    product_catalog["product-catalog"]
+    quote["quote"]
+    recommendation["recommendation"]
+    shipping["shipping"]
+    flagd["flagd"]
+    flagd_ui["flagd-ui"]
+    telemetry_docs["telemetry-docs"]
+    otel_collector["otel-collector"]
+    jaeger["jaeger"]
+    agent["agent"]
+    mcp["mcp"]
+    chatbot["chatbot"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    firepit["firepit"]
+    valkey_cart["valkey-cart"]
+    grafana["grafana"]
+    prometheus["prometheus"]
+    opamp_server["opamp-server"]
+  end
+  subgraph layer3 ["data stores"]
+    direction LR
+    astronomy_db[("astronomy-db")]:::db
+    kafka{{"kafka"}}:::queue
+  end
+  subgraph layer4 ["external"]
+    direction LR
+    local_llm_com[/"local-llm.com"/]:::external
+  end
+  subgraph layer5 ["no dependencies found"]
+    direction LR
+    opensearch["opensearch"]
+  end
+  load_generator -.-> flagd
+  load_generator -.-> agent
+  chatbot -.-> agent
+  agent -.-> flagd
+  agent -.-> mcp
+  accounting -. db .-> astronomy_db
+  accounting -. async .-> kafka
+  cart -.-> valkey_cart
+  cart -.-> opamp_server
+  checkout -.-> shipping
+  checkout -.-> product_catalog
+  checkout -.-> cart
+  checkout -.-> currency
+  checkout -.-> email
+  checkout -.-> payment
+  checkout -. async .-> kafka
+  product_catalog -. db .-> astronomy_db
+  fraud_detection -. async .-> kafka
+  otel_ebpf_profiler -.-> otel_collector
+  ad -.-> otel_collector
+  ad -.-> flagd
+  cart -.-> otel_collector
+  cart -.-> flagd
+  checkout -.-> otel_collector
+  checkout -.-> flagd
+  currency -.-> otel_collector
+  email -.-> otel_collector
+  frontend -.-> ad
+  frontend -.-> cart
+  frontend -.-> checkout
+  frontend -.-> currency
+  frontend -.-> product_catalog
+  frontend -.-> recommendation
+  frontend -.-> shipping
+  frontend -.-> otel_collector
+  frontend -.-> flagd
+  frontend_proxy -.-> frontend
+  frontend_proxy -.-> load_generator
+  frontend_proxy -.-> flagd_ui
+  frontend_proxy -.-> telemetry_docs
+  image_provider -.-> otel_collector
+  payment -.-> otel_collector
+  payment -.-> flagd
+  product_catalog -.-> otel_collector
+  product_catalog -.-> flagd
+  quote -.-> otel_collector
+  recommendation -.-> product_catalog
+  recommendation -.-> otel_collector
+  recommendation -.-> flagd
+  shipping -.-> otel_collector
+  shipping -.-> flagd
+  flagd_ui -.-> otel_collector
+  frontend_proxy -.-> jaeger
+  frontend_proxy -.-> grafana
+  frontend_proxy -.-> opamp_server
+  product_catalog -.-> opamp_server
+  agent -.-> otel_collector
+  mcp -.-> frontend
+  chatbot -.-> opamp_server
+  frontend_proxy -.-> chatbot
+  accounting -.-> otel_collector
+  fraud_detection -.-> otel_collector
+  frontend_proxy -.-> otel_collector
+  frontend_proxy -.-> image_provider
+  frontend_proxy -.-> flagd
+  frontend_proxy -.-> firepit
+  email -. declared? .-> flagd
+  load_generator -. declared? .-> frontend_proxy
+  load_generator -. declared? .-> otel_collector
+  shipping -. declared? .-> quote
+  flagd -. declared? .-> otel_collector
+  telemetry_docs -. declared? .-> otel_collector
+  otel_collector -. declared? .-> frontend_proxy
+  otel_collector -. declared? .-> image_provider
+  otel_collector -. db? .-> astronomy_db
+  jaeger -. declared? .-> prometheus
+  jaeger -. declared? .-> otel_collector
+  otel_collector -. async .-> kafka
+  agent -. ext? .-> local_llm_com
+  agent -. declared? .-> frontend
+  mcp -. declared? .-> otel_collector
+  chatbot -. declared? .-> otel_collector
+  fraud_detection -. declared? .-> flagd
+  kafka -. declared? .-> otel_collector
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;
+classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

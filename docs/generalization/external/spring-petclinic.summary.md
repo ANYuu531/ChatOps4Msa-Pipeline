@@ -1,17 +1,18 @@
 ## stacks
 - java/spring (FRAMEWORK, from pom.xml)
-- javascript (LLM, from 19 .js/.jsx/.ts/.tsx files)   <-- skipped (LLM tier)
+- javascript (GENERIC, from 19 .js/.mjs/.cjs/.jsx files; tree-sitter grammar)
 
 ## ledger sections
 - http-server = 13
 - jpa = 12
-- http-client = 1
+- http-client = 3
 - url = 2
+- config = 9
 - compose-service = 11
 - compose-dependency = 13
 - service-root = 10
 - module-deps = 8
-- TOTAL = 70 | files with syntax errors = 0
+- TOTAL = 81 | files with syntax errors = 0
 
 ## graph
 - after merge: 11 nodes / 15 edges | after normalize: 11 nodes / 15 edges | unresolved code edges = 0
@@ -104,3 +105,53 @@ flowchart TB
   hystrix_dashboard -. declared? .-> discovery_server
 
 ```
+
+## 規則觸發
+計數＝該規則改變了多少個不同的東西（邊、節點、名稱、檔案；同一個東西重複碰到算一次）；括號內最多列 5 個例子。
+- rule 1: 0
+- rule 2: 1 (climb docker)
+- rule 3: 0
+- rule 4: 0
+- rule 5: 0
+- rule 6: 0
+- rule 7: 0
+- rule 8: 0
+- rule 9: 6 (jpa spring-petclinic-vets-service/src/main/java/org/springframework/samples/petclinic/vets/model/Vet.java; jpa spring-petclinic-vets-service/src/main/java/org/springframework/samples/petclinic/vets/model/Specialty.java; jpa spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Pet.java; jpa spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java; jpa spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/PetType.java)
+- rule 10: 0
+- rule 11: 11 (node config-server; node discovery-server; node customers-service; node visits-service; node vets-service)
+- rule 12: 0
+- rule 13: 0
+- rule 14: 0
+- rule 15: 0
+- rule 16: 5 (edge admin-server->discovery-server; edge vets-service->discovery-server; edge api-gateway->discovery-server; edge customers-service->discovery-server; edge visits-service->discovery-server)
+- rule 17: 0
+- rule 18: 0
+- rule 19: 0
+- rule 20: 0
+- rule 21: 0
+- rule 22: 0
+- rule 23: 0
+- rule 24: 0
+- rule 25: 0
+- rule 26: 0
+- rule 27: 0
+- rule 28: 0
+- rule 29: 0
+- rule 30: 0
+- rule 31: 0
+- rule 32: 0
+- rule 33: 0
+- rule 34: 0
+- rule 35: 13 (inferred discovery-server->config-server; inferred customers-service->config-server; inferred customers-service->discovery-server; inferred visits-service->config-server; inferred visits-service->discovery-server)
+- rule 36: 0
+- rule 37: 0
+- rule 38: 0
+- rule 39: 0
+- rule 40: 0
+- rule 41: 0
+- rule 42: 0
+- rule 43: 0
+- rule 44: 18 (map grafana=grafana-server; map prometheus=prometheus-server; image spring-petclinic-config-server=config-server; map spring-petclinic-config-server=config-server; image spring-petclinic-discovery-server=discovery-server)
+- rule 45: 0
+- rule 46: 0
+- rule 51: 11 (browser spring-petclinic-api-gateway/src/main/resources/static/scripts/pet-form/pet-form.js:8; browser spring-petclinic-api-gateway/src/main/resources/static/scripts/pet-form/pet-form.js:13; browser spring-petclinic-api-gateway/src/main/resources/static/scripts/visits/visits.controller.js:11; browser spring-petclinic-api-gateway/src/main/resources/static/scripts/visits/visits.controller.js:21; browser spring-petclinic-api-gateway/src/main/resources/static/scripts/visits/visits.js:8)
