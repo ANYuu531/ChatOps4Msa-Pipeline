@@ -1,0 +1,280 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 6,
+    "examples": [
+      "map microservice-demo-order=order",
+      "map microservice-demo-eureka-server=eureka",
+      "map microservice-demo-turbine-server=turbine",
+      "map microservice-demo-catalog=catalog",
+      "map microservice-demo-zuul-server=zuul",
+      "map microservice-demo-customer=customer"
+    ],
+    "count": 6
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 10,
+    "examples": [
+      "not-preadded customer-app",
+      "not-preadded java",
+      "not-preadded order-app",
+      "not-preadded catalog-app",
+      "node eureka",
+      "node customer",
+      "node catalog",
+      "node order",
+      "node zuul",
+      "node turbine"
+    ],
+    "count": 10
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 5,
+    "examples": [
+      "links customer->eureka",
+      "links catalog->eureka",
+      "links order->eureka",
+      "links zuul->eureka",
+      "links turbine->eureka"
+    ],
+    "count": 5
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 5,
+    "examples": [
+      "inferred customer->eureka",
+      "inferred catalog->eureka",
+      "inferred order->eureka",
+      "inferred zuul->eureka",
+      "inferred turbine->eureka"
+    ],
+    "count": 5
+  },
+  "14": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "hits": 1,
+    "examples": ["aggregator microservice-demo"],
+    "count": 1
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 2,
+    "examples": [
+      "default catalog.service.host=catalog",
+      "default customer.service.host=customer"
+    ],
+    "count": 2
+  },
+  "5": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "8": {
+    "hits": 24,
+    "examples": [
+      "config-signal server.port",
+      "config-signal eureka.instance.leaseRenewalIntervalInSeconds",
+      "config-signal eureka.instance.metadataMap.instanceId",
+      "config-signal eureka.instance.preferIpAddress",
+      "config-signal eureka.client.registerWithEureka",
+      "config-signal eureka.client.fetchRegistry",
+      "config-signal eureka.server.waitTimeInMsWhenSyncEmpty",
+      "config-signal eureka.instance.statusPageUrlPath",
+      "config-signal eureka.instance.healthCheckUrlPath"
+    ],
+    "count": 9
+  },
+  "9": {
+    "hits": 5,
+    "examples": [
+      "jpa microservice-demo/microservice-demo-order/src/main/java/com/ewolff/microservice/order/logic/Order.java",
+      "jpa microservice-demo/microservice-demo-order/src/main/java/com/ewolff/microservice/order/logic/OrderLine.java",
+      "jpa microservice-demo/microservice-demo-catalog/src/main/java/com/ewolff/microservice/catalog/Item.java",
+      "jpa microservice-demo/microservice-demo-customer/src/main/java/com/ewolff/microservice/customer/Customer.java"
+    ],
+    "count": 4
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

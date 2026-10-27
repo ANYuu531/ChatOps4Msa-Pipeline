@@ -1,5 +1,6 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph;
 
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -188,6 +189,8 @@ public class CodeGraphMerger {
     private final Map<String, String> moduleManifests = new LinkedHashMap<>();
     /** Module names (service-root spelling) that are libraries, not services. */
     private final Set<String> libraryModules = new LinkedHashSet<>();
+    /** The library modules whose verdict came from a JVM build file (trace only: rule 41 rather than 21). */
+    private final Set<String> jvmLibraryModules = new LinkedHashSet<>();
     /** Library module dir -> its importable top-level packages. */
     private final Map<String, Set<String>> libraryPackages = new LinkedHashMap<>();
     /** Imported dotted module ({@code pkg.sub}) -> the service nodes whose code imports it. */
@@ -244,6 +247,7 @@ public class CodeGraphMerger {
         // stripped, and only on that evidence (2026-10-23).
         Set<String> k8sServices = new LinkedHashSet<>();
         Set<String> rawWorkloadNames = new LinkedHashSet<>();
+        boolean k8sVocabulary = false; // trace only: whether the vocabulary came from manifests (rule 1) or Compose (rule 11)
         if (graph.getNamespace() != null && !graph.getNamespace().isBlank()) {
             namespaces.add(graph.getNamespace().trim().toLowerCase(Locale.ROOT));
         }
@@ -288,12 +292,16 @@ public class CodeGraphMerger {
                     String raw = clean(fields.optString("name", ""));
                     String name = "k8s-workload".equals(section) ? unversionedWorkload(raw, k8sServices, rawWorkloadNames) : raw;
                     if (!isPlausibleName(name)) continue;
-                    if (!name.equals(raw)) workloadAliases.put(raw, name);
+                    if (RuleTrace.hitIf(!name.equals(raw), 19, "version " + raw + "=" + name)) workloadAliases.put(raw, name);
                     allWorkloads.add(name);
                     workloadsByDir.computeIfAbsent(parentDir(edge.optString("file", "").replace('\\', '/')),
                             k -> new LinkedHashSet<>()).add(name);
                 }
-                if (!allWorkloads.isEmpty()) break;
+                if (!allWorkloads.isEmpty()) {
+                    k8sVocabulary = "k8s-workload".equals(section);
+                    RuleTrace.hitIf(k8sVocabulary && !composeServiceNames.isEmpty(), 11, "k8s-over-compose " + composeServiceNames.size() + " compose names ignored");
+                    break;
+                }
             }
         }
         // Which ConfigMaps each workload receives, for scoping env lookups below.
@@ -320,6 +328,7 @@ public class CodeGraphMerger {
         // A module whose build manifest says it is a library (a Python distribution with
         // no image) is never a node: its code runs inside the services that import it.
         Map<String, String> libraryDirs = new LinkedHashMap<>(); // dir -> packages
+        Set<String> jvmLibraryDirs = new LinkedHashSet<>();        // the library dirs whose verdict came from a JVM build file (rule 41, not 21)
         Map<String, String> moduleArtifactIds = new LinkedHashMap<>(); // dir -> the module's own artifactId
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
@@ -329,6 +338,7 @@ public class CodeGraphMerger {
             String dir = fields.optString("dir", "").replace('\\', '/');
             if ("true".equals(fields.optString("library", ""))) {
                 libraryDirs.put(dir, fields.optString("packages", ""));
+                if ("jvm".equals(fields.optString("library_kind", ""))) jvmLibraryDirs.add(dir);
             }
             String artifact = fields.optString("artifact", "").trim();
             if (!artifact.isEmpty()) moduleArtifactIds.put(dir, artifact);
@@ -355,7 +365,7 @@ public class CodeGraphMerger {
                 String artifact = moduleArtifactIds.get(dir);
                 if (artifact != null && !artifact.equalsIgnoreCase(rawName)) {
                     for (String composeName : composeServiceNames) {
-                        if (composeName.equalsIgnoreCase(artifact)) deploymentName = composeName;
+                        if (RuleTrace.hitIf(composeName.equalsIgnoreCase(artifact), 44, "artifact " + rawName + "=" + composeName)) deploymentName = composeName;
                     }
                 }
             }
@@ -366,13 +376,15 @@ public class CodeGraphMerger {
             // as rule 11 says, and the module aligns on its own name below.
             String deploymentWorkload = deploymentName == null ? null
                     : (allWorkloads.isEmpty() ? deploymentName : workloadForDeploymentName(deploymentName, allWorkloads));
+            RuleTrace.hitIf(deploymentName != null && deploymentWorkload == null, 44, "no-workload " + rawName + "=" + deploymentName);
             if (deploymentWorkload != null && greenfield) {
+                RuleTrace.hitIf(!deploymentWorkload.equals(rawName), 44, "map " + rawName + "=" + deploymentWorkload);
                 name = deploymentWorkload;
                 if (allWorkloads.contains(deploymentWorkload)) aligned.add(deploymentWorkload);
                 deployed = true;
             } else if (greenfield && !allWorkloads.isEmpty()) {
                 String workload = matchWorkloadForModule(name, allWorkloads);
-                if (workload != null) {
+                if (RuleTrace.hitIf(workload != null && !workload.equals(name), k8sVocabulary ? 1 : 11, "align " + name + "=" + workload) || workload != null) {
                     name = workload;
                     aligned.add(workload);
                     deployed = true;
@@ -382,7 +394,10 @@ public class CodeGraphMerger {
             moduleNameNodes.put(rawName, name);
             // A library the deployment names anyway is a service after all: the build
             // manifest's verdict yields to the manifest's.
+            RuleTrace.hitIf(libraryDirs.containsKey(dir) && deployed, jvmLibraryDirs.contains(dir) ? 41 : 21, "deployed-overrides " + name);
             if (libraryDirs.containsKey(dir) && !deployed) {
+                RuleTrace.hit(jvmLibraryDirs.contains(dir) ? 41 : 21, "lib " + name);
+                if (jvmLibraryDirs.contains(dir)) jvmLibraryModules.add(name);
                 libraryModules.add(name);
                 Set<String> packages = new LinkedHashSet<>();
                 for (String p : libraryDirs.get(dir).split(",")) if (!p.isBlank()) packages.add(p.trim());
@@ -393,12 +408,10 @@ public class CodeGraphMerger {
         // is deployed. Their workloads (a database StatefulSet, the registry, the broker
         // of a variant) are the vocabulary; the other directories' are not.
         for (Map.Entry<String, Set<String>> e : workloadsByDir.entrySet()) {
-            for (String w : e.getValue()) {
-                if (aligned.contains(w)) {
-                    workloads.addAll(e.getValue());
-                    break;
-                }
-            }
+            boolean deploysOwnModule = false;
+            for (String w : e.getValue()) if (aligned.contains(w)) deploysOwnModule = true;
+            if (deploysOwnModule) workloads.addAll(e.getValue());
+            else for (String w : e.getValue()) RuleTrace.hit(10, "drop " + w + " (" + e.getKey() + ")");
         }
         if (greenfield) knownNodes.addAll(workloads);
         for (Map.Entry<String, String> e : moduleNodes.entrySet()) {
@@ -409,6 +422,7 @@ public class CodeGraphMerger {
                 // A module the manifests never deploy is a library or a tool; with no
                 // manifests at all, every module is presumed deployable.
                 if (workloads.isEmpty() || workloads.contains(name)) deployableModules.add(name);
+                else RuleTrace.hit(k8sVocabulary ? 1 : 11, "not-preadded " + name);
             }
         }
 
@@ -440,6 +454,7 @@ public class CodeGraphMerger {
             if (!configMap.isBlank()) {
                 scope = "configmap:" + configMap;
             } else if ("dockerfile".equals(workload)) {
+                RuleTrace.hit(18, "dockerfile-env " + name + "=" + host);
                 scope = "module:" + edge.optString("file", "").replace('\\', '/');
             } else if (!workload.isBlank()) {
                 scope = "workload:" + clean(workload);
@@ -483,6 +498,7 @@ public class CodeGraphMerger {
         // Docker base image) is not pre-added: it still attributes sources, and appears
         // only if an edge actually touches it.
         if (greenfield) {
+            for (String name : workloads) RuleTrace.hit(k8sVocabulary ? 1 : 11, "node " + name);
             for (String name : workloads) graph.addNode(name, DependencyGraph.classifyKind(name));
             for (String name : deployableModules) {
                 graph.addNode(name, DependencyGraph.classifyKind(name));
@@ -523,7 +539,7 @@ public class CodeGraphMerger {
         if (h.isEmpty()) return null;
         if (source != null && composeAliases.containsKey(source)) {
             String target = composeAliases.get(source).get(h);
-            if (target != null) return target;
+            if (RuleTrace.hitIf(target != null, 25, "resolve " + source + ":" + h + "=" + target)) return target;
         }
         String unanimous = null;
         for (Map<String, String> aliases : composeAliases.values()) {
@@ -532,6 +548,7 @@ public class CodeGraphMerger {
             if (unanimous != null && !unanimous.equals(target)) return null;
             unanimous = target;
         }
+        if (unanimous != null) RuleTrace.hit(composeAliases.getOrDefault("*", Map.of()).containsKey(h) ? 37 : 25, "resolve " + h + "=" + unanimous);
         return unanimous;
     }
 
@@ -736,8 +753,10 @@ public class CodeGraphMerger {
             if (source != null && v.scope() != null && scopeIs(v.scope(), source)) scoped.add(v.host());
         }
         String pick = uniqueHost(scoped);
-        if (pick == null && !scoped.isEmpty()) return null;
+        if (RuleTrace.hitIf(pick == null && !scoped.isEmpty(), 20, "ambiguous " + name + " @" + source)) return null;
+        RuleTrace.hitIf(pick != null, 20, "scoped " + name + "=" + pick + " @" + source);
         if (pick == null) pick = uniqueHost(all);
+        RuleTrace.hitIf(scoped.isEmpty() && all.size() > 1, 20, (pick == null ? "global-ambiguous " : "global ") + name + " @" + source);
         if (pick == null) return null;
         for (EnvValue v : values) {
             if (v.host().equals(pick) && v.kind() != null) return v;
@@ -883,7 +902,7 @@ public class CodeGraphMerger {
             if (key.startsWith("spring.cloud.config.uri") || key.startsWith("spring.cloud.config.import")
                     || (key.startsWith("spring.config.import") && value.contains("configserver"))) {
                 String client = resolveSource(file);
-                if (client != null) configClients.add(client);
+                if (RuleTrace.hitIf(client != null, 3, "config-client " + client)) configClients.add(client);
             }
             // server.port: the module that listens on a port. A loopback address with that
             // port in another module's client declaration (`http://localhost:9296`, the
@@ -909,7 +928,7 @@ public class CodeGraphMerger {
                     s = s.substring(0, s.lastIndexOf('-'));
                     node = matchNode(s); // account-service-dev → account-service; other-prod → other
                 }
-                if (node != null) {
+                if (RuleTrace.hitIf(node != null, 3, "config-file " + file + "=" + node)) {
                     configFileService.put(file, node);
                     configRepoDirs.add(parentDir(file));
                 }
@@ -922,6 +941,7 @@ public class CodeGraphMerger {
             String file = edge.optString("file", "").replace('\\', '/');
             String stem = fileStem(file);
             if (stem != null && stem.startsWith("application") && configRepoDirs.contains(parentDir(file))) {
+                RuleTrace.hit(3, "shared-file " + file);
                 sharedConfigFiles.add(file);
             }
         }
@@ -1052,9 +1072,11 @@ public class CodeGraphMerger {
             String family = section.startsWith("kafka") ? "kafka" : "rabbit";
             String broker = source == null ? null : brokerFor(source, family);
             if (broker == null) {
+                RuleTrace.hit(30, "residue " + source + " " + section + " " + brokerTarget(section, fields));
                 unresolved.add(new Unresolved(section, source, brokerTarget(section, fields), file, line));
                 continue;
             }
+            RuleTrace.hit(30, "edge " + source + "->" + broker);
             graph.addNode(broker, DependencyGraph.KIND_QUEUE);
             addCodeEdge(source, broker, "async", file, line);
         }
@@ -1145,6 +1167,7 @@ public class CodeGraphMerger {
             for (String a : e.getValue()) if (isEurekaClientArtifact(a)) isClient = true;
             if (!isClient) continue;
             String provenance = moduleManifests.getOrDefault(client, client);
+            RuleTrace.hit(16, "edge " + client + "->" + server);
             graph.addNode(server, DependencyGraph.classifyKind(server));
             addCodeEdge(client, server, "sync-http", provenance, -1, DependencyGraph.CONF_INFERRED);
         }
@@ -1179,7 +1202,8 @@ public class CodeGraphMerger {
         for (String[] entry : KEY_LIBRARIES) {
             if (!k.startsWith(entry[0])) continue;
             java.util.regex.Pattern lib = java.util.regex.Pattern.compile(entry[1]);
-            for (String a : artifacts) if (lib.matcher(a).find()) return true;
+            for (String a : artifacts) if (RuleTrace.hitIf(lib.matcher(a).find(), 23, "keep " + client + " " + entry[0])) return true;
+            RuleTrace.hit(23, "drop " + client + " " + entry[0]);
             return false;
         }
         return true;
@@ -1232,12 +1256,13 @@ public class CodeGraphMerger {
             String statedKind = kindField(fields);
             for (Map.Entry<String, Boolean> entry : hosts.entrySet()) {
                 String host = unalias(entry.getKey(), source);
-                if (isLoopback(host) || isReservedHost(host)) continue;
+                if (RuleTrace.hitIf(isLoopback(host), 8, "loopback " + host) || RuleTrace.hitIf(isReservedHost(host), 33, "drop " + host)) continue;
                 // A domain in the workload's own env (LLM_BASE_URL=https://local-llm.com) is an
                 // external endpoint it is handed: drawn as such, dotted, never cut to a first
                 // label that would read as an in-cluster service (2026-10-26).
                 if (external(host)) {
                     if (!entry.getValue()) continue;
+                    RuleTrace.hit(36, "external-env " + source + "->" + host);
                     graph.addNode(host, DependencyGraph.KIND_EXTERNAL);
                     addCodeEdge(source, host, "external", file, -1, DependencyGraph.CONF_INFERRED);
                     continue;
@@ -1253,6 +1278,7 @@ public class CodeGraphMerger {
                 }
                 if (node.equals(source)) continue;
                 String kind = statedKind != null && entry.getValue() ? statedKind : DependencyGraph.classifyKind(node);
+                RuleTrace.hitIf(statedKind != null && entry.getValue() && !statedKind.equals(DependencyGraph.classifyKind(node)), 39, "kind " + node + "=" + statedKind);
                 if (!DependencyGraph.KIND_DB.equals(kind) && !DependencyGraph.KIND_QUEUE.equals(kind)) {
                     // A service address written into this workload's own env is that
                     // workload saying which service it needs — the most explicit form a
@@ -1261,7 +1287,8 @@ public class CodeGraphMerger {
                     // avoid; drawing it dotted says "declared, no use observed".
                     // A shared ConfigMap is still excluded: it is handed to workloads that
                     // call none of it, and there the code layer is the only honest source.
-                    if (!entry.getValue()) continue;
+                    if (RuleTrace.hitIf(!entry.getValue(), 14, "skip-configmap " + source + "->" + node)) continue;
+                    RuleTrace.hit(14, "edge " + source + "->" + node);
                     graph.addNode(node, kind);
                     addCodeEdge(source, node, edgeType("", kind), file, -1, DependencyGraph.CONF_INFERRED);
                     continue;
@@ -1406,11 +1433,13 @@ public class CodeGraphMerger {
                             break;
                         }
                     }
-                    if (!addressed) return;
+                    if (RuleTrace.hitIf(!addressed, 35, "drop " + src + "->" + tgt)) return;
                     confidence = DependencyGraph.CONF_DOCUMENTED;
                 }
+                RuleTrace.hit(35, (hosts.isEmpty() ? "inferred " : "documented ") + src + "->" + tgt);
                 // The target is a node too: Robot Shop's cart -> redis edge pointed at a
                 // node that did not exist, because only the source was ever added.
+                RuleTrace.hitIf(graph.findNode(tgt) == null, 7, "node " + tgt);
                 graph.addNode(tgt, DependencyGraph.classifyKind(tgt));
                 // The provenance names the key, so a reader can tell a startup-order
                 // declaration from an address the same file hands the service.
@@ -1424,9 +1453,9 @@ public class CodeGraphMerger {
         // url="${rates.url}") — the url row carries the target.
         if ("feign".equals(section)) {
             String attr = fields.optString("attr", "").toLowerCase(Locale.ROOT);
-            if (FEIGN_NON_TARGET_ATTRS.contains(attr)) return;
-            if ((attr.equals("name") || attr.equals("value") || attr.isEmpty())
-                    && feignUrlSites.contains(file.replace('\\', '/') + ":" + line)) return;
+            if (RuleTrace.hitIf(FEIGN_NON_TARGET_ATTRS.contains(attr), 8, "feign-attr " + attr + " " + file + ":" + line)) return;
+            if (RuleTrace.hitIf((attr.equals("name") || attr.equals("value") || attr.isEmpty())
+                    && feignUrlSites.contains(file.replace('\\', '/') + ":" + line), 8, "feign-bean-id " + fields.optString("value", ""))) return;
         }
 
         // A shared config file of a config repository configures every client; the
@@ -1434,7 +1463,7 @@ public class CodeGraphMerger {
         if (sourceOverride == null && "config".equals(section) && sharedConfigFiles.contains(file.replace('\\', '/'))) {
             String key = fields.optString("key", "");
             for (String client : configClients) {
-                if (consumesKey(client, key)) mergeOne(edge, unresolved, client);
+                if (RuleTrace.hitIf(consumesKey(client, key), 3, "fanout " + client + " " + key)) mergeOne(edge, unresolved, client);
             }
             return;
         }
@@ -1458,7 +1487,10 @@ public class CodeGraphMerger {
         // theirs, attributed by the import of this very file; with no importer it is
         // nobody's, and the library is never a node.
         if (sourceOverride == null && source != null && libraryModules.contains(source)) {
-            for (String importer : importersOf(file)) mergeOne(edge, unresolved, importer);
+            Set<String> importers = importersOf(file);
+            RuleTrace.hitIf(importers.isEmpty(), jvmLibraryModules.contains(source) ? 41 : 21, (jvmLibraryModules.contains(source) ? "no-edge " : "no-importer ") + file);
+            for (String importer : importers) RuleTrace.hit(21, "attribute " + file + "=" + importer);
+            for (String importer : importers) mergeOne(edge, unresolved, importer);
             return;
         }
 
@@ -1475,6 +1507,7 @@ public class CodeGraphMerger {
             if (value == null) return;
             String node = resolveModuleName(value);
             if (node != null && !node.equals(source)) {
+                RuleTrace.hit(17, "edge " + source + "->" + node);
                 addCodeEdge(source, node, edgeType(section, DependencyGraph.classifyKind(node)), file, line);
             }
             return;
@@ -1495,7 +1528,7 @@ public class CodeGraphMerger {
             // the checked-in file (loopback: nothing), or a real address in another repo.
             if (host == null && fields.has("dotnetkey")) {
                 String prop = propertyLookup(fields.optString("dotnetkey", ""));
-                if (prop != null) {
+                if (RuleTrace.hitIf(prop != null, 40, "appsettings " + fields.optString("dotnetkey", ""))) {
                     host = stripToHost(prop);
                     if (host.isEmpty()) host = null;
                     statedKind = kindFromScheme(prop);
@@ -1505,7 +1538,7 @@ public class CodeGraphMerger {
                 }
             }
             if (host != null && source != null) {
-                if (isLoopback(host) || isReservedHost(host)) return;
+                if (RuleTrace.hitIf(isLoopback(host), 8, "loopback " + host) || RuleTrace.hitIf(isReservedHost(host), 33, "drop " + host)) return;
                 host = unalias(host, source);
                 // Only a known in-cluster node: a bare env read of a domain is not a call
                 // (AICS hands every service SYSTEM_ADDRESS, its own public address, for the
@@ -1513,6 +1546,7 @@ public class CodeGraphMerger {
                 String node = matchNode(host);
                 if (node != null && !node.equals(source)) {
                     String kind = statedKind != null ? statedKind : DependencyGraph.classifyKind(node);
+                    RuleTrace.hitIf(statedKind != null && !statedKind.equals(DependencyGraph.classifyKind(node)), 39, "kind " + node + "=" + statedKind);
                     graph.addNode(node, kind);
                     addCodeEdge(source, node, edgeType("", kind), file, line);
                 }
@@ -1531,7 +1565,7 @@ public class CodeGraphMerger {
                 if (!fallback.isBlank()) host = stripToHost(fallback);
             }
             if (host == null || host.isEmpty() || source == null) return;
-            if (isLoopback(host) || isReservedHost(host)) return;
+            if (RuleTrace.hitIf(isLoopback(host), 8, "loopback " + host) || RuleTrace.hitIf(isReservedHost(host), 33, "drop " + host)) return;
             host = unalias(host, source);
             if (external(host)) {
                 graph.addNode(host, DependencyGraph.KIND_EXTERNAL);
@@ -1562,6 +1596,7 @@ public class CodeGraphMerger {
                 if (!fallback.isBlank()) host = stripToHost(fallback);
             }
             if (host == null || host.isEmpty()) return;
+            RuleTrace.hit(18, "format " + env + "=" + host);
             fields.put("value", fields.optString("value", "").replaceFirst("%[sd]", java.util.regex.Matcher.quoteReplacement(host)));
         }
 
@@ -1573,9 +1608,10 @@ public class CodeGraphMerger {
             String value = substitutePlaceholders(fields.optString("property", ""));
             if (value == null || source == null) return;
             String node = matchNode(value);
+            RuleTrace.hitIf(node == null && looksLikeUrl(value) && isLoopback(stripToHost(value)), 8, "loopback " + stripToHost(value));
             if (node == null && looksLikeUrl(value) && !isLoopback(stripToHost(value))) {
                 String host = unalias(stripToHost(value), source);
-                if (isReservedHost(host)) return;
+                if (RuleTrace.hitIf(isReservedHost(host), 33, "drop " + host)) return;
                 if (external(host)) {
                     graph.addNode(host, DependencyGraph.KIND_EXTERNAL);
                     addCodeEdge(source, host, "external", file, line);
@@ -1622,6 +1658,7 @@ public class CodeGraphMerger {
         boolean inferredByName = nameInferred;
         if (schemeKind == null) schemeKind = kindFromScheme(rawTarget);
         // Spring's config import syntax wraps the address: [optional:]configserver:URL.
+        RuleTrace.hitIf(rawTarget != null && SPRING_IMPORT_PREFIX.matcher(rawTarget.trim()).find(), 15, "configserver-prefix " + rawTarget);
         if (rawTarget != null) rawTarget = SPRING_IMPORT_PREFIX.matcher(rawTarget.trim()).replaceFirst("");
 
         // Fallback for a call whose host is a variable but whose URL path names the
@@ -1642,7 +1679,7 @@ public class CodeGraphMerger {
             // A config key whose value names no address (a username, a profile, a
             // context path) is a signal the ledger keeps, not a dependency that failed
             // to resolve; it must not be handed to the LLM as residue.
-            if (rawTarget == null && "config".equals(section)) return;
+            if (RuleTrace.hitIf(rawTarget == null && "config".equals(section), 8, "config-signal " + fields.optString("key", fields.optString("env", "")))) return;
             unresolved.add(new Unresolved(section, source, rawTarget, file, line));
             return;
         }
@@ -1655,7 +1692,7 @@ public class CodeGraphMerger {
 
         String fullHost = stripToHost(rawTarget);
         // A documentation / test TLD is nobody's address: drawn as nothing, left as no residue.
-        if (isReservedHost(fullHost)) return;
+        if (RuleTrace.hitIf(isReservedHost(fullHost), 33, "drop " + fullHost)) return;
         // A Compose link alias is what this service calls the target; the service is the node.
         String aliasTarget = composeAlias(fullHost, source);
         if (aliasTarget != null) {
@@ -1670,10 +1707,12 @@ public class CodeGraphMerger {
             // 9296. Read back to that module, graded inferred (the host was never named);
             // with no or several owners of the port, nothing is drawn (2026-10-23).
             String owner = portOwner(portOf(rawTarget));
-            if (owner != null && !owner.equals(source)) {
+            if (RuleTrace.hitIf(owner != null && !owner.equals(source), 15, "edge " + source + "->" + owner + " :" + portOf(rawTarget))) {
                 graph.addNode(owner, DependencyGraph.classifyKind(owner));
                 addCodeEdge(source, owner, edgeType(section, DependencyGraph.classifyKind(owner)), file, line,
                         DependencyGraph.CONF_INFERRED);
+            } else {
+                RuleTrace.hit(8, "loopback " + fullHost + (portOf(rawTarget) == null ? "" : ":" + portOf(rawTarget)));
             }
             return;
         }
@@ -1704,6 +1743,7 @@ public class CodeGraphMerger {
         }
         // A .NET connection-string key says the target is a database whatever its name.
         if (schemeKind == null && fields.optString("key", "").toLowerCase(Locale.ROOT).startsWith("connectionstrings")) {
+            RuleTrace.hit(39, "connectionstrings " + fields.optString("key", ""));
             schemeKind = DependencyGraph.KIND_DB;
         }
 
@@ -1724,6 +1764,7 @@ public class CodeGraphMerger {
             node = label;
         }
         String kind = schemeKind != null ? schemeKind : DependencyGraph.classifyKind(node);
+        RuleTrace.hitIf(schemeKind != null && !schemeKind.equals(DependencyGraph.classifyKind(node)), 26, "kind " + node + "=" + schemeKind);
         graph.addNode(node, kind);
         // A db the service really uses (has persistence code) is documented; a db known
         // only from a datasource URL, with no entity/repository code, is a bare
@@ -1789,36 +1830,38 @@ public class CodeGraphMerger {
                 // An address list names several hosts; the first is the edge this rule
                 // draws (the others are the same cluster in every system seen so far).
                 if (v.contains(",") && !looksLikeUrl(v.substring(0, v.indexOf(',')).trim() + "x")) {
+                    RuleTrace.hit(27, "first-of-list " + fields.optString("key", ""));
                     v = v.substring(0, v.indexOf(',')).trim();
                 } else if (v.contains(",") && !v.contains("://")) {
+                    RuleTrace.hit(27, "first-of-list " + fields.optString("key", ""));
                     v = v.substring(0, v.indexOf(',')).trim();
                 }
                 if (looksLikeUrl(v)) return v;
                 // A YAML list flattens to key[0], key[1]: the suffix is the key's, not the index's.
                 String key = fields.optString("key", "").toLowerCase(Locale.ROOT).replaceAll("\\[\\d+]$", "");
-                if (key.equals("host") || key.equals("hostname")) return v; // a bare `host=` parameter
+                if (RuleTrace.hitIf(key.equals("host") || key.equals("hostname"), 5, "key " + key + "=" + v)) return v; // a bare `host=` parameter
                 for (String suffix : HOST_KEY_SUFFIXES) {
-                    if (key.endsWith(suffix)) return v;
+                    if (RuleTrace.hitIf(key.endsWith(suffix), LIST_KEY_SUFFIXES.contains(suffix) ? 27 : 5, (LIST_KEY_SUFFIXES.contains(suffix) ? "list " : "key ") + key + "=" + v)) return v;
                 }
                 // An endpoint key whose value is a bare fully-qualified host (aliyun.oss.endpoint:
                 // oss-cn-shenzhen.aliyuncs.com) names an external service without a scheme; a
                 // bare single word under such a key stays a signal, not a target (2026-10-26).
-                if ((key.endsWith(".endpoint") || key.endsWith("_endpoint")) && BARE_FQDN.matcher(v.trim()).matches()) return v;
+                if (RuleTrace.hitIf((key.endsWith(".endpoint") || key.endsWith("_endpoint")) && BARE_FQDN.matcher(v.trim()).matches(), 27, "fqdn " + key + "=" + v)) return v;
                 // A .NET ConnectionStrings:X value: a key=value; string names its host, and a
                 // bare host:port (ConnectionStrings:Redis=distributedcache:6379) is one too.
                 if (key.startsWith("connectionstrings")) {
                     java.util.regex.Matcher cs = CONNECTION_STRING_HOST.matcher(v);
-                    if (v.indexOf('=') > 0 && v.indexOf(';') > 0) return cs.find() ? cs.group(1).trim().replaceFirst("(?i)^tcp:", "") : null;
-                    return v.matches("[^\\s/=;]+(:\\d{2,5})?") ? v : null;
+                    if (v.indexOf('=') > 0 && v.indexOf(';') > 0) return RuleTrace.hitIf(cs.find(), 32, "connstr " + key) ? cs.group(1).trim().replaceFirst("(?i)^tcp:", "") : null;
+                    return RuleTrace.hitIf(v.matches("[^\\s/=;]+(:\\d{2,5})?"), 38, "connectionstrings-host " + key + "=" + v) ? v : null;
                 }
                 // A bare single word under a *.url / *.uri / *.endpoint key is the target only
                 // when it is a node the deployment declares (elasticsearch.url=elasticsearch,
                 // the Compose service elasticsearch) — any other word is a signal, not a guess
                 // at a host (2026-10-26, yas).
                 for (String suffix : ADDRESS_KEY_SUFFIXES) {
-                    if (key.endsWith(suffix) && v.trim().matches("[a-z0-9]([a-z0-9-]*[a-z0-9])?(:\\d{2,5})?")
-                            && declaredName(v.trim().replaceAll(":\\d+$", ""))) {
-                        return v.trim();
+                    if (key.endsWith(suffix) && v.trim().matches("[a-z0-9]([a-z0-9-]*[a-z0-9])?(:\\d{2,5})?")) {
+                        if (RuleTrace.hitIf(declaredName(v.trim().replaceAll(":\\d+$", "")), 45, "accept " + key + "=" + v)) return v.trim();
+                        RuleTrace.hit(45, "drop " + key + "=" + v);
                     }
                 }
                 return null;
@@ -1828,6 +1871,9 @@ public class CodeGraphMerger {
             }
         }
     }
+
+    /** The address-list keys among {@link #HOST_KEY_SUFFIXES} (rule 27); the others are rule 5's bare-host keys. */
+    private static final Set<String> LIST_KEY_SUFFIXES = Set.of(".uris", ".cluster-nodes", ".server-addr", ".addresses", ".bootstrap-servers");
 
     /** The host key of a {@code key=value;} connection string (Npgsql, SqlClient, ODBC), as the extractor reads it. */
     private static final java.util.regex.Pattern CONNECTION_STRING_HOST = java.util.regex.Pattern.compile(
@@ -1859,12 +1905,13 @@ public class CodeGraphMerger {
             String name = (m.group(1) != null ? m.group(1) : m.group(3));
             String fallback = m.group(2);
             String value = name == null ? null : lookupPlaceholder(name.trim());
+            RuleTrace.hitIf(value != null, 4, "table " + name + "=" + value);
             // The placeholder's own default outranks a guess from its name: train-ticket's
             // lb://${ADMIN_ORDER_SERVICE_HOST:ts-admin-order-service} states the host.
-            if (value == null && fallback != null && !fallback.isBlank()) value = fallback.trim();
+            if (RuleTrace.hitIf(value == null && fallback != null && !fallback.isBlank(), 4, "default " + name + "=" + fallback)) value = fallback.trim();
             if (value == null && name != null) {
                 value = nodeNamedByVariable(name.trim());
-                if (value != null) nameInferred = true;
+                if (RuleTrace.hitIf(value != null, 4, "by-name " + name + "=" + value)) nameInferred = true;
             }
             if (value == null) return null;
             m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(value));
@@ -2047,6 +2094,7 @@ public class CodeGraphMerger {
             if (e.runtimeObserved || !"sync-http".equals(e.type)) continue;
             DependencyGraph.Node target = graph.findNode(e.target);
             if (target == null) continue;
+            if (DependencyGraph.KIND_DB.equals(target.kind) || DependencyGraph.KIND_QUEUE.equals(target.kind)) RuleTrace.hit(39, "retype " + e.source + "->" + e.target);
             if (DependencyGraph.KIND_DB.equals(target.kind)) e.type = "db";
             else if (DependencyGraph.KIND_QUEUE.equals(target.kind)) e.type = "async";
         }
@@ -2060,7 +2108,7 @@ public class CodeGraphMerger {
         for (String suffix : DEPLOY_NAME_SUFFIXES) {
             if (c.endsWith(suffix) && c.length() > suffix.length()) {
                 node = matchNode(c.substring(0, c.length() - suffix.length()));
-                if (node != null) return node;
+                if (RuleTrace.hitIf(node != null, 7, "strip-suffix " + c + "=" + node)) return node;
             }
         }
         String unique = null;
@@ -2070,6 +2118,7 @@ public class CodeGraphMerger {
                 unique = known;
             }
         }
+        RuleTrace.hitIf(unique != null, 7, "unique-suffix " + c + "=" + unique);
         return unique;
     }
 
@@ -2104,7 +2153,7 @@ public class CodeGraphMerger {
         if (c.indexOf('.') >= 0 || c.indexOf('-') >= 0) {
             String h = hyphenated(c);
             for (String node : knownNodes) {
-                if (node.indexOf('.') >= 0 && hyphenated(node).equals(h)) return node;
+                if (RuleTrace.hitIf(node.indexOf('.') >= 0 && hyphenated(node).equals(h), 36, "dotted-name " + c + "=" + node)) return node;
             }
         }
         // Feign/gRPC client identifiers: "CatalogueClient" / "catalogue-client" -> "catalogue".
@@ -2148,13 +2197,14 @@ public class CodeGraphMerger {
         boolean cluster = false;
         for (String suffix : CLUSTER_SUFFIXES) {
             if (s.endsWith(suffix) && s.length() > suffix.length()) {
+                RuleTrace.hit(36, "cluster-suffix " + s);
                 s = s.substring(0, s.length() - suffix.length());
                 cluster = true;
                 break;
             }
         }
         int dot = s.lastIndexOf('.');
-        if (dot > 0 && (cluster || namespaces.contains(s.substring(dot + 1)))) s = s.substring(0, dot);
+        if (RuleTrace.hitIf(dot > 0 && !cluster && namespaces.contains(s.substring(dot + 1)), 36, "ns-strip " + s) || (dot > 0 && cluster)) s = s.substring(0, dot);
         return s;
     }
 

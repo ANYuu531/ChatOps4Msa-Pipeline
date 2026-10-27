@@ -71,6 +71,7 @@ public class CodeExtractionService {
      *         analysis instead of aborting it.
      */
     public ExtractionResult extract(String repo) {
+        ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace.clear(); // a new analysis: the rule trace starts empty
         EdgeLedger ledger = new EdgeLedger();
         ledger.setRepo(repo == null ? "" : repo);
 

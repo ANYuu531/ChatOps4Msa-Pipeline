@@ -1,0 +1,282 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 2,
+    "examples": [
+      "map grafana=grafana-server",
+      "map prometheus=prometheus-server"
+    ],
+    "count": 2
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 19,
+    "examples": [
+      "align spring-petclinic-config-server=config-server",
+      "align spring-petclinic-discovery-server=discovery-server",
+      "align spring-petclinic-hystrix-dashboard=hystrix-dashboard",
+      "align spring-petclinic-admin-server=admin-server",
+      "align spring-petclinic-vets-service=vets-service",
+      "align spring-petclinic-api-gateway=api-gateway",
+      "align spring-petclinic-customers-service=customers-service",
+      "align spring-petclinic-visits-service=visits-service",
+      "node config-server",
+      "node discovery-server",
+      "node customers-service",
+      "node visits-service",
+      "node vets-service",
+      "node api-gateway",
+      "node tracing-server",
+      "node admin-server",
+      "node hystrix-dashboard",
+      "node grafana-server",
+      "node prometheus-server"
+    ],
+    "count": 19
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 13,
+    "examples": [
+      "inferred discovery-server->config-server",
+      "inferred customers-service->config-server",
+      "inferred customers-service->discovery-server",
+      "inferred visits-service->config-server",
+      "inferred visits-service->discovery-server",
+      "inferred vets-service->config-server",
+      "inferred vets-service->discovery-server",
+      "inferred api-gateway->config-server",
+      "inferred api-gateway->discovery-server",
+      "inferred admin-server->config-server",
+      "inferred admin-server->discovery-server",
+      "inferred hystrix-dashboard->config-server",
+      "inferred hystrix-dashboard->discovery-server"
+    ],
+    "count": 13
+  },
+  "14": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 5,
+    "examples": [
+      "edge admin-server->discovery-server",
+      "edge vets-service->discovery-server",
+      "edge api-gateway->discovery-server",
+      "edge customers-service->discovery-server",
+      "edge visits-service->discovery-server"
+    ],
+    "count": 5
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "hits": 1,
+    "examples": ["climb docker"],
+    "count": 1
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "5": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "8": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "9": {
+    "hits": 12,
+    "examples": [
+      "jpa spring-petclinic-vets-service/src/main/java/org/springframework/samples/petclinic/vets/model/Vet.java",
+      "jpa spring-petclinic-vets-service/src/main/java/org/springframework/samples/petclinic/vets/model/Specialty.java",
+      "jpa spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Pet.java",
+      "jpa spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/Owner.java",
+      "jpa spring-petclinic-customers-service/src/main/java/org/springframework/samples/petclinic/customers/model/PetType.java",
+      "jpa spring-petclinic-visits-service/src/main/java/org/springframework/samples/petclinic/visits/model/Visit.java"
+    ],
+    "count": 6
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

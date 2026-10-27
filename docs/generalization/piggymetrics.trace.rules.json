@@ -1,0 +1,324 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 1,
+    "examples": ["map mongodb=auth-mongodb"],
+    "count": 1
+  },
+  "23": {
+    "hits": 24,
+    "examples": [
+      "keep statistics-service eureka.client.",
+      "keep account-service eureka.client.",
+      "keep notification-service eureka.client.",
+      "keep turbine-stream-service eureka.client.",
+      "keep registry eureka.client.",
+      "drop monitoring eureka.client.",
+      "keep auth-service eureka.client.",
+      "keep gateway eureka.client.",
+      "keep statistics-service security.oauth2.",
+      "keep account-service security.oauth2.",
+      "keep notification-service security.oauth2.",
+      "drop turbine-stream-service security.oauth2.",
+      "drop registry security.oauth2.",
+      "drop monitoring security.oauth2.",
+      "keep auth-service security.oauth2.",
+      "drop gateway security.oauth2.",
+      "keep statistics-service spring.rabbitmq.",
+      "keep account-service spring.rabbitmq.",
+      "keep notification-service spring.rabbitmq.",
+      "keep turbine-stream-service spring.rabbitmq."
+    ],
+    "count": 24
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 14,
+    "examples": [
+      "node rabbitmq",
+      "node config",
+      "node registry",
+      "node gateway",
+      "node auth-service",
+      "node auth-mongodb",
+      "node account-service",
+      "node account-mongodb",
+      "node statistics-service",
+      "node statistics-mongodb",
+      "node notification-service",
+      "node notification-mongodb",
+      "node monitoring",
+      "node turbine-stream-service"
+    ],
+    "count": 14
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 8,
+    "examples": [
+      "inferred registry->config",
+      "inferred gateway->config",
+      "inferred auth-service->config",
+      "inferred account-service->config",
+      "inferred statistics-service->config",
+      "inferred notification-service->config",
+      "inferred monitoring->config",
+      "inferred turbine-stream-service->config"
+    ],
+    "count": 8
+  },
+  "14": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "hits": 120,
+    "examples": [
+      "spring-yml config/src/main/resources/shared/gateway.yml",
+      "spring-yml config/src/main/resources/shared/auth-service.yml",
+      "spring-yml config/src/main/resources/shared/notification-service.yml",
+      "spring-yml config/src/main/resources/shared/statistics-service.yml",
+      "spring-yml config/src/main/resources/shared/account-service.yml",
+      "config-client statistics-service",
+      "config-client account-service",
+      "config-client notification-service",
+      "config-file config/src/main/resources/shared/gateway.yml=gateway",
+      "config-file config/src/main/resources/shared/auth-service.yml=auth-service",
+      "config-file config/src/main/resources/shared/notification-service.yml=notification-service",
+      "config-file config/src/main/resources/shared/statistics-service.yml=statistics-service",
+      "config-file config/src/main/resources/shared/account-service.yml=account-service",
+      "config-client turbine-stream-service",
+      "config-client registry",
+      "config-client monitoring",
+      "config-client auth-service",
+      "config-client gateway",
+      "shared-file config/src/main/resources/shared/application.yml",
+      "fanout statistics-service eureka.instance.prefer-ip-address"
+    ],
+    "count": 42
+  },
+  "4": {
+    "hits": 1,
+    "examples": ["table rates.url=https://api.exchangeratesapi.io"],
+    "count": 1
+  },
+  "5": {
+    "hits": 12,
+    "examples": [
+      "key zuul.routes.account-service.serviceid=account-service",
+      "key zuul.routes.statistics-service.serviceid=statistics-service",
+      "key zuul.routes.notification-service.serviceid=notification-service",
+      "key spring.data.mongodb.host=auth-mongodb",
+      "key spring.data.mongodb.host=notification-mongodb",
+      "key spring.mail.host=smtp.gmail.com",
+      "key spring.data.mongodb.host=statistics-mongodb",
+      "key spring.rabbitmq.host=rabbitmq",
+      "key spring.data.mongodb.host=account-mongodb"
+    ],
+    "count": 9
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "8": {
+    "hits": 35,
+    "examples": [
+      "feign-bean-id rates-client",
+      "config-signal server.port",
+      "config-signal spring.data.mongodb.username",
+      "config-signal spring.data.mongodb.password",
+      "config-signal spring.data.mongodb.database",
+      "config-signal spring.data.mongodb.port",
+      "config-signal eureka.instance.prefer-ip-address",
+      "config-signal eureka.client.registerWithEureka",
+      "config-signal eureka.client.fetchRegistry",
+      "config-signal eureka.client.server.waitTimeInMsWhenSyncEmpty"
+    ],
+    "count": 10
+  },
+  "9": {
+    "hits": 4,
+    "examples": [
+      "jpa statistics-service/src/main/java/com/piggymetrics/statistics/repository/DataPointRepository.java",
+      "jpa account-service/src/main/java/com/piggymetrics/account/repository/AccountRepository.java",
+      "jpa notification-service/src/main/java/com/piggymetrics/notification/repository/RecipientRepository.java",
+      "jpa auth-service/src/main/java/com/piggymetrics/auth/repository/UserRepository.java"
+    ],
+    "count": 4
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

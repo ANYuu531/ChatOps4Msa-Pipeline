@@ -1,0 +1,356 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 2,
+    "examples": [
+      "no-workload eureka-server=eureka-server",
+      "no-workload nginx=proxy"
+    ],
+    "count": 2
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 1,
+    "examples": ["k8s-over-compose 12 compose names ignored"],
+    "count": 1
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 1,
+    "examples": ["links proxy->app"],
+    "count": 1
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 5,
+    "examples": [
+      "drop http://lm.com/ccore",
+      "drop http://lm.com/ccore/GetCustomerRequest",
+      "drop http://lakesdemutual.com/interfaces/xsd"
+    ],
+    "count": 3
+  },
+  "35": {
+    "hits": 32,
+    "examples": [
+      "documented customer-core->eureka-server",
+      "documented customer-management-backend->customer-core",
+      "documented customer-management-frontend->customer-management-backend",
+      "documented customer-self-service-backend->customer-core",
+      "documented customer-self-service-backend->policy-management-backend",
+      "documented customer-self-service-frontend->customer-self-service-backend",
+      "documented customer-self-service-frontend->customer-management-backend",
+      "documented customer-self-service-frontend->policy-management-backend",
+      "documented policy-management-backend->customer-core",
+      "documented policy-management-frontend->policy-management-backend",
+      "documented spring-boot-admin->eureka-server",
+      "documented risk-management-server->policy-management-backend"
+    ],
+    "count": 12
+  },
+  "14": {
+    "hits": 38,
+    "examples": [
+      "edge customer-core->eureka-server",
+      "edge customer-management-backend->eureka-server",
+      "edge customer-management-frontend->customer-management-backend",
+      "edge customer-self-service-backend->eureka-server",
+      "edge customer-self-service-backend->policy-management-backend",
+      "edge customer-self-service-frontend->customer-self-service-backend",
+      "edge customer-self-service-frontend->policy-management-backend",
+      "edge customer-self-service-frontend->customer-management-backend",
+      "edge policy-management-backend->eureka-server",
+      "edge policy-management-frontend->policy-management-backend",
+      "edge spring-boot-admin->eureka-server",
+      "edge customer-core->spring-boot-admin",
+      "edge customer-management-backend->customer-core",
+      "edge customer-management-backend->spring-boot-admin",
+      "edge policy-management-backend->customer-core",
+      "edge policy-management-backend->spring-boot-admin",
+      "edge customer-self-service-backend->customer-core",
+      "edge customer-self-service-backend->spring-boot-admin",
+      "edge risk-management-server->policy-management-backend",
+      "edge risk-management-server->policy-management-backend-queue"
+    ],
+    "count": 20
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 13,
+    "examples": [
+      "edge customer-self-service-frontend->customer-self-service-backend :8080",
+      "edge customer-self-service-frontend->policy-management-backend :8090",
+      "edge customer-self-service-frontend->customer-management-backend :8100",
+      "edge policy-management-frontend->policy-management-backend :8090",
+      "edge customer-core->spring-boot-admin :9000",
+      "edge customer-management-backend->customer-core :8110",
+      "edge customer-management-backend->spring-boot-admin :9000",
+      "edge policy-management-backend->customer-core :8110",
+      "edge policy-management-backend->spring-boot-admin :9000",
+      "edge customer-self-service-backend->customer-core :8110",
+      "edge customer-self-service-backend->spring-boot-admin :9000",
+      "edge customer-management-frontend->customer-self-service-backend :8080",
+      "edge customer-management-frontend->customer-management-backend :8100"
+    ],
+    "count": 13
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 12,
+    "examples": [
+      "not-preadded eureka-server",
+      "not-preadded nginx",
+      "not-preadded risk-management-client",
+      "node customer-self-service-backend",
+      "node policy-management-backend",
+      "node customer-self-service-frontend",
+      "node policy-management-frontend",
+      "node risk-management-server",
+      "node customer-management-backend",
+      "node spring-boot-admin",
+      "node customer-management-frontend",
+      "node customer-core"
+    ],
+    "count": 12
+  },
+  "2": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 3,
+    "examples": ["table customercore.baseURL=http://customer-core"],
+    "count": 1
+  },
+  "5": {
+    "hits": 6,
+    "examples": [
+      "env ACTIVEMQ_HOST=policy-management-backend",
+      "env ACTIVEMQ_HOST=policy-management-backend-queue"
+    ],
+    "count": 2
+  },
+  "6": {
+    "hits": 1,
+    "examples": ["url http://app_servers"],
+    "count": 1
+  },
+  "7": {
+    "hits": 30,
+    "examples": [
+      "env customer-core.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=eureka-server",
+      "env customer-management-backend.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=eureka-server",
+      "env customer-management-frontend.REACT_APP_CUSTOMER_MANAGEMENT_BACKEND=customer-management-backend",
+      "env customer-self-service-backend.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=eureka-server",
+      "env customer-self-service-backend.POLICYMANAGEMENT_TCPBROKERBINDADDRESS=policy-management-backend",
+      "env customer-self-service-frontend.REACT_APP_CUSTOMER_SELF_SERVICE_BACKEND=customer-self-service-backend",
+      "env customer-self-service-frontend.REACT_APP_POLICY_MANAGEMENT_BACKEND=policy-management-backend",
+      "env customer-self-service-frontend.REACT_APP_CUSTOMER_MANAGEMENT_BACKEND=customer-management-backend",
+      "env policy-management-backend.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=eureka-server",
+      "env policy-management-frontend.VUE_APP_POLICY_MANAGEMENT_BACKEND=policy-management-backend",
+      "env spring-boot-admin.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=eureka-server",
+      "env customer-core.SPRING_BOOT_ADMIN_CLIENT_URL=spring-boot-admin",
+      "env customer-management-backend.CUSTOMERCORE_BASEURL=customer-core",
+      "env customer-management-backend.SPRING_BOOT_ADMIN_CLIENT_URL=spring-boot-admin",
+      "env policy-management-backend.CUSTOMERCORE_BASEURL=customer-core",
+      "env policy-management-backend.SPRING_BOOT_ADMIN_CLIENT_URL=spring-boot-admin",
+      "env customer-self-service-backend.CUSTOMERCORE_BASEURL=customer-core",
+      "env customer-self-service-backend.SPRING_BOOT_ADMIN_CLIENT_URL=spring-boot-admin",
+      "env risk-management-server.ACTIVEMQ_HOST=policy-management-backend",
+      "node eureka-server"
+    ],
+    "count": 20
+  },
+  "8": {
+    "hits": 39,
+    "examples": [
+      "loopback localhost:8110",
+      "feign-bean-id customercore",
+      "loopback localhost:8761",
+      "config-signal eureka.instance.preferIpAddress",
+      "config-signal eureka.client.enabled",
+      "config-signal server.port",
+      "config-signal spring.datasource.url",
+      "config-signal spring.datasource.username",
+      "config-signal spring.datasource.password",
+      "config-signal spring.datasource.driverClassName"
+    ],
+    "count": 10
+  },
+  "9": {
+    "hits": 51,
+    "examples": [
+      "jpa customer-core/src/main/java/com/lakesidemutual/customercore/domain/customer/CustomerProfileEntity.java",
+      "jpa customer-core/src/main/java/com/lakesidemutual/customercore/domain/customer/Address.java",
+      "jpa customer-core/src/main/java/com/lakesidemutual/customercore/domain/customer/CustomerId.java",
+      "jpa customer-core/src/main/java/com/lakesidemutual/customercore/domain/customer/CustomerAggregateRoot.java",
+      "jpa customer-management-backend/src/main/java/com/lakesidemutual/customermanagement/domain/interactionlog/InteractionLogAggregateRoot.java",
+      "jpa customer-management-backend/src/main/java/com/lakesidemutual/customermanagement/domain/interactionlog/InteractionEntity.java",
+      "jpa customer-management-backend/src/main/java/com/lakesidemutual/customermanagement/domain/customer/CustomerId.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/insurancequoterequest/InsuranceOptionsEntity.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/insurancequoterequest/RequestStatusChange.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/insurancequoterequest/InsuranceQuoteRequestAggregateRoot.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/insurancequoterequest/Address.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/insurancequoterequest/InsuranceQuoteEntity.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/insurancequoterequest/CustomerInfoEntity.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/policy/PolicyPeriod.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/policy/PolicyAggregateRoot.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/policy/InsuringAgreementItem.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/policy/MoneyAmount.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/policy/InsuringAgreementEntity.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/policy/PolicyId.java",
+      "jpa policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/domain/customer/CustomerId.java"
+    ],
+    "count": 29
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

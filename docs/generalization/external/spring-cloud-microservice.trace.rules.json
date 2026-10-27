@@ -1,0 +1,358 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 25,
+    "examples": [
+      "align cloud-hystrix-turbine=turbine",
+      "align cloud-zipkin=zipkin",
+      "align cloud-simple-service=simple-service",
+      "align cloud-simple-ui=simple-ui",
+      "align cloud-simple-serviceb=simple-serviceb",
+      "align cloud-api-gateway=gateway",
+      "not-preadded cloud-thrift-client",
+      "not-preadded cloud-hystrix-dashboard",
+      "not-preadded cloud-uaa-service",
+      "not-preadded cloud-config-server",
+      "not-preadded cloud-finagle-thrift-client",
+      "not-preadded cloud-thrift-server",
+      "not-preadded cloud-eureka-server",
+      "not-preadded cloud-dummy-service",
+      "not-preadded cloud-finagle-thrift-server",
+      "node hystrix",
+      "node turbine",
+      "node discovery",
+      "node configserver",
+      "node gateway"
+    ],
+    "count": 25
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 27,
+    "examples": [
+      "v1 docker/docker-compose.yaml",
+      "links hystrix->gateway",
+      "links hystrix->discovery",
+      "links turbine->gateway",
+      "links turbine->discovery",
+      "links configserver->discovery",
+      "links gateway->discovery",
+      "links gateway->configserver",
+      "links gateway->simple-service",
+      "links gateway->simple-service2",
+      "links gateway->simple-serviceb",
+      "links gateway->simple-ui",
+      "links gateway->zipkin",
+      "links simple-service->discovery",
+      "links simple-service->configserver",
+      "links simple-service->zipkin",
+      "links simple-service2->discovery",
+      "links simple-service2->configserver",
+      "links simple-service2->zipkin",
+      "links simple-serviceb->discovery"
+    ],
+    "count": 27
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 26,
+    "examples": [
+      "inferred hystrix->gateway",
+      "inferred hystrix->discovery",
+      "inferred turbine->gateway",
+      "inferred turbine->discovery",
+      "inferred configserver->discovery",
+      "inferred gateway->discovery",
+      "inferred gateway->configserver",
+      "inferred gateway->simple-service",
+      "inferred gateway->simple-service2",
+      "inferred gateway->simple-serviceb",
+      "inferred gateway->simple-ui",
+      "inferred gateway->zipkin",
+      "inferred simple-service->discovery",
+      "inferred simple-service->configserver",
+      "inferred simple-service->zipkin",
+      "inferred simple-service2->discovery",
+      "inferred simple-service2->configserver",
+      "inferred simple-service2->zipkin",
+      "inferred simple-serviceb->discovery",
+      "inferred simple-serviceb->configserver"
+    ],
+    "count": 26
+  },
+  "14": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 17,
+    "examples": [
+      "edge cloud-hystrix-dashboard->cloud-config-server :8888",
+      "edge cloud-config-server->cloud-eureka-server :8761",
+      "edge cloud-finagle-thrift-client->zipkin :9411",
+      "edge turbine->cloud-config-server :8888",
+      "edge turbine->cloud-eureka-server :8761",
+      "edge simple-service->cloud-config-server :8888",
+      "edge simple-service->cloud-eureka-server :8761",
+      "edge simple-service->zipkin :9411",
+      "edge simple-ui->cloud-config-server :8888",
+      "edge simple-ui->cloud-eureka-server :8761",
+      "edge simple-ui->zipkin :9411",
+      "edge simple-serviceb->cloud-config-server :8888",
+      "edge simple-serviceb->cloud-eureka-server :8761",
+      "edge simple-serviceb->zipkin :9411",
+      "edge cloud-finagle-thrift-server->zipkin :9411",
+      "edge gateway->cloud-eureka-server :8761",
+      "edge gateway->zipkin :9411"
+    ],
+    "count": 17
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "hits": 10,
+    "examples": [
+      "climb cloud-hystrix-dashboard/src/main/docker",
+      "climb cloud-config-server/src/main/docker",
+      "climb cloud-hystrix-turbine/src/main/docker",
+      "climb cloud-zipkin/src/main/docker",
+      "climb cloud-eureka-server/src/main/docker",
+      "climb cloud-simple-service/src/main/docker",
+      "climb cloud-simple-ui/src/main/docker",
+      "climb cloud-simple-serviceB/src/main/docker",
+      "climb cloud-api-gateway/src/main/docker",
+      "name cloud-simple-serviceB=cloud-simple-serviceb"
+    ],
+    "count": 10
+  },
+  "3": {
+    "hits": 10,
+    "examples": [
+      "config-client cloud-hystrix-dashboard",
+      "config-client turbine",
+      "config-client simple-service",
+      "config-client simple-ui",
+      "config-client simple-serviceb",
+      "config-client cloud-simple-service",
+      "config-client cloud-simple-ui",
+      "config-client cloud-simple-serviceb"
+    ],
+    "count": 8
+  },
+  "4": {
+    "hits": 5,
+    "examples": [
+      "default config.port=8888",
+      "table eureka.instance.hostname=localhost"
+    ],
+    "count": 2
+  },
+  "5": {
+    "hits": 7,
+    "examples": [
+      "key zipkin.http.host=localhost:9411",
+      "key eureka.instance.hostname=localhost",
+      "key zuul.routes.api-a.serviceid=cloud-simple-service",
+      "key zuul.routes.api-b.serviceid=cloud-simple-serviceB",
+      "key zuul.routes.api-ui.serviceid=cloud-simple-ui",
+      "key security.oauth2.resource.serviceid=${PREFIX:}resource"
+    ],
+    "count": 6
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "8": {
+    "hits": 21,
+    "examples": [
+      "loopback localhost:9966",
+      "config-signal server.port",
+      "config-signal eureka.instance.leaseRenewalIntervalInSeconds",
+      "config-signal eureka.client.registerWithEureka",
+      "config-signal eureka.client.fetchRegistry",
+      "loopback localhost",
+      "config-signal eureka.server.waitTimeInMsWhenSyncEmpty"
+    ],
+    "count": 7
+  },
+  "9": {
+    "hits": 1,
+    "examples": ["jpa cloud-simple-service/src/main/java/cloud/simple/service/storage/UserStorageImpl.java"],
+    "count": 1
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 10,
+    "examples": [
+      "lib cloud-finagle-commons-thrift",
+      "lib cloud-finagle-thrift-api",
+      "lib cloud-thrift-interface",
+      "no-edge cloud-finagle-commons-thrift/src/main/java/cloud/finagle/commons/ClusterFactory.java",
+      "no-edge cloud-thrift-interface/src/main/java/cloud/thrift/UserService.java",
+      "no-edge cloud-thrift-interface/src/main/java/cloud/thrift/UserDto.java"
+    ],
+    "count": 6
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

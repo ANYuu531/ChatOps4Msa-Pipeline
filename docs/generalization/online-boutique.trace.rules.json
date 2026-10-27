@@ -1,0 +1,275 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 1,
+    "examples": ["drop opentelemetrycollector (kustomize/components/google-cloud-operations)"],
+    "count": 1
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "14": {
+    "hits": 48,
+    "examples": [
+      "edge checkoutservice->productcatalogservice",
+      "edge checkoutservice->shippingservice",
+      "edge checkoutservice->paymentservice",
+      "edge checkoutservice->emailservice",
+      "edge checkoutservice->currencyservice",
+      "edge checkoutservice->cartservice",
+      "edge recommendationservice->productcatalogservice",
+      "edge frontend->productcatalogservice",
+      "edge frontend->currencyservice",
+      "edge frontend->cartservice",
+      "edge frontend->recommendationservice",
+      "edge frontend->shippingservice",
+      "edge frontend->checkoutservice",
+      "edge frontend->adservice",
+      "edge frontend->shoppingassistantservice",
+      "edge loadgenerator->frontend"
+    ],
+    "count": 16
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 13,
+    "examples": [
+      "node emailservice",
+      "node checkoutservice",
+      "node recommendationservice",
+      "node frontend",
+      "node paymentservice",
+      "node productcatalogservice",
+      "node cartservice",
+      "node redis-cart",
+      "node loadgenerator",
+      "node currencyservice",
+      "node shippingservice",
+      "node adservice",
+      "node shoppingassistantservice"
+    ],
+    "count": 13
+  },
+  "2": {
+    "hits": 1,
+    "examples": ["climb src/cartservice/src"],
+    "count": 1
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "5": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "8": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "9": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "40": {
+    "hits": 8,
+    "examples": [
+      "cs-file src/cartservice/src/cartstore/ICartStore.cs",
+      "cs-file src/cartservice/src/cartstore/SpannerCartStore.cs",
+      "cs-file src/cartservice/src/cartstore/AlloyDBCartStore.cs",
+      "cs-file src/cartservice/src/cartstore/RedisCartStore.cs",
+      "cs-file src/cartservice/src/Startup.cs",
+      "cs-file src/cartservice/src/services/HealthCheckService.cs",
+      "cs-file src/cartservice/src/services/CartService.cs",
+      "cs-file src/cartservice/src/Program.cs"
+    ],
+    "count": 8
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 2,
+    "examples": [
+      "scoped PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice @recommendationservice",
+      "scoped REDIS_ADDR=redis-cart @cartservice"
+    ],
+    "count": 2
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

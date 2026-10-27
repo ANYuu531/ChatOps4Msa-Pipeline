@@ -1,0 +1,289 @@
+{"rules": {
+  "22": {
+    "hits": 4,
+    "examples": [
+      "urlref src/frontend/frontend.py:691 metadata_url",
+      "urlref src/frontend/frontend.py:707 metadata_url",
+      "dead src/frontend/frontend.py:420",
+      "dead src/frontend/frontend.py:421"
+    ],
+    "count": 4
+  },
+  "44": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 1,
+    "examples": ["hidden .github/workflows/ui-tests/Dockerfile"],
+    "count": 1
+  },
+  "10": {
+    "hits": 5,
+    "examples": [
+      "drop populate-ledger-db (src/ledger/ledger-db/k8s/components/init-db-job)",
+      "drop populate-accounts-db (src/accounts/accounts-db/k8s/components/init-db-job)",
+      "drop populate-ledger-db (extras/cloudsql/populate-jobs)",
+      "drop populate-accounts-db (extras/cloudsql/populate-jobs)",
+      "drop blackbox-exporter (extras/prometheus/gmp)"
+    ],
+    "count": 5
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "14": {
+    "hits": 39,
+    "examples": [
+      "skip-configmap ledgerwriter->balancereader",
+      "skip-configmap ledgerwriter->transactionhistory",
+      "skip-configmap ledgerwriter->contacts",
+      "skip-configmap ledgerwriter->userservice",
+      "skip-configmap frontend->ledgerwriter",
+      "skip-configmap frontend->balancereader",
+      "skip-configmap frontend->transactionhistory",
+      "skip-configmap frontend->contacts",
+      "skip-configmap frontend->userservice",
+      "edge loadgenerator->frontend"
+    ],
+    "count": 10
+  },
+  "36": {
+    "hits": 5,
+    "examples": [
+      "keep-dotted www.apache.org",
+      "keep-dotted kopf.on.startup() async def startup(**_)"
+    ],
+    "count": 2
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 11,
+    "examples": [
+      "not-preadded ledgermonolith",
+      "node ledgerwriter",
+      "node accounts-db",
+      "node transactionhistory",
+      "node ledger-db",
+      "node frontend",
+      "node loadgenerator",
+      "node balancereader",
+      "node contacts",
+      "node userservice",
+      "node pgpool-operator"
+    ],
+    "count": 11
+  },
+  "2": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 1,
+    "examples": ["table BALANCES_API_ADDR=balancereader"],
+    "count": 1
+  },
+  "5": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "8": {
+    "hits": 7,
+    "examples": [
+      "loopback metadata.google.internal",
+      "config-signal server.port",
+      "config-signal spring.datasource.platform"
+    ],
+    "count": 3
+  },
+  "9": {
+    "hits": 12,
+    "examples": [
+      "jpa src/ledger/balancereader/src/main/java/anthos/samples/bankofanthos/balancereader/TransactionRepository.java",
+      "jpa src/ledger/balancereader/src/main/java/anthos/samples/bankofanthos/balancereader/Transaction.java",
+      "jpa src/ledger/ledgerwriter/src/main/java/anthos/samples/bankofanthos/ledgerwriter/TransactionRepository.java",
+      "jpa src/ledger/ledgerwriter/src/main/java/anthos/samples/bankofanthos/ledgerwriter/Transaction.java",
+      "jpa src/ledger/transactionhistory/src/main/java/anthos/samples/bankofanthos/transactionhistory/TransactionRepository.java",
+      "jpa src/ledger/transactionhistory/src/main/java/anthos/samples/bankofanthos/transactionhistory/Transaction.java",
+      "jpa src/ledgermonolith/src/main/java/anthos/samples/bankofanthos/ledgermonolith/TransactionRepository.java",
+      "jpa src/ledgermonolith/src/main/java/anthos/samples/bankofanthos/ledgermonolith/Transaction.java"
+    ],
+    "count": 8
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 7,
+    "examples": [
+      "scoped BALANCES_API_ADDR=balancereader @ledgerwriter",
+      "scoped TRANSACTIONS_API_ADDR=ledgerwriter @frontend",
+      "scoped USERSERVICE_API_ADDR=userservice @frontend",
+      "scoped BALANCES_API_ADDR=balancereader @frontend",
+      "scoped HISTORY_API_ADDR=transactionhistory @frontend",
+      "scoped CONTACTS_API_ADDR=contacts @frontend"
+    ],
+    "count": 6
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

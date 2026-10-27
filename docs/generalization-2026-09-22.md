@@ -159,6 +159,10 @@ mvn -o test -Dtest=GreenfieldProbeTest -Dprobe.repo=/path/to/checkout -Dprobe.ou
 
 **回歸**（同一份 checkout 重跑）：七個歸納系統 P 全部 1.00、R 不變、**邊逐條相同**（唯一差異：Online Boutique `cartservice → redis-cart` 由 inferred 升為 documented，規則 40 看到了 `Configuration["REDIS_ADDR"]`）；Bank of Anthos 12 條逐邊不變；train-ticket 120 條逐邊不變；MicroDepGraph 93／95 ＝ 0.98 不變（microservices-book 工具多畫的邊 4 → 2：規則 44 把 `microservice-demo-turbine-server`／`-zuul-server` 併進 compose 的 `turbine`／`zuul`）；第一組 hold-out 0.99／0.89 不變（otel-demo `accounting → astronomy-db` 升 documented、mall-swarm 多一條 variant `kibana → elasticsearch`）；AICS 0.89／0.63 逐邊不變。做的過程中有兩次差點退步，都在回歸裡被抓到並改掉：(1) TeaStore 模組 pom 的 `<artifactId>webui</artifactId>` 等於 compose 的 `webui`，第一版規則 44 把 k8s 的 `teastore-webui` 改名成 `webui`、多出 9 條兩種拼法的邊——改成「有 manifest 時 compose 名要能對到 workload」；(2) 第一版讓程式碼讀到的環境變數若解到外部網域就畫 external 邊，AICS 的 `SYSTEM_ADDRESS`（系統自己的對外網域，寄信用）變成 2 條假邊——改回「裸的 env 讀取只畫叢集內節點，外部主機要有帶 URL 的呼叫點」。
 
+### 3d. 2026-10-27：每條規則在 20 個系統上各觸發幾次（回答「這不就是列舉？」）
+
+靜態層加了一個不改行為的記錄器 `RuleTrace`（`src/main/java/.../DependencyAnalysis/RuleTrace.java`）：46 條規則各在它改變結果的地方呼叫 `RuleTrace.hit(規則號, token)`，`GreenfieldProbeTest` 把結果寫進 summary 的新段 `## 規則觸發` 與旁邊的 `<name>.rules.json`。以 tag `trace` 在同一份 checkout 上重跑 21 個 probe（7 歸納＋train-ticket＋MicroDepGraph 7＋hold-out B 3＋hold-out C 2＋AICS），邊逐條相同、既有段落逐 byte 相同後，只保留 `*.trace.rules.json`。表在 **`docs/generalization/rule-triggers.md`**（`rule_triggers.py` 產生，`--write-compsac` 同時改 COMPSAC 附錄表的兩個新欄）：**20 條在 ≥5 個系統上觸發、15 條在 2–4 個、10 條只在歸納它的系統上（其中 7 條綁在語料裡只出現一次的技術）、1 條（第 26 條）從未觸發**。
+
 ## 4. 修改後：對照參考邊集（程式計分）
 
 > **2026-09-25 補**：這一節的參考邊集是**作者依專案文件與程式碼整理**的，所以「程式計分」只保證算得沒錯，**不保證答案是對的**（建構效度）。回應這個疑慮的三件事——對照**第三方發表**的邊集（7 個專案，一致度 0.96）、把每一條出處變成**打得開的檔案行**（92／92，順便抓到 2 條寫錯的出處）、**第二標註者**——在 `docs/generalization-external.md`。措辭也改了：以下的 P／R 應讀作「與**作者整理的**參考邊集的一致度」。

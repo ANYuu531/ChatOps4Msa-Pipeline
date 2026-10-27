@@ -1,0 +1,324 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 21,
+    "examples": [
+      "drop product-service-container (product-service)",
+      "drop cloud-config-container (cloud-config)",
+      "drop api-gateway-container (api-gateway)",
+      "drop shipping-service-container (shipping-service)",
+      "drop payment-service-container (payment-service)",
+      "drop favourite-service-container (favourite-service)",
+      "drop order-service-container (order-service)",
+      "drop service-discovery-container (service-discovery)",
+      "drop user-service-container (user-service)",
+      "drop zipkin-container ()",
+      "drop service-discovery-container ()",
+      "drop cloud-config-container ()",
+      "drop api-gateway-container ()",
+      "drop proxy-client-container ()",
+      "drop order-service-container ()",
+      "drop payment-service-container ()",
+      "drop product-service-container ()",
+      "drop shipping-service-container ()",
+      "drop user-service-container ()",
+      "drop favourite-service-container ()"
+    ],
+    "count": 21
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "14": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 16,
+    "examples": [
+      "configserver-prefix optional:configserver:http://localhost:9296",
+      "edge product-service->cloud-config :9296",
+      "edge api-gateway->cloud-config :9296",
+      "edge shipping-service->cloud-config :9296",
+      "edge payment-service->cloud-config :9296",
+      "edge favourite-service->cloud-config :9296",
+      "edge order-service->cloud-config :9296",
+      "edge user-service->cloud-config :9296",
+      "edge proxy-client->cloud-config :9296"
+    ],
+    "count": 9
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 9,
+    "examples": [
+      "edge product-service->service-discovery",
+      "edge cloud-config->service-discovery",
+      "edge api-gateway->service-discovery",
+      "edge shipping-service->service-discovery",
+      "edge payment-service->service-discovery",
+      "edge favourite-service->service-discovery",
+      "edge order-service->service-discovery",
+      "edge user-service->service-discovery",
+      "edge proxy-client->service-discovery"
+    ],
+    "count": 9
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "hits": 16,
+    "examples": [
+      "config-client product-service",
+      "config-client api-gateway",
+      "config-client shipping-service",
+      "config-client payment-service",
+      "config-client favourite-service",
+      "config-client order-service",
+      "config-client user-service",
+      "config-client proxy-client"
+    ],
+    "count": 8
+  },
+  "4": {
+    "hits": 8,
+    "examples": ["default SPRING_CONFIG_IMPORT=optional:configserver:http://localhost:9296"],
+    "count": 1
+  },
+  "5": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "8": {
+    "hits": 88,
+    "examples": [
+      "feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/order/service/OrderClientService.java:19",
+      "feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/order/service/OrderClientService.java:19",
+      "feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/order/service/CartClientService.java:19",
+      "feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/order/service/CartClientService.java:19",
+      "feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/payment/service/PaymentClientService.java:19",
+      "feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/payment/service/PaymentClientService.java:19",
+      "feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/user/service/UserClientService.java:19",
+      "feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/user/service/UserClientService.java:19",
+      "feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/user/service/CredentialClientService.java:19",
+      "feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/user/service/CredentialClientService.java:19",
+      "feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/user/service/VerificationTokenClientService.java:19",
+      "feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/user/service/VerificationTokenClientService.java:19",
+      "feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/user/service/AddressClientService.java:19",
+      "feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/user/service/AddressClientService.java:19",
+      "feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/product/service/ProductClientService.java:19",
+      "feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/product/service/ProductClientService.java:19",
+      "feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/product/service/CategoryClientService.java:19",
+      "feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/product/service/CategoryClientService.java:19",
+      "feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/favourite/service/FavouriteClientService.java:19",
+      "feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/favourite/service/FavouriteClientService.java:19"
+    ],
+    "count": 28
+  },
+  "9": {
+    "hits": 105,
+    "examples": [
+      "jpa product-service/src/main/java/com/selimhorri/app/domain/Product.java",
+      "jpa product-service/src/main/java/com/selimhorri/app/domain/Category.java",
+      "jpa product-service/src/main/java/com/selimhorri/app/domain/AbstractMappedEntity.java",
+      "jpa shipping-service/src/main/java/com/selimhorri/app/domain/OrderItem.java",
+      "jpa shipping-service/src/main/java/com/selimhorri/app/domain/AbstractMappedEntity.java",
+      "jpa payment-service/src/main/java/com/selimhorri/app/domain/Payment.java",
+      "jpa payment-service/src/main/java/com/selimhorri/app/domain/AbstractMappedEntity.java",
+      "jpa favourite-service/src/main/java/com/selimhorri/app/domain/Favourite.java",
+      "jpa favourite-service/src/main/java/com/selimhorri/app/domain/AbstractMappedEntity.java",
+      "jpa order-service/src/main/java/com/selimhorri/app/domain/Order.java",
+      "jpa order-service/src/main/java/com/selimhorri/app/domain/Cart.java",
+      "jpa order-service/src/main/java/com/selimhorri/app/domain/AbstractMappedEntity.java",
+      "jpa user-service/src/main/java/com/selimhorri/app/domain/User.java",
+      "jpa user-service/src/main/java/com/selimhorri/app/domain/Address.java",
+      "jpa user-service/src/main/java/com/selimhorri/app/domain/VerificationToken.java",
+      "jpa user-service/src/main/java/com/selimhorri/app/domain/Credential.java",
+      "jpa user-service/src/main/java/com/selimhorri/app/domain/AbstractMappedEntity.java",
+      "unreferenced USER_SERVICE_HOST=http://USER-SERVICE/user-service",
+      "unreferenced USER_SERVICE_API_URL=http://USER-SERVICE/user-service/api/users",
+      "unreferenced PRODUCT_SERVICE_HOST=http://PRODUCT-SERVICE/product-service"
+    ],
+    "count": 29
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

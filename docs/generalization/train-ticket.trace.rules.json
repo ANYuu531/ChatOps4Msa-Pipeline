@@ -1,0 +1,356 @@
+{"rules": {
+  "22": {
+    "hits": 6,
+    "examples": [
+      "dead build_upload_image.py:33",
+      "dead build_upload_image.py:34",
+      "dead ts-voucher-service/server.py:53",
+      "dead ts-voucher-service/server.py:54",
+      "dead ts-voucher-service/server.py:56",
+      "dead ts-voucher-service/server.py:57"
+    ],
+    "count": 6
+  },
+  "44": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 76,
+    "examples": [
+      "first-of-list spring.cloud.nacos.discovery.server-addr",
+      "list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local",
+      "list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:127.0.0.1:8848}"
+    ],
+    "count": 3
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 1,
+    "examples": ["drop https://github.com/FudanSELab/train-ticket"],
+    "count": 1
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 13,
+    "examples": [
+      "drop fluentd-es-v2.2.0 (deployment/kubernetes-manifests/efk-deployment)",
+      "drop elasticsearch-logging (deployment/kubernetes-manifests/efk-deployment)",
+      "drop kibana-logging (deployment/kubernetes-manifests/efk-deployment)",
+      "drop node-exporter (deployment/kubernetes-manifests/prometheus)",
+      "drop alertsnitch-mysql (deployment/kubernetes-manifests/prometheus)",
+      "drop alertsnitch (deployment/kubernetes-manifests/prometheus)",
+      "drop alertmanager (deployment/kubernetes-manifests/prometheus)",
+      "drop grafana-core (deployment/kubernetes-manifests/prometheus)",
+      "drop kube-state-metrics (deployment/kubernetes-manifests/prometheus)",
+      "drop prometheus (deployment/kubernetes-manifests/prometheus)",
+      "drop elasticsearch (deployment/kubernetes-manifests/skywalking)",
+      "drop skywalking (deployment/kubernetes-manifests/skywalking)",
+      "drop skywalking-ui (deployment/kubernetes-manifests/skywalking)"
+    ],
+    "count": 13
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 1,
+    "examples": ["k8s-over-compose 101 compose names ignored"],
+    "count": 1
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 2,
+    "examples": ["inferred ts-voucher-service->ts-voucher-mysql"],
+    "count": 1
+  },
+  "14": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 1,
+    "examples": ["version ts-voucher-service-v2=ts-voucher-service"],
+    "count": 1
+  },
+  "1": {
+    "hits": 78,
+    "examples": [
+      "not-preadded ts-station-food-service",
+      "not-preadded ts-train-food-service",
+      "not-preadded ts-food-delivery-service",
+      "not-preadded ts-wait-order-service",
+      "not-preadded ts-gateway-service",
+      "not-preadded bin",
+      "not-preadded json2shiviz",
+      "not-preadded ts-delivery-service",
+      "node ts-voucher-service",
+      "node ts-admin-basic-info-service",
+      "node ts-admin-order-service",
+      "node ts-admin-route-service",
+      "node ts-admin-travel-service",
+      "node ts-admin-user-service",
+      "node ts-assurance-service",
+      "node ts-basic-service",
+      "node ts-cancel-service",
+      "node ts-config-service",
+      "node ts-consign-price-service",
+      "node ts-consign-service"
+    ],
+    "count": 78
+  },
+  "2": {
+    "hits": 2,
+    "examples": [
+      "test-dir old-docs/ts-ui-test",
+      "name Json2Shiviz=json2shiviz"
+    ],
+    "count": 2
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 148,
+    "examples": [
+      "default email_address=trainticket_notify@163.com",
+      "default CONTACTS_MYSQL_HOST=ts-contacts-mysql",
+      "default CONTACTS_MYSQL_PORT=3306",
+      "default CONTACTS_MYSQL_DATABASE=ts-contacts-mysql",
+      "default NOTIFICATION_MYSQL_HOST=ts-notification-mysql",
+      "default NOTIFICATION_MYSQL_PORT=3306",
+      "default NOTIFICATION_MYSQL_DATABASE=ts-notification-mysql",
+      "default rabbitmq_host=localhost",
+      "default CONFIG_MYSQL_HOST=ts-config-mysql",
+      "default CONFIG_MYSQL_PORT=3306",
+      "default CONFIG_MYSQL_DATABASE=ts-config-mysql",
+      "default ASSURANCE_MYSQL_HOST=ts-assurance-mysql",
+      "default ASSURANCE_MYSQL_PORT=3306",
+      "default ASSURANCE_MYSQL_DATABASE=ts-assurance-mysql",
+      "default ORDER_OTHER_MYSQL_HOST=ts-order-other-mysql",
+      "default ORDER_OTHER_MYSQL_PORT=3306",
+      "default ORDER_OTHER_MYSQL_DATABASE=ts-order-other-mysql",
+      "default NACOS_ADDRS=127.0.0.1:8848",
+      "default ROUTE_MYSQL_HOST=10.176.122.1",
+      "default ROUTE_MYSQL_PORT=3306"
+    ],
+    "count": 126
+  },
+  "5": {
+    "hits": 7,
+    "examples": [
+      "env rabbitmq_host={{.Release.Name=null}=null}",
+      "key spring.mail.host=smtp.163.com",
+      "key spring.rabbitmq.host=${rabbitmq_host:localhost}"
+    ],
+    "count": 3
+  },
+  "6": {
+    "hits": 1,
+    "examples": ["url http://ts-gateway-service:18888"],
+    "count": 1
+  },
+  "7": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "8": {
+    "hits": 132,
+    "examples": [
+      "config-signal server.port",
+      "config-signal spring.datasource.username",
+      "config-signal spring.datasource.password",
+      "config-signal spring.datasource.driver-class-name",
+      "loopback localhost",
+      "config-signal spring.rabbitmq.port",
+      "loopback 127.0.0.1:8848"
+    ],
+    "count": 7
+  },
+  "9": {
+    "hits": 59,
+    "examples": [
+      "jpa ts-contacts-service/src/main/java/contacts/repository/ContactsRepository.java",
+      "jpa ts-contacts-service/src/main/java/contacts/entity/Contacts.java",
+      "jpa ts-notification-service/src/main/java/notification/repository/NotifyRepository.java",
+      "jpa ts-notification-service/src/main/java/notification/entity/NotifyInfo.java",
+      "jpa ts-config-service/src/main/java/config/entity/Config.java",
+      "jpa ts-assurance-service/src/main/java/assurance/repository/AssuranceRepository.java",
+      "jpa ts-assurance-service/src/main/java/assurance/entity/Assurance.java",
+      "jpa ts-order-other-service/src/main/java/other/repository/OrderOtherRepository.java",
+      "jpa ts-order-other-service/src/main/java/other/entity/Order.java",
+      "jpa ts-route-service/src/main/java/route/repository/RouteRepository.java",
+      "jpa ts-route-service/src/main/java/route/entity/Route.java",
+      "jpa ts-price-service/src/main/java/price/repository/PriceConfigRepository.java",
+      "jpa ts-price-service/src/main/java/price/entity/PriceConfig.java",
+      "jpa ts-security-service/src/main/java/security/repository/SecurityRepository.java",
+      "jpa ts-security-service/src/main/java/security/entity/SecurityConfig.java",
+      "jpa ts-consign-service/src/main/java/consign/repository/ConsignRepository.java",
+      "jpa ts-consign-service/src/main/java/consign/entity/ConsignRecord.java",
+      "jpa ts-train-service/src/main/java/train/repository/TrainTypeRepository.java",
+      "jpa ts-train-service/src/main/java/train/entity/TrainType.java",
+      "jpa ts-order-service/src/main/java/order/repository/OrderRepository.java"
+    ],
+    "count": 48
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 117,
+    "examples": [
+      "lib ts-common",
+      "lib ms-monitoring-core",
+      "no-edge ts-common/src/main/java/edu/fudan/common/util/StringUtils.java",
+      "no-edge ts-common/src/main/java/edu/fudan/common/security/jwt/JWTFilter.java",
+      "no-edge ts-common/src/main/java/edu/fudan/common/entity/Station.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/antn/SleuthAdvisorConfig.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/schedl/TSAspect.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/msg/HBMInject.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/msg/TCInter.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/msg/HBMExtra.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/web/ZHSExtra.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/web/SsLogSetter.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/web/HSRTMap.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/web/TFilter.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/web/ZHSInject.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/web/TWAsp.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/web/THInter.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/web/client/TRTInter.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/web/client/ATHRInter.java",
+      "no-edge old-docs/Lib/ms-monitoring-core/src/main/java/org/myproject/ms/monitoring/instrument/web/client/TARTemp.java"
+    ],
+    "count": 27
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 39,
+    "examples": ["drop swagger.controllerpackage"],
+    "count": 1
+  }
+}}

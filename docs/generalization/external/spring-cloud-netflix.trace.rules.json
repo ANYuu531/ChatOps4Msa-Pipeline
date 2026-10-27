@@ -1,0 +1,291 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 2,
+    "examples": ["drop https://github.com/yidongnan"],
+    "count": 1
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 9,
+    "examples": [
+      "node rabbitmq",
+      "node zipkin",
+      "node eureka-server",
+      "node config-server",
+      "node service-b",
+      "node service-a",
+      "node admin-dashboard",
+      "node zuul",
+      "node hystrix-dashboard"
+    ],
+    "count": 9
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 28,
+    "examples": [
+      "v1 docker-compose.yml",
+      "links config-server->eureka-server",
+      "links config-server->rabbitmq",
+      "links service-b->eureka-server",
+      "links service-b->config-server",
+      "links service-b->hystrix-dashboard",
+      "links service-b->rabbitmq",
+      "links service-b->zipkin",
+      "links service-a->eureka-server",
+      "links service-a->config-server",
+      "links service-a->service-b",
+      "links service-a->hystrix-dashboard",
+      "links service-a->rabbitmq",
+      "links service-a->zipkin",
+      "links admin-dashboard->eureka-server",
+      "links admin-dashboard->rabbitmq",
+      "links admin-dashboard->config-server",
+      "links admin-dashboard->service-a",
+      "links admin-dashboard->service-b",
+      "links admin-dashboard->zuul"
+    ],
+    "count": 28
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 26,
+    "examples": [
+      "inferred config-server->eureka-server",
+      "inferred config-server->rabbitmq",
+      "inferred service-b->eureka-server",
+      "inferred service-b->config-server",
+      "inferred service-b->hystrix-dashboard",
+      "inferred service-b->rabbitmq",
+      "inferred service-b->zipkin",
+      "inferred service-a->eureka-server",
+      "inferred service-a->config-server",
+      "inferred service-a->service-b",
+      "inferred service-a->hystrix-dashboard",
+      "inferred service-a->rabbitmq",
+      "inferred service-a->zipkin",
+      "inferred admin-dashboard->eureka-server",
+      "inferred admin-dashboard->rabbitmq",
+      "inferred admin-dashboard->config-server",
+      "inferred admin-dashboard->service-a",
+      "inferred admin-dashboard->service-b",
+      "inferred admin-dashboard->zuul",
+      "inferred admin-dashboard->hystrix-dashboard"
+    ],
+    "count": 26
+  },
+  "14": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 6,
+    "examples": [
+      "edge service-a->eureka-server",
+      "edge admin-dashboard->eureka-server",
+      "edge hystrix-dashboard->eureka-server",
+      "edge service-b->eureka-server",
+      "edge zuul->eureka-server",
+      "edge config-server->eureka-server"
+    ],
+    "count": 6
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "5": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "8": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "9": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

@@ -1,0 +1,50 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    viaggi["viaggi"]
+    loadtester["loadtester"]
+    control["control"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    voyages["voyages"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    travels["travels"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    cars["cars"]
+    flights["flights"]
+    hotels["hotels"]
+    insurances["insurances"]
+  end
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    discounts["discounts"]
+  end
+  subgraph layer5 ["data stores"]
+    direction LR
+    mysqldb[("mysqldb")]:::db
+  end
+  voyages -. declared? .-> travels
+  viaggi -. declared? .-> travels
+  loadtester -. declared? .-> travels
+  cars -. declared? .-> discounts
+  cars -. db? .-> mysqldb
+  flights -. declared? .-> discounts
+  flights -. db? .-> mysqldb
+  hotels -. declared? .-> discounts
+  hotels -. db? .-> mysqldb
+  insurances -. declared? .-> discounts
+  insurances -. db? .-> mysqldb
+  travels -. declared? .-> flights
+  travels -. declared? .-> hotels
+  travels -. declared? .-> cars
+  travels -. declared? .-> insurances
+  control -. declared? .-> voyages
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;

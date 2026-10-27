@@ -1,0 +1,39 @@
+# kiali/demos @ 38ceb5ab6653a0a587673c9293918c6b9b8d6b86（2026-07-31），只看 travels/ 子目錄（Kiali 的 Travel Demo）；出處路徑相對 travels/。
+# 全部 Go（net/http ＋ go-sql-driver/mysql），沒有 compose；部署描述檔＝四份純 k8s manifest（README「Quick Start」：travel_agency.yaml → namespace travel-agency、travel_portal.yaml → travel-portal、travel_control.yaml → travel-control；deploy.sh 同），
+# 外加 travel_loadtester.yaml（fortio 負載產生器）、travels-v2/v3.yaml 與 mysql-v2/v3.yaml（同一個 workload 的其他版本，README「Travels Versions」用來示範 Istio 流量切分）。
+# manifest 本身沒有 metadata.namespace，namespace 是 kubectl -n 給的；服務間位址寫成叢集 DNS 短名 <svc>.<ns>:8000（如 http://travels.travel-agency:8000）。
+# 節點名＝k8s Service 名（Deployment 叫 cars-v1／travels-v1／mysqldb-v1，Service 叫 cars／travels／mysqldb；Istio bookinfo 式的版本後綴）：control、voyages、viaggi、travels、loadtester、cars、discounts、flights、hotels、insurances、mysqldb。
+# **同名碰撞**：travel-portal 的第三個入口網站 Deployment／Service 就叫 travels（travels.uk），和 travel-agency 的核心服務 travels 同名；在沒有 namespace 的 manifest 裡兩者分不開。本檔照 manifest 的名字寫，入口網站 travels → 代理商 travels 因此是一條 travels → travels 自環；工具畫不出來記「規則邊界」（namespace 不在 manifest 裡）。
+# 出處＝發出呼叫那一行（http.NewRequest／sql.Open）；位址來源（os.Getenv 那行、manifest 的 env value 那行）寫在括號裡。travels-v2/v3 的 env 與 v1 相同（travels-v2.yaml:58–64），不另列。
+# 遙測：Istio sidecar 的 proxy.istio.io/config 註解把 zipkin 位址設成 zipkin.istio-system:9411（voyages、viaggi、travels 入口、cars、discounts、flights、hotels、travels-v1/v2/v3；insurances 與 mysqldb 沒有），那是 sidecar 的設定不是程式呼叫，沿既有慣例列 variant（節點名寫兩段式短名剝 namespace 後的 zipkin）。
+#
+# ---- business：服務→服務 ----
+voyages	travels	business	travel_portal/travel_portal.go:411 http.NewRequest("GET", travelsAgencyService + "/travels")（:432 /travels/<city> 同；:134 os.Getenv("TRAVELS_AGENCY_SERVICE")；travel_portal.yaml:60 value http://travels.travel-agency:8000）
+viaggi	travels	business	travel_portal/travel_portal.go:411（同一支程式、同一個映像 demo_travels_portal；travel_portal.yaml:134 value http://travels.travel-agency:8000）
+travels	travels	business	travel_portal/travel_portal.go:411（入口網站 travels.uk → 代理商 travels；travel_portal.yaml:208 value http://travels.travel-agency:8000；兩個 workload 同名，見檔頭）
+travels	flights	business	travel_agency/travels/travels.go:200 http.NewRequest("GET", flightsService+"/flights/"+city)（:100 os.Getenv("FLIGHTS_SERVICE")；travel_agency.yaml:538 value http://flights.travel-agency:8000）
+travels	hotels	business	travel_agency/travels/travels.go:154 http.NewRequest("GET", hotelsService+"/hotels")（:218 /hotels/<city> 同；:104 HOTELS_SERVICE；travel_agency.yaml:540）
+travels	cars	business	travel_agency/travels/travels.go:237 http.NewRequest("GET", carsService+"/cars/"+city)（:108 CARS_SERVICE；travel_agency.yaml:542）
+travels	insurances	business	travel_agency/travels/travels.go:256 http.NewRequest("GET", insurancesService+"/insurances/"+city)（:112 INSURANCES_SERVICE；travel_agency.yaml:544）
+cars	discounts	business	travel_agency/cars/cars.go:194 http.NewRequest("GET", discountsService+"/discounts/"+user)（:81 os.Getenv("DISCOUNTS_SERVICE")；travel_agency.yaml:139 value http://discounts.travel-agency:8000）
+flights	discounts	business	travel_agency/flights/flights.go:194 http.NewRequest("GET", discountsService+"/discounts/"+user)（:82 DISCOUNTS_SERVICE；travel_agency.yaml:298）
+hotels	discounts	business	travel_agency/hotels/hotels.go:195 http.NewRequest("GET", discountsService+"/discounts/"+user)（:88 DISCOUNTS_SERVICE；travel_agency.yaml:384）
+insurances	discounts	business	travel_agency/insurances/insurances.go:194 http.NewRequest("GET", discountsService+"/discounts/"+user)（:81 DISCOUNTS_SERVICE；travel_agency.yaml:452）
+# ---- data：服務→MySQL（DSN 是 go-sql-driver 格式 user:pass@tcp(host:port)/db，不是 URL） ----
+cars	mysqldb	data	travel_agency/cars/cars.go:158 sql.Open("mysql", dataSourceName)（:157 "@tcp(" + mysqlService + ")"；:86 os.Getenv("MYSQL_SERVICE")；travel_agency.yaml:141 value mysqldb.travel-agency:3306）
+flights	mysqldb	data	travel_agency/flights/flights.go:158 sql.Open("mysql", dataSourceName)（:87 MYSQL_SERVICE；travel_agency.yaml:300）
+hotels	mysqldb	data	travel_agency/hotels/hotels.go:144 sql.Open("mysql", dataSourceName)（:222 第二處；:93 MYSQL_SERVICE；travel_agency.yaml:386）
+insurances	mysqldb	data	travel_agency/insurances/insurances.go:157 sql.Open("mysql", dataSourceName)（:86 MYSQL_SERVICE；travel_agency.yaml:454）
+# ---- control：業務儀表板對入口網站的狀態查詢／設定推送、負載產生器 ----
+control	voyages	control	travel_control/travel_control.go:82 http.NewRequest("GET", address + "/status")（:145 PUT /settings；:42 os.Getenv("PORTAL_SERVICES") 的值是「名稱;網址,名稱;網址」逗號分隔，:44–47 拆開；travel_control.yaml:34 value "voyages.fr;http://voyages.travel-portal:8000,viaggi.it;http://viaggi.travel-portal:8000,travels.uk;http://travels.travel-portal:8000"）
+control	viaggi	control	travel_control/travel_control.go:82（同上；travel_control.yaml:34 第二段 http://viaggi.travel-portal:8000）
+control	travels	control	travel_control/travel_control.go:82（同上；travel_control.yaml:34 第三段 http://travels.travel-portal:8000，指的是入口網站 travels.uk）
+loadtester	travels	control	docker/travel_loadtester/travel_loadtester.sh:27 /usr/bin/fortio load … "${TRAVELS_AGENCY_SERVICE}/travels"（shell 腳本，沒有 Go 程式；travel_loadtester.yaml:48 value http://travels.travel-agency:8000；負載產生器沿第一組 hold-out 的 load-generator → frontend-proxy 慣例列 control）
+# ---- variant：Istio sidecar 的 zipkin 追蹤位址（proxy.istio.io/config 註解） ----
+voyages	zipkin	variant	travel_portal.yaml:18 tracing.zipkin.address: zipkin.istio-system:9411（sidecar 註解；遙測）
+viaggi	zipkin	variant	travel_portal.yaml:92（sidecar 註解；遙測）
+travels	zipkin	variant	travel_portal.yaml:166（入口網站 travels）＋ travel_agency.yaml:498（travels-v1）、travels-v2.yaml:18、travels-v3.yaml:18（sidecar 註解；遙測）
+cars	zipkin	variant	travel_agency.yaml:99（sidecar 註解；遙測）
+discounts	zipkin	variant	travel_agency.yaml:185（sidecar 註解；遙測）
+flights	zipkin	variant	travel_agency.yaml:258（sidecar 註解；遙測）
+hotels	zipkin	variant	travel_agency.yaml:344（sidecar 註解；遙測）

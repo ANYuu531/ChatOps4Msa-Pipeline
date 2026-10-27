@@ -1,0 +1,300 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 1,
+    "examples": ["hidden .bingo/go.mod"],
+    "count": 1
+  },
+  "10": {
+    "hits": 51,
+    "examples": [
+      "drop mongodb-profile (knative)",
+      "drop mongodb-user (knative)",
+      "drop jaeger (knative)",
+      "drop mongodb-recommendation (knative)",
+      "drop memcached-profile (knative)",
+      "drop mongodb-reservation (knative)",
+      "drop mongodb-geo (knative)",
+      "drop memcached-reserve (knative)",
+      "drop frontend (knative)",
+      "drop memcached-rate (knative)",
+      "drop consul (knative)",
+      "drop mongodb-rate (knative)",
+      "drop recommendation (openshift)",
+      "drop mongodb-profile (openshift)",
+      "drop search (openshift)",
+      "drop mongodb-user (openshift)",
+      "drop hr-client (openshift)",
+      "drop jaeger (openshift)",
+      "drop mongodb-recommendation (openshift)",
+      "drop geo (openshift)"
+    ],
+    "count": 51
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 1,
+    "examples": ["k8s-over-compose 24 compose names ignored"],
+    "count": 1
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 22,
+    "examples": [
+      "inferred frontend->consul",
+      "inferred profile->mongodb-profile",
+      "inferred profile->memcached-profile",
+      "inferred profile->consul",
+      "inferred search->consul",
+      "inferred geo->mongodb-geo",
+      "inferred geo->consul",
+      "inferred rate->mongodb-rate",
+      "inferred rate->memcached-rate",
+      "inferred rate->consul",
+      "inferred review->mongodb-review",
+      "inferred review->memcached-review",
+      "inferred review->consul",
+      "inferred attractions->mongodb-attractions",
+      "inferred attractions->consul",
+      "inferred recommendation->mongodb-recommendation",
+      "inferred recommendation->consul",
+      "inferred user->mongodb-user",
+      "inferred user->consul",
+      "inferred reservation->mongodb-reservation"
+    ],
+    "count": 22
+  },
+  "14": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 11,
+    "examples": [
+      "hostname user-memcached=memcached-rate",
+      "hostname user-memcached=memcached-profile",
+      "hostname user-memcached=memcached-reserve",
+      "hostname geo-db=mongodb-geo",
+      "hostname profile-db=mongodb-profile",
+      "hostname rate-db=mongodb-rate",
+      "hostname review-db=mongodb-review",
+      "hostname attractions-db=mongodb-attractions",
+      "hostname recommendation-db=mongodb-recommendation",
+      "hostname reservation-db=mongodb-reservation",
+      "hostname user-db=mongodb-user"
+    ],
+    "count": 11
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "5": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 13,
+    "examples": [
+      "node consul",
+      "node mongodb-profile",
+      "node memcached-profile",
+      "node mongodb-geo",
+      "node mongodb-rate",
+      "node memcached-rate",
+      "node mongodb-review",
+      "node memcached-review",
+      "node mongodb-attractions",
+      "node mongodb-recommendation",
+      "node mongodb-user",
+      "node mongodb-reservation",
+      "node memcached-reserve"
+    ],
+    "count": 13
+  },
+  "8": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "9": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

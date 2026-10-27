@@ -1,0 +1,383 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 15,
+    "examples": [
+      "alias mall-admin:db=mysql",
+      "alias mall-search:es=elasticsearch",
+      "alias mall-search:db=mysql",
+      "alias mall-portal:db=mysql",
+      "alias mall-portal:rabbit=rabbitmq",
+      "alias logstash:es=elasticsearch",
+      "alias kibana:es=elasticsearch",
+      "resolve db=mysql",
+      "resolve mall-portal:db=mysql",
+      "resolve mall-portal:rabbit=rabbitmq",
+      "resolve mall-admin:db=mysql",
+      "resolve mall-search:db=mysql",
+      "resolve mall-search:es=elasticsearch",
+      "resolve kibana:es=elasticsearch"
+    ],
+    "count": 14
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 33,
+    "examples": [
+      "list spring.cloud.nacos.discovery.server-addr=nacos-registry:8848",
+      "list spring.cloud.nacos.config.server-addr=nacos-registry:8848",
+      "list spring.cloud.nacos.discovery.server-addr=localhost:8848",
+      "list spring.cloud.nacos.config.server-addr=localhost:8848",
+      "first-of-list spring.datasource.druid.web-stat-filter.exclusions",
+      "fqdn aliyun.oss.endpoint=oss-cn-shenzhen.aliyuncs.com",
+      "list spring.elasticsearch.uris=localhost:9200",
+      "list spring.elasticsearch.uris=es:9200"
+    ],
+    "count": 8
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 10,
+    "examples": [
+      "drop https://github.com/macrozheng/mall-learning",
+      "drop http://www.macrozheng.com"
+    ],
+    "count": 2
+  },
+  "30": {
+    "hits": 1,
+    "examples": ["edge mall-portal->rabbitmq"],
+    "count": 1
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 6,
+    "examples": [
+      "drop mall-monitor-deployment (document/k8s)",
+      "drop mall-admin-deployment (document/k8s)",
+      "drop mall-gateway-deployment (document/k8s)",
+      "drop mall-search-deployment (document/k8s)",
+      "drop mall-auth-deployment (document/k8s)",
+      "drop mall-portal-deployment (document/k8s)"
+    ],
+    "count": 6
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 1,
+    "examples": ["k8s-over-compose 15 compose names ignored"],
+    "count": 1
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 16,
+    "examples": [
+      "links mall-admin->mysql",
+      "links mall-admin->nacos-registry",
+      "links mall-search->elasticsearch",
+      "links mall-search->mysql",
+      "links mall-search->nacos-registry",
+      "links mall-portal->redis",
+      "links mall-portal->mongo",
+      "links mall-portal->mysql",
+      "links mall-portal->rabbitmq",
+      "links mall-portal->nacos-registry",
+      "links mall-auth->nacos-registry",
+      "links mall-gateway->redis",
+      "links mall-gateway->nacos-registry",
+      "links mall-monitor->nacos-registry",
+      "links logstash->elasticsearch",
+      "links kibana->elasticsearch"
+    ],
+    "count": 16
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 16,
+    "examples": [
+      "inferred mall-admin->mysql",
+      "inferred mall-admin->nacos-registry",
+      "inferred mall-search->elasticsearch",
+      "inferred mall-search->mysql",
+      "inferred mall-search->nacos-registry",
+      "inferred mall-portal->redis",
+      "inferred mall-portal->mongo",
+      "inferred mall-portal->mysql",
+      "inferred mall-portal->rabbitmq",
+      "inferred mall-portal->nacos-registry",
+      "inferred mall-auth->nacos-registry",
+      "inferred mall-gateway->redis",
+      "inferred mall-gateway->nacos-registry",
+      "inferred mall-monitor->nacos-registry",
+      "inferred logstash->elasticsearch",
+      "drop kibana->elasticsearch"
+    ],
+    "count": 16
+  },
+  "14": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "hits": 176,
+    "examples": [
+      "spring-yml config/demo/mall-demo-dev.yaml",
+      "spring-yml config/demo/mall-demo-prod.yaml",
+      "spring-yml config/portal/mall-portal-prod.yaml",
+      "spring-yml config/portal/mall-portal-dev.yaml",
+      "spring-yml config/admin/mall-admin-dev.yaml",
+      "spring-yml config/admin/mall-admin-prod.yaml",
+      "spring-yml config/search/mall-search-dev.yaml",
+      "spring-yml config/search/mall-search-prod.yaml",
+      "spring-yml config/gateway/mall-gateway-prod.yaml",
+      "spring-yml config/gateway/mall-gateway-dev.yaml",
+      "config-file config/demo/mall-demo-dev.yaml=mall-demo",
+      "config-file config/demo/mall-demo-prod.yaml=mall-demo",
+      "config-file config/portal/mall-portal-prod.yaml=mall-portal",
+      "config-file config/portal/mall-portal-dev.yaml=mall-portal",
+      "config-file config/admin/mall-admin-dev.yaml=mall-admin",
+      "config-file config/admin/mall-admin-prod.yaml=mall-admin",
+      "config-file config/search/mall-search-dev.yaml=mall-search",
+      "config-file config/search/mall-search-prod.yaml=mall-search",
+      "config-file config/gateway/mall-gateway-prod.yaml=mall-gateway",
+      "config-file config/gateway/mall-gateway-dev.yaml=mall-gateway"
+    ],
+    "count": 20
+  },
+  "4": {
+    "hits": 3,
+    "examples": [
+      "table aliyun.oss.endpoint=oss-cn-shenzhen.aliyuncs.com",
+      "table minio.endpoint=http://localhost:9000"
+    ],
+    "count": 2
+  },
+  "5": {
+    "hits": 26,
+    "examples": [
+      "key spring.data.redis.host=localhost",
+      "key logstash.host=localhost",
+      "key spring.data.mongodb.host=localhost",
+      "key spring.rabbitmq.host=localhost",
+      "key logstash.host=logstash",
+      "key spring.data.mongodb.host=mongo",
+      "key spring.data.redis.host=redis",
+      "key spring.rabbitmq.host=rabbit"
+    ],
+    "count": 8
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 1,
+    "examples": ["env kibana.elasticsearch.hosts=es"],
+    "count": 1
+  },
+  "8": {
+    "hits": 157,
+    "examples": [
+      "loopback localhost",
+      "config-signal spring.cloud.nacos.config.file-extension",
+      "config-signal spring.config.import[0]",
+      "loopback localhost:8848",
+      "config-signal server.port",
+      "loopback localhost:3306",
+      "config-signal spring.datasource.username",
+      "config-signal spring.datasource.password",
+      "config-signal spring.datasource.druid.initial-size",
+      "config-signal spring.datasource.druid.min-idle",
+      "config-signal spring.datasource.druid.max-active",
+      "config-signal spring.datasource.druid.web-stat-filter.exclusions",
+      "config-signal spring.datasource.druid.stat-view-servlet.login-username",
+      "config-signal spring.datasource.druid.stat-view-servlet.login-password",
+      "config-signal spring.data.redis.database",
+      "config-signal spring.data.redis.port",
+      "config-signal spring.data.redis.timeout",
+      "loopback localhost:9000",
+      "config-signal spring.data.mongodb.port",
+      "config-signal spring.data.mongodb.database"
+    ],
+    "count": 27
+  },
+  "9": {
+    "hits": 4,
+    "examples": [
+      "jpa mall-admin/src/main/java/com/macro/mall/config/MyBatisConfig.java",
+      "jpa mall-portal/src/main/java/com/macro/mall/portal/config/MyBatisConfig.java",
+      "jpa mall-demo/src/main/java/com/macro/mall/demo/config/MyBatisConfig.java",
+      "jpa mall-search/src/main/java/com/macro/mall/search/config/MyBatisConfig.java"
+    ],
+    "count": 4
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 8,
+    "examples": [
+      "lib mall-common",
+      "no-edge mall-common/src/main/java/com/macro/mall/common/config/BaseRedisConfig.java",
+      "no-edge mall-common/src/main/java/com/macro/mall/common/api/CommonResult.java",
+      "no-edge mall-common/src/main/java/com/macro/mall/common/service/impl/RedisServiceImpl.java"
+    ],
+    "count": 4
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 46,
+    "examples": [
+      "drop springdoc.swagger-ui.path",
+      "drop springdoc.swagger-ui.enabled",
+      "drop springdoc.swagger-ui.doc-expansion",
+      "drop springdoc.api-docs.path",
+      "drop springdoc.api-docs.enabled",
+      "drop springdoc.group-configs[0].group",
+      "drop springdoc.group-configs[0].packages-to-scan",
+      "drop springdoc.default-flat-param-object",
+      "drop springdoc.swagger-ui.tags-sorter",
+      "drop springdoc.swagger-ui.operations-sorter",
+      "drop springdoc.swagger-ui.show-extensions",
+      "drop knife4j.gateway.enabled",
+      "drop knife4j.gateway.strategy",
+      "drop knife4j.gateway.discover.version",
+      "drop knife4j.gateway.discover.enabled",
+      "drop knife4j.gateway.discover.excluded-services",
+      "drop knife4j.gateway.tags-sorter",
+      "drop knife4j.gateway.operations-sorter"
+    ],
+    "count": 18
+  }
+}}

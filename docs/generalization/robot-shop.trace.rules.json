@@ -1,0 +1,323 @@
+{"rules": {
+  "22": {
+    "hits": 1,
+    "examples": ["urlref payment/payment.py:84 PAYMENT_GATEWAY"],
+    "count": 1
+  },
+  "44": {
+    "hits": 11,
+    "examples": [
+      "no-workload web=web",
+      "no-workload payment=payment",
+      "no-workload dispatch=dispatch",
+      "no-workload ratings=ratings",
+      "no-workload user=user",
+      "no-workload shipping=shipping",
+      "no-workload mysql=mysql",
+      "no-workload cart=cart",
+      "no-workload mongo=mongodb",
+      "no-workload catalogue=catalogue",
+      "map load-gen=load"
+    ],
+    "count": 11
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 1,
+    "examples": ["drop payment-fix (K8s/Istio)"],
+    "count": 1
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 1,
+    "examples": ["k8s-over-compose 13 compose names ignored"],
+    "count": 1
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 16,
+    "examples": [
+      "documented load->web",
+      "inferred catalogue->mongodb",
+      "inferred user->mongodb",
+      "inferred user->redis",
+      "inferred cart->redis",
+      "inferred shipping->mysql",
+      "inferred ratings->mysql",
+      "inferred payment->rabbitmq",
+      "inferred dispatch->rabbitmq",
+      "inferred web->catalogue",
+      "inferred web->user",
+      "inferred web->shipping",
+      "inferred web->payment"
+    ],
+    "count": 13
+  },
+  "14": {
+    "hits": 2,
+    "examples": ["edge load->web"],
+    "count": 1
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 19,
+    "examples": [
+      "dockerfile-env CATALOGUE_HOST=catalogue",
+      "dockerfile-env USER_HOST=user",
+      "dockerfile-env CART_HOST=cart",
+      "dockerfile-env SHIPPING_HOST=shipping",
+      "dockerfile-env PAYMENT_HOST=payment",
+      "dockerfile-env RATINGS_HOST=ratings",
+      "dockerfile-env CART_ENDPOINT=cart",
+      "dockerfile-env DB_HOST=mysql",
+      "dockerfile-env HOST=localhost",
+      "format CART_ENDPOINT=cart"
+    ],
+    "count": 10
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 13,
+    "examples": [
+      "not-preadded web",
+      "not-preadded payment",
+      "not-preadded dispatch",
+      "not-preadded ratings",
+      "not-preadded html",
+      "not-preadded user",
+      "not-preadded shipping",
+      "not-preadded mysql",
+      "not-preadded cart",
+      "not-preadded mongo",
+      "not-preadded catalogue",
+      "node fluentd",
+      "node load"
+    ],
+    "count": 13
+  },
+  "2": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 6,
+    "examples": [
+      "table CATALOGUE_HOST=catalogue",
+      "table USER_HOST=user",
+      "table CART_HOST=cart",
+      "table SHIPPING_HOST=shipping",
+      "table PAYMENT_HOST=payment",
+      "table RATINGS_HOST=ratings"
+    ],
+    "count": 6
+  },
+  "5": {
+    "hits": 7,
+    "examples": [
+      "env CATALOGUE_HOST=catalogue",
+      "env USER_HOST=user",
+      "env CART_HOST=cart",
+      "env SHIPPING_HOST=shipping",
+      "env PAYMENT_HOST=payment",
+      "env RATINGS_HOST=ratings",
+      "env DB_HOST=mysql"
+    ],
+    "count": 7
+  },
+  "6": {
+    "hits": 6,
+    "examples": [
+      "url http://${CATALOGUE_HOST}:8080/",
+      "url http://${USER_HOST}:8080/",
+      "url http://${CART_HOST}:8080/",
+      "url http://${SHIPPING_HOST}:8080/",
+      "url http://${PAYMENT_HOST}:8080/",
+      "url http://${RATINGS_HOST}:80/"
+    ],
+    "count": 6
+  },
+  "7": {
+    "hits": 5,
+    "examples": [
+      "env load.HOST=web",
+      "node web",
+      "node mongodb",
+      "node redis",
+      "node rabbitmq"
+    ],
+    "count": 5
+  },
+  "8": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "9": {
+    "hits": 4,
+    "examples": [
+      "jpa shipping/src/main/java/com/instana/robotshop/shipping/City.java",
+      "jpa shipping/src/main/java/com/instana/robotshop/shipping/Code.java"
+    ],
+    "count": 2
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 8,
+    "examples": [
+      "scoped CART_ENDPOINT=cart @shipping",
+      "scoped DB_HOST=mysql @shipping",
+      "scoped CATALOGUE_HOST=catalogue @web",
+      "scoped USER_HOST=user @web",
+      "scoped CART_HOST=cart @web",
+      "scoped SHIPPING_HOST=shipping @web",
+      "scoped PAYMENT_HOST=payment @web",
+      "scoped RATINGS_HOST=ratings @web"
+    ],
+    "count": 8
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

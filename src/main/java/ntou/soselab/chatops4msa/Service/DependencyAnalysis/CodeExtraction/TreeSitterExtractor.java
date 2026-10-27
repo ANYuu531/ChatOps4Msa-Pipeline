@@ -1,6 +1,7 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction;
 
 import jakarta.annotation.PostConstruct;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.FileCopyUtils;
@@ -205,6 +206,7 @@ public class TreeSitterExtractor {
                 continue;
             }
             parsed++;
+            RuleTrace.hit(csharp ? 40 : 28, (csharp ? "cs-file " : "kt-file ") + relative);
             String[] lines = source.split("\n", -1);
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i];
@@ -312,6 +314,10 @@ public class TreeSitterExtractor {
             int cap = SECTION_CAPS.getOrDefault(section, DEFAULT_SECTION_CAP);
             if (count > cap) continue;
 
+            // Rule 9's parsing halves: JPA markers are a Java-standard signal (java-generic pack),
+            // and a JAX-RS @Path is an inbound endpoint like a Spring mapping.
+            if ("jpa".equals(section)) RuleTrace.hit(9, "jpa " + file);
+            if ("http-server".equals(section) && "Path".equals(entry.getValue().get("verb"))) RuleTrace.hit(9, "jaxrs " + file + ":" + match.line);
             ledger.add(section, entry.getValue(), file, match.line,
                     confidenceOf(section, entry.getValue()));
         }
@@ -376,6 +382,7 @@ public class TreeSitterExtractor {
             if (!XML_NAMESPACE_SITE.matcher(window).find()) continue;
             e.fields.put("unreferenced", "true");
             e.fields.put("not-an-address", "xml-namespace");
+            RuleTrace.hit(13, "drop " + e.fields.get("value"));
             dropped++;
         }
         if (dropped > 0) {
@@ -404,6 +411,7 @@ public class TreeSitterExtractor {
                         && !"true".equals(e.fields.get("unreferenced"))) {
                     e.fields.put("unreferenced", "true");
                     e.fields.put("not-an-address", "openapi-metadata");
+                    RuleTrace.hit(29, "drop " + e.fields.get("value"));
                     dropped++;
                 }
             }
@@ -445,6 +453,7 @@ public class TreeSitterExtractor {
             }
             if (referenced) continue;
             unreferenced++;
+            RuleTrace.hit(9, "unreferenced " + name + "=" + constant.fields.get("value"));
             for (EdgeLedger.Edge e : ledger.getEdges()) {
                 if ("url".equals(e.section) && e.file.equals(constant.file) && e.line == constant.line
                         && constant.fields.get("value").equals(e.fields.get("value"))) {
@@ -503,6 +512,7 @@ public class TreeSitterExtractor {
             if (source == null) continue;
             Map<String, String> resolved = followAssignment(source, ref.trim(), 0);
             if (resolved == null) continue;
+            RuleTrace.hit(22, "urlref " + e.file + ":" + e.line + " " + ref.trim());
             e.fields.putAll(resolved);
             if (resolved.containsKey("env")) consumed.add(e);
         }
@@ -652,6 +662,7 @@ public class TreeSitterExtractor {
                 if (unreferenced && !"true".equals(e.fields.get("unreferenced"))) {
                     e.fields.put("unreferenced", "true");
                     e.fields.put("dead-code", "python");
+                    RuleTrace.hit(22, "dead " + e.file + ":" + e.line);
                     marked++;
                 }
             }

@@ -1,0 +1,277 @@
+# apache/skywalking-showcase @ 7d955bedc31d83eba1de9513680a45b2be3c8c5f（2026-10-15）。Apache SkyWalking 的展示系統：一個多語言的「音樂」應用（services/：Spring Cloud Gateway 的 gateway-service、Spring Boot JPA＋ActiveMQ 的 songs-service、Flask 的 recommendation-service、Go net/http 的 rating-service、Node/Express 的 app server ＋ React 前端、APISIX 當 frontend、Selenium 的 load-gen）
+# 外加 SkyWalking 自己的觀測平台（OAP、UI、BanyanDB、Satellite、Rover、OTel collector…）與一堆「feature」：各種中介軟體的監控示範（mysql／postgresql／nginx／apisix／activemq／rabbitmq／mongodb／rocketmq／pulsar／flink／elasticsearch／vm）與 otlp-trace（把 OpenTelemetry Astronomy Shop 整套抄進來當 OTLP 流量源）。
+# 兩套部署描述檔（docs/readme.md：`make deploy.docker` 與 `make deploy.kubernetes`）：
+#   - deploy/platform/docker/docker-compose.<feature>.yaml：每個 feature 一份，Makefile 依 FEATURE_FLAGS 用多個 -f 合起來；音樂應用在 docker-compose.agent.yaml（服務名 gateway、songs、rcmd、app、loadgen、frontend、activemq、rating）。
+#   - deploy/platform/kubernetes/：一個 Helm chart（templates/feature-*/…），**全部是 Go template**（{{ .Values… }}、{{- if …}}），沒渲染過不是合法 YAML；音樂應用在 templates/feature-agent/resources.yaml，Deployment 叫 <x>-deployment、Service 叫 gateway／songs／rcmd／app／frontend／activemq／rating（loadgen 沒有 Service）。OAP／UI 等來自外部 subchart（fullnameOverride sw-demo → sw-demo-oap）。
+# 節點名＝compose 服務名（＝k8s Service 名，也是程式碼裡用的 DNS 名）：gateway、songs、rcmd、app、frontend、loadgen、activemq、rating；平台側用 compose 名 oap、ui、banyandb、…。k8s 的 <x>-deployment 拼法與 compose 名不同，工具若畫成 gateway-deployment 算一錯一漏、原因記命名。
+# 出處＝發出呼叫那一行；位址來源寫在括號裡（程式碼預設值、compose 的 environment 行、k8s template 的 value 行）。音樂應用的服務間位址**全部寫死在程式碼裡**（index.js 的 GATEWAY 預設 'gateway'、app.py 的 http://songs/、http://rating/、application.yaml 的 http://songs／http://rcmd、loadgen.py 的 http://frontend/），manifest 不另外設。
+# 分類：app → gateway、rcmd → songs／rating 是業務呼叫（business）；gateway 的 Spring Cloud Gateway 路由與 APISIX 的 upstream 沿 yas／otel-demo 的慣例列 control（反向代理路由）；loadgen 沿第一組 hold-out 的 load-generator 慣例列 control。
+# variant：(1) 遙測——每個音樂服務的 SkyWalking agent → oap（compose 寫 ${BACKEND_SERVICE}:11800、k8s 寫 {{ template "skywalking.collector.address" }} ＝ sw-demo-oap.<ns>.svc.cluster.local 埠 11800 或 sw-demo-satellite），兩種拼法都列；frontend 的 APISIX 把 /browser/*、/v3/* 代理到 oap:12800 給瀏覽器端 agent 用；
+#   (2) 只在某個 feature 才有的：songs → psql（postgresql-monitor 開才有 DATA_SOURCE_URL，預設 H2 記憶體庫）、r3-load → rating、各監控示範的 mock 負載／exporter → 被監控的中介軟體、otel-collector → exporter／oap；
+#   (3) otlp-trace：docker-compose.otlp-trace.yaml 把 opentelemetry-demo 的 compose 抄進來（服務名 otel-demo-<x>、network alias <x>），那是第三方系統（已在第一組 hold-out 量過），兩種拼法都列 variant，不計分。
+# 不列：event feature 的 CronJob 用 kubectl scale 改 songs／gateway／app 的 replicas（deploy/platform/kubernetes/templates/feature-event/scaler.yaml:83）是 API server 操作不是服務呼叫；trace-profiling／rover 的 swctl 只打 oap；grafana 只有 oap 資料源。
+#
+# ---- business：服務→服務 ----
+app	gateway	business	services/app/server/src/index.js:47 axios.get(`http://${GATEWAY}/songs/top`)（:48 /rcmd；:33 GATEWAY = process.env.GATEWAY || 'gateway'，manifest 沒設 GATEWAY）
+rcmd	songs	business	services/recommendation-service/src/app.py:46 requests.get('http://songs/songs')（寫死在程式碼）
+rcmd	rating	business	services/recommendation-service/src/app.py:48 requests.get('http://rating/rating')（寫死在程式碼）
+# ---- data：songs → ActiveMQ（sender＋receiver 同一個 broker） ----
+songs	activemq	data	services/songs-service/src/main/java/org/apache/skywalking/showcase/services/song/mq/SongMessageReceiver.java:52 new ActiveMQConnectionFactory(activeMQUrl)（:38 @Value("${ACTIVE_MQ_URL:tcp://127.0.0.1:61616}")；services/songs-service/src/main/java/org/apache/skywalking/showcase/services/song/mq/SongMessageSender.java:64 同；deploy/platform/docker/docker-compose.agent.yaml:48 ACTIVE_MQ_URL: tcp://activemq:61616；deploy/platform/kubernetes/templates/feature-agent/resources.yaml:170 同）
+# ---- control：API gateway 路由、APISIX upstream、負載產生器 ----
+gateway	songs	control	services/gateway-service/src/main/resources/application.yaml:27 spring.cloud.gateway route songs-service uri: http://songs（Path=/songs/**）
+gateway	rcmd	control	services/gateway-service/src/main/resources/application.yaml:31 route recommendation-service uri: http://rcmd（Path=/rcmd/**）
+frontend	app	control	deploy/platform/docker/config/apisix/apisix.yaml:54 upstreams[2].nodes "app:80"（routes /homepage、/test → service 2 → upstream 2；k8s 的同一份設定在 deploy/platform/kubernetes/templates/feature-agent/resources.yaml:342）
+loadgen	frontend	control	services/load-gen/loadgen.py:40 driver.get(url)（Selenium 無頭 Chrome；:27 url = os.getenv('URL', 'http://frontend/index.html')，compose／k8s 都沒設 URL）
+# ---- variant (1)：SkyWalking agent 遙測 → OAP（compose 拼法 oap、k8s 拼法 sw-demo-oap） ----
+gateway	oap	variant	deploy/platform/docker/docker-compose.agent.yaml:28 SW_AGENT_COLLECTOR_BACKEND_SERVICES: ${BACKEND_SERVICE}:11800（compose 變數；遙測）
+songs	oap	variant	deploy/platform/docker/docker-compose.agent.yaml:47（遙測）
+rcmd	oap	variant	deploy/platform/docker/docker-compose.agent.yaml:67（遙測）
+app	oap	variant	deploy/platform/docker/docker-compose.agent.yaml:86（遙測）
+frontend	oap	variant	deploy/platform/docker/docker-compose.agent.yaml:106 ＋ deploy/platform/docker/config/apisix/apisix.yaml:50 upstreams[1].nodes "oap:12800"（/browser/*、/v3/* 代理給瀏覽器端 agent）＋ :30 skywalking plugin endpoint_addr http://oap:12800（遙測）
+rating	oap	variant	deploy/platform/docker/docker-compose.agent.yaml:134 SW_AGENT_REPORTER_GRPC_BACKEND_SERVICE（遙測）
+gateway	sw-demo-oap	variant	deploy/platform/kubernetes/templates/feature-agent/resources.yaml:108 value: {{ template "skywalking.collector.address" . }}（deploy/platform/kubernetes/templates/_helpers.tpl:21–27 → sw-demo-oap.<ns>.svc.cluster.local 埠 11800；遙測）
+songs	sw-demo-oap	variant	deploy/platform/kubernetes/templates/feature-agent/resources.yaml:168（遙測）
+rcmd	sw-demo-oap	variant	deploy/platform/kubernetes/templates/feature-agent/resources.yaml:225（遙測）
+app	sw-demo-oap	variant	deploy/platform/kubernetes/templates/feature-agent/resources.yaml:273（遙測）
+frontend	sw-demo-oap	variant	deploy/platform/kubernetes/templates/feature-agent/resources.yaml:501 ＋ :338 upstreams[1].nodes "{{ template "skywalking.oap.address.host" . }}:12800"（遙測）
+rating	sw-demo-oap	variant	deploy/platform/kubernetes/templates/feature-agent/resources.yaml:644（遙測）
+gateway	sw-demo-satellite	variant	deploy/platform/kubernetes/templates/_helpers.tpl:22–23 satellite.enabled 時 collector 位址改成 sw-demo-satellite（遙測）
+songs	sw-demo-satellite	variant	同上（遙測）
+rcmd	sw-demo-satellite	variant	同上（遙測）
+app	sw-demo-satellite	variant	同上（遙測）
+frontend	sw-demo-satellite	variant	同上（遙測）
+rating	sw-demo-satellite	variant	同上（遙測）
+# ---- variant (2)：只在某個 feature 才有 ----
+songs	psql	variant	deploy/platform/kubernetes/templates/feature-agent/resources.yaml:175 DATA_SOURCE_URL jdbc:postgresql://psql.<release-ns>.svc.cluster.local 埠 5432（只在 postgresqlMonitor.enabled；預設是 services/songs-service/src/main/resources/application.yaml:28 的 jdbc:h2:mem；services/songs-service/src/main/java/org/apache/skywalking/showcase/services/song/repo/SongsRepo.java:27 JpaRepository）
+r3-load	rating	variant	deploy/platform/kubernetes/templates/feature-r3/resources.yaml:77 curl http://rating/songs/$i/reviews/…（r3 feature 的 CronJob 負載）
+r3	sw-demo-oap	variant	deploy/platform/kubernetes/templates/feature-r3/resources.yaml（r3 feature；SkyAPM r3 向 OAP 取 URI 樣本）
+ui	oap	variant	deploy/platform/docker/docker-compose.single-node.yaml:84 HORIZON_OAP_QUERY_URL: http://oap:12800（:85–88 admin／zipkin／traceql；deploy/platform/docker/docker-compose.cluster.yaml:97 同；平台）
+oap	banyandb	variant	deploy/platform/docker/docker-compose.single-node.yaml:51 SW_STORAGE_BANYANDB_TARGETS: banyandb:17912（deploy/platform/docker/docker-compose.cluster.yaml:58；平台儲存）
+oap-init	banyandb	variant	deploy/platform/docker/docker-compose.cluster.yaml:42（cluster feature）
+oap1	banyandb	variant	deploy/platform/docker/docker-compose.cluster.yaml:58（cluster feature；oap1/oap2 共用 &oap 錨點）
+oap2	banyandb	variant	deploy/platform/docker/docker-compose.cluster.yaml:58（cluster feature）
+oap1	zookeeper	variant	deploy/platform/docker/docker-compose.cluster.yaml:53 SW_CLUSTER_ZK_HOST_PORT: zookeeper:2181（cluster feature）
+oap2	zookeeper	variant	deploy/platform/docker/docker-compose.cluster.yaml:53（cluster feature）
+oap	zookeeper	variant	deploy/platform/docker/docker-compose.cluster.yaml:53（cluster feature 的 oap 是 oap1/oap2 的別名服務）
+satellite	oap	variant	deploy/platform/docker/docker-compose.satellite.yaml:31 SATELLITE_GRPC_CLIENT: oap:11800（satellite feature）
+grafana	oap	variant	deploy/platform/docker/config/grafana/datasources.yaml:27 url: http://oap:9090（:34 graphql、:43、:50、:59、:68；grafana feature）
+grafana	sw-demo-oap	variant	deploy/platform/kubernetes/templates/feature-grafana/resources.yaml:68 url: http://{{ include "skywalking.oap.address.host" . }}:9090（grafana feature）
+event-reporter	oap	variant	deploy/platform/docker/docker-compose.event.yaml:31 swctl --grpc-addr=oap:11800 event report（event feature）
+skywalking-event-exporter	demo-oap	variant	deploy/platform/kubernetes/templates/feature-event/resources.yaml:40 address: "{{ .Release.Name }}-oap:11800"（event feature；Release 名 demo）
+otel-collector	oap	variant	deploy/platform/docker/config/otel-collector-config.yaml:31 exporters otlp endpoint "oap:11800"（vm-monitor 等每個監控 feature 的 collector 設定檔都有同一行：deploy/platform/docker/config/otel-collector-config-mysql.yaml:31、deploy/platform/docker/config/otel-collector-config-psql.yaml:29、deploy/platform/docker/config/otel-collector-config-elasticsearch.yaml:31、deploy/platform/docker/config/otel-collector-config-banyandb.yaml:45、deploy/platform/docker/config/nginx/otel-collector-config.yaml:33、deploy/platform/docker/config/mongodb/otel-collector-config.yaml:36、deploy/platform/docker/config/pulsar/otel-collector-config.yaml:35、deploy/platform/docker/config/rabbitmq/otel-collector-config.yaml:42、deploy/platform/docker/config/rocketmq/otel-collector-rocketmq-config.yaml:31、deploy/platform/docker/config/flink/otel-collector-flink-config.yaml:61、deploy/platform/docker/config/opentelemetry-demo/otel-collector-config.yaml:38（otlp-trace 的 collector 在 compose 叫 otel-demo-collector、alias otel-collector）；遙測）
+otel-collector	sw-demo-oap	variant	deploy/platform/kubernetes/templates/otel-collector-config.yaml:60 endpoint: "{{ include "skywalking.oap.address.grpc" $root }}"（遙測）
+otel-collector	vm1	variant	deploy/platform/docker/config/otel-collector-config.yaml:24 targets vm1:9100（vm-monitor feature）
+otel-collector	vm2	variant	deploy/platform/docker/config/otel-collector-config.yaml:24 targets vm2:9100（vm-monitor feature）
+otel-collector	banyandb	variant	deploy/platform/docker/config/otel-collector-config-banyandb.yaml:32 targets banyandb:2121（banyandb-monitor feature）
+otel-collector	es-exporter	variant	deploy/platform/docker/config/otel-collector-config-elasticsearch.yaml:24 targets es-exporter:9114（elasticsearch-monitor feature）
+es-exporter	elasticsearch	variant	deploy/platform/docker/docker-compose.elasticsearch-monitor.yaml:54 --es.uri=http://elasticsearch:9200（elasticsearch-monitor feature）
+es-mock	elasticsearch	variant	deploy/platform/docker/docker-compose.elasticsearch-monitor.yaml:81 es-mock 跑 scripts/es-e2e-data-mock.sh 打 elasticsearch（elasticsearch-monitor feature）
+otel-collector	mysql-service	variant	deploy/platform/docker/config/otel-collector-config-mysql.yaml:23 targets mysql-service:9104（mysql-monitor feature）
+mysql-service	mysql	variant	deploy/platform/docker/docker-compose.mysql-monitor.yaml:51 DATA_SOURCE_NAME=root:password@(mysql:3306)/（mysqld-exporter；mysql-monitor feature）
+mysql-load	mysql	variant	deploy/platform/docker/docker-compose.mysql-monitor.yaml:44 mysql -h mysql … < /docker/mock.sql（mysql-monitor feature；k8s deploy/platform/kubernetes/templates/feature-mysql-monitor/mysql.yaml:190 mysql-load-deployment 同）
+mysql-load-deployment	mysql	variant	deploy/platform/kubernetes/templates/feature-mysql-monitor/mysql.yaml:190 mysql -hmysql（k8s 拼法；mysql-monitor feature）
+otel-collector	postgres-exporter	variant	deploy/platform/docker/config/otel-collector-config-psql.yaml:23 targets postgres-exporter:9187（postgresql-monitor feature）
+postgres-exporter	postgres	variant	deploy/platform/docker/docker-compose.postgresql-monitor.yaml:51 DATA_SOURCE_NAME=postgresql://…@postgres:5432/postgres（postgresql-monitor feature）
+postgres-load	postgres	variant	deploy/platform/docker/docker-compose.postgresql-monitor.yaml:41 psql -f /docker/mock.sql -h postgres（postgresql-monitor feature）
+psql-exporter	psql	variant	deploy/platform/kubernetes/templates/feature-postgresql-monitor/psql.yaml:154 postgresql://…@psql:5432/postgres（k8s 拼法；sidecar 容器）
+psql-load-deployment	psql	variant	deploy/platform/kubernetes/templates/feature-postgresql-monitor/psql.yaml:213 psql -f /conf/mock.sql -h psql（k8s 拼法）
+psql-load	psql	variant	deploy/platform/kubernetes/templates/feature-postgresql-monitor/psql.yaml:213（容器名拼法）
+otel-collector	nginx	variant	deploy/platform/docker/config/nginx/otel-collector-config.yaml:24 targets nginx:9145（nginx-monitor feature）
+nginx-caller	nginx	variant	deploy/platform/docker/docker-compose.nginx-monitor.yaml:46 curl http://nginx:8080/test（nginx-monitor feature）
+fluent-bit	oap	variant	deploy/platform/docker/config/nginx/fluent-bit.conf:45 Host oap（:46 Port 12800；nginx 日誌送 OAP；nginx-monitor feature）
+nginx	oap	variant	deploy/platform/docker/docker-compose.nginx-monitor.yaml:19 nginx 用 config/nginx/Dockerfile.nginx 內建 skywalking 模組（nginx-monitor feature；遙測）
+otel-collector	amqexporter	variant	deploy/platform/docker/docker-compose.activemq-monitor.yaml:36 OTEL_TARGET_ADDREESS: amqexporter:5556（activemq-monitor feature）
+amqexporter	activemq	variant	deploy/platform/docker/docker-compose.activemq-monitor.yaml:19 jmx-exporter（config/activemq/config.yaml 的 hostPort；depends_on activemq；activemq-monitor feature）
+apisix-otel-collector	frontend	variant	deploy/platform/docker/docker-compose.apisix-monitor.yaml:32 OTEL_TARGET_ADDREESS: frontend:9091（apisix-monitor feature；抓 APISIX 的 Prometheus 指標）
+apisix-otel-collector	oap	variant	deploy/platform/docker/config/apisix/otel-collector-config.yaml:32 endpoint "${SW_AGENT_COLLECTOR_BACKEND_SERVICES}"（apisix-monitor feature）
+otel-collector	frontend	variant	deploy/platform/kubernetes/templates/feature-apisix-monitor/opentelemetry-config.yaml:36 replacement: frontend.{{ .Values.sampleServices.namespace }}（k8s apisix-monitor）
+otel-collector	activemq	variant	deploy/platform/kubernetes/templates/feature-activemq-monitor/opentelemetry-config.yaml:32 replacement: activemq.{{ .Values.sampleServices.namespace }}（k8s activemq-monitor）
+otel-collector	mongodb-exporter-1	variant	deploy/platform/docker/config/mongodb/otel-collector-config.yaml:24 targets mongodb-exporter-1:9216（mongodb-monitor feature）
+otel-collector	mongodb-exporter-2	variant	deploy/platform/docker/config/mongodb/otel-collector-config.yaml:24（mongodb-monitor feature）
+mongodb-exporter-1	mongodb-1	variant	deploy/platform/docker/docker-compose.mongodb-monitor.yaml:57 --mongodb.uri=mongodb://mongodb-1:27017（mongodb-monitor feature）
+mongodb-exporter-2	mongodb-2	variant	deploy/platform/docker/docker-compose.mongodb-monitor.yaml:73 --mongodb.uri=mongodb://mongodb-2:27017（mongodb-monitor feature）
+mongodb-repl-setup	mongodb-1	variant	deploy/platform/docker/config/mongodb/setup.sh:18 mongosh --host mongodb-1:27017（deploy/platform/docker/docker-compose.mongodb-monitor.yaml:35；mongodb-monitor feature）
+mongodb-repl-setup	mongodb-2	variant	deploy/platform/docker/config/mongodb/setup.sh:22 mongosh --host mongodb-2:27017（mongodb-monitor feature）
+otel-collector	rmq0	variant	deploy/platform/docker/config/rabbitmq/otel-collector-config.yaml:24 targets rmq0:15692（rabbitmq-monitor feature）
+basic-get	rmq0	variant	deploy/platform/docker/docker-compose.rabbitmq-monitor.yaml:50 URI amqp://guest:guest@rmq0:5672/%2f（rabbitmq-monitor feature 的 perf-test 客戶端）
+basic-get-auto	rmq0	variant	deploy/platform/docker/docker-compose.rabbitmq-monitor.yaml:64（rabbitmq-monitor feature）
+greedy-consumer	rmq0	variant	deploy/platform/docker/docker-compose.rabbitmq-monitor.yaml:78（rabbitmq-monitor feature）
+publisher-confirms	rmq0	variant	deploy/platform/docker/docker-compose.rabbitmq-monitor.yaml:92（rabbitmq-monitor feature）
+slow-consumer-persistent	rmq0	variant	deploy/platform/docker/docker-compose.rabbitmq-monitor.yaml:106（rabbitmq-monitor feature）
+nack	rmq0	variant	deploy/platform/docker/docker-compose.rabbitmq-monitor.yaml:127（rabbitmq-monitor feature）
+unroutable-return	rmq0	variant	deploy/platform/docker/docker-compose.rabbitmq-monitor.yaml:143（rabbitmq-monitor feature）
+unroutable-drop	rmq0	variant	deploy/platform/docker/docker-compose.rabbitmq-monitor.yaml:155（rabbitmq-monitor feature）
+rabbitmq-mock-client	demo-rabbitmq	variant	deploy/platform/kubernetes/templates/feature-rabbitmq-monitor/rabbitmq.yaml:39 URI amqp://guest:guest@demo-rabbitmq:5672/%2f（k8s rabbitmq-monitor；bitnami subchart）
+otel-collector	rocketmq-exporter	variant	deploy/platform/docker/config/rocketmq/otel-collector-rocketmq-config.yaml:23 targets rocketmq-exporter:5557（rocketmq-monitor feature）
+rocketmq-broker-1	rocketmq-namesrv-1	variant	deploy/platform/docker/docker-compose.rocketmq-monitor.yaml:43 NAMESRV_ADDR rocketmq-namesrv-1:9876（rocketmq-monitor feature）
+rocketmq-producer-perf-test	rocketmq-namesrv-1	variant	deploy/platform/docker/docker-compose.rocketmq-monitor.yaml:61（rocketmq-monitor feature）
+rocketmq-consumer-perf-test	rocketmq-namesrv-1	variant	deploy/platform/docker/docker-compose.rocketmq-monitor.yaml:74（rocketmq-monitor feature）
+rocketmq-exporter	rocketmq-namesrv-1	variant	deploy/platform/docker/docker-compose.rocketmq-monitor.yaml:88 rocketmq.config.namesrvAddr（rocketmq-monitor feature）
+rocketmq-producer-development	rocketmq	variant	deploy/platform/kubernetes/templates/feature-rocketmq/resource.yaml:132 NAMESRV_ADDR rocketmq:9876（k8s rocketmq feature 的 CronJob）
+otel-collector	broker	variant	deploy/platform/docker/config/pulsar/otel-collector-config.yaml:23 targets broker:8080（pulsar-monitor feature）
+bookie	zookeeper	variant	deploy/platform/docker/docker-compose.pulsar-monitor.yaml:41 zkServers=zookeeper:2181（pulsar-monitor feature）
+broker	zookeeper	variant	deploy/platform/docker/docker-compose.pulsar-monitor.yaml:68 metadataStoreUrl=zk:zookeeper:2181（:69、:86；pulsar-monitor feature）
+consume-perf	broker	variant	deploy/platform/docker/docker-compose.pulsar-monitor.yaml:93 consume-perf 依 depends_on broker 連 broker（pulsar-perf 預設 pulsar://localhost… 由 compose 的 broker 服務提供；pulsar-monitor feature）
+produce-perf	broker	variant	deploy/platform/docker/docker-compose.pulsar-monitor.yaml:102（pulsar-monitor feature）
+pulsar-consumer-pref	pulsar	variant	deploy/platform/kubernetes/templates/feature-pulsar-monitor/resource.yaml:85 --service-url pulsar://pulsar:6650（k8s pulsar-monitor）
+pulsar-producer-perf-test	pulsar	variant	deploy/platform/kubernetes/templates/feature-pulsar-monitor/resource.yaml:109 pulsar://pulsar.<release-ns>.svc.cluster.local 埠 6650（k8s pulsar-monitor）
+otel-collector	jobmanager	variant	deploy/platform/docker/config/flink/otel-collector-flink-config.yaml:23 targets jobmanager:9260（flink-monitor feature）
+otel-collector	taskmanager	variant	deploy/platform/docker/config/flink/otel-collector-flink-config.yaml:42 targets taskmanager:9261（flink-monitor feature）
+taskmanager	jobmanager	variant	deploy/platform/docker/docker-compose.flink-monitor.yaml:47 jobmanager.rpc.address: jobmanager（flink-monitor feature）
+execute-flink-job	jobmanager	variant	deploy/platform/docker/docker-compose.flink-monitor.yaml:71 ./bin/flink run -m jobmanager:8081（flink-monitor feature；k8s deploy/platform/kubernetes/templates/feature-flink/resource.yaml:150 同）
+# ---- variant (3)：otlp-trace feature 把 opentelemetry-demo 抄進 compose（第三方系統；compose 名 otel-demo-<x>、alias <x>；兩種拼法都列） ----
+otel-demo-collector	oap	variant	deploy/platform/docker/config/opentelemetry-demo/otel-collector-config.yaml:38 endpoint oap:11800（otlp-trace feature）
+otel-demo-cart	otel-demo-valkey-cart	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:193 VALKEY_ADDR: valkey-cart:6379（otlp-trace）
+cart	valkey-cart	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:193（alias 拼法）
+otel-demo-checkout	otel-demo-cart	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:218 CART_ADDR: cart:7070（otlp-trace）
+otel-demo-checkout	otel-demo-currency	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:219（otlp-trace）
+otel-demo-checkout	otel-demo-email	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:220（otlp-trace）
+otel-demo-checkout	otel-demo-payment	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:221（otlp-trace）
+otel-demo-checkout	otel-demo-product-catalog	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:222（otlp-trace）
+otel-demo-checkout	otel-demo-shipping	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:223（otlp-trace）
+otel-demo-checkout	otel-demo-kafka	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:224（otlp-trace）
+checkout	cart	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:218（alias 拼法）
+checkout	currency	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:219（alias 拼法）
+checkout	email	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:220（alias 拼法）
+checkout	payment	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:221（alias 拼法）
+checkout	product-catalog	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:222（alias 拼法）
+checkout	shipping	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:223（alias 拼法）
+checkout	kafka	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:224（alias 拼法）
+otel-demo-product-catalog	otel-demo-astronomy-db	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:371 DB_CONNECTION_STRING postgres://…@astronomy-db/astronomy_db（otlp-trace）
+product-catalog	astronomy-db	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:371（alias 拼法）
+otel-demo-recommendation	otel-demo-product-catalog	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:432 PRODUCT_CATALOG_ADDR（otlp-trace）
+recommendation	product-catalog	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:432（alias 拼法）
+otel-demo-shipping	otel-demo-quote	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:466 QUOTE_ADDR: http://quote:8090（otlp-trace）
+shipping	quote	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:466（alias 拼法）
+otel-demo-accounting	otel-demo-kafka	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:497 KAFKA_ADDR: kafka:9092（otlp-trace）
+accounting	kafka	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:497（alias 拼法）
+otel-demo-fraud-detection	otel-demo-kafka	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:525（otlp-trace）
+fraud-detection	kafka	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:525（alias 拼法）
+otel-demo-frontend	otel-demo-ad	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:578 AD_ADDR: ad:9555（otlp-trace）
+otel-demo-frontend	otel-demo-cart	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:579（otlp-trace）
+otel-demo-frontend	otel-demo-checkout	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:580（otlp-trace）
+otel-demo-frontend	otel-demo-currency	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:581（otlp-trace）
+otel-demo-frontend	otel-demo-product-catalog	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:582（otlp-trace）
+otel-demo-frontend	otel-demo-recommendation	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:583（otlp-trace）
+otel-demo-frontend	otel-demo-shipping	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:584（otlp-trace）
+frontend	ad	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:578（alias 拼法；注意 alias frontend 與音樂應用的 frontend 同名，在 otel-demo network 裡）
+frontend	cart	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:579（alias 拼法）
+frontend	checkout	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:580（alias 拼法）
+frontend	currency	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:581（alias 拼法）
+frontend	product-catalog	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:582（alias 拼法）
+frontend	recommendation	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:583（alias 拼法）
+frontend	shipping	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:584（alias 拼法）
+otel-demo-frontend-proxy	otel-demo-frontend	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:638 FRONTEND_HOST: frontend（Envoy 路由；otlp-trace）
+otel-demo-frontend-proxy	otel-demo-load-generator	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:639 LOCUST_WEB_HOST: load-generator（otlp-trace）
+otel-demo-frontend-proxy	otel-demo-image-provider	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:648 IMAGE_PROVIDER_HOST: image-provider（otlp-trace）
+otel-demo-frontend-proxy	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:660 FLAGD_HOST: flagd（otlp-trace）
+otel-demo-frontend-proxy	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:647 OTEL_COLLECTOR_HOST: otel-collector（otlp-trace）
+frontend-proxy	frontend	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:638（alias 拼法）
+frontend-proxy	load-generator	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:639（alias 拼法）
+frontend-proxy	image-provider	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:648（alias 拼法）
+frontend-proxy	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:660（alias 拼法）
+frontend-proxy	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:647（alias 拼法）
+frontend-proxy	grafana	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:642 GRAFANA_HOST: grafana（compose 裡沒有 grafana 服務在 otel-demo network；Envoy 範本留下的位址）
+frontend-proxy	jaeger	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:644 JAEGER_HOST: jaeger（同上，沒有這個服務）
+frontend-proxy	opamp-server	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:645（同上）
+frontend-proxy	firepit	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:658（同上）
+frontend-proxy	flagd-ui	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:662（同上）
+frontend-proxy	telemetry-docs	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:664（同上）
+frontend-proxy	chatbot	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:666（同上）
+otel-demo-load-generator	otel-demo-frontend-proxy	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:693 LOCUST_HOST: http://frontend-proxy:8080（otlp-trace）
+load-generator	frontend-proxy	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:693（alias 拼法）
+otel-demo-ad	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33 x-otel-demo-env FLAGD_HOST: flagd（錨點展開到每個服務；otlp-trace）
+ad	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-cart	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+cart	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-checkout	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+checkout	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-payment	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+payment	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-product-catalog	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+product-catalog	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-recommendation	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+recommendation	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-shipping	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+shipping	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-frontend	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+frontend	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-email	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+email	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-currency	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+currency	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-quote	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+quote	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-accounting	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+accounting	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-fraud-detection	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+fraud-detection	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-image-provider	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+image-provider	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-load-generator	otel-demo-flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（otlp-trace）
+load-generator	flagd	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:33（alias 拼法）
+otel-demo-kafka	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37 x-otel-demo-grpc OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317（:39 x-otel-demo-http 4318；錨點展開到每個服務；遙測）
+kafka	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-ad	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+ad	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-cart	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+cart	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-checkout	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+checkout	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-currency	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+currency	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-email	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+email	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-payment	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+payment	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-product-catalog	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+product-catalog	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-quote	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+quote	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-recommendation	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+recommendation	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-shipping	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+shipping	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-accounting	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+accounting	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-fraud-detection	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+fraud-detection	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-image-provider	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+image-provider	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-frontend	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+frontend	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-frontend-proxy	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:647（alias 拼法混用；遙測）
+otel-demo-load-generator	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+load-generator	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+otel-demo-flagd	otel-demo-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（遙測）
+flagd	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（alias 拼法；遙測）
+# ---- variant (3)：2026-10-27 計分後補（混拼與漏列；見各行說明） ----
+otel-demo-accounting	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-accounting → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-ad	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-ad → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-cart	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-cart → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-checkout	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-checkout → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-currency	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-currency → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-email	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-email → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-flagd	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-flagd → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-fraud-detection	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-fraud-detection → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-frontend	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-frontend → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-image-provider	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-image-provider → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-kafka	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-kafka → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-load-generator	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-load-generator → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-payment	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-payment → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-product-catalog	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-product-catalog → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-quote	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-quote → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-recommendation	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-recommendation → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-shipping	otel-collector	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:37（混拼：otel-demo-shipping → alias otel-collector；遙測）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-checkout	cart	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:218 CART_ADDR: cart:7070（混拼：目標停在 alias cart）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-frontend	cart	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:579 CART_ADDR: cart:7070（混拼）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-frontend-proxy	chatbot	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:666（混拼：來源 otel-demo-frontend-proxy、目標 chatbot 在這份 compose 裡不存在）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-frontend-proxy	firepit	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:658（混拼：來源 otel-demo-frontend-proxy、目標 firepit 在這份 compose 裡不存在）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-frontend-proxy	flagd-ui	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:662（混拼：來源 otel-demo-frontend-proxy、目標 flagd-ui 在這份 compose 裡不存在）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-frontend-proxy	grafana	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:642（混拼：來源 otel-demo-frontend-proxy、目標 grafana 在這份 compose 裡不存在）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-frontend-proxy	jaeger	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:644（混拼：來源 otel-demo-frontend-proxy、目標 jaeger 在這份 compose 裡不存在）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-frontend-proxy	opamp-server	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:645（混拼：來源 otel-demo-frontend-proxy、目標 opamp-server 在這份 compose 裡不存在）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-frontend-proxy	telemetry-docs	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:664（混拼：來源 otel-demo-frontend-proxy、目標 telemetry-docs 在這份 compose 裡不存在）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-frontend-proxy	frontend	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:638 FRONTEND_HOST: frontend（混拼：alias frontend 指 otel-demo-frontend，但工具的 frontend 節點是音樂應用的 APISIX，兩個 network 同名）—— 2026-10-27 計分後補：工具把來源解成 compose 名、目標停在 network alias（compose 的 networks.<n>.aliases 沒讀），檔頭已宣告兩種拼法都算 variant，這是沒料到的第三種「混拼」；邊本身與已列的同一條
+otel-demo-accounting	otel-demo-astronomy-db	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:503 DB_CONNECTION_STRING: Host=astronomy-db;…（Npgsql 連線字串；:514 depends_on）—— 2026-10-27 計分後補：標註 otlp-trace 區塊時漏了 accounting 的資料庫（第一組 hold-out 的 accounting → astronomy-db 同一條）
+accounting	astronomy-db	variant	deploy/platform/docker/docker-compose.otlp-trace.yaml:503（alias 拼法）—— 2026-10-27 計分後補，同上

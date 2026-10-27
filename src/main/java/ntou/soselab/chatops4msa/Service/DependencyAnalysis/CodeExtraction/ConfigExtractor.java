@@ -1,5 +1,6 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction;
 
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace;
 import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
 
@@ -82,7 +83,7 @@ public class ConfigExtractor {
                     // A Compose overlay whose name says it runs tests (compose.tests.yaml,
                     // docker-compose-e2e.yml) declares test runners, not workloads: the same
                     // exclusion the service-root scan applies to a tests/ directory (2026-10-26).
-                    if (isTestCompose(name)) continue;
+                    if (RuleTrace.hitIf(isTestCompose(name), 31, "skip-compose " + relative)) continue;
                     Object loaded = new Yaml().load(Files.newBufferedReader(file, StandardCharsets.UTF_8));
                     // docker-compose declares each service's startup dependencies
                     // (config-server, discovery-server, …) as depends_on — the one
@@ -111,6 +112,7 @@ public class ConfigExtractor {
                         // An Envoy static config is a reverse proxy's routing table in YAML:
                         // its clusters are the upstreams, as nginx's proxy_pass are.
                         if (!extractEnvoyClusters(loaded, relative, ledger) && looksLikeSpringConfig(loaded)) {
+                            RuleTrace.hit(3, "spring-yml " + relative);
                             flatten("", loaded, relative, ledger);
                         }
                     }
@@ -446,11 +448,11 @@ public class ConfigExtractor {
         // Host=astronomy-db;Username=…;Database=… (2026-10-26, OpenTelemetry demo's accounting).
         if (v.indexOf('=') > 0 && v.indexOf(';') > 0) {
             java.util.regex.Matcher m = CONNECTION_STRING_HOST.matcher(v);
-            if (m.find()) return hostOf(m.group(1).replaceFirst("(?i)^tcp:", ""), keepDomain);
+            if (RuleTrace.hitIf(m.find(), 32, "connstr " + name)) return hostOf(m.group(1).replaceFirst("(?i)^tcp:", ""), keepDomain);
         }
         boolean addressShaped = v.contains("://") || v.matches("[^\\s/]+:\\d{2,5}(/.*)?");
         if (addressShaped) return hostOf(v, keepDomain);
-        if (name != null && HOST_ENV_NAME.matcher(name.trim()).find()) return hostOf(v, keepDomain);
+        if (RuleTrace.hitIf(name != null && HOST_ENV_NAME.matcher(name.trim()).find(), 5, "env " + name + "=" + v)) return hostOf(v, keepDomain);
         return null;
     }
 
@@ -498,11 +500,12 @@ public class ConfigExtractor {
                                         String relative, EdgeLedger ledger) {
         Map<?, ?> services = composeServices(loaded);
         if (services == null) return;
+        if (!(((Map<?, ?>) loaded).get("services") instanceof Map)) RuleTrace.hit(12, "v1 " + relative);
         for (Map.Entry<?, ?> entry : services.entrySet()) {
             String service = String.valueOf(entry.getKey()).trim();
             // A service whose name says it is a test runner (frontendTests, e2e-tests) is a
             // build unit, never a workload — as a tests/ directory is (2026-10-26).
-            if (service.isEmpty() || ServiceRootScanner.isTestName(service)) continue;
+            if (service.isEmpty() || RuleTrace.hitIf(ServiceRootScanner.isTestName(service), 31, "skip-service " + service)) continue;
             Map<String, String> fields = new LinkedHashMap<>();
             fields.put("name", service);
             fields.put("kind", "ComposeService");
@@ -547,6 +550,7 @@ public class ConfigExtractor {
                     aliasFields.put("service", "*");
                     aliasFields.put("alias", alias);
                     aliasFields.put("target", service);
+                    RuleTrace.hit(37, "hostname " + alias + "=" + service);
                     ledger.add("compose-alias", aliasFields, relative, -1, "High (compose hostname)");
                 }
             }
@@ -610,13 +614,16 @@ public class ConfigExtractor {
             }
             env.putAll(fileEnv);
             Set<String> forwarded = new java.util.HashSet<>();
+            Set<String> interpolated = new java.util.HashSet<>(); // keys whose value had a ${VAR} filled from .env (rule 24, traced below)
 
             Object environment = config.get("environment");
             if (environment instanceof Map<?, ?> map) {
                 for (Map.Entry<?, ?> e : map.entrySet()) {
                     String key = String.valueOf(e.getKey()).trim();
                     if (e.getValue() != null) {
-                        env.put(key, interpolate(String.valueOf(e.getValue()), projectEnv, 0));
+                        String value = interpolate(String.valueOf(e.getValue()), projectEnv, 0);
+                        if (!value.equals(String.valueOf(e.getValue()))) interpolated.add(key);
+                        env.put(key, value);
                     } else {
                         String value = fileEnv.containsKey(key) ? fileEnv.get(key) : projectEnv.get(key);
                         if (value != null) {
@@ -630,7 +637,9 @@ public class ConfigExtractor {
                     String s = String.valueOf(item).trim();
                     int eq = s.indexOf('=');
                     if (eq > 0) {
-                        env.put(s.substring(0, eq).trim(), interpolate(s.substring(eq + 1).trim(), projectEnv, 0));
+                        String value = interpolate(s.substring(eq + 1).trim(), projectEnv, 0);
+                        if (!value.equals(s.substring(eq + 1).trim())) interpolated.add(s.substring(0, eq).trim());
+                        env.put(s.substring(0, eq).trim(), value);
                     } else if (!s.isEmpty()) {
                         String value = fileEnv.containsKey(s) ? fileEnv.get(s) : projectEnv.get(s);
                         if (value != null) {
@@ -646,9 +655,27 @@ public class ConfigExtractor {
                 recordEnvAddress(e.getKey(), e.getValue(), null, service, relative, ledger,
                         forwarded.contains(e.getKey()) ? ".env" : null, true);
                 String host = addressHost(e.getKey(), e.getValue(), true);
+                // Rule 7: the Compose environment is the env → host table. Rule 24: the value
+                // came through a forwarded key, an env_file, or a ${VAR} filled from .env.
+                String via = forwarded.contains(e.getKey()) ? "forward " : fileEnv.containsKey(e.getKey()) && !environmentDeclares(config, e.getKey()) ? "env_file "
+                        : interpolated.contains(e.getKey()) ? "interp " : null;
+                if (host != null) RuleTrace.hit(via != null ? 24 : 7, (via != null ? via : "env ") + service + "." + e.getKey() + "=" + host);
                 if (host != null) recordWorkloadEnv(service, null, host, e.getKey(), e.getValue(), relative, ledger);
             }
         }
+    }
+
+    /** Whether a Compose service's own {@code environment} block names {@code key} (in either form); trace only. */
+    private static boolean environmentDeclares(Map<?, ?> config, String key) {
+        Object environment = config.get("environment");
+        if (environment instanceof Map<?, ?> map) return map.containsKey(key);
+        if (environment instanceof List<?> list) {
+            for (Object item : list) {
+                String s = String.valueOf(item).trim();
+                if (s.equals(key) || s.startsWith(key + "=")) return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -763,6 +790,7 @@ public class ConfigExtractor {
                 Map<String, String> fields = new LinkedHashMap<>();
                 fields.put("value", value);
                 fields.put("cluster", yarp.group(1));
+                RuleTrace.hit(38, "yarp " + value);
                 ledger.add("url", fields, relative, -1, "High (yarp reverse proxy)");
                 return;
             }
@@ -771,6 +799,7 @@ public class ConfigExtractor {
             Map<String, String> fields = new LinkedHashMap<>();
             fields.put("key", prefix);
             fields.put("value", value);
+            RuleTrace.hit(38, "key " + prefix);
             ledger.add("config", fields, relative, -1, "High");
         }
     }
@@ -816,6 +845,7 @@ public class ConfigExtractor {
                 Map<String, String> fields = new LinkedHashMap<>();
                 fields.put("value", value);
                 if (cluster.get("name") != null) fields.put("cluster", String.valueOf(cluster.get("name")));
+                RuleTrace.hit(34, "url " + value);
                 ledger.add("url", fields, relative, -1, "High (envoy static config)");
             }
         }
@@ -872,10 +902,12 @@ public class ConfigExtractor {
                     v.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(value != null ? value : v.group()));
                 }
                 v.appendTail(sb);
+                RuleTrace.hitIf(!sb.toString().equals(target), 46, "set-var " + sb);
                 target = sb.toString();
             }
             Map<String, String> fields = new LinkedHashMap<>();
             fields.put("value", target);
+            RuleTrace.hit(6, "url " + target);
             ledger.add("url", fields, relative, lineNo, "High (reverse-proxy config)");
         }
     }
@@ -948,6 +980,7 @@ public class ConfigExtractor {
         boolean cluster = false;
         for (String suffix : CLUSTER_SUFFIXES) {
             if (s.endsWith(suffix) && s.length() > suffix.length()) {
+                RuleTrace.hit(36, "cluster-suffix " + s);
                 s = s.substring(0, s.length() - suffix.length());
                 cluster = true;
                 break;
@@ -957,7 +990,10 @@ public class ConfigExtractor {
         if (cluster) {
             if (lastDot > 0) s = s.substring(0, lastDot);            // <svc>.<ns>.svc.cluster.local -> <svc>
         } else if (!keepDomain && lastDot > 0 && s.indexOf('.') == lastDot && !hasReservedTld(s)) {
+            RuleTrace.hit(36, "ns-strip " + s);
             s = s.substring(0, lastDot);                              // k8s manifest: <svc>.<ns> -> <svc>
+        } else if (lastDot > 0) {
+            RuleTrace.hit(36, "keep-dotted " + s);                    // a domain, a reserved TLD or a dotted Compose name: kept whole
         }
         if (s.matches(DNS_LABEL)) return s;
         return s.matches(DNS_NAME) ? s : null;
@@ -1002,11 +1038,13 @@ public class ConfigExtractor {
                         String target = parts[0].trim();
                         targets.add(target);
                         String alias = parts.length > 1 ? parts[1].trim() : "";
+                        if (!key.equals("depends_on") && !target.isEmpty()) RuleTrace.hit(12, "links " + service + "->" + target);
                         if (!alias.isEmpty() && !target.isEmpty() && !alias.equalsIgnoreCase(target)) {
                             Map<String, String> fields = new LinkedHashMap<>();
                             fields.put("service", service);
                             fields.put("alias", alias);
                             fields.put("target", target);
+                            RuleTrace.hit(25, "alias " + service + ":" + alias + "=" + target);
                             ledger.add("compose-alias", fields, relative, -1, "High (docker-compose links alias)");
                         }
                     }
@@ -1077,7 +1115,7 @@ public class ConfigExtractor {
         String k = key.toLowerCase(Locale.ROOT);
 
         for (String prefix : OPENAPI_UI_PREFIXES) {
-            if (k.startsWith(prefix)) return false;
+            if (RuleTrace.hitIf(k.startsWith(prefix), 43, "drop " + k)) return false;
         }
 
         if (k.startsWith("spring.datasource") || k.startsWith("spring.kafka")

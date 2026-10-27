@@ -1,0 +1,462 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 13,
+    "examples": [
+      "no-workload promotion=promotion",
+      "no-workload order=order",
+      "no-workload rating=rating",
+      "no-workload sampledata=sampledata",
+      "no-workload location=location",
+      "no-workload payment=payment",
+      "map storefront-bff=storefront",
+      "no-workload tax=tax",
+      "map backoffice-bff=backoffice",
+      "no-workload search=search",
+      "no-workload inventory=inventory",
+      "no-workload cart=cart",
+      "no-workload customer=customer"
+    ],
+    "count": 13
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 1,
+    "examples": ["accept elasticsearch.url=elasticsearch"],
+    "count": 1
+  },
+  "24": {
+    "hits": 59,
+    "examples": [
+      "interp search.YAS_PUBLIC_URL=api.yas.local",
+      "forward search.YAS_SERVICES_PRODUCT=product",
+      "forward search.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward backoffice.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward storefront.YAS_SERVICES_CUSTOMER=customer",
+      "forward storefront.YAS_SERVICES_CART=cart",
+      "forward storefront.YAS_SERVICES_RATING=rating",
+      "forward storefront.YAS_SERVICES_ORDER=order",
+      "forward storefront.YAS_SERVICES_LOCATION=location",
+      "forward storefront.YAS_SERVICES_INVENTORY=inventory",
+      "forward storefront.YAS_SERVICES_TAX=tax",
+      "forward storefront.YAS_SERVICES_PROMOTION=promotion",
+      "forward storefront.YAS_SERVICES_PAYMENT=payment",
+      "forward storefront.YAS_SERVICES_SAMPLE_DATA=sampledata",
+      "forward storefront.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "interp media.YAS_PUBLIC_URL=api.yas.local",
+      "forward media.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward product.YAS_SERVICES_MEDIA=media",
+      "forward product.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward customer.YAS_SERVICES_LOCATION=location"
+    ],
+    "count": 59
+  },
+  "46": {
+    "hits": 5,
+    "examples": [
+      "set-var http://search",
+      "set-var http://webhook",
+      "set-var http://recommendation",
+      "set-var http://grafana:3000",
+      "set-var http://elasticsearch:9200"
+    ],
+    "count": 5
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 5,
+    "examples": [
+      "list spring.kafka.bootstrap-servers=kafka:9092",
+      "list spring.kafka.consumer.bootstrap-servers=kafka:9092",
+      "list spring.kafka.producer.bootstrap-servers=kafka:9092"
+    ],
+    "count": 3
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 4,
+    "examples": [
+      "edge webhook->kafka",
+      "edge recommendation->kafka",
+      "edge search->kafka"
+    ],
+    "count": 3
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 1,
+    "examples": ["k8s-over-compose 33 compose names ignored"],
+    "count": 1
+  },
+  "33": {
+    "hits": 41,
+    "examples": ["drop api.yas.local"],
+    "count": 1
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 6,
+    "examples": [
+      "inferred collector->tempo",
+      "inferred collector->prometheus",
+      "documented kafka->zookeeper",
+      "documented kafka-connect->kafka",
+      "documented kafka-ui->kafka",
+      "drop kafka-ui->kafka-connect"
+    ],
+    "count": 6
+  },
+  "14": {
+    "hits": 49,
+    "examples": [
+      "edge storefront->jaeger",
+      "edge backoffice->jaeger",
+      "edge media->jaeger",
+      "edge product->media",
+      "edge product->jaeger",
+      "edge search->product",
+      "edge search->collector",
+      "edge backoffice->collector",
+      "edge storefront->customer",
+      "edge storefront->cart",
+      "edge storefront->rating",
+      "edge storefront->order",
+      "edge storefront->location",
+      "edge storefront->inventory",
+      "edge storefront->tax",
+      "edge storefront->promotion",
+      "edge storefront->payment",
+      "edge storefront->sampledata",
+      "edge storefront->collector",
+      "edge media->collector"
+    ],
+    "count": 48
+  },
+  "36": {
+    "hits": 26,
+    "examples": ["keep-dotted api.yas.local"],
+    "count": 1
+  },
+  "15": {
+    "hits": 2,
+    "examples": [
+      "edge storefront->payment :8081",
+      "edge backoffice->order :8085"
+    ],
+    "count": 2
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 23,
+    "examples": [
+      "not-preadded promotion",
+      "not-preadded webhook",
+      "not-preadded recommendation",
+      "not-preadded order",
+      "not-preadded rating",
+      "not-preadded sampledata",
+      "not-preadded location",
+      "not-preadded payment",
+      "not-preadded tax",
+      "not-preadded search",
+      "not-preadded payment-paypal",
+      "not-preadded inventory",
+      "not-preadded cart",
+      "not-preadded delivery",
+      "not-preadded customer",
+      "node storefront",
+      "node backoffice",
+      "node swagger-ui",
+      "node media",
+      "node product"
+    ],
+    "count": 23
+  },
+  "2": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 5,
+    "examples": [
+      "table spring.datasource.product.url=jdbc:postgresql://localhost:5432/product",
+      "table spring.datasource.media.url=jdbc:postgresql://localhost:5432/media",
+      "table yas.public.url=http://storefront/complete-payment",
+      "table OTEL_COLLECTOR_HOST=collector"
+    ],
+    "count": 4
+  },
+  "5": {
+    "hits": 17,
+    "examples": [
+      "env BASE_URL=/swagger-ui",
+      "env DB_ADDR=postgres",
+      "env SPRING_DATA_REDIS_HOST=redis",
+      "key spring.data.redis.host=redis",
+      "key otel_collector_host=collector",
+      "key kafka_service_host=kafka",
+      "key postgres_host=postgres",
+      "key grafana_service_host=grafana",
+      "key jaeger_service_host=jaeger",
+      "key prometheus_service_host=prometheus",
+      "key spring_data_redis_host=redis"
+    ],
+    "count": 11
+  },
+  "6": {
+    "hits": 23,
+    "examples": [
+      "url http://media",
+      "url http://swagger-ui:8080",
+      "url http://product",
+      "url http://customer",
+      "url http://cart",
+      "url http://rating",
+      "url http://order",
+      "url http://location",
+      "url http://inventory",
+      "url http://tax",
+      "url http://promotion",
+      "url http://search",
+      "url http://payment",
+      "url http://webhook",
+      "url http://sampledata",
+      "url http://recommendation",
+      "url http://backoffice",
+      "url http://storefront",
+      "url http://pgadmin",
+      "url http://identity"
+    ],
+    "count": 23
+  },
+  "7": {
+    "hits": 18,
+    "examples": [
+      "env identity.KC_DB_URL=postgres",
+      "env media.SPRING_DATASOURCE_URL=postgres",
+      "env product.SPRING_DATASOURCE_URL=postgres",
+      "env customer.SPRING_DATASOURCE_URL=postgres",
+      "env cart.SPRING_DATASOURCE_URL=postgres",
+      "env rating.SPRING_DATASOURCE_URL=postgres",
+      "env payment.SPRING_DATASOURCE_URL=postgres",
+      "env location.SPRING_DATASOURCE_URL=postgres",
+      "env inventory.SPRING_DATASOURCE_URL=postgres",
+      "env promotion.SPRING_DATASOURCE_URL=postgres",
+      "env tax.SPRING_DATASOURCE_URL=postgres",
+      "env sampledata.SPRING_DATASOURCE_PRODUCT_URL=postgres",
+      "env sampledata.SPRING_DATASOURCE_MEDIA_URL=postgres",
+      "env kafka-connect.BOOTSTRAP_SERVERS=kafka",
+      "env kafka-ui.KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka",
+      "node tempo",
+      "node prometheus",
+      "node zookeeper"
+    ],
+    "count": 18
+  },
+  "8": {
+    "hits": 95,
+    "examples": [
+      "loopback localhost",
+      "config-signal server.port",
+      "config-signal spring.datasource.driver-class-name",
+      "loopback localhost:5432",
+      "config-signal spring.datasource.username",
+      "config-signal spring.datasource.password",
+      "config-signal spring.kafka.consumer.group-id",
+      "config-signal spring.kafka.consumer.key-deserializer",
+      "config-signal spring.kafka.consumer.value-deserializer",
+      "config-signal spring.kafka.consumer.properties.spring.json.use.type.headers",
+      "config-signal spring.ai.azure.openai.endpoint",
+      "config-signal spring.kafka.producer.key-serializer",
+      "config-signal spring.kafka.producer.value-serializer",
+      "loopback localhost:3000",
+      "config-signal spring.data.redis.port",
+      "config-signal KAFKA_SERVICE_ADDR",
+      "config-signal PROMETHEUS_ADDR",
+      "loopback localhost:8083"
+    ],
+    "count": 18
+  },
+  "9": {
+    "hits": 117,
+    "examples": [
+      "jpa promotion/src/main/java/com/yas/promotion/repository/PromotionRepository.java",
+      "jpa promotion/src/main/java/com/yas/promotion/model/PromotionUsage.java",
+      "jpa promotion/src/main/java/com/yas/promotion/model/Promotion.java",
+      "jpa promotion/src/main/java/com/yas/promotion/model/PromotionApply.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/WebhookRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/WebhookEventRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/EventRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/WebhookEventNotificationRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/Event.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/WebhookEventNotification.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/WebhookEvent.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/Webhook.java",
+      "jpa order/src/main/java/com/yas/order/repository/OrderRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/CheckoutItemRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/OrderAddressRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/CheckoutRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/OrderItemRepository.java",
+      "jpa order/src/main/java/com/yas/order/model/Order.java",
+      "jpa order/src/main/java/com/yas/order/model/OrderItem.java",
+      "jpa order/src/main/java/com/yas/order/model/OrderAddress.java"
+    ],
+    "count": 77
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 5,
+    "examples": [
+      "lib common-library",
+      "no-edge common-library/src/main/java/com/yas/commonlibrary/kafka/cdc/BaseCdcConsumer.java",
+      "no-edge common-library/src/main/resources/application.properties"
+    ],
+    "count": 3
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 325,
+    "examples": [
+      "ignore /promotion/src/it/resources/mockito-extensions/org.mockito.plugins.MockMaker/",
+      "ignore /promotion/src/it/resources/logback-spring.xml/",
+      "ignore /promotion/src/it/resources/application.properties/",
+      "ignore /promotion/src/it/java/com/yas/promotion/service/PromotionServiceIT.java/",
+      "ignore /webhook/src/it/resources/mockito-extensions/org.mockito.plugins.MockMaker/",
+      "ignore /webhook/src/it/resources/logback-spring.xml/",
+      "ignore /webhook/src/it/resources/application.properties/",
+      "ignore /webhook/src/it/java/com/yas/webhook/controller/WebhookControllerIT.java/",
+      "ignore /recommendation/src/it/resources/application.properties/",
+      "ignore /recommendation/src/it/java/com/yas/recommendation/configuration/KafkaConfiguration.java/",
+      "ignore /recommendation/src/it/java/com/yas/recommendation/kafka/ProductCdcConsumerTest.java/",
+      "ignore /order/src/it/resources/mockito-extensions/org.mockito.plugins.MockMaker/",
+      "ignore /order/src/it/resources/logback-spring.xml/",
+      "ignore /order/src/it/resources/application.properties/",
+      "ignore /order/src/it/java/com/yas/order/constant/TestConstants.java/",
+      "ignore /order/src/it/java/com/yas/order/service/CustomerServiceIT.java/",
+      "ignore /order/src/it/java/com/yas/order/service/TaxServiceIT.java/",
+      "ignore /order/src/it/java/com/yas/order/service/ProductServiceIT.java/",
+      "ignore /order/src/it/java/com/yas/order/service/OrderServiceIT.java/",
+      "ignore /automation-ui/storefront/pom.xml/"
+    ],
+    "count": 119
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 104,
+    "examples": [
+      "drop springdoc.swagger-ui.path",
+      "drop springdoc.packagestoscan",
+      "drop springdoc.swagger-ui.oauth.use-pkce-with-authorization-code-grant",
+      "drop springdoc.swagger-ui.oauth.client-id",
+      "drop springdoc.oauthflow.authorization-url",
+      "drop springdoc.oauthflow.token-url"
+    ],
+    "count": 6
+  }
+}}

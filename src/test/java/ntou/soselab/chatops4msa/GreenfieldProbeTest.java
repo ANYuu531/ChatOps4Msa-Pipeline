@@ -7,6 +7,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.Servic
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.StackDetector;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.TreeSitterExtractor;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyReportService;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.AliasResolution;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CodeGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
@@ -47,6 +48,7 @@ public class GreenfieldProbeTest {
                 "set -Dprobe.repo=/path/to/checkout to run this driver");
         Path root = Path.of(repoPath);
         String repoName = root.getFileName().toString();
+        RuleTrace.clear();
 
         StackDetector detector = new StackDetector();
         TreeSitterExtractor treeSitter = new TreeSitterExtractor();
@@ -145,6 +147,10 @@ public class GreenfieldProbeTest {
         String mermaid = MermaidEmitter.emit(graph);
         out.append("\n## mermaid\n```mermaid\n").append(mermaid).append("\n```\n");
 
+        // Which of the 46 rules fired on this repo, and on what (RuleTrace). Appended after
+        // every existing section so the parsers of the edge list are unaffected.
+        out.append('\n').append(RuleTrace.toMarkdown());
+
         System.out.println("\n================ GREENFIELD PROBE: " + repoName + " ================\n" + out);
 
         String outPath = System.getProperty("probe.out");
@@ -153,6 +159,7 @@ public class GreenfieldProbeTest {
             if (target.getParent() != null) Files.createDirectories(target.getParent());
             Files.writeString(target, mermaid);
             Files.writeString(Path.of(outPath.replaceAll("\\.mmd$", "") + ".summary.md"), out.toString());
+            Files.writeString(Path.of(outPath.replaceAll("\\.mmd$", "") + ".rules.json"), RuleTrace.toJson().toString(2) + "\n");
         }
     }
 }

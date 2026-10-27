@@ -1,5 +1,7 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction;
 
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,6 +38,10 @@ public final class SourceScanner {
             "/test/", "/tests/", "/testing/", "/src/test/", "/spec/", "/__tests__/",
             "/src/it/", "/src/integration-test/", "/src/integrationtest/", "/e2e/", "/automation-ui/");
 
+    /** The segments rule 42 added (2026-10-26); the others predate the numbered rules. */
+    private static final List<String> RULE_42_SEGMENTS = List.of(
+            "/__tests__/", "/src/it/", "/src/integration-test/", "/src/integrationtest/", "/e2e/", "/automation-ui/");
+
     /** Files larger than this are skipped (minified bundles, generated sources). */
     public static final long MAX_FILE_BYTES = 512 * 1024;
 
@@ -44,7 +50,7 @@ public final class SourceScanner {
         String lower = relative.toLowerCase(Locale.ROOT);
 
         for (String segment : TEST_SEGMENTS) {
-            if (lower.contains(segment)) return true;
+            if (RuleTrace.hitIf(lower.contains(segment) && RULE_42_SEGMENTS.contains(segment), 42, "ignore " + relative) || lower.contains(segment)) return true;
         }
         for (String directory : IGNORED_DIRECTORIES) {
             if (lower.contains("/" + directory + "/")) return true;

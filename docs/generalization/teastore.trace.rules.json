@@ -1,0 +1,357 @@
+{"rules": {
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "44": {
+    "hits": 18,
+    "examples": [
+      "artifact tools-descartes-teastore-webui=webui",
+      "map tools-descartes-teastore-webui=teastore-webui",
+      "artifact tools-descartes-teastore-recommender=recommender",
+      "map tools-descartes-teastore-recommender=teastore-recommender",
+      "artifact tools-descartes-teastore-persistence=persistence",
+      "map tools-descartes-teastore-persistence=teastore-persistence",
+      "artifact tools-descartes-teastore-registry=registry",
+      "map tools-descartes-teastore-registry=teastore-registry",
+      "artifact tools-descartes-teastore-image=image",
+      "map tools-descartes-teastore-image=teastore-image",
+      "artifact tools-descartes-teastore-auth=auth",
+      "map tools-descartes-teastore-auth=teastore-auth"
+    ],
+    "count": 12
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 1,
+    "examples": ["k8s-over-compose 8 compose names ignored"],
+    "count": 1
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "14": {
+    "hits": 45,
+    "examples": [
+      "edge teastore-persistence->teastore-registry",
+      "edge teastore-auth->teastore-registry",
+      "edge teastore-image->teastore-registry",
+      "edge teastore-recommender->teastore-registry",
+      "edge teastore-webui->teastore-registry"
+    ],
+    "count": 5
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 46,
+    "examples": [
+      "edge teastore-webui->teastore-persistence",
+      "edge teastore-webui->teastore-recommender",
+      "edge teastore-webui->teastore-auth",
+      "edge teastore-webui->teastore-image",
+      "edge teastore-recommender->teastore-persistence",
+      "edge teastore-image->teastore-persistence",
+      "edge teastore-auth->teastore-persistence"
+    ],
+    "count": 7
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 2,
+    "examples": ["dockerfile-env RABBITMQ_HOST=unset"],
+    "count": 1
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 14,
+    "examples": [
+      "align tools-descartes-teastore-kieker-rabbitmq=teastore-kieker-rabbitmq",
+      "not-preadded tools-descartes-teastore-dockermemoryconfigurator",
+      "not-preadded tools-descartes-teastore-database",
+      "not-preadded tools-descartes-teastore-docker-all",
+      "not-preadded tools-descartes-teastore-dockerbase",
+      "node teastore-db",
+      "node teastore-registry",
+      "node teastore-persistence",
+      "node teastore-auth",
+      "node teastore-image",
+      "node teastore-recommender",
+      "node teastore-webui",
+      "node teastore-all",
+      "node teastore-kieker-rabbitmq"
+    ],
+    "count": 14
+  },
+  "2": {
+    "hits": 15,
+    "examples": [
+      "test-dir e2e-tests",
+      "name tools.descartes.teastore.dockermemoryconfigurator=tools-descartes-teastore-dockermemoryconfigurator",
+      "name tools.descartes.teastore.database=tools-descartes-teastore-database",
+      "name tools.descartes.teastore.kieker.probes=tools-descartes-teastore-kieker-probes",
+      "name tools.descartes.teastore.docker.all=tools-descartes-teastore-docker-all",
+      "name tools.descartes.teastore.kieker.rabbitmq=tools-descartes-teastore-kieker-rabbitmq",
+      "name tools.descartes.teastore.dockerbase=tools-descartes-teastore-dockerbase",
+      "name tools.descartes.teastore.registryclient=tools-descartes-teastore-registryclient",
+      "name tools.descartes.teastore.webui=tools-descartes-teastore-webui",
+      "name tools.descartes.teastore.recommender=tools-descartes-teastore-recommender",
+      "name tools.descartes.teastore.persistence=tools-descartes-teastore-persistence",
+      "name tools.descartes.teastore.registry=tools-descartes-teastore-registry",
+      "name tools.descartes.teastore.image=tools-descartes-teastore-image",
+      "name tools.descartes.teastore.auth=tools-descartes-teastore-auth",
+      "name tools.descartes.teastore.entities=tools-descartes-teastore-entities"
+    ],
+    "count": 15
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "5": {
+    "hits": 143,
+    "examples": [
+      "env REGISTRY_HOST=127.0.0.1",
+      "env DB_HOST=127.0.0.1",
+      "env RABBITMQ_HOST=unset",
+      "env REGISTRY_HOST=teastore-registry",
+      "env DB_HOST=teastore-db",
+      "env REGISTRY_HOST=registry",
+      "env DB_HOST=db",
+      "env RABBITMQ_HOST=rabbitmq",
+      "env RABBITMQ_HOST=teastore-kieker-rabbitmq"
+    ],
+    "count": 9
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 63,
+    "examples": [
+      "env persistence.REGISTRY_HOST=teastore-registry",
+      "env persistence.DB_HOST=teastore-db",
+      "env auth.REGISTRY_HOST=teastore-registry",
+      "env image.REGISTRY_HOST=teastore-registry",
+      "env recommender.REGISTRY_HOST=teastore-registry",
+      "env webui.REGISTRY_HOST=teastore-registry",
+      "env persistence.REGISTRY_HOST=registry",
+      "env persistence.DB_HOST=db",
+      "env auth.REGISTRY_HOST=registry",
+      "env image.REGISTRY_HOST=registry",
+      "env recommender.REGISTRY_HOST=registry",
+      "env webui.REGISTRY_HOST=registry",
+      "env persistence.RABBITMQ_HOST=rabbitmq",
+      "env auth.RABBITMQ_HOST=rabbitmq",
+      "env image.RABBITMQ_HOST=rabbitmq",
+      "env recommender.RABBITMQ_HOST=rabbitmq",
+      "env webui.RABBITMQ_HOST=rabbitmq",
+      "unique-suffix persistence=teastore-persistence",
+      "unique-suffix auth=teastore-auth",
+      "unique-suffix image=teastore-image"
+    ],
+    "count": 25
+  },
+  "8": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "9": {
+    "hits": 58,
+    "examples": [
+      "jaxrs utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/util/AbstractCRUDEndpoint.java:37",
+      "jaxrs utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/util/AbstractCRUDEndpoint.java:70",
+      "jaxrs utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/util/AbstractCRUDEndpoint.java:124",
+      "jaxrs utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/util/AbstractCRUDEndpoint.java:153",
+      "jaxrs services/tools.descartes.teastore.webui/src/main/java/tools/descartes/teastore/webui/rest/ReadyRest.java:27",
+      "jaxrs services/tools.descartes.teastore.webui/src/main/java/tools/descartes/teastore/webui/rest/ReadyRest.java:38",
+      "jaxrs services/tools.descartes.teastore.recommender/src/main/java/tools/descartes/teastore/recommender/rest/RecommendEndpoint.java:36",
+      "jaxrs services/tools.descartes.teastore.recommender/src/main/java/tools/descartes/teastore/recommender/rest/RecommendSingleEndpoint.java:37",
+      "jaxrs services/tools.descartes.teastore.recommender/src/main/java/tools/descartes/teastore/recommender/rest/TrainEndpoint.java:32",
+      "jaxrs services/tools.descartes.teastore.recommender/src/main/java/tools/descartes/teastore/recommender/rest/TrainEndpoint.java:79",
+      "jaxrs services/tools.descartes.teastore.recommender/src/main/java/tools/descartes/teastore/recommender/rest/TrainEndpoint.java:100",
+      "jpa services/tools.descartes.teastore.persistence/src/main/java/tools/descartes/teastore/persistence/repository/DatabaseManagementEntity.java",
+      "jpa services/tools.descartes.teastore.persistence/src/main/java/tools/descartes/teastore/persistence/domain/PersistenceCategory.java",
+      "jpa services/tools.descartes.teastore.persistence/src/main/java/tools/descartes/teastore/persistence/domain/PersistenceProduct.java",
+      "jpa services/tools.descartes.teastore.persistence/src/main/java/tools/descartes/teastore/persistence/domain/PersistenceOrderItem.java",
+      "jpa services/tools.descartes.teastore.persistence/src/main/java/tools/descartes/teastore/persistence/domain/PersistenceUser.java",
+      "jpa services/tools.descartes.teastore.persistence/src/main/java/tools/descartes/teastore/persistence/domain/PersistenceOrder.java",
+      "jaxrs services/tools.descartes.teastore.persistence/src/main/java/tools/descartes/teastore/persistence/rest/DatabaseGenerationEndpoint.java:37",
+      "jaxrs services/tools.descartes.teastore.persistence/src/main/java/tools/descartes/teastore/persistence/rest/DatabaseGenerationEndpoint.java:105",
+      "jaxrs services/tools.descartes.teastore.persistence/src/main/java/tools/descartes/teastore/persistence/rest/DatabaseGenerationEndpoint.java:121"
+    ],
+    "count": 58
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 56,
+    "examples": [
+      "lib tools-descartes-teastore-kieker-probes",
+      "lib tools-descartes-teastore-registryclient",
+      "lib tools-descartes-teastore-entities",
+      "no-edge utilities/tools.descartes.teastore.kieker.probes/src/main/java/tools/descartes/teastore/kieker/probes/AbstractOperationExecutionWithParameterAspect.java",
+      "no-edge utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/tracing/Tracing.java",
+      "no-edge utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/util/AbstractCRUDEndpoint.java",
+      "no-edge utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/util/RESTClient.java",
+      "no-edge utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/RegistryClient.java",
+      "no-edge utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/loadbalancers/ServiceLoadBalancerResult.java",
+      "no-edge utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/rest/LoadBalancedRecommenderOperations.java",
+      "no-edge utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/rest/HttpWrapper.java",
+      "no-edge utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/rest/LoadBalancedImageOperations.java",
+      "no-edge utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/rest/LoadBalancedStoreOperations.java",
+      "no-edge utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/rest/NonBalancedCRUDOperations.java"
+    ],
+    "count": 14
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

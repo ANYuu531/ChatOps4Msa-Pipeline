@@ -1,5 +1,6 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction;
 
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -98,6 +99,7 @@ public class ExternalHostDetector {
         // Documentation / testing TLDs (RFC 2606, 6761): a placeholder, not an egress.
         if (host.endsWith(".test") || host.endsWith(".example") || host.endsWith(".invalid")
                 || host.endsWith(".localhost") || host.matches("(.*\\.)?example\\.(com|net|org)")) {
+            RuleTrace.hit(33, "no-serviceentry " + host);
             return false;
         }
         return true;

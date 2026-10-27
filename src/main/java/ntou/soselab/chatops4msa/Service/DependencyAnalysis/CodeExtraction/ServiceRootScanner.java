@@ -1,5 +1,6 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction;
 
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Files;
@@ -96,12 +97,13 @@ public class ServiceRootScanner {
         try (Stream<Path> stream = Files.walk(root)) {
             stream.filter(Files::isRegularFile)
                     .filter(p -> !SourceScanner.isIgnored(root, p))
-                    .filter(p -> !inHiddenDir(root, p))
                     .forEach(p -> {
                         String name = p.getFileName().toString().toLowerCase(Locale.ROOT);
                         if (!MARKERS.contains(name)) return;
+                        if (RuleTrace.hitIf(inHiddenDir(root, p), 31, "hidden " + SourceScanner.relative(root, p))) return;
                         Path dir = serviceDir(root, p.getParent());
                         if (dir == null) return;
+                        RuleTrace.hitIf(!dir.equals(p.getParent()), 2, "climb " + SourceScanner.relative(root, p.getParent()));
                         serviceDirs.putIfAbsent(dir, p.getFileName().toString());
                     });
         } catch (Exception ignored) {
@@ -118,12 +120,14 @@ public class ServiceRootScanner {
             // The same holds one level down: a module directory whose only role is to
             // hold other modules (a Maven parent pom over services/, an examples/
             // folder of Dockerfiles) is a grouping, not a workload.
-            if (isAggregator(dir, serviceDirs.keySet())) continue;
+            if (RuleTrace.hitIf(isAggregator(dir, serviceDirs.keySet()), 2, "aggregator " + relDir)) continue;
             String serviceName = dir.getFileName() == null ? relDir : dir.getFileName().toString();
-            if (serviceName.isBlank() || TEST_DIR.matcher(serviceName).find() || underTestDir(relDir)) continue;
+            if (serviceName.isBlank() || RuleTrace.hitIf(TEST_DIR.matcher(serviceName).find(), 2, "test-dir " + relDir)
+                    || RuleTrace.hitIf(underTestDir(relDir), 42, "test-path " + relDir)) continue;
 
             Map<String, String> fields = new LinkedHashMap<>();
             fields.put("dir", relDir);
+            RuleTrace.hitIf(!serviceName(serviceName).equals(serviceName), 2, "name " + serviceName + "=" + serviceName(serviceName));
             fields.put("name", serviceName(serviceName));
             ledger.add("service-root", fields, relDir + "/" + entry.getValue(), -1,
                     "High (build manifest / Dockerfile)");

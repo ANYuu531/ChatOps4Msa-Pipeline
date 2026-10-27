@@ -1,0 +1,442 @@
+{"rules": {
+  "22": {
+    "hits": 11,
+    "examples": [
+      "urlref src/shared/tools.py:46 url",
+      "urlref src/shared/tools.py:66 url",
+      "urlref src/shared/tools.py:79 url",
+      "urlref src/shared/tools.py:108 url",
+      "urlref src/shared/tools.py:121 url",
+      "urlref src/shared/tools.py:138 url",
+      "urlref src/shared/tools.py:159 url",
+      "urlref src/shared/tools.py:173 url",
+      "urlref src/shared/tools.py:209 url",
+      "dead src/agent/run.py:24",
+      "dead src/mcp/run.py:21"
+    ],
+    "count": 11
+  },
+  "44": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "45": {
+    "hits": 2,
+    "examples": [
+      "accept mcp_endpoint=mcp",
+      "accept agent_endpoint=agent"
+    ],
+    "count": 2
+  },
+  "24": {
+    "hits": 95,
+    "examples": [
+      "forward otel-ebpf-profiler.OTEL_COLLECTOR_HOST=otel-collector",
+      "forward ad.FLAGD_HOST=flagd",
+      "interp ad.OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector",
+      "forward cart.FLAGD_HOST=flagd",
+      "forward cart.VALKEY_ADDR=valkey-cart",
+      "forward cart.OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector",
+      "forward checkout.FLAGD_HOST=flagd",
+      "forward checkout.CART_ADDR=cart",
+      "forward checkout.CURRENCY_ADDR=currency",
+      "forward checkout.EMAIL_ADDR=email",
+      "forward checkout.PAYMENT_ADDR=payment",
+      "forward checkout.PRODUCT_CATALOG_ADDR=product-catalog",
+      "forward checkout.SHIPPING_ADDR=shipping",
+      "interp checkout.OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector",
+      "forward currency.OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector",
+      "forward email.FLAGD_HOST=flagd",
+      "interp email.OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector",
+      "forward frontend.FRONTEND_ADDR=frontend",
+      "forward frontend.AD_ADDR=ad",
+      "forward frontend.CART_ADDR=cart"
+    ],
+    "count": 94
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 3,
+    "examples": [
+      "kt-file src/fraud-detection/build.gradle.kts",
+      "kt-file src/fraud-detection/settings.gradle.kts",
+      "kt-file src/fraud-detection/src/main/kotlin/frauddetection/main.kt"
+    ],
+    "count": 3
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 1,
+    "examples": ["skip-compose compose.tests.yaml"],
+    "count": 1
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 2,
+    "examples": ["connstr DB_CONNECTION_STRING"],
+    "count": 1
+  },
+  "11": {
+    "hits": 39,
+    "examples": [
+      "not-preadded tools",
+      "not-preadded genproto",
+      "not-preadded react-native-app",
+      "node otel-ebpf-profiler",
+      "node firepit",
+      "node ad",
+      "node cart",
+      "node checkout",
+      "node currency",
+      "node email",
+      "node frontend",
+      "node frontend-proxy",
+      "node image-provider",
+      "node load-generator",
+      "node payment",
+      "node product-catalog",
+      "node quote",
+      "node recommendation",
+      "node shipping",
+      "node flagd"
+    ],
+    "count": 36
+  },
+  "33": {
+    "hits": 1,
+    "examples": ["drop vcr.local"],
+    "count": 1
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 13,
+    "examples": [
+      "url http://${OTEL_COLLECTOR_HOST}",
+      "url http://${FRONTEND_HOST}",
+      "url http://${IMAGE_PROVIDER_HOST}",
+      "url http://${FLAGD_HOST}",
+      "url http://${FLAGD_UI_HOST}",
+      "url http://${LOCUST_WEB_HOST}",
+      "url http://${GRAFANA_HOST}",
+      "url http://${JAEGER_HOST}",
+      "url http://${OPAMP_SERVER_HOST}",
+      "url http://${TELEMETRY_DOCS_HOST}",
+      "url http://${CHATBOT_HOST}",
+      "url http://${FIREPIT_HOST}"
+    ],
+    "count": 12
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 69,
+    "examples": [
+      "documented otel-ebpf-profiler->otel-collector",
+      "documented ad->otel-collector",
+      "documented ad->flagd",
+      "documented cart->valkey-cart",
+      "documented cart->otel-collector",
+      "documented cart->flagd",
+      "documented checkout->cart",
+      "documented checkout->currency",
+      "documented checkout->email",
+      "documented checkout->payment",
+      "documented checkout->product-catalog",
+      "documented checkout->shipping",
+      "documented checkout->otel-collector",
+      "documented checkout->flagd",
+      "documented currency->otel-collector",
+      "documented email->otel-collector",
+      "documented frontend->ad",
+      "documented frontend->cart",
+      "documented frontend->checkout",
+      "documented frontend->currency"
+    ],
+    "count": 69
+  },
+  "14": {
+    "hits": 77,
+    "examples": [
+      "edge otel-ebpf-profiler->otel-collector",
+      "edge ad->flagd",
+      "edge ad->otel-collector",
+      "edge cart->flagd",
+      "edge cart->valkey-cart",
+      "edge cart->otel-collector",
+      "edge checkout->flagd",
+      "edge checkout->cart",
+      "edge checkout->currency",
+      "edge checkout->email",
+      "edge checkout->payment",
+      "edge checkout->product-catalog",
+      "edge checkout->shipping",
+      "edge checkout->otel-collector",
+      "edge currency->otel-collector",
+      "edge email->flagd",
+      "edge email->otel-collector",
+      "edge frontend->ad",
+      "edge frontend->cart",
+      "edge frontend->checkout"
+    ],
+    "count": 76
+  },
+  "36": {
+    "hits": 3,
+    "examples": [
+      "keep-dotted local-llm.com",
+      "external-env agent->local-llm.com"
+    ],
+    "count": 2
+  },
+  "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "hits": 1,
+    "examples": ["climb src/cart/src"],
+    "count": 1
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 16,
+    "examples": [
+      "table OTEL_COLLECTOR_HOST=otel-collector",
+      "table FRONTEND_PROXY_ADDR=frontend-proxy",
+      "table FRONTEND_HOST=frontend",
+      "table IMAGE_PROVIDER_HOST=image-provider",
+      "table FLAGD_HOST=flagd",
+      "table FLAGD_UI_HOST=flagd-ui",
+      "table LOCUST_WEB_HOST=load-generator",
+      "table GRAFANA_HOST=grafana",
+      "table JAEGER_HOST=jaeger",
+      "table OPAMP_SERVER_HOST=opamp-server",
+      "table TELEMETRY_DOCS_HOST=telemetry-docs",
+      "table CHATBOT_HOST=chatbot",
+      "table FIREPIT_HOST=firepit"
+    ],
+    "count": 13
+  },
+  "5": {
+    "hits": 98,
+    "examples": [
+      "env OTEL_COLLECTOR_HOST=otel-collector",
+      "env FLAGD_HOST=flagd",
+      "env FRONTEND_HOST=frontend",
+      "env LOCUST_WEB_HOST=load-generator",
+      "env GRAFANA_HOST=grafana",
+      "env JAEGER_HOST=jaeger",
+      "env OPAMP_SERVER_HOST=opamp-server",
+      "env IMAGE_PROVIDER_HOST=image-provider",
+      "env ENVOY_ADDR=0.0.0.0",
+      "env FIREPIT_HOST=firepit",
+      "env FLAGD_UI_HOST=flagd-ui",
+      "env TELEMETRY_DOCS_HOST=telemetry-docs",
+      "env CHATBOT_HOST=chatbot",
+      "env LOCUST_WEB_HOST=0.0.0.0",
+      "env PHX_HOST=localhost",
+      "env POSTGRES_HOST=astronomy-db",
+      "env MCP_ENDPOINT=mcp",
+      "env AGENT_ENDPOINT=agent",
+      "key otel_collector_host=otel-collector",
+      "key frontend_host=frontend"
+    ],
+    "count": 34
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 1,
+    "examples": ["env flagd-ui.PHX_HOST=localhost"],
+    "count": 1
+  },
+  "8": {
+    "hits": 17,
+    "examples": [
+      "config-signal AD_ADDR",
+      "config-signal CART_ADDR",
+      "config-signal CHECKOUT_ADDR",
+      "config-signal CURRENCY_ADDR",
+      "config-signal ENVOY_ADDR",
+      "config-signal FRONTEND_PROXY_ADDR",
+      "config-signal FRONTEND_ADDR",
+      "config-signal PAYMENT_ADDR",
+      "config-signal PRODUCT_CATALOG_ADDR",
+      "config-signal RECOMMENDATION_ADDR",
+      "config-signal KAFKA_ADDR",
+      "config-signal VALKEY_ADDR",
+      "config-signal PROMETHEUS_ADDR",
+      "config-signal AGENT_ADDR",
+      "config-signal APPLICATION_ENDPOINT",
+      "loopback localhost"
+    ],
+    "count": 16
+  },
+  "9": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "40": {
+    "hits": 12,
+    "examples": [
+      "cs-file src/accounting/Log.cs",
+      "cs-file src/accounting/Entities.cs",
+      "cs-file src/accounting/Helpers.cs",
+      "cs-file src/accounting/Consumer.cs",
+      "cs-file src/accounting/Program.cs",
+      "cs-file src/cart/src/cartstore/ICartStore.cs",
+      "cs-file src/cart/src/cartstore/ValkeyCartStore.cs",
+      "cs-file src/cart/src/OpAmpClientSetup.cs",
+      "cs-file src/cart/src/Log.cs",
+      "cs-file src/cart/src/services/HealthCheckService.cs",
+      "cs-file src/cart/src/services/CartService.cs",
+      "cs-file src/cart/src/Program.cs"
+    ],
+    "count": 12
+  },
+  "41": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 25,
+    "examples": [
+      "scoped FLAGD_HOST=flagd @load-generator",
+      "scoped AGENT_ENDPOINT=agent @load-generator",
+      "scoped AGENT_ENDPOINT=agent @chatbot",
+      "scoped LLM_BASE_URL=local-llm.com @agent",
+      "scoped FLAGD_HOST=flagd @agent",
+      "scoped MCP_ENDPOINT=mcp @agent",
+      "scoped DB_CONNECTION_STRING=astronomy-db @accounting",
+      "scoped KAFKA_ADDR=kafka @accounting",
+      "scoped VALKEY_ADDR=valkey-cart @cart",
+      "scoped OPAMP_SERVER_ENDPOINT=opamp-server @cart",
+      "scoped KAFKA_ADDR=kafka @fraud-detection",
+      "scoped OTEL_COLLECTOR_HOST=otel-collector @frontend-proxy",
+      "scoped FRONTEND_HOST=frontend @frontend-proxy",
+      "scoped IMAGE_PROVIDER_HOST=image-provider @frontend-proxy",
+      "scoped FLAGD_HOST=flagd @frontend-proxy",
+      "scoped FLAGD_UI_HOST=flagd-ui @frontend-proxy",
+      "scoped LOCUST_WEB_HOST=load-generator @frontend-proxy",
+      "scoped GRAFANA_HOST=grafana @frontend-proxy",
+      "scoped JAEGER_HOST=jaeger @frontend-proxy",
+      "scoped OPAMP_SERVER_HOST=opamp-server @frontend-proxy"
+    ],
+    "count": 23
+  },
+  "42": {
+    "hits": 8,
+    "examples": [
+      "ignore /src/frontend/cypress/e2e/Checkout.cy.ts/",
+      "ignore /src/frontend/cypress/e2e/ProductDetail.cy.ts/",
+      "ignore /src/frontend/cypress/e2e/Home.cy.ts/",
+      "ignore /src/frontend/cypress/e2e/CheckoutPaymentFailure.cy.ts/"
+    ],
+    "count": 4
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}
