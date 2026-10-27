@@ -54,6 +54,23 @@ python3 -I docs/experiments/2026-10-20/pure_llm_graph.py --set aics --repos ~/De
 - 中斷了直接重跑同一行，`raw/` 裡已有的回應會跳過。
 - 跑完要補進論文的地方：COMPSAC 表 V 加「hold-out」列、效度段刪掉「尚未在 hold-out 系統上重複」那句；AICS 的數字只寫總分，不寫服務名。
 
+## 結果（機器 B，2026-10-27，45 次呼叫、349 萬 prompt token）
+
+| 組別 | P | R | F1（5 系統 macro） |
+|---|---|---|---|
+| 零檔案 | 0.51 | 0.61 | 0.55 |
+| 給檔案 | 0.79 | 0.88 | 0.83 |
+| 給檔案、不給名稱（嚴格對名） | 0.89 | 0.86 | 0.87 |
+| DepWeaver 靜態層（第三輪規則後） | 0.96 | 0.93 | 0.94 |
+
+- 零檔案組越冷門越差：hotelReservation（學界 benchmark）0.78／1.00，yas 0.37／0.29、opentelemetry-demo 0.35／0.37。
+- 給檔案組在 yas 只有 0.58／0.50：17 個模組加 Helm 與 Compose 超過預算（原始碼 343/890 檔）。
+- LLM 唯一明顯贏的是 hotelReservation 1.00 對 0.71——它讀得懂 Go 程式碼裡 Consul 的 `srv-search` 是 search，這正是靜態層真正的邊界。
+- 2 次輸出陷入迴圈（mall-swarm 不給名稱 run2 原始 511 條、yas 給檔案 run2 原始 574 條）。
+- 不給名稱組反而比給名稱高（0.87 對 0.83）：這 5 個系統的名字多半就是 Compose 服務名，對名容易；對名問題在 7 個歸納用系統那邊才嚴重（ecommerce 的 container_name）。
+
+已寫進 COMPSAC 表 V 下半與 RQ0 結果第五點。
+
 ## 要回答的問題
 
 1. 零檔案組在 AICS 上是不是接近 0？（私有系統不在訓練資料裡，這是 10/20 推測「對私有系統只會更差」的直接證據。）
