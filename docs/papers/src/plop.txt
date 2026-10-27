@@ -103,7 +103,7 @@ PLoP 系列沿用 Christopher Alexander 的定義：pattern 是針對某個情�
 
 **別名：**靜態＋動態分析、多來源融合（information fusion）；ServiceNow 稱為 pattern-based 與 traffic-based mapping；vFunction 稱為 dynamic 與 static analysis。
 
-**一句話摘要：**先主動產生流量，讓執行期觀測看到平常沒被走到的路徑；再把連線設定、程式碼、執行期觀測與文件的結果，以「來源服務 → 目標服務」為鍵，合併成同一張圖，每條邊保留它來自哪些來源。
+**一句話摘要：**用流量補齊執行期觀測，再把各來源的結果合併成一張圖，每條邊記下出處。
 
 ## Context
 
@@ -184,7 +184,7 @@ PLoP 系列沿用 Christopher Alexander 的定義：pattern 是針對某個情�
 
 **別名：**推測節點（inferred services，Datadog [@datadoginferred]）、推測區段（inferred segments，AWS X-Ray）、虛擬節點（virtual nodes，Grafana Tempo [@grafanatempo] 與 OpenTelemetry）；學界稱為 uncertainty in graph edges、partial models。
 
-**一句話摘要：**讓每條邊或節點帶一個「實測」或「推測」標記並畫成不同樣子；同一條邊有了更強的證據，就取代推測的版本。
+**一句話摘要：**每條邊標上「實測」或「推測」並畫成不同樣子，有了更強的證據就取代推測。
 
 ## Context
 
@@ -263,7 +263,7 @@ PLoP 系列沿用 Christopher Alexander 的定義：pattern 是針對某個情�
 
 **別名：**Reflexion model 的 mapping；互動式重複資料比對（interactive deduplication）；Datadog 稱為 service remapping；Dynatrace 稱為 merged services 與 service detection rules；ServiceNow 稱為手動加入與排除連線。
 
-**一句話摘要：**規則判斷不了某個名稱該對應到誰時，不要丟掉、也不要模糊比對；把它變成一個具體的問題（附候選）交給熟悉系統的人，答案存下來給下一次用。
+**一句話摘要：**規則判斷不了的名稱，附上候選問熟悉系統的人，答案存下來重複使用。
 
 ## Context
 
@@ -341,7 +341,7 @@ PLoP 系列沿用 Christopher Alexander 的定義：pattern 是針對某個情�
 
 **別名：**analytics augmented generation（Satyrn）；program-aided language models（PAL）；Dynatrace 稱為 hypermodal AI（causal AI 計算、generative AI 解釋）；K8sGPT 稱為 analyzer 加上 explain。事實所出自的那份模型，業界叫 Software Catalog（Backstage）或拓樸模型（Dynatrace Smartscape），學界叫架構重建的 metamodel 或中間表示法（intermediate representation），相當於 Model–View–Controller 裡的 model；「沒有資料」的狀態，監控工具叫 No Data（Grafana、Datadog），Kubernetes 叫 Unknown condition，runtime verification 叫 inconclusive verdict。
 
-**一句話摘要：**每次分析先建一份統一模型；能由程式從模型算出的事實（有哪些相依關係、量測到幾次、覆蓋率多少、哪些來源這次沒收集）由程式產生，LLM 只負責解釋這些事實、提出詮釋與建議，不讓它重述事實；沒收集到的資料在模型裡是「未知」，程式照寫「未量測」而不是 0，也不交給 LLM 猜。
+**一句話摘要：**事實由程式從統一模型產生，LLM 只負責解釋；沒收集到的資料寫「未量測」，不寫 0。
 
 ## Context
 
