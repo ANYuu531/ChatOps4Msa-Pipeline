@@ -71,6 +71,8 @@ python3 -I docs/experiments/2026-10-20/pure_llm_graph.py --set aics --repos ~/De
 
 已寫進 COMPSAC 表 V 下半與 RQ0 結果第五點。
 
+AICS（私有，9 次呼叫；原始回應在私有 repo `ANYuu531/aics-eval` 的 `out/llm/`，這裡只記總分）：零檔案 0.52／0.35／F1 0.42（服務到服務的邊 P 0.21、R 0.20，畫對的幾乎都是從名稱猜得到的 X-service → X-service-mongo）；給檔案 0.65／0.56／0.60；不給名稱 0.57／0.39／0.46；靜態層 0.89／0.63／0.74。寫進表 V 與 RQ0 第六點。
+
 ## 要回答的問題
 
 1. 零檔案組在 AICS 上是不是接近 0？（私有系統不在訓練資料裡，這是 10/20 推測「對私有系統只會更差」的直接證據。）
