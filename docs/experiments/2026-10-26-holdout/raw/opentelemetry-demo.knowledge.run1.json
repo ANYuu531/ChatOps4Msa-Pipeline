@@ -1,0 +1,29 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 503,
+  "completion_tokens": 890,
+  "total_tokens": 1393,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 12000
+  }
+ },
+ "finish_reason": "stop",
+ "content": "{\"edges\": [{\"source\": \"frontend-proxy\", \"target\": \"frontend\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"cart\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"product-catalog\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"recommendation\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"ad\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"quote\", \"class\": \"business\"}, {\"source\": \"cart\", \"target\": \"valkey-cart\", \"class\": \"data\"}, {\"source\": \"cart\", \"target\": \"currency\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"cart\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"payment\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"shipping\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"fraud-detection\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"email\", \"class\": \"business\"}, {\"source\": \"payment\", \"target\": \"accounting\", \"class\": \"business\"}, {\"source\": \"payment\", \"target\": \"currency\", \"class\": \"business\"}, {\"source\": \"fraud-detection\", \"target\": \"kafka\", \"class\": \"data\"}, {\"source\": \"fraud-detection\", \"target\": \"firepit\", \"class\": \"business\"}, {\"source\": \"firepit\", \"target\": \"kafka\", \"class\": \"data\"}, {\"source\": \"firepit\", \"target\": \"astronomy-db\", \"class\": \"data\"}, {\"source\": \"product-catalog\", \"target\": \"astronomy-db\", \"class\": \"data\"}, {\"source\": \"recommendation\", \"target\": \"product-catalog\", \"class\": \"business\"}, {\"source\": \"recommendation\", \"target\": \"kafka\", \"class\": \"data\"}, {\"source\": \"ad\", \"target\": \"kafka\", \"class\": \"data\"}, {\"source\": \"quote\", \"target\": \"currency\", \"class\": \"business\"}, {\"source\": \"shipping\", \"target\": \"currency\", \"class\": \"business\"}, {\"source\": \"shipping\", \"target\": \"kafka\", \"class\": \"data\"}, {\"source\": \"email\", \"target\": \"external\", \"class\": \"external\"}, {\"source\": \"frontend\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"checkout\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"flagd-ui\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"frontend\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"checkout\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"firepit\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"otel-ebpf-profiler\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"frontend\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"checkout\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"firepit\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"frontend\", \"target\": \"prometheus\", \"class\": \"control\"}, {\"source\": \"checkout\", \"target\": \"prometheus\", \"class\": \"control\"}, {\"source\": \"firepit\", \"target\": \"prometheus\", \"class\": \"control\"}, {\"source\": \"grafana\", \"target\": \"prometheus\", \"class\": \"business\"}, {\"source\": \"grafana\", \"target\": \"jaeger\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"local-llm.com\", \"class\": \"external\"}, {\"source\": \"chatbot\", \"target\": \"local-llm.com\", \"class\": \"external\"}, {\"source\": \"frontend\", \"target\": \"frontend-proxy\", \"class\": \"control\"}]}"
+}

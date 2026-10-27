@@ -1,0 +1,29 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 125334,
+  "completion_tokens": 1275,
+  "total_tokens": 126609,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 12000
+  }
+ },
+ "finish_reason": "stop",
+ "content": "{\"edges\": [{\"source\": \"accounting\", \"target\": \"kafka\", \"class\": \"data\"}, {\"source\": \"accounting\", \"target\": \"astronomy-db\", \"class\": \"data\"}, {\"source\": \"ad\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"ad\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"agent\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"agent\", \"target\": \"product-catalog\", \"class\": \"business\"}, {\"source\": \"agent\", \"target\": \"mcp\", \"class\": \"business\"}, {\"source\": \"agent\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"cart\", \"target\": \"valkey-cart\", \"class\": \"data\"}, {\"source\": \"cart\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"cart\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"chatbot\", \"target\": \"agent\", \"class\": \"business\"}, {\"source\": \"chatbot\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"checkout\", \"target\": \"cart\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"currency\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"email\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"payment\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"product-catalog\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"shipping\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"checkout\", \"target\": \"kafka\", \"class\": \"data\"}, {\"source\": \"checkout\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"currency\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"email\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"email\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"fraud-detection\", \"target\": \"kafka\", \"class\": \"data\"}, {\"source\": \"fraud-detection\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"fraud-detection\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"frontend\", \"target\": \"ad\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"cart\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"checkout\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"currency\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"product-catalog\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"quote\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"recommendation\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"shipping\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"frontend\", \"target\": \"image-provider\", \"class\": \"control\"}, {\"source\": \"frontend\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"frontend-proxy\", \"target\": \"frontend\", \"class\": \"control\"}, {\"source\": \"frontend-proxy\", \"target\": \"load-generator\", \"class\": \"control\"}, {\"source\": \"frontend-proxy\", \"target\": \"flagd-ui\", \"class\": \"control\"}, {\"source\": \"frontend-proxy\", \"target\": \"telemetry-docs\", \"class\": \"control\"}, {\"source\": \"image-provider\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"load-generator\", \"target\": \"frontend\", \"class\": \"business\"}, {\"source\": \"load-generator\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"mcp\", \"target\": \"frontend\", \"class\": \"business\"}, {\"source\": \"mcp\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"chatbot\", \"target\": \"opamp-server\", \"class\": \"business\"}, {\"source\": \"opamp-server\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"payment\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"payment\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"product-catalog\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"product-catalog\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"product-catalog\", \"target\": \"astronomy-db\", \"class\": \"data\"}, {\"source\": \"quote\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"recommendation\", \"target\": \"product-catalog\", \"class\": \"business\"}, {\"source\": \"recommendation\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"recommendation\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"shipping\", \"target\": \"quote\", \"class\": \"business\"}, {\"source\": \"shipping\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"shipping\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"telemetry-docs\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"valkey-cart\", \"target\": \"cart\", \"class\": \"data\"}]}"
+}

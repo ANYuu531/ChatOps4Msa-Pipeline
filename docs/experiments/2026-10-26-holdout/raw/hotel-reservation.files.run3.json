@@ -1,0 +1,29 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 117019,
+  "completion_tokens": 792,
+  "total_tokens": 117811,
+  "prompt_tokens_details": {
+   "cached_tokens": 116864,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 12000
+  }
+ },
+ "finish_reason": "stop",
+ "content": "{\"edges\": [{\"source\": \"frontend\", \"target\": \"search\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"profile\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"recommendation\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"user\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"reservation\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"review\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"attractions\", \"class\": \"business\"}, {\"source\": \"search\", \"target\": \"geo\", \"class\": \"business\"}, {\"source\": \"search\", \"target\": \"rate\", \"class\": \"business\"}, {\"source\": \"profile\", \"target\": \"mongodb-profile\", \"class\": \"data\"}, {\"source\": \"profile\", \"target\": \"memcached-profile\", \"class\": \"data\"}, {\"source\": \"geo\", \"target\": \"mongodb-geo\", \"class\": \"data\"}, {\"source\": \"rate\", \"target\": \"mongodb-rate\", \"class\": \"data\"}, {\"source\": \"rate\", \"target\": \"memcached-rate\", \"class\": \"data\"}, {\"source\": \"review\", \"target\": \"mongodb-review\", \"class\": \"data\"}, {\"source\": \"review\", \"target\": \"memcached-review\", \"class\": \"data\"}, {\"source\": \"attractions\", \"target\": \"mongodb-attractions\", \"class\": \"data\"}, {\"source\": \"recommendation\", \"target\": \"mongodb-recommendation\", \"class\": \"data\"}, {\"source\": \"user\", \"target\": \"mongodb-user\", \"class\": \"data\"}, {\"source\": \"reservation\", \"target\": \"mongodb-reservation\", \"class\": \"data\"}, {\"source\": \"reservation\", \"target\": \"memcached-reserve\", \"class\": \"data\"}, {\"source\": \"frontend\", \"target\": \"consul\", \"class\": \"control\"}, {\"source\": \"search\", \"target\": \"consul\", \"class\": \"control\"}, {\"source\": \"profile\", \"target\": \"consul\", \"class\": \"control\"}, {\"source\": \"geo\", \"target\": \"consul\", \"class\": \"control\"}, {\"source\": \"rate\", \"target\": \"consul\", \"class\": \"control\"}, {\"source\": \"review\", \"target\": \"consul\", \"class\": \"control\"}, {\"source\": \"attractions\", \"target\": \"consul\", \"class\": \"control\"}, {\"source\": \"recommendation\", \"target\": \"consul\", \"class\": \"control\"}, {\"source\": \"user\", \"target\": \"consul\", \"class\": \"control\"}, {\"source\": \"reservation\", \"target\": \"consul\", \"class\": \"control\"}, {\"source\": \"frontend\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"search\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"profile\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"geo\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"rate\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"review\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"attractions\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"recommendation\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"user\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"reservation\", \"target\": \"jaeger\", \"class\": \"control\"}]}"
+}

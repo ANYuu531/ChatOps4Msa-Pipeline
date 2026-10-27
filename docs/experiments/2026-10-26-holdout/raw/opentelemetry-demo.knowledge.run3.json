@@ -1,0 +1,29 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 503,
+  "completion_tokens": 726,
+  "total_tokens": 1229,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 12000
+  }
+ },
+ "finish_reason": "stop",
+ "content": "{\"edges\": [{\"source\": \"frontend-proxy\", \"target\": \"frontend\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"cart\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"product-catalog\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"recommendation\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"ad\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"quote\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"chatbot\", \"class\": \"business\"}, {\"source\": \"cart\", \"target\": \"valkey-cart\", \"class\": \"data\"}, {\"source\": \"cart\", \"target\": \"currency\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"cart\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"payment\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"shipping\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"fraud-detection\", \"class\": \"business\"}, {\"source\": \"checkout\", \"target\": \"currency\", \"class\": \"business\"}, {\"source\": \"payment\", \"target\": \"accounting\", \"class\": \"business\"}, {\"source\": \"payment\", \"target\": \"email\", \"class\": \"business\"}, {\"source\": \"product-catalog\", \"target\": \"astronomy-db\", \"class\": \"data\"}, {\"source\": \"recommendation\", \"target\": \"product-catalog\", \"class\": \"business\"}, {\"source\": \"recommendation\", \"target\": \"astronomy-db\", \"class\": \"data\"}, {\"source\": \"fraud-detection\", \"target\": \"kafka\", \"class\": \"data\"}, {\"source\": \"fraud-detection\", \"target\": \"firepit\", \"class\": \"business\"}, {\"source\": \"firepit\", \"target\": \"kafka\", \"class\": \"data\"}, {\"source\": \"firepit\", \"target\": \"astronomy-db\", \"class\": \"data\"}, {\"source\": \"chatbot\", \"target\": \"local-llm.com\", \"class\": \"external\"}, {\"source\": \"frontend\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"flagd-ui\", \"target\": \"flagd\", \"class\": \"control\"}, {\"source\": \"frontend\", \"target\": \"otel-collector\", \"class\": \"control\"}, {\"source\": \"otel-collector\", \"target\": \"jaeger\", \"class\": \"control\"}, {\"source\": \"otel-collector\", \"target\": \"prometheus\", \"class\": \"control\"}, {\"source\": \"otel-collector\", \"target\": \"opamp-server\", \"class\": \"control\"}, {\"source\": \"opamp-server\", \"target\": \"otel-ebpf-profiler\", \"class\": \"control\"}, {\"source\": \"grafana\", \"target\": \"prometheus\", \"class\": \"business\"}, {\"source\": \"grafana\", \"target\": \"opensearch\", \"class\": \"business\"}, {\"source\": \"load-generator\", \"target\": \"frontend-proxy\", \"class\": \"business\"}, {\"source\": \"frontend\", \"target\": \"image-provider\", \"class\": \"control\"}, {\"source\": \"frontend\", \"target\": \"telemetry-docs\", \"class\": \"control\"}]}"
+}

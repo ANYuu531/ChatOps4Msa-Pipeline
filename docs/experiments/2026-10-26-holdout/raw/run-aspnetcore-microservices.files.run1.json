@@ -1,0 +1,29 @@
+{
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 39142,
+  "completion_tokens": 269,
+  "total_tokens": 39411,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 12000
+  }
+ },
+ "finish_reason": "stop",
+ "content": "{\"edges\": [\n  {\"source\": \"basket.api\", \"target\": \"basketdb\", \"class\": \"data\"},\n  {\"source\": \"basket.api\", \"target\": \"distributedcache\", \"class\": \"data\"},\n  {\"source\": \"basket.api\", \"target\": \"discount.grpc\", \"class\": \"business\"},\n  {\"source\": \"basket.api\", \"target\": \"messagebroker\", \"class\": \"data\"},\n  {\"source\": \"catalog.api\", \"target\": \"catalogdb\", \"class\": \"data\"},\n  {\"source\": \"discount.grpc\", \"target\": \"discount.grpc\", \"class\": \"data\"},\n  {\"source\": \"ordering.api\", \"target\": \"orderdb\", \"class\": \"data\"},\n  {\"source\": \"ordering.api\", \"target\": \"messagebroker\", \"class\": \"data\"},\n  {\"source\": \"shopping.web\", \"target\": \"yarpapigateway\", \"class\": \"business\"},\n  {\"source\": \"yarpapigateway\", \"target\": \"catalog.api\", \"class\": \"business\"},\n  {\"source\": \"yarpapigateway\", \"target\": \"basket.api\", \"class\": \"business\"},\n  {\"source\": \"yarpapigateway\", \"target\": \"ordering.api\", \"class\": \"business\"}\n]}"
+}
