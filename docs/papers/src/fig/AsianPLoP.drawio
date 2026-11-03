@@ -1,0 +1,463 @@
+<mxfile host="Electron" pages="4">
+  <diagram id="p_flow1" name="① 混合重建">
+    <mxGraphModel dx="1236" dy="1221" grid="1" gridSize="5" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="pre" parent="1" style="rounded=1;arcSize=6;dashed=1;dashPattern=6 4;fillColor=#fafafa;strokeColor=#888888;verticalAlign=top;align=left;spacingLeft=10;spacingTop=4;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontColor=#555555;" value="前提：先以流量走遍路徑" vertex="1">
+          <mxGeometry height="213" width="551" x="192" y="-74" as="geometry" />
+        </mxCell>
+        <mxCell id="start" parent="1" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontColor=#ffffff;" value="&lt;b style=&quot;font-size:15px&quot;&gt;開始&lt;/b&gt;&lt;br&gt;三個來源&lt;br&gt;各自的結果" vertex="1">
+          <mxGeometry height="78" width="150" x="25" y="41" as="geometry" />
+        </mxCell>
+        <mxCell id="t1" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="送流量（先走&lt;br&gt;主要使用者流程）" vertex="1">
+          <mxGeometry height="56" width="150" x="210" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="列出「靜態有、&lt;br&gt;執行期還沒量到」的邊" vertex="1">
+          <mxGeometry height="56" width="160" x="390" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="t3" parent="1" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="清單還在&lt;br&gt;縮短？" vertex="1">
+          <mxGeometry height="90" width="140" x="585" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="t4" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="依清單設計下一輪請求；&lt;br&gt;只有人知道的值請人提供" vertex="1">
+          <mxGeometry height="56" width="173" x="384" y="-40" as="geometry" />
+        </mxCell>
+        <mxCell id="s1" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="1. 以部署描述檔的&lt;br&gt;服務清單建節點" vertex="1">
+          <mxGeometry height="56" width="150" x="793" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" parent="1" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="名稱對得上&lt;br&gt;部署裡的服務？" vertex="1">
+          <mxGeometry height="90" width="175" x="780" y="151" as="geometry" />
+        </mxCell>
+        <mxCell id="h3" parent="1" style="shape=process;size=0.07;backgroundOutline=1;fillColor=#e9eef6;strokeColor=#4a6290;strokeWidth=1.5;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="&lt;b&gt;請人確認名稱對應&lt;/b&gt;&lt;br&gt;（第 7 節）" vertex="1">
+          <mxGeometry height="56" width="150" x="580" y="168" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="2. 以（來源，目標）&lt;br&gt;為鍵合併各來源的邊" vertex="1">
+          <mxGeometry height="56" width="157" x="789" y="283" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="3. 保留所有支持它的&lt;br&gt;來源與出處" vertex="1">
+          <mxGeometry height="56" width="157" x="577" y="283" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" parent="1" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="只有弱來源、&lt;br&gt;不在部署裡？" vertex="1">
+          <mxGeometry height="90" width="126" x="407" y="266" as="geometry" />
+        </mxCell>
+        <mxCell id="s4" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="4. 不新增節點，&lt;br&gt;只補強既有節點" vertex="1">
+          <mxGeometry height="56" width="150" x="395" y="393" as="geometry" />
+        </mxCell>
+        <mxCell id="s5" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="5. 記錄這次收集了&lt;br&gt;哪些來源" vertex="1">
+          <mxGeometry height="56" width="150" x="210" y="283" as="geometry" />
+        </mxCell>
+        <mxCell id="end" parent="1" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontColor=#ffffff;" value="&lt;b style=&quot;font-size:15px&quot;&gt;結束&lt;/b&gt;&lt;br&gt;每條邊都有&lt;br&gt;出處的圖" vertex="1">
+          <mxGeometry height="78" width="150" x="25" y="272" as="geometry" />
+        </mxCell>
+        <mxCell id="e0" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="t1" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="t1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="t2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="t2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="t3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="t3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="t4" value="是">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="t4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="t1" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="t3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="s1" value="否">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="d1" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="d1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="h3" value="否">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="d1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="s2" value="是">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="s2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="s3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="s3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="d2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="d2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="s5" value="否">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="d2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="s4" value="是">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="s4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="s5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="s5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="end" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="rounded=0;fillColor=#ffffff;strokeColor=#999999;verticalAlign=middle;align=left;spacingLeft=10;container=1;collapsible=0;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="&lt;b&gt;圖例&lt;/b&gt;" vertex="1">
+          <mxGeometry height="38" width="868" x="105" y="471" as="geometry" />
+        </mxCell>
+        <mxCell id="lg0" parent="legend" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;" value="" vertex="1">
+          <mxGeometry height="20" width="40" x="52" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="lt0" parent="legend" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="開始／結束" vertex="1">
+          <mxGeometry height="20" width="68" x="98" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="lg1" parent="legend" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;" value="" vertex="1">
+          <mxGeometry height="20" width="40" x="190" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="lt1" parent="legend" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="步驟" vertex="1">
+          <mxGeometry height="20" width="32" x="236" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="lg2" parent="legend" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;" value="" vertex="1">
+          <mxGeometry height="24" width="40" x="292" y="7" as="geometry" />
+        </mxCell>
+        <mxCell id="lt2" parent="legend" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="判斷" vertex="1">
+          <mxGeometry height="20" width="32" x="338" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="lg3" parent="legend" style="shape=process;size=0.07;backgroundOutline=1;fillColor=#e9eef6;strokeColor=#4a6290;strokeWidth=1.5;html=1;" value="" vertex="1">
+          <mxGeometry height="20" width="40" x="394" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="lt3" parent="legend" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="接到另一個 pattern" vertex="1">
+          <mxGeometry height="20" width="124" x="440" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="lg4" parent="legend" style="rounded=1;arcSize=10;dashed=1;dashPattern=6 4;fillColor=#fafafa;strokeColor=#888888;html=1;" value="" vertex="1">
+          <mxGeometry height="20" width="40" x="588" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="lt4" parent="legend" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="前提" vertex="1">
+          <mxGeometry height="20" width="32" x="634" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="lg5" parent="legend" style="text;align=center;verticalAlign=middle;fontStyle=1;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;html=1;" value="1.–N." vertex="1">
+          <mxGeometry height="20" width="40" x="690" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="lt5" parent="legend" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="Solution 的第幾步" vertex="1">
+          <mxGeometry height="20" width="119" x="736" y="9" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="I0UZt34VCLbXN5sKe589" name="② 實測優先於推測">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-28" parent="1" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontColor=#ffffff;" value="&lt;b style=&quot;font-size:15px&quot;&gt;開始&lt;/b&gt;&lt;br&gt;合併後的一條邊&lt;br&gt;（或節點）" vertex="1">
+          <mxGeometry height="78" width="150" x="50" y="156" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-29" parent="1" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="執行期觀測&lt;br&gt;記錄到了？" vertex="1">
+          <mxGeometry height="90" width="140" x="240" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-30" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="1a. 標記為「實測」" vertex="1">
+          <mxGeometry height="52" width="151" x="419" y="169" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-31" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="1b. 標記為「推測」&lt;br&gt;（只來自程式碼、&lt;br&gt;設定或文件）" vertex="1">
+          <mxGeometry height="74" width="151" x="419" y="263" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-32" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="2. 出處另存（可多筆），&lt;br&gt;標記只有一個" vertex="1">
+          <mxGeometry height="56" width="183" x="607" y="167" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-33" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="3. 同一條邊有多個標記時&lt;br&gt;留較強的：實測取代推測" vertex="1">
+          <mxGeometry height="56" width="183" x="607" y="382" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-34" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="4. 實測＝實線、推測＝虛線；&lt;br&gt;圖例跟著圖走" vertex="1">
+          <mxGeometry height="56" width="189" x="391" y="382" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-35" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="5. 下游的摘要與報告&lt;br&gt;只能照抄或降級" vertex="1">
+          <mxGeometry height="56" width="140" x="222" y="382" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-36" parent="1" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontColor=#ffffff;" value="&lt;b style=&quot;font-size:15px&quot;&gt;結束&lt;/b&gt;&lt;br&gt;分得出哪條&lt;br&gt;可信的圖" vertex="1">
+          <mxGeometry height="78" width="150" x="50" y="371" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-37" edge="1" parent="1" source="YOhvoSXPEvrJ-7QvGyvb-28" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="YOhvoSXPEvrJ-7QvGyvb-29" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-38" edge="1" parent="1" source="YOhvoSXPEvrJ-7QvGyvb-29" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="YOhvoSXPEvrJ-7QvGyvb-30" value="是">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-39" edge="1" parent="1" source="YOhvoSXPEvrJ-7QvGyvb-29" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="YOhvoSXPEvrJ-7QvGyvb-31" value="否">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-40" edge="1" parent="1" source="YOhvoSXPEvrJ-7QvGyvb-30" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="YOhvoSXPEvrJ-7QvGyvb-32" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-41" edge="1" parent="1" source="YOhvoSXPEvrJ-7QvGyvb-31" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.3;entryY=1;entryDx=0;entryDy=0;" target="YOhvoSXPEvrJ-7QvGyvb-32" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-42" edge="1" parent="1" source="YOhvoSXPEvrJ-7QvGyvb-32" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" target="YOhvoSXPEvrJ-7QvGyvb-33" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-43" edge="1" parent="1" source="YOhvoSXPEvrJ-7QvGyvb-33" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="YOhvoSXPEvrJ-7QvGyvb-34" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-44" edge="1" parent="1" source="YOhvoSXPEvrJ-7QvGyvb-34" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="YOhvoSXPEvrJ-7QvGyvb-35" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-45" edge="1" parent="1" source="YOhvoSXPEvrJ-7QvGyvb-35" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="YOhvoSXPEvrJ-7QvGyvb-36" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-46" parent="1" style="rounded=0;fillColor=#ffffff;strokeColor=#999999;verticalAlign=middle;align=left;spacingLeft=10;container=1;collapsible=0;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="&lt;b&gt;圖例&lt;/b&gt;" vertex="1">
+          <mxGeometry height="38" width="573" x="217" y="471" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-47" parent="YOhvoSXPEvrJ-7QvGyvb-46" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;" value="" vertex="1">
+          <mxGeometry height="20" width="40" x="52" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-48" parent="YOhvoSXPEvrJ-7QvGyvb-46" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="開始／結束" vertex="1">
+          <mxGeometry height="20" width="68" x="98" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-49" parent="YOhvoSXPEvrJ-7QvGyvb-46" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;" value="" vertex="1">
+          <mxGeometry height="20" width="40" x="190" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-50" parent="YOhvoSXPEvrJ-7QvGyvb-46" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="步驟" vertex="1">
+          <mxGeometry height="20" width="32" x="236" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-51" parent="YOhvoSXPEvrJ-7QvGyvb-46" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;" value="" vertex="1">
+          <mxGeometry height="24" width="40" x="292" y="7" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-52" parent="YOhvoSXPEvrJ-7QvGyvb-46" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="判斷" vertex="1">
+          <mxGeometry height="20" width="32" x="338" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-53" parent="YOhvoSXPEvrJ-7QvGyvb-46" style="text;align=center;verticalAlign=middle;fontStyle=1;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;html=1;" value="1.–N." vertex="1">
+          <mxGeometry height="20" width="40" x="394" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="YOhvoSXPEvrJ-7QvGyvb-54" parent="YOhvoSXPEvrJ-7QvGyvb-46" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="Solution 的第幾步" vertex="1">
+          <mxGeometry height="20" width="119" x="440" y="9" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="4EzgUlh3TqbSNvEOvjoR" name="③ 請人確認名稱對應">
+    <mxGraphModel dx="3505" dy="1778" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-1" parent="1" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontColor=#ffffff;" value="&lt;b style=&quot;font-size:15px&quot;&gt;開始&lt;/b&gt;&lt;br&gt;合併時遇到&lt;br&gt;的一個名稱" vertex="1">
+          <mxGeometry height="78" width="150" x="-500" y="316" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-2" parent="1" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="1a. 規則能&lt;br&gt;對齊？" vertex="1">
+          <mxGeometry height="90" width="144" x="-312" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-3" parent="1" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontColor=#ffffff;" value="&lt;b style=&quot;font-size:15px&quot;&gt;結束&lt;/b&gt;&lt;br&gt;併入圖中" vertex="1">
+          <mxGeometry height="60" width="150" x="-315" y="456" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-4" parent="1" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="這個 repo&lt;br&gt;存過答案？" vertex="1">
+          <mxGeometry height="90" width="108" x="-110" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-5" parent="1" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="答案指向的節點&lt;br&gt;這次還在？" vertex="1">
+          <mxGeometry height="90" width="130" x="-120" y="441" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-6" parent="1" style="rounded=1;arcSize=20;dashed=1;fillColor=#ffffff;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="略過這個名稱，&lt;br&gt;不建立新節點" vertex="1">
+          <mxGeometry height="56" width="140" x="85" y="458" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-7" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="1b. 記成問題，&lt;br&gt;不默默丟掉" vertex="1">
+          <mxGeometry height="56" width="140" x="85" y="327" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-8" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="2. 附排序過的候選，&lt;br&gt;與「新節點」「忽略」" vertex="1">
+          <mxGeometry height="56" width="160" x="263" y="327" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-9" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="3. 在審查頁面或對話&lt;br&gt;裡一次問完" vertex="1">
+          <mxGeometry height="56" width="157" x="264" y="458" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-10" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="4a. 以確定性的&lt;br&gt;規則解析答案" vertex="1">
+          <mxGeometry height="56" width="150" x="268" y="573" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-11" parent="1" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="看得懂且指向&lt;br&gt;存在的節點？" vertex="1">
+          <mxGeometry height="90" width="157" x="61" y="556" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-12" parent="1" style="rounded=1;arcSize=20;dashed=1;fillColor=#ffffff;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="4b. 保留問題，不猜" vertex="1">
+          <mxGeometry height="52" width="151" x="64" y="685" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-13" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="5. 套用，並以 repo&lt;br&gt;為單位存下答案" vertex="1">
+          <mxGeometry height="56" width="155" x="-133" y="573" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-14" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="6. 報告標出這條邊&lt;br&gt;靠人的回答" vertex="1">
+          <mxGeometry height="56" width="150" x="-315" y="573" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-15" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-16" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-3" value="能">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-17" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-4" value="不能">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-18" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-5" value="有">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-19" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-3" value="在">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-20" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-6" value="不在">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-21" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-7" value="沒有">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-22" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-8" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-23" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-9" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-24" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-10" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-25" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-26" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-12" value="否">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-27" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-13" value="是">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-28" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-14" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-29" edge="1" parent="1" source="Dn54ygtq_xH8EhrWlVuw-14" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="Dn54ygtq_xH8EhrWlVuw-3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-30" parent="1" style="rounded=0;fillColor=#ffffff;strokeColor=#999999;verticalAlign=middle;align=left;spacingLeft=10;container=1;collapsible=0;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="&lt;b&gt;圖例&lt;/b&gt;" vertex="1">
+          <mxGeometry height="38" width="795" x="-372" y="759" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-31" parent="Dn54ygtq_xH8EhrWlVuw-30" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;" value="" vertex="1">
+          <mxGeometry height="20" width="40" x="52" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-32" parent="Dn54ygtq_xH8EhrWlVuw-30" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="開始／結束" vertex="1">
+          <mxGeometry height="20" width="68" x="98" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-33" parent="Dn54ygtq_xH8EhrWlVuw-30" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;" value="" vertex="1">
+          <mxGeometry height="20" width="40" x="190" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-34" parent="Dn54ygtq_xH8EhrWlVuw-30" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="步驟" vertex="1">
+          <mxGeometry height="20" width="32" x="236" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-35" parent="Dn54ygtq_xH8EhrWlVuw-30" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;" value="" vertex="1">
+          <mxGeometry height="24" width="40" x="292" y="7" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-36" parent="Dn54ygtq_xH8EhrWlVuw-30" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="判斷" vertex="1">
+          <mxGeometry height="20" width="32" x="338" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-37" parent="Dn54ygtq_xH8EhrWlVuw-30" style="rounded=1;arcSize=20;dashed=1;fillColor=#ffffff;strokeColor=#777777;html=1;" value="" vertex="1">
+          <mxGeometry height="20" width="40" x="394" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-38" parent="Dn54ygtq_xH8EhrWlVuw-30" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="其他結局（流程到此停止）" vertex="1">
+          <mxGeometry height="20" width="152" x="440" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-39" parent="Dn54ygtq_xH8EhrWlVuw-30" style="text;align=center;verticalAlign=middle;fontStyle=1;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;html=1;" value="1.–N." vertex="1">
+          <mxGeometry height="20" width="40" x="616" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="Dn54ygtq_xH8EhrWlVuw-40" parent="Dn54ygtq_xH8EhrWlVuw-30" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="Solution 的第幾步" vertex="1">
+          <mxGeometry height="20" width="119" x="662" y="9" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="cP3BTN-r1JP24MpGAXk-" name="④ 基於事實的解釋">
+    <mxGraphModel dx="1236" dy="821" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-34" parent="1" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontColor=#ffffff;" value="&lt;b style=&quot;font-size:15px&quot;&gt;開始&lt;/b&gt;&lt;br&gt;這次分析&lt;br&gt;收集到的結果" vertex="1">
+          <mxGeometry height="78" width="150" x="296" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-35" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="1a. 建一份統一模型&lt;br&gt;並存檔" vertex="1">
+          <mxGeometry height="56" width="151" x="480" y="201" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-36" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="1b. 圖、數字、問答、匯出&lt;br&gt;都從模型產生" vertex="1">
+          <mxGeometry height="56" width="190" x="461" y="322" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-37" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="2. 記下收集了哪些來源；&lt;br&gt;狀態三值，預設「未知」" vertex="1">
+          <mxGeometry height="56" width="183" x="659" y="201" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-38" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="3. 報告內容分成&lt;br&gt;事實與詮釋" vertex="1">
+          <mxGeometry height="56" width="150" x="870" y="201" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-39" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="4. 事實由程式從模型產生；&lt;br&gt;未知寫「未量測」與原因，&lt;br&gt;不寫 0" vertex="1">
+          <mxGeometry height="74" width="196" x="847" y="313" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-40" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="5a. 詮釋：LLM 讀同一份&lt;br&gt;事實，寫角色、風險、建議" vertex="1">
+          <mxGeometry height="56" width="186" x="1055" y="322" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-41" parent="1" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="LLM 也寫了&lt;br&gt;事實段落？" vertex="1">
+          <mxGeometry height="90" width="144" x="1076" y="426" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-42" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="5b. 丟掉 LLM 的版本" vertex="1">
+          <mxGeometry height="52" width="163" x="863" y="549" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-43" parent="1" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;" value="6. 拼成報告，標出程式&lt;br&gt;產生的段落；失敗要記錄" vertex="1">
+          <mxGeometry height="56" width="173" x="858.5" y="442" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-44" parent="1" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontColor=#ffffff;" value="&lt;b style=&quot;font-size:15px&quot;&gt;結束&lt;/b&gt;&lt;br&gt;各產出物&lt;br&gt;說同一件事" vertex="1">
+          <mxGeometry height="78" width="150" x="675" y="431" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-45" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-34" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="DCR4PjZcfTbiTniNoCl5-35" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-46" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-35" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="DCR4PjZcfTbiTniNoCl5-37" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-47" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-35" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="DCR4PjZcfTbiTniNoCl5-36" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-48" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-37" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="DCR4PjZcfTbiTniNoCl5-38" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-49" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-38" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="DCR4PjZcfTbiTniNoCl5-39" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-50" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-38" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="DCR4PjZcfTbiTniNoCl5-40" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-51" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-39" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="DCR4PjZcfTbiTniNoCl5-43" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-52" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-40" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="DCR4PjZcfTbiTniNoCl5-41" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-53" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-41" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="DCR4PjZcfTbiTniNoCl5-43" value="否">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-54" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-41" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="DCR4PjZcfTbiTniNoCl5-42" value="是">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-55" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-42" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="DCR4PjZcfTbiTniNoCl5-43" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-56" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-43" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;" target="DCR4PjZcfTbiTniNoCl5-44" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-57" edge="1" parent="1" source="DCR4PjZcfTbiTniNoCl5-36" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;endSize=7;strokeColor=#555555;strokeWidth=1.3;fontFamily=PingFang TC;fontSize=12;fontColor=#444444;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="DCR4PjZcfTbiTniNoCl5-44" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-58" parent="1" style="rounded=0;fillColor=#ffffff;strokeColor=#999999;verticalAlign=middle;align=left;spacingLeft=10;container=1;collapsible=0;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="&lt;b&gt;圖例&lt;/b&gt;" vertex="1">
+          <mxGeometry height="38" width="573" x="668" y="623" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-59" parent="DCR4PjZcfTbiTniNoCl5-58" style="rounded=1;arcSize=50;fillColor=#2f3b4a;strokeColor=#2f3b4a;strokeWidth=2;fontColor=#ffffff;html=1;" value="" vertex="1">
+          <mxGeometry height="20" width="40" x="52" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-60" parent="DCR4PjZcfTbiTniNoCl5-58" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="開始／結束" vertex="1">
+          <mxGeometry height="20" width="68" x="98" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-61" parent="DCR4PjZcfTbiTniNoCl5-58" style="rounded=1;arcSize=20;fillColor=#f4f4f4;strokeColor=#777777;html=1;" value="" vertex="1">
+          <mxGeometry height="20" width="40" x="190" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-62" parent="DCR4PjZcfTbiTniNoCl5-58" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="步驟" vertex="1">
+          <mxGeometry height="20" width="32" x="236" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-63" parent="DCR4PjZcfTbiTniNoCl5-58" style="rhombus;fillColor=#ffffff;strokeColor=#777777;html=1;" value="" vertex="1">
+          <mxGeometry height="24" width="40" x="292" y="7" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-64" parent="DCR4PjZcfTbiTniNoCl5-58" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="判斷" vertex="1">
+          <mxGeometry height="20" width="32" x="338" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-65" parent="DCR4PjZcfTbiTniNoCl5-58" style="text;align=center;verticalAlign=middle;fontStyle=1;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;html=1;" value="1.–N." vertex="1">
+          <mxGeometry height="20" width="40" x="394" y="9" as="geometry" />
+        </mxCell>
+        <mxCell id="DCR4PjZcfTbiTniNoCl5-66" parent="DCR4PjZcfTbiTniNoCl5-58" style="text;align=left;verticalAlign=middle;html=1;whiteSpace=wrap;fontFamily=PingFang TC;fontSize=13;fontColor=#222222;fontSize=12;" value="Solution 的第幾步" vertex="1">
+          <mxGeometry height="20" width="119" x="440" y="9" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

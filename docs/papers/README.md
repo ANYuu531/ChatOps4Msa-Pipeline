@@ -20,7 +20,7 @@ python3 docs/papers/src/build_compsac.py docs/papers/compsac-2027-zh.docx
 
 標記：`#`／`##` 標題、空行分段、`**粗體**`、`- ` 條列、`1. ` 編號、`> ` 引文、`!table 標題` … `!end`（`!widths` 以 dxa 為單位）、`!fig 檔名 | 圖說 | 寬（吋）`、`!algo` ＋ `!code` … `!endcode`。引用寫 `[@key]`，`!bib key | 內容`：COMPSAC 依第一次引用的順序編號（IEEE `[1]`）；AsianPLoP 用 ACM 的作者＋年份（`[Schneider et al. 2025]`），參考文獻不編號、依字母排序，標籤從 `!bib` 內容自動取（作者. 年份. …；組織文件取 accessed 年份）；沒被引用的會印警告。
 
-圖在 `src/fig/`：改 `.dot` 後 `dot -Tpng -Gdpi=300 x.dot -o x.png`。四張 Solution 流程圖（`p_flow1`–`p_flow4`）是 `src/fig/flows.py` 產生的（固定格位、蛇形排列，避免圖太高把版面往下推），改那支程式再跑 `python3 flows.py`，不要直接改它們的 `.dot`。
+圖在 `src/fig/`：改 `.dot` 後 `dot -Tpng -Gdpi=300 x.dot -o x.png`。四張 Solution 流程圖（`p_flow1`–`p_flow4`）的原始檔是 **`src/fig/AsianPLoP.drawio`**（10/28 起；取代原本的 `flows.py`），四個分頁依序是 ①–④：用 draw.io Desktop（`brew install --cask drawio`）或 app.diagrams.net 開來改，存檔後跑 `sh docs/papers/src/fig/export_flows.sh`（第 N 頁 → `p_flowN.png`；加頁碼只匯出一頁，例如 `… export_flows.sh 2`），再重跑 `build_plop.py`。**分頁順序不要動**，匯出是照頁碼對應檔名的。圖的慣例：開始／結束是深色膠囊、框內第一行寫「開始」「結束」；接到其他 pattern 用左右各多一條線的框（流程圖的「預定義處理」），寫 pattern 全名＋節號，不寫「→ ③」「交給 ③」；右下角一條橫的圖例，只列這張圖有用到的形狀；編號是 Solution 的第幾步，同一步拆成兩個框用 a、b，分流用的判斷與前提不編號。
 
 ## 兩篇共用的用詞（2026-10-14 定）
 

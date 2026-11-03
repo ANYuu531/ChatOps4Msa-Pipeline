@@ -111,8 +111,7 @@ AsianPLoP〈相依架構抽取：微服務系統的 Pattern Language（A Pattern
 | 一句話摘要 | pattern 欄位 | AsianPLoP §1.3 | 用一句話講完 pattern。 | 快速瀏覽用。 |
 | Context | pattern 欄位 | AsianPLoP §1.3 | 問題出現在什麼情境，通常承接前一個 pattern 留下的狀態。 | 串起整個 language。 |
 | Problem | pattern 欄位 | AsianPLoP §1.3 | 要解決的核心問題，本文以引言框列出。 | 每個 pattern 的核心。 |
-| Solution | pattern 欄位 | AsianPLoP §1.3 | 解法步驟，最後附商店例子；本文用「因此：」開頭，沿用 Alexander 寫法中的「Therefore」。 | 每個 pattern 的核心。 |
-| 實作要點 | pattern 欄位 | AsianPLoP §1.3 | 實作時要注意的細節與陷阱。 | 實作時的細節與陷阱，不指名是哪個工具的經驗。 |
+| Solution | pattern 欄位 | AsianPLoP §1.3 | 解法步驟，實作時要注意的細節直接寫在對應的步驟裡，最後附商店例子；本文用「因此：」開頭，沿用 Alexander 寫法中的「Therefore」。 | 每個 pattern 的核心。 |
 | Resulting Context | pattern 欄位 | AsianPLoP §1.3 | 套用解法之後系統變成什麼狀態、還留下什麼問題。 | 用來引出下一個 pattern（generative 關係）。 |
 | Consequences | pattern 欄位 | AsianPLoP §1.3 | 套用後的好處（＋）與代價（－）。 | 誠實交代取捨。 |
 | Related Patterns | pattern 欄位 | AsianPLoP §1.3 | 和其他 pattern 的前後與互補關係。 | 說明 language 的結構。 |
@@ -181,9 +180,9 @@ AsianPLoP〈相依架構抽取：微服務系統的 Pattern Language（A Pattern
 | 副作用（side effect） | 術語 | AsianPLoP §5 前提 Forces | 請求除了取得回應之外，還改變了系統狀態（例如寫入資料）。 | 流量的代價之一。 |
 | 端對端測試（end-to-end test） | 術語 | AsianPLoP §5 前提 Solution | 從使用者入口一路走到後端的整合測試。 | 產生流量的另一種來源。 |
 | 停止條件 | 術語 | AsianPLoP §5 前提 Solution 3 | 「靜態有、執行期未量測」的清單不再縮短時就停。 | 回應「永遠走不完」這個 force。 |
-| curl、watch | 工具（命令列） | AsianPLoP §5 前提 實作要點、Known Uses | curl 從命令列送 HTTP 請求；watch 每隔一段時間重複執行指令。 | repo 裡常見的現成流量來源；Istio 教學也用它們送流量。 |
-| 整合測試、README | 術語 | AsianPLoP §5 前提 實作要點 | 專案附的測試與說明檔。 | 先找現成的流量腳本，找不到再自己寫。 |
-| Postman collection | 標準（檔案格式） | AsianPLoP §5 前提 實作要點；COMPSAC III-F | Postman 工具的 API 請求集合格式（JSON，DepWeaver 用 v2.1）。 | 【AsianPLoP】把流量腳本存成標準格式，方便重跑。　【COMPSAC】流量腳本使用這個格式。第 3 層的問題以「空值變數加上說明」宣告在裡面。執行器是 DepWeaver 自己寫的，不是 Newman。 |
+| curl、watch | 工具（命令列） | AsianPLoP §5 前提、Known Uses | curl 從命令列送 HTTP 請求；watch 每隔一段時間重複執行指令。 | repo 裡常見的現成流量來源；Istio 教學也用它們送流量。 |
+| 整合測試、README | 術語 | AsianPLoP §5 前提 | 專案附的測試與說明檔。 | 先找現成的流量腳本，找不到再自己寫。 |
+| Postman collection | 標準（檔案格式） | AsianPLoP §5 前提；COMPSAC III-F | Postman 工具的 API 請求集合格式（JSON，DepWeaver 用 v2.1）。 | 【AsianPLoP】把流量腳本存成標準格式，方便重跑。　【COMPSAC】流量腳本使用這個格式。第 3 層的問題以「空值變數加上說明」宣告在裡面。執行器是 DepWeaver 自己寫的，不是 Newman。 |
 | 測試缺口清單 | 術語 | AsianPLoP §5 前提 Consequences | 「還沒量測到的邊」清單同時也指出測試還沒涵蓋的地方。 | ① 的前提的附帶好處。 |
 | Cornelissen 等人 2009（cornelissen2009） | 論文 | AsianPLoP §5 前提 Known Uses | IEEE TSE 論文，以動態分析理解程式的系統性文獻調查。 | 引用它的論點：動態分析本質上不完整，難處在於決定要執行哪些情境，可以借用測試套件。 |
 | Istio 的 Kiali 教學（istio 文件〈Visualizing Your Mesh〉） | 業界文件 | AsianPLoP §5 前提 Known Uses | Istio 官方的 Kiali 操作教學。 | 業界證據：教學先叫使用者反覆送流量，因為服務圖只顯示一段時間內真的流過的流量。 |
@@ -197,11 +196,11 @@ AsianPLoP〈相依架構抽取：微服務系統的 Pattern Language（A Pattern
 | provenance（出處） | 術語 | AsianPLoP §5 Solution 3；COMPSAC 摘要（關鍵字：出處追溯） | 每條邊的證據來源：檔案與行號、指標名稱、文件段落。 | 【AsianPLoP】讓每條邊都能回頭查證；② 把標記和出處分開存。　【COMPSAC】每條邊都帶完整的出處清單，合併時取聯集。 |
 | 加權投票／機率模型 | 術語 | AsianPLoP §5 Forces | 依來源可信度加權，或用機率計算邊存不存在的合併方法。 | 本文認為這類方法難以向讀者解釋，所以採「只做加法、保留出處」。 |
 | 假邊（false edge） | 術語 | AsianPLoP §5 Forces | 圖上有、實際上不存在的相依關係。 | 弱來源帶進的雜訊。 |
-| 骨架（skeleton） | 術語 | AsianPLoP §5 實作要點 | 先用最可靠的來源建立的基本圖，再往上疊其他來源。 | 先以最可靠的來源建骨架，再往上疊。 |
-| 框架函式庫的名稱 | 術語 | AsianPLoP §5 實作要點；COMPSAC III-D | 例如快取、斷路器函式庫的名稱，常被誤認成服務。（COMPSAC 補充：例如 Eureka、Hystrix 這類函式庫名稱被誤畫成節點。） | 【AsianPLoP】要用可設定的排除清單濾掉。　【COMPSAC】第一類雜訊，用「函式庫名單」處理。 |
-| 快取（cache） | 術語 | AsianPLoP §5 實作要點 | 暫存常用資料以加速存取的元件。 | 例子：快取函式庫被誤認為服務。 |
-| 斷路器（circuit breaker） | 術語 | AsianPLoP §5 實作要點 | 下游一直失敗時暫時停止呼叫、避免連鎖故障的機制（例如 Resilience4j、Hystrix）。 | 同上。 |
-| 可設定的排除清單 | 術語 | AsianPLoP §5 實作要點；COMPSAC III-F | 列出「不是服務」的名稱，而且可以依專案調整。 | 【AsianPLoP】降低假節點。　【COMPSAC】hystrix 被它誤刪，是 RQ3 的案例。 |
+| 骨架（skeleton） | 術語 | AsianPLoP §5 Solution 2 | 先用最可靠的來源建立的基本圖，再往上疊其他來源。 | 先以最可靠的來源建骨架，再往上疊。 |
+| 框架函式庫的名稱 | 術語 | AsianPLoP §5 Solution 1；COMPSAC III-D | 例如快取、斷路器函式庫的名稱，常被誤認成服務。（COMPSAC 補充：例如 Eureka、Hystrix 這類函式庫名稱被誤畫成節點。） | 【AsianPLoP】要用可設定的排除清單濾掉。　【COMPSAC】第一類雜訊，用「函式庫名單」處理。 |
+| 快取（cache） | 術語 | AsianPLoP §5 Solution 1 | 暫存常用資料以加速存取的元件。 | 例子：快取函式庫被誤認為服務。 |
+| 斷路器（circuit breaker） | 術語 | AsianPLoP §5 Solution 1 | 下游一直失敗時暫時停止呼叫、避免連鎖故障的機制（例如 Resilience4j、Hystrix）。 | 同上。 |
+| 可設定的排除清單 | 術語 | AsianPLoP §5 Solution 1；COMPSAC III-F | 列出「不是服務」的名稱，而且可以依專案調整。 | 【AsianPLoP】降低假節點。　【COMPSAC】hystrix 被它誤刪，是 RQ3 的案例。 |
 | Mayer 與 Weinreich 2018（mayer2018） | 論文 | AsianPLoP §5 Forces；COMPSAC II-A | SOSE 2018 論文，提出擷取微服務架構的方法，結合靜態的服務資訊、基礎設施資訊與執行期資訊，理由是有些關係只在執行期看得到。 | 【AsianPLoP】證據：有些關係只在執行期看得到，所以要混合來源。　【COMPSAC】支持融合的動機。 |
 | 部署狀態 | 術語 | AsianPLoP §6 Related Patterns、§8 例子 | 某個服務在叢集裡有沒有部署。 | ④ 討論它「未知」時怎麼處理：預設未知，不是 false。 |
 
@@ -216,9 +215,9 @@ AsianPLoP〈相依架構抽取：微服務系統的 Pattern Language（A Pattern
 | partial models（部分模型） | 術語 | AsianPLoP §6 別名 | 能明確表達「哪些部分還不確定」的模型。 | 學界別名，出自 Famelis 2012。 |
 | 實測／推測標記 | 術語 | AsianPLoP §6 Solution | 每條邊一個標記：執行期觀測記錄到的是「實測」，只來自程式碼、設定或文件的是「推測」。 | ② 的核心；和出處分開儲存。 |
 | 視覺通道（visual channel／visual variable） | 術語 | AsianPLoP §6 Forces；COMPSAC II-E | 圖上能用來編碼資訊的視覺屬性：線型、顏色、粗細、形狀等。 | 【AsianPLoP】最醒目的通道（實線／虛線）要留給可信程度。　【COMPSAC】DepWeaver 用點線、虛線、實線三種線型。 |
-| 實線／虛線（／點線） | 術語 | AsianPLoP §6 Solution 4；COMPSAC III-C | AsianPLoP 只講實測＝實線、推測＝虛線兩級；COMPSAC 用三級三種線型（Mermaid 沒有點線，僅推測改畫虛線加「?」）。 | 【AsianPLoP】② 把最醒目的視覺通道給實測／推測標記；實作要點說兩級是底線，要細分就得在圖例交代。　【COMPSAC】讀者一眼分辨可信度。 |
+| 實線／虛線（／點線） | 術語 | AsianPLoP §6 Solution 4；COMPSAC III-C | AsianPLoP 只講實測＝實線、推測＝虛線兩級；COMPSAC 用三級三種線型（Mermaid 沒有點線，僅推測改畫虛線加「?」）。 | 【AsianPLoP】② 把最醒目的視覺通道給實測／推測標記；同一步也說兩級是底線，要細分就得在圖例交代。　【COMPSAC】讀者一眼分辨可信度。 |
 | 有使用證據 | 術語（DepWeaver） | COMPSAC III-C／表 I（AsianPLoP 稿已不出現） | 有會發出呼叫的程式碼或服務位址設定，或資料庫連線設定加上持久化程式碼。注意英文代號叫 documented，但意思不是「文件提到」。 | 【COMPSAC】DepWeaver 介於實測與推測之間的中間級，畫成虛線，計入分母。 |
-| 圖例（legend） | 術語 | AsianPLoP §6 實作要點 | 說明圖上符號意義的區塊。 | 必須跟著圖一起匯出。 |
+| 圖例（legend） | 術語 | AsianPLoP §6 Solution 4 | 說明圖上符號意義的區塊。 | 必須跟著圖一起匯出。 |
 | 降級（downgrade） | 術語 | AsianPLoP §6 Solution 5 | 下游產出物只能維持或降低可信程度，不能把推測講成確定。 | 約束報告與摘要。 |
 | Guo 等人 2015（guo2015） | 論文 | AsianPLoP §6 Forces；COMPSAC II-E | IEEE TVCG 論文，以受控實驗比較在圖的邊上同時呈現主屬性與不確定性的成對視覺變數。 | 【AsianPLoP】證據：視覺變數會互相干擾，所以要把最醒目的通道留給可信程度。　【COMPSAC】用線型表示信心等級的依據。 |
 | Famelis 等人 2012（famelis2012） | 論文 | AsianPLoP §6 Known Uses；COMPSAC II-E | ICSE 2012 論文，提出 partial models，讓模型能表達建模者的不確定性並據以推理。 | 【AsianPLoP】學界依據：過早選定一個答案會帶進錯誤資訊。　【COMPSAC】支持「圖要標示不確定性」。 |
@@ -238,7 +237,7 @@ AsianPLoP〈相依架構抽取：微服務系統的 Pattern Language（A Pattern
 | 手動加入／排除連線（ServiceNow） | 術語 | AsianPLoP §7 別名、Known Uses | ServiceNow 讓使用者審查建議的連線，記錄成手動加入或手動排除。 | §9 說這是最接近 ③ 的業界做法。 |
 | 模糊比對（fuzzy matching） | 術語 | AsianPLoP §7 Problem；COMPSAC I-B | 依字串相似度自動判斷兩個名稱是否相同。 | 【AsianPLoP】③ 反對的做法：可能憑相似度捏造邊。　【COMPSAC】DepWeaver 刻意不用，改成附排序過的候選讓人確認。 |
 | 排序過的候選 | 術語 | AsianPLoP §7 Solution 2；COMPSAC I-B、III-F | 列出可能的對應對象並排好順序，另附「新節點」「忽略」選項。（COMPSAC 補充：1. 去除 service、api、client 等通用詞後的包含關係。2. 共用字詞。3. 編輯距離。） | 【AsianPLoP】排序只給人看，不替人做決定。　【COMPSAC】只用來呈現給人看，不由工具決定。；只用於呈現，不做決定。 |
-| 編輯距離（edit distance） | 術語 | AsianPLoP §7 實作要點；COMPSAC III-F | 一個字串最少要經過幾次插入、刪除、替換才能變成另一個（例如 Levenshtein 距離）。 | 【AsianPLoP】候選排序的依據之一。　【COMPSAC】排序訊號之一。 |
+| 編輯距離（edit distance） | 術語 | AsianPLoP §7 Solution 2；COMPSAC III-F | 一個字串最少要經過幾次插入、刪除、替換才能變成另一個（例如 Levenshtein 距離）。 | 【AsianPLoP】候選排序的依據之一。　【COMPSAC】排序訊號之一。 |
 | 確定性規則解析 | 術語 | AsianPLoP §7 Solution 4；COMPSAC III-F | 用固定規則解讀人的回答（例如「1」就是第一個候選），看不懂就保留問題。（COMPSAC 補充：new 表示建立新節點，ignore 表示忽略。） | 【AsianPLoP】不讓 LLM 或猜測介入答案。　【COMPSAC】答案以確定性規則解析，解析不了就保留問題、不猜。 |
 | 審查頁面、對話 | 術語 | AsianPLoP §7 Solution 3 | 使用者平常就在用的介面。 | 在那裡一次把問題問完。DepWeaver 是在 Discord 上提問。 |
 | Murphy 等人 2001（murphy2001） | 論文 | AsianPLoP §7 Known Uses；COMPSAC II-D | IEEE TSE 論文〈Software Reflexion Models〉，提出上述的 reflexion model。 | 【AsianPLoP】③ 的學界 Known Use。　【COMPSAC】經典的「人提供對應」先例。拼法是 reflexion，不是 reflection。 |
@@ -259,8 +258,8 @@ AsianPLoP〈相依架構抽取：微服務系統的 Pattern Language（A Pattern
 | schema（資料結構定義） | 術語 | AsianPLoP §8 Forces | 模型有哪些欄位、什麼型別的定義。 | 代價：schema 會越長越大，是所有視圖的共同介面。 |
 | 衍生計算 | 術語 | AsianPLoP §8 Solution 2；COMPSAC III-E | 從模型算出的分數、分層、排序等。 | 【AsianPLoP】只實作一次，避免各產出物算出不同結果。　【COMPSAC】避免兩套算法得出不同結果。 |
 | 覆蓋率（coverage） | 術語（DepWeaver 指標） | AsianPLoP §7 Resulting Context（§8 例子）；COMPSAC 摘要 | DepWeaver 中「該量測的邊有多少被量測到」的比例（例如 4/4）。 | 【AsianPLoP】典型的數字型產出物；§9、④ 都討論它。　【COMPSAC】本文重新定義了它的分母（III-E）。 |
-| 單元測試（unit test） | 術語 | AsianPLoP §8 實作要點；COMPSAC III-D | 不需要外部環境、只測一小段邏輯的自動化測試。 | 【AsianPLoP】視圖由模型決定，所以「報告與圖是否一致」可以寫成單元測試。　【COMPSAC】每條規則都有。 |
-| 中繼資料（metadata） | 術語 | AsianPLoP §8 實作要點（§8 再次出現） | 描述資料本身的資料，例如「這次收集了哪些來源」。 | 要和模型一起存，④ 才能運作。 |
+| 單元測試（unit test） | 術語 | AsianPLoP §8 Solution 1；COMPSAC III-D | 不需要外部環境、只測一小段邏輯的自動化測試。 | 【AsianPLoP】視圖由模型決定，所以「報告與圖是否一致」可以寫成單元測試。　【COMPSAC】每條規則都有。 |
+| 中繼資料（metadata） | 術語 | AsianPLoP §8 Solution 2 | 描述資料本身的資料，例如「這次收集了哪些來源」。 | 要和模型一起存，④ 才能運作。 |
 | Alshuqayran 等人 2018（alshuqayran2018） | 論文 | AsianPLoP §8 Known Uses | ICSA 2018 論文，以 metamodel 加上對應規則，把多個開源微服務系統的實作產物（程式碼、docker-compose、建置檔、Dockerfile）對應到同一個架構 metamodel 的實證研究（方法後來稱 MiSAR）。 | ④ 的學界 Known Use。 |
 | Cerny 等人 2022（cerny2022） | 論文 | AsianPLoP §8 Known Uses | SOSE 2022 論文，回顧微服務架構重建與視覺化技術。 | 證據：重建結果通常是系統模型，再依觀點產生不同的視覺化；§10 也引用。 |
 | Dynatrace〈Custom Topology Model〉文件 | 業界文件 | AsianPLoP §8 Known Uses | Dynatrace 說明如何擴充拓樸模型的官方文件。 | 支持「Smartscape 是平台內建拓樸模型」的引用出處。 |
@@ -279,7 +278,7 @@ AsianPLoP〈相依架構抽取：微服務系統的 Pattern Language（A Pattern
 | LLM agent | 術語 | AsianPLoP §8 Forces；COMPSAC I-A | 能自行呼叫工具、多步驟行動的 LLM 系統。 | 【AsianPLoP】Liljas 2026 測試它重建架構的能力。　【COMPSAC】用來對照「純靠 LLM」的效果。 |
 | Liljas 等人 2026（liljas2026） | 論文 | AsianPLoP §8 Forces；COMPSAC I-A | ESEM 2026 論文，評估 LLM agent 能否自行重建微服務架構；只比較了兩個模型，較好的 GPT-4o 平均 F1 約 0.6（0.604）。 | 【AsianPLoP】證據：LLM 自己算事實不夠準。　【COMPSAC】證明「只靠 LLM」不夠可靠。 |
 | 事實 vs. 詮釋 | 術語 | AsianPLoP §8 Solution 1 | 事實有唯一正確答案、模型裡都有；詮釋是角色、風險、建議。 | ④ 的分工界線；劃錯的話，LLM 會在詮釋裡重述事實。 |
-| 結構錨點（structural anchor） | 術語 | AsianPLoP §8 實作要點；COMPSAC III-E | 報告中可以定位的位置（例如下一節的標題），程式產生的段落插在那裡。 | 【AsianPLoP】找不到錨點就附在最後，確保事實不會遺失。　【COMPSAC】找不到錨點時附在報告最後。 |
+| 結構錨點（structural anchor） | 術語 | AsianPLoP §8 Solution 6；COMPSAC III-E | 報告中可以定位的位置（例如下一節的標題），程式產生的段落插在那裡。 | 【AsianPLoP】找不到錨點就附在最後，確保事實不會遺失。　【COMPSAC】找不到錨點時附在報告最後。 |
 | 範本文字 | 術語 | AsianPLoP §8 Consequences | 程式依固定句型產生的文字。 | 代價：報告風格不完全一致。 |
 | GPT-4 Code Interpreter | 產品功能（OpenAI） | AsianPLoP §8 Known Uses；COMPSAC II-C | ChatGPT 中讓 GPT-4 撰寫並執行 Python 的功能（後來改名 Advanced Data Analysis）。 | 【AsianPLoP】Satyrn 實驗的比較對象（57%）。　【COMPSAC】Satyrn 的對照組。 |
 | A Prompt Pattern Catalog（White 等人，PLoP 2023） | 論文 | AsianPLoP §8 Related Patterns | 整理撰寫 ChatGPT prompt 的 pattern 目錄（Vanderbilt 大學團隊）。 | 和 ④ 方向互補：它教你把 prompt 寫好，④ 說有些事不該交給 prompt；§10 再次提到。 |
@@ -294,7 +293,7 @@ AsianPLoP〈相依架構抽取：微服務系統的 Pattern Language（A Pattern
 | deployed: false | 術語（欄位例子） | AsianPLoP §8 Problem | 布林欄位「是否已部署」為 false。 | 說明二值欄位會把「沒查」誤表達成「查了，沒部署」。 |
 | 不中斷的設計（失敗不中斷） | 術語 | AsianPLoP §8 Context | 某一步失敗時，工具仍繼續產出其餘結果（類似 graceful degradation）。 | Force 之一：它會把失敗藏起來。 |
 | 佔位值（placeholder） | 術語 | AsianPLoP §8 Solution 4 | 用 0、0/N、0% 暫代沒有的值。 | ④ 明確禁止，尤其不能交給 LLM。 |
-| 可為 null 的布林值（nullable boolean） | 術語 | AsianPLoP §8 實作要點；COMPSAC I-B | 允許 true、false、null 三種值的布林型別（例如 Java 的 `Boolean`）。 | 【AsianPLoP】三值最簡單的實作，重點是預設必須是未知。　【COMPSAC】部署狀態用可為 null 的布林值表示，避免把「沒量」當成「零」。 |
+| 可為 null 的布林值（nullable boolean） | 術語 | AsianPLoP §8 Solution 2；COMPSAC I-B | 允許 true、false、null 三種值的布林型別（例如 Java 的 `Boolean`）。 | 【AsianPLoP】三值最簡單的實作，重點是預設必須是未知。　【COMPSAC】部署狀態用可為 null 的布林值表示，避免把「沒量」當成「零」。 |
 | NOT MEASURED／未量測 | 術語（DepWeaver 輸出） | AsianPLoP §8 例子；COMPSAC 摘要、III-E | 交給 LLM 或顯示給讀者的明確字串，代替 0%。 | 【AsianPLoP】④ 例子裡交給 LLM 的字串。　【COMPSAC】見 III-E〈未量測不是零〉。 |
 | Bauer 等人 2011（bauer2011） | 論文 | AsianPLoP §8 Known Uses | ACM TOSEM 論文，為 LTL（線性時序邏輯）與 TLTL（時間化 LTL）定義執行期驗證，判定結果有 true、false、inconclusive 三種。 | ④ 的學界 Known Use。 |
 | LTL／TLTL | 術語 | AsianPLoP 參考文獻 bauer2011 | 線性時序邏輯（描述「最終會」「一直都」這類性質）及其加上時間限制的版本。 | 認得 Bauer 論文題目用。 |
