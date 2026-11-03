@@ -42,4 +42,20 @@ python3 -I docs/generalization/mining/mine_residue.py --list ~/Documents/depweav
   --probe-out ~/Documents/depweaver-eval/out/corpus --out docs/generalization/mining/out
 ```
 
+## 機器 A／B：LLM 判讀（會打 OpenAI，不能在本機跑）
+
+不需要任何 checkout：程式碼的前後文已經包在 `out/samples.jsonl`（108 群，227 KB）與 `out/edge_samples.jsonl`（279 條邊，195 KB）裡。只用 Python 標準函式庫；金鑰讀 `src/main/resources/application.properties` 的 `openai.api.key`（或環境變數 `OPENAI_API_KEY`）。共 136 次呼叫、約 13 萬 prompt token；輸出約 1–2 MB。
+
+```bash
+df -h ~                                   # 先確認還有空間（幾 MB 就夠）
+cd ~/Desktop/ChatOps4Msa-Pipeline && git pull
+python3 -I docs/generalization/mining/label_clusters.py --task clusters \
+  --in docs/generalization/mining/out/samples.jsonl --out docs/generalization/mining/llm/clusters
+python3 -I docs/generalization/mining/label_clusters.py --task edges \
+  --in docs/generalization/mining/out/edge_samples.jsonl --out docs/generalization/mining/llm/edges
+git add docs/generalization/mining/llm && git commit -m "mining: LLM labels (machine B)" && git push
+```
+
+中途斷掉直接重跑同一行即可：已存在 `raw/` 的呼叫會跳過。
+
 回歸（23 個系統逐邊比對，30 秒）：`bash fetch_regression.sh ~/Documents/depweaver-eval/repos`，再跑 `regress.sh`。
