@@ -55,7 +55,8 @@ public class TreeSitterExtractor {
             // Rule 47's bindings: lookup rows the resolver consumes and removes.
             BindingResolver.BINDING, 50000,
             BindingResolver.DEFAULT, 5000,
-            "registry-ref", 500);
+            "registry-ref", 500,
+            "registry-name", 500);
 
     private static final int DEFAULT_SECTION_CAP = 200;
 

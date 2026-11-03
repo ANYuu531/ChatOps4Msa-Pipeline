@@ -99,7 +99,7 @@ READING = """## 怎麼讀（2026-10-27，第五輪後：56 條規則、22 個系
 
 **只在歸納它的系統上觸發（11 條）**：13、17、21、23、28、34、38、46、48、49、50。第四輪的 10 條中，第 25 條（Compose 別名）因為加上 network aliases 而在 skywalking-showcase 觸發、離開這一組；
 第 28 條（Kotlin）改為有文法之後仍只有 opentelemetry-demo 有 .kt。新增的 3 條：48（環境變數讀取的預設值，robot-shop）、49（註冊中心名稱，hotelReservation）、50（模組 dotenv，yas）——
-它們是某種寫法在語料裡只出現一次（Consul 名稱經參數傳到 dial、Next.js 的 .env.production、PHP 的 getenv ?: URL），要再有一個系統才知道是慣例還是特例。
+它們是某種寫法在語料裡只出現一次（Consul 的登記名稱與呼叫名稱、Next.js 的 .env.production、PHP 的 getenv ?: URL），要再有一個系統才知道是慣例還是特例。
 
 **從未觸發（1 條）**：第 26 條（連線 scheme 決定節點種類），理由同前：語料裡 scheme 說的與主機名說的一致。
 

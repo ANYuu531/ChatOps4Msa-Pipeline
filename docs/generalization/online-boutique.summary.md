@@ -11,6 +11,7 @@
 - grpc = 3
 - registry-ref = 1
 - url = 2
+- registry-name = 1
 - import = 85
 - http-server = 1
 - persistence = 1
@@ -24,7 +25,7 @@
 - k8s-gateway = 1
 - service-root = 12
 - module-deps = 11
-- TOTAL = 480 | files with syntax errors = 0
+- TOTAL = 481 | files with syntax errors = 0
 
 ## graph
 - after merge: 14 nodes / 18 edges | after normalize: 14 nodes / 18 edges | unresolved code edges = 8

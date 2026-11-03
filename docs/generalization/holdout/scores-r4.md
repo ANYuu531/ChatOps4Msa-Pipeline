@@ -4,10 +4,10 @@
 
 | 專案 | 畫了 | 對 | 錯 | 漏 | P | R | business P/R | data P/R | control P/R | external P/R | 另外畫到的 variant 邊 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| hotel-reservation | 22 | 22 | 0 | 9 | 1.00 | 0.71 | — / 0.00 | 1.00 / 1.00 | — / 1.00 | — | 0 |
+| hotel-reservation | 31 | 31 | 0 | 0 | 1.00 | 1.00 | 1.00 / 1.00 | 1.00 / 1.00 | — / 1.00 | — | 0 |
 | mall-swarm | 23 | 23 | 0 | 1 | 1.00 | 0.96 | 1.00 / 1.00 | 1.00 / 0.90 | — / 1.00 | — / 1.00 | 13 |
 | opentelemetry-demo | 39 | 38 | 1 | 0 | 0.97 | 1.00 | 0.94 / 1.00 | 1.00 / 1.00 | — / 1.00 | — | 45 |
-| **合計** | 84 | 83 | 1 | 10 | 0.99 | 0.89 | | | | | |
+| **合計** | 93 | 92 | 1 | 1 | 0.99 | 0.99 | | | | | |
 
 `external` 欄只報 R（錯的邊沒有 class，無法分辨是不是外部主機）。
 
@@ -17,20 +17,11 @@
 參考邊集：business 9、data 12、control 10（可計分 31）＋ variant 10。
 
 
-對的裡面有 22 條標 inferred（名字推的，不是表查到的）。
+對的裡面有 14 條標 inferred（名字推的，不是表查到的）。
 
 
-漏（truth 有、工具沒畫，9 條）：
+全對。
 
-- frontend -> search  ·  services/frontend/server.go:64 initSearchClient("srv-search") → dialer.Dial 經 Consul 解析  ·  **缺文法**：Go 沒有 pattern；呼叫目標是 Consul 服務名 "srv-search"（dialer.Dial 經 registry 解析），程式碼與 manifest 都沒有主機名——與 TeaStore 的 registry 邊界同型
-- frontend -> profile  ·  services/frontend/server.go:68 initProfileClient("srv-profile")  ·  **缺文法**：同上
-- frontend -> recommendation  ·  services/frontend/server.go:72 initRecommendationClient("srv-recommendation")  ·  **缺文法**：同上
-- frontend -> user  ·  services/frontend/server.go:76 initUserClient("srv-user")  ·  **缺文法**：同上
-- frontend -> reservation  ·  services/frontend/server.go:80 initReservation("srv-reservation")  ·  **缺文法**：同上
-- frontend -> review  ·  services/frontend/server.go:84 initReviewClient("srv-review")  ·  **缺文法**：同上
-- frontend -> attractions  ·  services/frontend/server.go:88 initAttractionsClient("srv-attractions")  ·  **缺文法**：同上
-- search -> geo  ·  services/search/server.go:70 initGeoClient("srv-geo")  ·  **缺文法**：同上
-- search -> rate  ·  services/search/server.go:73 initRateClient("srv-rate")  ·  **缺文法**：同上
 
 ## mall-swarm
 

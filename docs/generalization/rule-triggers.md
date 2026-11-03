@@ -53,12 +53,12 @@ robot-shop 有兩個 checkout（歸納用的 2024 版與 MicroDepGraph 對齊的
 | 41 | JVM 函式庫模組不是服務（規則 21 的 Java 版） | yas | 0 | 0 | 0 | 0 | 14 | 0 | 0 | 27 | 0 | 0 | 0 | 0 | 6 | 0 | 0 | 0 | 4 | 0 | 3 | 0 | 0 | 0 | 0 | 5/22 | 54 |
 | 42 | 測試樹的每一段都算（規則 2、31 的延伸） | ts）也是測試 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 0 | 0 | 119 | 0 | 0 | 0 | 1 | 4/22 | 132 |
 | 43 | OpenAPI UI 的設定鍵不是呼叫（規則 29 的設定檔版） | yas | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 6 | 0 | 0 | 0 | 0 | 3/22 | 25 |
-| 44 | compose 的 build 說了哪個模組是哪個服務 | yas、run-aspnetcore-microservices、ewolff/microservice | 0 | 0 | 0 | 1 | 12 | 0 | 15 | 1 | 18 | 6 | 10 | 7 | 16 | 3 | 1 | 8 | 12 | 0 | 17 | 5 | 1 | 12 | 0 | 16/22 | 145 |
+| 44 | compose 的 build 說了哪個模組是哪個服務 | yas、run-aspnetcore-microservices、ewolff/microservice | 0 | 0 | 0 | 1 | 12 | 0 | 15 | 1 | 18 | 6 | 10 | 7 | 16 | 3 | 1 | 8 | 12 | 18 | 17 | 5 | 1 | 12 | 0 | 17/22 | 163 |
 | 45 | *.url／*.uri／*.endpoint 鍵下的裸單字只在它是部署宣告… | yas | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 2/22 | 3 |
 | 46 | nginx 的 set $var "x"; proxy_pass http… | yas | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 | 0 | 0 | 0 | 0 | 1/22 | 5 |
-| 47 | 呼叫點的變數沿同檔綁定解析，所有文法共用（規則 22 的通用化） | robot-shop、skywalking-showcase、AICS | 2 | 0 | 0 | 0 | 0 | 3 | 5 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 6 | 9 | 0 | 0 | 151 | 0 | 0 | 4 | 37 | 8/22 | 218 |
+| 47 | 呼叫點的變數沿同檔綁定解析，所有文法共用（規則 22 的通用化） | robot-shop、skywalking-showcase、AICS | 2 | 0 | 0 | 0 | 0 | 3 | 5 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 6 | 9 | 0 | 9 | 151 | 0 | 0 | 4 | 37 | 9/22 | 227 |
 | 48 | 環境變數讀取的預設值 | robot-shop | 0 | 0 | 0 | 0 | 0 | 0 | 3 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1/22 | 5 |
-| 49 | 註冊中心名稱列出、不猜 | hotelReservation | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 1/22 | 9 |
+| 49 | 註冊中心名稱對上登記者 | hotelReservation | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 9 | 0 | 0 | 0 | 0 | 0 | 1/22 | 9 |
 | 50 | 模組裡的 dotenv 檔（.env、.env.<mode>；旁邊沒有 c… | yas | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 0 | 1/22 | 2 |
 | 51 | HTML 頁面以 <script src> 載入的腳本在瀏覽器執行 | AICS | 0 | 0 | 0 | 6 | 0 | 0 | 8 | 75 | 11 | 0 | 0 | 0 | 0 | 0 | 8 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 57 | 6/22 | 166 |
 | 52 | Helm chart 先渲染再讀 | skywalking-showcase、yas、hotelReservation | 0 | 0 | 0 | 0 | 14 | 21 | 28 | 14 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 58 | 89 | 0 | 0 | 57 | 0 | 7/22 | 281 |
@@ -124,12 +124,12 @@ robot-shop 有兩個 checkout（歸納用的 2024 版與 MicroDepGraph 對齊的
 | 41 | yas | 5：teastore、train-ticket、spring-cloud-microservice、mall-swarm、yas | 4：teastore、train-ticket、spring-cloud-microservice、mall-swarm | teastore: lib tools-descartes-teastore-kieker-probes；teastore: lib tools-descartes-teastore-registryclient；teastore: lib tools-descartes-teastore-entities |
 | 42 | ts）也是測試 | 4：online-boutique、opentelemetry-demo、yas、aics | 4：online-boutique、opentelemetry-demo、yas、aics | online-boutique: ignore /src/frontend/validator/validator_test.go/；online-boutique: ignore /src/frontend/money/money_test.go/；online-boutique: ignore /src/productcatalogservice/product_catalog_test.go/ |
 | 43 | yas | 3：train-ticket、mall-swarm、yas | 2：train-ticket、mall-swarm | train-ticket: drop swagger.controllerpackage；mall-swarm: drop springdoc.swagger-ui.path；mall-swarm: drop springdoc.swagger-ui.enabled |
-| 44 | yas、run-aspnetcore-microservices、ewolff/microservice | 16：piggymetrics、teastore、robot-shop、train-ticket、spring-petclinic、microservices-book、tap-and-eat、spring-cloud-netflix、spring-cloud-microservice、lakeside-mutual、opentelemetry-demo、mall-swarm、yas、run-aspnetcore-microservices、travels、skywalking-showcase | 13：piggymetrics、teastore、robot-shop、train-ticket、spring-petclinic、tap-and-eat、spring-cloud-netflix、spring-cloud-microservice、lakeside-mutual、opentelemetry-demo、mall-swarm、travels、skywalking-showcase | piggymetrics: map mongodb=auth-mongodb；teastore: image tools-descartes-teastore-webui=webui；teastore: map tools-descartes-teastore-webui=teastore-webui |
+| 44 | yas、run-aspnetcore-microservices、ewolff/microservice | 17：piggymetrics、teastore、robot-shop、train-ticket、spring-petclinic、microservices-book、tap-and-eat、spring-cloud-netflix、spring-cloud-microservice、lakeside-mutual、opentelemetry-demo、mall-swarm、hotel-reservation、yas、run-aspnetcore-microservices、travels、skywalking-showcase | 14：piggymetrics、teastore、robot-shop、train-ticket、spring-petclinic、tap-and-eat、spring-cloud-netflix、spring-cloud-microservice、lakeside-mutual、opentelemetry-demo、mall-swarm、hotel-reservation、travels、skywalking-showcase | piggymetrics: map mongodb=auth-mongodb；teastore: image tools-descartes-teastore-webui=webui；teastore: map tools-descartes-teastore-webui=teastore-webui |
 | 45 | yas | 2：opentelemetry-demo、yas | 1：opentelemetry-demo | opentelemetry-demo: accept mcp_endpoint=mcp；opentelemetry-demo: accept agent_endpoint=agent；yas: accept elasticsearch.url=elasticsearch |
 | 46 | yas | 1：yas | 0：— | yas: set-var http://search；yas: set-var http://webhook；yas: set-var http://recommendation |
-| 47 | robot-shop、skywalking-showcase、AICS | 8：bank-of-anthos、online-boutique、robot-shop、spring-cloud-microservice、opentelemetry-demo、yas、skywalking-showcase、aics | 5：bank-of-anthos、online-boutique、spring-cloud-microservice、opentelemetry-demo、yas | bank-of-anthos: urlref src/frontend/frontend.py:691 metadata_url；bank-of-anthos: urlref src/frontend/frontend.py:707 metadata_url；online-boutique: urlref src/frontend/main.go:229 addr |
+| 47 | robot-shop、skywalking-showcase、AICS | 9：bank-of-anthos、online-boutique、robot-shop、spring-cloud-microservice、opentelemetry-demo、hotel-reservation、yas、skywalking-showcase、aics | 6：bank-of-anthos、online-boutique、spring-cloud-microservice、opentelemetry-demo、hotel-reservation、yas | bank-of-anthos: urlref src/frontend/frontend.py:691 metadata_url；bank-of-anthos: urlref src/frontend/frontend.py:707 metadata_url；online-boutique: urlref src/frontend/main.go:229 addr |
 | 48 | robot-shop | 1：robot-shop | 0：— | robot-shop: default CATALOGUE_URL=catalogue；robot-shop: usesite MONGO_URL=mongodb；robot-shop: usesite REDIS_HOST=redis |
-| 49 | hotelReservation | 1：hotel-reservation | 0：— | hotel-reservation: listed services => srv-review；hotel-reservation: listed services => srv-attractions；hotel-reservation: listed services => srv-search |
+| 49 | hotelReservation | 1：hotel-reservation | 0：— | hotel-reservation: registered frontend => srv-review = review；hotel-reservation: registered frontend => srv-attractions = attractions；hotel-reservation: registered frontend => srv-search = search |
 | 50 | yas | 1：yas | 0：— | yas: dotenv storefront/.env.production API_BASE_PATH=storefront；yas: dotenv storefront/.env.development API_BASE_PATH=storefront |
 | 51 | AICS | 6：piggymetrics、robot-shop、train-ticket、spring-petclinic、travels、aics | 5：piggymetrics、robot-shop、train-ticket、spring-petclinic、travels | piggymetrics: browser gateway/src/main/resources/static/js/main.js:871；piggymetrics: browser gateway/src/main/resources/static/js/login.js:1；piggymetrics: browser gateway/src/main/resources/static/js/lib/jquery.min.js:2 |
 | 52 | skywalking-showcase、yas、hotelReservation | 7：teastore、online-boutique、robot-shop、train-ticket、hotel-reservation、yas、skywalking-showcase | 4：teastore、online-boutique、robot-shop、train-ticket | teastore: render examples/helm/templates/auth-service.yaml；teastore: render examples/helm/templates/auth-statefulset.yaml；teastore: render examples/helm/templates/db-service.yaml |
@@ -152,7 +152,7 @@ robot-shop 有兩個 checkout（歸納用的 2024 版與 MicroDepGraph 對齊的
 
 **只在歸納它的系統上觸發（11 條）**：13、17、21、23、28、34、38、46、48、49、50。第四輪的 10 條中，第 25 條（Compose 別名）因為加上 network aliases 而在 skywalking-showcase 觸發、離開這一組；
 第 28 條（Kotlin）改為有文法之後仍只有 opentelemetry-demo 有 .kt。新增的 3 條：48（環境變數讀取的預設值，robot-shop）、49（註冊中心名稱，hotelReservation）、50（模組 dotenv，yas）——
-它們是某種寫法在語料裡只出現一次（Consul 名稱經參數傳到 dial、Next.js 的 .env.production、PHP 的 getenv ?: URL），要再有一個系統才知道是慣例還是特例。
+它們是某種寫法在語料裡只出現一次（Consul 的登記名稱與呼叫名稱、Next.js 的 .env.production、PHP 的 getenv ?: URL），要再有一個系統才知道是慣例還是特例。
 
 **從未觸發（1 條）**：第 26 條（連線 scheme 決定節點種類），理由同前：語料裡 scheme 說的與主機名說的一致。
 
@@ -206,12 +206,12 @@ robot-shop 有兩個 checkout（歸納用的 2024 版與 MicroDepGraph 對齊的
 | 41 | JVM 函式庫模組不是服務（規則 21 的 Java 版） | yas | 5/22 | 54 |
 | 42 | 測試樹的每一段都算（規則 2、31 的延伸） | ts）也是測試 | 4/22 | 132 |
 | 43 | OpenAPI UI 的設定鍵不是呼叫（規則 29 的設定檔版） | yas | 3/22 | 25 |
-| 44 | compose 的 build 說了哪個模組是哪個服務 | yas、run-aspnetcore-microservices、ewolff/microservice | 16/22 | 145 |
+| 44 | compose 的 build 說了哪個模組是哪個服務 | yas、run-aspnetcore-microservices、ewolff/microservice | 17/22 | 163 |
 | 45 | *.url／*.uri／*.endpoint 鍵下的裸單字只在它是部署宣告… | yas | 2/22 | 3 |
 | 46 | nginx 的 set $var "x"; proxy_pass http… | yas | 1/22 | 5 |
-| 47 | 呼叫點的變數沿同檔綁定解析，所有文法共用（規則 22 的通用化） | robot-shop、skywalking-showcase、AICS | 8/22 | 218 |
+| 47 | 呼叫點的變數沿同檔綁定解析，所有文法共用（規則 22 的通用化） | robot-shop、skywalking-showcase、AICS | 9/22 | 227 |
 | 48 | 環境變數讀取的預設值 | robot-shop | 1/22 | 5 |
-| 49 | 註冊中心名稱列出、不猜 | hotelReservation | 1/22 | 9 |
+| 49 | 註冊中心名稱對上登記者 | hotelReservation | 1/22 | 9 |
 | 50 | 模組裡的 dotenv 檔（.env、.env.<mode>；旁邊沒有 c… | yas | 1/22 | 2 |
 | 51 | HTML 頁面以 <script src> 載入的腳本在瀏覽器執行 | AICS | 6/22 | 166 |
 | 52 | Helm chart 先渲染再讀 | skywalking-showcase、yas、hotelReservation | 7/22 | 281 |

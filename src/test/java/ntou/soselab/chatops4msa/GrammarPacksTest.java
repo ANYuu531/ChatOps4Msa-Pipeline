@@ -186,6 +186,47 @@ class GrammarPacksTest {
     }
 
     @Test
+    void aRegistryNameIsTheServiceThatRegistersItself(@TempDir Path dir) throws Exception {
+        // hotelReservation (rule 49): one image, many services; search registers itself as
+        // "srv-search", frontend dials "srv-search". Nobody registers "srv-reservation".
+        write(dir, "go.mod", "module example.com/hotel\n");
+        write(dir, "services/frontend/server.go", """
+                package frontend
+                func (s *Server) Run() error {
+                	if err := s.initSearchClient("srv-search"); err != nil { return err }
+                	if err := s.initReservation("srv-reservation"); err != nil { return err }
+                	return nil
+                }
+                func (s *Server) initSearchClient(name string) error {
+                	conn, err := dialer.Dial(name, dialer.WithTracer(s.Tracer))
+                	return err
+                }
+                func (s *Server) initReservation(name string) error {
+                	conn, err := dialer.Dial(name, dialer.WithTracer(s.Tracer))
+                	return err
+                }
+                """);
+        write(dir, "services/search/server.go", """
+                package search
+                const name = "srv-search"
+                func (s *Server) Run() error {
+                	return s.Registry.Register(name, s.uuid, s.IpAddr, s.Port)
+                }
+                """);
+        EdgeLedger ledger = extract(dir, "go");
+        assertTrue(row(ledger, "registry-name", Map.of("name", "srv-search")), "the registered name, through its constant");
+        for (String svc : List.of("frontend", "search", "reservation")) {
+            ledger.add("compose-service", Map.of("name", svc, "kind", "ComposeService"), "docker-compose.yml", -1, "High");
+        }
+        DependencyGraph g = new DependencyGraph("");
+        List<CodeGraphMerger.Unresolved> left = CodeGraphMerger.merge(g, ledger.toJson().toString(), "owner/repo");
+        assertTrue(g.getEdges().stream().anyMatch(e -> e.source.equals("frontend") && e.target.equals("search")),
+                "services/frontend is frontend's code; srv-search is the service that registers it");
+        assertTrue(left.stream().anyMatch(u -> "srv-reservation".equals(u.rawTarget)), "no registrant: still the operator's question");
+        assertTrue(g.getEdges().stream().noneMatch(e -> e.target.equals("reservation")), "never drawn by the name's resemblance");
+    }
+
+    @Test
     void phpEnvReadWithAUrlDefaultNamesAKnownService(@TempDir Path dir) throws Exception {
         // robot-shop ratings (rule 48): getenv('CATALOGUE_URL') ?: 'http://catalogue:8080' in the container wiring.
         write(dir, "ratings/composer.json", "{ \"name\": \"instana/ratings\" }\n");

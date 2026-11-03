@@ -5,25 +5,31 @@ flowchart TB
   subgraph layer0 ["entry services"]
     direction LR
     frontend["frontend"]
-    profile["profile"]
-    search["search"]
-    geo["geo"]
-    rate["rate"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
     review["review"]
     attractions["attractions"]
+    search["search"]
+    profile["profile"]
     recommendation["recommendation"]
     user["user"]
     reservation["reservation"]
   end
-  subgraph layer1 ["services · depth 1"]
+  subgraph layer2 ["services · depth 2"]
     direction LR
-    consul["consul"]
+    geo["geo"]
+    rate["rate"]
     memcached_profile["memcached-profile"]
-    memcached_rate["memcached-rate"]
     memcached_review["memcached-review"]
     memcached_reserve["memcached-reserve"]
   end
-  subgraph layer2 ["data stores"]
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    consul["consul"]
+    memcached_rate["memcached-rate"]
+  end
+  subgraph layer4 ["data stores"]
     direction LR
     mongodb_profile[("mongodb-profile")]:::db
     mongodb_geo[("mongodb-geo")]:::db
@@ -34,26 +40,35 @@ flowchart TB
     mongodb_user[("mongodb-user")]:::db
     mongodb_reservation[("mongodb-reservation")]:::db
   end
+  frontend -.-> review
+  frontend -.-> attractions
+  frontend -.-> search
+  frontend -.-> profile
+  frontend -.-> recommendation
+  frontend -.-> user
+  frontend -.-> reservation
+  search -.-> geo
+  search -.-> rate
   frontend -. declared? .-> consul
-  profile -. db? .-> mongodb_profile
+  profile -. db .-> mongodb_profile
   profile -. declared? .-> memcached_profile
   profile -. declared? .-> consul
   search -. declared? .-> consul
-  geo -. db? .-> mongodb_geo
+  geo -. db .-> mongodb_geo
   geo -. declared? .-> consul
-  rate -. db? .-> mongodb_rate
+  rate -. db .-> mongodb_rate
   rate -. declared? .-> memcached_rate
   rate -. declared? .-> consul
-  review -. db? .-> mongodb_review
+  review -. db .-> mongodb_review
   review -. declared? .-> memcached_review
   review -. declared? .-> consul
-  attractions -. db? .-> mongodb_attractions
+  attractions -. db .-> mongodb_attractions
   attractions -. declared? .-> consul
-  recommendation -. db? .-> mongodb_recommendation
+  recommendation -. db .-> mongodb_recommendation
   recommendation -. declared? .-> consul
-  user -. db? .-> mongodb_user
+  user -. db .-> mongodb_user
   user -. declared? .-> consul
-  reservation -. db? .-> mongodb_reservation
+  reservation -. db .-> mongodb_reservation
   reservation -. declared? .-> memcached_reserve
   reservation -. declared? .-> consul
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;

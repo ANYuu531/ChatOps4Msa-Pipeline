@@ -224,6 +224,29 @@
  (#not-any-of? @_o "grpc" "http" "net")
  (#match? @_m "^Dial(Context)?$"))
 
+; s.Registry.Register(name, id, ip, port) / agent.ServiceRegister(…): the name a service
+; registers itself under. A dial name that exactly one service registers is that service
+; (rule 49); the name is a literal, or a constant the binding resolver follows.
+((call_expression
+   function: (selector_expression field: (field_identifier) @_m)
+   arguments: (argument_list . (interpreted_string_literal (interpreted_string_literal_content) @registry-name.name)))
+ (#match? @_m "^(Register|ServiceRegister)$")
+ (#match? @registry-name.name "^[A-Za-z][A-Za-z0-9-]*$"))
+
+((call_expression
+   function: (selector_expression field: (field_identifier) @_m)
+   arguments: (argument_list . (identifier) @registry-name.nameref))
+ (#match? @_m "^(Register|ServiceRegister)$"))
+
+; consul.AgentServiceRegistration{Name: "srv-x"} written out in the service itself
+((composite_literal
+   type: (qualified_type name: (type_identifier) @_t)
+   body: (literal_value (keyed_element
+     key: (literal_element (identifier) @_k)
+     value: (literal_element (interpreted_string_literal (interpreted_string_literal_content) @registry-name.name)))))
+ (#eq? @_t "AgentServiceRegistration")
+ (#eq? @_k "Name"))
+
 ; ---------- Data-store clients ----------
 ; sql.Open("mysql", dsn) / gorm.Open / mgo.Dial("host:port") / mongo.Connect / redis.NewClient
 ((call_expression

@@ -55,7 +55,7 @@ final class BindingResolver {
     }
 
     /** The use-site sections and the reference fields they may carry. */
-    private static final Set<String> USE_SECTIONS = Set.of("http-client", "grpc", "config", "url", "registry-ref");
+    private static final Set<String> USE_SECTIONS = Set.of("http-client", "grpc", "config", "url", "registry-ref", "registry-name");
 
     static void resolve(EdgeLedger ledger) {
         Map<String, Map<String, List<EdgeLedger.Edge>>> bindings = new LinkedHashMap<>();
@@ -124,7 +124,7 @@ final class BindingResolver {
             String value = !scheme.isEmpty() && !lit.matches("(?i)^[a-z][a-z0-9+.-]*://.*") ? scheme + lit : lit;
             switch (e.section) {
                 case "http-client", "grpc" -> f.put("url", value);
-                case "registry-ref" -> f.put("name", value);
+                case "registry-ref", "registry-name" -> f.put("name", value);
                 default -> f.put("value", value);
             }
             return;

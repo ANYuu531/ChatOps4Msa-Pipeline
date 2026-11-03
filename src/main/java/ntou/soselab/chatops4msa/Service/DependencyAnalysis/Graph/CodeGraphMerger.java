@@ -78,7 +78,7 @@ public class CodeGraphMerger {
      */
     private static final Set<String> META_SECTIONS = Set.of("service-root", "env-address", "workload-env",
             "k8s-workload", "compose-service", "k8s-service", "k8s-namespace", "module-deps", "name-constant", "import",
-            "compose-alias", "url-metadata", "k8s-gateway", "compose-mount");
+            "compose-alias", "url-metadata", "k8s-gateway", "compose-mount", "registry-name");
 
     /** Hosts that name the caller itself, never another workload. */
     private static final Set<String> LOOPBACK = Set.of(
@@ -136,6 +136,8 @@ public class CodeGraphMerger {
     private boolean helmVocabulary;
     /** Workload names the k8s manifests declare ({@code k8s-workload}); greenfield vocabulary. */
     private final Set<String> workloads = new LinkedHashSet<>();
+    /** Every workload name any manifest declares, before the own-module filter (rule 44's directory match). */
+    private final Set<String> declaredWorkloads = new LinkedHashSet<>();
     /** Module names that are (or align to) a deployable workload; pre-added as nodes in greenfield. */
     private final Set<String> deployableModules = new LinkedHashSet<>();
     /** Spring property key (lower-cased) -> address-shaped value, from every config file read. */
@@ -180,6 +182,8 @@ public class CodeGraphMerger {
     private final Map<String, Set<String>> k8sImageRegistries = new LinkedHashMap<>();
     /** A module whose image several workloads run → those workloads (its code edges are each one's). */
     private final Map<String, List<String>> moduleFanout = new LinkedHashMap<>();
+    /** Registry name ({@code srv-search}) -> the files whose service registers itself under it (rule 49). */
+    private final Map<String, Set<String>> registryNameFiles = new LinkedHashMap<>();
 
     /**
      * The workloads that run the image a module is built into: an image stem (whole, or with
@@ -280,6 +284,13 @@ public class CodeGraphMerger {
      * table (which resolves indirected targets like {@code TRANSACTIONS_API_ADDR}).
      */
     private void indexMeta(JSONArray edges) {
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject e = edges.optJSONObject(i);
+            if (e == null || !"registry-name".equals(e.optString("section", ""))) continue;
+            JSONObject f = e.optJSONObject("fields");
+            String name = f == null ? "" : f.optString("name", "").trim();
+            if (!name.isEmpty()) registryNameFiles.computeIfAbsent(name, k -> new LinkedHashSet<>()).add(e.optString("file", ""));
+        }
         // Pass 0 (greenfield only): the workloads the manifests declare. These are the
         // names the cluster — and so the runtime graph — would use, so they outrank a
         // module directory's spelling: "catalog", not microservice-kubernetes-demo-catalog.
@@ -614,6 +625,8 @@ public class CodeGraphMerger {
             else for (String w : e.getValue()) RuleTrace.hit(10, "drop " + w + " (" + e.getKey() + ")");
         }
         if (greenfield) knownNodes.addAll(workloads);
+        declaredWorkloads.addAll(allWorkloads);
+        declaredWorkloads.addAll(composeServiceNames);
         for (Map.Entry<String, String> e : moduleNodes.entrySet()) {
             String name = e.getValue();
             serviceDirs.put(e.getKey(), name);
@@ -1823,14 +1836,29 @@ public class CodeGraphMerger {
         }
 
         // Rule 49: a registry name (dialer.Dial("srv-rate"), a literal reaching a dial through
-        // a parameter) is resolved by Consul / etcd at run time. Nothing in the repository
-        // maps it to a deployment, so it is never drawn: it is listed as residue, which is
-        // where the "Resolve names" question asks the operator (2026-10-27).
+        // a parameter) is resolved by Consul / etcd at run time — to whichever service
+        // registered itself under that name. The registering side is code too
+        // (Registry.Register(name, …) with const name = "srv-search"): when exactly one
+        // service registers the name, the dial is a call to it. With no registrant, or
+        // several, nothing in the repository settles it: listed as residue, where the
+        // "Resolve names" question asks the operator (2026-10-27; 2026-10-28).
         if ("registry-ref".equals(section)) {
             String name = fields.optString("name", "").trim();
             if (!name.isEmpty() && source != null) {
-                RuleTrace.hit(49, "listed " + source + " => " + name);
-                unresolved.add(new Unresolved(section, source, name, file, line));
+                Set<String> owners = new LinkedHashSet<>();
+                for (String f : registryNameFiles.getOrDefault(name, Set.of())) {
+                    String owner = resolveSource(f);
+                    if (owner != null) owners.add(owner);
+                }
+            String owner = owners.size() == 1 ? owners.iterator().next() : null;
+                if (owner != null && !owner.equals(source) && (knownNodes.contains(owner) || declaredWorkloads.contains(owner))) {
+                    RuleTrace.hit(49, "registered " + source + " => " + name + " = " + owner);
+                    graph.addNode(owner, DependencyGraph.classifyKind(owner));
+                    addCodeEdge(source, owner, edgeType(section, DependencyGraph.classifyKind(owner)), file, line);
+                } else {
+                    RuleTrace.hit(49, "listed " + source + " => " + name);
+                    unresolved.add(new Unresolved(section, source, name, file, line));
+                }
             }
             return;
         }
@@ -2666,8 +2694,16 @@ public class CodeGraphMerger {
         if (svc != null) {
             String matched = matchNodeForSource(svc);
             if (matched != null) return matched;
-            if (greenfield && isPlausibleName(svc) && !SOURCE_STOP.contains(svc)) return svc;
         }
+        // One build, many services (hotelReservation: `build: .` with `entrypoint: search`,
+        // code under services/search/): a file in no module, under a directory that is
+        // exactly one deployed service's name, is that service's code. A file inside a
+        // module stays the module's (yas: common-library/…/kafka/ is not the kafka broker).
+        String inner = svc == null ? innerServiceDir(file) : null;
+        String first = firstPathSegment(file);
+        String firstNode = first == null ? null : matchNodeForSource(first);
+        if (RuleTrace.hitIf(inner != null && (firstNode == null || !declaredWorkloads.contains(firstNode)), 44, "dir " + file + "=" + inner)) return inner;
+        if (svc != null && greenfield && isPlausibleName(svc) && !SOURCE_STOP.contains(svc)) return svc;
         // A file in no module that exactly one Compose service mounts is that service's config.
         if (svc == null && file != null) {
             Set<String> by = mounts.get(file.replace('\\', '/'));
@@ -2714,6 +2750,15 @@ public class CodeGraphMerger {
             }
         }
         return best;
+    }
+
+    /** The one deployed service a directory of this path (below its first segment) is named after, or null. */
+    private String innerServiceDir(String file) {
+        if (file == null || file.isBlank()) return null;
+        Set<String> named = new LinkedHashSet<>();
+        String[] parts = file.replace('\\', '/').split("/");
+        for (int i = 1; i < parts.length - 1; i++) if (declaredWorkloads.contains(parts[i])) named.add(parts[i]);
+        return named.size() == 1 ? named.iterator().next() : null;
     }
 
     private static String firstPathSegment(String file) {

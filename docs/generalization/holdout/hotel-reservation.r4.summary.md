@@ -7,6 +7,7 @@
 - config = 6
 - grpc = 1
 - url = 2
+- registry-name = 10
 - http-server = 9
 - registry-ref = 11
 - http-client = 3
@@ -17,76 +18,76 @@
 - compose-service = 24
 - compose-alias = 11
 - compose-dependency = 22
-- TOTAL = 210 | files with syntax errors = 0
+- TOTAL = 220 | files with syntax errors = 0
 
 ## graph
-- after merge: 23 nodes / 22 edges | after normalize: 23 nodes / 22 edges | unresolved code edges = 15
-- persistence services: []
+- after merge: 23 nodes / 31 edges | after normalize: 23 nodes / 31 edges | unresolved code edges = 6
+- persistence services: [recommendation, attractions, rate, geo, reservation, user, profile, review]
 
 ## nodes (kind, layer)
-- attractions  [service, L0]
-- consul  [service, L1]
+- attractions  [service, L1]
+- consul  [service, L3]
 - frontend  [service, L0]
-- geo  [service, L0]
-- memcached-profile  [service, L1]
-- memcached-rate  [service, L1]
-- memcached-reserve  [service, L1]
-- memcached-review  [service, L1]
-- mongodb-attractions  [db, L2]
-- mongodb-geo  [db, L2]
-- mongodb-profile  [db, L2]
-- mongodb-rate  [db, L2]
-- mongodb-recommendation  [db, L2]
-- mongodb-reservation  [db, L2]
-- mongodb-review  [db, L2]
-- mongodb-user  [db, L2]
-- profile  [service, L0]
-- rate  [service, L0]
-- recommendation  [service, L0]
-- reservation  [service, L0]
-- review  [service, L0]
-- search  [service, L0]
-- user  [service, L0]
+- geo  [service, L2]
+- memcached-profile  [service, L2]
+- memcached-rate  [service, L3]
+- memcached-reserve  [service, L2]
+- memcached-review  [service, L2]
+- mongodb-attractions  [db, L4]
+- mongodb-geo  [db, L4]
+- mongodb-profile  [db, L4]
+- mongodb-rate  [db, L4]
+- mongodb-recommendation  [db, L4]
+- mongodb-reservation  [db, L4]
+- mongodb-review  [db, L4]
+- mongodb-user  [db, L4]
+- profile  [service, L1]
+- rate  [service, L2]
+- recommendation  [service, L1]
+- reservation  [service, L1]
+- review  [service, L1]
+- search  [service, L1]
+- user  [service, L1]
 
 ## edges (type, confidence, provenance ref)
 - attractions -> consul  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- attractions -> mongodb-attractions  (db, inferred)  code: docker-compose.yml#depends_on
+- attractions -> mongodb-attractions  (db, documented)  code: docker-compose.yml#depends_on
+- frontend -> attractions  (sync-http, documented)  code: services/frontend/server.go:88
 - frontend -> consul  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- frontend -> profile  (sync-http, documented)  code: services/frontend/server.go:68
+- frontend -> recommendation  (sync-http, documented)  code: services/frontend/server.go:72
+- frontend -> reservation  (sync-http, documented)  code: services/frontend/server.go:80
+- frontend -> review  (sync-http, documented)  code: services/frontend/server.go:84
+- frontend -> search  (sync-http, documented)  code: services/frontend/server.go:64
+- frontend -> user  (sync-http, documented)  code: services/frontend/server.go:76
 - geo -> consul  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- geo -> mongodb-geo  (db, inferred)  code: docker-compose.yml#depends_on
+- geo -> mongodb-geo  (db, documented)  code: docker-compose.yml#depends_on
 - profile -> consul  (sync-http, inferred)  code: docker-compose.yml#depends_on
 - profile -> memcached-profile  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- profile -> mongodb-profile  (db, inferred)  code: docker-compose.yml#depends_on
+- profile -> mongodb-profile  (db, documented)  code: docker-compose.yml#depends_on
 - rate -> consul  (sync-http, inferred)  code: docker-compose.yml#depends_on
 - rate -> memcached-rate  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- rate -> mongodb-rate  (db, inferred)  code: docker-compose.yml#depends_on
+- rate -> mongodb-rate  (db, documented)  code: docker-compose.yml#depends_on
 - recommendation -> consul  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- recommendation -> mongodb-recommendation  (db, inferred)  code: docker-compose.yml#depends_on
+- recommendation -> mongodb-recommendation  (db, documented)  code: docker-compose.yml#depends_on
 - reservation -> consul  (sync-http, inferred)  code: docker-compose.yml#depends_on
 - reservation -> memcached-reserve  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- reservation -> mongodb-reservation  (db, inferred)  code: docker-compose.yml#depends_on
+- reservation -> mongodb-reservation  (db, documented)  code: docker-compose.yml#depends_on
 - review -> consul  (sync-http, inferred)  code: docker-compose.yml#depends_on
 - review -> memcached-review  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- review -> mongodb-review  (db, inferred)  code: docker-compose.yml#depends_on
+- review -> mongodb-review  (db, documented)  code: docker-compose.yml#depends_on
 - search -> consul  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- search -> geo  (sync-http, documented)  code: services/search/server.go:70
+- search -> rate  (sync-http, documented)  code: services/search/server.go:73
 - user -> consul  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- user -> mongodb-user  (db, inferred)  code: docker-compose.yml#depends_on
+- user -> mongodb-user  (db, documented)  code: docker-compose.yml#depends_on
 
 ## unresolved (source hint / raw target / file:line), first 40
 - dialer  =>  null   @ dialer/dialer.go:55
 - registry  =>  null   @ registry/registry.go:89
-- services  =>  null   @ services/reservation/server.go:123
-- services  =>  null   @ services/reservation/server.go:158
-- services  =>  null   @ services/review/server.go:121
-- services  =>  srv-review   @ services/frontend/server.go:84
-- services  =>  srv-attractions   @ services/frontend/server.go:88
-- services  =>  srv-search   @ services/frontend/server.go:64
-- services  =>  srv-profile   @ services/frontend/server.go:68
-- services  =>  srv-recommendation   @ services/frontend/server.go:72
-- services  =>  srv-user   @ services/frontend/server.go:76
-- services  =>  srv-reservation   @ services/frontend/server.go:80
-- services  =>  srv-geo   @ services/search/server.go:70
-- services  =>  srv-rate   @ services/search/server.go:73
+- reservation  =>  null   @ services/reservation/server.go:123
+- reservation  =>  null   @ services/reservation/server.go:158
+- review  =>  null   @ services/review/server.go:121
 - null  =>  http://localhost:5000/review   @ test.py:7
 
 ## alias questions (name [origin] seen in | candidates)
@@ -94,16 +95,6 @@
 - memcached-review  [graph]  looks like the same service as `review` (one name is the other with a prefix or suffix); both stay on the graph until you say   | candidates: review
 - dialer  [code]  the module directory of grpc at dialer/dialer.go:55 — no service on the graph has this name   | candidates: -
 - registry  [code]  the module directory of url at registry/registry.go:89 — no service on the graph has this name   | candidates: -
-- services  [code]  the module directory of http-client at services/reservation/server.go:123 — no service on the graph has this name  (+11 more)   | candidates: -
-- srv-review  [code]  registry-ref at services/frontend/server.go:84   | candidates: review, memcached-review
-- srv-attractions  [code]  registry-ref at services/frontend/server.go:88   | candidates: attractions
-- srv-search  [code]  registry-ref at services/frontend/server.go:64   | candidates: search
-- srv-profile  [code]  registry-ref at services/frontend/server.go:68   | candidates: profile, memcached-profile
-- srv-recommendation  [code]  registry-ref at services/frontend/server.go:72   | candidates: recommendation
-- srv-user  [code]  registry-ref at services/frontend/server.go:76   | candidates: user
-- srv-reservation  [code]  registry-ref at services/frontend/server.go:80   | candidates: reservation
-- srv-geo  [code]  registry-ref at services/search/server.go:70   | candidates: geo
-- srv-rate  [code]  registry-ref at services/search/server.go:73   | candidates: rate
 
 ## alias answers applied
 - none
@@ -117,25 +108,31 @@ flowchart TB
   subgraph layer0 ["entry services"]
     direction LR
     frontend["frontend"]
-    profile["profile"]
-    search["search"]
-    geo["geo"]
-    rate["rate"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
     review["review"]
     attractions["attractions"]
+    search["search"]
+    profile["profile"]
     recommendation["recommendation"]
     user["user"]
     reservation["reservation"]
   end
-  subgraph layer1 ["services · depth 1"]
+  subgraph layer2 ["services · depth 2"]
     direction LR
-    consul["consul"]
+    geo["geo"]
+    rate["rate"]
     memcached_profile["memcached-profile"]
-    memcached_rate["memcached-rate"]
     memcached_review["memcached-review"]
     memcached_reserve["memcached-reserve"]
   end
-  subgraph layer2 ["data stores"]
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    consul["consul"]
+    memcached_rate["memcached-rate"]
+  end
+  subgraph layer4 ["data stores"]
     direction LR
     mongodb_profile[("mongodb-profile")]:::db
     mongodb_geo[("mongodb-geo")]:::db
@@ -146,26 +143,35 @@ flowchart TB
     mongodb_user[("mongodb-user")]:::db
     mongodb_reservation[("mongodb-reservation")]:::db
   end
+  frontend -.-> review
+  frontend -.-> attractions
+  frontend -.-> search
+  frontend -.-> profile
+  frontend -.-> recommendation
+  frontend -.-> user
+  frontend -.-> reservation
+  search -.-> geo
+  search -.-> rate
   frontend -. declared? .-> consul
-  profile -. db? .-> mongodb_profile
+  profile -. db .-> mongodb_profile
   profile -. declared? .-> memcached_profile
   profile -. declared? .-> consul
   search -. declared? .-> consul
-  geo -. db? .-> mongodb_geo
+  geo -. db .-> mongodb_geo
   geo -. declared? .-> consul
-  rate -. db? .-> mongodb_rate
+  rate -. db .-> mongodb_rate
   rate -. declared? .-> memcached_rate
   rate -. declared? .-> consul
-  review -. db? .-> mongodb_review
+  review -. db .-> mongodb_review
   review -. declared? .-> memcached_review
   review -. declared? .-> consul
-  attractions -. db? .-> mongodb_attractions
+  attractions -. db .-> mongodb_attractions
   attractions -. declared? .-> consul
-  recommendation -. db? .-> mongodb_recommendation
+  recommendation -. db .-> mongodb_recommendation
   recommendation -. declared? .-> consul
-  user -. db? .-> mongodb_user
+  user -. db .-> mongodb_user
   user -. declared? .-> consul
-  reservation -. db? .-> mongodb_reservation
+  reservation -. db .-> mongodb_reservation
   reservation -. declared? .-> memcached_reserve
   reservation -. declared? .-> consul
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
@@ -217,8 +223,9 @@ classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
 - rule 41: 0
 - rule 42: 0
 - rule 43: 0
-- rule 44: 0
+- rule 44: 18 (dir cmd/recommendation/db.go=recommendation; dir cmd/attractions/db.go=attractions; dir cmd/rate/db.go=rate; dir cmd/geo/db.go=geo; dir cmd/reservation/db.go=reservation)
 - rule 45: 0
 - rule 46: 0
-- rule 49: 9 (listed services => srv-review; listed services => srv-attractions; listed services => srv-search; listed services => srv-profile; listed services => srv-recommendation)
+- rule 47: 9 (nameref services/recommendation/server.go:77 name; nameref services/attractions/server.go:96 name; nameref services/rate/server.go:78 name; nameref services/geo/server.go:81 name; nameref services/reservation/server.go:79 name)
+- rule 49: 9 (registered frontend => srv-review = review; registered frontend => srv-attractions = attractions; registered frontend => srv-search = search; registered frontend => srv-profile = profile; registered frontend => srv-recommendation = recommendation)
 - rule 52: 58 (render helm-chart/hotelreservation/charts/consul/templates/deployment.yaml; render helm-chart/hotelreservation/charts/consul/templates/service.yaml; render helm-chart/hotelreservation/charts/frontend/templates/configmap.yaml; render helm-chart/hotelreservation/charts/frontend/templates/deployment.yaml; render helm-chart/hotelreservation/charts/frontend/templates/service.yaml)

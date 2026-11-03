@@ -17,6 +17,7 @@
 - url = 28
 - persistence = 2
 - grpc = 1
+- registry-name = 1
 - name-constant = 4
 - name-ref = 4
 - compose-service = 41
@@ -26,7 +27,7 @@
 - workload-env = 96
 - service-root = 30
 - module-deps = 15
-- TOTAL = 684 | files with syntax errors = 52
+- TOTAL = 685 | files with syntax errors = 52
 
 ## graph
 - after merge: 34 nodes / 84 edges | after normalize: 34 nodes / 84 edges | unresolved code edges = 49

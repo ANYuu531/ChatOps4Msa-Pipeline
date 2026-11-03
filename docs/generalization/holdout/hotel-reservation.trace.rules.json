@@ -1,25 +1,29 @@
 {"rules": {
-  "22": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "44": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "23": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 39,
+    "examples": [
+      "dir cmd/recommendation/db.go=recommendation",
+      "dir cmd/attractions/db.go=attractions",
+      "dir cmd/rate/db.go=rate",
+      "dir cmd/geo/db.go=geo",
+      "dir cmd/reservation/db.go=reservation",
+      "dir cmd/user/db.go=user",
+      "dir cmd/profile/db.go=profile",
+      "dir cmd/review/db.go=review",
+      "dir services/frontend/server.go=frontend",
+      "dir services/reservation/server.go=reservation",
+      "dir services/review/server.go=review",
+      "dir services/attractions/server.go=attractions",
+      "dir services/search/server.go=search",
+      "dir services/profile/server.go=profile",
+      "dir services/recommendation/server.go=recommendation",
+      "dir services/user/server.go=user",
+      "dir services/geo/server.go=geo",
+      "dir services/rate/server.go=rate"
+    ],
+    "count": 18
   },
   "45": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "24": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -29,50 +33,35 @@
     "examples": [],
     "count": 0
   },
-  "25": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "26": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "27": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "47": {
+    "hits": 9,
+    "examples": [
+      "nameref services/recommendation/server.go:77 name",
+      "nameref services/attractions/server.go:96 name",
+      "nameref services/rate/server.go:78 name",
+      "nameref services/geo/server.go:81 name",
+      "nameref services/reservation/server.go:79 name",
+      "nameref services/user/server.go:76 name",
+      "nameref services/search/server.go:82 name",
+      "nameref services/profile/server.go:78 name",
+      "nameref services/review/server.go:84 name"
+    ],
+    "count": 9
   },
   "49": {
     "hits": 9,
     "examples": [
-      "listed services => srv-review",
-      "listed services => srv-attractions",
-      "listed services => srv-search",
-      "listed services => srv-profile",
-      "listed services => srv-recommendation",
-      "listed services => srv-user",
-      "listed services => srv-reservation",
-      "listed services => srv-geo",
-      "listed services => srv-rate"
+      "registered frontend => srv-review = review",
+      "registered frontend => srv-attractions = attractions",
+      "registered frontend => srv-search = search",
+      "registered frontend => srv-profile = profile",
+      "registered frontend => srv-recommendation = recommendation",
+      "registered frontend => srv-user = user",
+      "registered frontend => srv-reservation = reservation",
+      "registered search => srv-geo = geo",
+      "registered search => srv-rate = rate"
     ],
     "count": 9
-  },
-  "28": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "29": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "30": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
   },
   "52": {
     "hits": 58,
@@ -100,11 +89,6 @@
     ],
     "count": 58
   },
-  "31": {
-    "hits": 1,
-    "examples": ["hidden .bingo/go.mod"],
-    "count": 1
-  },
   "10": {
     "hits": 51,
     "examples": [
@@ -131,27 +115,12 @@
     ],
     "count": 51
   },
-  "32": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "11": {
     "hits": 1,
     "examples": ["k8s-over-compose 24 compose names ignored"],
     "count": 1
   },
-  "33": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "12": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "34": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -161,38 +130,7 @@
     "examples": [],
     "count": 0
   },
-  "35": {
-    "hits": 22,
-    "examples": [
-      "inferred frontend->consul",
-      "inferred profile->mongodb-profile",
-      "inferred profile->memcached-profile",
-      "inferred profile->consul",
-      "inferred search->consul",
-      "inferred geo->mongodb-geo",
-      "inferred geo->consul",
-      "inferred rate->mongodb-rate",
-      "inferred rate->memcached-rate",
-      "inferred rate->consul",
-      "inferred review->mongodb-review",
-      "inferred review->memcached-review",
-      "inferred review->consul",
-      "inferred attractions->mongodb-attractions",
-      "inferred attractions->consul",
-      "inferred recommendation->mongodb-recommendation",
-      "inferred recommendation->consul",
-      "inferred user->mongodb-user",
-      "inferred user->consul",
-      "inferred reservation->mongodb-reservation"
-    ],
-    "count": 22
-  },
   "14": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "36": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -202,39 +140,12 @@
     "examples": [],
     "count": 0
   },
-  "37": {
-    "hits": 11,
-    "examples": [
-      "hostname user-memcached=memcached-rate",
-      "hostname user-memcached=memcached-profile",
-      "hostname user-memcached=memcached-reserve",
-      "hostname geo-db=mongodb-geo",
-      "hostname profile-db=mongodb-profile",
-      "hostname rate-db=mongodb-rate",
-      "hostname review-db=mongodb-review",
-      "hostname attractions-db=mongodb-attractions",
-      "hostname recommendation-db=mongodb-recommendation",
-      "hostname reservation-db=mongodb-reservation",
-      "hostname user-db=mongodb-user"
-    ],
-    "count": 11
-  },
   "16": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "38": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "17": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "39": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -308,6 +219,139 @@
     "examples": [],
     "count": 0
   },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 1,
+    "examples": ["hidden .bingo/go.mod"],
+    "count": 1
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 22,
+    "examples": [
+      "inferred frontend->consul",
+      "inferred profile->mongodb-profile",
+      "inferred profile->memcached-profile",
+      "inferred profile->consul",
+      "inferred search->consul",
+      "inferred geo->mongodb-geo",
+      "inferred geo->consul",
+      "inferred rate->mongodb-rate",
+      "inferred rate->memcached-rate",
+      "inferred rate->consul",
+      "inferred review->mongodb-review",
+      "inferred review->memcached-review",
+      "inferred review->consul",
+      "inferred attractions->mongodb-attractions",
+      "inferred attractions->consul",
+      "inferred recommendation->mongodb-recommendation",
+      "inferred recommendation->consul",
+      "inferred user->mongodb-user",
+      "inferred user->consul",
+      "inferred reservation->mongodb-reservation"
+    ],
+    "count": 22
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 11,
+    "examples": [
+      "hostname user-memcached=memcached-rate",
+      "hostname user-memcached=memcached-profile",
+      "hostname user-memcached=memcached-reserve",
+      "hostname geo-db=mongodb-geo",
+      "hostname profile-db=mongodb-profile",
+      "hostname rate-db=mongodb-rate",
+      "hostname review-db=mongodb-review",
+      "hostname attractions-db=mongodb-attractions",
+      "hostname recommendation-db=mongodb-recommendation",
+      "hostname reservation-db=mongodb-reservation",
+      "hostname user-db=mongodb-user"
+    ],
+    "count": 11
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "40": {
     "hits": 0,
     "examples": [],
@@ -318,17 +362,7 @@
     "examples": [],
     "count": 0
   },
-  "20": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "42": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "21": {
     "hits": 0,
     "examples": [],
     "count": 0
