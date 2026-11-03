@@ -1,0 +1,2 @@
+repo	stars	language	sha	verdict
+mehdihadeli/go-food-delivery-microservices	1140	Go	4a59535f2f5432b3a1a4d28fe0a1767a66dd16f9	ok: 13 services, 3 compose, 1 k8s/helm yaml

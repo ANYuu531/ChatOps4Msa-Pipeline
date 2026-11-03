@@ -1,0 +1,40 @@
+# mehdihadeli/go-food-delivery-microservices @ 4a59535f2f5432b3a1a4d28fe0a1767a66dd16f9；hold-out E（2026-11-03 由 mining/collect_corpus.py 以固定種子 20261103 從 101 個合格候選中抽出，從未被探勘）。
+# 參考邊集合在工具對它執行前寫好（作者讀 repo 自己的設定與程式碼）。
+# 部署形狀：deployments/docker-compose/ 的兩份 Compose 只部署基礎設施；三個應用服務（internal/services/*，各有 Dockerfile）在本機執行，
+#   以 config/config.development.json 的 localhost:PORT 連到 Compose 發佈的 port。deployments/kubernetes、deployments/kustomize 只有 .gitkeep。
+# 節點名：應用服務＝模組目錄名（沒有任何描述檔部署它們）；基礎設施＝Compose 服務名。
+# 服務之間沒有直接呼叫，全部經 RabbitMQ（生產與消費都寫成 service -> rabbitmq）。
+# 慣例（沿用既有參考邊集合）：遙測管線（→ jaeger／tempo／zipkin／otelcol、prometheus 抓取、grafana → 資料來源）列 variant；
+#   docker-compose.infrastructure-collector.yaml 才有的元件（otelcol、zipkin、cadvisor、node_exporter）也是 variant。
+catalogwriteservice	postgres	data	internal/services/catalogwriteservice/internal/shared/configurations/catalogs/infrastructure/infrastructure_fx.go:29 postgresgorm.Module（config/config.development.json:33 gormOptions host localhost、:34 port 5432 → docker-compose.infrastructure.yaml postgres 發佈 5432）
+catalogwriteservice	rabbitmq	data	internal/services/catalogwriteservice/internal/products/configurations/rabbitmq/rabbitmq_configurations.go:12 AddProducer（config/config.development.json:46 hostName localhost、port 5672 → compose rabbitmq）
+catalogreadservice	rabbitmq	data	internal/services/catalogreadservice/internal/products/configurations/rabbitmq/rabbitmq_configuration.go:26 AddConsumer（config/config.development.json:38）
+catalogreadservice	mongo	data	internal/services/catalogreadservice/internal/shared/configurations/catalogs/infrastructure/infrastructure_fx.go:28 mongodb.Module（config/config.development.json:51 host localhost、port 27017 → compose mongo）
+catalogreadservice	redis	data	internal/services/catalogreadservice/internal/shared/configurations/catalogs/infrastructure/infrastructure_fx.go:29 redis.Module（config/config.development.json:44 host localhost、port 6379 → compose redis）
+orderservice	rabbitmq	data	internal/services/orderservice/internal/orders/configurations/rabbitmq/rabbitmq_configurations.go:13 AddProducer（config/config.development.json:46）
+orderservice	mongo	data	internal/services/orderservice/internal/shared/configurations/orders/infrastructure/infrastructure_fx.go:30 mongodb.Module（config/config.development.json:33 host localhost、port 27017）
+orderservice	eventstore	data	internal/services/orderservice/internal/shared/configurations/orders/infrastructure/infrastructure_fx.go:32 eventstroredb.ModuleFunc（config/config.development.json:90 host localhost、httpPort 2113、tcpPort 1113 → compose eventstore）
+orderservice	elasticsearch	variant	internal/services/orderservice/internal/shared/configurations/orders/infrastructure/infrastructure_fx.go:31 elasticsearch.Module；Compose 的 elasticsearch 服務整段被註解掉，沒有部署
+catalogwriteservice	jaeger	variant	config/config.development.json:59 jaegerExporterOptions localhost:4320（compose jaeger 4320:4317）；遙測
+catalogreadservice	jaeger	variant	config/config.development.json:66；遙測
+orderservice	jaeger	variant	config/config.development.json:59；遙測
+catalogwriteservice	tempo	variant	config/config.development.json:63 tempoExporterOptions localhost:4322（compose tempo 4322:4317）；遙測
+catalogreadservice	tempo	variant	config/config.development.json:70；遙測
+catalogwriteservice	zipkin	variant	config/config.development.json:67 localhost:9411（只有 infrastructure-collector 變體部署 zipkin）；遙測
+catalogreadservice	zipkin	variant	config/config.development.json:74；遙測
+orderservice	zipkin	variant	config/config.development.json:63；遙測
+grafana	prometheus	variant	deployments/docker-compose/monitoring/grafana.yaml:8 datasource url http://prometheus:9090；遙測
+grafana	tempo	variant	deployments/docker-compose/monitoring/grafana.yaml:28；遙測
+grafana	jaeger	variant	deployments/docker-compose/monitoring/grafana.yaml:18；遙測
+jaeger	prometheus	variant	deployments/docker-compose/docker-compose.infrastructure.yaml:177 PROMETHEUS_SERVER_URL；遙測
+otelcol	jaeger	variant	infrastructure-collector 變體；遙測
+otelcol	zipkin	variant	infrastructure-collector 變體；遙測
+otelcol	tempo	variant	infrastructure-collector 變體；遙測
+otelcol	prometheus	variant	infrastructure-collector 變體；遙測
+prometheus	otelcol	variant	deployments/docker-compose/otelcollector 變體的抓取；遙測
+prometheus	cadvisor	variant	抓取；遙測
+prometheus	node_exporter	variant	deployments/docker-compose/monitoring/prometheus.yml:29；遙測
+prometheus	grafana	variant	deployments/docker-compose/monitoring/prometheus.yml:20；遙測
+prometheus	catalogwriteservice	variant	deployments/docker-compose/monitoring/prometheus.yml:37 host.docker.internal:7000；遙測
+prometheus	catalogreadservice	variant	deployments/docker-compose/monitoring/prometheus.yml:45 host.docker.internal:7001；遙測
+prometheus	orderservice	variant	deployments/docker-compose/monitoring/prometheus.yml:53 host.docker.internal:8000；遙測

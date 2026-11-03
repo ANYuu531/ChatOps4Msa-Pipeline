@@ -46,7 +46,39 @@ public class GreenfieldProbeTest {
         String repoPath = System.getProperty("probe.repo");
         Assumptions.assumeTrue(repoPath != null && !repoPath.isBlank(),
                 "set -Dprobe.repo=/path/to/checkout to run this driver");
-        Path root = Path.of(repoPath);
+        // The operator's alias answers, when a previous probe run raised questions and a
+        // human answered them: -Dprobe.aliases=/path/answers.json (AliasResolution.Answers).
+        String aliasesPath = System.getProperty("probe.aliases");
+        AliasResolution.Answers answers = (aliasesPath == null || aliasesPath.isBlank())
+                ? new AliasResolution.Answers()
+                : AliasResolution.Answers.fromJson(Files.readString(Path.of(aliasesPath)));
+        Probe p = run(Path.of(repoPath), answers);
+
+        System.out.println("\n================ GREENFIELD PROBE: " + p.repoName + " ================\n" + p.summary);
+
+        String outPath = System.getProperty("probe.out");
+        if (outPath != null && !outPath.isBlank()) {
+            Path target = Path.of(outPath);
+            if (target.getParent() != null) Files.createDirectories(target.getParent());
+            Files.writeString(target, p.mermaid);
+            Files.writeString(Path.of(outPath.replaceAll("\\.mmd$", "") + ".summary.md"), p.summary);
+            Files.writeString(Path.of(outPath.replaceAll("\\.mmd$", "") + ".rules.json"), RuleTrace.toJson().toString(2) + "\n");
+        }
+    }
+
+    /** What one offline run produced; {@link MiningProbeTest} reads the parts the summary truncates. */
+    static final class Probe {
+        String repoName;
+        String summary;
+        String mermaid;
+        EdgeLedger ledger;
+        DependencyGraph graph;
+        List<CodeGraphMerger.Unresolved> unresolved;
+        AliasResolution.Questions questions;
+    }
+
+    static Probe run(Path root, AliasResolution.Answers answers) throws IOException {
+        String repoPath = root.toString();
         String repoName = root.getFileName().toString();
         RuleTrace.clear();
 
@@ -79,12 +111,6 @@ public class GreenfieldProbeTest {
         out.append("- TOTAL = ").append(ledger.edgeCount())
                 .append(" | files with syntax errors = ").append(ledger.getFilesWithErrors()).append('\n');
 
-        // The operator's alias answers, when a previous probe run raised questions and a
-        // human answered them: -Dprobe.aliases=/path/answers.json (AliasResolution.Answers).
-        String aliasesPath = System.getProperty("probe.aliases");
-        AliasResolution.Answers answers = (aliasesPath == null || aliasesPath.isBlank())
-                ? new AliasResolution.Answers()
-                : AliasResolution.Answers.fromJson(Files.readString(Path.of(aliasesPath)));
         AliasResolution.Questions questions = new AliasResolution.Questions();
 
         String codeEdges = ledger.toJson().toString();
@@ -151,15 +177,14 @@ public class GreenfieldProbeTest {
         // every existing section so the parsers of the edge list are unaffected.
         out.append('\n').append(RuleTrace.toMarkdown());
 
-        System.out.println("\n================ GREENFIELD PROBE: " + repoName + " ================\n" + out);
-
-        String outPath = System.getProperty("probe.out");
-        if (outPath != null && !outPath.isBlank()) {
-            Path target = Path.of(outPath);
-            if (target.getParent() != null) Files.createDirectories(target.getParent());
-            Files.writeString(target, mermaid);
-            Files.writeString(Path.of(outPath.replaceAll("\\.mmd$", "") + ".summary.md"), out.toString());
-            Files.writeString(Path.of(outPath.replaceAll("\\.mmd$", "") + ".rules.json"), RuleTrace.toJson().toString(2) + "\n");
-        }
+        Probe p = new Probe();
+        p.repoName = repoName;
+        p.summary = out.toString();
+        p.mermaid = mermaid;
+        p.ledger = ledger;
+        p.graph = graph;
+        p.unresolved = unresolved;
+        p.questions = questions;
+        return p;
     }
 }

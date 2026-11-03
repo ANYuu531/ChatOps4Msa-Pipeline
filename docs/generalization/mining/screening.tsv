@@ -1,0 +1,191 @@
+repo	include	reason
+alibaba/spring-cloud-alibaba	no	framework
+temporalio/temporal	no	middleware product (workflow engine)
+TykTechnologies/tyk	no	gateway product
+chaos-mesh/chaos-mesh	no	platform/tool (chaos engineering)
+evrone/go-clean-template	no	single-service template
+dotnetcore/CAP	no	library
+stefanprodan/podinfo	no	single-service template
+weaveworks/scope	no	tool (monitoring)
+kgateway-dev/kgateway	no	gateway product
+Mikaelemmmm/go-zero-looklook	yes	application (travel booking) of go-zero services
+emissary-ingress/emissary	no	gateway product
+fagongzi/manba	no	gateway product
+CodelyTV/php-ddd-example	yes	application (mooc / backoffice apps, MySQL, RabbitMQ, Elasticsearch)
+juicycleff/ultimate-backend	yes	application (multi-tenant SaaS services, GraphQL federation)
+erda-project/erda	no	platform product
+polarismesh/polaris	no	platform product (service discovery)
+vietnam-devs/coolstore-microservices	yes	application (e-commerce demo on Dapr)
+phongnguyend/Practical.CleanArchitecture	yes	application (microservices variant beside monolith variants)
+1backend/1backend	no	platform product
+authorizerdev/authorizer	no	product (auth server)
+confluentinc/examples	no	collection of independent examples
+nocalhost/nocalhost	no	tool (dev environment)
+Netflix/genie	no	product (orchestration service)
+vdaas/vald	no	product (vector search engine)
+mateaix/matecloud	yes	application (admin system of Spring Cloud Alibaba services)
+vanus-labs/vanus	no	product (event streaming)
+banzaicloud/pipeline	no	platform product
+meysamhadeli/booking-microservices	yes	application (flight booking)
+piomin/sample-spring-microservices-new	yes	application (Spring Cloud demo)
+thangchung/clean-architecture-dotnet	yes	application (.NET microservices sample)
+kubeshop/tracetest	no	tool (trace-based testing)
+eazybytes/microservices	no	course code: many section copies of one system
+durable-workflow/workflow	no	library
+stackvana/hook.io	no	platform product (hosting)
+redhat-scholars/istio-tutorial	no	tutorial: language variants of one small chain
+EdwinVW/pitstop	yes	application (garage management)
+mehdihadeli/go-food-delivery-microservices	yes	application (food delivery)
+desenvolvedor-io/dev-store	yes	application (e-commerce reference)
+dapr/quickstarts	no	collection of independent examples
+harlow/go-micro-services	yes	application (hotel booking)
+mosn/layotto	no	runtime product
+open-source-labs/Chronos	no	tool (monitoring)
+go-kratos/beer-shop	yes	application (online shop demo)
+go-kratos/gateway	no	gateway product
+sczyh30/vertx-blueprint-microservice	yes	application (micro-shop)
+fluxninja/aperture	no	product (rate limiting)
+sivaprasadreddy/spring-boot-microservices-series	yes	application (catalog / inventory / order series)
+databufflabs/databuff	no	product (APM)
+hamed-shirbandi/TaskoMask	yes	application (task management)
+evangelosvlachos96-dotcom/booking-microservices	no	duplicate of meysamhadeli/booking-microservices
+madslundt/NetCoreMicroservicesSample	yes	application (.NET sample)
+rasadov/EcommerceAPI	yes	application (e-commerce backend)
+abixen/abixen-platform	no	platform product
+apache/servicecomb-mesher	no	service mesh product
+unitedrhino/things	no	platform product (IoT)
+oktadev/java-microservices-examples	no	collection of independent examples
+aws-containers/retail-store-sample-app	yes	application (retail store sample)
+JavatoDev-com/internet-banking-concept-microservices	yes	application (internet banking)
+ThomasVitale/cloud-native-spring-in-action	no	book code: chapter copies of one system
+saalikmubeen/microservices-architectured-app	yes	application (event-driven e-commerce)
+apache/dubbo-go-pixiu	no	gateway product
+codergogoi/nodejs_microservice	yes	application (tutorial shop)
+sdgmf/go-project-sample	yes	application (products / details / ratings / reviews)
+JoeCao/qbike	yes	application (bike sharing)
+asc-lab/micronaut-microservices-poc	yes	application (insurance sales)
+apache/camel-examples	no	collection of independent examples
+douyu/juno	no	tool (microservice management)
+apssouza22/java-microservice	yes	application (Spring Cloud system)
+mudigal-technologies/microservices-sample	yes	application (sample system)
+SaiUpadhyayula/spring-boot-3-microservices-course	yes	application (course building one shop)
+minghsu0107/go-random-chat	yes	application (chat)
+AntonioFalcaoJr/EventualShop	yes	application (event-sourced shop)
+slime-io/slime	no	service mesh product
+nicholasjackson/fake-service	no	tool (test service)
+aliyun/alibabacloud-microservice-demo	yes	application (Dubbo / Spring Cloud Alibaba demo)
+merikbest/twitter-spring-reactjs	yes	application (Twitter clone)
+mikemajesty/nestjs-microservice-boilerplate-api	no	single-service boilerplate
+songcser/sanic-ms	no	framework scaffold
+falberthen/EcommerceDDD	yes	application (e-commerce DDD)
+hoangtien2k3/ecommerce-microservices	yes	application (e-commerce)
+convertigo/convertigo	no	platform product (low code)
+phodal/aofe.code	no	book code (front-end chapters)
+devdcores/BookStoreApp-Distributed-Application	yes	application (bookstore)
+tinrab/spidey	yes	application (online store)
+idugalic/micro-company	yes	application (CQRS company)
+orbitalapi/orbital	no	product (integration platform)
+powerman/go-monolith-example	no	one deployable monolith
+ujjavaldesai07/spring-boot-react-ecommerce-app	yes	application (e-commerce)
+jingsewu/open-wes	yes	application (warehouse execution system)
+geoserver/geoserver-cloud	yes	application (GeoServer split into services)
+abhimishra91/insight	yes	application (NLP services and front end)
+charlessolar/eShopOnContainersDDD	yes	application (eShop DDD fork, its own code)
+ebosas/microservices	yes	application (Go example system)
+hantsy/spring-microservice-sample	yes	application (Spring sample)
+ThreeDotsLabs/monolith-microservice-shop	yes	application (shop, microservice variant beside monolith)
+meysamhadeli/booking-microservices-nestjs	yes	application (flight booking, NestJS)
+sourcefuse/loopback4-microservice-catalog	no	catalog of independent reusable services
+go-saas/kit	yes	application (SaaS services)
+meysamhadeli/booking-microservices-expressjs	yes	application (flight booking, Express)
+oracle-quickstart/oci-cloudnative	yes	application (MuShop)
+ivanpaulovich/clean-architecture-manga	yes	application (accounts API, identity server, SPA, reverse proxy)
+xiajingren/HelloAbp	yes	application (ABP identity / data-dictionary services)
+AleksK1NG/Go-gRPC-RabbitMQ-microservice	no	one application service plus infrastructure
+nameko/nameko-examples	yes	application (orders / products / gateway)
+uid4oe/grpc-web-demo	yes	application (catalog / offer / order with Envoy)
+tinrab/meower	yes	application (social network)
+piomin/sample-spring-microservices-advanced	yes	application (Spring Cloud demo)
+dashersw/cote-workshop	yes	application (shop case study)
+saturnism/istio-by-example-java	no	collection of independent examples
+webmakaka/Microservices-with-Node-JS-and-React	no	course code copies
+AleksK1NG/Go-CQRS-Kafka-gRPC-Microservices	yes	application (gateway / reader / writer)
+yiv/yivnet	yes	application (game server services)
+Toktik-Team/toktik	yes	application (short video)
+amasen02/freshcart-backend	yes	application (e-commerce reference)
+wsrh8888/beaver-server	yes	application (instant messaging)
+typv/nest-turbo-starter	no	starter template
+mostafacs/ecommerce-microservices-spring-reactive-webflux	yes	application (e-commerce)
+uid4oe/microservices-go-grpc	yes	application (BFF / user / advice)
+tkssharma/nodejs-microservices-patterns	yes	application (commerce services)
+thangchung/northwind-dotnet	yes	application (Northwind services)
+AleksK1NG/Go-Kafka-gRPC-MongoDB-microservice	no	one application service plus infrastructure
+mabuonomo/example-nestjs-microservices-grpc	yes	application (gRPC nodes and client)
+kreta/Kreta	yes	application (project management)
+thangchung/magazine-website	yes	application (magazine)
+JarrodMalkovic/auction-website	yes	application (auction)
+leoChaoGlut/log-sys	no	tool (log system)
+amalgam8/amalgam8	no	routing fabric product
+Rapter1990/SpringBootMicroservices	yes	application (Spring Cloud example)
+sitkoru/Sitko.Core	no	library
+vany0114/microservices-dotnetcore-docker-sf-k8s	yes	application (Duber ride sharing)
+tkssharma/12-factor-app-microservices	yes	application (NestJS services)
+meysamhadeli/booking-microservices-java-spring-boot	yes	application (flight booking, Java: separate code base)
+alperenkucukali/dotnet-microservices	yes	application (accounts / customers / transactions)
+commandeer/open	no	tool
+cuongnh28/spring-microservices-blueprint	yes	application (accounts / products)
+ebubekirdinc/SuuCat	yes	application (subscription sample)
+opexdev/core	yes	application (crypto exchange)
+ionutbalosin/ecommerce-app	yes	application (e-commerce)
+moov-io/paygate	no	product (payments API)
+tkssharma/nestjs-microservices	yes	application (user / token services)
+antosubash/abp-microservice	yes	application (ABP microservice sample)
+cloudblue/django-cqrs	no	library
+nvawntien/go-judge-system	yes	application (online judge)
+getlarge/ticketing	yes	application (ticketing)
+NesoHQ/bgce-archive	yes	application (CMS)
+PacktPublishing/Hands-on-Microservices-with-Python	yes	application (one shop built through the course)
+netcorebcn/quiz	yes	application (real-time quiz)
+buptmiao/microservice-app	yes	application (feed / profile / topic)
+rcherara/microservice-architecture	yes	application (user / bill with Spring Cloud)
+aelassas/microservices	yes	application (catalog / cart / identity)
+AleksK1NG/Go-NATS-Streaming-gRPC-PostgreSQL	no	one application service plus infrastructure
+hemerajs/aither	yes	application (Hemera services)
+thangchung/coffeeshop-on-nomad	yes	application (coffee shop)
+andrechristikan/ack-nestjs-boilerplate-kafka	no	boilerplate
+aidanwhiteley/books	yes	application (books with gateway tier)
+kalintsenkov/BettingSystem	yes	application (betting)
+nplszfl/OmniTradeERP	yes	application (ERP)
+alexcheng1982/happyride	yes	application (ride hailing)
+chesterheng/microservices-node-react	no	course code copies
+PramithaMJ/fully-completed-microservices-Java-Springboot	yes	application (Spring Cloud with Kafka)
+ThoreauZZ/spring-cloud-example	yes	application (user / trade)
+fdonnet/ubik_accounting	yes	application (accounting)
+mehmetozkaya/CloudNative	no	collection of hands-on projects
+walkline/ToCloud9	yes	application (game server services)
+danionescu0/docker-flask-mongodb-example	yes	application (Flask services)
+tanerdiler/spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes	yes	application (Spring Cloud services)
+WendellAdriel/spring-microservices	yes	application (articles / authors)
+mehmetkirkoca/social-media-manager	yes	application (social media manager)
+AleksK1NG/Go-CQRS-EventSourcing-Microservice	no	one application service plus infrastructure
+alextanhongpin/full-stack-microservice	yes	application (services behind a gateway)
+Rapter1990/springbootmicroserviceswithsecurity	yes	application (auth / user / product)
+CTU-LinguTechies/VN-Law-Advisor	yes	application (law Q&A)
+yh-zero/go-zero-admin	yes	application (admin back end)
+liaotxcn/PaiPai	yes	application (instant messaging)
+aptlogica/sereni-base	no	platform product (backend as a service)
+ibatulanandjp/ecommerce-microservices	yes	application (e-commerce)
+SunneV/OpenRegex	no	developer tool
+hdimitrieski/e-shop	yes	application (e-shop)
+piomin/sample-spring-microservices-transactions	yes	application (distributed transactions demo)
+east-eden/server	yes	application (game services)
+aws-samples/observability-with-amazon-opensearch	yes	application (sample shop for observability)
+sylleryum/kafka-microservices-with-saga	yes	application (order / stock / payment saga)
+6boris/web3-template	no	template
+DevYangJC/intelli_hub	no	platform product (API open platform)
+IF1007/if1007	no	course material
+suadev/go-microservices-and-krakend-api-gateway	yes	application (shopping basket workshop)
+febrihidayan/go-architecture-monorepo	yes	application (auth / user / storage / notification)
+zoltanvin/royal-reserve-bank	yes	application (banking)
+Milvasoft/milvaion	no	product (job scheduler)
+BrodyGaudel/bank	yes	application (banking)

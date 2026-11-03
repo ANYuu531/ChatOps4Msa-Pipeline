@@ -1,0 +1,851 @@
+1492 unique search hits
+[  0] doocs/advanced-java: framework/library/list by name or description
+[  0] nestjs/nest: framework/library/list by name or description
+[  0] traefik/traefik: only 2 deployable services
+[  0] serverless/serverless: framework/library/list by name or description
+[  0] apache/dubbo: framework/library/list by name or description
+[  0] istio/istio: repo > 300 MB
+[  0] backstage/backstage: framework/library/list by name or description
+[  0] alibaba/nacos: no deployment descriptor
+[  0] zeromicro/go-zero: framework/library/list by name or description
+[  0] labstack/echo: framework/library/list by name or description
+[  0] apolloconfig/apollo: only 3 deployable services
+[  0] alibaba/spring-cloud-alibaba: screened out: framework
+[  0] go-kit/kit: framework/library/list by name or description
+[  0] dapr/dapr: only 1 deployable services
+[  0] apache/incubator-seata: only 2 deployable services
+[  0] go-kratos/kratos: framework/library/list by name or description
+[  0] temporalio/temporal: screened out: middleware product (workflow engine)
+[  0] alibaba/Sentinel: only 3 deployable services
+[  0] grpc/grpc-go: no deployment descriptor
+[  0] go-chi/chi: no deployment descriptor
+[  0] thingsboard/thingsboard: repo > 300 MB
+[  0] jina-ai/serve: repo > 300 MB
+[  0] nats-io/nats-server: no deployment descriptor
+[  0] gofr-dev/gofr: framework/library/list by name or description
+[  0] umijs/qiankun: no deployment descriptor
+[  0] shuzheng/zheng: no deployment descriptor
+[  0] GoogleContainerTools/jib: no deployment descriptor
+[  0] sqshq/piggymetrics: already used in the evaluation
+[  0] single-spa/single-spa: no deployment descriptor
+[  0] gogf/gf: framework/library/list by name or description
+[  0] encoredev/encore: no deployment descriptor
+[  0] grpc/grpc-java: no deployment descriptor
+[  0] mehdihadeli/awesome-software-architecture: framework/library/list by name or description
+[  0] newbee-ltd/newbee-mall: no deployment descriptor
+[  0] imgproxy/imgproxy: only 2 deployable services
+[  0] dtm-labs/dtm: framework/library/list by name or description
+[  0] TykTechnologies/tyk: screened out: gateway product
+[  0] vercel/micro: no deployment descriptor
+[  0] Activiti/Activiti: no deployment descriptor
+[  0] falconry/falcon: framework/library/list by name or description
+[  0] fenixsoft/awesome-fenix: framework/library/list by name or description
+[  0] karatelabs/karate: no deployment descriptor
+[  0] apex/up: no deployment descriptor
+[  0] ThreeMammals/Ocelot: only 3 deployable services
+[  0] javalin/javalin: framework/library/list by name or description
+[  0] smallnest/rpcx: framework/library/list by name or description
+[  0] cloudwego/kitex: framework/library/list by name or description
+[  0] coroot/coroot: only 5 deployable services
+[  0] chaos-mesh/chaos-mesh: screened out: platform/tool (chaos engineering)
+[  0] kubevela/kubevela: only 1 deployable services
+[  0] evrone/go-clean-template: screened out: single-service template
+[  0] cloudwego/hertz: framework/library/list by name or description
+[  0] dotnetcore/CAP: screened out: library
+[  0] hyperf/hyperf: framework/library/list by name or description
+[  0] luraproject/lura: no deployment descriptor
+[  0] nats-io/nats.go: no deployment descriptor
+[  0] chaosblade-io/chaosblade: framework/library/list by name or description
+[  0] micronaut-projects/micronaut-core: framework/library/list by name or description
+[  0] apache/camel: framework/library/list by name or description
+[  0] moleculerjs/moleculer: framework/library/list by name or description
+[  0] goadesign/goa: framework/library/list by name or description
+[  0] h2non/imaginary: only 2 deployable services
+[  0] stefanprodan/podinfo: screened out: single-service template
+[  0] weaveworks/scope: screened out: tool (monitoring)
+[  0] easegress-io/easegress: only 1 deployable services
+[  0] ZHENFENG13/spring-boot-projects: no deployment descriptor
+[  0] TencentBlueKing/bk-cmdb: only 0 deployable services
+[  0] kgateway-dev/kgateway: screened out: gateway product
+[  0] swoft-cloud/swoft: framework/library/list by name or description
+[  0] permitio/opal: only 4 deployable services
+[  0] devspace-sh/devspace: repo > 300 MB
+[  1] Mikaelemmmm/go-zero-looklook: ok: 11 services, 2 compose, 0 k8s/helm yaml
+[  1] line/armeria: framework/library/list by name or description
+[  1] shfshanyue/Daily-Question: only 1 deployable services
+[  1] apache/dubbo-go: only 1 deployable services
+[  1] spring-cloud/spring-cloud-netflix: no deployment descriptor
+[  1] spring-cloud/spring-cloud-gateway: framework/library/list by name or description
+[  1] micrometer-metrics/micrometer: no deployment descriptor
+[  1] goravel/goravel: framework/library/list by name or description
+[  1] zlt2000/microservices-platform: repo > 300 MB
+[  1] nameko/nameko: framework/library/list by name or description
+[  1] ergo-services/ergo: framework/library/list by name or description
+[  1] neuland/micro-frontends: only 4 deployable services
+[  1] spec-first/connexion: framework/library/list by name or description
+[  1] douyu/jupiter: framework/library/list by name or description
+[  1] emissary-ingress/emissary: screened out: gateway product
+[  1] goldbergyoni/nodejs-testing-best-practices: only 2 deployable services
+[  2] ivanpaulovich/clean-architecture-manga: ok: 6 services, 4 compose, 0 k8s/helm yaml
+[  2] thangchung/go-coffeeshop: already used in the evaluation
+[  2] camunda/camunda: repo > 300 MB
+[  2] yusing/godoxy: only 4 deployable services
+[  2] apache/dubbo-admin: no deployment descriptor
+[  2] kumahq/kuma: repo > 300 MB
+[  2] spacecloud-io/space-cloud: only 4 deployable services
+[  2] mercyblitz/tech-weekly: no deployment descriptor
+[  2] senecajs/seneca: framework/library/list by name or description
+[  2] sony/gobreaker: no deployment descriptor
+[  2] networknt/light-4j: framework/library/list by name or description
+[  2] kennethreitz/responder: framework/library/list by name or description
+[  2] evolutionary-architecture/evolutionary-architecture-by-example: no deployment descriptor
+[  2] LinShunKang/MyPerf4J: no deployment descriptor
+[  2] spring-cloud/spring-cloud-kubernetes: only 0 deployable services
+[  2] superstreamlabs/memphis: repo > 300 MB
+[  2] TarsCloud/TarsGo: framework/library/list by name or description
+[  2] fagongzi/manba: screened out: gateway product
+[  2] Tencent/spring-cloud-tencent: framework/library/list by name or description
+[  2] rafaelfgx/Architecture: only 2 deployable services
+[  2] openfaas/faasd: only 5 deployable services
+[  2] aspnetrun/run-aspnetcore-microservices: already used in the evaluation
+[  2] microsurging/surging: only 1 deployable services
+[  3] CodelyTV/php-ddd-example: ok: 7 services, 1 compose, 0 k8s/helm yaml
+[  3] ml-tooling/opyrator: no deployment descriptor
+[  3] eolinker/goku_lite: no deployment descriptor
+[  3] ExpressGateway/express-gateway: no deployment descriptor
+[  3] alibaba/sentinel-golang: no deployment descriptor
+[  3] jsynowiec/node-typescript-boilerplate: no deployment descriptor
+[  3] event-catalog/eventcatalog: no deployment descriptor
+[  4] juicycleff/ultimate-backend: ok: 9 services, 2 compose, 0 k8s/helm yaml
+[  4] go-dev-frame/sponge: framework/library/list by name or description
+[  4] motiv-labs/janus: only 5 deployable services
+[  4] opensolon/solon: framework/library/list by name or description
+[  4] erda-project/erda: screened out: platform product
+[  4] golevelup/nestjs: only 1 deployable services
+[  4] go-chassis/go-chassis: framework/library/list by name or description
+[  4] krakend/krakend-ce: no deployment descriptor
+[  4] rebus-org/Rebus: repo > 300 MB
+[  4] lealone/Lealone: no deployment descriptor
+[  4] aimeos/aimeos-headless: no deployment descriptor
+[  4] polarismesh/polaris: screened out: platform product (service discovery)
+[  4] lovoo/goka: framework/library/list by name or description
+[  4] rootsongjc/awesome-cloud-native: framework/library/list by name or description
+[  4] prontera/spring-cloud-rest-tcc: no deployment descriptor
+[  4] TencentBlueKing/bk-ci: repo > 300 MB
+[  5] vietnam-devs/coolstore-microservices: ok: 13 services, 4 compose, 7 k8s/helm yaml
+[  5] andeya/erpc: framework/library/list by name or description
+[  5] BrighterCommand/Brighter: framework/library/list by name or description
+[  6] phongnguyend/Practical.CleanArchitecture: ok: 26 services, 19 compose, 20 k8s/helm yaml
+[  6] go-eagle/eagle: framework/library/list by name or description
+[  6] Kong/kubernetes-ingress-controller: only 2 deployable services
+[  6] dashersw/cote: framework/library/list by name or description
+[  6] 1backend/1backend: screened out: platform product
+[  6] danielfsousa/express-rest-boilerplate: only 2 deployable services
+[  6] anthdm/hollywood: no deployment descriptor
+[  6] lipp/login-with: no deployment descriptor
+[  6] ProgrammerAnthony/Pantheon: no deployment descriptor
+[  6] 8treenet/freedom: no deployment descriptor
+[  6] pydio/cells: repo > 300 MB
+[  6] spring-petclinic/spring-petclinic-microservices: already used in the evaluation
+[  6] metrue/fx: no deployment descriptor
+[  6] apioo/fusio: no deployment descriptor
+[  6] authorizerdev/authorizer: screened out: product (auth server)
+[  6] confluentinc/examples: screened out: collection of independent examples
+[  6] lukechilds/reverse-shell: no deployment descriptor
+[  6] suyuan32/simple-admin-core: framework/library/list by name or description
+[  6] spring-cloud/spring-cloud-config: no deployment descriptor
+[  6] nitrictech/nitric: framework/library/list by name or description
+[  6] nashtech-garage/yas: already used in the evaluation
+[  6] javahongxi/whatsmars: no deployment descriptor
+[  6] smapiot/piral: framework/library/list by name or description
+[  6] nocalhost/nocalhost: screened out: tool (dev environment)
+[  6] XiaoMi/naftis: framework/library/list by name or description
+[  6] in28minutes/spring-microservices: no deployment descriptor
+[  6] expressots/expressots: framework/library/list by name or description
+[  6] crizstian/cinema-microservice: no deployment descriptor
+[  6] Netflix/genie: screened out: product (orchestration service)
+[  6] apache/eventmesh: only 1 deployable services
+[  6] vdaas/vald: screened out: product (vector search engine)
+[  6] pinguo/php-msf: framework/library/list by name or description
+[  7] mateaix/matecloud: ok: 8 services, 1 compose, 6 k8s/helm yaml
+[  7] vanus-labs/vanus: screened out: product (event streaming)
+[  7] murraco/spring-boot-jwt: no deployment descriptor
+[  7] eolinker/apinto: no deployment descriptor
+[  7] storj/drpc: no deployment descriptor
+[  7] spring-projects/spring-integration: no deployment descriptor
+[  7] dotnetcore/AgileConfig: only 3 deployable services
+[  7] phalapi/phalapi: no deployment descriptor
+[  7] nanovms/ops: no deployment descriptor
+[  7] fengjiachun/Jupiter: no deployment descriptor
+[  7] banzaicloud/pipeline: screened out: platform product
+[  7] lileio/lile: no deployment descriptor
+[  7] AlphaYu/adnc: framework/library/list by name or description
+[  7] SeldonIO/seldon-server: no deployment descriptor
+[  7] honzaap/Systemizer: no deployment descriptor
+[  7] aregm/nff-go: framework/library/list by name or description
+[  8] meysamhadeli/booking-microservices: ok: 21 services, 2 compose, 2 k8s/helm yaml
+[  9] piomin/sample-spring-microservices-new: ok: 7 services, 1 compose, 0 k8s/helm yaml
+[  9] eko/monday: no deployment descriptor
+[ 10] thangchung/clean-architecture-dotnet: ok: 11 services, 1 compose, 0 k8s/helm yaml
+[ 10] MarioCarrion/todo-api-microservice-example: only 5 deployable services
+[ 10] kubeshop/tracetest: screened out: tool (trace-based testing)
+[ 10] meysamhadeli/awesome-dotnet-tips: framework/library/list by name or description
+[ 10] eazybytes/microservices: screened out: course code: many section copies of one system
+[ 10] durable-workflow/workflow: screened out: library
+[ 10] stackvana/hook.io: screened out: platform product (hosting)
+[ 10] hamvocke/spring-testing: no deployment descriptor
+[ 10] temporalio/sdk-python: framework/library/list by name or description
+[ 10] redhat-scholars/istio-tutorial: screened out: tutorial: language variants of one small chain
+[ 10] microsoft/aspire-samples: no deployment descriptor
+[ 10] unionj-cloud/go-doudou: framework/library/list by name or description
+[ 10] panagiop/node.js-clean-architecture: only 3 deployable services
+[ 10] nicholasjackson/building-microservices-youtube: no deployment descriptor
+[ 11] EdwinVW/pitstop: ok: 9 services, 2 compose, 34 k8s/helm yaml
+[ 11] banq/jdonframework: framework/library/list by name or description
+[ 11] apache/apisix-ingress-controller: only 2 deployable services
+[ 11] itmuch/spring-cloud-docker-microservice-book-code: no deployment descriptor
+[ 11] nactio/nact: no deployment descriptor
+[ 11] klothoplatform/klotho: no deployment descriptor
+[ 12] mehdihadeli/go-food-delivery-microservices: ok: 13 services, 3 compose, 1 k8s/helm yaml
+[ 13] desenvolvedor-io/dev-store: ok: 9 services, 2 compose, 0 k8s/helm yaml
+[ 13] raycad/go-microservices: no deployment descriptor
+[ 13] dapr/quickstarts: screened out: collection of independent examples
+[ 13] learning-cloud-native-go/myapp: only 2 deployable services
+[ 13] kraken-php/framework: framework/library/list by name or description
+[ 13] SteeltoeOSS/Steeltoe: only 2 deployable services
+[ 14] harlow/go-micro-services: ok: 6 services, 1 compose, 0 k8s/helm yaml
+[ 14] spring-cloud/spring-cloud-stream: framework/library/list by name or description
+[ 14] zalando/problem-spring-web: framework/library/list by name or description
+[ 14] BlueWallet/LndHub: no deployment descriptor
+[ 14] apple/servicetalk: framework/library/list by name or description
+[ 14] wso2/product-apim: repo > 300 MB
+[ 14] eacdy/spring-cloud-study: no deployment descriptor
+[ 14] mehdihadeli/food-delivery-microservices: already used in the evaluation
+[ 14] open-lambda/open-lambda: no deployment descriptor
+[ 14] dapr/docs: repo > 300 MB
+[ 14] 417511458/jbone: no deployment descriptor
+[ 14] mat/besticon: no deployment descriptor
+[ 14] activej/activej: only 4 deployable services
+[ 14] Denrox/nestjs-microservices-example: framework/library/list by name or description
+[ 14] gotomicro/ego: no deployment descriptor
+[ 14] vmagamedov/grpclib: no deployment descriptor
+[ 14] baidu/starlight: no deployment descriptor
+[ 14] dromara/dante-cloud: no deployment descriptor
+[ 14] vardius/go-api-boilerplate: only 4 deployable services
+[ 14] stelligent/mu: framework/library/list by name or description
+[ 14] nghialv/promviz: only 2 deployable services
+[ 14] zalando/problem: framework/library/list by name or description
+[ 14] AlexStocks/getty: framework/library/list by name or description
+[ 14] temporalio/sdk-typescript: framework/library/list by name or description
+[ 14] o1egl/paseto: no deployment descriptor
+[ 14] AOL-archive/micro-server: framework/library/list by name or description
+[ 14] slanatech/swagger-stats: only 2 deployable services
+[ 14] payara/Payara: no deployment descriptor
+[ 14] rinormaloku/k8s-mastery: no deployment descriptor
+[ 14] mosn/layotto: screened out: runtime product
+[ 14] open-source-labs/Chronos: screened out: tool (monitoring)
+[ 14] phodal/mooa: framework/library/list by name or description
+[ 14] TalkingData/owl: no deployment descriptor
+[ 14] alexliesenfeld/health: framework/library/list by name or description
+[ 15] go-kratos/beer-shop: ok: 13 services, 1 compose, 13 k8s/helm yaml
+[ 15] go-kratos/gateway: screened out: gateway product
+[ 15] spring-cloud/spring-cloud-consul: only 0 deployable services
+[ 15] yidongnan/spring-cloud-netflix-example: already used in the evaluation
+[ 15] kiranz/just-api: no deployment descriptor
+[ 15] eicrud/eicrud: framework/library/list by name or description
+[ 15] hemerajs/hemera: no deployment descriptor
+[ 15] gogearbox/gearbox: framework/library/list by name or description
+[ 15] monzo/typhon: no deployment descriptor
+[ 15] pippo-java/pippo: framework/library/list by name or description
+[ 15] in28minutes/spring-microservices-v3: only 5 deployable services
+[ 16] sczyh30/vertx-blueprint-microservice: ok: 10 services, 1 compose, 0 k8s/helm yaml
+[ 16] nullstack/nullstack: no deployment descriptor
+[ 16] daimon3332/OutlookRegister: no deployment descriptor
+[ 16] apache/dubbo-js: framework/library/list by name or description
+[ 16] namecheap/ilc: framework/library/list by name or description
+[ 16] masastack/MASA.Framework: framework/library/list by name or description
+[ 16] shortlink-org/shortlink: repo > 300 MB
+[ 16] kmesh-net/kmesh: supported-language share 287/397 < 0.8
+[ 16] apache/streampipes: repo > 300 MB
+[ 16] chaokunyang/microservices-event-sourcing: no deployment descriptor
+[ 16] duyanming/Viper: no deployment descriptor
+[ 16] spring-cloud/spring-cloud-commons: no deployment descriptor
+[ 16] cellbang/cell: framework/library/list by name or description
+[ 16] VincentJouanne/nest-clean-architecture: only 1 deployable services
+[ 16] resgateio/resgate: no deployment descriptor
+[ 16] fluxninja/aperture: screened out: product (rate limiting)
+[ 16] micro-analytics/micro-analytics-cli: framework/library/list by name or description
+[ 17] sivaprasadreddy/spring-boot-microservices-series: ok: 8 services, 1 compose, 0 k8s/helm yaml
+[ 17] inadarei/nodebootstrap: no deployment descriptor
+[ 17] databufflabs/databuff: screened out: product (APM)
+[ 17] eventuate-tram/eventuate-tram-examples-customers-and-orders: no deployment descriptor
+[ 18] hamed-shirbandi/TaskoMask: ok: 11 services, 2 compose, 0 k8s/helm yaml
+[ 18] evangelosvlachos96-dotcom/booking-microservices: screened out: duplicate of meysamhadeli/booking-microservices
+[ 18] mxstbr/micro-github: no deployment descriptor
+[ 18] uavorg/uavstack: no deployment descriptor
+[ 18] caplogic/Mappedbus: no deployment descriptor
+[ 18] advantageous/qbit: no deployment descriptor
+[ 18] gbrayhan/microservices-go: only 2 deployable services
+[ 19] madslundt/NetCoreMicroservicesSample: ok: 7 services, 3 compose, 0 k8s/helm yaml
+[ 20] rasadov/EcommerceAPI: ok: 15 services, 1 compose, 0 k8s/helm yaml
+[ 20] abixen/abixen-platform: screened out: platform product
+[ 20] apache/servicecomb-mesher: screened out: service mesh product
+[ 20] go-masonry/mortar: framework/library/list by name or description
+[ 20] otterize/network-mapper: no deployment descriptor
+[ 20] koursaros-ai/nboost: only 3 deployable services
+[ 20] weyoss/redis-smq: no deployment descriptor
+[ 20] ackintosh/ganesha: only 5 deployable services
+[ 20] shijuvar/go-distributed-sys: no deployment descriptor
+[ 20] indeedeng/iwf: framework/library/list by name or description
+[ 20] unitedrhino/things: screened out: platform product (IoT)
+[ 20] keets2012/Auth-service: only 0 deployable services
+[ 20] lithdew/flatend: no deployment descriptor
+[ 20] Ahoo-Wang/CosId: framework/library/list by name or description
+[ 20] cristianoliveira/ergo: no deployment descriptor
+[ 20] go-chi/jwtauth: no deployment descriptor
+[ 20] xtrime-ru/TelegramApiServer: supported-language share 30/38 < 0.8
+[ 20] camelinaction/camelinaction2: no deployment descriptor
+[ 20] caoym/phpboot: framework/library/list by name or description
+[ 20] pnxtech/hydra: framework/library/list by name or description
+[ 20] SteeltoeOSS/Samples: only 5 deployable services
+[ 20] oktadev/java-microservices-examples: screened out: collection of independent examples
+[ 20] shijuvar/gokit: only 2 deployable services
+[ 20] scalar-labs/scalardb: no deployment descriptor
+[ 20] andrearaponi/dito: only 2 deployable services
+[ 20] scalecube/scalecube-services: framework/library/list by name or description
+[ 20] weiguangli-io/rydr: only 4 deployable services
+[ 20] istio-ecosystem/admiral: only 1 deployable services
+[ 20] lsm/micromono: only 0 deployable services
+[ 20] mohamed-taman/Springy-Store-Microservices: framework/library/list by name or description
+[ 20] arun-gupta/microservices: repo > 300 MB
+[ 20] 0xb4lamx/nestjs-boilerplate-microservice: no deployment descriptor
+[ 20] BBVA/kapow: no deployment descriptor
+[ 20] dotnet-easy/easy-dotnet: no deployment descriptor
+[ 20] pedronauck/micro-router: no deployment descriptor
+[ 21] aws-containers/retail-store-sample-app: ok: 6 services, 8 compose, 13 k8s/helm yaml
+[ 21] vaquarkhan/microservices-recipes-a-free-gitbook: no deployment descriptor
+[ 21] hyperledger-firefly/firefly: no deployment descriptor
+[ 21] annabergite/abg-cloud: no deployment descriptor
+[ 21] micro-plat/hydra: no deployment descriptor
+[ 21] hellofresh/health-go: framework/library/list by name or description
+[ 21] zhihuili/flower: no deployment descriptor
+[ 21] ssola/python-flask-microservice: only 3 deployable services
+[ 22] JavatoDev-com/internet-banking-concept-microservices: ok: 9 services, 2 compose, 0 k8s/helm yaml
+[ 22] megaease/easeagent: no deployment descriptor
+[ 22] yoyofx/yoyogo: framework/library/list by name or description
+[ 22] ThomasVitale/cloud-native-spring-in-action: screened out: book code: chapter copies of one system
+[ 22] spring-cloud/spring-cloud-zookeeper: only 0 deployable services
+[ 22] temporalio/sdk-dotnet: framework/library/list by name or description
+[ 22] meysamhadeli/shop-golang-microservices: no deployment descriptor
+[ 22] stevejgordon/CorrelationId: no deployment descriptor
+[ 23] saalikmubeen/microservices-architectured-app: ok: 6 services, 0 compose, 13 k8s/helm yaml
+[ 23] apache/dubbo-go-pixiu: screened out: gateway product
+[ 23] fullstackhero/dotnet-microservices-boilerplate: only 4 deployable services
+[ 23] jolie/jolie: no deployment descriptor
+[ 23] SDUOJ/OnlineJudge: no deployment descriptor
+[ 24] codergogoi/nodejs_microservice: ok: 6 services, 1 compose, 0 k8s/helm yaml
+[ 24] OmarElgabry/microservices-spring-boot: no deployment descriptor
+[ 24] amrkhaledccd/my-moments: only 5 deployable services
+[ 25] sdgmf/go-project-sample: ok: 15 services, 1 compose, 1 k8s/helm yaml
+[ 25] quick-perf/quickperf: framework/library/list by name or description
+[ 25] kimtth/software-architect-mindmap: repo > 300 MB
+[ 25] piomin/sample-spring-microservices-kubernetes: only 4 deployable services
+[ 25] ThembisileNGQ/Akkatecture: framework/library/list by name or description
+[ 25] alibaba/sca-best-practice: no deployment descriptor
+[ 25] thiagobustamante/typescript-rest: no deployment descriptor
+[ 25] digota/digota: only 3 deployable services
+[ 25] berialjs/berial: framework/library/list by name or description
+[ 25] megaease/easemesh: no deployment descriptor
+[ 25] foxminchan/BookWorm: no deployment descriptor
+[ 25] madmous/madClones: only 4 deployable services
+[ 26] JoeCao/qbike: ok: 10 services, 1 compose, 0 k8s/helm yaml
+[ 26] ZoneTree/ZoneTree: only 2 deployable services
+[ 26] nutzam/nutzboot: no deployment descriptor
+[ 26] mehdihadeli/awesome-go-education: framework/library/list by name or description
+[ 27] asc-lab/micronaut-microservices-poc: ok: 11 services, 1 compose, 0 k8s/helm yaml
+[ 27] learning-zone/spring-boot-basics: no deployment descriptor
+[ 27] apache/camel-examples: screened out: collection of independent examples
+[ 27] citrusframework/citrus: framework/library/list by name or description
+[ 27] unadlib/fronts: framework/library/list by name or description
+[ 27] douyu/juno: screened out: tool (microservice management)
+[ 27] duyanming/Anno.Core: no deployment descriptor
+[ 27] Avanade/Liquid-Application-Framework: framework/library/list by name or description
+[ 27] mehmetozkaya/Design-Microservices-Architecture-with-Patterns-Principles: no deployment descriptor
+[ 27] stackvana/microcule: framework/library/list by name or description
+[ 27] jd-opensource/joyrpc: framework/library/list by name or description
+[ 27] dapr/go-sdk: framework/library/list by name or description
+[ 27] oracle/coherence: repo > 300 MB
+[ 27] PoweredLocal/vrata: no deployment descriptor
+[ 27] TencentFemas/femas: repo > 300 MB
+[ 27] ihippik/wal-listener: only 4 deployable services
+[ 27] ivanpaulovich/hexagonal-architecture-acerola: only 1 deployable services
+[ 27] mishudark/eventhus: only 0 deployable services
+[ 27] BackendStack21/restana: framework/library/list by name or description
+[ 27] RisingStack/trace-nodejs: no deployment descriptor
+[ 27] minos-framework/minos-python: framework/library/list by name or description
+[ 28] apssouza22/java-microservice: ok: 9 services, 1 compose, 0 k8s/helm yaml
+[ 28] microsoft/azure-spring-apps-training: no deployment descriptor
+[ 28] teamcode-inc/kubeorbit: no deployment descriptor
+[ 28] spring-cloud/spring-cloud-bus: no deployment descriptor
+[ 28] boostercloud/booster: framework/library/list by name or description
+[ 28] charlessolar/Aggregates.NET: no deployment descriptor
+[ 28] spring-cloud/spring-cloud-task: no deployment descriptor
+[ 28] yarpc/yarpc-go: only 3 deployable services
+[ 29] mudigal-technologies/microservices-sample: ok: 14 services, 1 compose, 0 k8s/helm yaml
+[ 29] temporalio/sdk-java: framework/library/list by name or description
+[ 29] sdslabs/gasper: no deployment descriptor
+[ 29] naltatis/micro-frontends-in-action-code: no deployment descriptor
+[ 29] miaowing/nest-schedule: no deployment descriptor
+[ 29] x-izumin/grapi: framework/library/list by name or description
+[ 30] SaiUpadhyayula/spring-boot-3-microservices-course: ok: 12 services, 1 compose, 0 k8s/helm yaml
+[ 30] backstage/community-plugins: repo > 300 MB
+[ 31] minghsu0107/go-random-chat: ok: 19 services, 1 compose, 1 k8s/helm yaml
+[ 32] AntonioFalcaoJr/EventualShop: ok: 18 services, 3 compose, 0 k8s/helm yaml
+[ 32] slime-io/slime: screened out: service mesh product
+[ 32] nicholasjackson/fake-service: screened out: tool (test service)
+[ 32] TarsCloud/TarsJava: framework/library/list by name or description
+[ 32] nest-cloud/nestcloud: framework/library/list by name or description
+[ 32] retroryan/istio-workshop: only 3 deployable services
+[ 33] aliyun/alibabacloud-microservice-demo: ok: 43 services, 2 compose, 5 k8s/helm yaml
+[ 33] hardyscc/nestjs-cqrs-starter: no deployment descriptor
+[ 33] ErdemOzgen/Python-developer-roadmap: framework/library/list by name or description
+[ 33] jeddict/jeddict-modeler: framework/library/list by name or description
+[ 34] merikbest/twitter-spring-reactjs: ok: 16 services, 1 compose, 0 k8s/helm yaml
+[ 34] DragonKingpin/Hydra: no deployment descriptor
+[ 34] Clever/microplane: framework/library/list by name or description
+[ 34] littlehorse-enterprises/littlehorse: only 5 deployable services
+[ 34] specmatic/specmatic: only 3 deployable services
+[ 34] gudaoxuri/dew: no deployment descriptor
+[ 34] namastack/namastack-outbox: only 4 deployable services
+[ 34] opentracing-contrib/java-spring-cloud: no deployment descriptor
+[ 34] hb-chen/micro-starter: only 2 deployable services
+[ 34] mikemajesty/nestjs-microservice-boilerplate-api: screened out: single-service boilerplate
+[ 34] devicehive/devicehive-java-server: no deployment descriptor
+[ 34] lamoda/gonkey: only 3 deployable services
+[ 34] songcser/sanic-ms: screened out: framework scaffold
+[ 35] falberthen/EcommerceDDD: ok: 11 services, 3 compose, 0 k8s/helm yaml
+[ 36] hoangtien2k3/ecommerce-microservices: ok: 15 services, 1 compose, 3 k8s/helm yaml
+[ 36] paurakhsharma/python-microservice-fastapi: only 5 deployable services
+[ 36] Allenxuxu/microservices: only 4 deployable services
+[ 36] convertigo/convertigo: screened out: platform product (low code)
+[ 36] phodal/aofe.code: screened out: book code (front-end chapters)
+[ 36] DivanteLtd/microservices-book: no deployment descriptor
+[ 37] devdcores/BookStoreApp-Distributed-Application: ok: 10 services, 1 compose, 0 k8s/helm yaml
+[ 37] nuaazs/VAF_2: framework/library/list by name or description
+[ 37] spring-cloud-samples/spring-cloud-gateway-sample: no deployment descriptor
+[ 37] merken/Prise: framework/library/list by name or description
+[ 37] DevrexLabs/memstate: only 2 deployable services
+[ 37] CloudDetail/apo: only 2 deployable services
+[ 37] lvwangbeta/Poplar: no deployment descriptor
+[ 38] tinrab/spidey: ok: 7 services, 1 compose, 0 k8s/helm yaml
+[ 38] newbee-ltd/newbee-mall-cloud: no deployment descriptor
+[ 38] apache/camel-spring-boot-examples: only 5 deployable services
+[ 39] idugalic/micro-company: ok: 11 services, 3 compose, 0 k8s/helm yaml
+[ 39] infiniticio/infinitic: framework/library/list by name or description
+[ 39] orbitalapi/orbital: screened out: product (integration platform)
+[ 39] koupleless/koupleless: framework/library/list by name or description
+[ 39] powerman/go-monolith-example: screened out: one deployable monolith
+[ 39] CECTC/dbpack: only 4 deployable services
+[ 39] grissomlau/jimu: framework/library/list by name or description
+[ 39] Chinchilla-Software-Com/CQRS: framework/library/list by name or description
+[ 39] RainbowForest/e-commerce-microservices: no deployment descriptor
+[ 40] ujjavaldesai07/spring-boot-react-ecommerce-app: ok: 7 services, 1 compose, 0 k8s/helm yaml
+[ 40] zeromicro/zeromall: no deployment descriptor
+[ 40] leecho/cola-cloud: framework/library/list by name or description
+[ 40] easierway/service_decorators: no deployment descriptor
+[ 40] pereiren/dotnet-template-onion: no deployment descriptor
+[ 40] Privoce/Portal-Lite: framework/library/list by name or description
+[ 40] apache/syncope: only 5 deployable services
+[ 40] gruelbox/transaction-outbox: no deployment descriptor
+[ 40] siam1026/siam-cloud: no deployment descriptor
+[ 40] codingforentrepreneurs/Try-Django-3.2: no deployment descriptor
+[ 41] jingsewu/open-wes: ok: 16 services, 2 compose, 0 k8s/helm yaml
+[ 41] zalando/riptide: no deployment descriptor
+[ 41] RuedigerMoeller/kontraktor: no deployment descriptor
+[ 41] songzhibin97/gkit: no deployment descriptor
+[ 41] christopherread/Obvs: framework/library/list by name or description
+[ 41] SeunAdelekan/Kanary: framework/library/list by name or description
+[ 41] Nasruddin/spring-boot-based-microservices: framework/library/list by name or description
+[ 41] daohainam/microservice-patterns: no deployment descriptor
+[ 41] jquatier/eureka-js-client: no deployment descriptor
+[ 41] NHadi/Pos: framework/library/list by name or description
+[ 41] lucidarch/lucid: no deployment descriptor
+[ 41] nanoapi-io/napi: no deployment descriptor
+[ 41] stormcat24/protodep: no deployment descriptor
+[ 41] aws-samples/designing-cloud-native-microservices-on-aws: no deployment descriptor
+[ 42] geoserver/geoserver-cloud: ok: 13 services, 8 compose, 2 k8s/helm yaml
+[ 42] humank/ddd-practitioners-ref: no deployment descriptor
+[ 43] abhimishra91/insight: ok: 6 services, 1 compose, 0 k8s/helm yaml
+[ 43] mislam/fresh: no deployment descriptor
+[ 43] AlariCode/nestjs-rmq: framework/library/list by name or description
+[ 44] charlessolar/eShopOnContainersDDD: ok: 8 services, 2 compose, 0 k8s/helm yaml
+[ 44] microconfig/microconfig: no deployment descriptor
+[ 44] idugalic/digital-restaurant: only 2 deployable services
+[ 44] venkataravuri/e-commerce-microservices-sample: no deployment descriptor
+[ 44] wso2/product-microgateway: only 5 deployable services
+[ 44] anton-liauchuk/java-interview: framework/library/list by name or description
+[ 45] ebosas/microservices: ok: 7 services, 2 compose, 6 k8s/helm yaml
+[ 45] nilportugues/laravel5-jsonapi: no deployment descriptor
+[ 46] hantsy/spring-microservice-sample: ok: 7 services, 6 compose, 0 k8s/helm yaml
+[ 47] ThreeDotsLabs/monolith-microservice-shop: ok: 6 services, 1 compose, 0 k8s/helm yaml
+[ 47] codoworks/go-boilerplate: only 1 deployable services
+[ 47] TPIsoftwareOSPO/digiRunner-Open-Source: only 1 deployable services
+[ 47] Abdizriel/nodejs-microservice-starter: only 2 deployable services
+[ 47] alibaba/cloud-native-app-initializer: no deployment descriptor
+[ 47] Ahoo-Wang/Wow: framework/library/list by name or description
+[ 47] apache/camel-quarkus: repo > 300 MB
+[ 47] medevorg/nodetskeleton: framework/library/list by name or description
+[ 47] vaporz/turbo: no deployment descriptor
+[ 47] machinebox/remoto: no deployment descriptor
+[ 47] micrometer-metrics/tracing: no deployment descriptor
+[ 47] dapr/java-sdk: framework/library/list by name or description
+[ 47] microwind/design-patterns: only 3 deployable services
+[ 47] moleculerjs/moleculer-web: framework/library/list by name or description
+[ 47] keelab/keelith: framework/library/list by name or description
+[ 48] meysamhadeli/booking-microservices-nestjs: ok: 11 services, 1 compose, 0 k8s/helm yaml
+[ 48] thangchung/practical-dapr: only 1 deployable services
+[ 48] xtrime-ru/TelegramRSS: only 1 deployable services
+[ 48] mardix/sailor: no deployment descriptor
+[ 48] sourcefuse/loopback4-microservice-catalog: screened out: catalog of independent reusable services
+[ 48] viettranx/micro-clean-architecture-service-demo: only 2 deployable services
+[ 48] kumuluz/kumuluzee: framework/library/list by name or description
+[ 49] go-saas/kit: ok: 9 services, 4 compose, 0 k8s/helm yaml
+[ 49] CyanAsterisk/FreeCar: framework/library/list by name or description
+[ 49] liuhll/silky: framework/library/list by name or description
+[ 49] spring-cloud/spring-cloud-vault: only 0 deployable services
+[ 49] Baroshem/microservice-template: only 2 deployable services
+[ 49] guoming/Hummingbird: no deployment descriptor
+[ 49] leemonade/leemons: no deployment descriptor
+[ 49] restran/fomalhaut: no deployment descriptor
+[ 50] meysamhadeli/booking-microservices-expressjs: ok: 9 services, 1 compose, 26 k8s/helm yaml
+[ 50] wso2/product-integrator-mi: no deployment descriptor
+[ 50] bhope/hedge: no deployment descriptor
+[ 50] Calabonga/Microservice-Template: framework/library/list by name or description
+[ 50] cloudnative-netcore/netcorekit: framework/library/list by name or description
+[ 50] tmaiaroto/aegis: framework/library/list by name or description
+[ 50] BEagle1984/silverback: framework/library/list by name or description
+[ 50] python-microservices/pyms: framework/library/list by name or description
+[ 50] edgelesssys/marblerun: only 1 deployable services
+[ 50] alugili/ModernArchitectureShop: only 4 deployable services
+[ 50] Warewolf-ESB/Warewolf: repo > 300 MB
+[ 50] begmaroman/go-micro-boilerplate: only 4 deployable services
+[ 50] sy-vendor/Gobi: only 2 deployable services
+[ 51] oracle-quickstart/oci-cloudnative: ok: 15 services, 12 compose, 55 k8s/helm yaml
+[ 52] xiajingren/HelloAbp: ok: 6 services, 6 compose, 0 k8s/helm yaml
+[ 52] jd-opensource/joylive-agent: framework/library/list by name or description
+[ 52] etherlabsio/healthcheck: framework/library/list by name or description
+[ 52] UnderTreeTech/waterdrop: framework/library/list by name or description
+[ 52] AleksK1NG/Go-gRPC-RabbitMQ-microservice: screened out: one application service plus infrastructure
+[ 53] nameko/nameko-examples: ok: 6 services, 1 compose, 4 k8s/helm yaml
+[ 54] uid4oe/grpc-web-demo: ok: 6 services, 1 compose, 0 k8s/helm yaml
+[ 54] shipsaas/docking: only 2 deployable services
+[ 54] jgontrum/spacy-api-docker: no deployment descriptor
+[ 54] anacrolix/confluence: no deployment descriptor
+[ 55] tinrab/meower: ok: 7 services, 1 compose, 0 k8s/helm yaml
+[ 55] oracle/oracle-db-appdev-monitoring: only 5 deployable services
+[ 56] piomin/sample-spring-microservices-advanced: ok: 7 services, 5 compose, 0 k8s/helm yaml
+[ 56] phamquiluan/RCAEval: no deployment descriptor
+[ 56] stacksimplify/aws-fargate-ecs-masterclass: no deployment descriptor
+[ 56] charlessolar/TodoMVC-DDD-CQRS-EventSourcing: only 5 deployable services
+[ 57] dashersw/cote-workshop: ok: 11 services, 1 compose, 0 k8s/helm yaml
+[ 57] saturnism/istio-by-example-java: screened out: collection of independent examples
+[ 57] kartik1502/Spring-Boot-Microservices-Banking-Application: no deployment descriptor
+[ 57] stalary/microservice-recruit: no deployment descriptor
+[ 57] mikuhuyo/wanxin-p2p: only 4 deployable services
+[ 57] webmakaka/Microservices-with-Node-JS-and-React: screened out: course code copies
+[ 58] AleksK1NG/Go-CQRS-Kafka-gRPC-Microservices: ok: 12 services, 2 compose, 0 k8s/helm yaml
+[ 58] ivanpaulovich/dotnet-new-caju: no deployment descriptor
+[ 58] aplus-framework/one: framework/library/list by name or description
+[ 58] sivaprasadreddy/generator-springboot: framework/library/list by name or description
+[ 59] yiv/yivnet: ok: 14 services, 1 compose, 0 k8s/helm yaml
+[ 59] ngduc/node-rem: no deployment descriptor
+[ 59] module-federation/aegis-host: no deployment descriptor
+[ 60] Toktik-Team/toktik: ok: 6 services, 1 compose, 0 k8s/helm yaml
+[ 60] odrotbohm/sos: no deployment descriptor
+[ 60] sajya/server: no deployment descriptor
+[ 60] osgochina/dmicro: no deployment descriptor
+[ 60] avito-tech/netramesh: no deployment descriptor
+[ 60] tsukhu/nxplorerjs-microservice-starter: only 2 deployable services
+[ 61] amasen02/freshcart-backend: ok: 13 services, 1 compose, 13 k8s/helm yaml
+[ 61] lord-of-code/loc-framework: framework/library/list by name or description
+[ 61] wrannaman/generators: framework/library/list by name or description
+[ 62] wsrh8888/beaver-server: ok: 33 services, 33 compose, 0 k8s/helm yaml
+[ 62] Raiffeisen-DGTL/ViennaNET: framework/library/list by name or description
+[ 62] sagidM/s3-resizer: no deployment descriptor
+[ 62] davidguttman/authentic: no deployment descriptor
+[ 62] jhipster/jhipster-online: no deployment descriptor
+[ 62] sivaprasadreddy/spring-boot-microservices-course: no deployment descriptor
+[ 62] typv/nest-turbo-starter: screened out: starter template
+[ 62] azist/azos: framework/library/list by name or description
+[ 62] xluohome/smscode: no deployment descriptor
+[ 62] go-chassis/go-archaius: framework/library/list by name or description
+[ 62] yehohanan7/flux: framework/library/list by name or description
+[ 62] zeromicro/zero-contrib: no deployment descriptor
+[ 62] camunda-community-hub/spring-zeebe: no deployment descriptor
+[ 62] LeonKou/NetPro: only 4 deployable services
+[ 62] openebs/dynamic-localpv-provisioner: only 2 deployable services
+[ 62] 3n21c0/hello-auth-grpc: no deployment descriptor
+[ 62] xiaoenai/tp-micro: no deployment descriptor
+[ 63] mostafacs/ecommerce-microservices-spring-reactive-webflux: ok: 9 services, 1 compose, 0 k8s/helm yaml
+[ 63] andrewwebber/cqrs: framework/library/list by name or description
+[ 63] smallrye/smallrye-config: framework/library/list by name or description
+[ 63] xmlking/micro-starter-kit: only 1 deployable services
+[ 63] obsidiandynamics/goharvest: no deployment descriptor
+[ 63] rpcxio/rpcx-gateway: no deployment descriptor
+[ 63] goadesign/examples: no deployment descriptor
+[ 63] Azure-Samples/mcp-agent-langchainjs: no deployment descriptor
+[ 63] DaoCloud/DaoCloud-docs: repo > 300 MB
+[ 63] kalaspuff/tomodachi: only 1 deployable services
+[ 63] daxnet/apworks-core: framework/library/list by name or description
+[ 63] apache/dubbo-kubernetes: only 0 deployable services
+[ 63] RobyFerro/go-web: framework/library/list by name or description
+[ 64] uid4oe/microservices-go-grpc: ok: 6 services, 1 compose, 0 k8s/helm yaml
+[ 64] dustinsand/hex-arch-kotlin-spring-boot: no deployment descriptor
+[ 64] noboomu/proteus: framework/library/list by name or description
+[ 65] tkssharma/nodejs-microservices-patterns: ok: 22 services, 6 compose, 0 k8s/helm yaml
+[ 65] we-dcode/kubetunnel: only 1 deployable services
+[ 65] go-kod/kod: framework/library/list by name or description
+[ 65] heyuxian/mcloud: no deployment descriptor
+[ 65] WonderPanda/nestjs-microservice-architecture: only 4 deployable services
+[ 65] xiancloud/xian: no deployment descriptor
+[ 65] Dasync/Dasync: framework/library/list by name or description
+[ 66] thangchung/northwind-dotnet: ok: 8 services, 1 compose, 0 k8s/helm yaml
+[ 66] TreeGateway/tree-gateway: no deployment descriptor
+[ 66] Hecate2/Ignareo-ISML-auto-voter: no deployment descriptor
+[ 66] keijack/python-eureka-client: no deployment descriptor
+[ 66] tlandeka/authentication-microservice-with-domain-driven-design: only 2 deployable services
+[ 66] Double-Jin/jin-microservices: framework/library/list by name or description
+[ 66] ivanpaulovich/event-sourcing-jambo: only 3 deployable services
+[ 66] phil-guo/ketchup: no deployment descriptor
+[ 66] apache/camel-spring-boot: repo > 300 MB
+[ 66] go-ggz/ggz: only 5 deployable services
+[ 66] 360digitech/chronus: no deployment descriptor
+[ 66] AleksK1NG/Go-Kafka-gRPC-MongoDB-microservice: screened out: one application service plus infrastructure
+[ 67] mabuonomo/example-nestjs-microservices-grpc: ok: 7 services, 1 compose, 0 k8s/helm yaml
+[ 67] tkssharma/nestjs-advanced-2023: only 4 deployable services
+[ 67] oslabs-beta/Horus: no deployment descriptor
+[ 67] rpcxio/basalt: no deployment descriptor
+[ 67] jkaninda/goma-gateway: only 1 deployable services
+[ 68] kreta/Kreta: ok: 7 services, 2 compose, 1 k8s/helm yaml
+[ 68] shijuvar/gokit-examples: no deployment descriptor
+[ 68] pnxtech/hydra-express: framework/library/list by name or description
+[ 68] zhang8043/AgileWork: only 4 deployable services
+[ 68] danmt/microservices-basics: no deployment descriptor
+[ 68] gmsec/gmsec: no deployment descriptor
+[ 68] wuyichen24/microservices-patterns: framework/library/list by name or description
+[ 68] jzero-io/jzero: framework/library/list by name or description
+[ 68] saurabh0719/jett: framework/library/list by name or description
+[ 69] thangchung/magazine-website: ok: 10 services, 2 compose, 2 k8s/helm yaml
+[ 69] LearningByExample/reactive-ms-example: no deployment descriptor
+[ 69] pace/bricks: framework/library/list by name or description
+[ 69] open-edge-platform/edge-ai-libraries: repo > 300 MB
+[ 69] tsawler/go-microservices: only 2 deployable services
+[ 69] yidongnan/spring-cloud-consul-example: only 5 deployable services
+[ 69] avoidwork/tenso: framework/library/list by name or description
+[ 69] nutcas3/lets-bet: only 3 deployable services
+[ 69] pemrouz/fero: no deployment descriptor
+[ 69] Elders/Cronus: framework/library/list by name or description
+[ 69] joaopauloaramuni/projeto-de-software: no deployment descriptor
+[ 69] CanerPatir/aspnet-core-clean-arch: no deployment descriptor
+[ 69] code-architect/Microservices-with-Lumen: no deployment descriptor
+[ 69] Joker666/microservice-demo: supported-language share 33/44 < 0.8
+[ 69] microbus-io/fabric: no deployment descriptor
+[ 69] modernice/goes: framework/library/list by name or description
+[ 69] as-a-service/pdf: no deployment descriptor
+[ 69] kora-projects/kora: framework/library/list by name or description
+[ 69] python-microservices/microservices-scaffold: no deployment descriptor
+[ 69] erda-project/erda-infra: framework/library/list by name or description
+[ 69] MaskingTechnology/jitar: no deployment descriptor
+[ 70] JarrodMalkovic/auction-website: ok: 8 services, 0 compose, 16 k8s/helm yaml
+[ 70] saturnism/docker-kubernetes-by-example-java: only 2 deployable services
+[ 70] CocaineCong/micro-todoList: only 5 deployable services
+[ 70] Splitet/SplitetFramework: framework/library/list by name or description
+[ 70] DescartesResearch/TeaStore: already used in the evaluation
+[ 70] goldbergyoni/nodejs-course: only 0 deployable services
+[ 70] Advanced-SpringCloud/cloud-book: only 0 deployable services
+[ 70] creditkarma/thrift-typescript: no deployment descriptor
+[ 70] Aptomi/k8s-app-engine: only 2 deployable services
+[ 70] zhu327/doge: framework/library/list by name or description
+[ 70] base26-labs/appkernel: framework/library/list by name or description
+[ 70] devopsfaith/api2html: no deployment descriptor
+[ 70] leoChaoGlut/log-sys: screened out: tool (log system)
+[ 70] silentbalanceyh/vertx-zero: only 0 deployable services
+[ 70] tuyucheng7/taketoday-tutorial4j: framework/library/list by name or description
+[ 70] itmuch/spring-cloud-dubbo-together: no deployment descriptor
+[ 70] nelsonwenner/stream-live-system: only 4 deployable services
+[ 70] sanyathisside/System-Design: no deployment descriptor
+[ 70] carousell/Orion: framework/library/list by name or description
+[ 70] piomin/course-spring-microservices: only 3 deployable services
+[ 70] amalgam8/amalgam8: screened out: routing fabric product
+[ 71] Rapter1990/SpringBootMicroservices: ok: 7 services, 1 compose, 0 k8s/helm yaml
+[ 71] sitkoru/Sitko.Core: screened out: library
+[ 71] Kikobeats/tom: framework/library/list by name or description
+[ 71] moleculerjs/moleculer-db: no deployment descriptor
+[ 72] vany0114/microservices-dotnetcore-docker-sf-k8s: ok: 7 services, 2 compose, 0 k8s/helm yaml
+[ 72] apache/airavata: framework/library/list by name or description
+[ 72] zyclonite/nassh-relay: framework/library/list by name or description
+[ 72] Armando1514/Event-Driven-Microservices-Advanced: only 0 deployable services
+[ 72] shanbay/sea: framework/library/list by name or description
+[ 72] srfrog/go-relax: framework/library/list by name or description
+[ 73] tkssharma/12-factor-app-microservices: ok: 7 services, 9 compose, 0 k8s/helm yaml
+[ 73] moleculer-go/moleculer: framework/library/list by name or description
+[ 73] pavel-one/EdgeGPT-Go: framework/library/list by name or description
+[ 73] sindresorhus/gh-latest-repos: no deployment descriptor
+[ 73] awsrun/aws-serverless: no deployment descriptor
+[ 73] ImmoweltGroup/create-react-microservice: no deployment descriptor
+[ 74] meysamhadeli/booking-microservices-java-spring-boot: ok: 16 services, 1 compose, 0 k8s/helm yaml
+[ 74] swarmion/swarmion: no deployment descriptor
+[ 75] alperenkucukali/dotnet-microservices: ok: 6 services, 2 compose, 0 k8s/helm yaml
+[ 75] commandeer/open: screened out: tool
+[ 75] apache/apisix-website: only 3 deployable services
+[ 75] AndriyKalashnykov/spring-microservices-k8s: only 4 deployable services
+[ 76] cuongnh28/spring-microservices-blueprint: ok: 10 services, 1 compose, 0 k8s/helm yaml
+[ 76] eiselems/spring-boot-microservices: only 5 deployable services
+[ 76] rclement/mailer: no deployment descriptor
+[ 76] stemmlerjs/solid-email-microservice: no deployment descriptor
+[ 76] Clivern/Hippo: no deployment descriptor
+[ 76] vadimdemedes/generator-micro-service: framework/library/list by name or description
+[ 76] artembilan/microservices-patterns-spring-integration: no deployment descriptor
+[ 76] evenchange4/micro-medium-api: no deployment descriptor
+[ 76] madslundt/NetCoreMediatrSample: only 3 deployable services
+[ 76] veliovgroup/mail-time: only 3 deployable services
+[ 76] Jochen-z/php-microservice-demo: only 4 deployable services
+[ 76] Avanade/Beef: framework/library/list by name or description
+[ 76] aligoren/go_ecommerce_microservice: only 4 deployable services
+[ 76] devmentors/FeedR: no deployment descriptor
+[ 77] ebubekirdinc/SuuCat: ok: 10 services, 2 compose, 0 k8s/helm yaml
+[ 77] microservices-practical/microservices-v10: no deployment descriptor
+[ 78] opexdev/core: ok: 18 services, 10 compose, 0 k8s/helm yaml
+[ 78] suadev/dotnet-istanbul-microservices-demo: only 4 deployable services
+[ 78] wang502/gores: framework/library/list by name or description
+[ 78] antklim/go-microservices: no deployment descriptor
+[ 78] iquanzhan/lizhi-edu-parent: no deployment descriptor
+[ 78] chensheng/ddd-boot: no deployment descriptor
+[ 78] ali-bouali/springboot-3-micro-service-demo: only 3 deployable services
+[ 78] GuoGuang/madao_service: no deployment descriptor
+[ 78] osstotalsoft/nbb: no deployment descriptor
+[ 78] lucadibello/in-house-greenhouse: only 3 deployable services
+[ 78] mstrYoda/production-ready-microservice-example: only 4 deployable services
+[ 78] aserg-ufmg/micro-livraria: no deployment descriptor
+[ 78] demoiselle/framework: framework/library/list by name or description
+[ 78] fraktalio/order-demo: no deployment descriptor
+[ 79] ionutbalosin/ecommerce-app: ok: 7 services, 5 compose, 0 k8s/helm yaml
+[ 79] air-go/rpc: no deployment descriptor
+[ 79] moov-io/paygate: screened out: product (payments API)
+[ 79] otto-de/edison-microservice: no deployment descriptor
+[ 80] tkssharma/nestjs-microservices: ok: 6 services, 2 compose, 0 k8s/helm yaml
+[ 81] antosubash/abp-microservice: ok: 7 services, 9 compose, 0 k8s/helm yaml
+[ 81] hueter/docker-node-express-boilerplate: only 3 deployable services
+[ 81] moke-game/platform: no deployment descriptor
+[ 81] scosman/zipstreamer: no deployment descriptor
+[ 81] thisisagile/easy: framework/library/list by name or description
+[ 81] hootsuite/healthchecks: no deployment descriptor
+[ 81] Norwik/Helmet: no deployment descriptor
+[ 81] Bharath-code/git-scope: no deployment descriptor
+[ 81] cloudblue/django-cqrs: screened out: library
+[ 81] congcoi123/tenio: no deployment descriptor
+[ 81] gjovanovicst/golang-auth-api: only 4 deployable services
+[ 82] nvawntien/go-judge-system: ok: 6 services, 2 compose, 0 k8s/helm yaml
+[ 82] dtm-labs/client-csharp: no deployment descriptor
+[ 82] JeffDeCola/my-cheat-sheets: no deployment descriptor
+[ 82] mesg-foundation/engine: no deployment descriptor
+[ 82] pellse/assembler: framework/library/list by name or description
+[ 82] spring-avengers/summerframework: framework/library/list by name or description
+[ 82] go-dev-frame/sponge_examples: framework/library/list by name or description
+[ 82] kruglov-dmitry/crypto_crawler: only 0 deployable services
+[ 82] lamondlu/Library: framework/library/list by name or description
+[ 82] alejandro-du/vaadin-microservices-demo: no deployment descriptor
+[ 82] eolinker/apinto-dashboard: no deployment descriptor
+[ 83] getlarge/ticketing: ok: 21 services, 1 compose, 0 k8s/helm yaml
+[ 83] jmeisele/ml-ops: repo > 300 MB
+[ 83] ithaka/apiron: no deployment descriptor
+[ 84] NesoHQ/bgce-archive: ok: 7 services, 2 compose, 0 k8s/helm yaml
+[ 84] TransEmpiric/webFluxTemplate: no deployment descriptor
+[ 84] venkatapgummadi/agentflow: framework/library/list by name or description
+[ 85] PacktPublishing/Hands-on-Microservices-with-Python: ok: 7 services, 2 compose, 0 k8s/helm yaml
+[ 85] sfast/zeronode: no deployment descriptor
+[ 85] dyb881/nest-serve: no deployment descriptor
+[ 86] netcorebcn/quiz: ok: 7 services, 5 compose, 2 k8s/helm yaml
+[ 86] SebastienMelki/sebuf: framework/library/list by name or description
+[ 87] buptmiao/microservice-app: ok: 8 services, 3 compose, 0 k8s/helm yaml
+[ 87] claygod/microservice: framework/library/list by name or description
+[ 88] rcherara/microservice-architecture: ok: 7 services, 1 compose, 2 k8s/helm yaml
+[ 88] solidglue/Recommender_System_Inference_Services: no deployment descriptor
+[ 88] keets2012/Lottor: only 0 deployable services
+[ 88] syngit-org/syngit: framework/library/list by name or description
+[ 89] aelassas/microservices: ok: 7 services, 1 compose, 0 k8s/helm yaml
+[ 89] Protocol-Lattice/thunder: framework/library/list by name or description
+[ 89] ShankyTiwari/Microservices-in-Nodejs: no deployment descriptor
+[ 89] aditya43/golang-101: only 3 deployable services
+[ 89] HaydiKodlayalim/microservice-app: only 4 deployable services
+[ 89] hellosatish/microservice-patterns: no deployment descriptor
+[ 89] piomin/sample-spring-security-microservices: only 1 deployable services
+[ 89] AleksK1NG/Go-NATS-Streaming-gRPC-PostgreSQL: screened out: one application service plus infrastructure
+[ 89] andreschaffer/microservices-testing-examples: only 2 deployable services
+[ 90] hemerajs/aither: ok: 8 services, 1 compose, 0 k8s/helm yaml
+[ 90] rabbitevents/rabbitevents: only 1 deployable services
+[ 90] takama/caldera: only 1 deployable services
+[ 90] thangchung/GrpcJsonTranscoder: only 4 deployable services
+[ 90] kawser2133/clean-structured-project: framework/library/list by name or description
+[ 90] andreagiassi/microservice-rbac-user-management: no deployment descriptor
+[ 90] ngaxavi/nest-cqrs: only 2 deployable services
+[ 90] dapeng-soa/dapeng-soa: framework/library/list by name or description
+[ 90] datawire/kubernaut: no deployment descriptor
+[ 90] shahradelahi/node-cronstack: framework/library/list by name or description
+[ 91] thangchung/coffeeshop-on-nomad: ok: 10 services, 3 compose, 0 k8s/helm yaml
+[ 91] single-spa/single-spa.js.org: no deployment descriptor
+[ 91] andrechristikan/ack-nestjs-boilerplate-kafka: screened out: boilerplate
+[ 91] adgadev/jplusone: no deployment descriptor
+[ 91] aspnetrun/run-aspnet-grpc: no deployment descriptor
+[ 91] itsmebhavin/nestjs-microservice-example: only 3 deployable services
+[ 91] nilportugues/symfony-jsonapi: no deployment descriptor
+[ 91] tinrab/kubernetes-go-grpc-tutorial: no deployment descriptor
+[ 91] yesinteractive/dadjokes: only 1 deployable services
+[ 91] yildizberkay/microservices-with-expressjs: only 4 deployable services
+[ 91] akmamun/gin-boilerplate: only 3 deployable services
+[ 91] bzdgn/spring-boot-restful-web-service-example: framework/library/list by name or description
+[ 91] georgeyk/loafer: only 2 deployable services
+[ 91] Kahbazi/MediatR.AspNetCore.Endpoints: no deployment descriptor
+[ 91] mattaharish/fastify-boilerplate: no deployment descriptor
+[ 91] thanhson1085/swagger-combined: no deployment descriptor
+[ 91] zerowasteestonia/World-Cleanup-Day: repo > 300 MB
+[ 92] aidanwhiteley/books: ok: 7 services, 1 compose, 0 k8s/helm yaml
+[ 92] hammock-project/hammock: no deployment descriptor
+[ 93] kalintsenkov/BettingSystem: ok: 7 services, 1 compose, 0 k8s/helm yaml
+[ 94] nplszfl/OmniTradeERP: ok: 24 services, 8 compose, 8 k8s/helm yaml
+[ 94] TensorMSA/tensormsa: no deployment descriptor
+[ 94] ashleydavis/nodejs-microservices-example: only 4 deployable services
+[ 94] BoRuDar/configuration: framework/library/list by name or description
+[ 94] dmhao/hgw: no deployment descriptor
+[ 95] alexcheng1982/happyride: ok: 13 services, 1 compose, 12 k8s/helm yaml
+[ 95] orsinium-labs/walnats: framework/library/list by name or description
+[ 95] tal-tech/odin: framework/library/list by name or description
+[ 95] ashishjuyal/banking: only 1 deployable services
+[ 95] Jorexdev/java-prep: no deployment descriptor
+[ 95] maxzerbini/dingo: framework/library/list by name or description
+[ 95] secmohammed/microservices-e-commerce-nest-api: no deployment descriptor
+[ 95] team-dandelion/go-dandelion: framework/library/list by name or description
+[ 95] as-a-service/screenshot: no deployment descriptor
+[ 95] AsenaJs/Asena: framework/library/list by name or description
+[ 95] chesterheng/microservices-node-react: screened out: course code copies
+[ 95] GoogleContainerTools/container-debug-support: no deployment descriptor
+[ 95] Pathwit/file2md: only 2 deployable services
+[ 95] piomin/sample-istio-services: framework/library/list by name or description
+[ 96] PramithaMJ/fully-completed-microservices-Java-Springboot: ok: 8 services, 1 compose, 0 k8s/helm yaml
+[ 96] suadev/microservices-change-data-capture-with-debezium: only 5 deployable services
+[ 97] ThoreauZZ/spring-cloud-example: ok: 10 services, 3 compose, 0 k8s/helm yaml
+[ 97] aktos-io/scada.js: framework/library/list by name or description
+[ 98] fdonnet/ubik_accounting: ok: 6 services, 1 compose, 0 k8s/helm yaml
+[ 98] ligato/cn-infra: framework/library/list by name or description
+[ 98] microsphere-projects/microsphere-java: no deployment descriptor
+[ 98] p-fedyukovich/nestjs-google-pubsub-microservice: framework/library/list by name or description
+[ 98] autodidaddict/go-shopping: framework/library/list by name or description
+[ 98] creditkarma/thrift-parser: no deployment descriptor
+[ 98] mehmetozkaya/CloudNative: screened out: collection of hands-on projects
+[ 98] softindex/datakernel: no deployment descriptor
+[ 99] walkline/ToCloud9: ok: 15 services, 1 compose, 2 k8s/helm yaml
+[ 99] CONNECT-platform/connect-platform: no deployment descriptor
+[100] danionescu0/docker-flask-mongodb-example: ok: 6 services, 2 compose, 6 k8s/helm yaml
+[100] malike/sso-auth: no deployment descriptor
+[101] tanerdiler/spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes: ok: 6 services, 1 compose, 0 k8s/helm yaml
+corpus 100, hold-out E = mehdihadeli/go-food-delivery-microservices @ 4a59535

@@ -1,0 +1,850 @@
+repo	stars	language	sha	verdict
+doocs/advanced-java	79173	Java		framework/library/list by name or description
+nestjs/nest	76969	TypeScript		framework/library/list by name or description
+traefik/traefik	65445	Go	38d53dd06c53c7e9bd08e57b217e72686d823610	only 2 deployable services
+serverless/serverless	46927	JavaScript		framework/library/list by name or description
+apache/dubbo	41583	Java		framework/library/list by name or description
+istio/istio	38484	Go		repo > 300 MB
+backstage/backstage	34769	TypeScript		framework/library/list by name or description
+alibaba/nacos	33492	Java	e61ba821e025d713fc02d2020a338d4ce4251912	no deployment descriptor
+zeromicro/go-zero	33421	Go		framework/library/list by name or description
+labstack/echo	32786	Go		framework/library/list by name or description
+apolloconfig/apollo	29823	Java	0008c348ee3634fdab1c0bebcb6c475b44bd1d56	only 3 deployable services
+alibaba/spring-cloud-alibaba	29164	Java	858aa8d58d2e902770ac4c6f5598808e125e695e	screened out: framework
+go-kit/kit	27407	Go		framework/library/list by name or description
+dapr/dapr	26171	Go	bd54d837636ebec3450a24159f7f93cb0a89da87	only 1 deployable services
+apache/incubator-seata	26006	Java	cba73e180fd8896a99df6415b859d275122feaa7	only 2 deployable services
+go-kratos/kratos	26006	Go		framework/library/list by name or description
+temporalio/temporal	24142	Go	8fcaa51f023112a34f1180d8ea679a4912eacca4	screened out: middleware product (workflow engine)
+alibaba/Sentinel	23150	Java	a3f40ba8e900c8489bd520274739f17235a7721c	only 3 deployable services
+grpc/grpc-go	23101	Go	9a547278ce788fac772e693d9f2481b26c90a315	no deployment descriptor
+go-chi/chi	23043	Go	9f8adb1aabaa8a91180a821111d3f8e668d1c0bf	no deployment descriptor
+thingsboard/thingsboard	22631	Java		repo > 300 MB
+jina-ai/serve	21850	Python		repo > 300 MB
+nats-io/nats-server	20990	Go	dc55f4b43293fd1a4906b9acd0060e3298ebac0f	no deployment descriptor
+gofr-dev/gofr	20821	Go		framework/library/list by name or description
+umijs/qiankun	16701	TypeScript	6201077dfdfd35c9d2376b7393a2c522f9c28a9c	no deployment descriptor
+shuzheng/zheng	16631	Java	7005c0a775e6d014d1dc8a8a809f7b1c13bf785a	no deployment descriptor
+GoogleContainerTools/jib	14452	Java	a600d359769be6fc93aa9f1063d74ee9f09b7184	no deployment descriptor
+sqshq/piggymetrics	13968	Java		already used in the evaluation
+single-spa/single-spa	13880	JavaScript	297483c11265050542d7ef107d14c44936c51883	no deployment descriptor
+gogf/gf	13294	Go		framework/library/list by name or description
+encoredev/encore	12683	Go	7f38d5ddf02fff630d8e78e11d35f3b6284eab1a	no deployment descriptor
+grpc/grpc-java	12075	Java	adcae4a419c844ccb6ec1aed09646f3ac525dae8	no deployment descriptor
+mehdihadeli/awesome-software-architecture	11762	TypeScript		framework/library/list by name or description
+newbee-ltd/newbee-mall	11659	Java	a069069b07027613bf0e7f571736be86f431faee	no deployment descriptor
+imgproxy/imgproxy	11170	Go	ff1f64511009e774b4fe9b8c4684a6c2f495b52e	only 2 deployable services
+dtm-labs/dtm	10933	Go		framework/library/list by name or description
+TykTechnologies/tyk	10873	Go	63988da5a0b35109c1c86136f2f5625f717a6fda	screened out: gateway product
+vercel/micro	10629	TypeScript	cb3ac4f4cf03401a3568518ffd8d55eb9a50c5c5	no deployment descriptor
+Activiti/Activiti	10550	Java	db47e4c0b9fe806ca987aa4e8e0033df83bb7440	no deployment descriptor
+falconry/falcon	9811	Python		framework/library/list by name or description
+fenixsoft/awesome-fenix	9469	JavaScript		framework/library/list by name or description
+karatelabs/karate	9003	Java	3fb926074f4f918194310ab2a95726e0073335fb	no deployment descriptor
+apex/up	8793	Go	66dbf6d5e8362e1bb008213845a6e01f95917f59	no deployment descriptor
+ThreeMammals/Ocelot	8718	C#	8b8fde19ed6cafdba9e737c551360a24046eb4e5	only 3 deployable services
+javalin/javalin	8380	Kotlin		framework/library/list by name or description
+smallnest/rpcx	8320	Go		framework/library/list by name or description
+cloudwego/kitex	8067	Go		framework/library/list by name or description
+coroot/coroot	7999	Go	878c0df03991f0038bfffb9ff9ec1aa255eb9530	only 5 deployable services
+chaos-mesh/chaos-mesh	7967	Go	6226cec8ba1af8b0a5815bae334558029db7f4cb	screened out: platform/tool (chaos engineering)
+kubevela/kubevela	7920	Go	c4dbb1a43a6788940cea9c346de7bca927d98a08	only 1 deployable services
+evrone/go-clean-template	7716	Go	c27e974b1e16b24a8b139dcb7d15d56b192cff20	screened out: single-service template
+cloudwego/hertz	7401	Go		framework/library/list by name or description
+dotnetcore/CAP	7123	C#	ad19c5003eadfa35be8322fcd169bc9641adbe7a	screened out: library
+hyperf/hyperf	6912	PHP		framework/library/list by name or description
+luraproject/lura	6802	Go	4c408dd8bab071a6a2c4d02ee06ca09122bbecf5	no deployment descriptor
+nats-io/nats.go	6798	Go	c782ae0e3783cba75280d39db7784b873b2b1be4	no deployment descriptor
+chaosblade-io/chaosblade	6460	Python		framework/library/list by name or description
+micronaut-projects/micronaut-core	6436	Java		framework/library/list by name or description
+apache/camel	6390	Java		framework/library/list by name or description
+moleculerjs/moleculer	6384	JavaScript		framework/library/list by name or description
+goadesign/goa	6119	Go		framework/library/list by name or description
+h2non/imaginary	6091	Go	6a274b488759a896aff02f52afee6e50b5e3a3ee	only 2 deployable services
+stefanprodan/podinfo	6034	Go	fd3a834ed8d14b80ea334cf8a2fddd4597924da6	screened out: single-service template
+weaveworks/scope	5905	Go	12175b96a3456f1c2b050f1e1d6432498ed64d95	screened out: tool (monitoring)
+easegress-io/easegress	5873	Go	48bacc2e9978f64dd26b0ec48195424bb8d8bfc1	only 1 deployable services
+ZHENFENG13/spring-boot-projects	5769	Java	f08f1c4f91de27edb45f2c6702c7b23d0acf68cc	no deployment descriptor
+TencentBlueKing/bk-cmdb	5763	Go	111e7ac66a9f81ac1617bf3d60aea8e430e76a46	only 0 deployable services
+kgateway-dev/kgateway	5729	Go	583dce389f3cc7e538a3d04bdee62bebfdedcf33	screened out: gateway product
+swoft-cloud/swoft	5533	PHP		framework/library/list by name or description
+permitio/opal	5524	Python	83d17ac6670c3d0507b8931a3299b692be6405b2	only 4 deployable services
+devspace-sh/devspace	5225	Go		repo > 300 MB
+Mikaelemmmm/go-zero-looklook	5224	Go	53b255bfdfb7e33ab120b1e4136504d43af39b70	ok: 11 services, 2 compose, 0 k8s/helm yaml
+line/armeria	5153	Java		framework/library/list by name or description
+shfshanyue/Daily-Question	5149	TypeScript	710fb4ae0b6cb6432679567b31deb1649567b3fd	only 1 deployable services
+apache/dubbo-go	4974	Go	555a9ba6c4c81c6e3a0244b15e966b75e741fa2b	only 1 deployable services
+spring-cloud/spring-cloud-netflix	4974	Java	83919116209edd593e884b6a01c32d0e7c807ca6	no deployment descriptor
+spring-cloud/spring-cloud-gateway	4921	Java		framework/library/list by name or description
+micrometer-metrics/micrometer	4909	Java	6997a3e663f51021ce6b57eb0b782c306c93c088	no deployment descriptor
+goravel/goravel	4898	Go		framework/library/list by name or description
+zlt2000/microservices-platform	4751	Java		repo > 300 MB
+nameko/nameko	4742	Python		framework/library/list by name or description
+ergo-services/ergo	4693	Go		framework/library/list by name or description
+neuland/micro-frontends	4686	JavaScript	b2ba67cd028655e655c2a9d8b7452d429d2bb67a	only 4 deployable services
+spec-first/connexion	4613	Python		framework/library/list by name or description
+douyu/jupiter	4568	Go		framework/library/list by name or description
+emissary-ingress/emissary	4524	Python	e705c3f358b7963d47307e86026560d7f4af5a1b	screened out: gateway product
+goldbergyoni/nodejs-testing-best-practices	4402	JavaScript	21178757151ffa91bc126150b2b2d079304730ef	only 2 deployable services
+ivanpaulovich/clean-architecture-manga	4384	C#	68b1d5869dd9a7730c58eb0daf5051309eaf09a4	ok: 6 services, 4 compose, 0 k8s/helm yaml
+thangchung/go-coffeeshop	4363	Go		already used in the evaluation
+camunda/camunda	4347	Java		repo > 300 MB
+yusing/godoxy	4173	Go	0fea315c3e2b1f0a4bfc8247c77af168f818925e	only 4 deployable services
+apache/dubbo-admin	4061	Go	0db71b07b9d94b2f57e3ffd22af5e55e6083e63f	no deployment descriptor
+kumahq/kuma	4015	Go		repo > 300 MB
+spacecloud-io/space-cloud	4003	Go	260b785fc5ec024abd00ec4c4c29a1bc12b12b69	only 4 deployable services
+mercyblitz/tech-weekly	3968	Java	08e477621c68729eaa929d4340cdfd62db03b390	no deployment descriptor
+senecajs/seneca	3957	JavaScript		framework/library/list by name or description
+sony/gobreaker	3709	Go	fed8e9eb35f9cd3e5c2a67842c924346c3e1fbdd	no deployment descriptor
+networknt/light-4j	3676	Java		framework/library/list by name or description
+kennethreitz/responder	3617	Python		framework/library/list by name or description
+evolutionary-architecture/evolutionary-architecture-by-example	3572	C#	441a7cd94d3acfbac7d210a95ea8e78429fc9f47	no deployment descriptor
+LinShunKang/MyPerf4J	3571	Java	9846842704821d26ce1f44fd5896b654ae4d326f	no deployment descriptor
+spring-cloud/spring-cloud-kubernetes	3534	Java	0910e960bd2ef9c682d5f6a9762916a2a12eda97	only 0 deployable services
+superstreamlabs/memphis	3443	Go		repo > 300 MB
+TarsCloud/TarsGo	3372	Go		framework/library/list by name or description
+fagongzi/manba	3307	Go	2b39aeed1c7805e5b8e5ae8e5a0b482f539141e0	screened out: gateway product
+Tencent/spring-cloud-tencent	3295	Java		framework/library/list by name or description
+rafaelfgx/Architecture	3283	C#	5c99103bd8b690f6ad8e86857c38bcfadcc973bc	only 2 deployable services
+openfaas/faasd	3282	Go	422c5dd5c58bbafa4f24f83fe16b85e84c492647	only 5 deployable services
+aspnetrun/run-aspnetcore-microservices	3272	C#		already used in the evaluation
+microsurging/surging	3263	C#	1bc08b93c920af92ac759766e0ba9e539e3d804f	only 1 deployable services
+CodelyTV/php-ddd-example	3153	PHP	9271c467943f835ab3b6e5ba30bdbd710aca9d73	ok: 7 services, 1 compose, 0 k8s/helm yaml
+ml-tooling/opyrator	3137	Python	3f443f05b6b21f00685c2b9bba16cf080edf2385	no deployment descriptor
+eolinker/goku_lite	3123	Go	553e6cf2b22a981c8eb9203304aff8acee159dc2	no deployment descriptor
+ExpressGateway/express-gateway	3029	JavaScript	a294cac39c98d66f5750c424a24e0bb8ce351c1c	no deployment descriptor
+alibaba/sentinel-golang	2964	Go	f7a7f9575711440e3e00055c2cf2009d9c15d595	no deployment descriptor
+jsynowiec/node-typescript-boilerplate	2962	TypeScript	0275c7a4a98c6e07af74307eb895e232a9c08490	no deployment descriptor
+event-catalog/eventcatalog	2956	TypeScript	45cc56513a5af7e84affcbaa5cf2f499e82d33cf	no deployment descriptor
+juicycleff/ultimate-backend	2907	TypeScript	0ae62a4b894c0e46baf75228ec88fae98f6abe06	ok: 9 services, 2 compose, 0 k8s/helm yaml
+go-dev-frame/sponge	2869	Go		framework/library/list by name or description
+motiv-labs/janus	2837	Go	ce8de8183c6751e5c07d39b4c582e71e95e0d637	only 5 deployable services
+opensolon/solon	2797	Java		framework/library/list by name or description
+erda-project/erda	2759	Go	6b05aa50a93ccf0b9b6bc88ed0ae8b8e899849b5	screened out: platform product
+golevelup/nestjs	2750	TypeScript	6b1c92066ee68d13aa8f4e8d2364f22b943f1385	only 1 deployable services
+go-chassis/go-chassis	2726	Go		framework/library/list by name or description
+krakend/krakend-ce	2701	Go	74462690f943f6ecad8134a21f07ce66d4b5069a	no deployment descriptor
+rebus-org/Rebus	2675	C#		repo > 300 MB
+lealone/Lealone	2590	Java	d4a75e7d3dec6f6ac8a731677d92de7bcd9a58f9	no deployment descriptor
+aimeos/aimeos-headless	2582	JavaScript	69350c285f4d353970600bf6f744fde3c01028c1	no deployment descriptor
+polarismesh/polaris	2569	Go	df0ce073395eca9f5724f855f3777db73cfb9012	screened out: platform product (service discovery)
+lovoo/goka	2549	Go		framework/library/list by name or description
+rootsongjc/awesome-cloud-native	2549	JavaScript		framework/library/list by name or description
+prontera/spring-cloud-rest-tcc	2535	Java	20eda7129afe257242d0c29c80837fd42aa516d7	no deployment descriptor
+TencentBlueKing/bk-ci	2535	Kotlin		repo > 300 MB
+vietnam-devs/coolstore-microservices	2534	C#	2fe75484298968b68a767b351871d32d93632aa3	ok: 13 services, 4 compose, 7 k8s/helm yaml
+andeya/erpc	2525	Go		framework/library/list by name or description
+BrighterCommand/Brighter	2491	C#		framework/library/list by name or description
+phongnguyend/Practical.CleanArchitecture	2465	C#	9c6e43b205d2ead5f163280e32969232859ef104	ok: 26 services, 19 compose, 20 k8s/helm yaml
+go-eagle/eagle	2429	Go		framework/library/list by name or description
+Kong/kubernetes-ingress-controller	2414	Go	5fa96bf06f2f051853ed7b4f41003bda9931ecc3	only 2 deployable services
+dashersw/cote	2387	JavaScript		framework/library/list by name or description
+1backend/1backend	2355	Go	65ffb46ae9fc39cc285b0be8773c3b1e159b32d9	screened out: platform product
+danielfsousa/express-rest-boilerplate	2354	JavaScript	b8bed6d7cfce3cf2ef89ec1b5e47b52dfc50e874	only 2 deployable services
+anthdm/hollywood	2347	Go	b57d10b09004d546dc59310be8bb39e547b06846	no deployment descriptor
+lipp/login-with	2344	JavaScript	1a914ce27e3086cec8d0471ca650d8803c9ebeb6	no deployment descriptor
+ProgrammerAnthony/Pantheon	2338	Java	03af19cad2c485827b678ff114564387d303bb61	no deployment descriptor
+8treenet/freedom	2267	Go	93fdd1f18c1d11c3ea9634533507fa65c6ae6b22	no deployment descriptor
+pydio/cells	2257	Go		repo > 300 MB
+spring-petclinic/spring-petclinic-microservices	2235	Java		already used in the evaluation
+metrue/fx	2227	Go	003831b666a9f2d7d8f82758fdb4cc2c7200e476	no deployment descriptor
+apioo/fusio	2129	PHP	9dedd6f681d210ea3163b497158ce4fe03819d69	no deployment descriptor
+authorizerdev/authorizer	2117	Go	b0f6b6272346af342e1cae3f4a0f0625057e7934	screened out: product (auth server)
+confluentinc/examples	2070	Java	167326de493c4c5d14b88bcbcca256cc64ffb2a2	screened out: collection of independent examples
+lukechilds/reverse-shell	2070	Go	a920db41e41dca68c9febe9d30a2626e3e795068	no deployment descriptor
+suyuan32/simple-admin-core	2065	Go		framework/library/list by name or description
+spring-cloud/spring-cloud-config	2052	Java	3d41249bbbb57cb3c66f7a79b2d0aaa477e4454c	no deployment descriptor
+nitrictech/nitric	2019	Go		framework/library/list by name or description
+nashtech-garage/yas	1988	Java		already used in the evaluation
+javahongxi/whatsmars	1965	Java	b27c83a4880bae618dee5811f7f0820960ac1485	no deployment descriptor
+smapiot/piral	1937	TypeScript		framework/library/list by name or description
+nocalhost/nocalhost	1892	Go	366f765d2db7e88c69d9679cf07ed612612ab9f1	screened out: tool (dev environment)
+XiaoMi/naftis	1880	Go		framework/library/list by name or description
+in28minutes/spring-microservices	1867	Java	b88121cffa5a70a72880bc084db0bb35fa3756e5	no deployment descriptor
+expressots/expressots	1847	TypeScript		framework/library/list by name or description
+crizstian/cinema-microservice	1776	JavaScript	b6c973da8f8cf1944cee2de1ae7b64aa36c55f84	no deployment descriptor
+Netflix/genie	1768	Java	a7125b178dbb70020b6e3495961a18e55ffd11d5	screened out: product (orchestration service)
+apache/eventmesh	1758	Java	9b3efb7bfc2982c3ea765f6d47edd38ad1fbf117	only 1 deployable services
+vdaas/vald	1737	Go	a2b45292e0e1fe7b27617fbd9f31382359a50979	screened out: product (vector search engine)
+pinguo/php-msf	1717	PHP		framework/library/list by name or description
+mateaix/matecloud	1710	Java	580562917197e9ecabfc1c0a20f2f0eea8265a83	ok: 8 services, 1 compose, 6 k8s/helm yaml
+vanus-labs/vanus	1698	Go	1334a7b9605e2e96dbee869e270aca1375309624	screened out: product (event streaming)
+murraco/spring-boot-jwt	1691	Java	72b5b8a24db42cdc514c9f6870f046d7039aada9	no deployment descriptor
+eolinker/apinto	1682	Go	2386de34f36b09773dc4df33cb9ac7ef0cdbddf2	no deployment descriptor
+storj/drpc	1635	Go	926897689bd57a9643bd213c0b5b2223ecb1622e	no deployment descriptor
+spring-projects/spring-integration	1630	Java	2bf841bab740df4d6a6a477aaaabe118d9d4d9bd	no deployment descriptor
+dotnetcore/AgileConfig	1628	C#	03a8e5e3e6879966ca4e5f3c30c717f4a5fb2047	only 3 deployable services
+phalapi/phalapi	1601	PHP	a773b5693a09176e72034820a1b712f4b6090400	no deployment descriptor
+nanovms/ops	1527	Go	a52795e38ba33a006f0ba740fee0f18fec58fbbb	no deployment descriptor
+fengjiachun/Jupiter	1503	Java	6bffde84535bc32cb676a99e3b8d7c3e14894747	no deployment descriptor
+banzaicloud/pipeline	1501	Go	e7c744b8d316eb5356e3b4e719ec50c8d8841076	screened out: platform product
+lileio/lile	1494	Go	2b112ceae4ac6da1d274a1cdfcef7b476513ce1e	no deployment descriptor
+AlphaYu/adnc	1477	C#		framework/library/list by name or description
+SeldonIO/seldon-server	1476	Java	bbb756637c8c3f1b2d0ceef6d5d00f27cf4b84ab	no deployment descriptor
+honzaap/Systemizer	1470	TypeScript	5880b24113055f6177783c44aa20601e15b05fdc	no deployment descriptor
+aregm/nff-go	1416	Go		framework/library/list by name or description
+meysamhadeli/booking-microservices	1411	C#	1182f4defd8c36704600c65a380b161e70bb018e	ok: 21 services, 2 compose, 2 k8s/helm yaml
+piomin/sample-spring-microservices-new	1394	Java	d7bf01c7a1b25f2ed86fd84b7998067b7c8f30a2	ok: 7 services, 1 compose, 0 k8s/helm yaml
+eko/monday	1375	Go	2ebbab15a2efa65df10ff929cff761ce85317cce	no deployment descriptor
+thangchung/clean-architecture-dotnet	1363	C#	2870740c26dfbff8d9178596d73f5ebec4bb2687	ok: 11 services, 1 compose, 0 k8s/helm yaml
+MarioCarrion/todo-api-microservice-example	1344	Go	acb6a31ae934170a6231f1dc631f6ad1a5eb92b1	only 5 deployable services
+kubeshop/tracetest	1329	Go	64eb49ff2037e0ba5d16237278d984758e7c7309	screened out: tool (trace-based testing)
+meysamhadeli/awesome-dotnet-tips	1309	C#		framework/library/list by name or description
+eazybytes/microservices	1304	Java	dca4c28d6bfd730d3c39c393ba90758aae656a46	screened out: course code: many section copies of one system
+durable-workflow/workflow	1278	PHP	052f2e71b6973483599d8f03bf0454cee8f2f4c0	screened out: library
+stackvana/hook.io	1266	JavaScript	163b7e18b3fa0b4a90b86c15952d79c14725a93a	screened out: platform product (hosting)
+hamvocke/spring-testing	1245	Java	9cff812e1a71e399bc231ce8323107d1283b9505	no deployment descriptor
+temporalio/sdk-python	1242	Python		framework/library/list by name or description
+redhat-scholars/istio-tutorial	1206	Java	aea73b381c599504bbed332fa42be6e4ca60bf74	screened out: tutorial: language variants of one small chain
+microsoft/aspire-samples	1201	C#	bf93407d979107f83a09643f341e6e1f0d380ad8	no deployment descriptor
+unionj-cloud/go-doudou	1172	Go		framework/library/list by name or description
+panagiop/node.js-clean-architecture	1167	JavaScript	5248815b761261ca269c3d7e45f32e5f82c3ad31	only 3 deployable services
+nicholasjackson/building-microservices-youtube	1166	Go	0cd586295712a80654ac94f929444b106423c1f0	no deployment descriptor
+EdwinVW/pitstop	1165	JavaScript	6ab69be3ce6140c56292ee2eaa1866afdf4888c9	ok: 9 services, 2 compose, 34 k8s/helm yaml
+banq/jdonframework	1163	Java		framework/library/list by name or description
+apache/apisix-ingress-controller	1148	Go	23b18dd76ab092ed92a6c3e4c02719883b8c186f	only 2 deployable services
+itmuch/spring-cloud-docker-microservice-book-code	1148	Java	d198abc5fbd6f59eba6e6bb486f42c5e2d34865f	no deployment descriptor
+nactio/nact	1148	TypeScript	e16820e69003211c352696eb984f1eea4f3ed026	no deployment descriptor
+klothoplatform/klotho	1144	Go	c50c3a05237639830a0991ee6b26ea32ff7ed631	no deployment descriptor
+mehdihadeli/go-food-delivery-microservices	1140	Go	4a59535f2f5432b3a1a4d28fe0a1767a66dd16f9	ok: 13 services, 3 compose, 1 k8s/helm yaml
+desenvolvedor-io/dev-store	1133	C#	8e88a0c4b836d7f43f2c11bb47bab5650ce74763	ok: 9 services, 2 compose, 0 k8s/helm yaml
+raycad/go-microservices	1125	Go	b6c268eda30041e454f6a6cc4b125a844394a80e	no deployment descriptor
+dapr/quickstarts	1118	Java	b57fa84c44c0d7e5c0686d123163218f012da845	screened out: collection of independent examples
+learning-cloud-native-go/myapp	1101	Go	fc188d3e95bcbd8501a4bd671750c982cc3e409d	only 2 deployable services
+kraken-php/framework	1097	PHP		framework/library/list by name or description
+SteeltoeOSS/Steeltoe	1097	C#	8b67b571b03bf702959a5e37f6a8c9671b9c837f	only 2 deployable services
+harlow/go-micro-services	1095	Go	f80124996af7180bb28ad3e290a84e941980a45f	ok: 6 services, 1 compose, 0 k8s/helm yaml
+spring-cloud/spring-cloud-stream	1072	Java		framework/library/list by name or description
+zalando/problem-spring-web	1071	Java		framework/library/list by name or description
+BlueWallet/LndHub	1069	JavaScript	819518eab0b1abf08a237f803b2b6b1b60d42b2e	no deployment descriptor
+apple/servicetalk	1047	Java		framework/library/list by name or description
+wso2/product-apim	1042	Java		repo > 300 MB
+eacdy/spring-cloud-study	1035	Java	34b7b1ac41a5aa93320204f1581e3c021160b61b	no deployment descriptor
+mehdihadeli/food-delivery-microservices	1018	C#		already used in the evaluation
+open-lambda/open-lambda	1018	Go	5a1a912f0791a04394f4d6e565e6e4673e273d90	no deployment descriptor
+dapr/docs	1016	JavaScript		repo > 300 MB
+417511458/jbone	1003	Java	70cee0c4803bd1b61934032c11c063a31f8c7c81	no deployment descriptor
+mat/besticon	1002	Go	647e79bf895207a3129426e042c471e415764e93	no deployment descriptor
+activej/activej	998	Java	6a7746dc03e4a1b91445c64f65ab5aa7187f88b8	only 4 deployable services
+Denrox/nestjs-microservices-example	995	TypeScript		framework/library/list by name or description
+gotomicro/ego	994	Go	5eb2a4041b0d8ba0cd94603af40794f20621e5cd	no deployment descriptor
+vmagamedov/grpclib	989	Python	0d27158f98aa939493009e6844576d81ec7d8254	no deployment descriptor
+baidu/starlight	976	Java	9a01fd39e1f9920bc5a15acaf9676c1e2422f302	no deployment descriptor
+dromara/dante-cloud	969	Java	42edc06a932d9229668d05f46d0ec862e7294f10	no deployment descriptor
+vardius/go-api-boilerplate	967	Go	ab346afd4740c3f83cd50e4760b25c20d1e619aa	only 4 deployable services
+stelligent/mu	966	Go		framework/library/list by name or description
+nghialv/promviz	955	Go	a94ab0c4b2f821c95ae196320c1b5b4af89cd3ae	only 2 deployable services
+zalando/problem	952	Java		framework/library/list by name or description
+AlexStocks/getty	951	Go		framework/library/list by name or description
+temporalio/sdk-typescript	945	TypeScript		framework/library/list by name or description
+o1egl/paseto	940	Go	0757ff684e6cd99a5ae7a778f8a5e32364872245	no deployment descriptor
+AOL-archive/micro-server	933	Java		framework/library/list by name or description
+slanatech/swagger-stats	931	JavaScript	6370130440c429e4940f71c9d2bf4a70a7193227	only 2 deployable services
+payara/Payara	921	Java	53ff80f7f8d5c6c0ad3f2329d20b846cd25b2880	no deployment descriptor
+rinormaloku/k8s-mastery	907	JavaScript	4b0daf8f3366976b80bfb7efe3d04950021e9bb2	no deployment descriptor
+mosn/layotto	851	Go	14f2391d1aa6d47b3fcff12cf22595274bd1c5e9	screened out: runtime product
+open-source-labs/Chronos	850	TypeScript	c0790ef0d699a0044cb355c805dd744309fb2134	screened out: tool (monitoring)
+phodal/mooa	840	TypeScript		framework/library/list by name or description
+TalkingData/owl	839	Go	a70bacd92a70b3ca4a95677de962c452fdd25bf8	no deployment descriptor
+alexliesenfeld/health	834	Go		framework/library/list by name or description
+go-kratos/beer-shop	826	Go	f762a4251b7c74120c74406033b370a132cc1fde	ok: 13 services, 1 compose, 13 k8s/helm yaml
+go-kratos/gateway	824	Go	a553bef5c1a8cc03ae3d114e5e578c51b8ac06a0	screened out: gateway product
+spring-cloud/spring-cloud-consul	821	Java	a8dfe71a7201de19aa73760321e1490a8d236fb0	only 0 deployable services
+yidongnan/spring-cloud-netflix-example	818	Java		already used in the evaluation
+kiranz/just-api	815	JavaScript	43a1565879887c254464cb125dc4359702e4752e	no deployment descriptor
+eicrud/eicrud	808	TypeScript		framework/library/list by name or description
+hemerajs/hemera	808	JavaScript	edc8ebbd3e69daa2073429ffd59feec55af0db99	no deployment descriptor
+gogearbox/gearbox	804	Go		framework/library/list by name or description
+monzo/typhon	787	Go	1e2537a69680d4cbe2f8952ed0799ad88831c789	no deployment descriptor
+pippo-java/pippo	786	Java		framework/library/list by name or description
+in28minutes/spring-microservices-v3	785	JavaScript	95b78e9f1d644c623748ac7515b2d1350036043f	only 5 deployable services
+sczyh30/vertx-blueprint-microservice	785	Java	9d960641cb80b63d0e6a559279f1fc2c5a165e3e	ok: 10 services, 1 compose, 0 k8s/helm yaml
+nullstack/nullstack	780	JavaScript	ec5e51be540a98bab311ab02eef5c9c0231ec017	no deployment descriptor
+daimon3332/OutlookRegister	778	Python	736576dc7beb954d837eede17fa6afe964866f9e	no deployment descriptor
+apache/dubbo-js	777	TypeScript		framework/library/list by name or description
+namecheap/ilc	776	TypeScript		framework/library/list by name or description
+masastack/MASA.Framework	772	C#		framework/library/list by name or description
+shortlink-org/shortlink	767	TypeScript		repo > 300 MB
+kmesh-net/kmesh	766	Go	b25c1a2bd79a392aa0f283192a23f70a3f02f305	supported-language share 287/397 < 0.8
+apache/streampipes	756	Java		repo > 300 MB
+chaokunyang/microservices-event-sourcing	753	Java	ab84eb94c98a56a3ca2ad51c7e9fad90bc3e9832	no deployment descriptor
+duyanming/Viper	752	C#	f580ccc901b4843f38d6a205c685ef0d44427adf	no deployment descriptor
+spring-cloud/spring-cloud-commons	751	Java	9549ee201a0476b2dc01477dbb82c79c464e8251	no deployment descriptor
+cellbang/cell	748	TypeScript		framework/library/list by name or description
+VincentJouanne/nest-clean-architecture	743	TypeScript	7fab9054dcc2d4116bdb1551a157408673979cb6	only 1 deployable services
+resgateio/resgate	739	Go	0cab702e09ff52306e59a3615d93eb29671a7f15	no deployment descriptor
+fluxninja/aperture	732	Go	6b5320ab674cfb03f0f13b6c7714f998a0526bdc	screened out: product (rate limiting)
+micro-analytics/micro-analytics-cli	731	JavaScript		framework/library/list by name or description
+sivaprasadreddy/spring-boot-microservices-series	723	Java	1e0bb7a697dd7bca1333dcc5ee379e896ffee3a1	ok: 8 services, 1 compose, 0 k8s/helm yaml
+inadarei/nodebootstrap	722	JavaScript	1224509c4dcdf20ce1536e37740f4e041e4927f9	no deployment descriptor
+databufflabs/databuff	721	Java	ec1133cc0a0d69dbb6ea659e047c837286a82d87	screened out: product (APM)
+eventuate-tram/eventuate-tram-examples-customers-and-orders	720	Java	8632d030301c2a477141350df1e77f3f991f64e0	no deployment descriptor
+hamed-shirbandi/TaskoMask	720	C#	32c1697f3b3cda889e6d3708018eb97c1bbdf44b	ok: 11 services, 2 compose, 0 k8s/helm yaml
+evangelosvlachos96-dotcom/booking-microservices	719	C#	40789dcb8a17b5503ef5d61db408d9c6f8de6602	screened out: duplicate of meysamhadeli/booking-microservices
+mxstbr/micro-github	719	JavaScript	10ba8812048741bb2f55fab3c960509adf33ad7d	no deployment descriptor
+uavorg/uavstack	719	Java	dc700bd1c057212302ca707dac4cb589e5e6ebd5	no deployment descriptor
+caplogic/Mappedbus	710	Java	d18b368fa9df19cddb3b0b0eb6937a257740e3d6	no deployment descriptor
+advantageous/qbit	707	Java	533b3671785f238d576b02b5290c6525ed60f583	no deployment descriptor
+gbrayhan/microservices-go	701	Go	b63ba3de1132c6461359ac70ebbbec64e99bf128	only 2 deployable services
+madslundt/NetCoreMicroservicesSample	698	C#	1a8e7618343da0a3381abfc6319ccd9ff8adfef2	ok: 7 services, 3 compose, 0 k8s/helm yaml
+rasadov/EcommerceAPI	696	Go	6f2d32bfed0fb24fbed4c52cd5688b5a24904543	ok: 15 services, 1 compose, 0 k8s/helm yaml
+abixen/abixen-platform	687	Java	7227b32852b08216a42665f9167dff0ed112c3f8	screened out: platform product
+apache/servicecomb-mesher	686	Go	f35f82e6cc8f837314db1b551e2578669ffdd249	screened out: service mesh product
+go-masonry/mortar	677	Go		framework/library/list by name or description
+otterize/network-mapper	676	Go	52ab07d7e628f139399991b230b83b1d5137f689	no deployment descriptor
+koursaros-ai/nboost	671	Python	38123ba9ad52d33afd844a38b46ca702a00cfa6c	only 3 deployable services
+weyoss/redis-smq	671	TypeScript	a1c28df2f432968c1bff6d4e7cdc2081682719df	no deployment descriptor
+ackintosh/ganesha	670	PHP	f90f8d7c441f3182df6a866e0f7591b348a6a977	only 5 deployable services
+shijuvar/go-distributed-sys	664	Go	411c2a31f9ea840f71b60e8cf216aded59318ca4	no deployment descriptor
+indeedeng/iwf	663	Go		framework/library/list by name or description
+unitedrhino/things	659	Go	5e0fb385d2338e128ceeace510a968c314c434c0	screened out: platform product (IoT)
+keets2012/Auth-service	656	Java	5aa0028c002abb84056b813e8be0ce207cace5c7	only 0 deployable services
+lithdew/flatend	654	TypeScript	054795729a4717d0d65623cb773e1c8dba72ab82	no deployment descriptor
+Ahoo-Wang/CosId	652	Java		framework/library/list by name or description
+cristianoliveira/ergo	651	Go	a328420674b17854534799f4fddc5d9f20ed8ed9	no deployment descriptor
+go-chi/jwtauth	651	Go	21df58695c5de2073acacb5209d013e65347b936	no deployment descriptor
+xtrime-ru/TelegramApiServer	650	PHP	43d41cbde76043225b62306772527bcae989349b	supported-language share 30/38 < 0.8
+camelinaction/camelinaction2	649	Java	0f07f42a6cc078eba5e7d9c88e11b31fd4a837d8	no deployment descriptor
+caoym/phpboot	649	PHP		framework/library/list by name or description
+pnxtech/hydra	648	JavaScript		framework/library/list by name or description
+SteeltoeOSS/Samples	648	C#	9bc05b88b1e4a7261313d3f8e116508028df52f3	only 5 deployable services
+oktadev/java-microservices-examples	647	Java	d971f6615125e85d0ffddee6574630d8173397ca	screened out: collection of independent examples
+shijuvar/gokit	645	Go	4b5abbb8d4e6497a1eef211cb823c18b7977dde4	only 2 deployable services
+scalar-labs/scalardb	644	Java	416cdc22f1d8bd10cee4e5f8a64fd72477e1776b	no deployment descriptor
+andrearaponi/dito	639	Go	66a7365a95b07c90f4c13311fbcb5ede2fd4a04a	only 2 deployable services
+scalecube/scalecube-services	639	Java		framework/library/list by name or description
+weiguangli-io/rydr	638	Java	cc62a5cd9836e030f3cc105d5cd1b44faadaca67	only 4 deployable services
+istio-ecosystem/admiral	637	Go	6adfd2b977c6f8574bb75db926a2654a3eb8c85d	only 1 deployable services
+lsm/micromono	637	JavaScript	1dd0532f99fb90f5f9148dc74d97dec5faf4b36a	only 0 deployable services
+mohamed-taman/Springy-Store-Microservices	637	Java		framework/library/list by name or description
+arun-gupta/microservices	634	Java		repo > 300 MB
+0xb4lamx/nestjs-boilerplate-microservice	633	TypeScript	bda7af7257575fa6ae2b6662af85e6bb855e19e5	no deployment descriptor
+BBVA/kapow	624	Go	3cef9f0cd25ab41f683a883d3ae2ce042e162d59	no deployment descriptor
+dotnet-easy/easy-dotnet	613	JavaScript	a5ee89ded1843514c5827e231bc7a03018ff6546	no deployment descriptor
+pedronauck/micro-router	613	JavaScript	b551f424b5a8e9aca667a6a5cffb5ae633b25ea0	no deployment descriptor
+aws-containers/retail-store-sample-app	612	Java	d7a380b843e0759e58754f74188ea18252a51415	ok: 6 services, 8 compose, 13 k8s/helm yaml
+vaquarkhan/microservices-recipes-a-free-gitbook	610	Python	1ea85c95b11b5418b37db13187d34d08ff58f4b8	no deployment descriptor
+hyperledger-firefly/firefly	604	Go	3b975f8d3ba177fda6885ca104f198683d40bad4	no deployment descriptor
+annabergite/abg-cloud	600	Java	55197377a16807bbdade7516f648500e41d9e95e	no deployment descriptor
+micro-plat/hydra	591	Go	2ad731b9fa9da1aa6e30a4a61e68a55d8f0b80b3	no deployment descriptor
+hellofresh/health-go	588	Go		framework/library/list by name or description
+zhihuili/flower	587	Java	93e965bfc571098a8ad36e0d30f741d148d317d8	no deployment descriptor
+ssola/python-flask-microservice	585	Python	b13d1013737f2d02a8945734863e20c6dc0691f0	only 3 deployable services
+JavatoDev-com/internet-banking-concept-microservices	584	Java	efb42d6a6656ec128552ba3f3f93c5ce96f039ff	ok: 9 services, 2 compose, 0 k8s/helm yaml
+megaease/easeagent	583	Java	de531084eff07407ab7c899b04e256edf7d36d68	no deployment descriptor
+yoyofx/yoyogo	582	Go		framework/library/list by name or description
+ThomasVitale/cloud-native-spring-in-action	577	Java	fb268d7a29a74df003656d0f068c1556946328d1	screened out: book code: chapter copies of one system
+spring-cloud/spring-cloud-zookeeper	575	Java	3c287fabd5e2980a927c416184b0574fa0ac5dcb	only 0 deployable services
+temporalio/sdk-dotnet	574	C#		framework/library/list by name or description
+meysamhadeli/shop-golang-microservices	573	Go	76c34f1ab7e428f6106c5cf291570502df4ff257	no deployment descriptor
+stevejgordon/CorrelationId	571	C#	7b647e57cf5e069290ff5b835c82b1157bbea1b3	no deployment descriptor
+saalikmubeen/microservices-architectured-app	569	TypeScript	bf448eb461dd4e6f58f9bf293420215687ad850e	ok: 6 services, 0 compose, 13 k8s/helm yaml
+apache/dubbo-go-pixiu	566	Go	51198ddd8d1317f6c1d7e351fde8a6be7da60d62	screened out: gateway product
+fullstackhero/dotnet-microservices-boilerplate	556	C#	3f506d7ebf023aee63c73fd34bd198ad5972e31e	only 4 deployable services
+jolie/jolie	556	Java	d597c9aef0c535bfdca077949873a07b74e9534c	no deployment descriptor
+SDUOJ/OnlineJudge	553	Java	87b967e90ac15c1e413c1044baef74462f3be5bf	no deployment descriptor
+codergogoi/nodejs_microservice	552	JavaScript	5e56802ea8935e86ba663b6a24ae4327ebcf689e	ok: 6 services, 1 compose, 0 k8s/helm yaml
+OmarElgabry/microservices-spring-boot	551	Java	f479b259e837c85fba36a37975434f6e3234aa2e	no deployment descriptor
+amrkhaledccd/my-moments	547	Java	e9b86f086c19cc09b11faa66d3884fcec8923d07	only 5 deployable services
+sdgmf/go-project-sample	543	Go	ce62dce5e013606727a635b3052317c2a85607cd	ok: 15 services, 1 compose, 1 k8s/helm yaml
+quick-perf/quickperf	542	Java		framework/library/list by name or description
+kimtth/software-architect-mindmap	537	Python		repo > 300 MB
+piomin/sample-spring-microservices-kubernetes	537	Java	e20fe2fe19cb24eb7bef44f610447e126deb2202	only 4 deployable services
+ThembisileNGQ/Akkatecture	524	C#		framework/library/list by name or description
+alibaba/sca-best-practice	522	Java	0336939cf6fb265db5ae5dd5170ee86ecfe2b359	no deployment descriptor
+thiagobustamante/typescript-rest	522	TypeScript	43231cad663196888bc2ac1378dee7f323812527	no deployment descriptor
+digota/digota	521	Go	c2a16d57bfe0fd0d6f3a7b9a71122668a24c1e6c	only 3 deployable services
+berialjs/berial	520	TypeScript		framework/library/list by name or description
+megaease/easemesh	519	Go	e0bae14a9a19f78e61f49890d6ce3354c046336e	no deployment descriptor
+foxminchan/BookWorm	508	C#	ac148627d57db9086957b4dc6b7566f7cda5d220	no deployment descriptor
+madmous/madClones	508	JavaScript	29f4a82afc650b430a9a785feb49f006366f9d67	only 4 deployable services
+JoeCao/qbike	507	Java	47301e2067b7d8f5614b2359a9934f4080367d2e	ok: 10 services, 1 compose, 0 k8s/helm yaml
+ZoneTree/ZoneTree	507	C#	568c222736213f45a9963f51250621a8de092f6d	only 2 deployable services
+nutzam/nutzboot	506	Java	ffe77a39777b6f3021bd3dafbd3a23810d871785	no deployment descriptor
+mehdihadeli/awesome-go-education	502	Go		framework/library/list by name or description
+asc-lab/micronaut-microservices-poc	498	Java	9871a2e482f6ff8a358b8f3c6caa460374e76c36	ok: 11 services, 1 compose, 0 k8s/helm yaml
+learning-zone/spring-boot-basics	494	Java	3c00d984020e02932fc593602fab241cd5dbaab6	no deployment descriptor
+apache/camel-examples	487	Java	869cde2a332ab6108572af0b1f93923bc3fc9768	screened out: collection of independent examples
+citrusframework/citrus	486	Java		framework/library/list by name or description
+unadlib/fronts	486	TypeScript		framework/library/list by name or description
+douyu/juno	485	JavaScript	64aefaffb95c84e6bdafdbd0daa555b50330a331	screened out: tool (microservice management)
+duyanming/Anno.Core	483	C#	33001365a51584d9d3a9cc8ddf373cead2f40865	no deployment descriptor
+Avanade/Liquid-Application-Framework	482	C#		framework/library/list by name or description
+mehmetozkaya/Design-Microservices-Architecture-with-Patterns-Principles	480	C#	191292c67313b971f1d5b363ee73617310556baf	no deployment descriptor
+stackvana/microcule	480	JavaScript		framework/library/list by name or description
+jd-opensource/joyrpc	478	Java		framework/library/list by name or description
+dapr/go-sdk	477	Go		framework/library/list by name or description
+oracle/coherence	474	Java		repo > 300 MB
+PoweredLocal/vrata	473	PHP	838da21544c4fc29eca8a1df7f7ac685641466b9	no deployment descriptor
+TencentFemas/femas	473	Java		repo > 300 MB
+ihippik/wal-listener	472	Go	079b9b4469053a238a0e0b53b908a2b666eccc4f	only 4 deployable services
+ivanpaulovich/hexagonal-architecture-acerola	472	C#	1569ba2f716cb04117c4da551dc9f2904b082244	only 1 deployable services
+mishudark/eventhus	471	Go	9c41720129ae612f74ffbe86efd87e9b52d189b6	only 0 deployable services
+BackendStack21/restana	468	JavaScript		framework/library/list by name or description
+RisingStack/trace-nodejs	468	JavaScript	659ea24323b7a591d82a1da177ce454d1850d99a	no deployment descriptor
+minos-framework/minos-python	467	Python		framework/library/list by name or description
+apssouza22/java-microservice	463	Java	9172a9004dd92434fbec4712cb45650a611185c3	ok: 9 services, 1 compose, 0 k8s/helm yaml
+microsoft/azure-spring-apps-training	458	Java	90296b578eb9a2fcd570cde9e900703b59095a5e	no deployment descriptor
+teamcode-inc/kubeorbit	451	Go	118184b5fc4f9357a42cb5b5b25077744e5ce111	no deployment descriptor
+spring-cloud/spring-cloud-bus	448	Java	60160f68e63ea1705c165d3ad5ba4209077ccd8a	no deployment descriptor
+boostercloud/booster	447	TypeScript		framework/library/list by name or description
+charlessolar/Aggregates.NET	447	C#	3e8efc9ae55d3392cecc43cc657829b41e908f9a	no deployment descriptor
+spring-cloud/spring-cloud-task	446	Java	45b3ae177888e953b1dfb61b89265320282964b8	no deployment descriptor
+yarpc/yarpc-go	445	Go	b926be2d9faa845235fda976b8877c18513a95fe	only 3 deployable services
+mudigal-technologies/microservices-sample	444	Java	1e9ec03e01b7f63ac376fa38a6a54f2c072c0814	ok: 14 services, 1 compose, 0 k8s/helm yaml
+temporalio/sdk-java	442	Java		framework/library/list by name or description
+sdslabs/gasper	440	Go	3fc557c33c4cff3a114fd63e9005dfb1cd5a8080	no deployment descriptor
+naltatis/micro-frontends-in-action-code	439	JavaScript	8a5f3b4231a6f46f930e71ab190b6930820358a2	no deployment descriptor
+miaowing/nest-schedule	435	TypeScript	34464787160a8652f34d8d7f087e7d296a029987	no deployment descriptor
+x-izumin/grapi	429	Go		framework/library/list by name or description
+SaiUpadhyayula/spring-boot-3-microservices-course	427	Java	9cc3cc7c37ab25315d8d92bd58dae19fdfff3b65	ok: 12 services, 1 compose, 0 k8s/helm yaml
+backstage/community-plugins	426	TypeScript		repo > 300 MB
+minghsu0107/go-random-chat	426	Go	587a983885363824dc5b8a46faceece827d34411	ok: 19 services, 1 compose, 1 k8s/helm yaml
+AntonioFalcaoJr/EventualShop	425	C#	d63e424fb770982a312e4245c2202ff09eaf2d5b	ok: 18 services, 3 compose, 0 k8s/helm yaml
+slime-io/slime	425	Go	043e38df95fa5c65e17fb4b12d8382ce8389afd4	screened out: service mesh product
+nicholasjackson/fake-service	423	Go	f2194ab5171ded82f51164995d13537610c0f67a	screened out: tool (test service)
+TarsCloud/TarsJava	420	Java		framework/library/list by name or description
+nest-cloud/nestcloud	419	TypeScript		framework/library/list by name or description
+retroryan/istio-workshop	418	Python	2f32b0aa6c834e9e6ca89b407545315db1d2a064	only 3 deployable services
+aliyun/alibabacloud-microservice-demo	417	Java	441fb31723f034527f25fd41794f6ff89166dbd6	ok: 43 services, 2 compose, 5 k8s/helm yaml
+hardyscc/nestjs-cqrs-starter	416	TypeScript	a014ad126e3693a4526fbf5c77b02ced48aaeca3	no deployment descriptor
+ErdemOzgen/Python-developer-roadmap	413	Python		framework/library/list by name or description
+jeddict/jeddict-modeler	403	Java		framework/library/list by name or description
+merikbest/twitter-spring-reactjs	403	TypeScript	b4e6e9cb008ccbd65175e067584921c538574d59	ok: 16 services, 1 compose, 0 k8s/helm yaml
+DragonKingpin/Hydra	402	Java	6c537e4c868728085e8f095c05fae5031c172524	no deployment descriptor
+Clever/microplane	401	Go		framework/library/list by name or description
+littlehorse-enterprises/littlehorse	401	Java	b43eff79d934f8c875a1bad638423c455f594e54	only 5 deployable services
+specmatic/specmatic	401	Kotlin	46c545caefdb6484003c263aa5f6dc674db55f13	only 3 deployable services
+gudaoxuri/dew	399	Java	db86047b31ea8c029c0f8087d568f5378a169bdd	no deployment descriptor
+namastack/namastack-outbox	399	Kotlin	313eb5884e99f7c0174879fc5077e6cda4839543	only 4 deployable services
+opentracing-contrib/java-spring-cloud	399	Java	7664c1cdd37f87d593af3359fb4127f5b957a2d4	no deployment descriptor
+hb-chen/micro-starter	397	Go	045d1f4f99d50c96857b34fb1eced2c419eb6507	only 2 deployable services
+mikemajesty/nestjs-microservice-boilerplate-api	396	TypeScript	5c24b0c5679b66766e15a7dd64c397987a771abf	screened out: single-service boilerplate
+devicehive/devicehive-java-server	394	Java	905e3b932ddc30bd239a192e6eaadc3e5f17004f	no deployment descriptor
+lamoda/gonkey	393	Go	da13b1ba541ca754f3e2358257ec59b3fcebae7d	only 3 deployable services
+songcser/sanic-ms	392	Python	e15eaa87149a8298fe3a1ae319907be614736a06	screened out: framework scaffold
+falberthen/EcommerceDDD	391	C#	4d80939f649c1072a58086666bb670d40cbe29f3	ok: 11 services, 3 compose, 0 k8s/helm yaml
+hoangtien2k3/ecommerce-microservices	390	Java	2d687821f8246f426e536641cd0503cb15465275	ok: 15 services, 1 compose, 3 k8s/helm yaml
+paurakhsharma/python-microservice-fastapi	389	Python	3977eac365dabd0b49add36a37f769463a2d31bc	only 5 deployable services
+Allenxuxu/microservices	388	Go	384fe93feb8c2908603a25254477a0d429253e48	only 4 deployable services
+convertigo/convertigo	387	Java	bc4f8cc67181a5d74cf67e163db3dd589917ab78	screened out: platform product (low code)
+phodal/aofe.code	386	JavaScript	9ae3f816a072e0a618ceec3e5e0627b62c3549de	screened out: book code (front-end chapters)
+DivanteLtd/microservices-book	380	JavaScript	a9ffa6a5950f5439d514e67db86103a4cdb1c195	no deployment descriptor
+devdcores/BookStoreApp-Distributed-Application	378	Java	1a14fa38cd3827ccdf3e3e99d61d9254a40f3d8b	ok: 10 services, 1 compose, 0 k8s/helm yaml
+nuaazs/VAF_2	378	Python		framework/library/list by name or description
+spring-cloud-samples/spring-cloud-gateway-sample	377	Java	81da426de1f25d91a99318622c22066c25fc33fb	no deployment descriptor
+merken/Prise	376	C#		framework/library/list by name or description
+DevrexLabs/memstate	375	C#	8d30ac9541818ccc0c94b89a2438f978d1b9833b	only 2 deployable services
+CloudDetail/apo	374	Go	f8547f2a329d9fbbc6c060b1dd0962b532bc3849	only 2 deployable services
+lvwangbeta/Poplar	371	JavaScript	5efad9b9f0184e7091e935f0448aa307c8baa572	no deployment descriptor
+tinrab/spidey	370	Go	5e0dbefb31e04c65248f6362b88e0b259e3654ba	ok: 7 services, 1 compose, 0 k8s/helm yaml
+newbee-ltd/newbee-mall-cloud	368	Java	e2f89906e7bb286d89f7f167ddc25bfd30ae9723	no deployment descriptor
+apache/camel-spring-boot-examples	362	Java	c0b9389bea512ac15d0376cc922bc94a7ba3b9d3	only 5 deployable services
+idugalic/micro-company	362	JavaScript	9102aa048fb5246d87d1d116c7fcd2dd8fa0a926	ok: 11 services, 3 compose, 0 k8s/helm yaml
+infiniticio/infinitic	361	Kotlin		framework/library/list by name or description
+orbitalapi/orbital	361	TypeScript	0415fde5a6424e12622947e84649c19327c89411	screened out: product (integration platform)
+koupleless/koupleless	359	Java		framework/library/list by name or description
+powerman/go-monolith-example	357	Go	a990187d04a516269277410c48882a14ba843ccc	screened out: one deployable monolith
+CECTC/dbpack	356	Go	c334f734749de49ce120600f2c8f7726f43b0e80	only 4 deployable services
+grissomlau/jimu	356	C#		framework/library/list by name or description
+Chinchilla-Software-Com/CQRS	355	C#		framework/library/list by name or description
+RainbowForest/e-commerce-microservices	354	Java	a8a6d338f112b309521bebbd595ed335b4c104a9	no deployment descriptor
+ujjavaldesai07/spring-boot-react-ecommerce-app	354	JavaScript	9ff8fb2994a90514f14b959043d4fd3de7879d84	ok: 7 services, 1 compose, 0 k8s/helm yaml
+zeromicro/zeromall	353	Go	7a0926036325ecfb2f3cce173f8d341c794029b0	no deployment descriptor
+leecho/cola-cloud	352	Java		framework/library/list by name or description
+easierway/service_decorators	349	Go	b14d702d1fafd39c1bf0f2133cc7b6385d102f26	no deployment descriptor
+pereiren/dotnet-template-onion	348	C#	9555bdfe773eb0d3f86139aca5c48c87e6d68360	no deployment descriptor
+Privoce/Portal-Lite	348	JavaScript		framework/library/list by name or description
+apache/syncope	346	Java	dc7cfae33df32b5282a8f8b3d740bbdfc28286d1	only 5 deployable services
+gruelbox/transaction-outbox	346	Java	adabceb6d062c39baf33891d7910c369c925cbf3	no deployment descriptor
+siam1026/siam-cloud	346	Java	d6ee970f8decaac09d7f6cbce022b6c67d8d2d33	no deployment descriptor
+codingforentrepreneurs/Try-Django-3.2	345	Python	8e9c900e3118cfa085682fa97ca2ba42aba6535d	no deployment descriptor
+jingsewu/open-wes	341	Java	f77ce02d63ba8d222d64cc472bd9f769bb3d5829	ok: 16 services, 2 compose, 0 k8s/helm yaml
+zalando/riptide	341	Java	4e9400ad4f4fe01512245d7f651de16b2ebf985c	no deployment descriptor
+RuedigerMoeller/kontraktor	340	Java	8912981d9775e7b292a0d9a4dfcc02a28bc839ae	no deployment descriptor
+songzhibin97/gkit	339	Go	61ed6e92f24846eb9dc9835c1139def96aec5d40	no deployment descriptor
+christopherread/Obvs	338	C#		framework/library/list by name or description
+SeunAdelekan/Kanary	337	Kotlin		framework/library/list by name or description
+Nasruddin/spring-boot-based-microservices	332	Java		framework/library/list by name or description
+daohainam/microservice-patterns	331	C#	cb07bf588761cb6c766c5e0c3e35d01a9127bd87	no deployment descriptor
+jquatier/eureka-js-client	331	JavaScript	c83bbfb998104c98f96e4ec15078fe8296da7e53	no deployment descriptor
+NHadi/Pos	331	JavaScript		framework/library/list by name or description
+lucidarch/lucid	329	PHP	00d135ab4c1e7024cca7ca38027f1159cc00bd9b	no deployment descriptor
+nanoapi-io/napi	323	TypeScript	1827e3b087e516790ddf6bccb073e747de52237b	no deployment descriptor
+stormcat24/protodep	323	Go	ef40b60e522244b6c108986f78e5a9b628a68707	no deployment descriptor
+aws-samples/designing-cloud-native-microservices-on-aws	322	Java	edb30b21ba5dfadbfde25a8fc7e028b59570d63a	no deployment descriptor
+geoserver/geoserver-cloud	322	Java	5ef787348670347f395b80d637704d8605e5dc66	ok: 13 services, 8 compose, 2 k8s/helm yaml
+humank/ddd-practitioners-ref	322	Java	834ddce9dc9aa3529b47a4c13b6c1a7b0bb35590	no deployment descriptor
+abhimishra91/insight	320	Python	5ef2efe69c71cdc766671d8d2ab2a4b3d2cba69c	ok: 6 services, 1 compose, 0 k8s/helm yaml
+mislam/fresh	320	JavaScript	88abcc5af19cc9b3e6b573d358687dcef3bce6c4	no deployment descriptor
+AlariCode/nestjs-rmq	319	TypeScript		framework/library/list by name or description
+charlessolar/eShopOnContainersDDD	319	C#	afd9cf20425d49a4260fcd73c4ca96f9baa0121b	ok: 8 services, 2 compose, 0 k8s/helm yaml
+microconfig/microconfig	319	Java	ece162ff4d89f8604cb45416ca4985a28f55cfb2	no deployment descriptor
+idugalic/digital-restaurant	318	Kotlin	920248e62c5b7d9b8d3c365b2f911355aa19c7db	only 2 deployable services
+venkataravuri/e-commerce-microservices-sample	317	TypeScript	ec981a688b860104964010041717c64203972c5b	no deployment descriptor
+wso2/product-microgateway	317	Java	7f01aaeae542c8f659a81b6bb506688c1651c806	only 5 deployable services
+anton-liauchuk/java-interview	314	Java		framework/library/list by name or description
+ebosas/microservices	309	Go	1cbd5cf67215dda7d6079125b9439bdbae3cf1d5	ok: 7 services, 2 compose, 6 k8s/helm yaml
+nilportugues/laravel5-jsonapi	309	PHP	8a90fd4a4373bc052c8ed50a29fe71154260568d	no deployment descriptor
+hantsy/spring-microservice-sample	308	Java	f005113835de3e46eccf51ddc97cabba51310315	ok: 7 services, 6 compose, 0 k8s/helm yaml
+ThreeDotsLabs/monolith-microservice-shop	308	Go	dbb94dbea6752bb5a851dff45cc9d326c8479222	ok: 6 services, 1 compose, 0 k8s/helm yaml
+codoworks/go-boilerplate	307	Go	5372f9b9a33525da012a79c3b70c0b6e00e8e82d	only 1 deployable services
+TPIsoftwareOSPO/digiRunner-Open-Source	307	Java	41a280195e7f448282ab2b7eb94313955425b8a4	only 1 deployable services
+Abdizriel/nodejs-microservice-starter	306	JavaScript	3fa89d901930f68e7708f4b29e563a858fdaf316	only 2 deployable services
+alibaba/cloud-native-app-initializer	306	Java	06db56bdcb9cada58636b6812968435604d98245	no deployment descriptor
+Ahoo-Wang/Wow	305	Kotlin		framework/library/list by name or description
+apache/camel-quarkus	304	Java		repo > 300 MB
+medevorg/nodetskeleton	304	TypeScript		framework/library/list by name or description
+vaporz/turbo	304	Go	8088e6bf86ef08edb211e0750eddb6ca7c0b79f4	no deployment descriptor
+machinebox/remoto	303	Go	eff21a7d321f7d4f0d1736eb43e1af34025d006b	no deployment descriptor
+micrometer-metrics/tracing	302	Java	f74c820cabaa7e934edd3af4b6590abdeee1da3c	no deployment descriptor
+dapr/java-sdk	301	Java		framework/library/list by name or description
+microwind/design-patterns	301	Java	45401a0576ebd0aa100b4a88e320e3a5bc115e8a	only 3 deployable services
+moleculerjs/moleculer-web	301	JavaScript		framework/library/list by name or description
+keelab/keelith	299	Go		framework/library/list by name or description
+meysamhadeli/booking-microservices-nestjs	299	TypeScript	1eeeb941e1bd95b375337e2e1e53a0abd77c7f62	ok: 11 services, 1 compose, 0 k8s/helm yaml
+thangchung/practical-dapr	299	C#	7ed73041c801b0027549d3ef4d93dd09bd48a2d6	only 1 deployable services
+xtrime-ru/TelegramRSS	299	PHP	026044e4dcb2fb1237df8789b7a6d0c62113a284	only 1 deployable services
+mardix/sailor	298	Python	58bb5dc747578554a17336ffb5e33b8437dfb22b	no deployment descriptor
+sourcefuse/loopback4-microservice-catalog	298	TypeScript	947107b7cbbf7bc226a584f5bcd1525012a0fdad	screened out: catalog of independent reusable services
+viettranx/micro-clean-architecture-service-demo	297	Go	12947ca2908fa90fb6ac50695cbb7f173747300c	only 2 deployable services
+kumuluz/kumuluzee	296	Java		framework/library/list by name or description
+go-saas/kit	295	Go	8e55a6f58fa1e5f3ae8d7aeff025b38f8fed8a93	ok: 9 services, 4 compose, 0 k8s/helm yaml
+CyanAsterisk/FreeCar	292	Go		framework/library/list by name or description
+liuhll/silky	292	C#		framework/library/list by name or description
+spring-cloud/spring-cloud-vault	292	Java	c9c0576fccc6d179abfe75f3f9244d7c66952d90	only 0 deployable services
+Baroshem/microservice-template	291	TypeScript	beca13e14042566bb20edfaf6a2881baacce0173	only 2 deployable services
+guoming/Hummingbird	291	C#	9c52b270f9aee39294309685fa6a1fe695788bf4	no deployment descriptor
+leemonade/leemons	291	JavaScript	b1ca5d84d8b2f704e80dea127c9769e16a22201f	no deployment descriptor
+restran/fomalhaut	291	Python	df6762f3aa64c0c0ca50dd8bfd6f2a70b0bced7b	no deployment descriptor
+meysamhadeli/booking-microservices-expressjs	290	TypeScript	354f27e266cf01607c7c5cb9497ab8f675754112	ok: 9 services, 1 compose, 26 k8s/helm yaml
+wso2/product-integrator-mi	290	Java	2f73279a4419932472d5b9cd52c9f88fd7fe71d2	no deployment descriptor
+bhope/hedge	287	Go	52b211857fd5ca86462a96e9fd508add6da598dd	no deployment descriptor
+Calabonga/Microservice-Template	287	C#		framework/library/list by name or description
+cloudnative-netcore/netcorekit	286	C#		framework/library/list by name or description
+tmaiaroto/aegis	285	Go		framework/library/list by name or description
+BEagle1984/silverback	283	C#		framework/library/list by name or description
+python-microservices/pyms	282	Python		framework/library/list by name or description
+edgelesssys/marblerun	281	Go	fb2f13258263c02ed310c5fa9f135dbb94ba3ca6	only 1 deployable services
+alugili/ModernArchitectureShop	280	C#	8f92df177ff4c246d63dca3a0174ca70b999b699	only 4 deployable services
+Warewolf-ESB/Warewolf	280	C#		repo > 300 MB
+begmaroman/go-micro-boilerplate	279	Go	056fa98c1d27fc40fff0cfffea69eb64a45cd6ce	only 4 deployable services
+sy-vendor/Gobi	276	Go	5cf214642ed7c7792cb08f4ae8765c1a609d1d3f	only 2 deployable services
+oracle-quickstart/oci-cloudnative	275	JavaScript	899cf7489e91daf8f42e6f54ecebb6674f7b7ac8	ok: 15 services, 12 compose, 55 k8s/helm yaml
+xiajingren/HelloAbp	275	C#	91a05d03b131582a3a1d4ea44a616e42032d5c11	ok: 6 services, 6 compose, 0 k8s/helm yaml
+jd-opensource/joylive-agent	274	Java		framework/library/list by name or description
+etherlabsio/healthcheck	273	Go		framework/library/list by name or description
+UnderTreeTech/waterdrop	272	Go		framework/library/list by name or description
+AleksK1NG/Go-gRPC-RabbitMQ-microservice	271	Go	0d8b020075283c159c88bfa85c4c642f6f6eb22d	screened out: one application service plus infrastructure
+nameko/nameko-examples	270	Python	33cf47041d175f39def087987cac5dc39e2a5471	ok: 6 services, 1 compose, 4 k8s/helm yaml
+uid4oe/grpc-web-demo	268	Go	3e10e28ec81ae6f2db225e101be9f497b62b1f6a	ok: 6 services, 1 compose, 0 k8s/helm yaml
+shipsaas/docking	267	PHP	f986a084d5e9a21cb53cc324fdd132726cf33351	only 2 deployable services
+jgontrum/spacy-api-docker	266	Python	249f96a2387741bc1037eab8318966a284cceeec	no deployment descriptor
+anacrolix/confluence	265	Go	a8264f2fb29e484440b29cd221f8c3571692f193	no deployment descriptor
+tinrab/meower	265	Go	2efbf93cd6810fea11c9eeaeb0699f8f11cf5e63	ok: 7 services, 1 compose, 0 k8s/helm yaml
+oracle/oracle-db-appdev-monitoring	264	Go	2e96a0f7ef4ea36cff78eec21653bee9a29cd05d	only 5 deployable services
+piomin/sample-spring-microservices-advanced	262	Java	a07a1ad13f5e716669885ff71188e18fc7c1564e	ok: 7 services, 5 compose, 0 k8s/helm yaml
+phamquiluan/RCAEval	259	Python	dc9f48786db50cf9469f2c596b79f01907d4ac91	no deployment descriptor
+stacksimplify/aws-fargate-ecs-masterclass	259	Java	269054515f1faa3bc61c8106adbeadc26f90802e	no deployment descriptor
+charlessolar/TodoMVC-DDD-CQRS-EventSourcing	257	C#	94e21980ba21937ea9a9324fcb00811c7d8d3e2d	only 5 deployable services
+dashersw/cote-workshop	257	JavaScript	06fc95977519fb944f6ca04c98aa5619523458e2	ok: 11 services, 1 compose, 0 k8s/helm yaml
+saturnism/istio-by-example-java	257	Java	6b11c27e4c73f1cd3271a9fac11efe80238c5685	screened out: collection of independent examples
+kartik1502/Spring-Boot-Microservices-Banking-Application	255	Java	7ca604ae1b8217ee2a0a9d6598ae1ac4c2d2d107	no deployment descriptor
+stalary/microservice-recruit	255	Java	6a3fdd7d85da40927b4357d2127dc67035e8bb2d	no deployment descriptor
+mikuhuyo/wanxin-p2p	254	Java	72a63d0cf1128b4ca6e2a5a3cbfbb17768135fdf	only 4 deployable services
+webmakaka/Microservices-with-Node-JS-and-React	254	TypeScript	4f3a385676b6612e2afec9d5e7fbd9887162150b	screened out: course code copies
+AleksK1NG/Go-CQRS-Kafka-gRPC-Microservices	252	Go	70cda284cf55716f565310725f9c830c0f72ddc6	ok: 12 services, 2 compose, 0 k8s/helm yaml
+ivanpaulovich/dotnet-new-caju	252	C#	6df09c790936ba72559055436a8fb4c15bf1fec9	no deployment descriptor
+aplus-framework/one	250	PHP		framework/library/list by name or description
+sivaprasadreddy/generator-springboot	248	Java		framework/library/list by name or description
+yiv/yivnet	248	Go	9be9f3c53055c443bcab2bb80e9479f48d6326a0	ok: 14 services, 1 compose, 0 k8s/helm yaml
+ngduc/node-rem	247	TypeScript	d488838e41ed039eda497826ab6d637490a622d5	no deployment descriptor
+module-federation/aegis-host	243	JavaScript	662098161c37105046862744c312e2740ae1f565	no deployment descriptor
+Toktik-Team/toktik	243	Go	fd1c18ea896125d0a71b45d546a4eed5094d15d0	ok: 6 services, 1 compose, 0 k8s/helm yaml
+odrotbohm/sos	242	Java	c99dc6821810909ec6871d872abdf91a2224623e	no deployment descriptor
+sajya/server	242	PHP	a490928909cf5fb0d54a602fe2be80ef8b68b6b0	no deployment descriptor
+osgochina/dmicro	239	Go	5245feb92bd8c54f1f96a09382c43ed5b275097e	no deployment descriptor
+avito-tech/netramesh	238	Go	b4b96de9c511826bbf71de855d5595598b7e30ec	no deployment descriptor
+tsukhu/nxplorerjs-microservice-starter	237	TypeScript	3ce0d5291358bbdb6a4281bc87dd42522e8d2bf5	only 2 deployable services
+amasen02/freshcart-backend	236	C#	518aab1ed09411f3916664674b4f69a1e1ae5ed2	ok: 13 services, 1 compose, 13 k8s/helm yaml
+lord-of-code/loc-framework	236	Java		framework/library/list by name or description
+wrannaman/generators	235	JavaScript		framework/library/list by name or description
+wsrh8888/beaver-server	232	Go	0af1e1c9647e88cf0650742775d8f0f6fac9139b	ok: 33 services, 33 compose, 0 k8s/helm yaml
+Raiffeisen-DGTL/ViennaNET	230	C#		framework/library/list by name or description
+sagidM/s3-resizer	230	JavaScript	86132ffb1c848628ea6a615277c868812f2047d5	no deployment descriptor
+davidguttman/authentic	226	JavaScript	d39eb98c53bacc61e5b37ab8a5ed91f6326ebabb	no deployment descriptor
+jhipster/jhipster-online	226	Java	4b02e4a1d6134c48812b1cbc49123fcd41176f12	no deployment descriptor
+sivaprasadreddy/spring-boot-microservices-course	223	Java	5899a53015228692410b8120df82924e665a5d70	no deployment descriptor
+typv/nest-turbo-starter	223	JavaScript	93b761fee763dbed5e044af51d6a5d4f7847c775	screened out: starter template
+azist/azos	220	C#		framework/library/list by name or description
+xluohome/smscode	218	Go	19b1fd0b30c9af28922c17ca1055db3a744f0be5	no deployment descriptor
+go-chassis/go-archaius	216	Go		framework/library/list by name or description
+yehohanan7/flux	216	Go		framework/library/list by name or description
+zeromicro/zero-contrib	216	Go	dc194d0eabaacd42a2a787058f7cfcd350dd3823	no deployment descriptor
+camunda-community-hub/spring-zeebe	215	Java	5ee48fb3b15148c7307eff9bcc1248e5b5e160c2	no deployment descriptor
+LeonKou/NetPro	215	C#	a869a8606245f1c3991cd23d057337db91a2226f	only 4 deployable services
+openebs/dynamic-localpv-provisioner	213	Go	81411f1cd904992940285acff4661325db1e1cd6	only 2 deployable services
+3n21c0/hello-auth-grpc	210	Go	e85f129d8bb7c5a3ef4bb4f109cf6159bf32682b	no deployment descriptor
+xiaoenai/tp-micro	210	Go	f677d3285365a9fcde5f8f9a89cb71b5c8366459	no deployment descriptor
+mostafacs/ecommerce-microservices-spring-reactive-webflux	209	Java	919ad2b751d095a3679b445ebad27b77e42b0cef	ok: 9 services, 1 compose, 0 k8s/helm yaml
+andrewwebber/cqrs	208	Go		framework/library/list by name or description
+smallrye/smallrye-config	208	Java		framework/library/list by name or description
+xmlking/micro-starter-kit	208	Go	56b08d0a27521d1bfd52323d4f401e51e82d6af4	only 1 deployable services
+obsidiandynamics/goharvest	207	Go	1239a594e9dcbb1945120fa2b86caf3021c101bb	no deployment descriptor
+rpcxio/rpcx-gateway	206	Go	74ed729109fdc7a8d456a367a0f42e7cfdcc6b02	no deployment descriptor
+goadesign/examples	205	Go	912fad128ff88beb51f4a7b57f41b599d1e544e7	no deployment descriptor
+Azure-Samples/mcp-agent-langchainjs	204	TypeScript	6273b58cc3f155a25d938174984da17531b7caec	no deployment descriptor
+DaoCloud/DaoCloud-docs	204	Python		repo > 300 MB
+kalaspuff/tomodachi	204	Python	600b80ccf01915a036829d9007bc179816b557c2	only 1 deployable services
+daxnet/apworks-core	202	C#		framework/library/list by name or description
+apache/dubbo-kubernetes	201	Go	6891df5443c8fa534f1acf6879d42c1eb02e493a	only 0 deployable services
+RobyFerro/go-web	201	Go		framework/library/list by name or description
+uid4oe/microservices-go-grpc	201	Go	eee7c910d9791096d77a171c8d05e5d4e0f367fc	ok: 6 services, 1 compose, 0 k8s/helm yaml
+dustinsand/hex-arch-kotlin-spring-boot	200	Kotlin	6acc68d475e58b81a7e14125015da84b9b05dec1	no deployment descriptor
+noboomu/proteus	200	Java		framework/library/list by name or description
+tkssharma/nodejs-microservices-patterns	200	JavaScript	2170453c4fafa19f405ddacb332fbafe5d4cfb96	ok: 22 services, 6 compose, 0 k8s/helm yaml
+we-dcode/kubetunnel	200	Go	2f66ebe9b3c261a65e4074ed0796be360dfb0b5b	only 1 deployable services
+go-kod/kod	199	Go		framework/library/list by name or description
+heyuxian/mcloud	198	Java	f3e0c57c014c93fbb798e9110a15e4ccd461593b	no deployment descriptor
+WonderPanda/nestjs-microservice-architecture	198	TypeScript	b2d452a416b5820be08412cc4c27f33aba1a4c7a	only 4 deployable services
+xiancloud/xian	198	Java	911ee227949b24b1f6883d7d47c3df4ef66a9407	no deployment descriptor
+Dasync/Dasync	197	C#		framework/library/list by name or description
+thangchung/northwind-dotnet	196	C#	1af077c209f74c5357ac074d8bfcde8cdbc34d79	ok: 8 services, 1 compose, 0 k8s/helm yaml
+TreeGateway/tree-gateway	195	TypeScript	a1ed94e289a8f225e3e140d72c84c58084b5b902	no deployment descriptor
+Hecate2/Ignareo-ISML-auto-voter	194	Python	cee24440248d77271b23da6fb4dd0859a6c5a566	no deployment descriptor
+keijack/python-eureka-client	194	Python	60d3981d7ffd18825aaf2126a3bb4fea5f0e7673	no deployment descriptor
+tlandeka/authentication-microservice-with-domain-driven-design	192	Java	a7cfd82824d91d90e1f07a613cdeae1bd59f91e0	only 2 deployable services
+Double-Jin/jin-microservices	191	PHP		framework/library/list by name or description
+ivanpaulovich/event-sourcing-jambo	191	C#	15ac2de003dead45ca25fc673f08aa7b7168350a	only 3 deployable services
+phil-guo/ketchup	191	C#	82651c0e16764a4b1de2ebc07fba19bef4304c40	no deployment descriptor
+apache/camel-spring-boot	189	Java		repo > 300 MB
+go-ggz/ggz	188	Go	46af19ffdbe9b3d5316cfd4131eb3e0849297f17	only 5 deployable services
+360digitech/chronus	187	Java	909b0fdbafb80bb26369c5a3970c6faebdf5307b	no deployment descriptor
+AleksK1NG/Go-Kafka-gRPC-MongoDB-microservice	187	Go	59a9680b523bb09d5c95a844afbf074a567eb57a	screened out: one application service plus infrastructure
+mabuonomo/example-nestjs-microservices-grpc	187	TypeScript	07b9d0e79fdf7b8d40dadf87320ecb614f8abd0e	ok: 7 services, 1 compose, 0 k8s/helm yaml
+tkssharma/nestjs-advanced-2023	187	TypeScript	69ac018bbaaed620ef84cc28716cde1b3397e8a8	only 4 deployable services
+oslabs-beta/Horus	186	JavaScript	55f359474fccf6ea8c0c361c5e6a516cbed3667d	no deployment descriptor
+rpcxio/basalt	185	Go	a7e186f1ae4c9013452a595bfafb8512c828bf99	no deployment descriptor
+jkaninda/goma-gateway	184	Go	eb97a112e0d1cdb12b7beffbbeb58f6a93620fa0	only 1 deployable services
+kreta/Kreta	184	PHP	3d092f4216ecf2dab7313c2cc5635a44e36e993b	ok: 7 services, 2 compose, 1 k8s/helm yaml
+shijuvar/gokit-examples	184	Go	29a0e1fa25868948c8ccf4f7b8f5cce586d15d66	no deployment descriptor
+pnxtech/hydra-express	183	JavaScript		framework/library/list by name or description
+zhang8043/AgileWork	183	JavaScript	f94df1e0d6b731f4f8a46d0c1efa2eea305e697c	only 4 deployable services
+danmt/microservices-basics	182	TypeScript	352cf98f90749ea30c85940f9457b6be5095af32	no deployment descriptor
+gmsec/gmsec	182	Go	23de86e09c27ca9d48794896101d5fa659ce8f3e	no deployment descriptor
+wuyichen24/microservices-patterns	182	Java		framework/library/list by name or description
+jzero-io/jzero	181	Go		framework/library/list by name or description
+saurabh0719/jett	180	Go		framework/library/list by name or description
+thangchung/magazine-website	179	C#	85039c14d5c74481fdc5007cb09a0468dec78caf	ok: 10 services, 2 compose, 2 k8s/helm yaml
+LearningByExample/reactive-ms-example	178	Java	c40d5855ce2c5e0b6dfb06aa4a421ae9560d6548	no deployment descriptor
+pace/bricks	178	Go		framework/library/list by name or description
+open-edge-platform/edge-ai-libraries	177	Python		repo > 300 MB
+tsawler/go-microservices	176	Go	301cd369d52951cfdd3c991a44ae9b44ba42aa36	only 2 deployable services
+yidongnan/spring-cloud-consul-example	176	Java	d9dc6ea857c9219075ced397eb2bcb5eabe47c29	only 5 deployable services
+avoidwork/tenso	175	JavaScript		framework/library/list by name or description
+nutcas3/lets-bet	175	Go	f2e0e96531819568fd7bd9d14aa6899ea5be47a5	only 3 deployable services
+pemrouz/fero	175	JavaScript	cf49b6cd5d63bbe668a057f4d52278ac883d4580	no deployment descriptor
+Elders/Cronus	174	C#		framework/library/list by name or description
+joaopauloaramuni/projeto-de-software	174	Java	6e6140a2a2562e31a3eb035f4940f7b888909145	no deployment descriptor
+CanerPatir/aspnet-core-clean-arch	173	C#	d985326b38dd92fb013d55963eba382e28c476a5	no deployment descriptor
+code-architect/Microservices-with-Lumen	173	PHP	4672a676210891ef9a3741c978a2475b89a17ac0	no deployment descriptor
+Joker666/microservice-demo	173	JavaScript	93c42dffa776fddc943af5f065fc0b43767d0747	supported-language share 33/44 < 0.8
+microbus-io/fabric	173	Go	7780881d356454b3d5a8b7bae79d6e225b32ebb4	no deployment descriptor
+modernice/goes	172	Go		framework/library/list by name or description
+as-a-service/pdf	170	Python	dc59552041a7da09ebb29748fbb38fad91a6b1c2	no deployment descriptor
+kora-projects/kora	170	Java		framework/library/list by name or description
+python-microservices/microservices-scaffold	170	Python	f9bd276a74d3e4ec6b79595549d3c8af64c29939	no deployment descriptor
+erda-project/erda-infra	169	Go		framework/library/list by name or description
+MaskingTechnology/jitar	169	TypeScript	b37989c99cefbdb99bb9bf29e6ece546acbd91d5	no deployment descriptor
+JarrodMalkovic/auction-website	168	TypeScript	2baa7fcceb1b19bdf08eb381a87f23cbc258b4c6	ok: 8 services, 0 compose, 16 k8s/helm yaml
+saturnism/docker-kubernetes-by-example-java	168	Java	aa4c9955677c1c0733f564eb6e0b9f10345a4582	only 2 deployable services
+CocaineCong/micro-todoList	167	Go	499cb5a90b603c7d642457c9f7e19ed2872f1ec5	only 5 deployable services
+Splitet/SplitetFramework	167	Java		framework/library/list by name or description
+DescartesResearch/TeaStore	166	Java		already used in the evaluation
+goldbergyoni/nodejs-course	166	JavaScript	8edbaf5e2a30d3f83b03d4b66e391b9e59568f28	only 0 deployable services
+Advanced-SpringCloud/cloud-book	164	Java	94158c1868495f5a7775a07990bead6b68b4d87f	only 0 deployable services
+creditkarma/thrift-typescript	164	TypeScript	afd0ce0858cb54a1cedb198a4aec659b6ab90b68	no deployment descriptor
+Aptomi/k8s-app-engine	163	Go	11b495fc520680093a990fee0eaaf598507596b5	only 2 deployable services
+zhu327/doge	163	Python		framework/library/list by name or description
+base26-labs/appkernel	162	Python		framework/library/list by name or description
+devopsfaith/api2html	162	Go	00d32dd97f431f1a2b4e85d35439c861d7cb5ec3	no deployment descriptor
+leoChaoGlut/log-sys	161	JavaScript	11ee58b0871103b79f2e323ad24b5811f576a16c	screened out: tool (log system)
+silentbalanceyh/vertx-zero	160	Java	1f77f6e356b8a87cd0207e3ed35daa15b7d1b8e5	only 0 deployable services
+tuyucheng7/taketoday-tutorial4j	160	Java		framework/library/list by name or description
+itmuch/spring-cloud-dubbo-together	159	Java	4ccac19668978f611e2dd0b21524dfb25c829b64	no deployment descriptor
+nelsonwenner/stream-live-system	159	JavaScript	63c3fd10c4c50c3813f9050aaad4667dde72b860	only 4 deployable services
+sanyathisside/System-Design	159	Java	ff6f892b14af16d5aa9bc6285073935b685d915c	no deployment descriptor
+carousell/Orion	158	Go		framework/library/list by name or description
+piomin/course-spring-microservices	158	Kotlin	0b741cceab703205b64301821ec7fc85e8aa1148	only 3 deployable services
+amalgam8/amalgam8	157	Go	248b9f58362d0530d56f0a7ead5ad8cec45cb845	screened out: routing fabric product
+Rapter1990/SpringBootMicroservices	157	Java	2c7d011cf661f36257230acfa65087eb34ff07f4	ok: 7 services, 1 compose, 0 k8s/helm yaml
+sitkoru/Sitko.Core	157	C#	aced145585a0b9f84c2a98aa5b37f1951c3e8abd	screened out: library
+Kikobeats/tom	156	JavaScript		framework/library/list by name or description
+moleculerjs/moleculer-db	156	JavaScript	9720afc014072c25857d73b3496d723fe2eb394d	no deployment descriptor
+vany0114/microservices-dotnetcore-docker-sf-k8s	156	C#	125a43cf13e6f4ea5a116c9ce3d293ff73ce1ccb	ok: 7 services, 2 compose, 0 k8s/helm yaml
+apache/airavata	155	Go		framework/library/list by name or description
+zyclonite/nassh-relay	155	Java		framework/library/list by name or description
+Armando1514/Event-Driven-Microservices-Advanced	154	Java	4ab690484f4092ac2d3a12d58c09a81627f67c61	only 0 deployable services
+shanbay/sea	154	Python		framework/library/list by name or description
+srfrog/go-relax	153	Go		framework/library/list by name or description
+tkssharma/12-factor-app-microservices	153	TypeScript	1ebe1b4dc1d1fbe7ece8a8f37cded538f412a06d	ok: 7 services, 9 compose, 0 k8s/helm yaml
+moleculer-go/moleculer	152	Go		framework/library/list by name or description
+pavel-one/EdgeGPT-Go	152	Go		framework/library/list by name or description
+sindresorhus/gh-latest-repos	151	JavaScript	7b19463b22d9eef007a7df2c69ea1a0d1abc0cca	no deployment descriptor
+awsrun/aws-serverless	150	JavaScript	f378daa3b3673a75bd0153b409be9e9a07b5566c	no deployment descriptor
+ImmoweltGroup/create-react-microservice	150	JavaScript	552740776cabd85a5a3e6a6d22a340016b2f0b62	no deployment descriptor
+meysamhadeli/booking-microservices-java-spring-boot	150	Java	ea481c3ee7ebd405cd7e11d1b1a3ab9b73b5b972	ok: 16 services, 1 compose, 0 k8s/helm yaml
+swarmion/swarmion	150	TypeScript	bff9d180a7aa2b4c43c3eb35072f5d4c0971855d	no deployment descriptor
+alperenkucukali/dotnet-microservices	149	C#	1b551f75ccab3e6b07cc14399c6df3ff8b78c8a7	ok: 6 services, 2 compose, 0 k8s/helm yaml
+commandeer/open	149	JavaScript	9a8eff035e3011a4e0b14955d20edd78ed729366	screened out: tool
+apache/apisix-website	147	JavaScript	a6f5807aa30c67a880e2496eac91ee9802cfb179	only 3 deployable services
+AndriyKalashnykov/spring-microservices-k8s	146	Java	4fe9ec53e04544653ed1f8c7a9f2dca25281ce18	only 4 deployable services
+cuongnh28/spring-microservices-blueprint	146	Java	80ee16f09e2b5759599e3ce57ce0b5efd39cd1aa	ok: 10 services, 1 compose, 0 k8s/helm yaml
+eiselems/spring-boot-microservices	146	Java	78863edbb949ef8c9ae2022340168c0214c0b50d	only 5 deployable services
+rclement/mailer	146	Python	8ed3a4654e4e2194c63e3bdc6aba9e568096c452	no deployment descriptor
+stemmlerjs/solid-email-microservice	146	TypeScript	6264dca1c2e814db1b081036c1fe4d35afb64c9d	no deployment descriptor
+Clivern/Hippo	144	Go	499ece4ed4c7ec3ca20a32222d7e37bd558528fb	no deployment descriptor
+vadimdemedes/generator-micro-service	144	JavaScript		framework/library/list by name or description
+artembilan/microservices-patterns-spring-integration	143	Java	c47a45f384f1def533305557c15e428161167543	no deployment descriptor
+evenchange4/micro-medium-api	143	JavaScript	af0495de36eddf4299652c18e3531e3a273669a5	no deployment descriptor
+madslundt/NetCoreMediatrSample	143	C#	e752c85c675822668386a59fa5cc7f763530106c	only 3 deployable services
+veliovgroup/mail-time	143	JavaScript	d2887bc6769046a81427e70ecd9bec422bd80ee3	only 3 deployable services
+Jochen-z/php-microservice-demo	142	PHP	0aea06c488454f82768aacff63d6e6fc21f4cdbe	only 4 deployable services
+Avanade/Beef	141	C#		framework/library/list by name or description
+aligoren/go_ecommerce_microservice	140	Go	7e6e17770eb289134b56843402edecb42a9d0ea4	only 4 deployable services
+devmentors/FeedR	139	C#	3b6517bc2d1c9e5ff29575a71cb8c0d1c47cd17d	no deployment descriptor
+ebubekirdinc/SuuCat	139	C#	aa467180a3151238dfe9974a065ce55464817872	ok: 10 services, 2 compose, 0 k8s/helm yaml
+microservices-practical/microservices-v10	139	Java	2397a423fa0cbb2dcd111a05963aa5b625cbf71f	no deployment descriptor
+opexdev/core	139	Kotlin	c246a3cf6d1662a2e6048fc7a247add3a91c767e	ok: 18 services, 10 compose, 0 k8s/helm yaml
+suadev/dotnet-istanbul-microservices-demo	139	C#	257a6ea78dbf353a529363e3e322edcf80782f12	only 4 deployable services
+wang502/gores	139	Go		framework/library/list by name or description
+antklim/go-microservices	138	Go	cb8cfd3635de4845b77f71d883462ceb5fe73ae2	no deployment descriptor
+iquanzhan/lizhi-edu-parent	138	JavaScript	d62f3d3d1eccb1952183c7064214849782c4b3f6	no deployment descriptor
+chensheng/ddd-boot	137	Java	af99a6e0fc83ddd55eaf548071b1b517cbecf5f8	no deployment descriptor
+ali-bouali/springboot-3-micro-service-demo	136	Java	f41500964070cf656e69404ef2d97e5d841676ad	only 3 deployable services
+GuoGuang/madao_service	136	Java	a0e669bda8840b9297f8b6a741578674abceaf30	no deployment descriptor
+osstotalsoft/nbb	136	C#	2c77a6f215e26dd325dd9637ae0412f9103e32f7	no deployment descriptor
+lucadibello/in-house-greenhouse	135	TypeScript	b6e47fb839b92dd7862fc4aedf1d299955b88b30	only 3 deployable services
+mstrYoda/production-ready-microservice-example	135	Go	c828d544e19ee84373d46fea6d0ecca985f080c4	only 4 deployable services
+aserg-ufmg/micro-livraria	134	JavaScript	629543bb5c31dc3992425a9fecf9ef1dffbd09f5	no deployment descriptor
+demoiselle/framework	134	Java		framework/library/list by name or description
+fraktalio/order-demo	134	Java	5143a830a0a7953025fce594696561d9e94191d5	no deployment descriptor
+ionutbalosin/ecommerce-app	134	Java	f0b60013ff2b1345847d5ec7f4fc232bb7afafc6	ok: 7 services, 5 compose, 0 k8s/helm yaml
+air-go/rpc	133	Go	7b4daf385f4abc8fa35389ba2481ac4aed175dba	no deployment descriptor
+moov-io/paygate	133	Go	5008d0abdb59fe06f6b8f353cee8217d92d41630	screened out: product (payments API)
+otto-de/edison-microservice	133	Java	b58b4acf9af914e8b3600725cdf2381b6b1b3616	no deployment descriptor
+tkssharma/nestjs-microservices	133	TypeScript	dec736318b4283d08ae1b1cd3f558d6aaba00efb	ok: 6 services, 2 compose, 0 k8s/helm yaml
+antosubash/abp-microservice	132	C#	60faee0c96884fa8ac6049d7781b8fe9f29f2e6d	ok: 7 services, 9 compose, 0 k8s/helm yaml
+hueter/docker-node-express-boilerplate	132	JavaScript	a6499d7c58911f7e4812e590ba34292c0cd0a6e0	only 3 deployable services
+moke-game/platform	132	Go	c3564c8c798c246da31f07878460d23a16f07d82	no deployment descriptor
+scosman/zipstreamer	132	Go	1fe490409ea890ad3e3feb31c5a1f10458565215	no deployment descriptor
+thisisagile/easy	132	TypeScript		framework/library/list by name or description
+hootsuite/healthchecks	131	Go	e52a3a9c2c99e9f1d2dc96d0b91f351fc3c77edc	no deployment descriptor
+Norwik/Helmet	131	Go	358de5654bbcc7cededa2e4a101f7efd3d6db68b	no deployment descriptor
+Bharath-code/git-scope	130	Go	b31313fbbf026f190740d2338a319237fa72501b	no deployment descriptor
+cloudblue/django-cqrs	130	Python	f99435bb032c2eda70d1ffa71b86d7e9b2296a5c	screened out: library
+congcoi123/tenio	130	Java	5df792294b310bca76b367f691915691015ad198	no deployment descriptor
+gjovanovicst/golang-auth-api	130	Go	795d18de043cf17a62ab4c3c7c60a8fcf6ca14e6	only 4 deployable services
+nvawntien/go-judge-system	130	Go	afd8cb8319371f0736732e8d589cf82d1a624669	ok: 6 services, 2 compose, 0 k8s/helm yaml
+dtm-labs/client-csharp	129	C#	bccd14acbd077e430f688f2c8d178d75a1b09d60	no deployment descriptor
+JeffDeCola/my-cheat-sheets	129	Go	97f5970d924c4dd5b734c45100ff3158d2db0579	no deployment descriptor
+mesg-foundation/engine	129	Go	496656ced3cb98d90ba9e72fbbd6f3d3a6bc73d3	no deployment descriptor
+pellse/assembler	129	Java		framework/library/list by name or description
+spring-avengers/summerframework	129	Java		framework/library/list by name or description
+go-dev-frame/sponge_examples	128	Go		framework/library/list by name or description
+kruglov-dmitry/crypto_crawler	128	Python	17ec2962cb202cc7bbbdb1a986e2c806e09dd8c5	only 0 deployable services
+lamondlu/Library	128	JavaScript		framework/library/list by name or description
+alejandro-du/vaadin-microservices-demo	127	Java	263cfd4da791c038042c4efbe0cab40ce831273c	no deployment descriptor
+eolinker/apinto-dashboard	127	Go	9389d3177c5e9f998018166be569648898175706	no deployment descriptor
+getlarge/ticketing	127	TypeScript	8b9646c5f1fbc418a1ec4e155502898ebb1c4908	ok: 21 services, 1 compose, 0 k8s/helm yaml
+jmeisele/ml-ops	127	Python		repo > 300 MB
+ithaka/apiron	126	Python	5d12993356e99b16db97090c71221aa9e66c7b3c	no deployment descriptor
+NesoHQ/bgce-archive	126	TypeScript	fa0b20863cd0b1345dc40c584102b20a5d543a55	ok: 7 services, 2 compose, 0 k8s/helm yaml
+TransEmpiric/webFluxTemplate	126	Java	eac7eab14a08d9a4f911c9a3464b786c6b06c16a	no deployment descriptor
+venkatapgummadi/agentflow	126	Python		framework/library/list by name or description
+PacktPublishing/Hands-on-Microservices-with-Python	125	Python	ae97e8b45808ab8402e2bf77e1d88df2134edf60	ok: 7 services, 2 compose, 0 k8s/helm yaml
+sfast/zeronode	125	JavaScript	cac2555e44cdd1e3d9eb187e3b29f1ebb907bfab	no deployment descriptor
+dyb881/nest-serve	124	TypeScript	b66d3d1a1d5fd3e5e1204855abacbb02245ed6a1	no deployment descriptor
+netcorebcn/quiz	124	C#	82fb546678855dcf71152d3ccc2fb698e332e86b	ok: 7 services, 5 compose, 2 k8s/helm yaml
+SebastienMelki/sebuf	124	Go		framework/library/list by name or description
+buptmiao/microservice-app	123	Go	896651eb6dabb0fc876a3865ca472f416b5e5e05	ok: 8 services, 3 compose, 0 k8s/helm yaml
+claygod/microservice	123	Go		framework/library/list by name or description
+rcherara/microservice-architecture	123	Java	f8104ac82efaf3edaa71e698681c4595a5d9fa4a	ok: 7 services, 1 compose, 2 k8s/helm yaml
+solidglue/Recommender_System_Inference_Services	123	Go	d0a03ce3cca417b4ce785cb26531aa013b403c68	no deployment descriptor
+keets2012/Lottor	122	Java	d68b88c9dfc6808ec4b4ff67377c1242dc44bffa	only 0 deployable services
+syngit-org/syngit	122	Go		framework/library/list by name or description
+aelassas/microservices	121	C#	6634ed18fdc114726fe0bb87f2e0299e7ea7a0dd	ok: 7 services, 1 compose, 0 k8s/helm yaml
+Protocol-Lattice/thunder	121	Go		framework/library/list by name or description
+ShankyTiwari/Microservices-in-Nodejs	121	JavaScript	8099cee71f45a37d3db7c149f8836f26cbe6a9c6	no deployment descriptor
+aditya43/golang-101	120	Go	228c66878966ea4e75f7b661842661e1eb35ac09	only 3 deployable services
+HaydiKodlayalim/microservice-app	120	Java	ad941ab38a7c87319007538b9d9394121ba096f2	only 4 deployable services
+hellosatish/microservice-patterns	120	Java	88da956906c6b8438d637fb07adecc585f904a60	no deployment descriptor
+piomin/sample-spring-security-microservices	120	Java	d1de481ecef8915f0b63bd8fa7109f7acf7b8cd3	only 1 deployable services
+AleksK1NG/Go-NATS-Streaming-gRPC-PostgreSQL	119	Go	b3a39bf1c8f4096b2f1882da26352e415e416d86	screened out: one application service plus infrastructure
+andreschaffer/microservices-testing-examples	119	Java	c9193343603bceaf44fc1532deaa70f91c9ae734	only 2 deployable services
+hemerajs/aither	119	JavaScript	730f0056f96bb111f56fbcba4f2a8168528b8a0e	ok: 8 services, 1 compose, 0 k8s/helm yaml
+rabbitevents/rabbitevents	119	PHP	391d13ca707a9389a8ffbd55a00a266f05ff55e3	only 1 deployable services
+takama/caldera	119	Go	3723d12d4057d112d0512c6e01169e25175b54c5	only 1 deployable services
+thangchung/GrpcJsonTranscoder	119	C#	8aa92225c8579133c3e0c8c699e97705216bb178	only 4 deployable services
+kawser2133/clean-structured-project	118	C#		framework/library/list by name or description
+andreagiassi/microservice-rbac-user-management	117	Java	04500e7ded03e48686c884a5a6710a3943873c41	no deployment descriptor
+ngaxavi/nest-cqrs	117	TypeScript	dd1d55865d55a31f66c0ae5b307c0304cd40db2c	only 2 deployable services
+dapeng-soa/dapeng-soa	116	Java		framework/library/list by name or description
+datawire/kubernaut	116	Python	15c313330ef17717d79b0fdccb66edfd63a752ba	no deployment descriptor
+shahradelahi/node-cronstack	116	TypeScript		framework/library/list by name or description
+thangchung/coffeeshop-on-nomad	116	C#	23556f2c5af493ff1c0a4e47274c22298ea2cb89	ok: 10 services, 3 compose, 0 k8s/helm yaml
+single-spa/single-spa.js.org	115	JavaScript	7c8b48ee7bd0fd08451be50d6cee4addb6401a22	no deployment descriptor
+andrechristikan/ack-nestjs-boilerplate-kafka	114	TypeScript	a46cacedb9388f51a0b521255ea2d237cbde3321	screened out: boilerplate
+adgadev/jplusone	113	Java	2ab773e703032fc431ff2a8ff4c225a297358915	no deployment descriptor
+aspnetrun/run-aspnet-grpc	113	C#	c19063e77f59b7da32e7dd6252f8453f2302223e	no deployment descriptor
+itsmebhavin/nestjs-microservice-example	113	TypeScript	ed0b9e3661e8973990380f5e81d511d5834bde10	only 3 deployable services
+nilportugues/symfony-jsonapi	113	PHP	c86957fed9e32824e21310152b3f07a7e3ca0e61	no deployment descriptor
+tinrab/kubernetes-go-grpc-tutorial	112	Go	6053b94037ec3a6ab738ccbf02e07814f073cc02	no deployment descriptor
+yesinteractive/dadjokes	111	PHP	8ae3f0591d010121abcf841ebb2b3eebc518694a	only 1 deployable services
+yildizberkay/microservices-with-expressjs	111	JavaScript	29647645acbb8f21d4adbf719e99da7d42d64c41	only 4 deployable services
+akmamun/gin-boilerplate	110	Go	babf80e0ae8bd828c2c40c71cb2a2e22605f853b	only 3 deployable services
+bzdgn/spring-boot-restful-web-service-example	110	Java		framework/library/list by name or description
+georgeyk/loafer	110	Python	e878f27897776362f6661d31845f756ced7be711	only 2 deployable services
+Kahbazi/MediatR.AspNetCore.Endpoints	110	C#	7a69cb530f369c65856fe8695360312d7f057f41	no deployment descriptor
+mattaharish/fastify-boilerplate	110	JavaScript	2afddbf94960dac6fdba43e4cd59ca3300431d22	no deployment descriptor
+thanhson1085/swagger-combined	110	JavaScript	843b50a57f08e79048e6faf1a56138059d11d0dd	no deployment descriptor
+zerowasteestonia/World-Cleanup-Day	110	JavaScript		repo > 300 MB
+aidanwhiteley/books	109	Java	9afeea828f363a91ae9886c53ae9aeebc66ca017	ok: 7 services, 1 compose, 0 k8s/helm yaml
+hammock-project/hammock	109	Java	0bed53f5ded295f020d74861645954abfbd69a4b	no deployment descriptor
+kalintsenkov/BettingSystem	109	C#	f511c9680e6c2d8d858b57aab0c934205ca100f8	ok: 7 services, 1 compose, 0 k8s/helm yaml
+nplszfl/OmniTradeERP	109	Java	8fc5bba13768ae7f265ab87f9991e2662e77bb22	ok: 24 services, 8 compose, 8 k8s/helm yaml
+TensorMSA/tensormsa	109	Python	c36b565159cd934533636429add3c7d7263d622b	no deployment descriptor
+ashleydavis/nodejs-microservices-example	108	JavaScript	e34b2b977f40ec62f1321dbcc738c04a6bf74d97	only 4 deployable services
+BoRuDar/configuration	108	Go		framework/library/list by name or description
+dmhao/hgw	108	Go	dca265f95d3978f8afc6307d50bacc021b302083	no deployment descriptor
+alexcheng1982/happyride	107	Java	17a507fca213d87dab849b6cef6f1f469433b42e	ok: 13 services, 1 compose, 12 k8s/helm yaml
+orsinium-labs/walnats	107	Python		framework/library/list by name or description
+tal-tech/odin	107	Go		framework/library/list by name or description
+ashishjuyal/banking	106	Go	56ac7feaff8477635fcdb02c51de9ac7edd5ba9e	only 1 deployable services
+Jorexdev/java-prep	106	Java	f666cea61c968c105dac52240afbdd701362eef6	no deployment descriptor
+maxzerbini/dingo	106	Go		framework/library/list by name or description
+secmohammed/microservices-e-commerce-nest-api	106	TypeScript	674e4659eefef67b72bef64db73b423740a5a0ad	no deployment descriptor
+team-dandelion/go-dandelion	106	Go		framework/library/list by name or description
+as-a-service/screenshot	105	JavaScript	f52f49325b4dab1fb9498bc55a64a887f156f2bb	no deployment descriptor
+AsenaJs/Asena	105	TypeScript		framework/library/list by name or description
+chesterheng/microservices-node-react	105	TypeScript	c5ed81ba25544f86edc66c888b40f1bdefb46ac3	screened out: course code copies
+GoogleContainerTools/container-debug-support	105	Go	0a0640e96fbd0e67e4a09a125a17b02cf28603be	no deployment descriptor
+Pathwit/file2md	105	Python	989389bc81769cb21628748d80c33bb8e6c7b33b	only 2 deployable services
+piomin/sample-istio-services	105	Java		framework/library/list by name or description
+PramithaMJ/fully-completed-microservices-Java-Springboot	105	Java	4a3d1d7c8a678c621371caafebe083e79f105244	ok: 8 services, 1 compose, 0 k8s/helm yaml
+suadev/microservices-change-data-capture-with-debezium	105	C#	c89d957d0bf5531b645e4a6a03635bd4f62d8637	only 5 deployable services
+ThoreauZZ/spring-cloud-example	105	Java	654cf9b0700a50cdfc7abfdd121a7284478e7eb6	ok: 10 services, 3 compose, 0 k8s/helm yaml
+aktos-io/scada.js	104	JavaScript		framework/library/list by name or description
+fdonnet/ubik_accounting	104	C#	b68b37e1e768140f2cf0c4791c88219137cdb3fd	ok: 6 services, 1 compose, 0 k8s/helm yaml
+ligato/cn-infra	104	Go		framework/library/list by name or description
+microsphere-projects/microsphere-java	104	Java	f7f69b5ba9ef77566cf98c3c1e8bda395610f212	no deployment descriptor
+p-fedyukovich/nestjs-google-pubsub-microservice	104	TypeScript		framework/library/list by name or description
+autodidaddict/go-shopping	103	Go		framework/library/list by name or description
+creditkarma/thrift-parser	103	TypeScript	e4324a10ff65fef4bcc63cb1e939abcb445c0428	no deployment descriptor
+mehmetozkaya/CloudNative	103	C#	c78fe4027fce7df0fe4d3283c4f70aefa078e21a	screened out: collection of hands-on projects
+softindex/datakernel	103	Java	69a6bcb85be43177d96ea56041b63e8d8ffb10de	no deployment descriptor
+walkline/ToCloud9	103	Go	7fa8f2c7c56d3f3db06c801d8c9f2a8e761a83fc	ok: 15 services, 1 compose, 2 k8s/helm yaml
+CONNECT-platform/connect-platform	102	JavaScript	82dbfc98add4e7440bf1c01a7e5cbdbdc9dbfbfa	no deployment descriptor
+danionescu0/docker-flask-mongodb-example	102	Python	98857426fa24c3b07978e71a4e0335940f66e25d	ok: 6 services, 2 compose, 6 k8s/helm yaml
+malike/sso-auth	102	Java	21a48d2746006ab148357be6dead51cc0cc06a78	no deployment descriptor
+tanerdiler/spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes	102	Java	01dab0154a2a5000079227c38dcfc1436d83062f	ok: 6 services, 1 compose, 0 k8s/helm yaml
