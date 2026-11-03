@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0073",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 736,
+  "completion_tokens": 223,
+  "total_tokens": 959,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The ingress resource owned by coolstore-ingress routes HTTP traffic to the host named by the idp component, indicating runtime dependency.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The host value is a generic variable from values.ingress.hosts, not a declared component name, so no direct runtime dependency on a component named 'host'.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"helm-template; key=spec.rules.host\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"The host key may contain arbitrary hostnames or variables not corresponding to declared components\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"Only when the host key explicitly names a declared component that is the target of ingress routing does it indicate a runtime dependency; otherwise, it may be a generic hostname or unrelated value.\"\n}",
+ "payload": {
+  "rank": 73,
+  "kind": "helm-template",
+  "cls": "key",
+  "detail": "spec.rules.host",
+  "repos": 2,
+  "mentions": 5,
+  "samples": [
+   {
+    "repo": "vietnam-devs__coolstore-microservices",
+    "source": "coolstore-ingress",
+    "target": "idp",
+    "file": "deploys/charts/coolstore/templates/nginx-ingress.yaml",
+    "line": 18,
+    "kind": "helm-template",
+    "cls": "key",
+    "detail": "spec.rules.host",
+    "tag": "unread",
+    "text": "- host: {{ .Values.hosts.idp }}",
+    "context": "   14:       - path: /\n   15:         backend:\n   16:           serviceName: spa\n   17:           servicePort: 80\n>> 18:   - host: {{ .Values.hosts.idp }}\n   19:     http:\n   20:       paths:\n   21:       - path: /\n   22:         backend:"
+   },
+   {
+    "repo": "oracle-quickstart__oci-cloudnative",
+    "source": "{{ include \"mushop.fullname\" . }}-grafana",
+    "target": "host",
+    "file": "deploy/complete/helm-chart/mushop/templates/ingress-grafana.yaml",
+    "line": 35,
+    "kind": "helm-template",
+    "cls": "key",
+    "detail": "spec.rules.host",
+    "tag": "file-read",
+    "text": "- host: {{ $host }}",
+    "context": "   31:   ingressClassName: nginx\n   32:   rules:\n   33:     {{- if .Values.ingress.hosts }}\n   34:     {{- range $host := .Values.ingress.hosts }}\n>> 35:     - host: {{ $host }}\n   36:       http:\n   37:         paths:\n   38:         - path: /grafana(/|$)(.*)\n   39:           pathType: Prefix"
+   }
+  ]
+ }
+}

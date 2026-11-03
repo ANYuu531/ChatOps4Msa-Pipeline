@@ -1,0 +1,213 @@
+{
+ "id": "edges-0005",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1859,
+  "completion_tokens": 365,
+  "total_tokens": 2224,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"correct\", \"reason\": \"The istio ingressgateway route configuration directs traffic to address-service at runtime.\"}, {\"i\": 1, \"verdict\": \"wrong\", \"reason\": \"The cited code only declares the postgres-trip-validation service in docker-compose but does not show cdc-service connecting to it.\"}, {\"i\": 2, \"verdict\": \"wrong\", \"reason\": \"The application.yml only shows Hibernate dialect and schema configuration, no evidence of connecting to address-postgres.\"}, {\"i\": 3, \"verdict\": \"correct\", \"reason\": \"Zuul gateway routes configured to forward requests to the frontend service by service-id.\"}, {\"i\": 4, \"verdict\": \"unsure\", \"reason\": \"The properties list service URLs but do not show mock-server actually calling insights-http-service-1.\"}, {\"i\": 5, \"verdict\": \"correct\", \"reason\": \"Datasource URL in application.properties points to product-mysql, indicating runtime DB dependency.\"}, {\"i\": 6, \"verdict\": \"correct\", \"reason\": \"Connection string in appsettings.json points to accountdb, showing runtime DB dependency.\"}, {\"i\": 7, \"verdict\": \"correct\", \"reason\": \"Environment variable GrpcSettings:CustomerUrl points to customer.grpc, indicating webstatus calls customer.api.\"}, {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"Environment variable ElasticConfiguration:Uri points to elasticsearch, indicating runtime dependency.\"}, {\"i\": 9, \"verdict\": \"wrong\", \"reason\": \"The docker-compose snippet only declares sqlserver service but does not show ordering service connecting to it.\"}]}",
+ "payload": [
+  {
+   "repo": "alexcheng1982__happyride",
+   "source": "istio-ingressgateway",
+   "target": "address-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: devops/k8s/istio/address-service-external.yaml",
+     "file": "devops/k8s/istio/address-service-external.yaml",
+     "line": 19,
+     "kind": "yaml",
+     "context": "   15:       rewrite:\n   16:         uri: \"/\"         \n   17:       route:\n   18:         - destination:\n>> 19:             host: address-service.happyride.svc.cluster.local\n   20:     - name: \"passenger-service-external\"\n   21:       match:\n   22:         - uri:\n   23:             prefix: \"/passenger\""
+    }
+   ]
+  },
+  {
+   "repo": "alexcheng1982__happyride",
+   "source": "cdc-service",
+   "target": "postgres-trip-validation",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: devops/dev/docker-compose.yml#depends_on",
+     "file": "devops/dev/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: devops/dev/docker-compose.yml",
+     "file": "devops/dev/docker-compose.yml",
+     "line": 74,
+     "kind": "compose",
+     "context": "   70:       POSTGRES_DB: happyride-dispatch\n   71:       POSTGRES_USER: postgres\n   72:       POSTGRES_PASSWORD: postgres\n   73: \n>> 74:   postgres-trip-validation:\n   75:     image: eventuateio/eventuate-postgres:0.14.0.RELEASE\n   76:     ports:\n   77:       - \"8434:5432\"\n   78:     environment:"
+    }
+   ]
+  },
+  {
+   "repo": "alexcheng1982__happyride",
+   "source": "passenger-service",
+   "target": "address-postgres",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: happyride/service/passenger-service/src/main/resources/application.yml",
+     "file": "happyride/service/passenger-service/src/main/resources/application.yml",
+     "line": 0,
+     "kind": "spring-yaml",
+     "context": "   spring:\n     jpa:\n       open-in-view: false\n       hibernate:\n         ddl-auto: validate\n       properties:\n         hibernate:\n           dialect: org.hibernate.dialect.PostgreSQLDialect\n           default_schema: happyride"
+    }
+   ]
+  },
+  {
+   "repo": "aliyun__alibabacloud-microservice-demo",
+   "source": "zuul-gateway",
+   "target": "frontend",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/zuul-gateway/src/main/resources/application.properties",
+     "file": "src/zuul-gateway/src/main/resources/application.properties",
+     "line": 7,
+     "kind": "properties",
+     "context": "   3: spring.cloud.nacos.discovery.server-addr=localhost:8848\n   4: \n   5: zuul.routes.test.id=test\n   6: zuul.routes.test.path=/**\n>> 7: zuul.routes.test.service-id=frontend\n   8: \n   9: \n   10: #zuul.routes.test2.id=test2\n   11: #zuul.routes.test2.path=/test2/**"
+    }
+   ]
+  },
+  {
+   "repo": "aliyun__alibabacloud-microservice-demo",
+   "source": "mock-server",
+   "target": "insights-http-service-1",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: arms-demo/mock-server/src/main/resources/application.properties",
+     "file": "arms-demo/mock-server/src/main/resources/application.properties",
+     "line": 7,
+     "kind": "properties",
+     "context": "   3: spring.application.name=${SERVICE_NAME}\n   4: service.names=insights-server-0,insights-server-1,insights-server-2,insights-server-3,insights-http-server-0,insights-http-server-1,\\\n   5:   insights-redis-server,insights-mysql-server,insights-mysql-connection\n   6: service.serverUrls=http://insights-service-0:9190/,http://insights-service-1:9190/,http://insights-service-2:9190/,http://insights-service-3:9190/,\\\n>> 7:   http://insights-http-service-0:9190/,http://insights-http-service-1:9190/,\\\n   8:   http://insights-redis-service:9190/,http://insights-mysql-service:9190/,http://insights-mysql-connection-service:9190/\n   9: \n   10: #外部服务地址\n   11: external.service.addr=http://insights-http-service-0:9190/"
+    }
+   ]
+  },
+  {
+   "repo": "aliyun__alibabacloud-microservice-demo",
+   "source": "provider",
+   "target": "product-mysql",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/productservice/productservice-provider/src/main/resources/application.properties",
+     "file": "src/productservice/productservice-provider/src/main/resources/application.properties",
+     "line": 7,
+     "kind": "properties",
+     "context": "   3: management.endpoints.web.exposure.include=*\n   4: \n   5: #database\n   6: spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver\n>> 7: spring.datasource.url=jdbc:mysql://product-mysql:3306/product?characterEncoding=utf8&useSSL=false&serverTimezone=GMT\n   8: spring.datasource.username=root\n   9: spring.datasource.password=productservice\n   10: spring.jpa.hibernate.ddl-auto=update\n   11: spring.jpa.show-sql=false"
+    }
+   ]
+  },
+  {
+   "repo": "alperenkucukali__dotnet-microservices",
+   "source": "account.api",
+   "target": "accountdb",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Services/Account/Account.API/appsettings.json",
+     "file": "src/Services/Account/Account.API/appsettings.json",
+     "line": 3,
+     "kind": "appsettings",
+     "context": "   1: {\n   2:   \"ConnectionStrings\": {\n>> 3:     \"AccountConnectionString\": \"Server=accountdb;Database=AccountDb;User Id=admin;Password=admin1234;\"\n   4:   },\n   5:   \"GrpcSettings\": {\n   6:     \"CustomerUrl\": \"http://localhost:5001\"\n   7:   },"
+    },
+    {
+     "ref": "code: src/Services/Account/Account.API/appsettings.Development.json",
+     "file": "src/Services/Account/Account.API/appsettings.Development.json",
+     "line": 3,
+     "kind": "appsettings",
+     "context": "   1: {\n   2:   \"ConnectionStrings\": {\n>> 3:     \"AccountConnectionString\": \"Server=accountdb;Database=AccountDb;User Id=admin;Password=admin1234;\"\n   4:   },\n   5:   \"GrpcSettings\": {\n   6:     \"CustomerUrl\": \"http://localhost:5001\"\n   7:   },"
+    }
+   ]
+  },
+  {
+   "repo": "alperenkucukali__dotnet-microservices",
+   "source": "webstatus",
+   "target": "customer.api",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/docker-compose.override.yml",
+     "file": "src/docker-compose.override.yml",
+     "line": 97,
+     "kind": "compose",
+     "context": "   93:     container_name: account.api\n   94:     environment:\n   95:       - ASPNETCORE_ENVIRONMENT=Development\n   96:       - \"DatabaseSettings:ConnectionString=Server=accountdb;Port=5432;Database=AccountDb;User Id=admin;Password=admin1234;\"\n>> 97:       - \"GrpcSettings:CustomerUrl=http://customer.grpc\"\n   98:       - \"EventBusSettings:HostAddress=amqp://guest:guest@rabbitmq:5672\"\n   99:       - \"ElasticConfiguration:Uri=http://elasticsearch:9200\"\n   100:     depends_on:\n   101:       - accountdb"
+    }
+   ]
+  },
+  {
+   "repo": "alperenkucukali__dotnet-microservices",
+   "source": "account.api",
+   "target": "elasticsearch",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/docker-compose.override.yml",
+     "file": "src/docker-compose.override.yml",
+     "line": 85,
+     "kind": "compose",
+     "context": "   81:     environment:\n   82:       - ASPNETCORE_ENVIRONMENT=Development\n   83:       - \"DatabaseSettings:ConnectionString=mongodb://transactiondb:27017\"\n   84:       - \"EventBusSettings:HostAddress=amqp://guest:guest@rabbitmq:5672\"\n>> 85:       - \"ElasticConfiguration:Uri=http://elasticsearch:9200\"\n   86:     depends_on:\n   87:       - transactiondb\n   88:       - rabbitmq\n   89:     ports:"
+    }
+   ]
+  },
+  {
+   "repo": "amasen02__freshcart-backend",
+   "source": "ordering",
+   "target": "sqlserver",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker/docker-compose.yaml#depends_on",
+     "file": "deploy/docker/docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deploy/docker/docker-compose.yaml",
+     "file": "deploy/docker/docker-compose.yaml",
+     "line": 17,
+     "kind": "compose",
+     "context": "   13: services:\n   14: \n   15:   # --- Relational stores -------------------------------------------------------\n   16: \n>> 17:   sqlserver:\n   18:     image: mcr.microsoft.com/mssql/server:2022-latest\n   19:     container_name: freshcart-sqlserver\n   20:     environment:\n   21:       ACCEPT_EULA: \"Y\""
+    }
+   ]
+  }
+ ]
+}

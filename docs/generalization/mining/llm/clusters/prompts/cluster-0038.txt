@@ -1,0 +1,59 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = dotenv; position = key; context key = *_HOST
+They come from 3 different repositories (7 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=mostafacs__ecommerce-microservices-spring-reactive-webflux SOURCE=? TARGET=postgresdb file=common.env:4
+   1: CONFIG_SERVICE_URL=http://config-server:8111
+   2: DISCOVERY_SERVER_URL=http://discovery-server:2222/eureka/
+   3: JWKS_URL=http://authentication-server:8087/.well-known/jwks
+>> 4: DATABASE_HOST=postgresdb
+   5: DATABASE_NAME=ecommerce
+   6: DATABASE_SCHEMA=ecommerce
+   7: DATABASE_PORT=5432
+   8: DATABASE_USER=ecommerce
+
+[1] repo=kreta__Kreta SOURCE=? TARGET=taskmanager file=etc/docker/.env.dist:25
+   21: RABBITMQ_INTERNAL_PORT=5672
+   22: RABBITMQ_EXTERNAL_GUI_PORT=15672
+   23: RABBITMQ_INTERNAL_GUI_PORT=15672
+   24: 
+>> 25: TASK_MANAGER_HOST=taskmanager.localhost
+   26: IDENTITY_ACCESS_HOST=identityaccess.localhost
+   27: COMPOSITE_UI_HOST=kreta.localhost
+   28: NOTIFIER_HOST=notifier.localhost
+   29: 
+
+[2] repo=walkline__ToCloud9 SOURCE=? TARGET=database-ac file=.env:3
+   1: AUTH_DB_USER=root
+   2: AUTH_DB_PASS=password
+>> 3: AUTH_DB_HOST=database-ac
+   4: AUTH_DB_PORT=3306
+   5: AUTH_DB_NAME=acore_auth
+   6: 
+   7: CHAR_DB_USER=root

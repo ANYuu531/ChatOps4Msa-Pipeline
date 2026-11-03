@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0107",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 667,
+  "completion_tokens": 242,
+  "total_tokens": 909,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The elasticsearch.endpoints URL 'http://elk:9200' indicates that the component owning this config connects to the 'elk' service at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Similarly, the elasticsearch.endpoints URL 'http://elk:9200' shows a runtime connection from the component owning this config to 'elk'.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml file with key path ending in exporters.elasticsearch.endpoints\",\n    \"edge\": \"component owning the config -> component named in the endpoint URL\",\n    \"exclusions\": \"none (assuming the config is used at runtime by the owning component)\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"Both samples show runtime dependencies from the component owning the YAML config to the TARGET named in elasticsearch.endpoints URLs, so a general rule drawing edges from the config owner to the endpoint targets in such YAML keys is valid.\"\n}",
+ "payload": {
+  "rank": 107,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "exporters.elasticsearch.endpoints",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "phongnguyend__Practical.CleanArchitecture",
+    "source": "?",
+    "target": "elk",
+    "file": "tools/opentelemetry/otel-collector-config.yaml",
+    "line": 20,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.elasticsearch.endpoints",
+    "tag": "unread",
+    "text": "- 'http://elk:9200'",
+    "context": "   16:     tls:\n   17:       insecure: true\n   18:   elasticsearch:\n   19:     endpoints:\n>> 20:       - 'http://elk:9200'\n   21: processors:\n   22:   batch: null\n   23: extensions:\n   24:   health_check: null"
+   },
+   {
+    "repo": "thangchung__coffeeshop-on-nomad",
+    "source": "?",
+    "target": "elk",
+    "file": "otel-collector-config.yaml",
+    "line": 25,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.elasticsearch.endpoints",
+    "tag": "unread",
+    "text": "- \"http://elk:9200\"",
+    "context": "   21:       insecure: true\n   22: \n   23:   elasticsearch:\n   24:     endpoints:\n>> 25:     - \"http://elk:9200\"\n   26: \n   27: processors:\n   28:   batch:\n   29: "
+   }
+  ]
+ }
+}

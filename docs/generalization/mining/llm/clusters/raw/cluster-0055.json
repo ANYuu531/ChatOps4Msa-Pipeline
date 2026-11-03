@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0055",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1087,
+  "completion_tokens": 323,
+  "total_tokens": 1410,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The otel-collector-config.yaml is a config file for the OpenTelemetry Collector component, so the dependency on loki is from the otel-collector component, not from an unspecified SOURCE.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"Same as sample 0, the config file configures the OpenTelemetry Collector component, so the dependency on loki is from the otel-collector component, not from an unspecified SOURCE.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"Same reasoning as samples 0 and 1: the config file is for the OpenTelemetry Collector component, so the dependency on loki is from that component.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml file with key path containing exporters.otlphttp/loki.endpoint\",\n    \"edge\": \"component owning the config file (e.g. OpenTelemetry Collector) -> TARGET\",\n    \"exclusions\": \"do not draw edge from arbitrary SOURCE components that do not own or run the config file\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show a dependency on loki from the OpenTelemetry Collector component that owns the config file, not from an unspecified SOURCE, so edges should be drawn from the config file's owning component to TARGET.\"\n}",
+ "payload": {
+  "rank": 55,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "exporters.otlphttp/loki.endpoint",
+  "repos": 3,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "loki",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 61,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.otlphttp/loki.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://loki:3100/otlp\"",
+    "context": "   57: \n   58:   # https://grafana.com/docs/loki/latest/send-data/otel/\n   59:   # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/lokiexporter/README.md\n   60:   otlphttp/loki:\n>> 61:     endpoint: \"http://loki:3100/otlp\"\n   62:     tls:\n   63:       insecure: true\n   64: \n   65:       #  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "loki",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 73,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.otlphttp/loki.endpoint",
+    "tag": "unread",
+    "text": "endpoint: ${env:LOKI_ENDPOINT:-\"http://loki:3100/otlp\"}",
+    "context": "   69: \n   70:   # https://grafana.com/docs/loki/latest/send-data/otel/\n   71:   # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/lokiexporter/README.md\n   72:   otlphttp/loki:\n>> 73:     endpoint: ${env:LOKI_ENDPOINT:-\"http://loki:3100/otlp\"}\n   74:     tls:\n   75:       insecure: true\n   76:       #  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint\n   77:       #  loki:"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "loki",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 61,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.otlphttp/loki.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://loki:3100/otlp\"",
+    "context": "   57: \n   58:   # https://grafana.com/docs/loki/latest/send-data/otel/\n   59:   # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/lokiexporter/README.md\n   60:   otlphttp/loki:\n>> 61:     endpoint: \"http://loki:3100/otlp\"\n   62:     tls:\n   63:       insecure: true\n   64:       \n   65:       #  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint"
+   }
+  ]
+ }
+}

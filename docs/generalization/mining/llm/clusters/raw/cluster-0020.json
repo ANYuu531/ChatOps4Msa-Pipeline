@@ -1,0 +1,92 @@
+{
+ "id": "cluster-0020",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1097,
+  "completion_tokens": 355,
+  "total_tokens": 1452,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The endpoint is in an OpenTelemetry Collector config file, so the runtime dependency on 'prometheus' is from the otel-collector component, not the unspecified SOURCE.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"Same as sample 0: the endpoint is in an OpenTelemetry Collector config, so the dependency on 'prometheus' is from the otel-collector component, not the unspecified SOURCE.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The endpoint is in an OpenTelemetry Collector config file, so the runtime dependency on 'victoriametrics' is from the otel-collector component, not the unspecified SOURCE.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"Same as sample 0 and 1: the dependency on 'prometheus' is from the otel-collector component, not the unspecified SOURCE.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml file with key path exporters.prometheusremotewrite.endpoint\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show endpoints in OpenTelemetry Collector config files, so the runtime dependency on the TARGET is from the otel-collector component, not the SOURCE owning the file line; thus no general syntactic rule can safely add edges here.\"\n}",
+ "payload": {
+  "rank": 20,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "exporters.prometheusremotewrite.endpoint",
+  "repos": 4,
+  "mentions": 7,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 56,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.prometheusremotewrite.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://prometheus:9090/api/v1/write\"",
+    "context": "   52:   prometheus:\n   53:     endpoint: \"0.0.0.0:8889\"\n   54: \n   55:   prometheusremotewrite:\n>> 56:     endpoint: \"http://prometheus:9090/api/v1/write\"\n   57: \n   58:   # https://grafana.com/docs/loki/latest/send-data/otel/\n   59:   # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/lokiexporter/README.md\n   60:   otlphttp/loki:"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 68,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.prometheusremotewrite.endpoint",
+    "tag": "unread",
+    "text": "endpoint: ${env:PROMETHEUS_REMOTE_WRITE_ENDPOINT:-\"http://prometheus:9090/api/v1/write\"}",
+    "context": "   64:   prometheus:\n   65:     endpoint: ${env:PROMETHEUS_ENDPOINT:-\"0.0.0.0:8889\"}\n   66: \n   67:   prometheusremotewrite:\n>> 68:     endpoint: ${env:PROMETHEUS_REMOTE_WRITE_ENDPOINT:-\"http://prometheus:9090/api/v1/write\"}\n   69: \n   70:   # https://grafana.com/docs/loki/latest/send-data/otel/\n   71:   # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/lokiexporter/README.md\n   72:   otlphttp/loki:"
+   },
+   {
+    "repo": "Toktik-Team__toktik",
+    "source": "?",
+    "target": "victoriametrics",
+    "file": "otel.yaml",
+    "line": 8,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.prometheusremotewrite.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://victoriametrics:8428/api/v1/write\"",
+    "context": "   4:       grpc:\n   5: \n   6: exporters:\n   7:   prometheusremotewrite:\n>> 8:     endpoint: \"http://victoriametrics:8428/api/v1/write\"\n   9: \n   10:   logging:\n   11: \n   12:   jaeger:"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 56,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.prometheusremotewrite.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://prometheus:9090/api/v1/write\"",
+    "context": "   52:   prometheus:\n   53:     endpoint: \"0.0.0.0:8889\"\n   54: \n   55:   prometheusremotewrite:\n>> 56:     endpoint: \"http://prometheus:9090/api/v1/write\"\n   57: \n   58:   # https://grafana.com/docs/loki/latest/send-data/otel/\n   59:   # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/lokiexporter/README.md\n   60:   otlphttp/loki:"
+   }
+  ]
+ }
+}

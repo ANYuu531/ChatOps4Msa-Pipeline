@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0038",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 812,
+  "completion_tokens": 256,
+  "total_tokens": 1068,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"unsure\", \"reason\": \"The file is a common.env without clear ownership, so the SOURCE component is unknown and cannot be confirmed as depending on postgresdb.\"}, {\"i\": 1, \"verdict\": \"wrong-source\", \"reason\": \"The .env.dist file is a template for docker-compose services; the dependency on taskmanager is from the container or service that mounts this env, not from the .env.dist file itself.\"}, {\"i\": 2, \"verdict\": \"wrong-source\", \"reason\": \"The .env file is a config file likely mounted into some service, so the dependency on database-ac is from the service using this config, not from the .env file itself.\"}], \"rule\": {\"general\": false, \"trigger\": \"dotenv; key position with *_HOST suffix\", \"edge\": \"cannot be determined from syntax alone\", \"exclusions\": \"files that are templates or shared env files without clear ownership\", \"confidence\": \"medium\"}, \"summary\": \"HOST keys in dotenv files indicate runtime dependencies only when the owning component of the env file or config is known; syntax alone does not reliably distinguish true dependencies from mere declarations or templates.\"}",
+ "payload": {
+  "rank": 38,
+  "kind": "dotenv",
+  "cls": "key",
+  "detail": "*_HOST",
+  "repos": 3,
+  "mentions": 7,
+  "samples": [
+   {
+    "repo": "mostafacs__ecommerce-microservices-spring-reactive-webflux",
+    "source": "?",
+    "target": "postgresdb",
+    "file": "common.env",
+    "line": 4,
+    "kind": "dotenv",
+    "cls": "key",
+    "detail": "*_HOST",
+    "tag": "unread",
+    "text": "DATABASE_HOST=postgresdb",
+    "context": "   1: CONFIG_SERVICE_URL=http://config-server:8111\n   2: DISCOVERY_SERVER_URL=http://discovery-server:2222/eureka/\n   3: JWKS_URL=http://authentication-server:8087/.well-known/jwks\n>> 4: DATABASE_HOST=postgresdb\n   5: DATABASE_NAME=ecommerce\n   6: DATABASE_SCHEMA=ecommerce\n   7: DATABASE_PORT=5432\n   8: DATABASE_USER=ecommerce"
+   },
+   {
+    "repo": "kreta__Kreta",
+    "source": "?",
+    "target": "taskmanager",
+    "file": "etc/docker/.env.dist",
+    "line": 25,
+    "kind": "dotenv",
+    "cls": "key",
+    "detail": "*_HOST",
+    "tag": "unread",
+    "text": "TASK_MANAGER_HOST=taskmanager.localhost",
+    "context": "   21: RABBITMQ_INTERNAL_PORT=5672\n   22: RABBITMQ_EXTERNAL_GUI_PORT=15672\n   23: RABBITMQ_INTERNAL_GUI_PORT=15672\n   24: \n>> 25: TASK_MANAGER_HOST=taskmanager.localhost\n   26: IDENTITY_ACCESS_HOST=identityaccess.localhost\n   27: COMPOSITE_UI_HOST=kreta.localhost\n   28: NOTIFIER_HOST=notifier.localhost\n   29: "
+   },
+   {
+    "repo": "walkline__ToCloud9",
+    "source": "?",
+    "target": "database-ac",
+    "file": ".env",
+    "line": 3,
+    "kind": "dotenv",
+    "cls": "key",
+    "detail": "*_HOST",
+    "tag": "file-read",
+    "text": "AUTH_DB_HOST=database-ac",
+    "context": "   1: AUTH_DB_USER=root\n   2: AUTH_DB_PASS=password\n>> 3: AUTH_DB_HOST=database-ac\n   4: AUTH_DB_PORT=3306\n   5: AUTH_DB_NAME=acore_auth\n   6: \n   7: CHAR_DB_USER=root"
+   }
+  ]
+ }
+}

@@ -1,0 +1,130 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=hemerajs__aither api -> nats (type async)
+  cited code: api/index.js:21
+   17:         childLogger: true,
+   18:         tag: 'hemera-1'
+   19:       },
+   20:       nats: {
+>> 21:         url: process.env.NATS_URL,
+   22:         user: process.env.NATS_USER,
+   23:         pass: process.env.NATS_PW
+   24:       },
+   25:       plugins: [
+  cited code: docker-compose.yml#depends_on
+
+
+[1] repo=hoangtien2k3__ecommerce-microservices tax-service -> kafka (type async)
+  cited code: k8s/backend/tax-service.yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: tax-service
+     namespace: ecommerce
+     labels:
+       app: tax-service
+   spec:
+     strategy:
+
+[2] repo=hoangtien2k3__ecommerce-microservices order-service -> kafka (type async)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: k8s/backend/order-service.yaml
+   30:             capabilities:
+   31:               drop: ["ALL"]
+   32:         - name: wait-for-kafka
+   33:           image: busybox
+>> 34:           command: ["sh", "-c", "until nc -z kafka 9092; do sleep 5; done"]
+   35:           securityContext:
+   36:             runAsUser: 65534
+   37:             allowPrivilegeEscalation: false
+   38:             capabilities:
+
+[3] repo=hoangtien2k3__ecommerce-microservices payment-service -> order-service (type sync-http)
+  cited code: payment-service/src/main/java/com/ecommerce/paymentservice/service/CallAPI.java:17
+   13: 
+   14:     private final RestClient.Builder restClientBuilder;
+   15: 
+   16:     public OrderDto receiverPaymentDto(Integer orderId, String token) {
+>> 17:         return restClientBuilder.baseUrl("http://ORDER-SERVICE").build()
+   18:                 .get()
+   19:                 .uri("/api/orders/{id}", orderId)
+   20:                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+   21:                 .retrieve()
+
+[4] repo=idugalic__micro-company query-side-blog -> registry (type sync-http)
+  cited code: query-side-blog/pom.xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   
+   	<modelVersion>4.0.0</modelVersion>
+   	<artifactId>query-side-blog</artifactId>
+   	<packaging>jar</packaging>
+   	<name>query-side-blog</name>
+   	<description>Blog project - Query side</description>
+
+[5] repo=idugalic__micro-company adminserver -> registry (type sync-http)
+  cited code: adminserver/pom.xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <project xmlns="https://maven.apache.org/POM/4.0.0" xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance"
+   	xsi:schemaLocation="https://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+   	<modelVersion>4.0.0</modelVersion>
+   
+   	<artifactId>adminserver</artifactId>
+   	<name>Admin Server</name>
+   	<description>Admin Server</description>
+   
+
+[6] repo=idugalic__micro-company circuit-breaker -> configserver (type sync-http)
+  cited code: docker/docker-compose-v3.yml
+   1: version: "3"
+   2: 
+   3: services:
+>> 4:   configserver:
+   5:     image: idugalic/configserver
+   6:     ports:
+   7:      - "8888:8888"
+   8:   registry:
+  cited code: docker/docker-compose.yml
+   1: version: "2"
+   2: 
+   3: services:
+>> 4:   configserver:
+   5:     image: idugalic/configserver
+   6:     ports:
+   7:      - "8888:8888"
+   8:   registry:
+
+[7] repo=ionutbalosin__ecommerce-app account-service -> kafka (type async)
+  cited code: docker-compose-spring-boot.yml#depends_on
+
+
+[8] repo=ionutbalosin__ecommerce-app order-service -> order-service-database (type db)
+  cited code: docker-compose-spring-boot.yml#depends_on
+
+
+[9] repo=ionutbalosin__ecommerce-app kafka -> zookeeper (type sync-http)
+  cited code: docker-compose-kafka.yml#depends_on
+
+  cited code: docker-compose-kafka.yml
+   11:   # - keeps track of which brokers are part of the Kafka cluster
+   12:   # - used by Kafka brokers to determine which broker is the leader of a given partition and topic
+   13:   # - stores configurations for topics and permissions
+   14:   # - sends notifications to Kafka in case of changes (e.g. new topic, broker dies, broker comes up, delete topics, etc.…)
+>> 15:   zookeeper:
+   16:     container_name: zookeeper.local
+   17:     image: confluentinc/cp-zookeeper:7.5.0
+   18:     ports:
+   19:       - 12181:12181

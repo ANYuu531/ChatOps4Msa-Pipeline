@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0036",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1095,
+  "completion_tokens": 224,
+  "total_tokens": 1319,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [\n  {\"i\": 0, \"verdict\": \"not-dependency\", \"reason\": \"The literal 'mobile' is a key in a map lookup, likely a user attribute name, not a runtime component address.\"},\n  {\"i\": 1, \"verdict\": \"not-dependency\", \"reason\": \"The string 'security' is a directory name or resource key, not a runtime component address.\"},\n  {\"i\": 2, \"verdict\": \"not-dependency\", \"reason\": \"The string 'auth' appears as part of a URL path segment, but this is a fixed API path, not a component name used as an address.\"}\n],\n\"rule\": {\"general\": false, \"trigger\": \"src:java literal call get\", \"edge\": \"N/A\", \"exclusions\": \"N/A\", \"confidence\": \"high\"},\n\"summary\": \"All samples show literals used as keys, directory names, or URL path segments rather than runtime component addresses, so no general syntactic rule can separate dependencies from non-dependencies here.\"}",
+ "payload": {
+  "rank": 36,
+  "kind": "src:java",
+  "cls": "literal",
+  "detail": "call get",
+  "repos": 3,
+  "mentions": 8,
+  "samples": [
+   {
+    "repo": "mateaix__matecloud",
+    "source": "mate-sso-starter",
+    "target": "mobile",
+    "file": "mate-starters/mate-sso-starter/src/main/java/vip/mate/starter/sso/provider/FeishuProvider.java",
+    "line": 176,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call get",
+    "tag": "file-read",
+    "text": "str(u.get(\"mobile\")),",
+    "context": "   172:         return new ExternalUser(\n   173:                 str(u.get(\"user_id\")),\n   174:                 str(u.get(\"union_id\")),\n   175:                 str(u.get(\"name\")),\n>> 176:                 str(u.get(\"mobile\")),\n   177:                 str(u.get(\"email\")),\n   178:                 str(asMap(u.get(\"avatar\")).get(\"avatar_240\")),\n   179:                 deptIds,\n   180:                 enabled,"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "pgconfig",
+    "target": "security",
+    "file": "src/catalog/backends/pgconfig/src/main/java/org/geoserver/cloud/config/catalog/backend/pgconfig/PgconfigGeoServerResourceLoader.java",
+    "line": 40,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call get",
+    "tag": "unread",
+    "text": "store.get(\"security\").dir();",
+    "context": "   36:      * constructed. On a fresh database that ordering left the REST API with empty access rules, denying every request\n   37:      * with a 403 status code.\n   38:      */\n   39:     private void createSecurityDirectory(PgconfigResourceStore store) {\n>> 40:         store.get(\"security\").dir();\n   41:     }\n   42: \n   43:     public @NonNull LockProvider getLockProvider() {\n   44:         return resourceStore.getLockProvider();"
+   },
+   {
+    "repo": "opexdev__core",
+    "source": "keycloak-gateway",
+    "target": "auth",
+    "file": "user-management/keycloak-gateway/src/main/kotlin/co/nilin/opex/auth/gateway/extension/VaultService.java",
+    "line": 28,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call get",
+    "tag": "file-read",
+    "text": "String vaultToken = SimpleHttp.doPost(vaultUrl + \"v1//auth/app-id/login/\" + vaultAppId, session).json(new UserId(vaultUserId)).asJson().get(\"auth\").get(\"client_token\").textValue();",
+    "context": "   24: \n   25:     public ByteBuffer getSecretFromVault(String vaultUrl, String realm, String vaultSecretEngineName, String secretName, String vaultAppId, String vaultUserId, int secretVersion) {\n   26:         try {\n   27:             //curl \\    --method POST \\    --data '{\"user_id\": \":user_id\"}' \\    http://127.0.0.1:8200/v1/auth/app-id/login/:app_id\n>> 28:             String vaultToken = SimpleHttp.doPost(vaultUrl + \"v1//auth/app-id/login/\" + vaultAppId, session).json(new UserId(vaultUserId)).asJson().get(\"auth\").get(\"client_token\").textValue();\n   29:             JsonNode node = SimpleHttp.doGet(vaultUrl + \"v1/\" + vaultSecretEngineName + \"/\" + realm + \"?version=\" + secretVersion, session).header(\"X-Vault-Token\", vaultToken).asJson();\n   30:             byte[] secretBytes = node.get(\"data\").get(secretName).textValue().getBytes(StandardCharsets.UTF_8);\n   31:             return ByteBuffer.wrap(secretBytes);\n   32:         } catch (IOException e) {"
+   }
+  ]
+ }
+}

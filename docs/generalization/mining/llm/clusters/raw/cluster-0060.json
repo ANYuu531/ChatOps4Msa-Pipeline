@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0060",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 771,
+  "completion_tokens": 203,
+  "total_tokens": 974,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The identity component's appsettings declares a connection string pointing to the postgres component, indicating identity connects to postgres at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The source component is unknown, so it is unclear which component owns this config and thus whether it depends on magazine_db.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"appsettings; position=key; context key=connectionstring\",\n    \"edge\": \"unknown\",\n    \"exclusions\": \"unknown\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"Connection strings in appsettings files often indicate runtime dependencies from the component owning the config to the target named in the connection string, but without knowing the config owner, edges cannot always be drawn reliably.\"\n}",
+ "payload": {
+  "rank": 60,
+  "kind": "appsettings",
+  "cls": "key",
+  "detail": "connectionstring",
+  "repos": 2,
+  "mentions": 22,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "identity",
+    "target": "postgres",
+    "file": "src/Services/Identity/src/Identity.Api/appsettings.docker.json",
+    "line": 9,
+    "kind": "appsettings",
+    "cls": "key",
+    "detail": "connectionstring",
+    "tag": "file-read",
+    "text": "\"ConnectionString\": \"Server=postgres;Port=5432;Database=identity;User Id=postgres;Password=postgres;Include Error Detail=true\"",
+    "context": "   5:             \"Default\": \"Information\"\n   6:         }\n   7:     },\n   8:     \"PostgresOptions\": {\n>> 9:         \"ConnectionString\": \"Server=postgres;Port=5432;Database=identity;User Id=postgres;Password=postgres;Include Error Detail=true\"\n   10:     },\n   11:     \"AuthOptions\": {\n   12:         \"IssuerUri\": \"http://identity:80\"\n   13:     },"
+   },
+   {
+    "repo": "thangchung__magazine-website",
+    "source": "?",
+    "target": "magazine_db",
+    "file": "src/Services/Cik.Services.Magazine.MagazineService/appsettings.json",
+    "line": 4,
+    "kind": "appsettings",
+    "cls": "key",
+    "detail": "connectionstring",
+    "tag": "file-read",
+    "text": "\"ConnectionString\": \"User ID=magazine_dba;Password=Passw0rd;Host=192.168.99.100;Port=5432;Database=magazine_db;Pooling=true;MinPoolSize=1;MaxPoolSize=20;\"",
+    "context": "   1: ﻿{\n   2:   \"RunInMemory\": true,\n   3:   \"DataAccessPostgreSqlProvider\": {\n>> 4:     \"ConnectionString\": \"User ID=magazine_dba;Password=Passw0rd;Host=192.168.99.100;Port=5432;Database=magazine_db;Pooling=true;MinPoolSize=1;MaxPoolSize=20;\"\n   5:   },\n   6:   \"Logging\": {\n   7:     \"IncludeScopes\": false,\n   8:     \"LogLevel\": {"
+   }
+  ]
+ }
+}

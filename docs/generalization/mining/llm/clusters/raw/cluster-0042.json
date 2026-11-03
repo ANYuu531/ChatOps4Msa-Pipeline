@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0042",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1025,
+  "completion_tokens": 245,
+  "total_tokens": 1270,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a commented URL in a YAML config file and does not indicate a runtime call or connection to the TARGET component.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a comment containing a URL and does not represent a runtime dependency from SOURCE to TARGET.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a comment with documentation URLs and does not imply any runtime interaction with TARGET.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml file at storage_config.filesystem.directory\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"Lines that are comments or URLs should not be considered dependencies\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples are comments containing URLs and do not represent runtime dependencies, so no general syntactic rule can separate dependency from non-dependency in this context.\"\n}",
+ "payload": {
+  "rank": 42,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "storage_config.filesystem.directory",
+  "repos": 3,
+  "mentions": 6,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "grafana",
+    "file": "deployments/configs/loki-config.yaml",
+    "line": 39,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "storage_config.filesystem.directory",
+    "tag": "unread",
+    "text": "# https://grafana.com/docs/loki/latest/send-data/otel/",
+    "context": "   35: storage_config:\n   36:   filesystem:\n   37:     directory: /tmp/loki/chunks\n   38: \n>> 39: # https://grafana.com/docs/loki/latest/send-data/otel/\n   40: # https://grafana.com/docs/loki/latest/send-data/otel/#changing-the-default-mapping-of-otlp-to-loki-format\n   41: limits_config:\n   42:   # this attribute should be `true` when we use `otlphttp/loki`, but if we want to use `loki component` from `opentelemetry-collector-contrib` it should be false.\n   43:   allow_structured_metadata: true"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "grafana",
+    "file": "deployments/configs/loki-config.yaml",
+    "line": 39,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "storage_config.filesystem.directory",
+    "tag": "unread",
+    "text": "# https://grafana.com/docs/loki/latest/send-data/otel/",
+    "context": "   35: storage_config:\n   36:   filesystem:\n   37:     directory: /tmp/loki/chunks\n   38: \n>> 39: # https://grafana.com/docs/loki/latest/send-data/otel/\n   40: # https://grafana.com/docs/loki/latest/send-data/otel/#changing-the-default-mapping-of-otlp-to-loki-format\n   41: limits_config:\n   42:   # this attribute should be `true` when we use `otlphttp/loki`, but if we want to use `loki component` from `opentelemetry-collector-contrib` it should be false.\n   43:   allow_structured_metadata: true"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "grafana",
+    "file": "deployments/configs/loki-config.yaml",
+    "line": 39,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "storage_config.filesystem.directory",
+    "tag": "unread",
+    "text": "# https://grafana.com/docs/loki/latest/send-data/otel/",
+    "context": "   35: storage_config:\n   36:   filesystem:\n   37:     directory: /tmp/loki/chunks\n   38: \n>> 39: # https://grafana.com/docs/loki/latest/send-data/otel/\n   40: # https://grafana.com/docs/loki/latest/send-data/otel/#changing-the-default-mapping-of-otlp-to-loki-format\n   41: limits_config:\n   42:   # this attribute should be `true` when we use `otlphttp/loki`, but if we want to use `loki component` from `opentelemetry-collector-contrib` it should be false.\n   43:   allow_structured_metadata: true"
+   }
+  ]
+ }
+}

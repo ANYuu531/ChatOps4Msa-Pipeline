@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0106",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 819,
+  "completion_tokens": 260,
+  "total_tokens": 1079,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The line is inside an OpenTelemetry Collector configuration file, which is a separate component that exports telemetry data to the elasticsearch service; thus the dependency is from the otel-collector component to elasticsearch, not from an unknown SOURCE.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"Same as sample 0, this line configures the OpenTelemetry Collector exporter endpoint, so the dependency is from the otel-collector component to elasticsearch, not from an unknown SOURCE.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml file with key path containing 'exporters.elasticsearch.endpoint'\",\n    \"edge\": \"component owning the config file (e.g. otel-collector) -> elasticsearch\",\n    \"exclusions\": \"do not draw edges from components that do not own or run the config file\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"The endpoint setting in OpenTelemetry Collector exporter configs indicates a runtime dependency from the collector component to elasticsearch, not from arbitrary components referencing the config.\"\n}",
+ "payload": {
+  "rank": 106,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "exporters.elasticsearch.endpoint",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "elasticsearch",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 76,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.elasticsearch.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://elasticsearch:9200\"",
+    "context": "   72: \n   73:   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/elasticsearchexporter\n   74:   # using `elasticsearch` from `opentelemetry-collector-contrib` components because it doesn't exist in `opentelemetry-collector`\n   75:   elasticsearch:\n>> 76:     endpoint: \"http://elasticsearch:9200\"\n   77: \n   78:   zipkin:\n   79:     endpoint: \"http://zipkin-all-in-one:9411/api/v2/spans\"\n   80:     format: proto"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "elasticsearch",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 76,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.elasticsearch.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://elasticsearch:9200\"",
+    "context": "   72: \n   73:   # https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/elasticsearchexporter\n   74:   # using `elasticsearch` from `opentelemetry-collector-contrib` components because it doesn't exist in `opentelemetry-collector`\n   75:   elasticsearch:\n>> 76:     endpoint: \"http://elasticsearch:9200\"\n   77:   \n   78:   zipkin:\n   79:     endpoint: \"http://zipkin-all-in-one:9411/api/v2/spans\"\n   80:     format: proto"
+   }
+  ]
+ }
+}

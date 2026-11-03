@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0104",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 680,
+  "completion_tokens": 277,
+  "total_tokens": 957,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The 'otel.yaml' file is a configuration file for the OpenTelemetry collector component, so the dependency on 'jaeger-all-in-one' is from the collector component, not from the component owning this config file.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The 'otel-collector-config.yaml' is a config file for the OpenTelemetry collector component, so the runtime dependency on 'jaeger-all-in-one' is from the collector, not from the component owning this config file.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml file; key path containing 'exporters.jaeger.endpoint'\",\n    \"edge\": \"OpenTelemetry collector component -> jaeger-all-in-one\",\n    \"exclusions\": \"do not draw edge from the component owning the config file, but from the component that runs the collector using this config\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"The 'exporters.jaeger.endpoint' key in YAML config files indicates a runtime dependency from the OpenTelemetry collector component to the Jaeger component, not from the component owning the config file itself.\"\n}",
+ "payload": {
+  "rank": 104,
+  "kind": "yaml",
+  "cls": "hostport",
+  "detail": "exporters.jaeger.endpoint",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "Toktik-Team__toktik",
+    "source": "?",
+    "target": "jaeger-all-in-one",
+    "file": "otel.yaml",
+    "line": 13,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "exporters.jaeger.endpoint",
+    "tag": "unread",
+    "text": "endpoint: jaeger-all-in-one:14250",
+    "context": "   9: \n   10:   logging:\n   11: \n   12:   jaeger:\n>> 13:     endpoint: jaeger-all-in-one:14250\n   14:     tls:\n   15:       insecure: true\n   16: \n   17: processors:"
+   },
+   {
+    "repo": "thangchung__coffeeshop-on-nomad",
+    "source": "?",
+    "target": "jaeger-all-in-one",
+    "file": "otel-collector-config.yaml",
+    "line": 19,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "exporters.jaeger.endpoint",
+    "tag": "unread",
+    "text": "endpoint: jaeger-all-in-one:14250",
+    "context": "   15:     endpoint: \"http://zipkin-all-in-one:9411/api/v2/spans\"\n   16:     format: proto\n   17: \n   18:   jaeger:\n>> 19:     endpoint: jaeger-all-in-one:14250\n   20:     tls:\n   21:       insecure: true\n   22: \n   23:   elasticsearch:"
+   }
+  ]
+ }
+}

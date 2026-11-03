@@ -1,0 +1,106 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=wsrh8888__beaver-server livekit -> redis (type db)
+  cited code: docker/docker-compose.yml#depends_on
+
+
+[1] repo=wsrh8888__beaver-server rocketmq-console -> rocketmq-namesrv (type sync-http)
+  cited code: docker/docker-compose.yml#depends_on
+
+
+[2] repo=wsrh8888__beaver-server rocketmq-broker -> rocketmq-namesrv (type sync-http)
+  cited code: docker/docker-compose.yml#depends_on
+
+  cited code: docker/docker-compose.yml
+   53:       - "50000-50050:50000-50050/udp" # WebRTC 媒体流
+   54:     depends_on:
+   55:       - redis
+   56: 
+>> 57:   rocketmq-namesrv:
+   58:     image: apache/rocketmq:5.3.1
+   59:     container_name: rocketmq-namesrv
+   60:     restart: always
+   61:     ports:
+
+[3] repo=xiajingren__HelloAbp aspnet-core -> www.stats.gov.cn (type external)
+  cited code: aspnet-core/src/Xhznl.HelloAbp.BackgroundJobs.Shared/HelloAbpBackgroundJobSharedModule.cs:17
+   13:         {
+   14:             Configure<ChinaRegionOption>(options =>
+   15:             {
+   16:                 options.Year = 2019;
+>> 17:                 options.BaseGovUri=new Uri("http://www.stats.gov.cn/tjsj/tjbz/tjyqhdmhcxhfdm/2019/");
+   18:             });
+   19:         }
+   20:     }
+   21: }
+  cited code: aspnet-core/src/Xhznl.HelloAbp.BackgroundJobs.Shared/Jobs/ChinaRegion/ChinaRegionOption.cs:9
+   5:     public class ChinaRegionOption
+   6:     {
+   7:         public int Year { get; set; } = 2019;
+   8: 
+>> 9:         public Uri BaseGovUri { get; set; } = new Uri("http://www.stats.gov.cn/tjsj/tjbz/tjyqhdmhcxhfdm/2019/");
+   10:     }
+   11: }
+
+[4] repo=xiajingren__HelloAbp xhznl-datadictionary-identityserver -> *.datadictionary.com,http (type external)
+  cited code: aspnet-core/modules/data-dictionary/host/Xhznl.DataDictionary.IdentityServer/appsettings.json
+   1: ﻿{
+   2:   "App": {
+   3:     "SelfUrl": "https://localhost:44351/",
+>> 4:     "CorsOrigins": "https://*.DataDictionary.com,http://localhost:4200"
+   5:   },
+   6:   "AppSelfUrl": "https://localhost:44351/",
+   7:   "ConnectionStrings": {
+   8:     "Default": "Server=localhost;User Id=sa;Password=123456;Database=HelloAbp;MultipleActiveResultSets=true"
+
+[5] repo=xiajingren__HelloAbp data-dictionary -> sqlserver (type db)
+  cited code: aspnet-core/modules/data-dictionary/docker-compose.yml#depends_on
+
+  cited code: aspnet-core/modules/data-dictionary/docker-compose.override.yml
+   1: version: '3.4'
+   2: 
+   3: services:
+>> 4:   sqlserver:
+   5:     environment:
+   6:       - SA_PASSWORD=yourStrong(!)Password
+   7:       - ACCEPT_EULA=Y
+   8:     ports:
+
+[6] repo=yiv__yivnet usercenter -> etcd.yivgame.com (type external)
+  cited code: usercenter/main.go:36
+   32: 
+   33: var (
+   34: 	grpcAddr    = flag.String("grpc.addr", ":10000", "gRPC listen address")
+   35: 	debugAddr   = flag.String("debug.addr", ":10001", "Debug and metrics listen address")
+>> 36: 	etcdAddr    = flag.String("etcd.addr", "http://etcd.yivgame.com:2379", "Consul agent address")
+   37: 	kafkaAddr   = flag.String("kafka.addr", "kafka.yivgame.com:9092", "kafka address")
+   38: 	zipkinAddr  = flag.String("zipkin.addr", "", "Enable Zipkin tracing via a Zipkin HTTP Collector endpoint")
+   39: 	serviceName = flag.String("service.name", "usercenter", "the name of this service in service discovery")
+   40: )
+
+[7] repo=yiv__yivnet drone-agent -> drone-server (type sync-http)
+  cited code: docker/compose/infrastructure/docker-compose.yml#depends_on
+
+
+[8] repo=yiv__yivnet game -> etcd.yivgame.com (type external)
+  cited code: game/main.go:38
+   34: var (
+   35: 	grpcAddr     = flag.String("grpc.addr", ":10020", "gRPC (HTTP) listen address")
+   36: 	debugAddr    = flag.String("debug.addr", ":10021", "Debug and metrics listen address")
+   37: 	zipkinAddr   = flag.String("zipkin.addr", "", "Enable Zipkin tracing via a Zipkin HTTP Collector endpoint")
+>> 38: 	etcdAddr     = flag.String("etcd.addr", "http://etcd.yivgame.com:2379", "Consul agent address")
+   39: 	serviceName  = flag.String("service.name", "gameserver", "the name of this service in service discovery")
+   40: 	userCenter   = flag.String("userCenter.name", "usercenter", "the name of this service in service discovery")
+   41: 	retryMax     = flag.Int("retry.max", 3, "per-request retries to different instances")
+   42: 	retryTimeout = flag.Duration("retry.timeout", 500*time.Millisecond, "per-request timeout, including retries")

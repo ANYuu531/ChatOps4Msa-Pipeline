@@ -1,0 +1,148 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=JavatoDev-com__internet-banking-concept-microservices internet-banking-user-service -> core-banking-service (type sync-http)
+  cited code: internet-banking-user-service/src/main/java/com/javatodev/finance/service/rest/BankingCoreRestClient.java:9
+   5: import org.springframework.cloud.openfeign.FeignClient;
+   6: import org.springframework.web.bind.annotation.GetMapping;
+   7: import org.springframework.web.bind.annotation.PathVariable;
+   8: 
+>> 9: @FeignClient(name = "core-banking-service")
+   10: public interface BankingCoreRestClient {
+   11: 
+   12:     @GetMapping("/api/v1/user/{identification}")
+   13:     UserResponse readUser(@PathVariable("identification") String identification);
+
+[1] repo=JavatoDev-com__internet-banking-concept-microservices internet-banking-utility-payment-service -> core-banking-service (type sync-http)
+  cited code: internet-banking-utility-payment-service/src/main/java/com/javatodev/finance/service/rest/BankingCoreRestClient.java:14
+   10: import org.springframework.web.bind.annotation.RequestBody;
+   11: import org.springframework.web.bind.annotation.RequestMapping;
+   12: import org.springframework.web.bind.annotation.RequestMethod;
+   13: 
+>> 14: @FeignClient(name = "core-banking-service", configuration = CustomFeignClientConfiguration.class)
+   15: public interface BankingCoreRestClient {
+   16: 
+   17:     @RequestMapping(path = "/api/v1/account/bank-account/{account_number}", method = RequestMethod.GET)
+   18:     AccountResponse readAccount(@PathVariable("account_number") String accountNumber);
+
+[2] repo=JavatoDev-com__internet-banking-concept-microservices internet-banking-user-service -> internet-banking-service-registry (type sync-http)
+  cited code: docker-compose/docker-compose.yml
+   66:     networks:
+   67:       javatodev_ib_network:
+   68:         ipv4_address: 172.25.0.8
+   69: 
+>> 70:   internet-banking-service-registry:
+   71:     image: javatodev/internet-banking-service-registry
+   72:     container_name: internet-banking-service-registry
+   73:     ports:
+   74:       - 8081:8081
+  cited code: internet-banking-user-service/build.gradle
+   plugins {
+       id 'java'
+       id 'org.springframework.boot' version '3.2.4'
+       id 'io.spring.dependency-management' version '1.1.4'
+   	id "com.gorylenko.gradle-git-properties" version "2.4.2"
+   }
+   
+   gitProperties {
+   	dateFormat = "yyyy-MM-dd'T'HH:mmZ"
+
+[3] repo=JoeCao__qbike testclient -> qbike-uc (type sync-http)
+  cited code: testclient/src/main/java/club/newtech/qbike/client/api/UserApi.java:15
+   11:     @Autowired
+   12:     RestTemplate restTemplate;
+   13: 
+   14:     public void newUser(User user) {
+>> 15:         restTemplate.postForObject("http://qbike-uc/users", user, User.class);
+   16:     }
+   17: 
+   18:     public void newIntention(MyIntention myIntention) {
+   19:         restTemplate.postForObject("http://qbike-intention/intentions/place", myIntention, MyIntention.class);
+
+[4] repo=JoeCao__qbike position -> eureka (type sync-http)
+  cited code: position/src/main/resources/application-docker.yml
+   46:     root: INFO
+   47:     org.hibernate: INFO
+   48:     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+   49:     org.hibernate.type.descriptor.sql.BasicExtractor: TRACE
+>> 50: eureka:
+   51:   client:
+   52:     serviceUrl:
+   53:       defaultZone: http://${EUREKA_HOST}:8761/eureka/    # 指定注册中心的地址
+   54:   instance:
+  cited code: position/src/main/resources/application.yml
+   46:     root: INFO
+   47:     org.hibernate: INFO
+   48:     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+   49:     org.hibernate.type.descriptor.sql.BasicExtractor: TRACE
+>> 50: eureka:
+   51:   client:
+   52:     serviceUrl:
+   53:       defaultZone: http://127.0.0.1:8761/eureka/    # 指定注册中心的地址
+   54:   instance:
+
+[5] repo=JoeCao__qbike api-gateway -> redis (type db)
+  cited code: docker-compose.yml
+   12:       - "15672"
+   13:       - "5672"
+   14:     labels:
+   15:       NAME: "rabbitmq"
+>> 16:   redis:
+   17:     image: redis:latest
+   18:     ports:
+   19:       - "16379:6379"
+   20:     volumes:
+
+[6] repo=Mikaelemmmm__go-zero-looklook filebeat -> kafka (type async)
+  cited code: docker-compose-env.yml#depends_on
+
+
+[7] repo=Mikaelemmmm__go-zero-looklook go-stash -> elasticsearch (type db)
+  cited code: docker-compose-env.yml#depends_on
+
+
+[8] repo=Mikaelemmmm__go-zero-looklook deploy -> looklook (type sync-http)
+  cited code: deploy/nginx/conf.d/looklook-gateway.conf:12
+   8:            proxy_set_header Host $http_host;
+   9:            proxy_set_header X-Real-IP $remote_addr;
+   10:            proxy_set_header REMOTE-HOST $remote_addr;
+   11:            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+>> 12:            proxy_pass http://looklook:1001;
+   13:       }
+   14:       location ~ /payment/ {
+   15:           proxy_set_header Host $http_host;
+   16:           proxy_set_header X-Real-IP $remote_addr;
+  cited code: deploy/nginx/conf.d/looklook-gateway.conf:19
+   15:           proxy_set_header Host $http_host;
+   16:           proxy_set_header X-Real-IP $remote_addr;
+   17:           proxy_set_header REMOTE-HOST $remote_addr;
+   18:           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+>> 19:           proxy_pass http://looklook:1002;
+   20:       }
+   21:       location ~ /travel/ {
+   22:          proxy_set_header Host $http_host;
+   23:          proxy_set_header X-Real-IP $remote_addr;
+
+[9] repo=NesoHQ__bgce-archive bgce_cortex -> postgres (type db)
+  cited code: cortex/docker-compose.yml#depends_on
+
+  cited code: cortex/docker-compose.yml
+   34:       WRITE_REDIS_URL: "redis://redis:6379"
+   35:       ENABLE_REDIS_TLS_MODE: "false"
+   36: 
+   37:       # Postgres DB
+>> 38:       BGCE_DB_DSN: "postgresql://postgres:root@postgres:5432/cortex_db?sslmode=disable"
+   39:       BGCE_DB_DRIVER: "postgres"
+   40: 
+   41:     depends_on:
+   42:       postgres:

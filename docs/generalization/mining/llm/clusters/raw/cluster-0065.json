@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0065",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 708,
+  "completion_tokens": 243,
+  "total_tokens": 951,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The uri 'lb://employee-service' appears in a gateway routes config file owned by config-service, but the runtime caller is the gateway component that uses this config, not config-service itself.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"Same as sample 0: the config-service component owns the config file, but the actual runtime dependency is from the gateway component that loads this config to employee-service.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml file with key path containing 'gateway.routes.uri'\",\n    \"edge\": \"gateway component -> TARGET component\",\n    \"exclusions\": \"do not draw edge from the component owning the config file, but from the component that loads/runs the gateway config\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"Lines with 'gateway.routes.uri' in yaml config files indicate runtime dependencies from the gateway component to the TARGET, not from the component owning the config file.\"\n}",
+ "payload": {
+  "rank": 65,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "gateway.routes.uri",
+  "repos": 2,
+  "mentions": 9,
+  "samples": [
+   {
+    "repo": "piomin__sample-spring-microservices-new",
+    "source": "config-service",
+    "target": "employee-service",
+    "file": "config-service/src/main/resources/config/gateway-service-docker.yml",
+    "line": 24,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "gateway.routes.uri",
+    "tag": "file-read",
+    "text": "uri: lb://employee-service",
+    "context": "   20:         locator:\n   21:           enabled: true\n   22:       routes:\n   23:       - id: employee-service\n>> 24:         uri: lb://employee-service\n   25:         predicates:\n   26:         - Path=/employee/**\n   27:         filters:\n   28:         - RewritePath=/employee/(?<path>.*), /$\\{path}"
+   },
+   {
+    "repo": "rcherara__microservice-architecture",
+    "source": "config-service",
+    "target": "employee-service",
+    "file": "config-service/src/main/resources/config/gateway-service-development.yml",
+    "line": 21,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "gateway.routes.uri",
+    "tag": "file-read",
+    "text": "uri: lb://employee-service",
+    "context": "   17:         locator:\n   18:           enabled: true\n   19:       routes:\n   20:       - id: employee-service\n>> 21:         uri: lb://employee-service\n   22:         predicates:\n   23:         - Path=/employee/**\n   24:         filters:\n   25:         - RewritePath=/employee/(?<path>.*), /$\\{path}"
+   }
+  ]
+ }
+}

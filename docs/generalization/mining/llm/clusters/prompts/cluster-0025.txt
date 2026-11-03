@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = compose; position = hostport; context key = services.<service>.environment
+They come from 3 different repositories (36 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=go-saas__kit SOURCE=hydra TARGET=mysqld file=docker-compose.yml:50
+   46:     volumes:
+   47:       - ./quickstart/configs/hydra:/etc/config/hydra
+   48: 
+   49:     environment:
+>> 50:       - DSN=mysql://root:youShouldChangeThis@tcp(mysqld:3306)/kit?max_conns=20&max_idle_conns=4
+   51:     restart: unless-stopped
+   52:     depends_on:
+   53:       - hydra-migrate
+   54: 
+
+[1] repo=AleksK1NG__Go-CQRS-Kafka-gRPC-Microservices SOURCE=api_gateway_service TARGET=reader_service file=docker-compose.yaml:23
+   19:       - REDIS_ADDR=host.docker.internal:6379
+   20:       - MONGO_URI=mongodb://host.docker.internal:27017
+   21:       - JAEGER_HOST=host.docker.internal:6831
+   22:       - KAFKA_BROKERS=host.docker.internal:9092
+>> 23:       - READER_SERVICE=reader_service:5003
+   24:     depends_on:
+   25:       - redis
+   26:       - prometheus
+   27:       - grafana
+
+[2] repo=opexdev__core SOURCE=kafka-1 TARGET=kafka-2 file=docker-compose.yml:35
+   31:       - KAFKA_ADVERTISED_LISTENERS=CLIENT://kafka-1:29092,EXTERNAL://kafka-1:9092
+   32:       - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+   33:       - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false
+   34:       - KAFKA_OPTS=-javaagent:/opt/prometheus/jmx-exporter.jar=1234:/opt/prometheus/kafka-jmx-exporter.yml
+>> 35:       - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093
+   36:       - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+   37:       - KAFKA_LISTENERS=CLIENT://kafka-1:29092,EXTERNAL://kafka-1:9092,CONTROLLER://kafka-1:29093
+   38:       - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+   39: 

@@ -1,0 +1,146 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=ujjavaldesai07__spring-boot-react-ecommerce-app authentication-service -> mysql-db (type db)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   1: version: '3'
+   2: 
+   3: services:
+>> 4:   mysql-db:
+   5:     image: mysql:8
+   6:     container_name: mysql-db-container
+   7:     environment:
+   8:       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+[1] repo=vany0114__microservices-dotnetcore-docker-sf-k8s duber.website -> duber.trip.notifications (type external)
+  cited code: docker-compose.override.yml
+   1: version: '3.4'
+   2: 
+   3: services:
+>> 4:   duber.invoice.api:
+   5:     environment:
+   6:       - ASPNETCORE_ENVIRONMENT=${APP_ENVIRONMENT:-Development}
+   7:       - ConnectionStrings__InvoiceDB=${AZURE_INVOICE_DB:-Server=sql.data;Database=Duber.InvoiceDb;User Id=sa;Password=Pass@word}      
+   8:       - EventBusConnection=${AZURE_SERVICE_BUS:-rabbitmq}
+
+[2] repo=vany0114__microservices-dotnetcore-docker-sf-k8s duber.invoice.api -> externalsystem.payment (type sync-http)
+  cited code: src/Application/Duber.Invoice.API/Extensions/ServiceCollectionExtensions.cs:114
+   110:             services.AddTransient<IPaymentService, PaymentService>();
+   111:             services.AddTransient<IPaymentServiceAdapter, PaymentServiceAdapter>(provider =>
+   112:             {
+   113:                 var httpInvoker = provider.GetRequiredService<ResilientHttpClient>();
+>> 114:                 var paymentServiceBaseUrl = configuration["PaymentServiceBaseUrl"];
+   115:                 return new PaymentServiceAdapter(httpInvoker, paymentServiceBaseUrl);
+   116:             });
+   117: 
+   118:             return services;
+  cited code: docker-compose.override.yml
+   6:       - ASPNETCORE_ENVIRONMENT=${APP_ENVIRONMENT:-Development}
+   7:       - ConnectionStrings__InvoiceDB=${AZURE_INVOICE_DB:-Server=sql.data;Database=Duber.InvoiceDb;User Id=sa;Password=Pass@word}      
+   8:       - EventBusConnection=${AZURE_SERVICE_BUS:-rabbitmq}
+   9:       - EventBusConnectionHC=${AZURE_SERVICE_BUS:-rabbitmq}
+>> 10:       - PaymentServiceBaseUrl=${PAYMENT_SERVICE_URL:-http://externalsystem.payment}
+   11:       - AzureServiceBusEnabled=${SERVICE_BUS_ENABLED:-False}
+   12:     ports:
+   13:       - "32776:80"
+   14: 
+
+[3] repo=vany0114__microservices-dotnetcore-docker-sf-k8s duber.website -> duber.invoice.api (type sync-http)
+  cited code: src/Web/Duber.WebSite/Extensions/ServiceCollectionExtensions.cs:155
+   151:             var hcBuilder = services.AddHealthChecks();
+   152: 
+   153:             hcBuilder
+   154:                 .AddCheck("self", () => HealthCheckResult.Healthy())
+>> 155:                 .AddUrlGroup(new Uri($"{configuration["InvoiceApiSettings:BaseUrl"]}/readiness"), name: "invoice-service-check", tags: new string[] { "invoice-service" })
+   156:                 .AddUrlGroup(new Uri($"{configuration["TripApiSettings:BaseUrl"]}/readiness"), name: "trip-service-check", tags: new string[] { "trip-service" })
+   157:                 .AddUrlGroup(new Uri($"{configuration["TripApiSettings:NotificationsServerUrl"]}/readiness"), name: "notifications-service-check", tags: new string[] { "notifications-service" })
+   158:                 .AddSqlServer(
+   159:                     configuration["ConnectionStrings:WebsiteDB"],
+  cited code: docker-compose.yml#depends_on
+
+
+[4] repo=vietnam-devs__coolstore-microservices webapigatewayapp -> webapp (type sync-http)
+  cited code: docker-compose.override.yml
+   1: version: "3"
+   2: 
+   3: services:
+   4: 
+>> 5:   webapp:
+   6:     environment:
+   7:       - API_URL=https://web.cs.local:5000
+   8:     ports:
+   9:       - 3000:3000
+
+[5] repo=vietnam-devs__coolstore-microservices webapigatewayapp-dapr -> placement (type sync-http)
+  cited code: docker-compose.yml
+   22:     build:
+   23:       context: .
+   24:       dockerfile: src/dotnet/api-gateway/Dockerfile
+   25:     depends_on:
+>> 26:       - placement
+   27:       - identityapp
+   28:       - inventoryapp
+   29:       - productcatalogapp
+   30:       - shoppingcartapp
+
+[6] repo=vietnam-devs__coolstore-microservices productcatalogapp -> inventoryapp (type sync-http)
+  cited code: docker-compose.override.yml
+   15:           - web.cs.local
+   16:     environment:
+   17:       - Redis=host.docker.internal
+   18:       - OpenIdConnect__Authority=https://id.cs.local:5001
+>> 19:       - ReverseProxy__Clusters__inventoryApiCluster__Destinations__destination1__Address=http://inventoryapp:5002
+   20:       - ReverseProxy__Clusters__productCatalogApiCluster__Destinations__destination1__Address=http://productcatalogapp:5003
+   21:       - ReverseProxy__Clusters__shoppingCartApiCluster__Destinations__destination1__Address=http://shoppingcartapp:5004
+   22:       - ReverseProxy__Clusters__saleApiCluster__Destinations__destination1__Address=http://saleapp:5005
+   23:       - ReverseProxy__Clusters__appCluster__Destinations__destination1__Address=http://webapp:3000
+
+[7] repo=walkline__ToCloud9 gateway -> groupserver (type sync-http)
+  cited code: docker-compose.yaml
+   66:       CHAR_SERVICE_ADDRESS: charserver:8087
+   67:       CHAT_SERVICE_ADDRESS: chatserver:8992
+   68:       GUILDS_SERVICE_ADDRESS: guildserver:8995
+   69:       MAIL_SERVICE_ADDRESS: mailserver:8997
+>> 70:       GROUP_SERVICE_ADDRESS: groupserver:8998
+   71:       MATCHMAKING_SERVICE_ADDRESS: matchmakingserver:8994
+   72:       AUCTION_HOUSE_SERVICE_ADDRESS: auctionhouse:8993
+   73:       AUTH_DB_CONNECTION: ${AUTH_DB_USER}:${AUTH_DB_PASS}@tcp(${AUTH_DB_HOST}:${AUTH_DB_PORT})/${AUTH_DB_NAME}
+   74:       DB_SCHEMA_TYPE: ${DATABASE_SCHEMA_TYPE}
+
+[8] repo=walkline__ToCloud9 groupserver -> nats (type async)
+  cited code: docker-compose.yaml
+   74:       DB_SCHEMA_TYPE: ${DATABASE_SCHEMA_TYPE}
+   75:       PREFERRED_HOSTNAME: ${EXTERNAL_ADDRESS}
+   76:       LOG_LEVEL: 0
+   77:       PORT: 8085
+>> 78:       NATS_URL: nats://nats:4222
+   79:     profiles:
+   80:       - ac
+   81:       - tc
+   82: 
+
+[9] repo=walkline__ToCloud9 guidserver -> redis (type db)
+  cited code: docker-compose.yaml#depends_on
+
+  cited code: docker-compose.yaml
+   116:       dockerfile: apps/servers-registry/Dockerfile
+   117:     ports:
+   118:       - "8999:8999"
+   119:     depends_on:
+>> 120:       redis:
+   121:         condition: service_started
+   122:     environment:
+   123:       PORT: 8999
+   124:       REDIS_URL: redis://:@redis:6379/0

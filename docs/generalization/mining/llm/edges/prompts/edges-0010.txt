@@ -1,0 +1,114 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=ebubekirdinc__SuuCat subscription.api -> elasticsearch (type db)
+  cited code: docker-compose.override.yml
+   113:       - ASPNETCORE_ENVIRONMENT=Development
+   114:       - "ConnectionStrings:DefaultConnection=Server=notificationdb;Port=5432;Database=NotificationDb;User Id=admin;Password=admin1234;"
+   115:       - RabbitMQUrl=rabbitmq
+   116:       - IdentityServerURL=http://identity.api
+>> 117:       - "ElasticConfiguration:Uri=http://elasticsearch:9200"
+   118:     depends_on:
+   119:       - notificationdb
+   120:       - rabbitmq
+   121:     ports:
+
+[1] repo=falberthen__EcommerceDDD ecommerceddd-shipment-processing -> ecommerceddd-customer-management (type sync-http)
+  cited code: src/Services/EcommerceDDD.ShipmentProcessing/appsettings.json
+   14:   "ConnectionStrings": {
+   15:     "DefaultConnection": "host=postgresql;port=5432;timeout=15;pooling=True;minpoolsize=1;maxpoolsize=100;database='shipmentsdb';User Id='postgres';pwd='P@55w0rd'"
+   16:   },
+   17:   "Services": {
+>> 18:     "CustomerManagement": "http://ecommerceddd-customer-management"
+   19:   },
+   20:   "ShipmentFailureSimulation": {
+   21:     "UndeliverableAddressMarker": "308"
+   22:   },
+
+[2] repo=falberthen__EcommerceDDD ecommerceddd-order-processing -> ecommerceddd-quote-management (type sync-http)
+  cited code: src/Services/EcommerceDDD.OrderProcessing/appsettings.json
+   15:     "DefaultConnection": "host=postgresql;port=5432;timeout=15;pooling=True;minpoolsize=1;maxpoolsize=100;database='ordersdb';User Id='postgres';pwd='P@55w0rd'"
+   16:   },
+   17:   "Services": {
+   18:     "InventoryManagement": "http://ecommerceddd-inventory-management",
+>> 19:     "QuoteManagement": "http://ecommerceddd-quote-management",
+   20:     "PaymentProcessing": "http://ecommerceddd-payment-processing",
+   21:     "ShipmentProcessing": "http://ecommerceddd-shipment-processing",
+   22:     "SignalRClient": "http://ecommerceddd-signalr"
+   23:   },
+
+[3] repo=falberthen__EcommerceDDD ecommerceddd-payment-processing -> ecommerceddd-identityserver (type sync-http)
+  cited code: src/Services/EcommerceDDD.PaymentProcessing/appsettings.json
+   21:     "WriteSchema": "payments_write",
+   22:     "ReadSchema": "payments_read"
+   23:   },
+   24:   "TokenIssuerSettings": {
+>> 25:     "Authority": "http://ecommerceddd-identityserver",
+   26:     "ClientId": "ecommerceddd.application_client",
+   27:     "ClientSecret": "secret33587^&%&^%&^f3%%%",
+   28:     "Scope": "ecommerceddd-api.scope read write"
+   29:   },
+
+[4] repo=fdonnet__ubik_accounting ubik-yarpproxy -> security-api (type sync-http)
+  cited code: src/Ubik.YarpProxy/Program.cs:63
+   59: 
+   60: builder.Services.AddHttpClient<UserService>(client =>
+   61: {
+   62:     //TODO: change hardcoded
+>> 63:     client.BaseAddress = new Uri(builder.Configuration.GetSection("ApiSecurityForAdmin:HostAndPort").Value!);
+   64: });
+   65: 
+   66: //Authorization handlers
+   67: builder.Services.AddScoped<IAuthorizationHandler, UserInfoOkHandler>();
+
+[5] repo=fdonnet__ubik_accounting accounting-structure-api -> keycloak-local (type sync-http)
+  cited code: deploy/accounting-structure-api/accounting-structure-api-deploy.yaml
+   25:           value: Development
+   26:         - name: MessageBroker__Host
+   27:           value: 'amqp://ubik-rabbitmq:5672'
+   28:         - name: AuthServer__MetadataAddress
+>> 29:           value: "https://keycloak-local/realms/ubik/.well-known/openid-configuration"
+   30:         - name: AuthServer__Authority
+   31:           value: "https://keycloak-local/realms/ubik"
+   32:         - name: AuthServer__AuthorizationUrl
+   33:           value: "https://keycloak-local/realms/ubik/protocol/openid-connect/auth"
+
+[6] repo=fdonnet__ubik_accounting accounting-transaction-api -> ubik-rabbitmq (type async)
+  cited code: deploy/accounting-transaction-api/accounting-transaction-api-deploy.yaml
+   23:           value: 'Host=ubik-postgres-postgresql;Port=5432;Database=ubik_accounting_tx;Username=postgres;Password=test01'
+   24:         - name: ASPNETCORE_ENVIRONMENT
+   25:           value: Development
+   26:         - name: MessageBroker__Host
+>> 27:           value: 'amqp://ubik-rabbitmq:5672'
+   28:         - name: AuthServer__MetadataAddress
+   29:           value: "https://keycloak-local/realms/ubik/.well-known/openid-configuration"
+   30:         - name: AuthServer__Authority
+   31:           value: "https://keycloak-local/realms/ubik"
+
+[7] repo=geoserver__geoserver-cloud webui -> rabbitmq (type async)
+  cited code: compose/compose.yml#depends_on
+
+  cited code: docs/src/deploy/docker-compose/stable/datadir/compose.yml#depends_on
+
+
+[8] repo=geoserver__geoserver-cloud wfs -> acl (type sync-http)
+  cited code: compose/compose.yml#depends_on
+
+  cited code: docs/src/deploy/docker-compose/stable/pgconfig/compose.yml#depends_on
+
+
+[9] repo=geoserver__geoserver-cloud wps -> discovery (type sync-http)
+  cited code: docs/src/deploy/docker-compose/maintenance/datadir/compose.yml#depends_on
+
+  cited code: docs/src/deploy/docker-compose/maintenance/pgconfig/compose.yml#depends_on
+

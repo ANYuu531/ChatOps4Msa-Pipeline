@@ -1,0 +1,92 @@
+{
+ "id": "cluster-0018",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1121,
+  "completion_tokens": 307,
+  "total_tokens": 1428,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"KC_DB_URL points to a database service keycloakdb, not the keycloak service itself, so no edge keycloak_web -> keycloak.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The environment variable is in the docs service, which is not a runtime component making calls; the actual runtime dependency is from the service container that mounts this config.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"account-service-app sets DB_URL to account-service-db, indicating it connects to that database service at runtime.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"dependency\",\n      \"reason\": \"admin service sets TURBINE_URL to discovery service, indicating a runtime call from admin to turbine via discovery.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"compose; key; environment.*_URL\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"The samples mix true runtime dependencies with config references that do not imply direct calls, so no single syntax-based rule on environment.*_URL keys in compose files can reliably produce edges without false positives.\"\n}",
+ "payload": {
+  "rank": 18,
+  "kind": "compose",
+  "cls": "key",
+  "detail": "<service>.environment.*_URL",
+  "repos": 4,
+  "mentions": 9,
+  "samples": [
+   {
+    "repo": "JavatoDev-com__internet-banking-concept-microservices",
+    "source": "keycloak_web",
+    "target": "keycloak",
+    "file": "docker-compose/docker-compose-support-apps.yml",
+    "line": 18,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "<service>.environment.*_URL",
+    "tag": "file-read",
+    "text": "KC_DB_URL: jdbc:postgresql://keycloakdb:5432/keycloak",
+    "context": "   14:     image: quay.io/keycloak/keycloak:23.0.7\n   15:     container_name: keycloak_web\n   16:     environment:\n   17:       KC_DB: postgres\n>> 18:       KC_DB_URL: jdbc:postgresql://keycloakdb:5432/keycloak\n   19:       KC_DB_USERNAME: keycloak\n   20:       KC_DB_PASSWORD: password\n   21:       KEYCLOAK_ADMIN: admin\n   22:       KEYCLOAK_ADMIN_PASSWORD: password"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "docs",
+    "target": "acl",
+    "file": "docs/src/deploy/docker-compose/stable/pgconfig/compose.yml",
+    "line": 70,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "<service>.environment.*_URL",
+    "tag": "file-read",
+    "text": "SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_URL: http://acl:8080/acl/api",
+    "context": "   66:     # - When scaling services dynamically\n   67:     #\n   68:     # ALTERNATIVE:\n   69:     # - For Kubernetes: Use ConfigMaps/Secrets with standalone profile instead\n>> 70:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_URL: http://acl:8080/acl/api\n   71:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_USERNAME: admin\n   72:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_PASSWORD: s3cr3t\n   73:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_HOST: geoserverdb\n   74:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_PORT: 5432"
+   },
+   {
+    "repo": "cuongnh28__spring-microservices-blueprint",
+    "source": "account-service-app",
+    "target": "account-service",
+    "file": "docker-compose.yml",
+    "line": 28,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "<service>.environment.*_URL",
+    "tag": "file-read",
+    "text": "DB_URL: jdbc:postgresql://account-service-db:5432/account-service",
+    "context": "   24:     image: account-service-app:latest\n   25:     container_name: account-service-app\n   26:     restart: unless-stopped\n   27:     environment:\n>> 28:       DB_URL: jdbc:postgresql://account-service-db:5432/account-service\n   29:       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092\n   30:       JAVA_OPTS: \"-Xmx512m -Xms256m\"\n   31:     ports:\n   32:       - \"8088:8088\""
+   },
+   {
+    "repo": "ThoreauZZ__spring-cloud-example",
+    "source": "admin",
+    "target": "turbine",
+    "file": "docker-compose-v3.yml",
+    "line": 110,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "<service>.environment.*_URL",
+    "tag": "file-read",
+    "text": "TURBINE_URL: http://discovery:9010/turbine.stream",
+    "context": "   106:       - \"9003:9003\"\n   107:     environment:\n   108:       SERVICE_PORT: 9003\n   109:       REGISTRY_URL: http://discovery:9001/eureka\n>> 110:       TURBINE_URL: http://discovery:9010/turbine.stream\n   111: \n   112: \n   113:   comx:\n   114:     image: erdaoya/cloud-service-comx"
+   }
+  ]
+ }
+}

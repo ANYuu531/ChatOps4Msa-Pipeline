@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0080",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 757,
+  "completion_tokens": 271,
+  "total_tokens": 1028,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The Go source code in meow-service constructs a PostgreSQL connection string using the 'postgres' hostname, indicating meow-service connects to the postgres component at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The gateway_admin component calls a library function to get a service address from etcd, but this is a client of etcd, not a direct runtime dependency on the etcd component itself; the line is about fetching config data, not calling etcd as a service.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:go key addr\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"cannot distinguish config/address lookup from actual runtime call/connect purely by syntax\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"The Go source lines with 'key addr' sometimes indicate a runtime dependency (e.g. DB connection string) but sometimes only a config lookup (e.g. etcd address fetch), so no single syntactic rule on 'src:go key addr' can reliably separate dependencies from non-dependencies.\"\n}",
+ "payload": {
+  "rank": 80,
+  "kind": "src:go",
+  "cls": "key",
+  "detail": "key addr",
+  "repos": 2,
+  "mentions": 4,
+  "samples": [
+   {
+    "repo": "tinrab__meower",
+    "source": "?",
+    "target": "postgres",
+    "file": "meow-service/main.go",
+    "line": 42,
+    "kind": "src:go",
+    "cls": "key",
+    "detail": "key addr",
+    "tag": "file-read",
+    "text": "addr := fmt.Sprintf(\"postgres://%s:%s@postgres/%s?sslmode=disable\", cfg.PostgresUser, cfg.PostgresPassword, cfg.PostgresDB)",
+    "context": "   38: \t}\n   39: \n   40: \t// Connect to PostgreSQL\n   41: \tretry.ForeverSleep(2*time.Second, func(attempt int) error {\n>> 42: \t\taddr := fmt.Sprintf(\"postgres://%s:%s@postgres/%s?sslmode=disable\", cfg.PostgresUser, cfg.PostgresPassword, cfg.PostgresDB)\n   43: \t\trepo, err := db.NewPostgres(addr)\n   44: \t\tif err != nil {\n   45: \t\t\tlog.Println(err)\n   46: \t\t\treturn err"
+   },
+   {
+    "repo": "wsrh8888__beaver-server",
+    "source": "gateway_admin",
+    "target": "etcd",
+    "file": "app/gateway/gateway_admin/core/proxy.go",
+    "line": 96,
+    "kind": "src:go",
+    "cls": "key",
+    "detail": "key addr",
+    "tag": "file-read",
+    "text": "addr := etcd.GetServiceAddr(p.Config.Etcd, backendKey)",
+    "context": "   92: \t}\n   93: \n   94: \t// 固定使用 backend_admin 作为服务 key\n   95: \tbackendKey := \"backend_admin\"\n>> 96: \taddr := etcd.GetServiceAddr(p.Config.Etcd, backendKey)\n   97: \tif addr == \"\" {\n   98: \t\treturn \"\", fmt.Errorf(\"从 etcd 获取后端服务地址失败: %s\", backendKey)\n   99: \t}\n   100: "
+   }
+  ]
+ }
+}

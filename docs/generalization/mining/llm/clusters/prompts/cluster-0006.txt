@@ -1,0 +1,95 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = compose; position = key; context key = services.<service>.environment
+They come from 6 different repositories (46 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=minghsu0107__go-random-chat SOURCE=redis-node-0 TARGET=redis-node-1 file=deployments/docker-compose.yaml:248
+   244:     volumes:
+   245:       - redis-cluster_data-0:/bitnami/redis/data
+   246:     environment:
+   247:       - 'REDIS_PASSWORD=${REDIS_PASSWORD}'
+>> 248:       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+   249: 
+   250:   redis-node-1:
+   251:     image: docker.io/bitnami/redis-cluster:7.0
+   252:     restart: always
+
+[1] repo=aliyun__alibabacloud-microservice-demo SOURCE=frontend TARGET=nacos file=docker-compose.yml:60
+   56:     image: frontend:1.0.0-SNAPSHOT
+   57:     container_name: frontend
+   58:     #    restart: always
+   59:     environment:
+>> 60:       - dubbo.registry.address=nacos://nacos-server:8848
+   61:       - spring.cloud.nacos.discovery.server-addr=nacos-server:8848
+   62:       - spring.cloud.nacos.config.server-addr=nacos-server:8848
+   63:     ports:
+   64:       - "8080:8080"
+
+[2] repo=oracle-quickstart__oci-cloudnative SOURCE=api TARGET=assets file=deploy/complete/docker-compose/docker-compose.yml:39
+   35:       - CATALOGUE_URL=http://catalogue
+   36:       - CARTS_URL=http://carts
+   37:       - ORDERS_URL=http://orders
+   38:       - USERS_URL=http://user
+>> 39:       - STATIC_MEDIA_URL=${STATIC_MEDIA_URL:-/assets}
+   40:       - NEWSLETTER_SUBSCRIBE_URL
+   41:       - MOCK_MODE=catalogue
+   42:       - DEBUG=true
+   43: 
+
+[3] repo=AleksK1NG__Go-CQRS-Kafka-gRPC-Microservices SOURCE=api_gateway_service TARGET=mongodb file=docker-compose.yaml:20
+   16:     environment:
+   17:       - POSTGRES_HOST=host.docker.internal
+   18:       - POSTGRES_PORT=5432
+   19:       - REDIS_ADDR=host.docker.internal:6379
+>> 20:       - MONGO_URI=mongodb://host.docker.internal:27017
+   21:       - JAEGER_HOST=host.docker.internal:6831
+   22:       - KAFKA_BROKERS=host.docker.internal:9092
+   23:       - READER_SERVICE=reader_service:5003
+   24:     depends_on:
+
+[4] repo=PacktPublishing__Hands-on-Microservices-with-Python SOURCE=product_db TARGET=product file=docker-compose.deploy.yml:49
+   45:     volumes:
+   46:       - product-db-data:/var/lib/mysql
+   47:     environment:
+   48:       - MYSQL_ROOT_PASSWORD=test
+>> 49:       - MYSQL_DATABASE=product
+   50:     restart: always
+   51:     networks:
+   52:       - order-network
+   53: 
+
+[5] repo=thangchung__coffeeshop-on-nomad SOURCE=counter-service TARGET=rabbitmq file=docker-compose.yaml:52
+   48:     environment:
+   49:       - ASPNETCORE_ENVIRONMENT=Development
+   50:       - ConnectionStrings__counterdb=Server=postgresql;Port=5432;Database=postgres;User Id=postgres;Password=P@ssw0rd
+   51:       - ProductApiUri=http://product-service:5001
+>> 52:       - RabbitMqUrl=rabbitmq
+   53:     ports:
+   54:       - "5002:5002"
+   55:     depends_on:
+   56:       - postgresql

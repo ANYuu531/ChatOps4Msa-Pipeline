@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = makefile; position = url; context key = -
+They come from 2 different repositories (14 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=oracle-quickstart__oci-cloudnative SOURCE=api TARGET=events file=src/api/Makefile:44
+   40: 		-e CATALOGUE_URL=http://catalogue \
+   41: 		-e CARTS_URL=http://carts \
+   42: 		-e ORDERS_URL=http://orders \
+   43: 		-e USERS_URL=http://user \
+>> 44: 		-e EVENTS_URL=http://events \
+   45: 		-e MOCK_MODE=$(MOCK_MODE) \
+   46: 		-e NODE_ENV=development \
+   47: 		-e PORT=3000            \
+   48: 		-p 8080:3000            \
+
+[1] repo=NesoHQ__bgce-archive SOURCE=postal TARGET=postgres file=postal/Makefile:85
+   81: migrate-up: ## Apply all pending migrations
+   82: 	@echo "Running migrations..."
+   83: 	@if [ -z "$(DATABASE_URL)" ]; then \
+   84: 		echo "DATABASE_URL not set, using default..."; \
+>> 85: 		migrate -path ./migrations -database "postgresql://postgres:root@localhost:5432/postal_db?sslmode=disable" up; \
+   86: 	else \
+   87: 		migrate -path ./migrations -database "$(DATABASE_URL)" up; \
+   88: 	fi
+   89: 	@echo "✅ Migrations applied"

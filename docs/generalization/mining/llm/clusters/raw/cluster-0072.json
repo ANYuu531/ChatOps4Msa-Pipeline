@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0072",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 685,
+  "completion_tokens": 209,
+  "total_tokens": 894,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The .env file declares CATALOG_GRPC_SERVICE=alva-catalog:55050 but does not specify which component uses this variable, so the SOURCE component is unknown.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The .env file declares USER_GRPC_SERVICE=user-service:50051 but does not specify which component uses this variable, so the SOURCE component is unknown.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"dotenv; hostport\",\n    \"edge\": \"unknown -> TARGET\",\n    \"exclusions\": \"cannot determine SOURCE component from .env file alone\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"Without knowing which component consumes the environment variable, a general rule cannot reliably infer dependencies from .env hostport lines alone.\"\n}",
+ "payload": {
+  "rank": 72,
+  "kind": "dotenv",
+  "cls": "hostport",
+  "detail": "*_SERVICE",
+  "repos": 2,
+  "mentions": 5,
+  "samples": [
+   {
+    "repo": "uid4oe__grpc-web-demo",
+    "source": "?",
+    "target": "alva-catalog",
+    "file": ".env",
+    "line": 3,
+    "kind": "dotenv",
+    "cls": "hostport",
+    "detail": "*_SERVICE",
+    "tag": "file-read",
+    "text": "CATALOG_GRPC_SERVICE=alva-catalog:55050",
+    "context": "   1: CONTAINER=yes\n   2: \n>> 3: CATALOG_GRPC_SERVICE=alva-catalog:55050\n   4: OFFER_GRPC_SERVICE=alva-offer:55051\n   5: ORDER_GRPC_SERVICE=alva-order:55052\n   6: \n   7: MONGO_INITDB_ROOT_USERNAME=admin"
+   },
+   {
+    "repo": "uid4oe__microservices-go-grpc",
+    "source": "?",
+    "target": "user-service",
+    "file": ".env",
+    "line": 10,
+    "kind": "dotenv",
+    "cls": "hostport",
+    "detail": "*_SERVICE",
+    "tag": "file-read",
+    "text": "USER_GRPC_SERVICE=user-service:50051",
+    "context": "   6: MONGO_INITDB_USER=oe\n   7: MONGO_INITDB_PWD=oe\n   8: MONGO_CONN=mongodb://mongodb:27017\n   9: MONGO_COLLECTION=user\n>> 10: USER_GRPC_SERVICE=user-service:50051\n   11: \n   12: POSTGRES_USER=oe\n   13: POSTGRES_PASSWORD=oe\n   14: POSTGRES_DB=oe"
+   }
+  ]
+ }
+}

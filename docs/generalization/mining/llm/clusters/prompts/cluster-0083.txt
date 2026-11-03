@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = key; context key = <service>.environment.*_HOST
+They come from 2 different repositories (4 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=asc-lab__micronaut-microservices-poc SOURCE=? TARGET=kafkaserver file=scripts/infra.yml:36
+   32:     ports:
+   33:       - 2181:2181
+   34:       - 9092:9092
+   35:     environment:
+>> 36:       ADVERTISED_HOST: kafkaserver
+   37:       ADVERTISED_PORT: 9092
+   38:   kafka_manager:
+   39:     image: "mzagar/kafka-manager-docker:1.3.3.4"
+   40:     container_name: kafkamanager
+
+[1] repo=hantsy__spring-microservice-sample SOURCE=? TARGET=redis file=docker-stack.yml:32
+   28:   auth-service:
+   29:     image: hantsy/auth-service
+   30:     environment:
+   31:       SERVICES_USER_SERVICE_URL: http://user-service:8001
+>> 32:       SPRING_REDIS_HOST: redis
+   33:     ports:
+   34:       - "8000:8000" #specify ports forewarding
+   35:     networks:
+   36:       - backend

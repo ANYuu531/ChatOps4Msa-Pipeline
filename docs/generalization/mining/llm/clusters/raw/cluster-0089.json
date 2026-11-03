@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0089",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 759,
+  "completion_tokens": 223,
+  "total_tokens": 982,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The code creates an HTTP request targeting the service named 'spring-cloud-d', indicating a runtime call from 'ginc' to 'spring-cloud-d'.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The code constructs a PostgreSQL connection string using the hostname 'postgres', indicating that the component owning this code connects to the 'postgres' database service at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"src:go; position=url; context key=call sprintf\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show runtime dependencies where a component constructs a URL or connection string referencing another declared component, so drawing edges from the source component to the target component on such URL constructions in Go source code is a reliable rule.\"\n}",
+ "payload": {
+  "rank": 89,
+  "kind": "src:go",
+  "cls": "url",
+  "detail": "call sprintf",
+  "repos": 2,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "aliyun__alibabacloud-microservice-demo",
+    "source": "ginc",
+    "target": "spring-cloud-d",
+    "file": "mse-heterogeneous-demo/GinC/handler.go",
+    "line": 54,
+    "kind": "src:go",
+    "cls": "url",
+    "detail": "call sprintf",
+    "tag": "file-read",
+    "text": "req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(\"http://spring-cloud-d:20004/D/d\"), nil)",
+    "context": "   50: \tc.String(http.StatusOK, resp)\n   51: }\n   52: \n   53: func doGreet(ctx context.Context) (string, error) {\n>> 54: \treq, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(\"http://spring-cloud-d:20004/D/d\"), nil)\n   55: \tif err != nil {\n   56: \t\treturn \"\", err\n   57: \t}\n   58: "
+   },
+   {
+    "repo": "tinrab__meower",
+    "source": "?",
+    "target": "postgres",
+    "file": "meow-service/main.go",
+    "line": 42,
+    "kind": "src:go",
+    "cls": "url",
+    "detail": "call sprintf",
+    "tag": "file-read",
+    "text": "addr := fmt.Sprintf(\"postgres://%s:%s@postgres/%s?sslmode=disable\", cfg.PostgresUser, cfg.PostgresPassword, cfg.PostgresDB)",
+    "context": "   38: \t}\n   39: \n   40: \t// Connect to PostgreSQL\n   41: \tretry.ForeverSleep(2*time.Second, func(attempt int) error {\n>> 42: \t\taddr := fmt.Sprintf(\"postgres://%s:%s@postgres/%s?sslmode=disable\", cfg.PostgresUser, cfg.PostgresPassword, cfg.PostgresDB)\n   43: \t\trepo, err := db.NewPostgres(addr)\n   44: \t\tif err != nil {\n   45: \t\t\tlog.Println(err)\n   46: \t\t\treturn err"
+   }
+  ]
+ }
+}

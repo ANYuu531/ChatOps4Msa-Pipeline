@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0048",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 871,
+  "completion_tokens": 299,
+  "total_tokens": 1170,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The environment variable KAFKA_ADVERTISED_HOST_NAME set to 'kafka' is a configuration detail of the kafka service itself, not indicating that the source component calls or connects to the kafka component.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The environment variable PGBOUNCER_DATABASE naming 'geodatabase' is a configuration parameter for the pgbouncer service, not a runtime call or connection from the source component to the geodatabase component.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The environment variable MYSQL_DATABASE set to 'userdb' is a configuration setting for the database container itself, not indicating a runtime dependency from the source component to the userdb component.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml file; key position under <service>.environment.*\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show environment variables used as internal configuration values rather than runtime dependency addresses, so no general syntactic rule can separate dependency edges from non-dependency environment keys.\"\n}",
+ "payload": {
+  "rank": 48,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "<service>.environment.*",
+  "repos": 3,
+  "mentions": 4,
+  "samples": [
+   {
+    "repo": "apssouza22__java-microservice",
+    "source": "?",
+    "target": "kafka",
+    "file": "assets/event-docker-compose.yml",
+    "line": 22,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "<service>.environment.*",
+    "tag": "unread",
+    "text": "KAFKA_ADVERTISED_HOST_NAME: \"kafka\"",
+    "context": "   18:     environment:\n   19:       KAFKA_ADVERTISED_HOST_NAME: 172.19.0.1\n   20:       KAFKA_ZOOKEEPER_CONNECT: \"zookeeper:2181\"\n   21:       KAFKA_CREATE_TOPICS: \"todo-mail:1:1\"\n>> 22:       KAFKA_ADVERTISED_HOST_NAME: \"kafka\"\n   23:     volumes:\n   24:       - /var/run/docker.sock:/var/run/docker.sock\n   25:     hostname: kafka\n   26:     container_name: kafka"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "?",
+    "target": "geodatabase",
+    "file": "compose/pgbouncer.yml",
+    "line": 10,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "<service>.environment.*",
+    "tag": "unread",
+    "text": "PGBOUNCER_DATABASE: geodatabase",
+    "context": "   6:     extends:\n   7:       file: templates.yml\n   8:       service: pgbouncertemplate\n   9:     environment:\n>> 10:       PGBOUNCER_DATABASE: geodatabase\n   11:       POSTGRESQL_HOST: geodatabase_pg\n   12:       POSTGRESQL_DATABASE: geoserver\n   13:       POSTGRESQL_USERNAME: geoserver\n   14:       POSTGRESQL_PASSWORD: geoserver"
+   },
+   {
+    "repo": "hantsy__spring-microservice-sample",
+    "source": "?",
+    "target": "userdb",
+    "file": "docker-stack.yml",
+    "line": 111,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "<service>.environment.*",
+    "tag": "unread",
+    "text": "MYSQL_DATABASE: userdb",
+    "context": "   107:     environment:\n   108:       MYSQL_ROOT_PASSWORD: mysecret\n   109:       MYSQL_USER: user\n   110:       MYSQL_PASSWORD: password\n>> 111:       MYSQL_DATABASE: userdb\n   112:     volumes:\n   113:       - userdata:/var/lib/mysql\n   114:     networks:\n   115:       - backend"
+   }
+  ]
+ }
+}

@@ -1,0 +1,58 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = url; context key = data.*_URL
+They come from 3 different repositories (12 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=SaiUpadhyayula__spring-boot-3-microservices-course SOURCE=notification-service-config TARGET=schema-registry file=k8s/manifests/applications/notification-service.yml:57
+   53: kind: ConfigMap
+   54: metadata:
+   55:   name: notification-service-config
+   56: data:
+>> 57:   SPRING_KAFKA_CONSUMER_PROPERTIES_SCHEMA_REGISTRY_URL: "http://schema-registry.default.svc.cluster.local:8081"
+
+[1] repo=hoangtien2k3__ecommerce-microservices SOURCE=ecommerce-config TARGET=keycloak file=k8s/configmap.yaml:16
+   12:   # Keycloak
+   13:   KEYCLOAK_ISSUER_URI: "http://keycloak:8080/realms/ecommerce"
+   14:   KEYCLOAK_JWK_SET_URI: "http://keycloak:8080/realms/ecommerce/protocol/openid-connect/certs"
+   15:   JWT_ISSUER_URI: "http://keycloak:8080/realms/ecommerce"
+>> 16:   KEYCLOAK_SERVER_URL: "http://keycloak:8080"
+   17:   KEYCLOAK_PUBLIC_SERVER_URL: "http://keycloak.ecommerce.local"
+   18: 
+   19:   # Kafka
+   20:   KAFKA_SERVERS: "kafka:9092"
+
+[2] repo=meysamhadeli__booking-microservices-expressjs SOURCE=booking-config TARGET=otel-collector file=deployments/kubernetes/configmap.yaml:20
+   16:   RABBITMQ_Host: rabbitmq
+   17:   RABBITMQ_PORT: "5672"
+   18:   RABBITMQ_DEFAULT_USER: guest
+   19:   RABBITMQ_USERNAME: guest
+>> 20:   OPEN_TELEMETRY_COLLECTOR_URL: http://otel-collector:4319
+   21:   IDENTITY_PORT: "3333"
+   22:   IDENTITY_SERVICE_NAME: identity-service
+   23:   IDENTITY_RABBITMQ_EXCHANGE: identity
+   24:   IDENTITY_OTEL_SERVICE_NAME: identity

@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0096",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 652,
+  "completion_tokens": 203,
+  "total_tokens": 855,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The 'gateway:' key in helm-values is a component configuration section header, not an address or call site indicating runtime dependency.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The 'gateway:' key here is a configuration block name in helm-values, serving as a config namespace rather than a runtime call or connection.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"helm-values; key named as a component\",\n    \"edge\": \"n/a\",\n    \"exclusions\": \"n/a\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"In helm-values files, keys named after components under configuration sections do not indicate runtime dependencies but rather configuration namespaces, so no edges should be drawn from these keys alone.\"\n}",
+ "payload": {
+  "rank": 96,
+  "kind": "helm-values",
+  "cls": "key",
+  "detail": "gateway",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "amasen02__freshcart-backend",
+    "source": "?",
+    "target": "gateway",
+    "file": "deploy/helm/freshcart/values.yaml",
+    "line": 29,
+    "kind": "helm-values",
+    "cls": "key",
+    "detail": "gateway",
+    "tag": "unread",
+    "text": "gateway:",
+    "context": "   25: customersupport:\n   26:   enabled: true\n   27: reviews:\n   28:   enabled: true\n>> 29: gateway:\n   30:   enabled: true\n   31: "
+   },
+   {
+    "repo": "walkline__ToCloud9",
+    "source": "?",
+    "target": "gateway",
+    "file": "chart/values.yaml",
+    "line": 169,
+    "kind": "helm-values",
+    "cls": "key",
+    "detail": "gateway",
+    "tag": "unread",
+    "text": "gateway:",
+    "context": "   165:     type: ClusterIP\n   166:     internalPort: 8994\n   167:     externalPort: 8994\n   168: \n>> 169: gateway:\n   170:   replicaCount: 3\n   171:   # IP or domain to access this gateway.\n   172:   # If empty - uses node IP.\n   173:   hostname: \"\""
+   }
+  ]
+ }
+}

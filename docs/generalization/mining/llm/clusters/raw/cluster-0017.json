@@ -1,0 +1,92 @@
+{
+ "id": "cluster-0017",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 924,
+  "completion_tokens": 287,
+  "total_tokens": 1211,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The host field in an ingress rule is a DNS name used by external clients to reach the ingress, not a runtime call from mate-gateway to host.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The host in ingress rules is a routing hostname for incoming requests, not a runtime dependency from ecommerce-ingress to admin.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The host is a DNS name for ingress routing, not a runtime call from mushop to host.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The host is a hostname for ingress routing, not a runtime dependency from frontend to duber.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml key spec.rules.host\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show ingress hostnames used for routing external traffic, which do not represent runtime dependencies from the owning component to the named host.\"\n}",
+ "payload": {
+  "rank": 17,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "spec.rules.host",
+  "repos": 4,
+  "mentions": 11,
+  "samples": [
+   {
+    "repo": "mateaix__matecloud",
+    "source": "mate-gateway",
+    "target": "host",
+    "file": "deploy/k8s/mate-gateway.yaml",
+    "line": 72,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "spec.rules.host",
+    "tag": "file-read",
+    "text": "- host: api.matecloud.local",
+    "context": "   68:     nginx.ingress.kubernetes.io/rewrite-target: /\n   69: spec:\n   70:   ingressClassName: nginx\n   71:   rules:\n>> 72:     - host: api.matecloud.local\n   73:       http:\n   74:         paths:\n   75:           - path: /\n   76:             pathType: Prefix"
+   },
+   {
+    "repo": "hoangtien2k3__ecommerce-microservices",
+    "source": "ecommerce-ingress",
+    "target": "admin",
+    "file": "k8s/ingress/ingress.yaml",
+    "line": 38,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "spec.rules.host",
+    "tag": "unread",
+    "text": "- host: admin.ecommerce.local",
+    "context": "   34:                 name: frontend\n   35:                 port:\n   36:                   number: 3000\n   37:     # Admin dashboard\n>> 38:     - host: admin.ecommerce.local\n   39:       http:\n   40:         paths:\n   41:           - path: /\n   42:             pathType: Prefix"
+   },
+   {
+    "repo": "oracle-quickstart__oci-cloudnative",
+    "source": "mushop",
+    "target": "host",
+    "file": "deploy/complete/kubernetes/mushop.yaml",
+    "line": 17,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "spec.rules.host",
+    "tag": "file-read",
+    "text": "- host: mushop.example.com",
+    "context": "   13: spec:\n   14:   ingressClassName: nginx\n   15:   rules:\n   16:     # change this for user-specific ingress\n>> 17:     - host: mushop.example.com\n   18:       http:\n   19:         paths:\n   20:         - path: /\n   21:           backend:"
+   },
+   {
+    "repo": "vany0114__microservices-dotnetcore-docker-sf-k8s",
+    "source": "frontend",
+    "target": "duber",
+    "file": "deploy/k8s/local/website/website-ingress.yaml",
+    "line": 7,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "spec.rules.host",
+    "tag": "unread",
+    "text": "- host: duber.local.com",
+    "context": "   3: metadata:\n   4:   name: frontend\n   5: spec:\n   6:   rules:\n>> 7:   - host: duber.local.com\n   8:     http:\n   9:       paths:\n   10:       - path: /\n   11:         backend:"
+   }
+  ]
+ }
+}

@@ -1,0 +1,227 @@
+{
+ "id": "edges-0020",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1988,
+  "completion_tokens": 425,
+  "total_tokens": 2413,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"wrong\", \"reason\": \"The cited evidence only shows environment variables setting NATS host and port but no runtime code or config proving orders actually connects to or sends messages to nats.\"}, {\"i\": 1, \"verdict\": \"wrong\", \"reason\": \"The cited docker-compose snippet only shows the configuration-api service definition, not that webapi calls or depends on it.\"}, {\"i\": 2, \"verdict\": \"unsure\", \"reason\": \"The appsettings.json contains webhook URLs pointing to the external service, but no runtime code or invocation evidence is shown.\"}, {\"i\": 3, \"verdict\": \"wrong\", \"reason\": \"The docker-compose snippet only shows notification-grpc service definition, not that notification-background calls or depends on it.\"}, {\"i\": 4, \"verdict\": \"correct\", \"reason\": \"The gateway-service application.yml shows a route with URI lb://transfer-service, indicating runtime routing from gateway-service to transfer-service.\"}, {\"i\": 5, \"verdict\": \"correct\", \"reason\": \"The @FeignClient annotation in AccountClient interface in transfer-service indicates a runtime HTTP client dependency on account-service.\"}, {\"i\": 6, \"verdict\": \"correct\", \"reason\": \"The @FeignClient annotation in AccountClient interface in customer-service indicates a runtime HTTP client dependency on account-service.\"}, {\"i\": 7, \"verdict\": \"correct\", \"reason\": \"The gateway-service config files define a route with URI lb://employee-service, showing runtime routing from gateway-service to employee-service.\"}, {\"i\": 8, \"verdict\": \"wrong\", \"reason\": \"The config shows zipkin tracing endpoint configuration but no evidence that organization-service calls or depends on zipkin at runtime beyond tracing metadata.\"}, {\"i\": 9, \"verdict\": \"correct\", \"reason\": \"The gateway-service config sets Eureka client defaultZone to discovery-service URL, indicating runtime dependency on discovery-service.\"}]}",
+ "payload": [
+  {
+   "repo": "oracle-quickstart__oci-cloudnative",
+   "source": "orders",
+   "target": "nats",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/orders/src/main/resources/application.properties",
+     "file": "src/orders/src/main/resources/application.properties",
+     "line": 0,
+     "kind": "properties",
+     "context": "   spring.application.name=orders\n   server.port=${port:8082}\n   server.tomcat.max-threads=2\n   \n   spring.main.lazy-initialization=true\n   \n   management.endpoints.web.exposure.include=*\n   management.endpoint.health.show-details=always\n   management.endpoint.health.show-components=always"
+    },
+    {
+     "ref": "code: deploy/complete/docker-compose/docker-compose.yml",
+     "file": "deploy/complete/docker-compose/docker-compose.yml",
+     "line": 148,
+     "kind": "compose",
+     "context": "   144:     read_only: true\n   145:     tmpfs:\n   146:       - /tmp:rw,noexec,nosuid\n   147:     environment:\n>> 148:       - NATS_HOST=nats\n   149:       - NATS_PORT=4222\n   150:       - ORDERS_NEW=mushop-orders\n   151:       - ORDERS_SHIPPED=mushop-shipments\n   152:       - OADB_USER"
+    }
+   ]
+  },
+  {
+   "repo": "phongnguyend__Practical.CleanArchitecture",
+   "source": "webapi",
+   "target": "configuration-api",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/Microservices/docker-compose.yml",
+     "file": "src/Microservices/docker-compose.yml",
+     "line": 52,
+     "kind": "compose",
+     "context": "   48:           Authentication__IdentityServer__RequireHttpsMetadata: \"false\"\n   49:           Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}\n   50:           Services__Identity__Grpc: ${Services__Identity__Grpc}\n   51:           Services__Notification__Grpc: ${Services__Notification__Grpc}\n>> 52:     configuration-api:\n   53:         image: classifiedads.services.configuration.api\n   54:         build:\n   55:           context: .\n   56:           dockerfile: ./Services.Configuration/ClassifiedAds.Services.Configuration.Api/Dockerfile"
+    }
+   ]
+  },
+  {
+   "repo": "phongnguyend__Practical.CleanArchitecture",
+   "source": "background",
+   "target": "ddddotnet-webhook-server.azurewebsites.net",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Monolith/ClassifiedAds.Background/appsettings.json",
+     "file": "src/Monolith/ClassifiedAds.Background/appsettings.json",
+     "line": 191,
+     "kind": "appsettings",
+     "context": "   187:     }\n   188:   },\n   189:   \"Webhooks\": {\n   190:     \"FileCreatedEvent\": {\n>> 191:       \"PayloadUrl\": \"https://ddddotnet-webhook-server.azurewebsites.net/test\",\n   192:       \"Secret\": \"\"\n   193:     },\n   194:     \"FileUpdatedEvent\": {\n   195:       \"PayloadUrl\": \"https://ddddotnet-webhook-server.azurewebsites.net/test\","
+    },
+    {
+     "ref": "code: src/ModularMonolith/ClassifiedAds.Background/appsettings.json",
+     "file": "src/ModularMonolith/ClassifiedAds.Background/appsettings.json",
+     "line": 188,
+     "kind": "appsettings",
+     "context": "   184:         \"RegionEndpoint\": \"ap-southeast-1\"\n   185:       },\n   186:       \"Webhooks\": {\n   187:         \"FileUploadedEvent\": {\n>> 188:           \"PayloadUrl\": \"https://ddddotnet-webhook-server.azurewebsites.net/test\",\n   189:           \"Secret\": \"\"\n   190:         },\n   191:         \"FileDeletedEvent\": {\n   192:           \"PayloadUrl\": \"https://ddddotnet-webhook-server.azurewebsites.net/test\","
+    }
+   ]
+  },
+  {
+   "repo": "phongnguyend__Practical.CleanArchitecture",
+   "source": "notification-background",
+   "target": "notification-grpc",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/Microservices/docker-compose.yml",
+     "file": "src/Microservices/docker-compose.yml",
+     "line": 154,
+     "kind": "compose",
+     "context": "   150:           Notification__Sms__Twilio__FromNumber: \"\"\n   151:           Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}\n   152:           Services__Identity__Grpc: ${Services__Identity__Grpc}\n   153:           Services__Notification__Grpc: ${Services__Notification__Grpc}\n>> 154:     notification-grpc:\n   155:         image: classifiedads.services.notification.grpc\n   156:         build:\n   157:           context: .\n   158:           dockerfile: ./Services.Notification/ClassifiedAds.Services.Notification.Grpc/Dockerfile"
+    }
+   ]
+  },
+  {
+   "repo": "piomin__sample-spring-microservices-advanced",
+   "source": "gateway-service",
+   "target": "transfer-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: gateway-service/src/main/resources/application.yml",
+     "file": "gateway-service/src/main/resources/application.yml",
+     "line": 44,
+     "kind": "spring-yaml",
+     "context": "   40:           predicates:\n   41:             - Path=/product/**\n   42:           filters:\n   43:             - RewritePath=/product/(?<path>.*), /$\\{path}\n>> 44:         - id: transfer-service\n   45:           uri: lb://transfer-service\n   46:           predicates:\n   47:             - Path=/transfer/**\n   48:           filters:"
+    }
+   ]
+  },
+  {
+   "repo": "piomin__sample-spring-microservices-advanced",
+   "source": "transfer-service",
+   "target": "account-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: transfer-service/src/main/java/pl/piomin/microservices/advanced/transfer/contract/AccountClient.java:8",
+     "file": "transfer-service/src/main/java/pl/piomin/microservices/advanced/transfer/contract/AccountClient.java",
+     "line": 8,
+     "kind": "src:java",
+     "context": "   4: import org.springframework.web.bind.annotation.PathVariable;\n   5: import org.springframework.web.bind.annotation.RequestMapping;\n   6: import org.springframework.web.bind.annotation.RequestMethod;\n   7: \n>> 8: @FeignClient(\"account-service\")\n   9: public interface AccountClient {\n   10: \n   11: \t@RequestMapping(method = RequestMethod.GET, value = \"/accounts/{accountId}\")\n   12: \tAccount getAccount(@PathVariable(\"accountId\") String accountId);"
+    }
+   ]
+  },
+  {
+   "repo": "piomin__sample-spring-microservices-advanced",
+   "source": "customer-service",
+   "target": "account-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: customer-service/src/main/java/pl/piomin/microservices/advanced/customer/contract/AccountClient.java:10",
+     "file": "customer-service/src/main/java/pl/piomin/microservices/advanced/customer/contract/AccountClient.java",
+     "line": 10,
+     "kind": "src:java",
+     "context": "   6: import org.springframework.web.bind.annotation.RequestMethod;\n   7: \n   8: import java.util.List;\n   9: \n>> 10: @FeignClient(\"account-service\")\n   11: public interface AccountClient {\n   12: \n   13:     @RequestMapping(method = RequestMethod.GET, value = \"/accounts/customer/{customerId}\")\n   14:     List<Account> getAccounts(@PathVariable(\"customerId\") String customerId);"
+    }
+   ]
+  },
+  {
+   "repo": "piomin__sample-spring-microservices-new",
+   "source": "gateway-service",
+   "target": "employee-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: config-service/src/main/resources/config/gateway-service-docker.yml",
+     "file": "config-service/src/main/resources/config/gateway-service-docker.yml",
+     "line": 23,
+     "kind": "yaml",
+     "context": "   19:       discovery:\n   20:         locator:\n   21:           enabled: true\n   22:       routes:\n>> 23:       - id: employee-service\n   24:         uri: lb://employee-service\n   25:         predicates:\n   26:         - Path=/employee/**\n   27:         filters:"
+    },
+    {
+     "ref": "code: config-service/src/main/resources/config/gateway-service.yml",
+     "file": "config-service/src/main/resources/config/gateway-service.yml",
+     "line": 24,
+     "kind": "yaml",
+     "context": "   20:       discovery:\n   21:         locator:\n   22:           enabled: true\n   23:       routes:\n>> 24:       - id: employee-service\n   25:         uri: lb://employee-service\n   26:         predicates:\n   27:         - Path=/employee/**\n   28:         filters:"
+    }
+   ]
+  },
+  {
+   "repo": "piomin__sample-spring-microservices-new",
+   "source": "organization-service",
+   "target": "zipkin",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: config-service/src/main/resources/config/organization-service-docker.yml",
+     "file": "config-service/src/main/resources/config/organization-service-docker.yml",
+     "line": 25,
+     "kind": "yaml",
+     "context": "   21: management:\n   22:   tracing:\n   23:     sampling:\n   24:       probability: 1.0\n>> 25:   zipkin:\n   26:     tracing:\n   27:       endpoint: http://zipkin:9411/api/v2/spans"
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "piomin__sample-spring-microservices-new",
+   "source": "gateway-service",
+   "target": "discovery-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: config-service/src/main/resources/config/gateway-service-docker.yml",
+     "file": "config-service/src/main/resources/config/gateway-service-docker.yml",
+     "line": 7,
+     "kind": "yaml",
+     "context": "   3: \n   4: eureka:\n   5:   client:\n   6:     serviceUrl:\n>> 7:       defaultZone: http://discovery-service:8061/eureka/\n   8: \n   9: logging:\n   10:   pattern: \n   11:     console: \"%d{yyyy-MM-dd HH:mm:ss} [%X{traceId:-},%X{spanId:-}] ${LOG_LEVEL_PATTERN:-%5p} %m%n\""
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  }
+ ]
+}

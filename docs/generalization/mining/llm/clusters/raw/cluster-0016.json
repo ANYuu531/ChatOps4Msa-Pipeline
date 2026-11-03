@@ -1,0 +1,92 @@
+{
+ "id": "cluster-0016",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1116,
+  "completion_tokens": 276,
+  "total_tokens": 1392,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"not-dependency\", \"reason\": \"The line defines a constant string 'admin' likely used as a group or label, not a runtime call or connection.\"}, {\"i\": 1, \"verdict\": \"not-dependency\", \"reason\": \"The line declares a constant string with the target name but does not show any runtime call or connection from mock-client to insights-server-0.\"}, {\"i\": 2, \"verdict\": \"not-dependency\", \"reason\": \"The line defines a constant string 'station' as an app identifier, used for metadata or configuration, not a runtime dependency.\"}, {\"i\": 3, \"verdict\": \"not-dependency\", \"reason\": \"The line defines a constant string 'geoserver' as an identifier, likely for config or event tagging, not a runtime dependency.\"}], \"rule\": {\"general\": false, \"trigger\": \"src:java; position=literal; context key=assign *\", \"edge\": \"N/A\", \"exclusions\": \"N/A\", \"confidence\": \"high\"}, \"summary\": \"All samples are constant string assignments in Java source files that name components but do not represent runtime calls or connections, so no general syntactic rule can separate dependencies from non-dependencies here.\"}",
+ "payload": {
+  "rank": 16,
+  "kind": "src:java",
+  "cls": "literal",
+  "detail": "assign *",
+  "repos": 4,
+  "mentions": 11,
+  "samples": [
+   {
+    "repo": "mateaix__matecloud",
+    "source": "mate-api",
+    "target": "admin",
+    "file": "mate-common/mate-api/src/main/java/vip/mate/api/rpc/RpcConstants.java",
+    "line": 34,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "assign *",
+    "tag": "file-read",
+    "text": "public static final String GROUP_ADMIN = \"admin\";",
+    "context": "   30:     public static final int LONG_TIMEOUT = 15000;\n   31:     public static final int DEFAULT_RETRIES = 2;\n   32:     public static final int NO_RETRY = 0;\n   33:     public static final String GROUP_SYSTEM = \"system\";\n>> 34:     public static final String GROUP_ADMIN = \"admin\";\n   35:     public static final String GROUP_NOTICE = \"notice\";\n   36: }\n   37: "
+   },
+   {
+    "repo": "aliyun__alibabacloud-microservice-demo",
+    "source": "mock-client",
+    "target": "insights-server-0",
+    "file": "arms-demo/mock-client/src/main/java/com/alibaba/arms/demo/client/utils/InvocationUtils.java",
+    "line": 10,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "assign *",
+    "tag": "file-read",
+    "text": "private static final String SERVICE_0 = \"insights-server-0\";",
+    "context": "   6: \n   7: import java.util.ArrayList;\n   8: \n   9: public class InvocationUtils {\n>> 10:     private static final String SERVICE_0 = \"insights-server-0\";\n   11: \n   12:     private static final String SERVICE_1 = \"insights-server-1\";\n   13: \n   14:     private static final String SERVICE_2 = \"insights-server-2\";"
+   },
+   {
+    "repo": "jingsewu__open-wes",
+    "source": "script-plugin-api",
+    "target": "station",
+    "file": "server/modules-plugin/script-plugin-api/src/main/java/org/openwes/script/plugin/api/ScriptPluginApiConstants.java",
+    "line": 14,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "assign *",
+    "tag": "file-read",
+    "text": "public static final String APP_STATION = \"station\";",
+    "context": "   10:     /** Platform contract version; a plugin's sdk_version must equal this or enabling is refused. */\n   11:     public static final String CONTRACT_VERSION = \"1.0\";\n   12: \n   13:     public static final String APP_WES = \"wes\";\n>> 14:     public static final String APP_STATION = \"station\";\n   15: \n   16:     /** Target apps that may host script plugins. A single plugin never spans both (spec: no cross-app plugins in v1). */\n   17:     public static final List<String> SUPPORTED_APPS = List.of(APP_WES, APP_STATION);\n   18: }"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "events",
+    "target": "geoserver",
+    "file": "src/catalog/events/src/main/java/org/geoserver/cloud/event/GeoServerEvent.java",
+    "line": 107,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "assign *",
+    "tag": "file-read",
+    "text": "private static final String GEOSERVER_ID = \"geoserver\";",
+    "context": "   103:     /**\n   104:      * {@code getObjectId()} object identifier for changes performed to the {@link GeoServerInfo global config} itself\n   105:      * (e.g. {@code updateSequence} and the like)\n   106:      */\n>> 107:     private static final String GEOSERVER_ID = \"geoserver\";\n   108: \n   109:     /** {@code getObjectId()} object identifier for changes performed to the {@link LoggingInfo} config */\n   110:     private static final String LOGGING_ID = \"logging\";\n   111: "
+   }
+  ]
+ }
+}

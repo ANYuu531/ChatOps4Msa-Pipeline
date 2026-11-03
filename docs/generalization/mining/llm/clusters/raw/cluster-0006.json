@@ -1,0 +1,118 @@
+{
+ "id": "cluster-0006",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1374,
+  "completion_tokens": 424,
+  "total_tokens": 1798,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The environment variable REDIS_NODES lists redis cluster nodes including redis-node-1, indicating redis-node-0 connects to redis-node-1 at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The frontend service sets dubbo.registry.address to a nacos URL, indicating frontend depends on nacos at runtime.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"STATIC_MEDIA_URL is set to a path (/assets) rather than a service address, so no runtime call to assets service is implied.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"MONGO_URI points to host.docker.internal, not the mongodb service; the environment is injected into api_gateway_service container, but the actual dependency is on the external host, not the mongodb component.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"MYSQL_DATABASE=product is a database name, not a service address, so product_db does not depend on product service.\"\n    },\n    {\n      \"i\": 5,\n      \"verdict\": \"dependency\",\n      \"reason\": \"RabbitMqUrl=rabbitmq sets the address of the rabbitmq service, so counter-service depends on rabbitmq at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"compose; key under services.<service>.environment\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"The environment key under services in compose files sometimes contains runtime dependency addresses but also includes non-address values like database names or paths, so no single syntactic rule can separate dependencies from non-dependencies.\"\n}",
+ "payload": {
+  "rank": 6,
+  "kind": "compose",
+  "cls": "key",
+  "detail": "services.<service>.environment",
+  "repos": 6,
+  "mentions": 46,
+  "samples": [
+   {
+    "repo": "minghsu0107__go-random-chat",
+    "source": "redis-node-0",
+    "target": "redis-node-1",
+    "file": "deployments/docker-compose.yaml",
+    "line": 248,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "services.<service>.environment",
+    "tag": "file-read",
+    "text": "- 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'",
+    "context": "   244:     volumes:\n   245:       - redis-cluster_data-0:/bitnami/redis/data\n   246:     environment:\n   247:       - 'REDIS_PASSWORD=${REDIS_PASSWORD}'\n>> 248:       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'\n   249: \n   250:   redis-node-1:\n   251:     image: docker.io/bitnami/redis-cluster:7.0\n   252:     restart: always"
+   },
+   {
+    "repo": "aliyun__alibabacloud-microservice-demo",
+    "source": "frontend",
+    "target": "nacos",
+    "file": "docker-compose.yml",
+    "line": 60,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "services.<service>.environment",
+    "tag": "file-read",
+    "text": "- dubbo.registry.address=nacos://nacos-server:8848",
+    "context": "   56:     image: frontend:1.0.0-SNAPSHOT\n   57:     container_name: frontend\n   58:     #    restart: always\n   59:     environment:\n>> 60:       - dubbo.registry.address=nacos://nacos-server:8848\n   61:       - spring.cloud.nacos.discovery.server-addr=nacos-server:8848\n   62:       - spring.cloud.nacos.config.server-addr=nacos-server:8848\n   63:     ports:\n   64:       - \"8080:8080\""
+   },
+   {
+    "repo": "oracle-quickstart__oci-cloudnative",
+    "source": "api",
+    "target": "assets",
+    "file": "deploy/complete/docker-compose/docker-compose.yml",
+    "line": 39,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "services.<service>.environment",
+    "tag": "file-read",
+    "text": "- STATIC_MEDIA_URL=${STATIC_MEDIA_URL:-/assets}",
+    "context": "   35:       - CATALOGUE_URL=http://catalogue\n   36:       - CARTS_URL=http://carts\n   37:       - ORDERS_URL=http://orders\n   38:       - USERS_URL=http://user\n>> 39:       - STATIC_MEDIA_URL=${STATIC_MEDIA_URL:-/assets}\n   40:       - NEWSLETTER_SUBSCRIBE_URL\n   41:       - MOCK_MODE=catalogue\n   42:       - DEBUG=true\n   43: "
+   },
+   {
+    "repo": "AleksK1NG__Go-CQRS-Kafka-gRPC-Microservices",
+    "source": "api_gateway_service",
+    "target": "mongodb",
+    "file": "docker-compose.yaml",
+    "line": 20,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "services.<service>.environment",
+    "tag": "file-read",
+    "text": "- MONGO_URI=mongodb://host.docker.internal:27017",
+    "context": "   16:     environment:\n   17:       - POSTGRES_HOST=host.docker.internal\n   18:       - POSTGRES_PORT=5432\n   19:       - REDIS_ADDR=host.docker.internal:6379\n>> 20:       - MONGO_URI=mongodb://host.docker.internal:27017\n   21:       - JAEGER_HOST=host.docker.internal:6831\n   22:       - KAFKA_BROKERS=host.docker.internal:9092\n   23:       - READER_SERVICE=reader_service:5003\n   24:     depends_on:"
+   },
+   {
+    "repo": "PacktPublishing__Hands-on-Microservices-with-Python",
+    "source": "product_db",
+    "target": "product",
+    "file": "docker-compose.deploy.yml",
+    "line": 49,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "services.<service>.environment",
+    "tag": "file-read",
+    "text": "- MYSQL_DATABASE=product",
+    "context": "   45:     volumes:\n   46:       - product-db-data:/var/lib/mysql\n   47:     environment:\n   48:       - MYSQL_ROOT_PASSWORD=test\n>> 49:       - MYSQL_DATABASE=product\n   50:     restart: always\n   51:     networks:\n   52:       - order-network\n   53: "
+   },
+   {
+    "repo": "thangchung__coffeeshop-on-nomad",
+    "source": "counter-service",
+    "target": "rabbitmq",
+    "file": "docker-compose.yaml",
+    "line": 52,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "services.<service>.environment",
+    "tag": "file-read",
+    "text": "- RabbitMqUrl=rabbitmq",
+    "context": "   48:     environment:\n   49:       - ASPNETCORE_ENVIRONMENT=Development\n   50:       - ConnectionStrings__counterdb=Server=postgresql;Port=5432;Database=postgres;User Id=postgres;Password=P@ssw0rd\n   51:       - ProductApiUri=http://product-service:5001\n>> 52:       - RabbitMqUrl=rabbitmq\n   53:     ports:\n   54:       - \"5002:5002\"\n   55:     depends_on:\n   56:       - postgresql"
+   }
+  ]
+ }
+}

@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0044",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 964,
+  "completion_tokens": 270,
+  "total_tokens": 1234,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The spring.datasource.url in a component's own config points to the mysql component, indicating a runtime dependency.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The datasource.url in the erp-product-recommendation-service config points to mysql, showing a runtime dependency.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The cloud-zipkin-ui datasource.url points to a raw IP address, not the named mysql component, so no dependency on the mysql component.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"spring-yaml; position=key; context key=spring.datasource.url\",\n    \"edge\": \"SOURCE -> TARGET when the URL contains the TARGET component name as hostname\",\n    \"exclusions\": \"do not draw edge if the URL uses an IP address or a hostname different from TARGET\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"Datasource URLs in spring-yaml files that name a component as hostname indicate a runtime dependency from the config-owning component to that component.\"\n}",
+ "payload": {
+  "rank": 44,
+  "kind": "spring-yaml",
+  "cls": "key",
+  "detail": "spring.datasource.url",
+  "repos": 3,
+  "mentions": 5,
+  "samples": [
+   {
+    "repo": "aliyun__alibabacloud-microservice-demo",
+    "source": "b",
+    "target": "mysql",
+    "file": "mse-simple-demo/B/src/main/resources/application-druid.yml",
+    "line": 6,
+    "kind": "spring-yaml",
+    "cls": "key",
+    "detail": "spring.datasource.url",
+    "tag": "file-read",
+    "text": "url: jdbc:mysql://demo-mysql:3306/demo",
+    "context": "   2:   datasource:\n   3:     #1.JDBC\n   4:     type: com.alibaba.druid.pool.DruidDataSource\n   5:     driver-class-name: com.mysql.cj.jdbc.Driver\n>> 6:     url: jdbc:mysql://demo-mysql:3306/demo\n   7:     username: root\n   8:     password: root\n   9:     druid:\n   10:       #2.连接池配置"
+   },
+   {
+    "repo": "nplszfl__OmniTradeERP",
+    "source": "erp-product-recommendation-service",
+    "target": "mysql",
+    "file": "erp-product-recommendation-service/src/main/resources/application.yml",
+    "line": 93,
+    "kind": "spring-yaml",
+    "cls": "key",
+    "detail": "spring.datasource.url",
+    "tag": "unread",
+    "text": "url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/erp_recommendation?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true",
+    "context": "   89:   datasource:\n   90:     # 📌 项目权威数据库是 MySQL（docker-compose 只有 mysql:8.0）。\n   91:     #    之前指向 jdbc:postgresql://postgres:5432/erp_recommendation —— 纯空配置。\n   92:     driver-class-name: com.mysql.cj.jdbc.Driver\n>> 93:     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/erp_recommendation?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true\n   94:     username: ${MYSQL_USERNAME:root}\n   95:     password: ${MYSQL_PASSWORD:root}\n   96:   sql:\n   97:     init:"
+   },
+   {
+    "repo": "ThoreauZZ__spring-cloud-example",
+    "source": "cloud-zipkin-ui",
+    "target": "mysql",
+    "file": "cloud-zipkin-ui/src/main/resources/bootstrap.yml",
+    "line": 21,
+    "kind": "spring-yaml",
+    "cls": "key",
+    "detail": "spring.datasource.url",
+    "tag": "unread",
+    "text": "url: jdbc:mysql://192.168.99.100:3306/zipkin",
+    "context": "   17:   datasource:\n   18:     schema: classpath:/mysql.sql\n   19:     driver-class-name: com.mysql.jdbc.Driver\n   20:     type: com.alibaba.druid.pool.DruidDataSource\n>> 21:     url: jdbc:mysql://192.168.99.100:3306/zipkin\n   22:     username: root\n   23:     password: 1234\n   24:     initialize: true\n   25:     continueOnError: true"
+   }
+  ]
+ }
+}

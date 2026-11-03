@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:typescript; position = key; context key = key host
+They come from 3 different repositories (8 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=juicycleff__ultimate-backend SOURCE=? TARGET=eventstore file=libs/core/src/services/configs/eventstore-config.service.ts:22
+   18: 
+   19:     return {
+   20:       type: 'event-store',
+   21:       tcpEndpoint: {
+>> 22:         host: database?.eventstore?.hostname,
+   23:         port: database?.eventstore?.tcpPort,
+   24:       },
+   25:       options: {
+   26:         defaultUserCredentials: {
+
+[1] repo=mateaix__matecloud SOURCE=desktop TARGET=host file=mate-ui/apps/desktop/vite.config.ts:19
+   15:   clearScreen: false,
+   16:   server: {
+   17:     port: 5175,
+   18:     strictPort: true,
+>> 19:     host: host || false,
+   20:     hmr: host
+   21:       ? { protocol: 'ws', host, port: 5176 }
+   22:       : undefined,
+   23:     proxy: {
+
+[2] repo=JarrodMalkovic__auction-website SOURCE=payments TARGET=bid-mysql-srv file=services/payments/src/models/index.ts:10
+   6: const db =
+   7:   process.env.NODE_ENV == 'test'
+   8:     ? new Sequelize('sqlite::memory:', { logging: false })
+   9:     : new Sequelize('mysql', 'root', process.env.MYSQL_ROOT_PASSWORD, {
+>> 10:         host: 'bid-mysql-srv',
+   11:         dialect: 'mysql',
+   12:       });
+   13: 
+   14: const Listing = ListingFactory(db);

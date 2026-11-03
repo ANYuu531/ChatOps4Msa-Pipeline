@@ -1,0 +1,73 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:csharp; position = literal; context key = bare
+They come from 4 different repositories (26 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=vietnam-devs__coolstore-microservices SOURCE=? TARGET=productcatalogapp file=src/dotnet/shopping-cart/Infrastructure/Gateways/ProductCatalogGateway.cs:26
+   22:         if (product is not null) return product;
+   23: 
+   24:         var requestData = new ProductByIdRequest {Id = id};
+   25:         product = await _daprClient.InvokeMethodAsync<ProductByIdRequest, ProductDto>(
+>> 26:             "productcatalogapp", "get-product-by-id", requestData, cancellationToken: cancellationToken);
+   27: 
+   28:         if (product is null)
+   29:         {
+   30:             throw new CoreException($"Couldn't find out product with id={id}");
+
+[1] repo=madslundt__NetCoreMicroservicesSample SOURCE=? TARGET=mongo file=Infrastructure/Outbox/OutboxExtensions.cs:28
+   24:                     break;
+   25:                 case "dapr":
+   26:                     services.AddDaprOutbox(Configuration);
+   27:                     break;
+>> 28:                 case "mongo":
+   29:                 case "mongodb":
+   30:                     services.AddMongoDbOutbox(Configuration);
+   31:                     break;
+   32:                 default:
+
+[2] repo=amasen02__freshcart-backend SOURCE=? TARGET=identity file=src/AspireAppHost/FreshCart.AppHost/Program.cs:206
+   202: 
+   203: // --- Services ---------------------------------------------------------------
+   204: 
+   205: var identityService = distributedApplicationBuilder
+>> 206:     .AddProject<Projects.FreshCart_Identity_Api>("identity")
+   207:     .WithReference(identityDatabase)
+   208:     .WithReference(distributedCache)
+   209:     .WaitFor(identityDatabase)
+   210:     .WaitFor(distributedCache);
+
+[3] repo=aelassas__microservices SOURCE=cartmicroservice TARGET=mongo file=src/microservices/CartMicroservice/Startup.cs:68
+   64:                 mongodbConnectionString: (
+   65:                     Configuration.GetSection("mongo").Get<MongoOptions>()
+   66:                     ?? throw new Exception("mongo configuration section not found")
+   67:                 ).ConnectionString,
+>> 68:                 name: "mongo",
+   69:                 failureStatus: HealthStatus.Unhealthy
+   70:         );
+   71: 
+   72:         services.AddHealthChecksUI().AddInMemoryStorage();

@@ -1,0 +1,227 @@
+{
+ "id": "edges-0012",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 954,
+  "completion_tokens": 346,
+  "total_tokens": 1300,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml 'depends_on' only indicates container startup order, not runtime call or dependency.\"}, {\"i\": 1, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml 'depends_on' is about container startup order, not runtime dependency.\"}, {\"i\": 2, \"verdict\": \"correct\", \"reason\": \"nginx.conf proxy_pass directive routes requests from nginx-proxy to post-service at runtime.\"}, {\"i\": 3, \"verdict\": \"wrong\", \"reason\": \"docker-compose 'depends_on' only controls startup order, no runtime call or connection shown.\"}, {\"i\": 4, \"verdict\": \"wrong\", \"reason\": \"docker-compose 'depends_on' does not prove runtime dependency on redis.\"}, {\"i\": 5, \"verdict\": \"wrong\", \"reason\": \"docker-compose 'depends_on' only indicates startup order, no runtime evidence.\"}, {\"i\": 6, \"verdict\": \"wrong\", \"reason\": \"docker-compose 'depends_on' is not runtime evidence of frontend calling profile.\"}, {\"i\": 7, \"verdict\": \"wrong\", \"reason\": \"docker-compose 'depends_on' does not show runtime call from search to rate.\"}, {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"cache-service index.js connects to nats at runtime using nats client.\"}, {\"i\": 9, \"verdict\": \"correct\", \"reason\": \"math-service index.js connects to nats at runtime using nats client.\"}]}",
+ "payload": [
+  {
+   "repo": "hamed-shirbandi__TaskoMask",
+   "source": "api-gateway",
+   "target": "tasks-write-api",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/7-Docker/docker-compose.yml#depends_on",
+     "file": "src/7-Docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "hamed-shirbandi__TaskoMask",
+   "source": "aggregator",
+   "target": "boards-read-api",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/7-Docker/docker-compose.yml#depends_on",
+     "file": "src/7-Docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "hantsy__spring-microservice-sample",
+   "source": "nginx-proxy",
+   "target": "post-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.local.yml#depends_on",
+     "file": "docker-compose.local.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: nginx/nginx.conf:22",
+     "file": "nginx/nginx.conf",
+     "line": 22,
+     "kind": "nginx",
+     "context": "   18: \t\t\tproxy_pass http://user-service:8001;\n   19: \t\t}\n   20: \t\tlocation /posts {\n   21: #\t\t\trewrite ^/api/post-service/(.*) /$1 break;\n>> 22: \t\t\tproxy_pass http://post-service:8002;\n   23: \t\t}\n   24: \t\tlocation / {\n   25: #\t\t    rewrite ^/api/auth-service/(.*) /$1 break;\n   26: \t\t\tproxy_pass http://auth-service:8000;"
+    }
+   ]
+  },
+  {
+   "repo": "hantsy__spring-microservice-sample",
+   "source": "user-service",
+   "target": "userdb",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.local.yml#depends_on",
+     "file": "docker-compose.local.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.build.yml#depends_on",
+     "file": "docker-compose.build.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "hantsy__spring-microservice-sample",
+   "source": "post-service",
+   "target": "redis",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.local.yml#depends_on",
+     "file": "docker-compose.local.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.build.yml#depends_on",
+     "file": "docker-compose.build.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "harlow__go-micro-services",
+   "source": "search",
+   "target": "geo",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "harlow__go-micro-services",
+   "source": "frontend",
+   "target": "profile",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "harlow__go-micro-services",
+   "source": "search",
+   "target": "rate",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "hemerajs__aither",
+   "source": "cache-service",
+   "target": "nats",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: cache-service/index.js:5",
+     "file": "cache-service/index.js",
+     "line": 5,
+     "kind": "src:javascript",
+     "context": "   1: const Hemera = require('nats-hemera')\n   2: const HemeraJoi = require('hemera-joi')\n   3: const HemeraRedisCache = require('hemera-redis-cache')\n   4: const nats = require('nats').connect({\n>> 5:   url: process.env.NATS_URL,\n   6:   user: process.env.NATS_USER,\n   7:   pass: process.env.NATS_PW\n   8: })\n   9: "
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "hemerajs__aither",
+   "source": "math-service",
+   "target": "nats",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: math-service/index.js:5",
+     "file": "math-service/index.js",
+     "line": 5,
+     "kind": "src:javascript",
+     "context": "   1: const Hemera = require('nats-hemera')\n   2: const HemeraJoi = require('hemera-joi')\n   3: const HemeraJaeger = require('hemera-jaeger')\n   4: const nats = require('nats').connect({\n>> 5:   url: process.env.NATS_URL,\n   6:   user: process.env.NATS_USER,\n   7:   pass: process.env.NATS_PW\n   8: })\n   9: const hemera = new Hemera(nats, {"
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  }
+ ]
+}

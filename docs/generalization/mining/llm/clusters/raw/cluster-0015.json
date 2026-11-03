@@ -1,0 +1,92 @@
+{
+ "id": "cluster-0015",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1079,
+  "completion_tokens": 300,
+  "total_tokens": 1379,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The string \\\"minio\\\" appears as a documentation example in a Java annotation literal, not as a runtime call or connection.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The string \\\"cart\\\" is a view name returned by a controller method, not a runtime dependency on the cart component.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The method returns a hardcoded component name string \\\"mysql\\\", not a runtime call or connection.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The string \\\"extensions\\\" is part of a list of configuration keys or bean names, not a runtime dependency.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:java literal bare\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show component names used as literals in Java source code for documentation, configuration keys, or identifiers, not runtime dependencies; no general syntactic rule on bare literals in Java source can separate dependencies from non-dependencies.\"\n}",
+ "payload": {
+  "rank": 15,
+  "kind": "src:java",
+  "cls": "literal",
+  "detail": "bare",
+  "repos": 4,
+  "mentions": 16,
+  "samples": [
+   {
+    "repo": "mateaix__matecloud",
+    "source": "mate-file-starter",
+    "target": "minio",
+    "file": "mate-starters/mate-file-starter/src/main/java/vip/mate/starter/file/annotation/FileProvider.java",
+    "line": 42,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "/** Provider type key, e.g. {@code \"minio\"}. */",
+    "context": "   38: @Target(ElementType.TYPE)\n   39: @Retention(RetentionPolicy.RUNTIME)\n   40: public @interface FileProvider {\n   41: \n>> 42:     /** Provider type key, e.g. {@code \"minio\"}. */\n   43:     String value();\n   44: \n   45:     /** Human-readable description (optional). */\n   46:     String describe() default \"\";"
+   },
+   {
+    "repo": "aws-containers__retail-store-sample-app",
+    "source": "ui",
+    "target": "cart",
+    "file": "src/ui/src/main/java/com/amazon/sample/ui/web/CartController.java",
+    "line": 54,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "return \"cart\";",
+    "context": "   50:     String sessionId = SessionIDUtil.getSessionId(request);\n   51: \n   52:     model.addAttribute(\"fullCart\", cartsService.getCart(sessionId));\n   53: \n>> 54:     return \"cart\";\n   55:   }\n   56: \n   57:   @PostMapping\n   58:   public Mono<String> add("
+   },
+   {
+    "repo": "aliyun__alibabacloud-microservice-demo",
+    "source": "mock-server",
+    "target": "mysql",
+    "file": "arms-demo/mock-server/src/main/java/com/alibaba/arms/mock/server/service/MysqlService.java",
+    "line": 88,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "return \"mysql\";",
+    "context": "   84:     }\n   85: \n   86:     @Override\n   87:     public String getComponentName() {\n>> 88:         return \"mysql\";\n   89:     }\n   90: \n   91:     @Override\n   92:     public void execute() {"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "geoserver-configuration",
+    "target": "extensions",
+    "file": "src/config/geoserver-configuration/src/main/java/org/geoserver/configuration/core/main/GeoServerMainConfiguration.java",
+    "line": 32,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "\"extensions\", // provided by CoreBackendConfiguration#extensions",
+    "context": "   28:             \"rawCatalog\", // provided by GeoServerBackendConfigurer#rawCatalog\n   29:             \"accessRulesDao\", // provided by GeoServerBackendConfigurer#accessRulesDao\n   30:             \"catalogFacade\", // provided by GeoServerBackendConfigurer#catalogFacade\n   31:             \"dataDirectory\", // provided by GeoServerBackendConfigurer#dataDirectory\n>> 32:             \"extensions\", // provided by CoreBackendConfiguration#extensions\n   33:             \"geoServer\", // provided by GeoServerBackendConfigurer#geoServer\n   34:             \"geoserverFacade\", // provided by GeoServerBackendConfigurer#geoserverFacade\n   35:             \"geoServerLoader\", // provided by GeoServerBackendConfigurer#geoServerLoader\n   36:             \"geoServerSecurityManager\", // provided by GeoServerBackendConfigurer#geoServerSecurityManager"
+   }
+  ]
+ }
+}

@@ -1,0 +1,92 @@
+{
+ "id": "cluster-0021",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1011,
+  "completion_tokens": 372,
+  "total_tokens": 1383,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The configmap 'matecloud-config' defines environment variables for the matecloud component, but the runtime dependency on 'nacos' is from the matecloud application pod that mounts this configmap, not from the configmap itself.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The 'ecommerce-config' configmap sets POSTGRES_HOST for the ecommerce service, but the actual runtime dependency on 'postgres' is from the ecommerce application pod that uses this configmap.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The 'booking-config' configmap sets POSTGRES_HOST, but the runtime dependency on 'postgres' is from the booking application pod that mounts this configmap, not from the configmap itself.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The 'nacos-config' configmap sets MYSQL_SERVICE_HOST, but the runtime dependency on 'mysql-service' is from the application pod that mounts this configmap, not from the configmap itself.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml file; key position under data.*_HOST\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples are configmaps defining environment variables; the runtime dependency is from the application pods mounting these configmaps, so no general syntactic rule on yaml keys in configmaps can correctly infer edges without false positives.\"\n}",
+ "payload": {
+  "rank": 21,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "data.*_HOST",
+  "repos": 4,
+  "mentions": 6,
+  "samples": [
+   {
+    "repo": "mateaix__matecloud",
+    "source": "matecloud-config",
+    "target": "nacos",
+    "file": "deploy/k8s/configmap.yaml",
+    "line": 8,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "data.*_HOST",
+    "tag": "file-read",
+    "text": "NACOS_HOST: \"nacos.matecloud.svc.cluster.local\"",
+    "context": "   4:   name: matecloud-config\n   5:   namespace: matecloud\n   6: data:\n   7:   SPRING_PROFILES_ACTIVE: \"prod\"\n>> 8:   NACOS_HOST: \"nacos.matecloud.svc.cluster.local\"\n   9:   NACOS_PORT: \"8848\"\n   10:   # 空 = public 命名空间(与 init-nacos.sh 推送目标一致)。\n   11:   # 如需多环境隔离，可在 Nacos 控制台手动建命名空间后填入其 ID。\n   12:   NACOS_NAMESPACE: \"\""
+   },
+   {
+    "repo": "hoangtien2k3__ecommerce-microservices",
+    "source": "ecommerce-config",
+    "target": "postgres",
+    "file": "k8s/configmap.yaml",
+    "line": 8,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "data.*_HOST",
+    "tag": "file-read",
+    "text": "POSTGRES_HOST: \"postgres\"",
+    "context": "   4:   name: ecommerce-config\n   5:   namespace: ecommerce\n   6: data:\n   7:   # PostgresSQL\n>> 8:   POSTGRES_HOST: \"postgres\"\n   9:   POSTGRES_PORT: \"5432\"\n   10:   POSTGRES_DB: \"ecommerce\"\n   11: \n   12:   # Keycloak"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-expressjs",
+    "source": "booking-config",
+    "target": "postgres",
+    "file": "deployments/kubernetes/configmap.yaml",
+    "line": 8,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "data.*_HOST",
+    "tag": "file-read",
+    "text": "POSTGRES_HOST: postgres",
+    "context": "   4:   name: booking-config\n   5:   namespace: booking\n   6: data:\n   7:   NODE_ENV: production\n>> 8:   POSTGRES_HOST: postgres\n   9:   POSTGRES_PORT: \"5432\"\n   10:   POSTGRES_USER: postgres\n   11:   POSTGRES_USERNAME: postgres\n   12:   POSTGRES_SYNCHRONIZE: \"false\""
+   },
+   {
+    "repo": "nplszfl__OmniTradeERP",
+    "source": "nacos-config",
+    "target": "mysql-service",
+    "file": "k8s/nacos.yaml",
+    "line": 8,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "data.*_HOST",
+    "tag": "file-read",
+    "text": "MYSQL_SERVICE_HOST: \"mysql-service\"",
+    "context": "   4:   name: nacos-config\n   5:   namespace: erp\n   6: data:\n   7:   MODE: \"standalone\"\n>> 8:   MYSQL_SERVICE_HOST: \"mysql-service\"\n   9:   MYSQL_SERVICE_PORT: \"3306\"\n   10:   MYSQL_SERVICE_DB_NAME: \"nacos\"\n   11:   MYSQL_SERVICE_USER: \"root\"\n   12:   MYSQL_SERVICE_PASSWORD: \"root\""
+   }
+  ]
+ }
+}

@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0058",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 789,
+  "completion_tokens": 199,
+  "total_tokens": 988,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The workerservice uses a connection string to rabbitmq, indicating it connects to rabbitmq at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The cartmicroservice has a connection string to mongo, indicating it connects to mongo at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"appsettings; position = url; context key = connectionstring\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show runtime dependencies from the component owning the appsettings file to the TARGET named in the connection string URL, so a general rule drawing edges from SOURCE to TARGET for connection strings in appsettings files is valid.\"\n}",
+ "payload": {
+  "rank": 58,
+  "kind": "appsettings",
+  "cls": "url",
+  "detail": "connectionstring",
+  "repos": 2,
+  "mentions": 37,
+  "samples": [
+   {
+    "repo": "AntonioFalcaoJr__EventualShop",
+    "source": "workerservice",
+    "target": "rabbitmq",
+    "file": "src/Services/Order/Command/WorkerService/appsettings.Staging.json",
+    "line": 6,
+    "kind": "appsettings",
+    "cls": "url",
+    "detail": "connectionstring",
+    "tag": "file-read",
+    "text": "\"ConnectionString\": \"amqp://guest:guest@rabbitmq:5672/eventual-shop\"",
+    "context": "   2:   \"ConnectionStrings\": {\n   3:     \"EventStore\": \"Server=mssql;Database=OrderEventStore;User=sa;Password=!MyStrongPassword;trustServerCertificate=true\"\n   4:   },\n   5:   \"MessageBusOptions\": {\n>> 6:     \"ConnectionString\": \"amqp://guest:guest@rabbitmq:5672/eventual-shop\"\n   7:   },\n   8:   \"QuartzOptions\": {\n   9:     \"quartz.dataSource.default.connectionString\": \"Server=mssql;Database=Quartz;User=sa;Password=!MyStrongPassword;trustServerCertificate=true\"\n   10:   }"
+   },
+   {
+    "repo": "aelassas__microservices",
+    "source": "cartmicroservice",
+    "target": "mongo",
+    "file": "src/microservices/CartMicroservice/appsettings.Production.json",
+    "line": 14,
+    "kind": "appsettings",
+    "cls": "url",
+    "detail": "connectionstring",
+    "tag": "file-read",
+    "text": "\"connectionString\": \"mongodb://mongo\",",
+    "context": "   10:   \"jwt\": {\n   11:     \"secret\": \"9095a623-a23a-481a-aa0c-e0ad96edc103\"\n   12:   },\n   13:   \"mongo\": {\n>> 14:     \"connectionString\": \"mongodb://mongo\",\n   15:     \"database\": \"store-cart\"\n   16:   },\n   17:   \"HealthChecksUI\": {\n   18:     \"HealthChecks\": ["
+   }
+  ]
+ }
+}

@@ -1,0 +1,105 @@
+{
+ "id": "cluster-0010",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1179,
+  "completion_tokens": 318,
+  "total_tokens": 1497,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The @FeignClient annotation in a Java source file declares a client interface in SOURCE that calls TARGET at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The @FeignClient annotation indicates that SOURCE uses TARGET as a remote service client.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The Feign client interface in SOURCE calls TARGET service at runtime.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The @FeignClient annotation marks a runtime dependency from SOURCE to TARGET.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The @FeignClient annotation in SOURCE declares a runtime dependency on TARGET.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"src:java; position=literal; context key=call feignclient\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show that a @FeignClient annotation literal in Java source code marks a runtime dependency from the declaring component (SOURCE) to the named component (TARGET), so a general rule to add edges for such annotations is valid and precise.\"\n}",
+ "payload": {
+  "rank": 10,
+  "kind": "src:java",
+  "cls": "literal",
+  "detail": "call feignclient",
+  "repos": 5,
+  "mentions": 13,
+  "samples": [
+   {
+    "repo": "apssouza22__java-microservice",
+    "source": "oauth-server",
+    "target": "user",
+    "file": "oauth-server/src/main/java/com/apssouza/clients/UserClient.java",
+    "line": 15,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call feignclient",
+    "tag": "line-read",
+    "text": "@FeignClient(\"user\")",
+    "context": "   11: /**\n   12:  *\n   13:  * @author apssouza\n   14:  */\n>> 15: @FeignClient(\"user\")\n   16: @Component\n   17: public interface UserClient {\n   18:     \n   19:     @RequestMapping(value = \"/accounts/search\", method = RequestMethod.GET)"
+   },
+   {
+    "repo": "aliyun__alibabacloud-microservice-demo",
+    "source": "nacos-service-consumer",
+    "target": "service-provider",
+    "file": "microservice-doc-demo/spring-cloud-simplest-demo/nacos-service-consumer/src/main/java/com/aliware/edas/EchoService.java",
+    "line": 11,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call feignclient",
+    "tag": "line-read",
+    "text": "@FeignClient(name = \"service-provider\")",
+    "context": "   7: \n   8: /**\n   9:  * @author edas\n   10:  */\n>> 11: @FeignClient(name = \"service-provider\")\n   12: public interface EchoService {\n   13:     @RequestMapping(value = \"/echo/{str}\", method = RequestMethod.GET)\n   14:     String echo(@PathVariable(\"str\") String str);\n   15: }"
+   },
+   {
+    "repo": "devdcores__BookStoreApp-Distributed-Application",
+    "source": "bookstore-feign",
+    "target": "bookstore-order-service",
+    "file": "bookstore-feign/src/main/java/com/devd/spring/bookstorecommons/feign/OrderFeignClient.java",
+    "line": 8,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call feignclient",
+    "tag": "line-read",
+    "text": "@FeignClient(\"bookstore-order-service\")",
+    "context": "   4: \n   5: /**\n   6:  * @author: Devaraj Reddy, Date : 2019-07-02\n   7:  */\n>> 8: @FeignClient(\"bookstore-order-service\")\n   9: public interface OrderFeignClient {\n   10: \n   11: \n   12: }"
+   },
+   {
+    "repo": "ThoreauZZ__spring-cloud-example",
+    "source": "cloud-service-client",
+    "target": "cloud-service-user",
+    "file": "cloud-service-client/src/main/java/com/erdaoya/springcloud/client/client/UserFeignClient.java",
+    "line": 12,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call feignclient",
+    "tag": "line-read",
+    "text": "@FeignClient(value = \"cloud-service-user\")",
+    "context": "   8: /**\n   9:  * 2016/12/25 21:43\n   10:  * @author erdaoya\n   11:  */\n>> 12: @FeignClient(value = \"cloud-service-user\")\n   13: public interface UserFeignClient {\n   14: \n   15:     @RequestMapping(value = \"/user/personalInfo\",method = RequestMethod.GET)\n   16:     Object getUser(@RequestParam(value = \"id\") String id);"
+   },
+   {
+    "repo": "tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes",
+    "source": "containerized-main",
+    "target": "containerized-products",
+    "file": "containerized-main/src/main/java/com/tanerdiler/microservice/main/repository/ProductServiceClient.java",
+    "line": 12,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call feignclient",
+    "tag": "line-read",
+    "text": "@FeignClient(\"containerized-products\")",
+    "context": "   8: \n   9: import java.util.List;\n   10: \n   11: @Component\n>> 12: @FeignClient(\"containerized-products\")\n   13: public interface ProductServiceClient\n   14: {\n   15: \t@GetMapping(value = \"/product/api/v1/products/{productId}\")\n   16: \tProduct findById(@PathVariable(\"productId\") Integer orderId);"
+   }
+  ]
+ }
+}

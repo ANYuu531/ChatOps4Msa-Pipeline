@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:go; position = key; context key = key url
+They come from 2 different repositories (3 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=uid4oe__grpc-web-demo SOURCE=1-catalog-service TARGET=postgres file=1-catalog-service/catalogdb/postgres.go:32
+   28: 
+   29: var Postgres_Client *pgxpool.Pool
+   30: 
+   31: func NewClient(ctx context.Context) (*pgxpool.Pool, error) {
+>> 32: 	url := "postgres://" + username + ":" + password + "@" + host + "/" + db
+   33: 	client, err := pgxpool.Connect(ctx, url)
+   34: 	if err != nil {
+   35: 		return nil, errors.New("cannot connect to postgres instance")
+   36: 	}
+
+[1] repo=uid4oe__microservices-go-grpc SOURCE=? TARGET=postgres file=advice/advicedb/postgres.go:29
+   25: 	host     = GetEnv("POSTGRES_HOST")
+   26: )
+   27: 
+   28: func NewClient(ctx context.Context) (*pgxpool.Pool, error) {
+>> 29: 	url := "postgres://" + username + ":" + password + "@" + host + "/" + db
+   30: 	client, err := pgxpool.Connect(ctx, url)
+   31: 	if err != nil {
+   32: 		return nil, errors.New("cannot connect to postgres instance")
+   33: 	}

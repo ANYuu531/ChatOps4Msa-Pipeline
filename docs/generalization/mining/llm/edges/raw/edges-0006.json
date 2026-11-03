@@ -1,0 +1,234 @@
+{
+ "id": "edges-0006",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1468,
+  "completion_tokens": 400,
+  "total_tokens": 1868,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"wrong\", \"reason\": \"The cited docker-compose.yaml snippet only shows the sqlserver service definition, not that payment depends on sqlserver at runtime.\"}, {\"i\": 1, \"verdict\": \"wrong\", \"reason\": \"The cited snippet only shows the postgres service definition, not that basket depends on postgres at runtime.\"}, {\"i\": 2, \"verdict\": \"unsure\", \"reason\": \"No cited code shown to evaluate dependency; only filenames mentioned without content.\"}, {\"i\": 3, \"verdict\": \"wrong\", \"reason\": \"The cited snippet shows identity-server service definition and environment variables but no evidence that saa-s calls or connects to identity-server.\"}, {\"i\": 4, \"verdict\": \"wrong\", \"reason\": \"The cited snippet shows identity-server service definition and environment variables but no evidence that projects calls or connects to identity-server.\"}, {\"i\": 5, \"verdict\": \"unsure\", \"reason\": \"No actual cited code shown, only a reference to docker-compose.yml#depends_on without content.\"}, {\"i\": 6, \"verdict\": \"correct\", \"reason\": \"The user.properties file configures the user service to connect to eureka server URLs, showing runtime dependency.\"}, {\"i\": 7, \"verdict\": \"correct\", \"reason\": \"The @FeignClient(\\\"user\\\") annotation in UserClient.java shows oauth service depends on user service at runtime via HTTP calls.\"}, {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"The environment variable OTEL_EXPORTER_OTLP_ENDPOINT points to otel-collector, indicating cart sends telemetry data to it at runtime.\"}, {\"i\": 9, \"verdict\": \"unsure\", \"reason\": \"Only a depends_on reference is cited without showing actual code or configuration proving runtime dependency.\"}]}",
+ "payload": [
+  {
+   "repo": "amasen02__freshcart-backend",
+   "source": "payment",
+   "target": "sqlserver",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker/docker-compose.yaml#depends_on",
+     "file": "deploy/docker/docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deploy/docker/docker-compose.yaml",
+     "file": "deploy/docker/docker-compose.yaml",
+     "line": 17,
+     "kind": "compose",
+     "context": "   13: services:\n   14: \n   15:   # --- Relational stores -------------------------------------------------------\n   16: \n>> 17:   sqlserver:\n   18:     image: mcr.microsoft.com/mssql/server:2022-latest\n   19:     container_name: freshcart-sqlserver\n   20:     environment:\n   21:       ACCEPT_EULA: \"Y\""
+    }
+   ]
+  },
+  {
+   "repo": "amasen02__freshcart-backend",
+   "source": "basket",
+   "target": "postgres",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker/docker-compose.yaml#depends_on",
+     "file": "deploy/docker/docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deploy/docker/docker-compose.yaml",
+     "file": "deploy/docker/docker-compose.yaml",
+     "line": 35,
+     "kind": "compose",
+     "context": "   31:       interval: 15s\n   32:       timeout: 5s\n   33:       retries: 10\n   34: \n>> 35:   postgres:\n   36:     image: postgres:17-alpine\n   37:     container_name: freshcart-postgres\n   38:     environment:\n   39:       POSTGRES_USER: freshcart"
+    }
+   ]
+  },
+  {
+   "repo": "antosubash__abp-microservice",
+   "source": "identity-server",
+   "target": "sqlserver",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/services/projects/docker-compose.yml#depends_on",
+     "file": "src/services/projects/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: src/services/administration/docker-compose.yml#depends_on",
+     "file": "src/services/administration/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "antosubash__abp-microservice",
+   "source": "saa-s",
+   "target": "identity-server",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/services/saas/docker-compose.yml#depends_on",
+     "file": "src/services/saas/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: src/services/saas/docker-compose.override.yml",
+     "file": "src/services/saas/docker-compose.override.yml",
+     "line": 11,
+     "kind": "compose",
+     "context": "   7:       - ACCEPT_EULA=Y\n   8:     ports:\n   9:       - \"51599:1433\"\n   10: \n>> 11:   identity-server:\n   12:     environment:\n   13:       - ASPNETCORE_URLS=http://0.0.0.0:80\n   14:       - ConnectionStrings__Default=Server=sqlserver;Database=SaaS_Identity;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false\n   15:       - ConnectionStrings__SqlServerCache=Server=sqlserver;Database=SaaS_Cache;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false"
+    }
+   ]
+  },
+  {
+   "repo": "antosubash__abp-microservice",
+   "source": "projects",
+   "target": "identity-server",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/services/projects/docker-compose.yml#depends_on",
+     "file": "src/services/projects/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: src/services/projects/docker-compose.override.yml",
+     "file": "src/services/projects/docker-compose.override.yml",
+     "line": 11,
+     "kind": "compose",
+     "context": "   7:       - ACCEPT_EULA=Y\n   8:     ports:\n   9:       - \"51599:1433\"\n   10: \n>> 11:   identity-server:\n   12:     environment:\n   13:       - ASPNETCORE_URLS=http://0.0.0.0:80\n   14:       - ConnectionStrings__Default=Server=sqlserver;Database=Projects_Identity;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false\n   15:       - ConnectionStrings__SqlServerCache=Server=sqlserver;Database=Projects_Cache;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false"
+    }
+   ]
+  },
+  {
+   "repo": "apssouza22__java-microservice",
+   "source": "config",
+   "target": "kafka",
+   "type": "async",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "apssouza22__java-microservice",
+   "source": "user",
+   "target": "eureka",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: config-server/src/main/resources/offline-repository/user.properties",
+     "file": "config-server/src/main/resources/offline-repository/user.properties",
+     "line": 3,
+     "kind": "properties",
+     "context": "   1: server.port = 8016\n   2: spring.application.name = user\n>> 3: eureka.client.serviceUrl.defaultZone = http://eureka:8010/eureka/,http://localhost:8011/eureka/\n   4: \n   5: #database\n   6: spring.jpa.properties.hibernate.show_sql=true\n   7: spring.jpa.properties.hibernate.use_sql_comments=true"
+    }
+   ]
+  },
+  {
+   "repo": "apssouza22__java-microservice",
+   "source": "oauth",
+   "target": "user",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: oauth-server/src/main/java/com/apssouza/clients/UserClient.java:15",
+     "file": "oauth-server/src/main/java/com/apssouza/clients/UserClient.java",
+     "line": 15,
+     "kind": "src:java",
+     "context": "   11: /**\n   12:  *\n   13:  * @author apssouza\n   14:  */\n>> 15: @FeignClient(\"user\")\n   16: @Component\n   17: public interface UserClient {\n   18:     \n   19:     @RequestMapping(value = \"/accounts/search\", method = RequestMethod.GET)"
+    }
+   ]
+  },
+  {
+   "repo": "aws-containers__retail-store-sample-app",
+   "source": "cart",
+   "target": "otel-collector",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/app/docker-compose.tracing.yml",
+     "file": "src/app/docker-compose.tracing.yml",
+     "line": 14,
+     "kind": "compose",
+     "context": "   10: \n   11: x-otel-env: &otel-env\n   12:   OTEL_SDK_DISABLED: \"false\"\n   13:   OTEL_EXPORTER_OTLP_PROTOCOL: \"http/protobuf\"\n>> 14:   OTEL_EXPORTER_OTLP_ENDPOINT: \"http://otel-collector:4318\"\n   15:   OTEL_METRICS_EXPORTER: \"none\"\n   16:   OTEL_PROPAGATORS: \"tracecontext,baggage\"\n   17:   OTEL_RESOURCE_PROVIDERS_AWS_ENABLED: \"false\"\n   18:   OTEL_BSP_SCHEDULE_DELAY: \"200\""
+    }
+   ]
+  },
+  {
+   "repo": "aws-containers__retail-store-sample-app",
+   "source": "otel-collector",
+   "target": "jaeger",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/app/docker-compose.tracing.yml#depends_on",
+     "file": "src/app/docker-compose.tracing.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  }
+ ]
+}

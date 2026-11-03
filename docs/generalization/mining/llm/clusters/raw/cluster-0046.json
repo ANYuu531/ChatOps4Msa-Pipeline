@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0046",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 966,
+  "completion_tokens": 233,
+  "total_tokens": 1199,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a Javadoc comment describing a URL format, not actual runtime code invoking the TARGET.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The URL is part of a configuration list of allowed redirect URIs, not a runtime call or connection to TARGET.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The URL appears in a Javadoc comment describing configuration properties, not actual runtime code.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:java + url in bare context\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show URLs in comments or configuration values without runtime invocation, so no general syntactic rule on bare URLs in Java source can reliably identify dependencies.\"\n}",
+ "payload": {
+  "rank": 46,
+  "kind": "src:java",
+  "cls": "url",
+  "detail": "bare",
+  "repos": 3,
+  "mentions": 4,
+  "samples": [
+   {
+    "repo": "mateaix__matecloud",
+    "source": "mate-system",
+    "target": "host",
+    "file": "mate-biz/mate-system/src/main/java/vip/mate/system/admin/application/query/impl/MonitorQueryServiceImpl.java",
+    "line": 292,
+    "kind": "src:java",
+    "cls": "url",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "* first instance's {@code http://host:port} base URL. The display name",
+    "context": "   288: \n   289:     /**\n   290:      * Discover the platform services from Nacos: filter to {@code mate-*},\n   291:      * drop Dubbo provider entries ({@code *-dubbo}), then resolve each to its\n>> 292:      * first instance's {@code http://host:port} base URL. The display name\n   293:      * strips the {@code mate-} prefix to match the original UI labels\n   294:      * (gateway / auth / system / notice).\n   295:      */\n   296:     private List<String[]> discoverServices() {"
+   },
+   {
+    "repo": "hoangtien2k3__ecommerce-microservices",
+    "source": "auth-service",
+    "target": "admin",
+    "file": "auth-service/src/main/java/com/ecommerce/authservice/config/SsoProperties.java",
+    "line": 33,
+    "kind": "src:java",
+    "cls": "url",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "\"http://admin.ecommerce.local/auth/callback\",",
+    "context": "   29: \n   30:     /** Frontend callback pages allowed to receive the login ticket (anti open-redirect). */\n   31:     private List<String> allowedRedirectUris = List.of(\n   32:             \"http://ecommerce.local/auth/callback\",\n>> 33:             \"http://admin.ecommerce.local/auth/callback\",\n   34:             \"http://localhost:3000/auth/callback\",\n   35:             \"http://localhost:3001/auth/callback\"\n   36:     );\n   37: "
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "geoserver-acl",
+    "target": "acl",
+    "file": "src/extensions/security/geoserver-acl/src/main/java/org/geoserver/cloud/autoconfigure/extensions/security/acl/AclExtensionAutoConfiguration.java",
+    "line": 54,
+    "kind": "src:java",
+    "cls": "url",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "*       basePath: http://acl:8080/api",
+    "context": "   50:  *   extension.security.acl.enabled: true\n   51:  *   acl:\n   52:  *     client:\n   53:  *       enabled: true\n>> 54:  *       basePath: http://acl:8080/api\n   55:  *       username: geoserver\n   56:  *       password: pwd\n   57:  *       caching: true\n   58:  *       startupCheck: true"
+   }
+  ]
+ }
+}

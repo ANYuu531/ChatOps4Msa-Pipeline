@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0083",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 737,
+  "completion_tokens": 185,
+  "total_tokens": 922,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"not-dependency\", \"reason\": \"ADVERTISED_HOST is a Kafka broker config key setting its own advertised hostname, not a runtime call from another component.\"}, {\"i\": 1, \"verdict\": \"dependency\", \"reason\": \"SPRING_REDIS_HOST configures the auth-service to connect to the redis service at runtime.\"}], \"rule\": {\"general\": false, \"trigger\": \"yaml key under <service>.environment.*_HOST\", \"edge\": \"SOURCE -> TARGET\", \"exclusions\": \"cannot distinguish config keys that refer to self-host vs. external service only by syntax\", \"confidence\": \"medium\"}, \"summary\": \"Some environment variables named *_HOST under a service indicate runtime dependencies on other components, but others configure the service's own hostname, so no single syntactic rule can separate them reliably.\"}",
+ "payload": {
+  "rank": 83,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "<service>.environment.*_HOST",
+  "repos": 2,
+  "mentions": 4,
+  "samples": [
+   {
+    "repo": "asc-lab__micronaut-microservices-poc",
+    "source": "?",
+    "target": "kafkaserver",
+    "file": "scripts/infra.yml",
+    "line": 36,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "<service>.environment.*_HOST",
+    "tag": "unread",
+    "text": "ADVERTISED_HOST: kafkaserver",
+    "context": "   32:     ports:\n   33:       - 2181:2181\n   34:       - 9092:9092\n   35:     environment:\n>> 36:       ADVERTISED_HOST: kafkaserver\n   37:       ADVERTISED_PORT: 9092\n   38:   kafka_manager:\n   39:     image: \"mzagar/kafka-manager-docker:1.3.3.4\"\n   40:     container_name: kafkamanager"
+   },
+   {
+    "repo": "hantsy__spring-microservice-sample",
+    "source": "?",
+    "target": "redis",
+    "file": "docker-stack.yml",
+    "line": 32,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "<service>.environment.*_HOST",
+    "tag": "unread",
+    "text": "SPRING_REDIS_HOST: redis",
+    "context": "   28:   auth-service:\n   29:     image: hantsy/auth-service\n   30:     environment:\n   31:       SERVICES_USER_SERVICE_URL: http://user-service:8001\n>> 32:       SPRING_REDIS_HOST: redis\n   33:     ports:\n   34:       - \"8000:8000\" #specify ports forewarding\n   35:     networks:\n   36:       - backend"
+   }
+  ]
+ }
+}

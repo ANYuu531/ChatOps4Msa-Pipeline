@@ -1,0 +1,95 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = hostport; context key = scrape_configs.static_configs.targets
+They come from 14 different repositories (51 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=Mikaelemmmm__go-zero-looklook SOURCE=prometheus TARGET=looklook file=deploy/prometheus/server/prometheus.yml:14
+   10:       - targets: ['127.0.0.1:9090']
+   11: 
+   12:   - job_name: 'order-api'
+   13:     static_configs:
+>> 14:       - targets: [ 'looklook:4001' ]
+   15:         labels:
+   16:           job: order-api
+   17:           app: order-api
+   18:           env: dev
+
+[1] repo=phongnguyend__Practical.CleanArchitecture SOURCE=prometheus TARGET=otel-collector file=tools/opentelemetry/prometheus/prometheus.yml:6
+   2:   - job_name: otel-collector
+   3:     scrape_interval: 10s
+   4:     static_configs:
+   5:       - targets:
+>> 6:           - 'otel-collector:8889'
+   7:       - targets:
+   8:           - 'otel-collector:8888'
+   9:   - job_name: webapi
+   10:     scrape_interval: 15s
+
+[2] repo=meysamhadeli__booking-microservices SOURCE=? TARGET=otel-collector file=deployments/configs/prometheus.yaml:14
+   10:   - job_name: "otel-collector"
+   11:     scrape_interval: 10s
+   12:     static_configs:
+   13:       # otel-collector Prometheus exporter metrics
+>> 14:       - targets: [ 'otel-collector:8889' ]
+   15:       - targets: [ 'otel-collector:8888' ]
+   16: 
+   17:   - job_name: "prometheus"
+   18:     static_configs:
+
+[3] repo=sdgmf__go-project-sample SOURCE=prometheus TARGET=grafana file=configs/prometheus/prometheus.yml:19
+   15:         target_label: app
+   16:   - job_name: grafana
+   17:     static_configs:
+   18:       - targets:
+>> 19:           - "grafana:3000"
+   20:   - job_name: prometheus
+   21:     static_configs:
+   22:       - targets:
+   23:           - "localhost:9090"
+
+[4] repo=jingsewu__open-wes SOURCE=prometheus TARGET=station file=monitoring/prometheus/prometheus.yml:25
+   21:   - job_name: "station-server"
+   22:     metrics_path: "/actuator/prometheus"
+   23:     scrape_interval: 15s
+   24:     static_configs:
+>> 25:       - targets: ["station:9040"]
+   26: 
+   27:   - job_name: "gateway-server"
+   28:     metrics_path: "/actuator/prometheus"
+   29:     scrape_interval: 15s
+
+[5] repo=geoserver__geoserver-cloud SOURCE=? TARGET=consul file=compose/monitoring/prometheus-consul.yml:57
+   53:   # Discovery service (Consul)
+   54:   - job_name: 'discovery'
+   55:     metrics_path: '/metrics'
+   56:     static_configs:
+>> 57:       - targets: ['consul:8500']
+   58:         labels:
+   59:           service: 'discovery'
+   60:           application: 'consul'
+   61: 

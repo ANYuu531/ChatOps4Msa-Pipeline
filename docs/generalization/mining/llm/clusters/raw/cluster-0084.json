@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0084",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 773,
+  "completion_tokens": 241,
+  "total_tokens": 1014,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The URI is in a ConfigMap, which is a config resource, not the runtime component; the runtime component using this config (likely product-service) depends on mongodb.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The URI is in a ConfigMap named ecommerce-config, which is a config resource; the runtime component(s) mounting or using this config depend on keycloak, not the config itself.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml file with key matching data.*_URI\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show URIs in config files (ConfigMaps) that do not themselves represent runtime components, so no direct edges from these config components to the targets should be drawn; thus no purely syntactic rule on yaml data.*_URI lines can reliably distinguish dependencies here.\"\n}",
+ "payload": {
+  "rank": 84,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "data.*_URI",
+  "repos": 2,
+  "mentions": 4,
+  "samples": [
+   {
+    "repo": "SaiUpadhyayula__spring-boot-3-microservices-course",
+    "source": "product-service-config",
+    "target": "mongodb",
+    "file": "k8s/manifests/applications/product-service.yml",
+    "line": 52,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "data.*_URI",
+    "tag": "file-read",
+    "text": "SPRING_DATA_MONGODB_URI: \"mongodb://root:password@mongodb.default.svc.cluster.local:27017/product-service?authSource=admin\"",
+    "context": "   48: kind: ConfigMap\n   49: metadata:\n   50:   name: product-service-config\n   51: data:\n>> 52:   SPRING_DATA_MONGODB_URI: \"mongodb://root:password@mongodb.default.svc.cluster.local:27017/product-service?authSource=admin\""
+   },
+   {
+    "repo": "hoangtien2k3__ecommerce-microservices",
+    "source": "ecommerce-config",
+    "target": "keycloak",
+    "file": "k8s/configmap.yaml",
+    "line": 13,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "data.*_URI",
+    "tag": "file-read",
+    "text": "KEYCLOAK_ISSUER_URI: \"http://keycloak:8080/realms/ecommerce\"",
+    "context": "   9:   POSTGRES_PORT: \"5432\"\n   10:   POSTGRES_DB: \"ecommerce\"\n   11: \n   12:   # Keycloak\n>> 13:   KEYCLOAK_ISSUER_URI: \"http://keycloak:8080/realms/ecommerce\"\n   14:   KEYCLOAK_JWK_SET_URI: \"http://keycloak:8080/realms/ecommerce/protocol/openid-connect/certs\"\n   15:   JWT_ISSUER_URI: \"http://keycloak:8080/realms/ecommerce\"\n   16:   KEYCLOAK_SERVER_URL: \"http://keycloak:8080\"\n   17:   KEYCLOAK_PUBLIC_SERVER_URL: \"http://keycloak.ecommerce.local\""
+   }
+  ]
+ }
+}

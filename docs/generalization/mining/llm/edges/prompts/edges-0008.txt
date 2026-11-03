@@ -1,0 +1,96 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=cuongnh28__spring-microservices-blueprint kafdrop -> kafka (type async)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   25:     container_name: account-service-app
+   26:     restart: unless-stopped
+   27:     environment:
+   28:       DB_URL: jdbc:postgresql://account-service-db:5432/account-service
+>> 29:       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+   30:       JAVA_OPTS: "-Xmx512m -Xms256m"
+   31:     ports:
+   32:       - "8088:8088"
+   33:       - "5005:5005"
+
+[1] repo=cuongnh28__spring-microservices-blueprint fluentd -> elasticsearch (type db)
+  cited code: docker-compose.yml#depends_on
+
+
+[2] repo=cuongnh28__spring-microservices-blueprint product-service-app -> account-service (type sync-http)
+  cited code: product-service/src/main/java/com/demo/feign/UserFeignClient.java:14
+   10:  * @author Vito Nguyen (<a href="https://github.com/cuongnh28">...</a>)
+   11:  */
+   12: 
+   13: @FeignClient(
+>> 14:     name = "account-service", 
+   15:     url = "http://account-service-app:8088", 
+   16:     configuration = {CommonOpenFeignConfig.class}
+   17: )
+   18: public interface UserFeignClient {
+
+[3] repo=danionescu0__docker-flask-mongodb-example background-mqtt -> mongo (type db)
+  cited code: docker-compose.yml#depends_on
+
+
+[4] repo=danionescu0__docker-flask-mongodb-example web-book-collection -> mongo (type db)
+  cited code: docker-compose.yml#depends_on
+
+
+[5] repo=danionescu0__docker-flask-mongodb-example mongo-express -> mongo (type db)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   31:         volumes:
+   32:           - grafana_data:/var/lib/grafana
+   33: 
+   34:     # Genaral purpose database
+>> 35:     mongo:
+   36:         image: mongo:4.4.5-bionic
+   37:         hostname: mongodb
+   38:         ports:
+   39:             - '27017:27017'
+
+[6] repo=dashersw__cote-workshop purchase-service -> db (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+
+[7] repo=dashersw__cote-workshop lb -> admin (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+
+[8] repo=dashersw__cote-workshop lb -> monitoring (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+
+[9] repo=desenvolvedor-io__dev-store web-mvc -> devstore-api-catalog (type sync-http)
+  cited code: src/web/DevStore.WebApp.MVC/appsettings.Docker.json
+   29:       "Application": "DevStoreWeb"
+   30:     }
+   31:   },
+   32:   "AuthUrl": "https://devstore-api-identity",
+>> 33:   "CatalogUrl": "https://devstore-api-catalog",
+   34:   "CustomerUrl": "https://devstore-api-customers",
+   35:   "CheckoutBffUrl": "https://devstore-api-bff-checkout"
+   36: }
+  cited code: src/web/DevStore.WebApp.MVC/appsettings.Production.json
+   29:       "Application": "DevStoreWeb"
+   30:     }
+   31:   },
+   32:   "AuthUrl": "https://devstore-api-identity",
+>> 33:   "CatalogUrl": "https://devstore-api-catalog",
+   34:   "CustomerUrl": "https://devstore-api-customers",
+   35:   "CheckoutBffUrl": "https://devstore-api-bff-checkout"
+   36: }

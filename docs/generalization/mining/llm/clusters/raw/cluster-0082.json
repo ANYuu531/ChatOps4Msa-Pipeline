@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0082",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 837,
+  "completion_tokens": 196,
+  "total_tokens": 1033,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line defines a configuration default value for a Postgres username, which is metadata and not a runtime call or connection.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"Similarly, this line sets a default configuration value for Postgres username, not indicating a runtime dependency.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:typescript; position=literal; context key=call default\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples are configuration literals setting default values and do not represent runtime dependencies, so no general syntactic rule can separate dependency from non-dependency here.\"\n}",
+ "payload": {
+  "rank": 82,
+  "kind": "src:typescript",
+  "cls": "literal",
+  "detail": "call default",
+  "repos": 2,
+  "mentions": 4,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "building-blocks",
+    "target": "postgres",
+    "file": "src/building-blocks/configs/configs.ts",
+    "line": 29,
+    "kind": "src:typescript",
+    "cls": "literal",
+    "detail": "call default",
+    "tag": "file-read",
+    "text": "POSTGRES_USERNAME: Joi.string().default('postgres').description('Postgres username'),",
+    "context": "   25:       .default('1 days')\n   26:       .description('days after which refresh tokens expire'),\n   27:     POSTGRES_HOST: Joi.string().default('localhost').description('Postgres host'),\n   28:     POSTGRES_PORT: Joi.number().default(5432).description('Postgres host'),\n>> 29:     POSTGRES_USERNAME: Joi.string().default('postgres').description('Postgres username'),\n   30:     POSTGRES_PASSWORD: Joi.string().default('postgres').description('Postgres password'),\n   31:     POSTGRES_Database: Joi.string()\n   32:       .default('default_database')\n   33:       .description('Postgres database name'),"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-expressjs",
+    "source": "building-blocks",
+    "target": "postgres",
+    "file": "src/building-blocks/config/config.ts",
+    "line": 18,
+    "kind": "src:typescript",
+    "cls": "literal",
+    "detail": "call default",
+    "tag": "file-read",
+    "text": "POSTGRES_USERNAME: Joi.string().default('postgres').description('Postgres username'),",
+    "context": "   14:     SERVICE_NAME: Joi.string(),\n   15:     PORT: Joi.number().default(3000),\n   16:     POSTGRES_HOST: Joi.string().default('localhost').description('Postgres host'),\n   17:     POSTGRES_PORT: Joi.number().default(5432).description('Postgres host'),\n>> 18:     POSTGRES_USERNAME: Joi.string().default('postgres').description('Postgres username'),\n   19:     POSTGRES_PASSWORD: Joi.string().default('postgres').description('Postgres password'),\n   20:     POSTGRES_Database: Joi.string()\n   21:       .default('default_database')\n   22:       .description('Postgres database name'),"
+   }
+  ]
+ }
+}

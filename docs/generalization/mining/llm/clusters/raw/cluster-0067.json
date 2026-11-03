@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0067",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 716,
+  "completion_tokens": 205,
+  "total_tokens": 921,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"In an nginx config file, a proxy_pass directive inside a location block means SOURCE (proxy) forwards requests to TARGET (products) at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Similarly, proxy_pass in nginx config means SOURCE (nginx) routes requests to TARGET (user-service) at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"nginx file kind + url position\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show nginx proxy_pass directives where the SOURCE component routes requests to the TARGET component, so a general rule to draw edges from SOURCE to TARGET for nginx url proxy_pass lines is valid and precise.\"\n}",
+ "payload": {
+  "rank": 67,
+  "kind": "nginx",
+  "cls": "url",
+  "detail": "-",
+  "repos": 2,
+  "mentions": 8,
+  "samples": [
+   {
+    "repo": "codergogoi__nodejs_microservice",
+    "source": "proxy",
+    "target": "products",
+    "file": "proxy/nginx.conf",
+    "line": 13,
+    "kind": "nginx",
+    "cls": "url",
+    "detail": "-",
+    "tag": "line-read",
+    "text": "proxy_pass http://products:8002;",
+    "context": "   9:         listen 80;\n   10:         charset utf-8;\n   11: \n   12:         location / {\n>> 13:             proxy_pass http://products:8002;\n   14:             proxy_http_version 1.1;\n   15:             proxy_set_header Upgrade $http_upgrade;\n   16:             proxy_set_header Connection 'upgrade';\n   17:             proxy_set_header Host $host;"
+   },
+   {
+    "repo": "hantsy__spring-microservice-sample",
+    "source": "nginx",
+    "target": "user-service",
+    "file": "nginx/nginx.conf",
+    "line": 18,
+    "kind": "nginx",
+    "cls": "url",
+    "detail": "-",
+    "tag": "line-read",
+    "text": "proxy_pass http://user-service:8001;",
+    "context": "   14: \n   15: \n   16: \t\tlocation /users {\n   17: #\t\t\trewrite ^/api/user-service/(.*) /$1 break;\n>> 18: \t\t\tproxy_pass http://user-service:8001;\n   19: \t\t}\n   20: \t\tlocation /posts {\n   21: #\t\t\trewrite ^/api/post-service/(.*) /$1 break;\n   22: \t\t\tproxy_pass http://post-service:8002;"
+   }
+  ]
+ }
+}

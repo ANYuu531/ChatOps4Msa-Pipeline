@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0062",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 781,
+  "completion_tokens": 224,
+  "total_tokens": 1005,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The Makefile line sets an environment variable EVENTS_URL with a URL pointing to the events component, indicating that the api component depends on events at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The Makefile runs a migration command connecting to a postgres database, showing that the postal component depends on the postgres component at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"makefile; line containing URL or connection string in a command or environment variable\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"lines that only define labels, comments, or unrelated variables without runtime connection strings or URLs\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"In Makefiles, lines that assign URLs or connection strings to environment variables or use them in commands generally indicate runtime dependencies from the owning component to the target component.\"\n}",
+ "payload": {
+  "rank": 62,
+  "kind": "makefile",
+  "cls": "url",
+  "detail": "-",
+  "repos": 2,
+  "mentions": 14,
+  "samples": [
+   {
+    "repo": "oracle-quickstart__oci-cloudnative",
+    "source": "api",
+    "target": "events",
+    "file": "src/api/Makefile",
+    "line": 44,
+    "kind": "makefile",
+    "cls": "url",
+    "detail": "-",
+    "tag": "unread",
+    "text": "-e EVENTS_URL=http://events \\",
+    "context": "   40: \t\t-e CATALOGUE_URL=http://catalogue \\\n   41: \t\t-e CARTS_URL=http://carts \\\n   42: \t\t-e ORDERS_URL=http://orders \\\n   43: \t\t-e USERS_URL=http://user \\\n>> 44: \t\t-e EVENTS_URL=http://events \\\n   45: \t\t-e MOCK_MODE=$(MOCK_MODE) \\\n   46: \t\t-e NODE_ENV=development \\\n   47: \t\t-e PORT=3000            \\\n   48: \t\t-p 8080:3000            \\"
+   },
+   {
+    "repo": "NesoHQ__bgce-archive",
+    "source": "postal",
+    "target": "postgres",
+    "file": "postal/Makefile",
+    "line": 85,
+    "kind": "makefile",
+    "cls": "url",
+    "detail": "-",
+    "tag": "unread",
+    "text": "migrate -path ./migrations -database \"postgresql://postgres:root@localhost:5432/postal_db?sslmode=disable\" up; \\",
+    "context": "   81: migrate-up: ## Apply all pending migrations\n   82: \t@echo \"Running migrations...\"\n   83: \t@if [ -z \"$(DATABASE_URL)\" ]; then \\\n   84: \t\techo \"DATABASE_URL not set, using default...\"; \\\n>> 85: \t\tmigrate -path ./migrations -database \"postgresql://postgres:root@localhost:5432/postal_db?sslmode=disable\" up; \\\n   86: \telse \\\n   87: \t\tmigrate -path ./migrations -database \"$(DATABASE_URL)\" up; \\\n   88: \tfi\n   89: \t@echo \"✅ Migrations applied\""
+   }
+  ]
+ }
+}

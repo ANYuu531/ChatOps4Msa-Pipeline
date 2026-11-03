@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0029",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 998,
+  "completion_tokens": 305,
+  "total_tokens": 1303,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The line is in a ConfigMap named common-config, which is a config resource, not a runtime component; the dependency is from the component(s) that mount/use this config, not from common-config itself.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The STORAGE_ENDPOINT is declared in ecommerce-config ConfigMap, which is a config resource; the runtime dependency on rustfs is from the component(s) that consume this config, not ecommerce-config itself.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The OTEL_EXPORTER_OTLP_ENDPOINT is in basket-config ConfigMap; the runtime dependency on otel-collector is from the basket service that uses this config, not basket-config itself.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml file with key matching data.*_ENDPOINT\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples are config maps declaring endpoints used at runtime by other components; thus, the SOURCE component owning the config does not itself depend on TARGET, so no general syntactic rule can separate dependencies from non-dependencies here.\"\n}",
+ "payload": {
+  "rank": 29,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "data.*_ENDPOINT",
+  "repos": 3,
+  "mentions": 14,
+  "samples": [
+   {
+    "repo": "SaiUpadhyayula__spring-boot-3-microservices-course",
+    "source": "common-config",
+    "target": "tempo",
+    "file": "k8s/manifests/applications/common-config.yml",
+    "line": 8,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "data.*_ENDPOINT",
+    "tag": "file-read",
+    "text": "MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: \"http://tempo.default.svc.cluster.local:9411\"",
+    "context": "   4: metadata:\n   5:   name: common-config\n   6: data:\n   7:   LOKI_URL: \"http://loki.default.svc.cluster.local:3100/loki/api/v1/push\"\n>> 8:   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: \"http://tempo.default.svc.cluster.local:9411\"\n   9:   PRODUCT_SERVICE_URL: \"http://product-service.default.svc.cluster.local:8080\"\n   10:   ORDER_SERVICE_URL: \"http://order-service.default.svc.cluster.local:8081\"\n   11:   INVENTORY_SERVICE_URL: \"http://inventory-service.default.svc.cluster.local:8082\"\n   12:   SPRING_KAFKA_BOOTSTRAP-SERVERS: \"broker.default.svc.cluster.local:29092\""
+   },
+   {
+    "repo": "hoangtien2k3__ecommerce-microservices",
+    "source": "ecommerce-config",
+    "target": "rustfs",
+    "file": "k8s/configmap.yaml",
+    "line": 30,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "data.*_ENDPOINT",
+    "tag": "file-read",
+    "text": "STORAGE_ENDPOINT: \"http://rustfs:9000\"",
+    "context": "   26:   # Elasticsearch\n   27:   ELASTICSEARCH_URL: \"http://elasticsearch:9200\"\n   28: \n   29:   # Object storage (RustFS - S3-compatible)\n>> 30:   STORAGE_ENDPOINT: \"http://rustfs:9000\"\n   31:   STORAGE_REGION: \"us-east-1\"\n   32:   STORAGE_BUCKET: \"ecommerce-media\"\n   33: \n   34:   # Hibernate"
+   },
+   {
+    "repo": "amasen02__freshcart-backend",
+    "source": "basket-config",
+    "target": "otel-collector",
+    "file": "deploy/k8s/basket/configmap.yaml",
+    "line": 9,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "data.*_ENDPOINT",
+    "tag": "file-read",
+    "text": "OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector.observability.svc.cluster.local:4317'",
+    "context": "   5:   namespace: freshcart\n   6: data:\n   7:   ASPNETCORE_ENVIRONMENT: 'Production'\n   8:   ASPNETCORE_HTTP_PORTS: '8080'\n>> 9:   OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector.observability.svc.cluster.local:4317'\n   10:   OTEL_SERVICE_NAME: 'freshcart-basket'\n   11:   Cors__AllowedOrigins__0: 'https://www.freshcart.local'\n   12:   Jwt__Issuer: 'https://identity.freshcart.local'\n   13:   Jwt__Audience: 'https://freshcart.local'"
+   }
+  ]
+ }
+}

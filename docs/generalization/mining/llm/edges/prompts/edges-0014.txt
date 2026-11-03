@@ -1,0 +1,128 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=ivanpaulovich__clean-architecture-manga nginx -> identity-server (type sync-http)
+  cited code: nginx/nginx.conf:36
+   32:         proxy_set_header   X-Forwarded-Host $server_name;
+   33: 
+   34:         location /identity-server {
+   35:             rewrite /identity-server/?(.*) /$1 break;
+>> 36:             proxy_pass         https://identity-server;
+   37:         }
+   38: 
+   39:         location /accounts-api {
+   40:             rewrite /accounts-api/?(.*) /$1 break;
+  cited code: docker-compose/docker-compose.yml#depends_on
+
+
+[1] repo=ivanpaulovich__clean-architecture-manga nginx -> accounts-api (type sync-http)
+  cited code: nginx/nginx.conf:41
+   37:         }
+   38: 
+   39:         location /accounts-api {
+   40:             rewrite /accounts-api/?(.*) /$1 break;
+>> 41:             proxy_pass         https://accounts-api;
+   42:         }
+   43: 
+   44:         location / {
+   45:             proxy_pass         http://wallet-spa:3000;
+  cited code: docker-compose/docker-compose.yml#depends_on
+
+
+[2] repo=ivanpaulovich__clean-architecture-manga accounts-api -> raw.githubusercontent.com (type external)
+  cited code: accounts-api/src/WebApi/Modules/Common/Swagger/ConfigureSwaggerOptions.cs:22
+   18: {
+   19:     private const string UriString = "http://paulovich.net";
+   20: 
+   21:     private const string UriString1 =
+>> 22:         "https://raw.githubusercontent.com/ivanpaulovich/clean-architecture-manga/master/README.md";
+   23: 
+   24:     private readonly IApiVersionDescriptionProvider _provider;
+   25: 
+   26:     /// <summary>
+
+[3] repo=jingsewu__open-wes station-server -> nacos (type sync-http)
+  cited code: server/server/station-server/src/main/resources/bootstrap.yml
+   3:     name: station
+   4:   profiles:
+   5:     active: test
+   6:   cloud:
+>> 7:     nacos:
+   8:       config:
+   9:         server-addr: ${nacos.openwes.com:nacos.openwes.com}:${nacos.port:8848}
+   10:         prefix: ${spring.application.name}
+   11:         file-extension: yml
+  cited code: docker-compose.yml#depends_on
+
+
+[4] repo=jingsewu__open-wes gateway-server -> mysql (type db)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.prod.yml#depends_on
+
+
+[5] repo=jingsewu__open-wes station-server -> redis (type db)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.prod.yml#depends_on
+
+
+[6] repo=juicycleff__ultimate-backend services-role -> nats-cluster (type async)
+  cited code: docker-compose.yml
+   8:     image: "${DOCKER_REGISTRY}/${DOCKER_REPO:?err}/service-account:${IMAGE_TAG:?err}"
+   9:     restart: always
+   10:     environment:
+   11:       - CONSUL_HOST=consul-cluster.default.svc.cluster.local
+>> 12:       - NATS_HOST=nats-cluster.default.svc.cluster.local
+   13:       - DISCOVERY_HOST=service-account.default.svc.cluster.local
+   14:     ports:
+   15:       - 50054:50054
+   16:     labels:
+
+[7] repo=juicycleff__ultimate-backend service-tenant -> consul (type sync-http)
+  cited code: docker-compose.dev.yml#depends_on
+
+  cited code: docker-compose.dev.yml
+   9:         NODE_ENV: development
+   10:     image: "service-account:latest"
+   11:     restart: always
+   12:     depends_on:
+>> 13:       - consul
+   14:       - redis
+   15:     environment:
+   16:       - CONSUL_HOST=consul
+   17:       - NATS_HOST=nats
+
+[8] repo=juicycleff__ultimate-backend services-notification -> consul-cluster (type sync-http)
+  cited code: docker-compose.yml
+   7:       dockerfile: apps/service-account/Dockerfile
+   8:     image: "${DOCKER_REGISTRY}/${DOCKER_REPO:?err}/service-account:${IMAGE_TAG:?err}"
+   9:     restart: always
+   10:     environment:
+>> 11:       - CONSUL_HOST=consul-cluster.default.svc.cluster.local
+   12:       - NATS_HOST=nats-cluster.default.svc.cluster.local
+   13:       - DISCOVERY_HOST=service-account.default.svc.cluster.local
+   14:     ports:
+   15:       - 50054:50054
+
+[9] repo=kalintsenkov__BettingSystem betting -> sqlserver (type db)
+  cited code: src/docker-compose.yml
+   2: 
+   3: services:
+   4: 
+   5:     data:
+>> 6:         container_name: sqlserver
+   7:         image: mcr.microsoft.com/mssql/server:2019-latest
+   8:         ports: 
+   9:             - "1433:1433"
+   10:         environment:

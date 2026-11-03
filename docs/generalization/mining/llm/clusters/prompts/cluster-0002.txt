@@ -1,0 +1,95 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:typescript; position = literal; context key = bare
+They come from 10 different repositories (61 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=juicycleff__ultimate-backend SOURCE=? TARGET=nats file=libs/core/src/modules/subscription-base.provider.ts:55
+   51:     try {
+   52:       const natsConfig = this.config.get<{
+   53:         servers: string[];
+   54:         url: string;
+>> 55:       }>('nats');
+   56:       this.pubsub = new NatsPubSub({ servers: natsConfig.servers });
+   57:     } catch (e) {
+   58:       this.logger.error(e);
+   59:     }
+
+[1] repo=mateaix__matecloud SOURCE=core TARGET=admin file=mate-ui/packages/core/src/api/mock/data.ts:26
+   22: 
+   23: // ---- mock user ----
+   24: const ADMIN_USER = {
+   25:   userId: '1',
+>> 26:   username: 'admin',
+   27:   realName: 'Admin',
+   28:   mobile: '13800138000',
+   29:   email: 'admin@mate.vip',
+   30:   roleCodes: ['super_admin'],
+
+[2] repo=mudigal-technologies__microservices-sample SOURCE=web-application TARGET=service-one file=web-application/src/app/app.module.ts:17
+   13: import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+   14: 
+   15: export const appRoutes: Routes = [
+   16:   {path: '', component: HomeComponent},
+>> 17:   {path: 'service-one', component: DataComponent},
+   18:   {path: 'service-two', component: DataComponent},
+   19:   {path: '**', redirectTo: '/', pathMatch: 'full'}
+   20: ];
+   21: 
+
+[3] repo=jingsewu__open-wes SOURCE=client TARGET=user file=client/src/components/Chatbot.tsx:94
+   90:                 {/* Messages */}
+   91:                 {messages.map((message, index) => (
+   92:                     <div key={index} className={`message-container ${message.sender}`}>
+   93:                         <img
+>> 94:                             src={message.sender === "user" ? user : assistant}
+   95:                             alt={`${message.sender} avatar`}
+   96:                             className="avatar"
+   97:                         />
+   98:                         {message.sender === "user" ? (
+
+[4] repo=JarrodMalkovic__auction-website SOURCE=payments TARGET=listings file=services/payments/src/models/listing.ts:24
+   20: };
+   21: 
+   22: const ListingFactory = (sequelize: Sequelize): ListingStatic => {
+   23:   return <ListingStatic>sequelize.define(
+>> 24:     'listings',
+   25:     {
+   26:       id: {
+   27:         type: DataTypes.UUID,
+   28:         defaultValue: UUIDV4,
+
+[5] repo=tkssharma__12-factor-app-microservices SOURCE=nestjs-knex-postgres-02 TARGET=postgres file=nestjs-knex-postgres #02/src/db/db.module.ts:32
+   28:   private static getConnectionOptionsPostgres(
+   29:     dbdata: ConfigDBData,
+   30:   ): TypeOrmModuleOptions {
+   31:     return {
+>> 32:       type: 'postgres',
+   33:       url: dbdata.url,
+   34:       keepConnectionAlive: true,
+   35:       ssl:
+   36:         process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test'

@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0031",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 948,
+  "completion_tokens": 312,
+  "total_tokens": 1260,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The URL is set in a ConfigMap named notification-service-config, which is a config resource, not the runtime component; the actual runtime component using this config is notification-service.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The URL is set in a configmap named ecommerce-config, which is a config resource, not the runtime component; the actual runtime component using this config is ecommerce (or a specific microservice consuming this config).\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The URL is set in a configmap named booking-config, which is a config resource, not the runtime component; the actual runtime component using this config is booking-service or equivalent.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml file with context key matching data.*_URL\",\n    \"edge\": \"the runtime component that mounts or uses the config -> TARGET\",\n    \"exclusions\": \"do not draw edges from configmap or config resource components themselves\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show URLs in configmap data keys, which are not runtime components themselves, so edges should be drawn from the runtime components that consume these configs, not from the config resources.\"\n}",
+ "payload": {
+  "rank": 31,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "data.*_URL",
+  "repos": 3,
+  "mentions": 12,
+  "samples": [
+   {
+    "repo": "SaiUpadhyayula__spring-boot-3-microservices-course",
+    "source": "notification-service-config",
+    "target": "schema-registry",
+    "file": "k8s/manifests/applications/notification-service.yml",
+    "line": 57,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "data.*_URL",
+    "tag": "file-read",
+    "text": "SPRING_KAFKA_CONSUMER_PROPERTIES_SCHEMA_REGISTRY_URL: \"http://schema-registry.default.svc.cluster.local:8081\"",
+    "context": "   53: kind: ConfigMap\n   54: metadata:\n   55:   name: notification-service-config\n   56: data:\n>> 57:   SPRING_KAFKA_CONSUMER_PROPERTIES_SCHEMA_REGISTRY_URL: \"http://schema-registry.default.svc.cluster.local:8081\""
+   },
+   {
+    "repo": "hoangtien2k3__ecommerce-microservices",
+    "source": "ecommerce-config",
+    "target": "keycloak",
+    "file": "k8s/configmap.yaml",
+    "line": 16,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "data.*_URL",
+    "tag": "file-read",
+    "text": "KEYCLOAK_SERVER_URL: \"http://keycloak:8080\"",
+    "context": "   12:   # Keycloak\n   13:   KEYCLOAK_ISSUER_URI: \"http://keycloak:8080/realms/ecommerce\"\n   14:   KEYCLOAK_JWK_SET_URI: \"http://keycloak:8080/realms/ecommerce/protocol/openid-connect/certs\"\n   15:   JWT_ISSUER_URI: \"http://keycloak:8080/realms/ecommerce\"\n>> 16:   KEYCLOAK_SERVER_URL: \"http://keycloak:8080\"\n   17:   KEYCLOAK_PUBLIC_SERVER_URL: \"http://keycloak.ecommerce.local\"\n   18: \n   19:   # Kafka\n   20:   KAFKA_SERVERS: \"kafka:9092\""
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-expressjs",
+    "source": "booking-config",
+    "target": "otel-collector",
+    "file": "deployments/kubernetes/configmap.yaml",
+    "line": 20,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "data.*_URL",
+    "tag": "file-read",
+    "text": "OPEN_TELEMETRY_COLLECTOR_URL: http://otel-collector:4319",
+    "context": "   16:   RABBITMQ_Host: rabbitmq\n   17:   RABBITMQ_PORT: \"5672\"\n   18:   RABBITMQ_DEFAULT_USER: guest\n   19:   RABBITMQ_USERNAME: guest\n>> 20:   OPEN_TELEMETRY_COLLECTOR_URL: http://otel-collector:4319\n   21:   IDENTITY_PORT: \"3333\"\n   22:   IDENTITY_SERVICE_NAME: identity-service\n   23:   IDENTITY_RABBITMQ_EXCHANGE: identity\n   24:   IDENTITY_OTEL_SERVICE_NAME: identity"
+   }
+  ]
+ }
+}

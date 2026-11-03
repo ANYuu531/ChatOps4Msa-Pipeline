@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0076",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 753,
+  "completion_tokens": 223,
+  "total_tokens": 976,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line adds an attribute named 'checkout' to a UI model for rendering a view, not a runtime call or connection to the 'checkout' component.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line adds an attribute named 'cartservice' to a UI model for display purposes, not a runtime call or connection to the 'cartservice' component.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:java; position=literal; context key=call addattribute\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples are UI model attribute additions that do not represent runtime dependencies, so no general syntactic rule on addAttribute calls in Java source files can distinguish dependencies from non-dependencies here.\"\n}",
+ "payload": {
+  "rank": 76,
+  "kind": "src:java",
+  "cls": "literal",
+  "detail": "call addattribute",
+  "repos": 2,
+  "mentions": 5,
+  "samples": [
+   {
+    "repo": "aws-containers__retail-store-sample-app",
+    "source": "ui",
+    "target": "checkout",
+    "file": "src/ui/src/main/java/com/amazon/sample/ui/web/CheckoutController.java",
+    "line": 70,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call addattribute",
+    "tag": "file-read",
+    "text": "model.addAttribute(\"checkout\", o);",
+    "context": "   66:     model.addAttribute(\"shippingAddressRequest\", shippingAddressRequest);\n   67: \n   68:     return this.checkoutService.create(sessionId)\n   69:       .doOnNext(o -> {\n>> 70:         model.addAttribute(\"checkout\", o);\n   71:       })\n   72:       .thenReturn(\"checkout-shipping\");\n   73:   }\n   74: "
+   },
+   {
+    "repo": "aliyun__alibabacloud-microservice-demo",
+    "source": "frontend",
+    "target": "cartservice",
+    "file": "src/frontend/src/main/java/com/alibabacloud/hipstershop/web/GracefulShutdownDemoController.java",
+    "line": 84,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call addattribute",
+    "tag": "unread",
+    "text": "model.addAttribute(\"cartservice\", DUBBO_RESULT_LIST);",
+    "context": "   80:                 DUBBO_RESULT_LIST.add(new ResultNode(entry.getKey(), entry.getValue()));\n   81:             }\n   82: \n   83: \n>> 84:             model.addAttribute(\"cartservice\", DUBBO_RESULT_LIST);\n   85:         }\n   86: \n   87:         model.addAttribute(\"dubbo_invoker_times\", DUBBO_INVOKER_TIMES.get());\n   88:         model.addAttribute(\"dubbo_error_times\", DUBBO_ERROR_TIMES.get());"
+   }
+  ]
+ }
+}

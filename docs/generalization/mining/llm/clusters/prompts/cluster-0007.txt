@@ -1,0 +1,95 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:typescript; position = url; context key = bare
+They come from 6 different repositories (13 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=phongnguyend__Practical.CleanArchitecture SOURCE=angular TARGET=identityserver file=src/UIs/angular/src/environments/environment.ts:10
+   6:   production: false,
+   7:   OpenIdConnect: {
+   8:     Authority: "https://localhost:44367",
+   9:     //Authority: "http://host.docker.internal:9000/",
+>> 10:     //Authority: "http://identityserver",
+   11:     ClientId: "ClassifiedAds.Angular",
+   12:   },
+   13:   ResourceServer: {
+   14:     Endpoint: "https://localhost:44312/api/",
+
+[1] repo=mateaix__matecloud SOURCE=core TARGET=minio file=mate-ui/packages/core/src/api/mock/data.ts:118
+   114:   { id: '3', configKey: 'sys.login.maxFailCount', configValue: '5', configName: '登录失败锁定次数', builtIn: true, remark: '达到次数后锁定账号', createdAt: '2025-01-01 10:00:00' },
+   115:   { id: '4', configKey: 'sys.site.title', configValue: 'MateCloud Admin', configName: '站点标题', builtIn: false, remark: '', createdAt: '2025-02-10 09:30:00' },
+   116:   { id: '5', configKey: 'sys.site.copyright', configValue: '© 2026 MateCloud', configName: '版权信息', builtIn: false, remark: '', createdAt: '2025-02-10 09:31:00' },
+   117:   { id: '6', configKey: 'sys.oss.provider', configValue: 'minio', configName: '对象存储提供商', builtIn: false, remark: 'minio / aliyun / qiniu / s3', createdAt: '2025-03-15 14:22:00' },
+>> 118:   { id: '7', configKey: 'sys.oss.endpoint', configValue: 'http://minio:9000', configName: 'OSS Endpoint', builtIn: false, remark: '', createdAt: '2025-03-15 14:23:00' },
+   119:   { id: '8', configKey: 'sys.mail.host', configValue: 'smtp.example.com', configName: '邮件服务器', builtIn: false, remark: '', createdAt: '2025-04-01 11:00:00' },
+   120:   { id: '9', configKey: 'sys.sms.signature', configValue: 'MateCloud', configName: '短信签名', builtIn: false, remark: '', createdAt: '2025-04-02 11:00:00' },
+   121:   { id: '10', configKey: 'sys.tenant.enabled', configValue: 'false', configName: '多租户开关', builtIn: true, remark: '开启后数据自动按租户隔离', createdAt: '2025-01-01 10:00:00' },
+   122: ]
+
+[2] repo=saalikmubeen__microservices-architectured-app SOURCE=tickets TARGET=nats-service file=tickets/src/index.ts:30
+   26:     try {
+   27:         await natsInitializer.connect(
+   28:             process.env.NATS_CLUSTER_ID, // "ticketing"
+   29:             process.env.NATS_CLIENT_ID, //"abc123",
+>> 30:             process.env.NATS_URL // "http://nats-service:4222"
+   31:         );
+   32: 
+   33:         natsInitializer.client.on("close", () => {
+   34:             {
+
+[3] repo=SaiUpadhyayula__spring-boot-3-microservices-course SOURCE=frontend TARGET=keycloak file=frontend/src/app/config/auth.config.ts:5
+   1: import { PassedInitialConfig } from 'angular-auth-oidc-client';
+   2: 
+   3: export const authConfig: PassedInitialConfig = {
+   4:   config: {
+>> 5:     authority: 'http://keycloak.default.svc.cluster.local:8080/realms/spring-microservices-security-realm',
+   6:     redirectUrl: window.location.origin,
+   7:     postLogoutRedirectUri: window.location.origin,
+   8:     clientId: 'angular-client',
+   9:     scope: 'openid profile offline_access',
+
+[4] repo=mabuonomo__example-nestjs-microservices-grpc SOURCE=micr-prisma TARGET=prisma file=microservices/micr_prisma/src/prisma/prisma.service.ts:8
+   4: @Injectable()
+   5: export class PrismaService extends Prisma {
+   6:   constructor() {
+   7:     super({
+>> 8:       endpoint: 'http://prisma:4466',
+   9:       debug: false,
+   10:     });
+   11:   }
+   12: }
+
+[5] repo=getlarge__ticketing SOURCE=tools TARGET=mailslurper file=tools/ory/mappings.ts:57
+   53:     require_valid_protocol: true,
+   54:     protocols: ['smtp', 'smtps'],
+   55:   })
+   56:   courier_smtp_connection_uri?: string =
+>> 57:     'smtps://test:test@mailslurper:1025/?skip_ssl_verify=true';
+   58: 
+   59:   @Expose()
+   60:   @IsOptional()
+   61:   @IsString()

@@ -1,0 +1,92 @@
+{
+ "id": "cluster-0012",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1046,
+  "completion_tokens": 334,
+  "total_tokens": 1380,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The 'Host' key in an Ocelot JSON config downstream section indicates the target service the gateway routes requests to, so SOURCE calls TARGET at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Same Ocelot gateway downstream host usage indicating a runtime call from SOURCE to TARGET.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Ocelot gateway downstream host key naming the target service called by SOURCE at runtime.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Ocelot gateway downstream host key specifying the service TARGET that SOURCE routes to at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"json file with key path including 'host' inside 'DownstreamHostAndPorts' array in Ocelot gateway config\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none needed because this key always indicates a runtime downstream service call\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples are Ocelot gateway downstream host entries that unambiguously indicate a runtime dependency from the gateway component (SOURCE) to the downstream service (TARGET), so a general rule to add edges from the component owning the Ocelot config to the named host in the 'host' key is valid and precise.\"\n}",
+ "payload": {
+  "rank": 12,
+  "kind": "json",
+  "cls": "key",
+  "detail": "host",
+  "repos": 4,
+  "mentions": 46,
+  "samples": [
+   {
+    "repo": "falberthen__EcommerceDDD",
+    "source": "ecommerceddd-apigateway",
+    "target": "ecommerceddd-payment-processing",
+    "file": "src/Crosscutting/EcommerceDDD.ApiGateway/Ocelot/ocelot.paymentProcessing.json",
+    "line": 9,
+    "kind": "json",
+    "cls": "key",
+    "detail": "host",
+    "tag": "unread",
+    "text": "\"Host\": \"ecommerceddd-payment-processing\",",
+    "context": "   5:       \"DownstreamPathTemplate\": \"/api/v{version}/payments/{everything}\",\n   6:       \"DownstreamScheme\": \"http\",\n   7:       \"DownstreamHostAndPorts\": [\n   8:         {\n>> 9:           \"Host\": \"ecommerceddd-payment-processing\",\n   10:           \"Port\": 80\n   11:         }\n   12:       ],\n   13:       \"UpstreamHttpMethod\": ["
+   },
+   {
+    "repo": "alperenkucukali__dotnet-microservices",
+    "source": "ocelotapigateway",
+    "target": "transaction.api",
+    "file": "src/ApiGateways/OcelotApiGateway/ocelot.json",
+    "line": 9,
+    "kind": "json",
+    "cls": "key",
+    "detail": "host",
+    "tag": "unread",
+    "text": "\"Host\": \"transaction.api\",",
+    "context": "   5:       \"DownstreamPathTemplate\": \"/api/v1/Transactions/{accountId}\",\n   6:       \"DownstreamScheme\": \"http\",\n   7:       \"DownstreamHostAndPorts\": [\n   8:         {\n>> 9:           \"Host\": \"transaction.api\",\n   10:           \"Port\": \"8080\"\n   11:         }\n   12:       ],\n   13:       \"UpstreamPathTemplate\": \"/Transactions/{accountId}\","
+   },
+   {
+    "repo": "ebubekirdinc__SuuCat",
+    "source": "ocelotgateway",
+    "target": "notification.api",
+    "file": "src/ApiGateways/OcelotGateway/ocelot.development.json",
+    "line": 8,
+    "kind": "json",
+    "cls": "key",
+    "detail": "host",
+    "tag": "unread",
+    "text": "\"Host\": \"notification.api\",",
+    "context": "   4:       \"DownstreamPathTemplate\": \"/{everything}\",\n   5:       \"DownstreamScheme\": \"http\",\n   6:       \"DownstreamHostAndPorts\": [\n   7:         {\n>> 8:           \"Host\": \"notification.api\",\n   9:           \"Port\": 80\n   10:         }\n   11:       ],\n   12:       \"UpstreamPathTemplate\": \"/services/NotificationService/{everything}\","
+   },
+   {
+    "repo": "aelassas__microservices",
+    "source": "backendgateway",
+    "target": "catalog",
+    "file": "src/gateways/BackendGateway/ocelot.Production.json",
+    "line": 8,
+    "kind": "json",
+    "cls": "key",
+    "detail": "host",
+    "tag": "unread",
+    "text": "\"Host\": \"catalog\",",
+    "context": "   4:       \"DownstreamPathTemplate\": \"/api/catalog\",\n   5:       \"DownstreamScheme\": \"http\",\n   6:       \"DownstreamHostAndPorts\": [\n   7:         {\n>> 8:           \"Host\": \"catalog\",\n   9:           \"Port\": 80\n   10:         }\n   11:       ],\n   12:       \"UpstreamPathTemplate\": \"/catalog\","
+   }
+  ]
+ }
+}

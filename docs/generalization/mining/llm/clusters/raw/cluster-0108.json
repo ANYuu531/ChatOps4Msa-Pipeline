@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0108",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 757,
+  "completion_tokens": 236,
+  "total_tokens": 993,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The endpoint is configured in the otel-collector config, so the runtime dependency on jaeger-all-in-one is from the otel-collector component, not from an unspecified SOURCE.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"Same as sample 0, the dependency on jaeger-all-in-one arises from the otel-collector component that uses this config, not from the unspecified SOURCE.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml file with key path exporters.otlp/jaeger.endpoint\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"The endpoint setting in otel-collector config files indicates a runtime dependency from the otel-collector component to the target, not from the component owning the config file line, so no general syntactic rule can reliably infer edges here.\"\n}",
+ "payload": {
+  "rank": 108,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "exporters.otlp/jaeger.endpoint",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "jaeger-all-in-one",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 84,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.otlp/jaeger.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://jaeger-all-in-one:4317\"",
+    "context": "   80:     format: proto\n   81: \n   82:   # export collected telemetry traces to jaeger OTLP grpc port, we can send data to other available endpoints and ports on jaeger as well\n   83:   otlp/jaeger:\n>> 84:     endpoint: \"http://jaeger-all-in-one:4317\"\n   85:     tls:\n   86:       insecure: true\n   87: \n   88:   otlp/tempo:"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "jaeger-all-in-one",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 84,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.otlp/jaeger.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://jaeger-all-in-one:4317\"",
+    "context": "   80:     format: proto\n   81: \n   82:   # export collected telemetry traces to jaeger OTLP grpc port, we can send data to other available endpoints and ports on jaeger as well\n   83:   otlp/jaeger:\n>> 84:     endpoint: \"http://jaeger-all-in-one:4317\"\n   85:     tls:\n   86:       insecure: true\n   87: \n   88:   otlp/tempo:"
+   }
+  ]
+ }
+}

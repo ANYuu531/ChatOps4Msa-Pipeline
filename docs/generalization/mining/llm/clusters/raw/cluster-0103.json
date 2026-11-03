@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0103",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 657,
+  "completion_tokens": 251,
+  "total_tokens": 908,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The prometheus component configures alertmanager as an alertmanager target, meaning prometheus connects to alertmanager at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Similarly, prometheus configures alertmanager as an alertmanager target, indicating a runtime dependency from prometheus to alertmanager.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml file with key path alertmanagers.static_configs.targets\",\n    \"edge\": \"SOURCE -> TARGET where SOURCE is the component owning the prometheus.yml file and TARGET is the host:port named in targets\",\n    \"exclusions\": \"none needed, as this pattern always indicates a runtime dependency from the prometheus component to the alertmanager component\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"Both samples show prometheus connecting to alertmanager via alertmanagers.static_configs.targets in prometheus.yml, so a general rule to draw edges from the prometheus component to the alertmanager component on this yaml path is reliable.\"\n}",
+ "payload": {
+  "rank": 103,
+  "kind": "yaml",
+  "cls": "hostport",
+  "detail": "alertmanagers.static_configs.targets",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "sdgmf__go-project-sample",
+    "source": "prometheus",
+    "target": "alertmanager",
+    "file": "configs/prometheus/prometheus.yml",
+    "line": 28,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "alertmanagers.static_configs.targets",
+    "tag": "unread",
+    "text": "- \"alertmanager:9093\"",
+    "context": "   24: alerting:\n   25:   alertmanagers:\n   26:     - static_configs:\n   27:         - targets:\n>> 28:             - \"alertmanager:9093\"\n   29: "
+   },
+   {
+    "repo": "jingsewu__open-wes",
+    "source": "prometheus",
+    "target": "alertmanager",
+    "file": "monitoring/prometheus/prometheus.yml",
+    "line": 11,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "alertmanagers.static_configs.targets",
+    "tag": "unread",
+    "text": "- targets: [\"alertmanager:9093\"]",
+    "context": "   7: \n   8: alerting:\n   9:   alertmanagers:\n   10:     - static_configs:\n>> 11:         - targets: [\"alertmanager:9093\"]\n   12: \n   13: scrape_configs:\n   14:   # Application services — 15s interval\n   15:   - job_name: \"wes-server\""
+   }
+  ]
+ }
+}

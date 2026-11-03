@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0035",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 965,
+  "completion_tokens": 264,
+  "total_tokens": 1229,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The environment variable MYSQL_DATABASE: products names a database schema, not a service component, so db does not depend on products.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The environment variable MONGO_INITDB_DATABASE: product-service names a database name, not a service component, so mongodb does not depend on product-service.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The environment variable SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_DATABASE: geoserver names a database name, not a service component, so docs does not depend on geoserver.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"compose; environment key\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples use environment variables to name database schemas or similar identifiers, not service components, so no runtime dependency edges should be drawn from these environment keys.\"\n}",
+ "payload": {
+  "rank": 35,
+  "kind": "compose",
+  "cls": "key",
+  "detail": "<service>.environment.*",
+  "repos": 3,
+  "mentions": 8,
+  "samples": [
+   {
+    "repo": "sdgmf__go-project-sample",
+    "source": "db",
+    "target": "products",
+    "file": "deployments/docker-compose.yml",
+    "line": 47,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "<service>.environment.*",
+    "tag": "file-read",
+    "text": "MYSQL_DATABASE: products",
+    "context": "   43:   db:\n   44:     image: mariadb:latest\n   45:     environment:\n   46:       MYSQL_ROOT_PASSWORD: 123456\n>> 47:       MYSQL_DATABASE: products\n   48:       MYSQL_USER: products\n   49:       MYSQL_PASSWORD: 123456\n   50:     volumes:\n   51:       - ../scripts/products.sql:/docker-entrypoint-initdb.d/products.sql"
+   },
+   {
+    "repo": "SaiUpadhyayula__spring-boot-3-microservices-course",
+    "source": "mongodb",
+    "target": "product-service",
+    "file": "docker-compose.yml",
+    "line": 11,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "<service>.environment.*",
+    "tag": "file-read",
+    "text": "MONGO_INITDB_DATABASE: product-service",
+    "context": "   7:       - \"27017:27017\"\n   8:     environment:\n   9:       MONGO_INITDB_ROOT_USERNAME: root\n   10:       MONGO_INITDB_ROOT_PASSWORD: password\n>> 11:       MONGO_INITDB_DATABASE: product-service\n   12:     volumes:\n   13:       - ./data/mongodb:/data/db\n   14:   mysql:\n   15:     image: mysql:8.3.0"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "docs",
+    "target": "geoserver",
+    "file": "docs/src/deploy/docker-compose/stable/pgconfig/compose.yml",
+    "line": 75,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "<service>.environment.*",
+    "tag": "file-read",
+    "text": "SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_DATABASE: geoserver",
+    "context": "   71:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_USERNAME: admin\n   72:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_PASSWORD: s3cr3t\n   73:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_HOST: geoserverdb\n   74:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_PORT: 5432\n>> 75:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_DATABASE: geoserver\n   76:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_USERNAME: geoserver\n   77:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_PASSWORD: geoserver\n   78:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_SCHEMA: pgconfig\n   79:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_INITIALIZE: true"
+   }
+  ]
+ }
+}

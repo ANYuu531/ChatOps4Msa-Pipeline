@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = key; context key = spring.rabbitmq.host
+They come from 2 different repositories (6 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=mateaix__matecloud SOURCE=docs TARGET=host file=docs/nacos-templates/mate-infra-dev.yml:54
+   50:           max-wait: 2000
+   51: 
+   52:   # ---- RabbitMQ ----
+   53:   rabbitmq:
+>> 54:     host: ${RABBITMQ_HOST:127.0.0.1}
+   55:     port: ${RABBITMQ_PORT:5672}
+   56:     username: ${RABBITMQ_USER:matecloud}
+   57:     password: ${RABBITMQ_PASS:matecloud123}
+   58:     virtual-host: ${RABBITMQ_VHOST:/}
+
+[1] repo=geoserver__geoserver-cloud SOURCE=spring-boot TARGET=rabbitmq file=src/starters/spring-boot/src/main/resources/geoserver_spring_cloud_profiles.yml:54
+   50:     stream:
+   51:       # Prevents Stream from treating every java Function bean as a Rabbit queue
+   52:       function.autodetect: false
+   53:   rabbitmq:
+>> 54:     host: ${rabbitmq.host:rabbitmq}
+   55:     port: ${rabbitmq.port:5672}
+   56:     username: ${rabbitmq.user:guest}
+   57:     password: ${rabbitmq.password:guest}
+   58:     virtual-host: ${rabbitmq.vhost:}

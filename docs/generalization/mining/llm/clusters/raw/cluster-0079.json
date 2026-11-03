@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0079",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 697,
+  "completion_tokens": 205,
+  "total_tokens": 902,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The config-server component's spring.datasource.url property directly configures a JDBC connection to the mysqldb component, indicating a runtime dependency.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The productservice-provider component's spring.datasource.url property directly configures a JDBC connection to the product-mysql component, indicating a runtime dependency.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"properties file; position = url; context key = spring.datasource.url\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show that a spring.datasource.url property in a properties file indicates a runtime dependency from the component owning the file to the database component named in the URL.\"\n}",
+ "payload": {
+  "rank": 79,
+  "kind": "properties",
+  "cls": "url",
+  "detail": "spring.datasource.url",
+  "repos": 2,
+  "mentions": 4,
+  "samples": [
+   {
+    "repo": "sivaprasadreddy__spring-boot-microservices-series",
+    "source": "config-server",
+    "target": "mysqldb",
+    "file": "config-server/src/main/resources/config-repo/catalog-service-docker.properties",
+    "line": 1,
+    "kind": "properties",
+    "cls": "url",
+    "detail": "spring.datasource.url",
+    "tag": "file-read",
+    "text": "spring.datasource.url=jdbc:mysql://mysqldb:3306/catalog?useSSL=false",
+    "context": ">> 1: spring.datasource.url=jdbc:mysql://mysqldb:3306/catalog?useSSL=false\n   2: \n   3: \n   4: "
+   },
+   {
+    "repo": "aliyun__alibabacloud-microservice-demo",
+    "source": "productservice-provider",
+    "target": "product-mysql",
+    "file": "src/productservice/productservice-provider/src/main/resources/application.properties",
+    "line": 7,
+    "kind": "properties",
+    "cls": "url",
+    "detail": "spring.datasource.url",
+    "tag": "file-read",
+    "text": "spring.datasource.url=jdbc:mysql://product-mysql:3306/product?characterEncoding=utf8&useSSL=false&serverTimezone=GMT",
+    "context": "   3: management.endpoints.web.exposure.include=*\n   4: \n   5: #database\n   6: spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver\n>> 7: spring.datasource.url=jdbc:mysql://product-mysql:3306/product?characterEncoding=utf8&useSSL=false&serverTimezone=GMT\n   8: spring.datasource.username=root\n   9: spring.datasource.password=productservice\n   10: spring.jpa.hibernate.ddl-auto=update\n   11: spring.jpa.show-sql=false"
+   }
+  ]
+ }
+}

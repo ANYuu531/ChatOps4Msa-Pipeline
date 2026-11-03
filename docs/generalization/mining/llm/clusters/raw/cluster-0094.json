@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0094",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 615,
+  "completion_tokens": 234,
+  "total_tokens": 849,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The .env file sets POSTGRES_HOST=postgres:5432 but the owning component of this .env file is unknown, so we cannot confirm which component depends on postgres.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"unsure\",\n      \"reason\": \"Similarly, the .env file sets POSTGRES_HOST=postgres:5432 but the source component owning this config is not identified, so the dependency from SOURCE to postgres cannot be confirmed.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"dotenv file, hostport position, context key *_HOST\",\n    \"edge\": \"unknown -> TARGET\",\n    \"exclusions\": \"unknown owning component of the .env file\",\n    \"confidence\": \"low\"\n  },\n  \"summary\": \"Without knowing which component owns the .env file, the presence of a TARGET name in a *_HOST variable in dotenv files does not reliably indicate a dependency from the SOURCE component to TARGET.\"\n}",
+ "payload": {
+  "rank": 94,
+  "kind": "dotenv",
+  "cls": "hostport",
+  "detail": "*_HOST",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "uid4oe__grpc-web-demo",
+    "source": "?",
+    "target": "postgres",
+    "file": ".env",
+    "line": 19,
+    "kind": "dotenv",
+    "cls": "hostport",
+    "detail": "*_HOST",
+    "tag": "file-read",
+    "text": "POSTGRES_HOST=postgres:5432",
+    "context": "   15: \n   16: POSTGRES_USER=oe\n   17: POSTGRES_PASSWORD=oe\n   18: POSTGRES_DB=oe\n>> 19: POSTGRES_HOST=postgres:5432"
+   },
+   {
+    "repo": "uid4oe__microservices-go-grpc",
+    "source": "?",
+    "target": "postgres",
+    "file": ".env",
+    "line": 15,
+    "kind": "dotenv",
+    "cls": "hostport",
+    "detail": "*_HOST",
+    "tag": "file-read",
+    "text": "POSTGRES_HOST=postgres:5432",
+    "context": "   11: \n   12: POSTGRES_USER=oe\n   13: POSTGRES_PASSWORD=oe\n   14: POSTGRES_DB=oe\n>> 15: POSTGRES_HOST=postgres:5432\n   16: ADVICE_GRPC_SERVICE=advice-service:50052"
+   }
+  ]
+ }
+}

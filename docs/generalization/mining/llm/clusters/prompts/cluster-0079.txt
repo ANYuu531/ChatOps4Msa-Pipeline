@@ -1,0 +1,46 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = properties; position = url; context key = spring.datasource.url
+They come from 2 different repositories (4 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=sivaprasadreddy__spring-boot-microservices-series SOURCE=config-server TARGET=mysqldb file=config-server/src/main/resources/config-repo/catalog-service-docker.properties:1
+>> 1: spring.datasource.url=jdbc:mysql://mysqldb:3306/catalog?useSSL=false
+   2: 
+   3: 
+   4: 
+
+[1] repo=aliyun__alibabacloud-microservice-demo SOURCE=productservice-provider TARGET=product-mysql file=src/productservice/productservice-provider/src/main/resources/application.properties:7
+   3: management.endpoints.web.exposure.include=*
+   4: 
+   5: #database
+   6: spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+>> 7: spring.datasource.url=jdbc:mysql://product-mysql:3306/product?characterEncoding=utf8&useSSL=false&serverTimezone=GMT
+   8: spring.datasource.username=root
+   9: spring.datasource.password=productservice
+   10: spring.jpa.hibernate.ddl-auto=update
+   11: spring.jpa.show-sql=false

@@ -1,0 +1,58 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:javascript; position = literal; context key = call get
+They come from 3 different repositories (4 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=oracle-quickstart__oci-cloudnative SOURCE=storefront TARGET=basic file=src/storefront/src/scripts/shop/about.js:39
+   35:       .then(() => this.setOptions());
+   36:   }
+   37: 
+   38:   isBasic() {
+>> 39:     return this.context.get('basic');
+   40:   }
+   41: 
+   42:   offsetTop() {
+   43:     return ~~this._ctxProp('offset-top');
+
+[1] repo=aelassas__microservices SOURCE=frontend TARGET=catalog file=src/uis/Frontend/wwwroot/js/store.js:14
+   10:         location.href = "/index.html";
+   11:     }
+   12: 
+   13:     common.get(settings.uri + "identity/validate?email=" + encodeURIComponent(auth.email) + "&token=" + encodeURIComponent(auth.token), (userId) => {
+>> 14:         common.get(settings.uri + "catalog", (data) => {
+   15:             const catalogItems = JSON.parse(data);
+   16:             const items = [];
+   17:             for (const catalogItem of catalogItems) {
+   18:                 items.push("<tr>"
+
+[2] repo=alexcheng1982__happyride SOURCE=passenger-web-api-falcor TARGET=address file=example-projects/passenger-web-api-falcor/datasource_test.js:9
+   5: const dataSource = new falcor.Model({
+   6:   cache: jsonGraph
+   7: }).asDataSource();
+   8: 
+>> 9: dataSource.get(["passengersById", "p1", "userAddresses", 0, 'address', 'addressLine']).subscribe(debug);

@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0101",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 773,
+  "completion_tokens": 211,
+  "total_tokens": 984,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The @ConfigurationProperties annotation declares a prefix for binding configuration properties, not a runtime call or connection to the TARGET component.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"Similarly, the @ConfigurationProperties annotation here only binds configuration properties with the given prefix and does not imply a runtime dependency on the TARGET component.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:java; position=literal; context key=call configurationproperties\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"The @ConfigurationProperties annotation usage in Java source files marks configuration binding prefixes and does not indicate runtime dependencies, so no general syntactic rule can safely add edges here without false positives.\"\n}",
+ "payload": {
+  "rank": 101,
+  "kind": "src:java",
+  "cls": "literal",
+  "detail": "call configurationproperties",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "mateaix__matecloud",
+    "source": "mate-file-starter",
+    "target": "minio",
+    "file": "mate-starters/mate-file-starter/src/main/java/vip/mate/starter/file/config/MinioProperties.java",
+    "line": 25,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call configurationproperties",
+    "tag": "file-read",
+    "text": "@ConfigurationProperties(prefix = \"minio\")",
+    "context": "   21:  * Configuration properties for MinIO.\n   22:  *\n   23:  * @author mateaix\n   24:  */\n>> 25: @ConfigurationProperties(prefix = \"minio\")\n   26: public class MinioProperties {\n   27: \n   28:     private String endpoint = \"http://127.0.0.1:9000\";\n   29:     private String accessKey;"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "autoconfigure",
+    "target": "gwc",
+    "file": "src/gwc/autoconfigure/src/main/java/org/geoserver/cloud/autoconfigure/gwc/GeoWebCacheConfigurationProperties.java",
+    "line": 52,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "call configurationproperties",
+    "tag": "file-read",
+    "text": "@ConfigurationProperties(prefix = \"gwc\")",
+    "context": "   48:  * {@code gwc.disk-quota.data-source} is a {@link DataSourceProperties}\n   49:  *\n   50:  * @since 1.0\n   51:  */\n>> 52: @ConfigurationProperties(prefix = \"gwc\")\n   53: public @Data class GeoWebCacheConfigurationProperties {\n   54: \n   55:     public static final String GWC_ENABLED_PROPERTY = \"gwc.enabled\";\n   56:     public static final String CACHE_DIRECTORY = \"gwc.cache-directory\";"
+   }
+  ]
+ }
+}

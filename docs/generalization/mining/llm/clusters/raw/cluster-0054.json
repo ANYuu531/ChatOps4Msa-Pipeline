@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0054",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 816,
+  "completion_tokens": 301,
+  "total_tokens": 1117,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The line is inside an OpenTelemetry Collector config, which is a standalone telemetry component that sends data to the 'tempo' tracing backend; the dependency is from the collector component, not from an application component.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"Same as sample 0, this is an OpenTelemetry Collector config snippet; the dependency on 'tempo' is from the collector component, not from the application component owning this config file.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"Same reasoning as samples 0 and 1; the config declares the collector's endpoint to 'tempo', so the dependency is from the collector component, not the application component.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml file with key path containing 'exporters.otlp/tempo.endpoint'\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show a dependency on 'tempo' from the OpenTelemetry Collector component, not from the component owning the config file, so no general syntactic rule can safely infer edges from the config file's component.\"\n}",
+ "payload": {
+  "rank": 54,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "exporters.otlp/tempo.endpoint",
+  "repos": 3,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "tempo",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 89,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.otlp/tempo.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://tempo:4317\"",
+    "context": "   85:     tls:\n   86:       insecure: true\n   87: \n   88:   otlp/tempo:\n>> 89:     endpoint: \"http://tempo:4317\"\n   90:     tls:\n   91:       insecure: true\n   92: \n   93:       #  seq-otlp:"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "tempo",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 83,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.otlp/tempo.endpoint",
+    "tag": "unread",
+    "text": "endpoint: ${env:TEMPO_ENDPOINT:-\"http://tempo:4317\"}",
+    "context": "   79:       #    tls:\n   80:       #      insecure: true\n   81: \n   82:   otlp/tempo:\n>> 83:     endpoint: ${env:TEMPO_ENDPOINT:-\"http://tempo:4317\"}\n   84:     tls:\n   85:       insecure: true\n   86: \n   87:   # export telemetry data to aspire dashboard"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "tempo",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 89,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.otlp/tempo.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://tempo:4317\"",
+    "context": "   85:     tls:\n   86:       insecure: true\n   87: \n   88:   otlp/tempo:\n>> 89:     endpoint: \"http://tempo:4317\"\n   90:     tls:\n   91:       insecure: true\n   92:       \n   93:       #  seq-otlp:"
+   }
+  ]
+ }
+}

@@ -1,0 +1,197 @@
+{
+ "id": "edges-0027",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1566,
+  "completion_tokens": 337,
+  "total_tokens": 1903,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"wrong\", \"reason\": \"docker-compose 'depends_on' indicates container startup order, not runtime dependency or calls.\"}, {\"i\": 1, \"verdict\": \"wrong\", \"reason\": \"docker-compose 'depends_on' only controls container startup order, not runtime calls or connections.\"}, {\"i\": 2, \"verdict\": \"wrong\", \"reason\": \"docker-compose 'depends_on' shows startup order, not runtime dependency or calls from rocketmq-broker to rocketmq-namesrv.\"}, {\"i\": 3, \"verdict\": \"wrong\", \"reason\": \"setting a URI in configuration or options does not prove runtime calls or connections to the external URL.\"}, {\"i\": 4, \"verdict\": \"wrong\", \"reason\": \"CORS origins in appsettings.json is metadata for allowed origins, not a runtime dependency or call.\"}, {\"i\": 5, \"verdict\": \"wrong\", \"reason\": \"docker-compose 'depends_on' controls container startup order, not runtime dependency or calls.\"}, {\"i\": 6, \"verdict\": \"unsure\", \"reason\": \"flag defining etcd address shows configuration but no direct evidence of runtime calls or connections.\"}, {\"i\": 7, \"verdict\": \"wrong\", \"reason\": \"docker-compose 'depends_on' only controls startup order, not runtime calls or connections.\"}, {\"i\": 8, \"verdict\": \"unsure\", \"reason\": \"flag defining etcd address shows configuration but no direct evidence of runtime calls or connections.\"}]}",
+ "payload": [
+  {
+   "repo": "wsrh8888__beaver-server",
+   "source": "livekit",
+   "target": "redis",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "wsrh8888__beaver-server",
+   "source": "rocketmq-console",
+   "target": "rocketmq-namesrv",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "wsrh8888__beaver-server",
+   "source": "rocketmq-broker",
+   "target": "rocketmq-namesrv",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker/docker-compose.yml",
+     "file": "docker/docker-compose.yml",
+     "line": 57,
+     "kind": "compose",
+     "context": "   53:       - \"50000-50050:50000-50050/udp\" # WebRTC 媒体流\n   54:     depends_on:\n   55:       - redis\n   56: \n>> 57:   rocketmq-namesrv:\n   58:     image: apache/rocketmq:5.3.1\n   59:     container_name: rocketmq-namesrv\n   60:     restart: always\n   61:     ports:"
+    }
+   ]
+  },
+  {
+   "repo": "xiajingren__HelloAbp",
+   "source": "aspnet-core",
+   "target": "www.stats.gov.cn",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: aspnet-core/src/Xhznl.HelloAbp.BackgroundJobs.Shared/HelloAbpBackgroundJobSharedModule.cs:17",
+     "file": "aspnet-core/src/Xhznl.HelloAbp.BackgroundJobs.Shared/HelloAbpBackgroundJobSharedModule.cs",
+     "line": 17,
+     "kind": "src:csharp",
+     "context": "   13:         {\n   14:             Configure<ChinaRegionOption>(options =>\n   15:             {\n   16:                 options.Year = 2019;\n>> 17:                 options.BaseGovUri=new Uri(\"http://www.stats.gov.cn/tjsj/tjbz/tjyqhdmhcxhfdm/2019/\");\n   18:             });\n   19:         }\n   20:     }\n   21: }"
+    },
+    {
+     "ref": "code: aspnet-core/src/Xhznl.HelloAbp.BackgroundJobs.Shared/Jobs/ChinaRegion/ChinaRegionOption.cs:9",
+     "file": "aspnet-core/src/Xhznl.HelloAbp.BackgroundJobs.Shared/Jobs/ChinaRegion/ChinaRegionOption.cs",
+     "line": 9,
+     "kind": "src:csharp",
+     "context": "   5:     public class ChinaRegionOption\n   6:     {\n   7:         public int Year { get; set; } = 2019;\n   8: \n>> 9:         public Uri BaseGovUri { get; set; } = new Uri(\"http://www.stats.gov.cn/tjsj/tjbz/tjyqhdmhcxhfdm/2019/\");\n   10:     }\n   11: }"
+    }
+   ]
+  },
+  {
+   "repo": "xiajingren__HelloAbp",
+   "source": "xhznl-datadictionary-identityserver",
+   "target": "*.datadictionary.com,http",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: aspnet-core/modules/data-dictionary/host/Xhznl.DataDictionary.IdentityServer/appsettings.json",
+     "file": "aspnet-core/modules/data-dictionary/host/Xhznl.DataDictionary.IdentityServer/appsettings.json",
+     "line": 4,
+     "kind": "appsettings",
+     "context": "   1: ﻿{\n   2:   \"App\": {\n   3:     \"SelfUrl\": \"https://localhost:44351/\",\n>> 4:     \"CorsOrigins\": \"https://*.DataDictionary.com,http://localhost:4200\"\n   5:   },\n   6:   \"AppSelfUrl\": \"https://localhost:44351/\",\n   7:   \"ConnectionStrings\": {\n   8:     \"Default\": \"Server=localhost;User Id=sa;Password=123456;Database=HelloAbp;MultipleActiveResultSets=true\""
+    }
+   ]
+  },
+  {
+   "repo": "xiajingren__HelloAbp",
+   "source": "data-dictionary",
+   "target": "sqlserver",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: aspnet-core/modules/data-dictionary/docker-compose.yml#depends_on",
+     "file": "aspnet-core/modules/data-dictionary/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: aspnet-core/modules/data-dictionary/docker-compose.override.yml",
+     "file": "aspnet-core/modules/data-dictionary/docker-compose.override.yml",
+     "line": 4,
+     "kind": "compose",
+     "context": "   1: version: '3.4'\n   2: \n   3: services:\n>> 4:   sqlserver:\n   5:     environment:\n   6:       - SA_PASSWORD=yourStrong(!)Password\n   7:       - ACCEPT_EULA=Y\n   8:     ports:"
+    }
+   ]
+  },
+  {
+   "repo": "yiv__yivnet",
+   "source": "usercenter",
+   "target": "etcd.yivgame.com",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: usercenter/main.go:36",
+     "file": "usercenter/main.go",
+     "line": 36,
+     "kind": "src:go",
+     "context": "   32: \n   33: var (\n   34: \tgrpcAddr    = flag.String(\"grpc.addr\", \":10000\", \"gRPC listen address\")\n   35: \tdebugAddr   = flag.String(\"debug.addr\", \":10001\", \"Debug and metrics listen address\")\n>> 36: \tetcdAddr    = flag.String(\"etcd.addr\", \"http://etcd.yivgame.com:2379\", \"Consul agent address\")\n   37: \tkafkaAddr   = flag.String(\"kafka.addr\", \"kafka.yivgame.com:9092\", \"kafka address\")\n   38: \tzipkinAddr  = flag.String(\"zipkin.addr\", \"\", \"Enable Zipkin tracing via a Zipkin HTTP Collector endpoint\")\n   39: \tserviceName = flag.String(\"service.name\", \"usercenter\", \"the name of this service in service discovery\")\n   40: )"
+    }
+   ]
+  },
+  {
+   "repo": "yiv__yivnet",
+   "source": "drone-agent",
+   "target": "drone-server",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker/compose/infrastructure/docker-compose.yml#depends_on",
+     "file": "docker/compose/infrastructure/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "yiv__yivnet",
+   "source": "game",
+   "target": "etcd.yivgame.com",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: game/main.go:38",
+     "file": "game/main.go",
+     "line": 38,
+     "kind": "src:go",
+     "context": "   34: var (\n   35: \tgrpcAddr     = flag.String(\"grpc.addr\", \":10020\", \"gRPC (HTTP) listen address\")\n   36: \tdebugAddr    = flag.String(\"debug.addr\", \":10021\", \"Debug and metrics listen address\")\n   37: \tzipkinAddr   = flag.String(\"zipkin.addr\", \"\", \"Enable Zipkin tracing via a Zipkin HTTP Collector endpoint\")\n>> 38: \tetcdAddr     = flag.String(\"etcd.addr\", \"http://etcd.yivgame.com:2379\", \"Consul agent address\")\n   39: \tserviceName  = flag.String(\"service.name\", \"gameserver\", \"the name of this service in service discovery\")\n   40: \tuserCenter   = flag.String(\"userCenter.name\", \"usercenter\", \"the name of this service in service discovery\")\n   41: \tretryMax     = flag.Int(\"retry.max\", 3, \"per-request retries to different instances\")\n   42: \tretryTimeout = flag.Duration(\"retry.timeout\", 500*time.Millisecond, \"per-request timeout, including retries\")"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,118 @@
+{
+ "id": "cluster-0004",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1181,
+  "completion_tokens": 389,
+  "total_tokens": 1570,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Grafana uses the URL to connect to the Jaeger service at runtime for tracing data.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Grafana connects to Prometheus at runtime to query metrics via the specified URL.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Grafana connects to Prometheus at runtime using the URL to fetch monitoring data.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Grafana connects to Loki at runtime to retrieve logs via the URL.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Grafana connects to Tempo at runtime for tracing data using the URL.\"\n    },\n    {\n      \"i\": 5,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The source component is unknown, so it is unclear which component owns this config and thus whether it depends on Prometheus.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml file with key path datasources.url\",\n    \"edge\": \"component owning the yaml file -> component named in the url\",\n    \"exclusions\": \"none needed because this pattern only appears in datasource config files that define runtime connections\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples with known SOURCE show runtime dependencies from the component owning the datasource yaml file to the TARGET named in the url field; a general rule to draw edges from the yaml file's owning component to the TARGET named in datasources.url would correctly capture these dependencies without false positives.\"\n}",
+ "payload": {
+  "rank": 4,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "datasources.url",
+  "repos": 8,
+  "mentions": 19,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "grafana",
+    "target": "jaeger-all-in-one",
+    "file": "deployments/configs/grafana/provisioning/datasources/datasource.yml",
+    "line": 29,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "datasources.url",
+    "tag": "unread",
+    "text": "url: http://jaeger-all-in-one:16686",
+    "context": "   25: \n   26:   - name: Jaeger\n   27:     type: jaeger\n   28:     access: proxy\n>> 29:     url: http://jaeger-all-in-one:16686\n   30:     editable: false\n   31:     uid: jaeger-uid\n   32: \n   33:   - name: Zipkin"
+   },
+   {
+    "repo": "sdgmf__go-project-sample",
+    "source": "grafana",
+    "target": "prometheus",
+    "file": "configs/grafana/provisioning/datasources/prometheus.yaml",
+    "line": 7,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "datasources.url",
+    "tag": "unread",
+    "text": "url: http://prometheus:9090",
+    "context": "   3: datasources:\n   4:   - name: Prometheus\n   5:     type: prometheus\n   6:     access: proxy\n>> 7:     url: http://prometheus:9090\n   8:     isDefault: true\n   9:     editable: true"
+   },
+   {
+    "repo": "SaiUpadhyayula__spring-boot-3-microservices-course",
+    "source": "grafana",
+    "target": "prometheus",
+    "file": "docker/grafana/datasource.yml",
+    "line": 7,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "datasources.url",
+    "tag": "unread",
+    "text": "url: http://prometheus:9090",
+    "context": "   3: datasources:\n   4:   - name: Prometheus\n   5:     type: prometheus\n   6:     access: proxy\n>> 7:     url: http://prometheus:9090\n   8:     editable: false\n   9:     jsonData:\n   10:       httpMethod: POST\n   11:       exemplarTraceIdDestinations:"
+   },
+   {
+    "repo": "jingsewu__open-wes",
+    "source": "grafana",
+    "target": "loki",
+    "file": "monitoring/grafana/provisioning/datasources/datasources.yml",
+    "line": 14,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "datasources.url",
+    "tag": "unread",
+    "text": "url: http://loki:3100",
+    "context": "   10: \n   11:   - name: Loki\n   12:     type: loki\n   13:     access: proxy\n>> 14:     url: http://loki:3100\n   15:     editable: false\n   16: "
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "grafana",
+    "target": "tempo",
+    "file": "deployments/configs/grafana/provisioning/datasources/datasource.yml",
+    "line": 31,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "datasources.url",
+    "tag": "unread",
+    "text": "url: http://tempo:3200",
+    "context": "   27:   - name: Tempo\n   28:     type: tempo\n   29:     access: proxy\n   30:     orgId: 1\n>> 31:     url: http://tempo:3200\n   32:     basicAuth: false\n   33:     isDefault: false\n   34:     version: 1\n   35:     editable: false"
+   },
+   {
+    "repo": "amasen02__freshcart-backend",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deploy/docker/grafana-datasources.yaml",
+    "line": 7,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "datasources.url",
+    "tag": "unread",
+    "text": "url: http://prometheus:9090",
+    "context": "   3: datasources:\n   4:   - name: Prometheus\n   5:     type: prometheus\n   6:     access: proxy\n>> 7:     url: http://prometheus:9090\n   8:     isDefault: true\n   9:     editable: false\n   10: "
+   }
+  ]
+ }
+}

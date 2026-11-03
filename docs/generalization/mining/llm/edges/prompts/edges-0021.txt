@@ -1,0 +1,142 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=rasadov__EcommerceAPI graphql -> order (type sync-http)
+  cited code: docker-compose.yaml#depends_on
+
+  cited code: docker-compose.yaml
+   109:       DATABASE_URL: http://product_db:9200
+   110:       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+   111:     restart: on-failure
+   112: 
+>> 113:   order:
+   114:     container_name: "order"
+   115:     image: "rasadov/order:latest"
+   116:     build:
+   117:       context: .
+
+[1] repo=rasadov__EcommerceAPI recommender-sync -> product (type sync-http)
+  cited code: docker-compose.yaml
+   95:     environment:
+   96:       DATABASE_URL: postgres://rasadov:123456@account_db/rasadov?sslmode=disable
+   97:     restart: on-failure
+   98: 
+>> 99:   product:
+   100:     container_name: "product"
+   101:     image: "rasadov/product:latest"
+   102:     build:
+   103:       context: .
+
+[2] repo=rasadov__EcommerceAPI recommender-sync -> kafka (type async)
+  cited code: docker-compose.yaml#depends_on
+
+  cited code: docker-compose.yaml
+   6:       dockerfile: docker/base.dockerfile
+   7:     profiles:
+   8:       - build-only
+   9: 
+>> 10:   kafka:
+   11:     container_name: kafka
+   12:     hostname: kafka
+   13:     image: docker.io/apache/kafka:4.1.1
+   14:     volumes:
+
+[3] repo=rcherara__microservice-architecture gateway-service -> discovery-service (type sync-http)
+  cited code: config-service/src/main/resources/config/gateway-service-staging.yml
+   server:
+     port: ${CONFIG_PORT:8080}
+   spring:
+     application: #app discovery  config
+       name: Gateway-Service
+     cloud:
+       config:
+         uri: http://${CONFIG_SERVICE:localhost}:${CONFIG_PORT:7761}
+         fail-fast: true
+  cited code: config-service/src/main/resources/config/gateway-service-production.yml
+   server:
+     port: ${CONFIG_PORT:8080}
+   spring:
+     application: #app discovery  config
+       name: Gateway-Service
+     cloud:
+       config:
+         uri: http://${CONFIG_SERVICE:localhost}:${CONFIG_PORT:7761}
+         fail-fast: true
+
+[4] repo=rcherara__microservice-architecture sc-gateway -> sc-zipkin (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   23:     image: 'rcherara/spring-cloud-learn/discovery-service:1.0.0-SNAPSHOT'
+   24:     ports:
+   25:       - 8761:8761
+   26:     command: java -Djava.security.egd=file:/dev/./urandom -jar /app.jar
+>> 27:   sc-zipkin:
+   28:     image: openzipkin/zipkin
+   29:     container_name: sc-zipkin
+   30:     ports:
+   31:       # Port used for the Zipkin UI and HTTP Api
+
+[5] repo=rcherara__microservice-architecture sc-user -> sc-eureka (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   35:     image: 'zhixilang/spring-cloud-learn/sc-user:1.0.0-SNAPSHOT'
+   36:     expose:
+   37:       - 8081
+   38:     environment:
+>> 39:       - EUREKA_HOST=sc-eureka
+   40:       - EUREKA_PORT=8761
+   41:       - ZIP_KIN_SERVER_HOST=sc-zipkin
+   42:       - ZIP_KIN_SERVER_PORT=9411
+   43:     links:
+
+[6] repo=saalikmubeen__microservices-architectured-app client-deployment -> ingress-nginx-controller (type sync-http)
+  cited code: client/buildClient.js:8
+   4:     if (typeof window === "undefined") {
+   5:         // We are on the server
+   6: 
+   7:         return axios.create({
+>> 8:             baseURL:
+   9:                 "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local",
+   10:             headers: req.headers,
+   11:         });
+   12:     } else {
+
+[7] repo=saalikmubeen__microservices-architectured-app tickets-deployment -> nats-service (type async)
+  cited code: infra/k8s/tickets-deployment.yaml
+   28:                       - name: NATS_CLUSTER_ID
+   29:                         value: "ticketing"
+   30: 
+   31:                       - name: NATS_URL
+>> 32:                         value: "http://nats-service:4222"
+   33: 
+   34:                       - name: NATS_CLIENT_ID
+   35:                         valueFrom:
+   36:                             fieldRef:
+
+[8] repo=saalikmubeen__microservices-architectured-app auth-deployment -> auth-mongo-service (type db)
+  cited code: infra/k8s/auth-deployment.yaml
+   22:                                 name: jwt-secret
+   23:                                 key: SECRET
+   24: 
+   25:                       - name: MONGO_URI 
+>> 26:                         value: "mongodb://auth-mongo-service:27017/auth"
+   27: ---
+   28: apiVersion: v1
+   29: kind: Service
+   30: metadata:
+
+[9] repo=sczyh30__vertx-blueprint-microservice inventory-microservice -> redis (type db)
+  cited code: docker/docker-compose.yml#depends_on
+

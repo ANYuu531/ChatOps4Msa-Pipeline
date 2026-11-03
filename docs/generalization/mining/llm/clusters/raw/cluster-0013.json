@@ -1,0 +1,92 @@
+{
+ "id": "cluster-0013",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1228,
+  "completion_tokens": 329,
+  "total_tokens": 1557,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The value lists allowed redirect URIs for SSO, which is configuration data, not a runtime call from auth-service to admin.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The mushop-api component sets an environment variable with the URL of mushop-catalogue, indicating it calls/connects to mushop-catalogue at runtime.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The rmq-depl component configures RabbitMQ authentication backend URLs pointing to auth-srv, indicating a runtime dependency.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The accounting-sales-vat-tax-api component sets the AMQP URL to ubik-rabbitmq, indicating it connects to ubik-rabbitmq at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml; containers.env.value\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"when the value is a list of redirect URIs or other configuration metadata not used for runtime calls\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"Most env.value lines with URLs or hostnames indicate runtime dependencies from the component owning the env to the TARGET, except when the value is purely configuration metadata like allowed redirect URIs.\"\n}",
+ "payload": {
+  "rank": 13,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "containers.env.value",
+  "repos": 4,
+  "mentions": 36,
+  "samples": [
+   {
+    "repo": "hoangtien2k3__ecommerce-microservices",
+    "source": "auth-service",
+    "target": "admin",
+    "file": "k8s/backend/auth-service.yaml",
+    "line": 70,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "containers.env.value",
+    "tag": "file-read",
+    "text": "value: http://ecommerce.local/auth/callback,http://admin.ecommerce.local/auth/callback,http://localhost:3000/auth/callback,http://localhost:3001/auth/callback",
+    "context": "   66:               value: http://api.ecommerce.local/api/v1/auth/callback\n   67:             - name: SSO_DEFAULT_FRONTEND_REDIRECT\n   68:               value: http://ecommerce.local/auth/callback\n   69:             - name: SSO_ALLOWED_REDIRECT_URIS\n>> 70:               value: http://ecommerce.local/auth/callback,http://admin.ecommerce.local/auth/callback,http://localhost:3000/auth/callback,http://localhost:3001/auth/callback\n   71:           startupProbe:\n   72:             httpGet:\n   73:               path: /actuator/health\n   74:               port: 9000"
+   },
+   {
+    "repo": "oracle-quickstart__oci-cloudnative",
+    "source": "mushop-api",
+    "target": "mushop-catalogue",
+    "file": "deploy/complete/kubernetes/mushop.yaml",
+    "line": 736,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "containers.env.value",
+    "tag": "file-read",
+    "text": "value: http://mushop-catalogue",
+    "context": "   732:             value: \"catalogue\"\n   733:           - name: SESSION_REDIS\n   734:             value: mushop-session\n   735:           - name: CATALOGUE_URL\n>> 736:             value: http://mushop-catalogue\n   737:           - name: ORDERS_URL\n   738:             value: http://mushop-orders\n   739:           - name: CARTS_URL\n   740:             value: http://mushop-carts"
+   },
+   {
+    "repo": "getlarge__ticketing",
+    "source": "rmq-depl",
+    "target": "auth-srv",
+    "file": "infra/k8s/deps/rmq-depl.yaml",
+    "line": 24,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "containers.env.value",
+    "tag": "file-read",
+    "text": "-rabbitmq_auth_backend_http user_path \"http://auth-srv:3000/user\"",
+    "context": "   20:               value: '-rabbit auth_backends [rabbit_auth_backend_internal,rabbit_auth_backend_cache]\n   21:                 -rabbitmq_auth_backend_cache cached_backend rabbit_auth_backend_http\n   22:                 -rabbitmq_auth_backend_cache cache_ttl 5000\n   23:                 -rabbitmq_auth_backend_http http_method post\n>> 24:                 -rabbitmq_auth_backend_http user_path \"http://auth-srv:3000/user\"\n   25:                 -rabbitmq_auth_backend_http vhost_path \"http://auth-srv:3000/vhost\"\n   26:                 -rabbitmq_auth_backend_http resource_path \"http://auth-srv:3000/resource\"\n   27:                 -rabbitmq_auth_backend_http topic_path \"http://auth-srv:3000/topic\"'\n   28:           resources:"
+   },
+   {
+    "repo": "fdonnet__ubik_accounting",
+    "source": "accounting-sales-vat-tax-api",
+    "target": "ubik-rabbitmq",
+    "file": "deploy/accounting-tax-api/accounting-tax-api-deploy.yaml",
+    "line": 27,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "containers.env.value",
+    "tag": "file-read",
+    "text": "value: 'amqp://ubik-rabbitmq:5672'",
+    "context": "   23:           value: 'Host=ubik-postgres-postgresql;Port=5432;Database=ubik_accounting_salestax;Username=postgres;Password=test01'\n   24:         - name: ASPNETCORE_ENVIRONMENT\n   25:           value: Development\n   26:         - name: MessageBroker__Host\n>> 27:           value: 'amqp://ubik-rabbitmq:5672'\n   28:         - name: AuthServer__MetadataAddress\n   29:           value: \"https://keycloak-local/realms/ubik/.well-known/openid-configuration\"\n   30:         - name: AuthServer__Authority\n   31:           value: \"https://keycloak-local/realms/ubik\""
+   }
+  ]
+ }
+}

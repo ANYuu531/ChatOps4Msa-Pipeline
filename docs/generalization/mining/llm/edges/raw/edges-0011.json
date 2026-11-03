@@ -1,0 +1,199 @@
+{
+ "id": "edges-0011",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1201,
+  "completion_tokens": 407,
+  "total_tokens": 1608,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"unsure\", \"reason\": \"The environment variable PROXY_SERVER_URLS is set to ticketing.dev, but no direct evidence of runtime calls or connections from orders-service to ticketing.dev is shown.\"}, {\"i\": 1, \"verdict\": \"unsure\", \"reason\": \"HYDRA_ADMIN_URL environment variable is set to hydra, but no direct evidence of kratos-selfservice-ui-node making runtime calls to hydra is shown.\"}, {\"i\": 2, \"verdict\": \"unsure\", \"reason\": \"mongo-primary service is defined, but no explicit evidence that payments-service connects to mongo-primary at runtime is shown.\"}, {\"i\": 3, \"verdict\": \"unsure\", \"reason\": \"No cited code shown to judge dependency from user-service to user-db.\"}, {\"i\": 4, \"verdict\": \"unsure\", \"reason\": \"zookeeper service is defined, but no explicit evidence that kafka depends on zookeeper at runtime is shown.\"}, {\"i\": 5, \"verdict\": \"unsure\", \"reason\": \"No cited code shown to judge dependency from catalog-service to catalog-db.\"}, {\"i\": 6, \"verdict\": \"unsure\", \"reason\": \"No cited code shown to judge dependency from apisix to user.\"}, {\"i\": 7, \"verdict\": \"unsure\", \"reason\": \"kafka service is defined, but no explicit evidence that kafka-ui connects to kafka at runtime is shown.\"}, {\"i\": 8, \"verdict\": \"unsure\", \"reason\": \"No cited code shown to judge dependency from realtime to user.\"}, {\"i\": 9, \"verdict\": \"wrong\", \"reason\": \"Authority setting in Jwt config is metadata for token validation, not a runtime call or connection from owners-read-api to stageidentity.taskomask.ir.\"}]}",
+ "payload": [
+  {
+   "repo": "getlarge__ticketing",
+   "source": "orders-service",
+   "target": "ticketing.dev",
+   "type": "external",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 109,
+     "kind": "compose",
+     "context": "   105:       NODE_ENV: ${NODE_ENV:-development}\n   106:       LOG_LEVEL: ${LOG_LEVEL:-info}\n   107:       PORT: ${AUTH_HTTP_PORT:-3000}\n   108:       SERVER_URL: http://localhost:${AUTH_HTTP_PORT:-3000}\n>> 109:       PROXY_SERVER_URLS: ${PROXY_SERVER_URLS:-http://ticketing.dev}\n   110:       FRONTEND_URL: ${FRONTEND_URL:-http://ticketing.dev}\n   111:       JWT_ALGORITHM: ${JWT_ALGORITHM:-ES256}\n   112:       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-60m}\n   113:       JWT_ISSUER: ${JWT_ISSUER:-ticketing.dev}"
+    }
+   ]
+  },
+  {
+   "repo": "getlarge__ticketing",
+   "source": "kratos-selfservice-ui-node",
+   "target": "hydra",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 429,
+     "kind": "compose",
+     "context": "   425:     image: oryd/kratos-selfservice-ui-node:v1.1.0\n   426:     environment:\n   427:       - KRATOS_PUBLIC_URL=http://kratos:4433\n   428:       - KRATOS_BROWSER_URL=http://127.0.0.1:4433\n>> 429:       - HYDRA_ADMIN_URL=http://hydra:4445\n   430:       - KRATOS_ADMIN_URL=http://kratos:4434\n   431:       - PORT=4455\n   432:       - COOKIE_SECRET=changeme\n   433:       - CSRF_COOKIE_NAME=cookie_name"
+    }
+   ]
+  },
+  {
+   "repo": "getlarge__ticketing",
+   "source": "payments-service",
+   "target": "mongo-primary",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 25,
+     "kind": "compose",
+     "context": "   21:   keto_postgres_volume:\n   22: \n   23: services:\n   24:   # region Storage\n>> 25:   mongo-primary:\n   26:     image: mongo:7\n   27:     container_name: ticketing-mongo-primary\n   28:     hostname: ticketing-mongo-primary\n   29:     volumes:"
+    }
+   ]
+  },
+  {
+   "repo": "go-kratos__beer-shop",
+   "source": "user-service",
+   "target": "user-db",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose/docker-compose.yaml#depends_on",
+     "file": "deploy/docker-compose/docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "go-kratos__beer-shop",
+   "source": "kafka",
+   "target": "zookeeper",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose/docker-compose.yaml#depends_on",
+     "file": "deploy/docker-compose/docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deploy/docker-compose/docker-compose.yaml",
+     "file": "deploy/docker-compose/docker-compose.yaml",
+     "line": 54,
+     "kind": "compose",
+     "context": "   50:       MYSQL_ROOT_PASSWORD: dangerous\n   51:   payment-service:\n   52:     image: go-kratos/beer-payment-service:0.1.0\n   53:     hostname: cart-service\n>> 54:   zookeeper:\n   55:     image: docker.io/bitnami/zookeeper:3.7\n   56:     ports:\n   57:       - \"2181:2181\"\n   58:     environment:"
+    }
+   ]
+  },
+  {
+   "repo": "go-kratos__beer-shop",
+   "source": "catalog-service",
+   "target": "catalog-db",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose/docker-compose.yaml#depends_on",
+     "file": "deploy/docker-compose/docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "go-saas__kit",
+   "source": "apisix",
+   "target": "user",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.ms.yml#depends_on",
+     "file": "docker-compose.ms.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "go-saas__kit",
+   "source": "kafka-ui",
+   "target": "kafka",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.kafka.yml",
+     "file": "docker-compose.kafka.yml",
+     "line": 4,
+     "kind": "compose",
+     "context": "   1: version: '3.7'\n   2: services:\n   3: \n>> 4:   kafka:\n   5:     image: bitnami/kafka:3.5.1\n   6:     environment:\n   7:       - KAFKA_CFG_PROCESS_ROLES=broker,controller\n   8:       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER"
+    }
+   ]
+  },
+  {
+   "repo": "go-saas__kit",
+   "source": "realtime",
+   "target": "user",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.ms.yml#depends_on",
+     "file": "docker-compose.ms.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "hamed-shirbandi__TaskoMask",
+   "source": "owners-read-api",
+   "target": "stageidentity.taskomask.ir",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/2-Services/Owners/Api/Owners.Read.Api/appsettings.Staging.json",
+     "file": "src/2-Services/Owners/Api/Owners.Read.Api/appsettings.Staging.json",
+     "line": 12,
+     "kind": "appsettings",
+     "context": "   8:   \"Caching\": {\n   9:     \"Enabled\": false\n   10:   },\n   11:   \"Jwt\": {\n>> 12:     \"Authority\": \"https://stageidentity.taskomask.ir\"\n   13:   }\n   14: }\n   15: "
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = hostport; context key = <service>.environment.*
+They come from 2 different repositories (3 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=asc-lab__micronaut-microservices-poc SOURCE=? TARGET=kafkaserver file=scripts/infra.yml:45
+   41:     hostname: kafkamanager
+   42:     ports:
+   43:       - 9000:9000
+   44:     environment:
+>> 45:       ZK_HOSTS: "kafkaserver:2181"
+   46:   elasticsearch:
+   47:     image: docker.elastic.co/elasticsearch/elasticsearch:6.4.2
+   48:     container_name: elasticsearch
+   49:     environment:
+
+[1] repo=apssouza22__java-microservice SOURCE=? TARGET=zookeeper file=assets/infra-docker-compose.yml:37
+   33:     depends_on:
+   34:       - zookeeper
+   35:     environment:
+   36:       KAFKA_ADVERTISED_HOST_NAME: 172.19.0.1
+>> 37:       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+   38:       KAFKA_CREATE_TOPICS: "todo-mail:1:1"
+   39:     volumes:
+   40:       - /var/run/docker.sock:/var/run/docker.sock
+   41:     hostname: kafka

@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = key; context key = spring.datasource.url
+They come from 3 different repositories (9 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=mateaix__matecloud SOURCE=mate-cli TARGET=mysql file=mate-cli/src/main/resources/mate-infra-prod-template.yml:23
+   19: spring:
+   20:   # ---- MySQL / Druid (prod-grade pool sizes) ----
+   21:   datasource:
+   22:     driver-class-name: com.mysql.cj.jdbc.Driver
+>> 23:     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:matecloud}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=true&rewrite
+   24:     username: ${MYSQL_USER}
+   25:     password: ${MYSQL_PASSWORD}
+   26:     type: com.alibaba.druid.pool.DruidDataSource
+   27:     druid:
+
+[1] repo=PramithaMJ__fully-completed-microservices-Java-Springboot SOURCE=config-server TARGET=postgresql file=services/config-server/src/main/resources/configurations/payment-service.yml:6
+   2:   port: 8060
+   3: spring:
+   4:   datasource:
+   5:     driver-class-name: org.postgresql.Driver
+>> 6:     url: jdbc:postgresql://localhost:5432/payment
+   7:     username: alibou
+   8:     password: alibou
+   9:   jpa:
+   10:     hibernate:
+
+[2] repo=ThoreauZZ__spring-cloud-example SOURCE=config-repo TARGET=zipkin file=config-repo/cloud-zipkin-ui-docker.yml:6
+   2:   datasource:
+   3:     schema: classpath:/mysql.sql
+   4:     driver-class-name: com.mysql.jdbc.Driver
+   5:     type: com.alibaba.druid.pool.DruidDataSource
+>> 6:     url: jdbc:mysql://mysql:3306/zipkin?useUnicode=true&characterEncoding=UTF-8
+   7:     username: root
+   8:     password: 1234
+   9:     initialize: true
+   10:     continueOnError: true

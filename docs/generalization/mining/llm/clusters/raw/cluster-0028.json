@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0028",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 841,
+  "completion_tokens": 279,
+  "total_tokens": 1120,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The URL in a JavaScript AJAX call in a frontend component points to catalog-service, indicating shoppingcart-ui calls catalog-service at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The URL '/api/tickets' does not mention the TARGET 'tickets' component explicitly; it is a generic API path likely handled by the client or a gateway, not a direct call to the tickets component.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The JavaScript API call URL contains 'file-management', matching the TARGET component, indicating vue-element-admin-i18n calls file-management at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"src:javascript key url\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"when the URL does not contain the TARGET component name as a distinct path segment\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"URLs in JavaScript source files at the 'url' key that contain the TARGET component name as a path segment indicate a runtime dependency from SOURCE to TARGET.\"\n}",
+ "payload": {
+  "rank": 28,
+  "kind": "src:javascript",
+  "cls": "key",
+  "detail": "key url",
+  "repos": 3,
+  "mentions": 20,
+  "samples": [
+   {
+    "repo": "sivaprasadreddy__spring-boot-microservices-series",
+    "source": "shoppingcart-ui",
+    "target": "catalog-service",
+    "file": "shoppingcart-ui/src/main/resources/static/app.js",
+    "line": 22,
+    "kind": "src:javascript",
+    "cls": "key",
+    "detail": "key url",
+    "tag": "line-read",
+    "text": "url: '/ui/api/catalog-service/api/products'",
+    "context": "   18:     methods: {\n   19:         fetchProducts: function() {\n   20:             $.ajax({\n   21:                // url: 'http://localhost:9191/products'\n>> 22:                 url: '/ui/api/catalog-service/api/products'\n   23:             })\n   24:             .done(function(data) {\n   25:                 this.products = data;\n   26:             }.bind(this));"
+   },
+   {
+    "repo": "saalikmubeen__microservices-architectured-app",
+    "source": "client",
+    "target": "tickets",
+    "file": "client/pages/tickets/new.js",
+    "line": 12,
+    "kind": "src:javascript",
+    "cls": "key",
+    "detail": "key url",
+    "tag": "line-read",
+    "text": "url: \"/api/tickets\",",
+    "context": "   8:     const [price, setPrice] = useState(\"\");\n   9: \n   10:     const { sendRequest, errors } = useRequest({\n   11:         body: { title, price },\n>> 12:         url: \"/api/tickets\",\n   13:         method: \"post\",\n   14:         onSuccess: () => {\n   15:             router.push(\"/\");\n   16:         },"
+   },
+   {
+    "repo": "xiajingren__HelloAbp",
+    "source": "vue-element-admin-i18n",
+    "target": "file-management",
+    "file": "vue-element-admin-i18n/src/api/file-management/file.js",
+    "line": 5,
+    "kind": "src:javascript",
+    "cls": "key",
+    "detail": "key url",
+    "tag": "line-read",
+    "text": "url: '/api/file-management/files/upload',",
+    "context": "   1: import request from '@/utils/request'\n   2: \n   3: export function createFile(data) {\n   4:   return request({\n>> 5:     url: '/api/file-management/files/upload',\n   6:     method: 'post',\n   7:     data: data\n   8:   })\n   9: }"
+   }
+  ]
+ }
+}

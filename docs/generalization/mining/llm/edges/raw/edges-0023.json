@@ -1,0 +1,227 @@
+{
+ "id": "edges-0023",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1040,
+  "completion_tokens": 360,
+  "total_tokens": 1400,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\":[\n  {\"i\":0,\"verdict\":\"wrong\",\"reason\":\"application.yml snippet shows only configuration of containerized-gateway itself, no reference to containerized-accounts or any call to it.\"},\n  {\"i\":1,\"verdict\":\"wrong\",\"reason\":\"docker-compose.yml 'depends_on' is a startup order hint, not a runtime call or dependency.\"},\n  {\"i\":2,\"verdict\":\"wrong\",\"reason\":\"cited docker-compose.yml 'depends_on' indicates startup order, not runtime call or connection.\"},\n  {\"i\":3,\"verdict\":\"wrong\",\"reason\":\"claim with URL 'http://bob.com' is static test data, no runtime call or dependency from samples to bob.com.\"},\n  {\"i\":4,\"verdict\":\"wrong\",\"reason\":\"docker-compose 'depends_on' only indicates container startup order, not runtime call or connection.\"},\n  {\"i\":5,\"verdict\":\"wrong\",\"reason\":\"docker-compose 'depends_on' is startup order, no evidence of runtime call from reverse-proxy to counter-service.\"},\n  {\"i\":6,\"verdict\":\"correct\",\"reason\":\"Program.cs shows barista-service uses a Postgres connection string, indicating runtime DB dependency.\"},\n  {\"i\":7,\"verdict\":\"wrong\",\"reason\":\"docker-compose 'depends_on' is startup order, no evidence of runtime call from consul3 to consul1.\"},\n  {\"i\":8,\"verdict\":\"wrong\",\"reason\":\"docker-compose 'depends_on' is startup order, no evidence of runtime call from registrator to consul1.\"},\n  {\"i\":9,\"verdict\":\"wrong\",\"reason\":\"docker-compose 'depends_on' is startup order, no evidence of runtime call from consul2 to consul1.\"}\n]}",
+ "payload": [
+  {
+   "repo": "tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes",
+   "source": "k8n-service-gateway",
+   "target": "containerized-accounts",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: containerized-gateway/src/main/resources/application.yml",
+     "file": "containerized-gateway/src/main/resources/application.yml",
+     "line": 0,
+     "kind": "spring-yaml",
+     "context": "   server:\n     port: ${PORT:8762}\n   \n   spring:\n     application:\n       name: containerized-gateway\n     logstash:\n       server: logstash\n       port: 5000"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__clean-architecture-dotnet",
+   "source": "settingapp-dapr",
+   "target": "placement",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 16,
+     "kind": "compose",
+     "context": "   12:     ports:\n   13:       - \"5000:80\"\n   14:     depends_on:\n   15:       - redis\n>> 16:       - placement\n   17:       - productapp\n   18:       - customerapp\n   19:       - settingapp\n   20:     networks:"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__clean-architecture-dotnet",
+   "source": "webapigatewayapp",
+   "target": "placement",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__clean-architecture-dotnet",
+   "source": "samples",
+   "target": "bob.com",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: samples/IdentityServer/Quickstart/TestUsers.cs:58",
+     "file": "samples/IdentityServer/Quickstart/TestUsers.cs",
+     "line": 58,
+     "kind": "src:csharp",
+     "context": "   54:                             new Claim(JwtClaimTypes.GivenName, \"Bob\"),\n   55:                             new Claim(JwtClaimTypes.FamilyName, \"Smith\"),\n   56:                             new Claim(JwtClaimTypes.Email, \"BobSmith@email.com\"),\n   57:                             new Claim(JwtClaimTypes.EmailVerified, \"true\", ClaimValueTypes.Boolean),\n>> 58:                             new Claim(JwtClaimTypes.WebSite, \"http://bob.com\"),\n   59:                             new Claim(JwtClaimTypes.Address, JsonSerializer.Serialize(address), IdentityServerConstants.ClaimValueTypes.Json)\n   60:                         }\n   61:                     }\n   62:                 };"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__coffeeshop-on-nomad",
+   "source": "otel-collector",
+   "target": "jaeger-all-in-one",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose-o11y.yaml#depends_on",
+     "file": "docker-compose-o11y.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__coffeeshop-on-nomad",
+   "source": "reverse-proxy",
+   "target": "counter-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose-o11y.yaml#depends_on",
+     "file": "docker-compose-o11y.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__coffeeshop-on-nomad",
+   "source": "barista-service",
+   "target": "postgresql",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/BaristaService/Program.cs:31",
+     "file": "src/BaristaService/Program.cs",
+     "line": 31,
+     "kind": "src:csharp",
+     "context": "   27:     .AddCustomValidators(new[] {typeof(BaristaItem)});\n   28: \n   29: builder.Services\n   30:     .AddPostgresDbContext<MainDbContext>(\n>> 31:         builder.Configuration.GetConnectionString(\"baristadb\"),\n   32:         null,\n   33:         svc => svc.AddRepository(typeof(Repository<>)))\n   34:     .AddDatabaseDeveloperPageExceptionFilter();\n   35: "
+    },
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__magazine-website",
+   "source": "consul3",
+   "target": "consul1",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose-consul-only.yml#depends_on",
+     "file": "deploy/docker-compose-consul-only.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deploy/docker-compose.yml#depends_on",
+     "file": "deploy/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__magazine-website",
+   "source": "registrator",
+   "target": "consul1",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose-consul-only.yml#depends_on",
+     "file": "deploy/docker-compose-consul-only.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deploy/docker-compose.yml#depends_on",
+     "file": "deploy/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__magazine-website",
+   "source": "consul2",
+   "target": "consul1",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose-consul-only.yml#depends_on",
+     "file": "deploy/docker-compose-consul-only.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deploy/docker-compose.yml#depends_on",
+     "file": "deploy/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  }
+ ]
+}

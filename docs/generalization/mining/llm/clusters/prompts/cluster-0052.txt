@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = hostport; context key = scrape_configs.consul_sd_configs.server
+They come from 3 different repositories (3 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=sdgmf__go-project-sample SOURCE=prometheus TARGET=consul file=configs/prometheus/prometheus.yml:9
+   5:   - /rules/*.yml
+   6: scrape_configs:
+   7:   - job_name: consul
+   8:     consul_sd_configs:
+>> 9:       - server: consul:8500
+   10:         datacenter: dc1
+   11:         tags:
+   12:           - http
+   13:     relabel_configs:
+
+[1] repo=devdcores__BookStoreApp-Distributed-Application SOURCE=bookstore-prometheus TARGET=bookstore-consul-discovery file=bookstore-prometheus/prometheus.yml:28
+   24:     metrics_path: '/actuator/prometheus'
+   25:     scrape_interval: 5s
+   26:     static_configs:
+   27:     consul_sd_configs:
+>> 28:       - server: 'bookstore-consul-discovery:8500' # Host Ip where Consul is running.
+   29:     relabel_configs:
+   30:       - source_labels: ['__meta_consul_tags']
+   31:         action: keep
+   32:       - source_labels: ['__meta_consul_service']
+
+[2] repo=geoserver__geoserver-cloud SOURCE=? TARGET=consul file=compose/monitoring/prometheus-consul.yml:15
+   11: 
+   12:   - job_name: 'geoserver-cloud-services'
+   13:     metrics_path: '/actuator/prometheus'
+   14:     consul_sd_configs:
+>> 15:       - server: 'consul:8500'
+   16:         refresh_interval: 30s
+   17:     relabel_configs:
+   18:       # Spring Cloud Consul registers an extra <service>-management service for
+   19:       # the separate management port. The main registration (rewritten to 8081

@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = url; context key = exporters.otlp/jaeger.endpoint
+They come from 2 different repositories (2 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=meysamhadeli__booking-microservices SOURCE=? TARGET=jaeger-all-in-one file=deployments/configs/otel-collector-config.yaml:84
+   80:     format: proto
+   81: 
+   82:   # export collected telemetry traces to jaeger OTLP grpc port, we can send data to other available endpoints and ports on jaeger as well
+   83:   otlp/jaeger:
+>> 84:     endpoint: "http://jaeger-all-in-one:4317"
+   85:     tls:
+   86:       insecure: true
+   87: 
+   88:   otlp/tempo:
+
+[1] repo=meysamhadeli__booking-microservices-java-spring-boot SOURCE=? TARGET=jaeger-all-in-one file=deployments/configs/otel-collector-config.yaml:84
+   80:     format: proto
+   81: 
+   82:   # export collected telemetry traces to jaeger OTLP grpc port, we can send data to other available endpoints and ports on jaeger as well
+   83:   otlp/jaeger:
+>> 84:     endpoint: "http://jaeger-all-in-one:4317"
+   85:     tls:
+   86:       insecure: true
+   87: 
+   88:   otlp/tempo:

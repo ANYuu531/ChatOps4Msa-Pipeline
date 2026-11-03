@@ -1,0 +1,92 @@
+{
+ "id": "cluster-0022",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1035,
+  "completion_tokens": 319,
+  "total_tokens": 1354,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The URL is a static external documentation link to rabbitmq.com, not a runtime call from grafana to rabbitmq.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"Same as sample 0, the URL is an external documentation link, not a runtime dependency.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The URL is a configuration property reference inside keycloak-gateway pointing to keycloak; it likely indicates a runtime dependency but the context is insufficient to confirm actual runtime calls.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The URL is a template variable in an Oathkeeper rules JSON, probably used at runtime to route to kratos, but the exact component owning this config and runtime binding is unclear.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"json key url\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"URLs in JSON keys named 'url' appear both as runtime dependency addresses and as documentation or template placeholders, so no single syntax-based rule on 'json key url' can reliably distinguish runtime dependencies from non-dependencies.\"\n}",
+ "payload": {
+  "rank": 22,
+  "kind": "json",
+  "cls": "key",
+  "detail": "url",
+  "repos": 4,
+  "mentions": 5,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "grafana",
+    "target": "rabbitmq",
+    "file": "deployments/configs/grafana/dashboards/rabbitmq.json",
+    "line": 78,
+    "kind": "json",
+    "cls": "key",
+    "detail": "url",
+    "tag": "unread",
+    "text": "\"url\": \"https://www.rabbitmq.com/prometheus.html\"",
+    "context": "   74:       \"targetBlank\": true,\n   75:       \"title\": \"Monitoring with Prometheus & Grafana\",\n   76:       \"tooltip\": \"\",\n   77:       \"type\": \"link\",\n>> 78:       \"url\": \"https://www.rabbitmq.com/prometheus.html\"\n   79:     }\n   80:   ],\n   81:   \"liveNow\": false,\n   82:   \"panels\": ["
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "grafana",
+    "target": "rabbitmq",
+    "file": "deployments/configs/grafana/dashboards/rabbitmq.json",
+    "line": 78,
+    "kind": "json",
+    "cls": "key",
+    "detail": "url",
+    "tag": "unread",
+    "text": "\"url\": \"https://www.rabbitmq.com/prometheus.html\"",
+    "context": "   74:       \"targetBlank\": true,\n   75:       \"title\": \"Monitoring with Prometheus & Grafana\",\n   76:       \"tooltip\": \"\",\n   77:       \"type\": \"link\",\n>> 78:       \"url\": \"https://www.rabbitmq.com/prometheus.html\"\n   79:     }\n   80:   ],\n   81:   \"liveNow\": false,\n   82:   \"panels\": ["
+   },
+   {
+    "repo": "opexdev__core",
+    "source": "keycloak-gateway",
+    "target": "keycloak",
+    "file": "user-management/keycloak-gateway/src/main/resources/META-INF/keycloak-server.json",
+    "line": 206,
+    "kind": "json",
+    "cls": "key",
+    "detail": "url",
+    "tag": "unread",
+    "text": "\"url\": \"${keycloak.hashicorp.url}\",",
+    "context": "   202:     \"default\": {\n   203:       \"enabled\": true\n   204:     },\n   205:     \"hachicorp-vault\": {\n>> 206:       \"url\": \"${keycloak.hashicorp.url}\",\n   207:       \"appId\": \"${spring.application.name}\",\n   208:       \"engine-name\": \"secret\",\n   209:       \"enabled\": \"${keycloak.vault.files-plaintext.provider.enabled:true}\"\n   210:     }"
+   },
+   {
+    "repo": "getlarge__ticketing",
+    "source": "?",
+    "target": "kratos",
+    "file": "infra/ory/oathkeeper/rules-template.json",
+    "line": 10,
+    "kind": "json",
+    "cls": "key",
+    "detail": "url",
+    "tag": "unread",
+    "text": "\"url\": \"##oathkeeper_public_url##/.ory/kratos/public/<\\\\*\\\\*>\",",
+    "context": "   6:       \"url\": \"##kratos_public_url##\",\n   7:       \"strip_path\": \"/.ory/kratos/public\"\n   8:     },\n   9:     \"match\": {\n>> 10:       \"url\": \"##oathkeeper_public_url##/.ory/kratos/public/<\\\\*\\\\*>\",\n   11:       \"methods\": [\"GET\", \"POST\", \"PUT\", \"DELETE\", \"PATCH\"]\n   12:     },\n   13:     \"authenticators\": [\n   14:       {"
+   }
+  ]
+ }
+}

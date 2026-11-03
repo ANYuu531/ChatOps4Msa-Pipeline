@@ -1,0 +1,118 @@
+{
+ "id": "cluster-0002",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1268,
+  "completion_tokens": 429,
+  "total_tokens": 1697,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The string 'nats' is a config key used to retrieve configuration data, not a runtime call or connection to the 'nats' component.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The string 'admin' is a username literal in mock data, unrelated to any runtime call or connection to an 'admin' component.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The string 'service-one' is a route path segment, not a runtime call or connection to the 'service-one' component.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The string 'user' is used as a label or identifier in UI rendering, not a runtime dependency on the 'user' component.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The string 'listings' is a database table name in a model definition, not a runtime call or connection to a 'listings' component.\"\n    },\n    {\n      \"i\": 5,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The string 'postgres' is a database type identifier in configuration, not a runtime call or connection to a 'postgres' component.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:typescript literal bare\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show literals used as config keys, labels, mock data, or identifiers rather than runtime calls or connections, so no general syntactic rule on bare literals in TypeScript source files can reliably extract dependencies without false positives.\"\n}",
+ "payload": {
+  "rank": 2,
+  "kind": "src:typescript",
+  "cls": "literal",
+  "detail": "bare",
+  "repos": 10,
+  "mentions": 61,
+  "samples": [
+   {
+    "repo": "juicycleff__ultimate-backend",
+    "source": "?",
+    "target": "nats",
+    "file": "libs/core/src/modules/subscription-base.provider.ts",
+    "line": 55,
+    "kind": "src:typescript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "}>('nats');",
+    "context": "   51:     try {\n   52:       const natsConfig = this.config.get<{\n   53:         servers: string[];\n   54:         url: string;\n>> 55:       }>('nats');\n   56:       this.pubsub = new NatsPubSub({ servers: natsConfig.servers });\n   57:     } catch (e) {\n   58:       this.logger.error(e);\n   59:     }"
+   },
+   {
+    "repo": "mateaix__matecloud",
+    "source": "core",
+    "target": "admin",
+    "file": "mate-ui/packages/core/src/api/mock/data.ts",
+    "line": 26,
+    "kind": "src:typescript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "username: 'admin',",
+    "context": "   22: \n   23: // ---- mock user ----\n   24: const ADMIN_USER = {\n   25:   userId: '1',\n>> 26:   username: 'admin',\n   27:   realName: 'Admin',\n   28:   mobile: '13800138000',\n   29:   email: 'admin@mate.vip',\n   30:   roleCodes: ['super_admin'],"
+   },
+   {
+    "repo": "mudigal-technologies__microservices-sample",
+    "source": "web-application",
+    "target": "service-one",
+    "file": "web-application/src/app/app.module.ts",
+    "line": 17,
+    "kind": "src:typescript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "{path: 'service-one', component: DataComponent},",
+    "context": "   13: import { BrowserAnimationsModule } from '@angular/platform-browser/animations';\n   14: \n   15: export const appRoutes: Routes = [\n   16:   {path: '', component: HomeComponent},\n>> 17:   {path: 'service-one', component: DataComponent},\n   18:   {path: 'service-two', component: DataComponent},\n   19:   {path: '**', redirectTo: '/', pathMatch: 'full'}\n   20: ];\n   21: "
+   },
+   {
+    "repo": "jingsewu__open-wes",
+    "source": "client",
+    "target": "user",
+    "file": "client/src/components/Chatbot.tsx",
+    "line": 94,
+    "kind": "src:typescript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "src={message.sender === \"user\" ? user : assistant}",
+    "context": "   90:                 {/* Messages */}\n   91:                 {messages.map((message, index) => (\n   92:                     <div key={index} className={`message-container ${message.sender}`}>\n   93:                         <img\n>> 94:                             src={message.sender === \"user\" ? user : assistant}\n   95:                             alt={`${message.sender} avatar`}\n   96:                             className=\"avatar\"\n   97:                         />\n   98:                         {message.sender === \"user\" ? ("
+   },
+   {
+    "repo": "JarrodMalkovic__auction-website",
+    "source": "payments",
+    "target": "listings",
+    "file": "services/payments/src/models/listing.ts",
+    "line": 24,
+    "kind": "src:typescript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "'listings',",
+    "context": "   20: };\n   21: \n   22: const ListingFactory = (sequelize: Sequelize): ListingStatic => {\n   23:   return <ListingStatic>sequelize.define(\n>> 24:     'listings',\n   25:     {\n   26:       id: {\n   27:         type: DataTypes.UUID,\n   28:         defaultValue: UUIDV4,"
+   },
+   {
+    "repo": "tkssharma__12-factor-app-microservices",
+    "source": "nestjs-knex-postgres-02",
+    "target": "postgres",
+    "file": "nestjs-knex-postgres #02/src/db/db.module.ts",
+    "line": 32,
+    "kind": "src:typescript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "type: 'postgres',",
+    "context": "   28:   private static getConnectionOptionsPostgres(\n   29:     dbdata: ConfigDBData,\n   30:   ): TypeOrmModuleOptions {\n   31:     return {\n>> 32:       type: 'postgres',\n   33:       url: dbdata.url,\n   34:       keepConnectionAlive: true,\n   35:       ssl:\n   36:         process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test'"
+   }
+  ]
+ }
+}

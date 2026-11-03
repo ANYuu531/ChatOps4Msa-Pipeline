@@ -1,0 +1,53 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = dockerfile; position = hostport; context key = -
+They come from 3 different repositories (12 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=tkssharma__nodejs-microservices-patterns SOURCE=notification TARGET=node file=event-driven-microservices-docker/services/notification/Dockerfile:2
+   1: # Use Node v11.2 as the base image.
+>> 2: FROM node:11.2.0-alpine
+   3: 
+   4: #Set the working directory
+   5: WORKDIR /usr/app
+   6: 
+
+[1] repo=tkssharma__12-factor-app-microservices SOURCE=nestjs-sequelize-postgres-03 TARGET=node file=nestjs-sequelize-postgres #03/Dockerfile:1
+>> 1: FROM node:12-buster-slim
+   2: 
+   3: ARG GITLAB_ACCESS_TOKEN
+   4: 
+   5: WORKDIR /app
+
+[2] repo=opexdev__core SOURCE=keycloak-setup TARGET=keycloak file=auth-gateway/keycloak-setup/Dockerfile:8
+   4: RUN mvn dependency:go-offline
+   5: COPY spi/src ./src
+   6: RUN mvn clean install
+   7: 
+>> 8: FROM quay.io/keycloak/keycloak:26.1
+   9: COPY --from=builder /build/spi/target/*.jar /opt/keycloak/providers/
+   10: COPY realms/ /opt/keycloak/data/import/

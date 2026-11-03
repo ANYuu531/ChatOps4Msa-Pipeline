@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0056",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 865,
+  "completion_tokens": 273,
+  "total_tokens": 1138,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The remote_write.url config is for Tempo's storage component, so the dependency is from Tempo, not an unknown SOURCE.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The remote_write.url config is part of Tempo's storage config, so the dependency is from Tempo, not the unknown SOURCE.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The remote_write.url config is part of Tempo's storage config, so the dependency is from Tempo, not the unknown SOURCE.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml file with key path ending in storage.remote_write.url\",\n    \"edge\": \"component owning the config file -> TARGET named in url\",\n    \"exclusions\": \"do not draw edge from unrelated components that do not own or mount this config\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show a runtime dependency from the component owning the config (Tempo) to TARGET (prometheus), so edges should be drawn from that owner, not from unrelated components.\"\n}",
+ "payload": {
+  "rank": 56,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "storage.remote_write.url",
+  "repos": 3,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/tempo.yaml",
+    "line": 32,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "storage.remote_write.url",
+    "tag": "unread",
+    "text": "- url: http://prometheus:9090/api/v1/write",
+    "context": "   28:       cluster: docker-compose\n   29:   storage:\n   30:     path: /var/tempo/generator/wal\n   31:     remote_write:\n>> 32:       - url: http://prometheus:9090/api/v1/write\n   33:         send_exemplars: true\n   34:   traces_storage:\n   35:     path: /var/tempo/generator/traces\n   36: "
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/tempo.yaml",
+    "line": 38,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "storage.remote_write.url",
+    "tag": "unread",
+    "text": "- url: http://prometheus:9090/api/v1/write",
+    "context": "   34:       cluster: docker-compose\n   35:   storage:\n   36:     path: /var/tempo/generator/wal\n   37:     remote_write:\n>> 38:     - url: http://prometheus:9090/api/v1/write\n   39:       send_exemplars: true\n   40:   traces_storage:\n   41:     path: /var/tempo/generator/traces\n   42: "
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/tempo.yaml",
+    "line": 32,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "storage.remote_write.url",
+    "tag": "unread",
+    "text": "- url: http://prometheus:9090/api/v1/write",
+    "context": "   28:       cluster: docker-compose\n   29:   storage:\n   30:     path: /var/tempo/generator/wal\n   31:     remote_write:\n>> 32:       - url: http://prometheus:9090/api/v1/write\n   33:         send_exemplars: true\n   34:   traces_storage:\n   35:     path: /var/tempo/generator/traces\n   36: "
+   }
+  ]
+ }
+}

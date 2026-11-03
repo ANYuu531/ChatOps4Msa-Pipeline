@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0049",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 841,
+  "completion_tokens": 272,
+  "total_tokens": 1113,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line 'spring.cloud.gateway:' is just a configuration namespace key, not an address or reference to the TARGET component.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line 'spring.cloud.gateway:' is a configuration key prefix and does not indicate a runtime call or connection to TARGET.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The line 'spring.cloud.gateway:' itself is a config key, but the following nested keys (e.g., routes with URIs) may indicate dependencies; the single line alone is insufficient.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"spring-yaml; position=key; context key=spring.cloud.gateway\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"The 'spring.cloud.gateway:' key alone is a configuration namespace and does not indicate a runtime dependency; thus no general syntactic rule on this key alone can reliably extract edges without false positives.\"\n}",
+ "payload": {
+  "rank": 49,
+  "kind": "spring-yaml",
+  "cls": "key",
+  "detail": "spring.cloud.gateway",
+  "repos": 3,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "gateway-webmvc",
+    "target": "gateway",
+    "file": "src/apps/infrastructure/gateway-webmvc/src/main/resources/application.yml",
+    "line": 35,
+    "kind": "spring-yaml",
+    "cls": "key",
+    "detail": "spring.cloud.gateway",
+    "tag": "unread",
+    "text": "gateway:",
+    "context": "   31:       reactive:\n   32:         connector: reactor\n   33:       connect-timeout: 5s\n   34:   cloud:\n>> 35:     gateway:\n   36:       server:\n   37:         webmvc:\n   38:           # Required: without this, XForwardedRequestHeadersFilter is not created and\n   39:           # X-Forwarded-* headers won't be sent to backend services."
+   },
+   {
+    "repo": "nplszfl__OmniTradeERP",
+    "source": "erp-gateway",
+    "target": "gateway",
+    "file": "erp-gateway/src/main/resources/application.yml",
+    "line": 32,
+    "kind": "spring-yaml",
+    "cls": "key",
+    "detail": "spring.cloud.gateway",
+    "tag": "file-read",
+    "text": "gateway:",
+    "context": "   28:         group: DEFAULT_GROUP\n   29:         file-extension: yml\n   30:         import-check:\n   31:           enabled: false\n>> 32:     gateway:\n   33:       discovery:\n   34:         locator:\n   35:           enabled: true\n   36:           lower-case-service-id: true"
+   },
+   {
+    "repo": "tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes",
+    "source": "containerized-gateway",
+    "target": "gateway",
+    "file": "containerized-gateway/src/main/resources/application.yml",
+    "line": 14,
+    "kind": "spring-yaml",
+    "cls": "key",
+    "detail": "spring.cloud.gateway",
+    "tag": "file-read",
+    "text": "gateway:",
+    "context": "   10:   sleuth:\n   11:     traceId128: true\n   12:     supportsJoin: false\n   13:   cloud:\n>> 14:     gateway:\n   15:       routes:\n   16:         - id: containerized-main\n   17:           uri: lb://CONTAINERIZED-MAIN\n   18:           predicates:"
+   }
+  ]
+ }
+}

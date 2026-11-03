@@ -1,0 +1,241 @@
+{
+ "id": "edges-0007",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1716,
+  "completion_tokens": 442,
+  "total_tokens": 2158,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"edges\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"correct\",\n      \"reason\": \"The environment variable RETAIL_ORDERS_PERSISTENCE_ENDPOINT=orders-db:5432 shows orders connects to orders-db at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong\",\n      \"reason\": \"The cited lines only describe zipkin service and its endpoints but do not show apigateway calling or connecting to zipkin.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"unsure\",\n      \"reason\": \"No specific code lines or evidence shown to confirm topic depends on etcd at runtime.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"unsure\",\n      \"reason\": \"Only docker-compose depends_on is cited without code showing grafana calling prometheus.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"correct\",\n      \"reason\": \"Code shows presentation layer writing logs to Seq HTTP endpoint, indicating runtime dependency.\"\n    },\n    {\n      \"i\": 5,\n      \"verdict\": \"unsure\",\n      \"reason\": \"Only docker-compose depends_on cited without code showing domain sending messages to rabbitmq.\"\n    },\n    {\n      \"i\": 6,\n      \"verdict\": \"correct\",\n      \"reason\": \"Code shows presentation layer writing logs via HTTP to logstash endpoint, indicating runtime dependency.\"\n    },\n    {\n      \"i\": 7,\n      \"verdict\": \"correct\",\n      \"reason\": \"Code shows products service making HTTP POST requests to customer service URL at runtime.\"\n    },\n    {\n      \"i\": 8,\n      \"verdict\": \"correct\",\n      \"reason\": \"Code shows customer service configured with DB_URL environment variable pointing to nosql-db, indicating runtime DB dependency.\"\n    },\n    {\n      \"i\": 9,\n      \"verdict\": \"correct\",\n      \"reason\": \"Code shows shopping service configured with DB_URL environment variable pointing to nosql-db, indicating runtime DB dependency.\"\n    }\n  ]\n}",
+ "payload": [
+  {
+   "repo": "aws-containers__retail-store-sample-app",
+   "source": "orders",
+   "target": "orders-db",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/orders/docker-compose.yml#depends_on",
+     "file": "src/orders/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: src/orders/docker-compose.yml",
+     "file": "src/orders/docker-compose.yml",
+     "line": 20,
+     "kind": "compose",
+     "context": "   16:     environment:\n   17:       - reschedule=on-node-failure\n   18:       - SERVER_TOMCAT_ACCESSLOG_ENABLED=true\n   19:       - RETAIL_ORDERS_PERSISTENCE_PROVIDER=postgres\n>> 20:       - RETAIL_ORDERS_PERSISTENCE_ENDPOINT=orders-db:5432\n   21:       - RETAIL_ORDERS_PERSISTENCE_NAME=orders\n   22:       - RETAIL_ORDERS_PERSISTENCE_USERNAME=orders_user\n   23:       - RETAIL_ORDERS_PERSISTENCE_PASSWORD=${DB_PASSWORD}\n   24:       - RETAIL_ORDERS_MESSAGING_PROVIDER=rabbitmq"
+    }
+   ]
+  },
+  {
+   "repo": "buptmiao__microservice-app",
+   "source": "apigateway",
+   "target": "zipkin",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: tracer/docker-compose.yml#depends_on",
+     "file": "tracer/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: tracer/docker-compose.yml",
+     "file": "tracer/docker-compose.yml",
+     "line": 37,
+     "kind": "compose",
+     "context": "   33:       - 9200:9200\n   34:     networks:\n   35:       - back-tier\n   36: \n>> 37:     # The zipkin process services the UI, and also exposes a POST endpoint that\n   38:     # instrumentation can send trace data to. Scribe is enabled by default.\n   39:   zipkin:\n   40:     image: openzipkin/zipkin:1.17.0\n   41:     container_name: zipkin"
+    }
+   ]
+  },
+  {
+   "repo": "buptmiao__microservice-app",
+   "source": "topic",
+   "target": "etcd",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: tracer/docker-compose.yml#depends_on",
+     "file": "tracer/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "buptmiao__microservice-app",
+   "source": "grafana",
+   "target": "prometheus",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: monitor/docker-compose.yml#depends_on",
+     "file": "monitor/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "charlessolar__eShopOnContainersDDD",
+   "source": "presentation",
+   "target": "seq",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Contexts/Basket/Presentation/Program.cs:122",
+     "file": "src/Contexts/Basket/Presentation/Program.cs",
+     "line": 122,
+     "kind": "src:csharp",
+     "context": "   118:         .ReadFrom.Configuration(configuration)\n   119:         .ReadFrom.Services(services)\n   120:         .Enrich.FromLogContext()\n   121:         .WriteTo.Console()\n>> 122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? \"http://seq\" : seqServerUrl)\n   123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? \"http://logstash:8080\" : logstashUrl, queueLimitBytes: null);\n   124: \n   125: }\n   126: "
+    },
+    {
+     "ref": "code: src/Contexts/Identity/Presentation/Program.cs:122",
+     "file": "src/Contexts/Identity/Presentation/Program.cs",
+     "line": 122,
+     "kind": "src:csharp",
+     "context": "   118:         .ReadFrom.Configuration(configuration)\n   119:         .ReadFrom.Services(services)\n   120:         .Enrich.FromLogContext()\n   121:         .WriteTo.Console()\n>> 122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? \"http://seq\" : seqServerUrl)\n   123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? \"http://logstash:8080\" : logstashUrl, queueLimitBytes: null);\n   124: \n   125: }\n   126: "
+    }
+   ]
+  },
+  {
+   "repo": "charlessolar__eShopOnContainersDDD",
+   "source": "domain",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "charlessolar__eShopOnContainersDDD",
+   "source": "presentation",
+   "target": "logstash",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Contexts/Basket/Presentation/Program.cs:123",
+     "file": "src/Contexts/Basket/Presentation/Program.cs",
+     "line": 123,
+     "kind": "src:csharp",
+     "context": "   119:         .ReadFrom.Services(services)\n   120:         .Enrich.FromLogContext()\n   121:         .WriteTo.Console()\n   122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? \"http://seq\" : seqServerUrl)\n>> 123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? \"http://logstash:8080\" : logstashUrl, queueLimitBytes: null);\n   124: \n   125: }\n   126: \n   127: IConfiguration GetConfiguration()"
+    },
+    {
+     "ref": "code: src/Contexts/Identity/Presentation/Program.cs:123",
+     "file": "src/Contexts/Identity/Presentation/Program.cs",
+     "line": 123,
+     "kind": "src:csharp",
+     "context": "   119:         .ReadFrom.Services(services)\n   120:         .Enrich.FromLogContext()\n   121:         .WriteTo.Console()\n   122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? \"http://seq\" : seqServerUrl)\n>> 123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? \"http://logstash:8080\" : logstashUrl, queueLimitBytes: null);\n   124: \n   125: }\n   126: \n   127: IConfiguration GetConfiguration()"
+    }
+   ]
+  },
+  {
+   "repo": "codergogoi__nodejs_microservice",
+   "source": "products",
+   "target": "customer",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: products/src/utils/index.js:62",
+     "file": "products/src/utils/index.js",
+     "line": 62,
+     "kind": "src:javascript",
+     "context": "   58: };\n   59: \n   60: //Raise Events\n   61: module.exports.PublishCustomerEvent = async (payload) => {\n>> 62:   axios.post(\"http://customer:8001/app-events/\", {\n   63:     payload,\n   64:   });\n   65: \n   66:   //     axios.post(`${BASE_URL}/customer/app-events/`,{"
+    }
+   ]
+  },
+  {
+   "repo": "codergogoi__nodejs_microservice",
+   "source": "customer",
+   "target": "nosql-db",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: customer/src/config/index.js:12",
+     "file": "customer/src/config/index.js",
+     "line": 12,
+     "kind": "src:javascript",
+     "context": "   8: }\n   9: \n   10: module.exports = {\n   11:   PORT: process.env.PORT,\n>> 12:   DB_URL: process.env.MONGODB_URI,\n   13:   APP_SECRET: process.env.APP_SECRET,\n   14:   EXCHANGE_NAME: process.env.EXCHANGE_NAME,\n   15:   MSG_QUEUE_URL: process.env.MSG_QUEUE_URL,\n   16:   CUSTOMER_SERVICE: \"customer_service\","
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "codergogoi__nodejs_microservice",
+   "source": "shopping",
+   "target": "nosql-db",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: shopping/src/config/index.js:12",
+     "file": "shopping/src/config/index.js",
+     "line": 12,
+     "kind": "src:javascript",
+     "context": "   8: }\n   9: \n   10: module.exports = {\n   11:   PORT: process.env.PORT,\n>> 12:   DB_URL: process.env.MONGODB_URI,\n   13:   APP_SECRET: process.env.APP_SECRET,\n   14:   BASE_URL: process.env.BASE_URL,\n   15:   EXCHANGE_NAME: process.env.EXCHANGE_NAME,\n   16:   MSG_QUEUE_URL: process.env.MSG_QUEUE_URL,"
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  }
+ ]
+}

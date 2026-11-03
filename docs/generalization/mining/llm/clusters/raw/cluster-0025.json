@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0025",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1059,
+  "completion_tokens": 306,
+  "total_tokens": 1365,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The DSN environment variable in hydra service config contains the hostname 'mysqld', indicating hydra connects to mysqld at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The api_gateway_service environment variable READER_SERVICE is set to 'reader_service:5003', indicating api_gateway_service connects to reader_service at runtime.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The kafka-1 service environment variable KAFKA_CONTROLLER_QUORUM_VOTERS lists kafka-2 as a quorum voter, indicating kafka-1 connects to kafka-2 at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"compose + services.<service>.environment hostport or address-like values\",\n    \"edge\": \"SOURCE service -> TARGET service named in environment variable hostport or address-like value\",\n    \"exclusions\": \"none (no syntactic pattern separates dependencies from non-dependencies in these samples)\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show runtime dependencies from the service owning the environment variable to the named target service, so a general rule adding edges for environment variables containing target service hostnames or hostports in compose files is valid.\"\n}",
+ "payload": {
+  "rank": 25,
+  "kind": "compose",
+  "cls": "hostport",
+  "detail": "services.<service>.environment",
+  "repos": 3,
+  "mentions": 36,
+  "samples": [
+   {
+    "repo": "go-saas__kit",
+    "source": "hydra",
+    "target": "mysqld",
+    "file": "docker-compose.yml",
+    "line": 50,
+    "kind": "compose",
+    "cls": "hostport",
+    "detail": "services.<service>.environment",
+    "tag": "file-read",
+    "text": "- DSN=mysql://root:youShouldChangeThis@tcp(mysqld:3306)/kit?max_conns=20&max_idle_conns=4",
+    "context": "   46:     volumes:\n   47:       - ./quickstart/configs/hydra:/etc/config/hydra\n   48: \n   49:     environment:\n>> 50:       - DSN=mysql://root:youShouldChangeThis@tcp(mysqld:3306)/kit?max_conns=20&max_idle_conns=4\n   51:     restart: unless-stopped\n   52:     depends_on:\n   53:       - hydra-migrate\n   54: "
+   },
+   {
+    "repo": "AleksK1NG__Go-CQRS-Kafka-gRPC-Microservices",
+    "source": "api_gateway_service",
+    "target": "reader_service",
+    "file": "docker-compose.yaml",
+    "line": 23,
+    "kind": "compose",
+    "cls": "hostport",
+    "detail": "services.<service>.environment",
+    "tag": "file-read",
+    "text": "- READER_SERVICE=reader_service:5003",
+    "context": "   19:       - REDIS_ADDR=host.docker.internal:6379\n   20:       - MONGO_URI=mongodb://host.docker.internal:27017\n   21:       - JAEGER_HOST=host.docker.internal:6831\n   22:       - KAFKA_BROKERS=host.docker.internal:9092\n>> 23:       - READER_SERVICE=reader_service:5003\n   24:     depends_on:\n   25:       - redis\n   26:       - prometheus\n   27:       - grafana"
+   },
+   {
+    "repo": "opexdev__core",
+    "source": "kafka-1",
+    "target": "kafka-2",
+    "file": "docker-compose.yml",
+    "line": 35,
+    "kind": "compose",
+    "cls": "hostport",
+    "detail": "services.<service>.environment",
+    "tag": "file-read",
+    "text": "- KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093",
+    "context": "   31:       - KAFKA_ADVERTISED_LISTENERS=CLIENT://kafka-1:29092,EXTERNAL://kafka-1:9092\n   32:       - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT\n   33:       - KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE=false\n   34:       - KAFKA_OPTS=-javaagent:/opt/prometheus/jmx-exporter.jar=1234:/opt/prometheus/kafka-jmx-exporter.yml\n>> 35:       - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka-1:29093,2@kafka-2:29093,3@kafka-3:29093\n   36:       - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER\n   37:       - KAFKA_LISTENERS=CLIENT://kafka-1:29092,EXTERNAL://kafka-1:9092,CONTROLLER://kafka-1:29093\n   38:       - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT\n   39: "
+   }
+  ]
+ }
+}

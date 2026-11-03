@@ -1,0 +1,213 @@
+{
+ "id": "edges-0015",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1119,
+  "completion_tokens": 359,
+  "total_tokens": 1478,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose.yml indicates container startup order, not runtime call or dependency.\"}, {\"i\": 1, \"verdict\": \"wrong\", \"reason\": \"container_name declaration alone does not show that teams depends on sqlserver at runtime.\"}, {\"i\": 2, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose.yml only indicates startup order, not runtime HTTP calls.\"}, {\"i\": 3, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose.yml only indicates startup order, not runtime HTTP calls.\"}, {\"i\": 4, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose.yml only indicates startup order, not runtime HTTP calls.\"}, {\"i\": 5, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose.yml only indicates startup order, not runtime DB usage.\"}, {\"i\": 6, \"verdict\": \"unsure\", \"reason\": \"ConsulAddress config shows a URL but no direct evidence of runtime calls from users_service to consul.\"}, {\"i\": 7, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose.yml only indicates startup order, not runtime HTTP calls.\"}, {\"i\": 8, \"verdict\": \"unsure\", \"reason\": \"OutboxType and connection string config suggest possible runtime DB usage but no direct code evidence of calls.\"}, {\"i\": 9, \"verdict\": \"wrong\", \"reason\": \"configuration metadata describing external API URL does not prove runtime calls from mate-system to api.openai.com.\"}]}",
+ "payload": [
+  {
+   "repo": "kalintsenkov__BettingSystem",
+   "source": "watchdog",
+   "target": "games",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/docker-compose.yml#depends_on",
+     "file": "src/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: src/docker-compose.yml",
+     "file": "src/docker-compose.yml",
+     "line": 100,
+     "kind": "compose",
+     "context": "   96:         depends_on:\n   97:             - data\n   98:             - messages\n   99:             \n>> 100:     games:\n   101:         container_name: games\n   102:         image: kalintsenkov/bettingsystem-games-service:1.0\n   103:         build:\n   104:             context: ./Server"
+    }
+   ]
+  },
+  {
+   "repo": "kalintsenkov__BettingSystem",
+   "source": "teams",
+   "target": "sqlserver",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/docker-compose.yml",
+     "file": "src/docker-compose.yml",
+     "line": 6,
+     "kind": "compose",
+     "context": "   2: \n   3: services:\n   4: \n   5:     data:\n>> 6:         container_name: sqlserver\n   7:         image: mcr.microsoft.com/mssql/server:2019-latest\n   8:         ports: \n   9:             - \"1433:1433\"\n   10:         environment:"
+    }
+   ]
+  },
+  {
+   "repo": "kreta__Kreta",
+   "source": "nginx",
+   "target": "php",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: etc/docker/docker-compose.yml#depends_on",
+     "file": "etc/docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "kreta__Kreta",
+   "source": "nginx",
+   "target": "node",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: etc/docker/docker-compose.yml#depends_on",
+     "file": "etc/docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "kreta__Kreta",
+   "source": "php",
+   "target": "db",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: etc/docker/docker-compose.yml#depends_on",
+     "file": "etc/docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "mabuonomo__example-nestjs-microservices-grpc",
+   "source": "prisma",
+   "target": "mysql",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "madslundt__NetCoreMicroservicesSample",
+   "source": "users_service",
+   "target": "consul",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: Src/UsersService/appsettings.json",
+     "file": "Src/UsersService/appsettings.json",
+     "line": 52,
+     "kind": "appsettings",
+     "context": "   48:   \"ElasticApm\": {\n   49:     \"ServerUrls\": \"http://apm:8200\"\n   50:   },\n   51:   \"ConsulOptions\": {\n>> 52:     \"ConsulAddress\": \"http://consul:8500\",\n   53:     \"ServiceAddress\": \"http://users_service\",\n   54:     \"ServiceName\": \"UsersService\",\n   55:     \"DisableAgentCheck\": false,\n   56:     \"Tags\": []"
+    },
+    {
+     "ref": "code: Compose/docker-compose.services.yml#depends_on",
+     "file": "Compose/docker-compose.services.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "madslundt__NetCoreMicroservicesSample",
+   "source": "api",
+   "target": "reviews_service",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: Compose/docker-compose.ocelot.yml#depends_on",
+     "file": "Compose/docker-compose.ocelot.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "madslundt__NetCoreMicroservicesSample",
+   "source": "users_service",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: Src/UsersService/appsettings.json",
+     "file": "Src/UsersService/appsettings.json",
+     "line": 87,
+     "kind": "appsettings",
+     "context": "   83:       }\n   84:     ]\n   85:   },\n   86:   \"OutboxOptions\": {\n>> 87:     \"OutboxType\": \"mongo\",\n   88:     \"DatabaseName\": \"OutboxDb\",\n   89:     \"CollectionName\": \"UserMessages\",\n   90:     \"ConnectionString\": \"mongodb://mongo:27017\",\n   91:     \"DeleteAfter\": false"
+    },
+    {
+     "ref": "code: Compose/docker-compose.services.yml#depends_on",
+     "file": "Compose/docker-compose.services.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "mateaix__matecloud",
+   "source": "mate-system",
+   "target": "api.openai.com",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: mate-biz/mate-system/src/main/java/vip/mate/system/admin/application/model/ModelProviderDescriptors.java:48",
+     "file": "mate-biz/mate-system/src/main/java/vip/mate/system/admin/application/model/ModelProviderDescriptors.java",
+     "line": 48,
+     "kind": "src:java",
+     "context": "   44:     static {\n   45:         register(ModelVendor.OPENAI, ProviderDescriptor.builder(\"OPENAI\", \"OpenAI\")\n   46:                         .describe(\"OpenAI 兼容接口(GPT / text-embedding / TTS / Whisper)\")\n   47:                         .secret(\"apiKey\", \"API Key\", true)\n>> 48:                         .text(\"baseUrl\", \"Base URL\", false, \"https://api.openai.com\")\n   49:                         .build(),\n   50:                 List.of(ModelType.LLM, ModelType.EMBEDDING, ModelType.TTS, ModelType.STT,\n   51:                         ModelType.IMAGE, ModelType.MODERATION));\n   52: "
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,49 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = spring-yaml; position = url; context key = spring.datasource.url
+They come from 2 different repositories (6 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=aliyun__alibabacloud-microservice-demo SOURCE=b TARGET=demo-mysql file=mse-simple-demo/B/src/main/resources/application-druid.yml:6
+   2:   datasource:
+   3:     #1.JDBC
+   4:     type: com.alibaba.druid.pool.DruidDataSource
+   5:     driver-class-name: com.mysql.cj.jdbc.Driver
+>> 6:     url: jdbc:mysql://demo-mysql:3306/demo
+   7:     username: root
+   8:     password: root
+   9:     druid:
+   10:       #2.连接池配置
+
+[1] repo=devdcores__BookStoreApp-Distributed-Application SOURCE=bookstore-catalog-service TARGET=bookstore-mysql-db file=bookstore-catalog-service/src/main/resources/application.yml:110
+   106:         use_sql_comments: true
+   107:         format_sql: true
+   108:   datasource:
+   109:     driver-class-name: com.mysql.cj.jdbc.Driver
+>> 110:     url: jdbc:mysql://bookstore-mysql-db:3306/bookstore_db?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC
+   111:     username: bookstoreDBA
+   112:     password: PaSSworD

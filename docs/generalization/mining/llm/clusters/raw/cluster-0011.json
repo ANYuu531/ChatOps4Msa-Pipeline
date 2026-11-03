@@ -1,0 +1,105 @@
+{
+ "id": "cluster-0011",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1167,
+  "completion_tokens": 440,
+  "total_tokens": 1607,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The line is inside an OpenTelemetry Collector config file, so the runtime dependency on TARGET (zipkin) is from the collector component, not from an unknown SOURCE.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The endpoint is configured in an OpenTelemetry Collector config, so the dependency on zipkin-all-in-one is from the collector component, not from an unknown SOURCE.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The endpoint is set inside an OpenTelemetry Collector configmap, so the dependency on zipkin is from the collector component, not from the configmap itself.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The endpoint is in an OpenTelemetry Collector config file, so the dependency on zipkin-all-in-one is from the collector component, not from an unknown SOURCE.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The endpoint is in an OpenTelemetry Collector config file, so the dependency on zipkin-all-in-one is from the collector component, not from an unknown SOURCE.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml file with key path containing 'exporters.zipkin.endpoint'\",\n    \"edge\": \"OpenTelemetry Collector component -> TARGET component named in endpoint URL\",\n    \"exclusions\": \"Do not draw edges from the file owner component if the file is a config file (e.g. OpenTelemetry Collector config) not representing a runtime component itself\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show runtime dependencies on TARGET from the OpenTelemetry Collector component configured by the YAML, not from the file owner component, so edges should be drawn from the collector component to TARGET based on exporters.zipkin.endpoint lines in YAML config files.\"\n}",
+ "payload": {
+  "rank": 11,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "exporters.zipkin.endpoint",
+  "repos": 5,
+  "mentions": 5,
+  "samples": [
+   {
+    "repo": "phongnguyend__Practical.CleanArchitecture",
+    "source": "?",
+    "target": "zipkin",
+    "file": "tools/opentelemetry/otel-collector-config.yaml",
+    "line": 12,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.zipkin.endpoint",
+    "tag": "unread",
+    "text": "endpoint: 'http://zipkin:9411/api/v2/spans'",
+    "context": "   8:     endpoint: '0.0.0.0:8889'\n   9:     const_labels:\n   10:       label1: value1\n   11:   zipkin:\n>> 12:     endpoint: 'http://zipkin:9411/api/v2/spans'\n   13:     format: proto\n   14:   otlp/jaeger:\n   15:     endpoint: 'jaeger-all-in-one:4317'\n   16:     tls:"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "zipkin-all-in-one",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 79,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.zipkin.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://zipkin-all-in-one:9411/api/v2/spans\"",
+    "context": "   75:   elasticsearch:\n   76:     endpoint: \"http://elasticsearch:9200\"\n   77: \n   78:   zipkin:\n>> 79:     endpoint: \"http://zipkin-all-in-one:9411/api/v2/spans\"\n   80:     format: proto\n   81: \n   82:   # export collected telemetry traces to jaeger OTLP grpc port, we can send data to other available endpoints and ports on jaeger as well\n   83:   otlp/jaeger:"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-expressjs",
+    "source": "otel-collector-config",
+    "target": "zipkin",
+    "file": "deployments/kubernetes/otel-collector-configmap.yaml",
+    "line": 21,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.zipkin.endpoint",
+    "tag": "file-read",
+    "text": "endpoint: http://zipkin:9411/api/v2/spans",
+    "context": "   17:       batch:\n   18: \n   19:     exporters:\n   20:       zipkin:\n>> 21:         endpoint: http://zipkin:9411/api/v2/spans\n   22:       debug:\n   23:         verbosity: normal\n   24: \n   25:     service:"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "zipkin-all-in-one",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 79,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.zipkin.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://zipkin-all-in-one:9411/api/v2/spans\"",
+    "context": "   75:   elasticsearch:\n   76:     endpoint: \"http://elasticsearch:9200\"\n   77:   \n   78:   zipkin:\n>> 79:     endpoint: \"http://zipkin-all-in-one:9411/api/v2/spans\"\n   80:     format: proto\n   81: \n   82:   # export collected telemetry traces to jaeger OTLP grpc port, we can send data to other available endpoints and ports on jaeger as well\n   83:   otlp/jaeger:"
+   },
+   {
+    "repo": "thangchung__coffeeshop-on-nomad",
+    "source": "?",
+    "target": "zipkin-all-in-one",
+    "file": "otel-collector-config.yaml",
+    "line": 15,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "exporters.zipkin.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"http://zipkin-all-in-one:9411/api/v2/spans\"",
+    "context": "   11: \n   12:   logging:\n   13: \n   14:   zipkin:\n>> 15:     endpoint: \"http://zipkin-all-in-one:9411/api/v2/spans\"\n   16:     format: proto\n   17: \n   18:   jaeger:\n   19:     endpoint: jaeger-all-in-one:14250"
+   }
+  ]
+ }
+}

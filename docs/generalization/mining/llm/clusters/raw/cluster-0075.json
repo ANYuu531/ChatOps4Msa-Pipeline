@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0075",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 741,
+  "completion_tokens": 220,
+  "total_tokens": 961,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The constant 'address' is assigned a host:port string that the source component uses to connect to the target component at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The address field in a runtime config struct is set to the target component's host:port, indicating the source depends on the target at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"src:go; position=hostport; context key=assign address\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples assign a host:port string to an address variable in Go source code, indicating a runtime dependency from SOURCE to TARGET; thus, a general rule to draw edges from SOURCE to TARGET on such assignments is valid and precise.\"\n}",
+ "payload": {
+  "rank": 75,
+  "kind": "src:go",
+  "cls": "hostport",
+  "detail": "assign address",
+  "repos": 2,
+  "mentions": 5,
+  "samples": [
+   {
+    "repo": "aliyun__alibabacloud-microservice-demo",
+    "source": "c",
+    "target": "go-grpc-demo-d",
+    "file": "mse-go-demo/multiframe/C/http/internal/logic/call_server_d.go",
+    "line": 11,
+    "kind": "src:go",
+    "cls": "hostport",
+    "detail": "assign address",
+    "tag": "file-read",
+    "text": "address = \"go-grpc-demo-d:50053\"",
+    "context": "   7: \t\"google.golang.org/grpc\"\n   8: )\n   9: \n   10: const (\n>> 11: \taddress = \"go-grpc-demo-d:50053\"\n   12: )\n   13: \n   14: var dClient d_api.CServiceClient\n   15: "
+   },
+   {
+    "repo": "nvawntien__go-judge-system",
+    "source": "judge",
+    "target": "problem-service",
+    "file": "workers/judge/internal/container/providers.go",
+    "line": 90,
+    "kind": "src:go",
+    "cls": "hostport",
+    "detail": "assign address",
+    "tag": "unread",
+    "text": "problemCfg.Address = \"problem-service:9092\"",
+    "context": "   86: func ProvideProblemGRPCConfig(cfg *config.Config) (config.ProblemGRPCConfig, error) {\n   87: \tproblemCfg := cfg.ProblemGRPC\n   88: \tproblemCfg.Address = strings.TrimSpace(problemCfg.Address)\n   89: \tif problemCfg.Address == \"\" {\n>> 90: \t\tproblemCfg.Address = \"problem-service:9092\"\n   91: \t}\n   92: \tif problemCfg.Timeout == 0 {\n   93: \t\tproblemCfg.Timeout = 5 * time.Second\n   94: \t}"
+   }
+  ]
+ }
+}

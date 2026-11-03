@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0027",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 864,
+  "completion_tokens": 231,
+  "total_tokens": 1095,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a comment referencing Prometheus documentation and does not indicate a runtime call or connection.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a comment referencing Prometheus documentation and does not indicate a runtime call or connection.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a comment referencing Prometheus documentation and does not indicate a runtime call or connection.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml file, comment line\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"Lines that are comments should never be considered dependencies\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples are comments referencing Prometheus documentation and do not represent runtime dependencies, so no general syntactic rule can separate dependency edges here.\"\n}",
+ "payload": {
+  "rank": 27,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "-",
+  "repos": 3,
+  "mentions": 21,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/prometheus.yaml",
+    "line": 2,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "-",
+    "tag": "unread",
+    "text": "# https://prometheus.io/docs/introduction/first_steps/",
+    "context": "   1: # ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/examples/demo/prometheus.yaml\n>> 2: # https://prometheus.io/docs/introduction/first_steps/\n   3: # https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-prometheus/prometheus-config-examples/docker-compose-linux/\n   4: \n   5: global:\n   6:   scrape_interval: 5s"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/prometheus.yaml",
+    "line": 2,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "-",
+    "tag": "unread",
+    "text": "# https://prometheus.io/docs/introduction/first_steps/",
+    "context": "   1: # ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/examples/demo/prometheus.yaml\n>> 2: # https://prometheus.io/docs/introduction/first_steps/\n   3: # https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-prometheus/prometheus-config-examples/docker-compose-linux/\n   4: \n   5: global:\n   6:   scrape_interval: 5s"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/prometheus.yaml",
+    "line": 2,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "-",
+    "tag": "unread",
+    "text": "# https://prometheus.io/docs/introduction/first_steps/",
+    "context": "   1: # ref: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/examples/demo/prometheus.yaml\n>> 2: # https://prometheus.io/docs/introduction/first_steps/\n   3: # https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-prometheus/prometheus-config-examples/docker-compose-linux/\n   4: \n   5: global:\n   6:   scrape_interval: 5s"
+   }
+  ]
+ }
+}

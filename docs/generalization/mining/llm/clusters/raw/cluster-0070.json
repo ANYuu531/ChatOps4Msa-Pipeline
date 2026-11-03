@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0070",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 760,
+  "completion_tokens": 209,
+  "total_tokens": 969,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The spring.datasource.url in a component's application YAML config specifies the JDBC URL used at runtime by that component to connect to the TARGET database service.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The spring.datasource.url in the bookstore-catalog-service config points to the bookstore-mysql-db database, indicating a runtime dependency from bookstore-catalog-service to bookstore-mysql-db.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"spring-yaml; context key = spring.datasource.url\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show that the spring.datasource.url line in spring YAML config files indicates a runtime dependency from the component owning the config to the TARGET database component.\"\n}",
+ "payload": {
+  "rank": 70,
+  "kind": "spring-yaml",
+  "cls": "url",
+  "detail": "spring.datasource.url",
+  "repos": 2,
+  "mentions": 6,
+  "samples": [
+   {
+    "repo": "aliyun__alibabacloud-microservice-demo",
+    "source": "b",
+    "target": "demo-mysql",
+    "file": "mse-simple-demo/B/src/main/resources/application-druid.yml",
+    "line": 6,
+    "kind": "spring-yaml",
+    "cls": "url",
+    "detail": "spring.datasource.url",
+    "tag": "file-read",
+    "text": "url: jdbc:mysql://demo-mysql:3306/demo",
+    "context": "   2:   datasource:\n   3:     #1.JDBC\n   4:     type: com.alibaba.druid.pool.DruidDataSource\n   5:     driver-class-name: com.mysql.cj.jdbc.Driver\n>> 6:     url: jdbc:mysql://demo-mysql:3306/demo\n   7:     username: root\n   8:     password: root\n   9:     druid:\n   10:       #2.连接池配置"
+   },
+   {
+    "repo": "devdcores__BookStoreApp-Distributed-Application",
+    "source": "bookstore-catalog-service",
+    "target": "bookstore-mysql-db",
+    "file": "bookstore-catalog-service/src/main/resources/application.yml",
+    "line": 110,
+    "kind": "spring-yaml",
+    "cls": "url",
+    "detail": "spring.datasource.url",
+    "tag": "unread",
+    "text": "url: jdbc:mysql://bookstore-mysql-db:3306/bookstore_db?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC",
+    "context": "   106:         use_sql_comments: true\n   107:         format_sql: true\n   108:   datasource:\n   109:     driver-class-name: com.mysql.cj.jdbc.Driver\n>> 110:     url: jdbc:mysql://bookstore-mysql-db:3306/bookstore_db?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC\n   111:     username: bookstoreDBA\n   112:     password: PaSSworD"
+   }
+  ]
+ }
+}

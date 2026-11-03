@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:go; position = url; context key = call sprintf
+They come from 2 different repositories (3 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=aliyun__alibabacloud-microservice-demo SOURCE=ginc TARGET=spring-cloud-d file=mse-heterogeneous-demo/GinC/handler.go:54
+   50: 	c.String(http.StatusOK, resp)
+   51: }
+   52: 
+   53: func doGreet(ctx context.Context) (string, error) {
+>> 54: 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("http://spring-cloud-d:20004/D/d"), nil)
+   55: 	if err != nil {
+   56: 		return "", err
+   57: 	}
+   58: 
+
+[1] repo=tinrab__meower SOURCE=? TARGET=postgres file=meow-service/main.go:42
+   38: 	}
+   39: 
+   40: 	// Connect to PostgreSQL
+   41: 	retry.ForeverSleep(2*time.Second, func(attempt int) error {
+>> 42: 		addr := fmt.Sprintf("postgres://%s:%s@postgres/%s?sslmode=disable", cfg.PostgresUser, cfg.PostgresPassword, cfg.PostgresDB)
+   43: 		repo, err := db.NewPostgres(addr)
+   44: 		if err != nil {
+   45: 			log.Println(err)
+   46: 			return err

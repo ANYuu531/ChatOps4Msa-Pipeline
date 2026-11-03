@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0088",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 859,
+  "completion_tokens": 219,
+  "total_tokens": 1078,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line reads a configuration environment variable for a database URL but does not itself represent a runtime call or connection from the config component to the postgres component.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The postal component reads a database connection string for postgres, indicating postal depends on postgres at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:go; position=url; context key=call getenv\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"The getenv calls in Go source code reading URLs sometimes represent runtime dependencies (when used by a component that actually connects to the target), but sometimes are just config values without direct runtime calls; no single syntactic rule on getenv calls alone can separate these cases.\"\n}",
+ "payload": {
+  "rank": 88,
+  "kind": "src:go",
+  "cls": "url",
+  "detail": "call getenv",
+  "repos": 2,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "ebosas__microservices",
+    "source": "?",
+    "target": "postgres",
+    "file": "internal/config/config.go",
+    "line": 30,
+    "kind": "src:go",
+    "cls": "url",
+    "detail": "call getenv",
+    "tag": "line-read",
+    "text": "PostgresURL: getEnv(\"POSTGRES_URL\", \"postgres://postgres:demopsw@localhost:5432/microservices\"),",
+    "context": "   26: // These are passed by Docker from the .env file.\n   27: func New() *Config {\n   28: \treturn &Config{\n   29: \t\tServerAddr:  getEnv(\"SERVER_ADDR\", \"localhost:8080\"),\n>> 30: \t\tPostgresURL: getEnv(\"POSTGRES_URL\", \"postgres://postgres:demopsw@localhost:5432/microservices\"),\n   31: \t\tRabbitURL:   getEnv(\"RABBIT_URL\", \"amqp://guest:guest@localhost:5672\"),\n   32: \t\tRedisURL:    getEnv(\"REDIS_URL\", \"localhost:6379\"),\n   33: \t\tExchange:    getEnv(\"EXCHANGE\", \"main_exchange\"),\n   34: \t\tQueueBack:   getEnv(\"QUEUE_BACK\", \"backend_queue\"),"
+   },
+   {
+    "repo": "NesoHQ__bgce-archive",
+    "source": "postal",
+    "target": "postgres",
+    "file": "postal/config/load-config.go",
+    "line": 46,
+    "kind": "src:go",
+    "cls": "url",
+    "detail": "call getenv",
+    "tag": "line-read",
+    "text": "PostalDBDSN:    getEnv(\"POSTAL_DB_DSN\", \"postgresql://postgres:postgres@localhost:5432/postal_db?sslmode=disable\"),",
+    "context": "   42: \t\tReadRedisURL:       getEnv(\"READ_REDIS_URL\", \"redis://localhost:6379\"),\n   43: \t\tWriteRedisURL:      getEnv(\"WRITE_REDIS_URL\", \"redis://localhost:6379\"),\n   44: \t\tEnableRedisTLSMode: getEnv(\"ENABLE_REDIS_TLS_MODE\", \"false\") == \"true\",\n   45: \n>> 46: \t\tPostalDBDSN:    getEnv(\"POSTAL_DB_DSN\", \"postgresql://postgres:postgres@localhost:5432/postal_db?sslmode=disable\"),\n   47: \t\tPostalDBDriver: getEnv(\"POSTAL_DB_DRIVER\", \"postgres\"),\n   48: \t}\n   49: \n   50: \tAppConfig = config"
+   }
+  ]
+ }
+}

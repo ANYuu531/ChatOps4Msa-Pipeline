@@ -1,0 +1,93 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:go; position = literal; context key = bare
+They come from 10 different repositories (38 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=harlow__go-micro-services SOURCE=? TARGET=geo file=cmd/go-micro-services/main.go:61
+   57: 
+   58: 	var srv server
+   59: 
+   60: 	switch cmd {
+>> 61: 	case "geo":
+   62: 		srv = geosrv.New()
+   63: 	case "rate":
+   64: 		srv = ratesrv.New()
+   65: 	case "profile":
+
+[1] repo=sdgmf__go-project-sample SOURCE=? TARGET=reviews file=internal/pkg/models/product.go:6
+   2: 
+   3: type Product struct {
+   4: 	Detail *Detail `json:"detail"`
+   5: 	Rating *Rating `json:"rating"`
+>> 6: 	Reviews []*Review `json:"reviews"`
+   7: }
+   8: 
+
+[2] repo=minghsu0107__go-random-chat SOURCE=? TARGET=forwarder file=cmd/forwarder.go:12
+   8: 	"github.com/spf13/cobra"
+   9: )
+   10: 
+   11: var forwarderCmd = &cobra.Command{
+>> 12: 	Use:   "forwarder",
+   13: 	Short: "forwarder server",
+   14: 	Run: func(cmd *cobra.Command, args []string) {
+   15: 		server, err := wire.InitializeForwarderServer("forwarder")
+   16: 		if err != nil {
+
+[3] repo=go-saas__kit SOURCE=? TARGET=user file=pkg/authz/authz/subjects.go:27
+   23: 
+   24: }
+   25: 
+   26: func (u *UserSubject) GetName() string {
+>> 27: 	return "user"
+   28: }
+   29: func (u *UserSubject) GetIdentity() string {
+   30: 	return fmt.Sprintf("%s/%s", u.GetName(), u.userId)
+   31: }
+
+[4] repo=tinrab__meower SOURCE=? TARGET=query file=search/elastic.go:49
+   45: 
+   46: func (r *ElasticRepository) SearchMeows(ctx context.Context, query string, skip uint64, take uint64) (result []schema.Meow, err error) {
+   47: 	var buf bytes.Buffer
+   48: 	reqBody := map[string]interface{}{
+>> 49: 		"query": map[string]interface{}{
+   50: 			"multi_match": map[string]interface{}{
+   51: 				"query":            query,
+   52: 				"fields":           []string{"body"},
+   53: 				"fuzziness":        3,
+
+[5] repo=AleksK1NG__Go-CQRS-Kafka-gRPC-Microservices SOURCE=reader_service TARGET=redis file=reader_service/config/config.go:33
+   29: 	GRPC             GRPC                `mapstructure:"grpc"`
+   30: 	Postgresql       *postgres.Config    `mapstructure:"postgres"`
+   31: 	Kafka            *kafkaClient.Config `mapstructure:"kafka"`
+   32: 	Mongo            *mongodb.Config     `mapstructure:"mongo"`
+>> 33: 	Redis            *redis.Config       `mapstructure:"redis"`
+   34: 	MongoCollections MongoCollections    `mapstructure:"mongoCollections"`
+   35: 	Probes           probes.Config       `mapstructure:"probes"`
+   36: 	ServiceSettings  ServiceSettings     `mapstructure:"serviceSettings"`
+   37: 	Jaeger           *tracing.Config     `mapstructure:"jaeger"`

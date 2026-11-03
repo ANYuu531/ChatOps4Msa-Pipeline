@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:python; position = literal; context key = bare
+They come from 3 different repositories (119 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=abhimishra91__insight SOURCE=src-streamlit TARGET=classification file=src_streamlit/NLPfiy.py:62
+   58:             ],
+   59:         )
+   60:         self.service = {
+   61:             "Project Insight": "about",
+>> 62:             "News Classification": "classification",
+   63:             "Named Entity Recognition": "ner",
+   64:             "Sentiment Analysis": "sentiment",
+   65:             "Summarization": "summary",
+   66:         }
+
+[1] repo=nvawntien__go-judge-system SOURCE=analysis TARGET=judge file=tools/benchmark/judge/analysis/judge_analysis/metrics.py:38
+   34: 
+   35: def _system_config(run: dict) -> dict:
+   36:     value = run.get("system_config")
+   37:     required = {
+>> 38:         "label", "release", "app", "judge",
+   39:     }
+   40:     if not isinstance(value, dict) or not required.issubset(value):
+   41:         return {"available": False, "reason": "safe system configuration metadata unavailable"}
+   42:     # Copy only the strict allowlist emitted by judge-bench. This avoids ever
+
+[2] repo=nplszfl__OmniTradeERP SOURCE=? TARGET=gateway file=scripts/fix-compose-ports.py:21
+   17: ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+   18: 
+   19: # compose 服务名 → (Maven 模块目录, server.port)
+   20: CANON = {
+>> 21:     "gateway":                      ("erp-gateway", 8080),
+   22:     "user-service":                 ("erp-user-service", 8084),
+   23:     "product-service":              ("erp-product-service", 8083),
+   24:     "order-service":                ("erp-order-service", 8081),
+   25:     "platform-service":             ("erp-platform-service", 8082),

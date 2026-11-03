@@ -1,0 +1,121 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=tkssharma__nodejs-microservices-patterns ms_commerce_client -> ms_commerce_auth (type sync-http)
+  cited code: dockerized-containers/docker-compose.yml#depends_on
+
+
+[1] repo=tkssharma__nodejs-microservices-patterns node2 -> redis (type db)
+  cited code: nodejs-microservice-using-docker-Part-2/docker-compose.yml#depends_on
+
+
+[2] repo=uid4oe__grpc-web-demo alva-offer -> mongodb (type db)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   36:     ports:
+   37:       - 55051:55051
+   38:     command: /main
+   39:     depends_on:
+>> 40:       - mongodb
+   41:     env_file:
+   42:       - .env
+   43:     restart: always
+   44:   alva-offer-envoy:
+
+[3] repo=uid4oe__grpc-web-demo postgres -> mongodb (type db)
+  cited code: docker-compose.yml
+   36:     ports:
+   37:       - 55051:55051
+   38:     command: /main
+   39:     depends_on:
+>> 40:       - mongodb
+   41:     env_file:
+   42:       - .env
+   43:     restart: always
+   44:   alva-offer-envoy:
+
+[4] repo=uid4oe__grpc-web-demo alva-offer -> alva-order (type sync-http)
+  cited code: docker-compose.yml
+   47:     networks:
+   48:       - grpc-web-demo-alva-net
+   49:     ports:
+   50:       - "8001:8001"
+>> 51:   alva-order:
+   52:     container_name: "order"
+   53:     image: uid4oe/alva-order:latest
+   54:     networks:
+   55:       - grpc-web-demo-alva-net
+
+[5] repo=uid4oe__microservices-go-grpc advice-service -> user-service (type sync-http)
+  cited code: docker-compose.yml
+   10:       - 8080:8080
+   11:     command: /main
+   12:     env_file:
+   13:       - .env
+>> 14:   user-service:
+   15:     container_name: "user-service_go"
+   16:     image: uid4oe/go-ms-user:latest
+   17:     networks:
+   18:       - uid4oe
+
+[6] repo=uid4oe__microservices-go-grpc postgres -> advice-service (type sync-http)
+  cited code: docker-compose.yml
+   21:     command: /main
+   22:     restart: always
+   23:     env_file:
+   24:       - .env
+>> 25:   advice-service:
+   26:     container_name: "advice-service_go"
+   27:     image: uid4oe/go-ms-advice:latest
+   28:     networks:
+   29:       - uid4oe
+
+[7] repo=uid4oe__microservices-go-grpc postgres -> user-service (type sync-http)
+  cited code: docker-compose.yml
+   10:       - 8080:8080
+   11:     command: /main
+   12:     env_file:
+   13:       - .env
+>> 14:   user-service:
+   15:     container_name: "user-service_go"
+   16:     image: uid4oe/go-ms-user:latest
+   17:     networks:
+   18:       - uid4oe
+
+[8] repo=ujjavaldesai07__spring-boot-react-ecommerce-app common-data-service -> mysql-db (type db)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   1: version: '3'
+   2: 
+   3: services:
+>> 4:   mysql-db:
+   5:     image: mysql:8
+   6:     container_name: mysql-db-container
+   7:     environment:
+   8:       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+[9] repo=ujjavaldesai07__spring-boot-react-ecommerce-app common-data-service -> redis-cache (type db)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   15:       - 3306:3306
+   16:     networks:
+   17:       - spring-cloud-microservices
+   18: 
+>> 19:   redis-cache:
+   20:     image: redis:alpine
+   21:     container_name: redis-cache-container
+   22:     command: redis-server --requirepass ${REDIS_PASSWORD}
+   23:     ports:

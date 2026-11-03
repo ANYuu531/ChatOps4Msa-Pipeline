@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0061",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 782,
+  "completion_tokens": 205,
+  "total_tokens": 987,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The ui service sets an environment variable with a URL pointing to the catalog service, indicating ui calls catalog at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The service-accounts service configures an OTEL exporter endpoint pointing to tempo, indicating service-accounts sends telemetry data to tempo at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"compose; position = url; context key = services.<service>.environment\",\n    \"edge\": \"<service owning the environment variable> -> <component named in the URL>\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"Environment variables in Docker Compose services that contain URLs referencing other declared services indicate runtime dependencies from the owning service to the referenced target.\"\n}",
+ "payload": {
+  "rank": 61,
+  "kind": "compose",
+  "cls": "url",
+  "detail": "services.<service>.environment",
+  "repos": 2,
+  "mentions": 14,
+  "samples": [
+   {
+    "repo": "aws-containers__retail-store-sample-app",
+    "source": "ui",
+    "target": "catalog",
+    "file": "src/app/compose.override.yaml",
+    "line": 4,
+    "kind": "compose",
+    "cls": "url",
+    "detail": "services.<service>.environment",
+    "tag": "unread",
+    "text": "- RETAIL_UI_ENDPOINTS_CATALOG=http://catalog:8080",
+    "context": "   1: services:\n   2:   ui:\n   3:     environment:\n>> 4:       - RETAIL_UI_ENDPOINTS_CATALOG=http://catalog:8080\n   5:       - RETAIL_UI_ENDPOINTS_CARTS=http://carts:8080\n   6:       - RETAIL_UI_ENDPOINTS_ORDERS=http://orders:8080\n   7:       - RETAIL_UI_ENDPOINTS_CHECKOUT=http://checkout:8080\n   8:     depends_on:"
+   },
+   {
+    "repo": "tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes",
+    "source": "service-accounts",
+    "target": "tempo",
+    "file": "docker-compose.yml",
+    "line": 169,
+    "kind": "compose",
+    "cls": "url",
+    "detail": "services.<service>.environment",
+    "tag": "file-read",
+    "text": "- OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317",
+    "context": "   165:     build:\n   166:       context: ./containerized-accounts\n   167:       dockerfile: Dockerfile\n   168:     environment:\n>> 169:       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317\n   170:       - OTEL_RESOURCE_ATTRIBUTES=service.name=service-accounts,compose_service=service-accounts\n   171:       - OTEL_METRICS_EXPORTER=none\n   172:       - MANAGEMENT_METRICS_TAGS_APPLICATION=service-accounts\n   173:       - management.zipkin.tracing.endpoint=http://zipkin:9411/api/v2/spans"
+   }
+  ]
+ }
+}

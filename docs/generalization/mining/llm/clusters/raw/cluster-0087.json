@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0087",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 727,
+  "completion_tokens": 208,
+  "total_tokens": 935,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The call to sql.Open(\\\"postgres\\\", url) in a Go source file indicates that the component owning this code opens a runtime connection to the postgres database.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The call to sql.Open(\\\"postgres\\\", cfg.PostalDBDSN) in a Go source file shows that the postal component connects at runtime to the postgres database.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"src:go literal call open\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show a runtime connection from the source Go component to the target postgres component via sql.Open calls, so drawing edges for all such calls is a reliable rule.\"\n}",
+ "payload": {
+  "rank": 87,
+  "kind": "src:go",
+  "cls": "literal",
+  "detail": "call open",
+  "repos": 2,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "tinrab__meower",
+    "source": "?",
+    "target": "postgres",
+    "file": "db/postgres.go",
+    "line": 18,
+    "kind": "src:go",
+    "cls": "literal",
+    "detail": "call open",
+    "tag": "line-read",
+    "text": "db, err := sql.Open(\"postgres\", url)",
+    "context": "   14: \tdb *sql.DB\n   15: }\n   16: \n   17: func NewPostgres(url string) (*PostgresRepository, error) {\n>> 18: \tdb, err := sql.Open(\"postgres\", url)\n   19: \tif err != nil {\n   20: \t\treturn nil, err\n   21: \t}\n   22: \terr = db.Ping()"
+   },
+   {
+    "repo": "NesoHQ__bgce-archive",
+    "source": "postal",
+    "target": "postgres",
+    "file": "postal/cmd/rest.go",
+    "line": 51,
+    "kind": "src:go",
+    "cls": "literal",
+    "detail": "call open",
+    "tag": "unread",
+    "text": "sqlDB, err := sql.Open(\"postgres\", cfg.PostalDBDSN)",
+    "context": "   47: \tdefer config.CloseDatabase()\n   48: \n   49: \t// Run migrations using golang-migrate\n   50: \tlog.Println(\"🔄 Running database migrations...\")\n>> 51: \tsqlDB, err := sql.Open(\"postgres\", cfg.PostalDBDSN)\n   52: \tif err != nil {\n   53: \t\tlog.Printf(\"❌ Failed to connect to database for migrations: %v\", err)\n   54: \t\treturn fmt.Errorf(\"failed to connect to database for migrations: %w\", err)\n   55: \t}"
+   }
+  ]
+ }
+}

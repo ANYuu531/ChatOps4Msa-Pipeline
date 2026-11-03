@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:java; position = literal; context key = call configurationproperties
+They come from 2 different repositories (2 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=mateaix__matecloud SOURCE=mate-file-starter TARGET=minio file=mate-starters/mate-file-starter/src/main/java/vip/mate/starter/file/config/MinioProperties.java:25
+   21:  * Configuration properties for MinIO.
+   22:  *
+   23:  * @author mateaix
+   24:  */
+>> 25: @ConfigurationProperties(prefix = "minio")
+   26: public class MinioProperties {
+   27: 
+   28:     private String endpoint = "http://127.0.0.1:9000";
+   29:     private String accessKey;
+
+[1] repo=geoserver__geoserver-cloud SOURCE=autoconfigure TARGET=gwc file=src/gwc/autoconfigure/src/main/java/org/geoserver/cloud/autoconfigure/gwc/GeoWebCacheConfigurationProperties.java:52
+   48:  * {@code gwc.disk-quota.data-source} is a {@link DataSourceProperties}
+   49:  *
+   50:  * @since 1.0
+   51:  */
+>> 52: @ConfigurationProperties(prefix = "gwc")
+   53: public @Data class GeoWebCacheConfigurationProperties {
+   54: 
+   55:     public static final String GWC_ENABLED_PROPERTY = "gwc.enabled";
+   56:     public static final String CACHE_DIRECTORY = "gwc.cache-directory";

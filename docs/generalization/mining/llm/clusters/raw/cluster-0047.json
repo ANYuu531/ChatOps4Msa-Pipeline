@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0047",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 843,
+  "completion_tokens": 240,
+  "total_tokens": 1083,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"not-dependency\", \"reason\": \"The call to this.context.get('basic') is a local context or config lookup, not a runtime call to the 'basic' component.\"}, {\"i\": 1, \"verdict\": \"dependency\", \"reason\": \"The call to common.get(settings.uri + \\\"catalog\\\", ...) is a runtime HTTP call from frontend to catalog service.\"}, {\"i\": 2, \"verdict\": \"unsure\", \"reason\": \"The get call on dataSource with 'address' key may be a data path lookup, but it's unclear if it triggers a runtime call to the 'address' component.\"}], \"rule\": {\"general\": false, \"trigger\": \"src:javascript literal in call get\", \"edge\": \"SOURCE -> TARGET\", \"exclusions\": \"cannot distinguish local context/config lookups or data path keys from actual runtime calls based on syntax alone\", \"confidence\": \"medium\"}, \"summary\": \"Only some calls to get with a literal TARGET name represent runtime dependencies; the syntax alone does not reliably separate true dependencies from local or data path lookups.\"}",
+ "payload": {
+  "rank": 47,
+  "kind": "src:javascript",
+  "cls": "literal",
+  "detail": "call get",
+  "repos": 3,
+  "mentions": 4,
+  "samples": [
+   {
+    "repo": "oracle-quickstart__oci-cloudnative",
+    "source": "storefront",
+    "target": "basic",
+    "file": "src/storefront/src/scripts/shop/about.js",
+    "line": 39,
+    "kind": "src:javascript",
+    "cls": "literal",
+    "detail": "call get",
+    "tag": "unread",
+    "text": "return this.context.get('basic');",
+    "context": "   35:       .then(() => this.setOptions());\n   36:   }\n   37: \n   38:   isBasic() {\n>> 39:     return this.context.get('basic');\n   40:   }\n   41: \n   42:   offsetTop() {\n   43:     return ~~this._ctxProp('offset-top');"
+   },
+   {
+    "repo": "aelassas__microservices",
+    "source": "frontend",
+    "target": "catalog",
+    "file": "src/uis/Frontend/wwwroot/js/store.js",
+    "line": 14,
+    "kind": "src:javascript",
+    "cls": "literal",
+    "detail": "call get",
+    "tag": "unread",
+    "text": "common.get(settings.uri + \"catalog\", (data) => {",
+    "context": "   10:         location.href = \"/index.html\";\n   11:     }\n   12: \n   13:     common.get(settings.uri + \"identity/validate?email=\" + encodeURIComponent(auth.email) + \"&token=\" + encodeURIComponent(auth.token), (userId) => {\n>> 14:         common.get(settings.uri + \"catalog\", (data) => {\n   15:             const catalogItems = JSON.parse(data);\n   16:             const items = [];\n   17:             for (const catalogItem of catalogItems) {\n   18:                 items.push(\"<tr>\""
+   },
+   {
+    "repo": "alexcheng1982__happyride",
+    "source": "passenger-web-api-falcor",
+    "target": "address",
+    "file": "example-projects/passenger-web-api-falcor/datasource_test.js",
+    "line": 9,
+    "kind": "src:javascript",
+    "cls": "literal",
+    "detail": "call get",
+    "tag": "unread",
+    "text": "dataSource.get([\"passengersById\", \"p1\", \"userAddresses\", 0, 'address', 'addressLine']).subscribe(debug);",
+    "context": "   5: const dataSource = new falcor.Model({\n   6:   cache: jsonGraph\n   7: }).asDataSource();\n   8: \n>> 9: dataSource.get([\"passengersById\", \"p1\", \"userAddresses\", 0, 'address', 'addressLine']).subscribe(debug);"
+   }
+  ]
+ }
+}

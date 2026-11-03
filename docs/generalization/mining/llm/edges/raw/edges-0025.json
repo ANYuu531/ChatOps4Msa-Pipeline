@@ -1,0 +1,213 @@
+{
+ "id": "edges-0025",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1292,
+  "completion_tokens": 366,
+  "total_tokens": 1658,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose only controls startup order, does not prove runtime dependency or calls.\"}, {\"i\": 1, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose only controls startup order, no evidence of runtime DB usage or calls.\"}, {\"i\": 2, \"verdict\": \"wrong\", \"reason\": \"depends_on shows startup order but no evidence that alva-offer connects to mongodb at runtime.\"}, {\"i\": 3, \"verdict\": \"wrong\", \"reason\": \"depends_on shows startup order but no evidence that postgres depends on mongodb at runtime.\"}, {\"i\": 4, \"verdict\": \"wrong\", \"reason\": \"cited lines just define alva-order service, no evidence alva-offer calls or connects to it.\"}, {\"i\": 5, \"verdict\": \"wrong\", \"reason\": \"cited lines define user-service container, no evidence advice-service calls or connects to it.\"}, {\"i\": 6, \"verdict\": \"wrong\", \"reason\": \"cited lines define advice-service container, no evidence postgres calls or connects to it.\"}, {\"i\": 7, \"verdict\": \"wrong\", \"reason\": \"cited lines define user-service container, no evidence postgres calls or connects to it.\"}, {\"i\": 8, \"verdict\": \"wrong\", \"reason\": \"cited lines define mysql-db service, no evidence common-data-service connects or calls it.\"}, {\"i\": 9, \"verdict\": \"wrong\", \"reason\": \"cited lines define redis-cache service, no evidence common-data-service connects or calls it.\"}]}",
+ "payload": [
+  {
+   "repo": "tkssharma__nodejs-microservices-patterns",
+   "source": "ms_commerce_client",
+   "target": "ms_commerce_auth",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: dockerized-containers/docker-compose.yml#depends_on",
+     "file": "dockerized-containers/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "tkssharma__nodejs-microservices-patterns",
+   "source": "node2",
+   "target": "redis",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: nodejs-microservice-using-docker-Part-2/docker-compose.yml#depends_on",
+     "file": "nodejs-microservice-using-docker-Part-2/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "uid4oe__grpc-web-demo",
+   "source": "alva-offer",
+   "target": "mongodb",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 40,
+     "kind": "compose",
+     "context": "   36:     ports:\n   37:       - 55051:55051\n   38:     command: /main\n   39:     depends_on:\n>> 40:       - mongodb\n   41:     env_file:\n   42:       - .env\n   43:     restart: always\n   44:   alva-offer-envoy:"
+    }
+   ]
+  },
+  {
+   "repo": "uid4oe__grpc-web-demo",
+   "source": "postgres",
+   "target": "mongodb",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 40,
+     "kind": "compose",
+     "context": "   36:     ports:\n   37:       - 55051:55051\n   38:     command: /main\n   39:     depends_on:\n>> 40:       - mongodb\n   41:     env_file:\n   42:       - .env\n   43:     restart: always\n   44:   alva-offer-envoy:"
+    }
+   ]
+  },
+  {
+   "repo": "uid4oe__grpc-web-demo",
+   "source": "alva-offer",
+   "target": "alva-order",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 51,
+     "kind": "compose",
+     "context": "   47:     networks:\n   48:       - grpc-web-demo-alva-net\n   49:     ports:\n   50:       - \"8001:8001\"\n>> 51:   alva-order:\n   52:     container_name: \"order\"\n   53:     image: uid4oe/alva-order:latest\n   54:     networks:\n   55:       - grpc-web-demo-alva-net"
+    }
+   ]
+  },
+  {
+   "repo": "uid4oe__microservices-go-grpc",
+   "source": "advice-service",
+   "target": "user-service",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 14,
+     "kind": "compose",
+     "context": "   10:       - 8080:8080\n   11:     command: /main\n   12:     env_file:\n   13:       - .env\n>> 14:   user-service:\n   15:     container_name: \"user-service_go\"\n   16:     image: uid4oe/go-ms-user:latest\n   17:     networks:\n   18:       - uid4oe"
+    }
+   ]
+  },
+  {
+   "repo": "uid4oe__microservices-go-grpc",
+   "source": "postgres",
+   "target": "advice-service",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 25,
+     "kind": "compose",
+     "context": "   21:     command: /main\n   22:     restart: always\n   23:     env_file:\n   24:       - .env\n>> 25:   advice-service:\n   26:     container_name: \"advice-service_go\"\n   27:     image: uid4oe/go-ms-advice:latest\n   28:     networks:\n   29:       - uid4oe"
+    }
+   ]
+  },
+  {
+   "repo": "uid4oe__microservices-go-grpc",
+   "source": "postgres",
+   "target": "user-service",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 14,
+     "kind": "compose",
+     "context": "   10:       - 8080:8080\n   11:     command: /main\n   12:     env_file:\n   13:       - .env\n>> 14:   user-service:\n   15:     container_name: \"user-service_go\"\n   16:     image: uid4oe/go-ms-user:latest\n   17:     networks:\n   18:       - uid4oe"
+    }
+   ]
+  },
+  {
+   "repo": "ujjavaldesai07__spring-boot-react-ecommerce-app",
+   "source": "common-data-service",
+   "target": "mysql-db",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 4,
+     "kind": "compose",
+     "context": "   1: version: '3'\n   2: \n   3: services:\n>> 4:   mysql-db:\n   5:     image: mysql:8\n   6:     container_name: mysql-db-container\n   7:     environment:\n   8:       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}"
+    }
+   ]
+  },
+  {
+   "repo": "ujjavaldesai07__spring-boot-react-ecommerce-app",
+   "source": "common-data-service",
+   "target": "redis-cache",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 19,
+     "kind": "compose",
+     "context": "   15:       - 3306:3306\n   16:     networks:\n   17:       - spring-cloud-microservices\n   18: \n>> 19:   redis-cache:\n   20:     image: redis:alpine\n   21:     container_name: redis-cache-container\n   22:     command: redis-server --requirepass ${REDIS_PASSWORD}\n   23:     ports:"
+    }
+   ]
+  }
+ ]
+}

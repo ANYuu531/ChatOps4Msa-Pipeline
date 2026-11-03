@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = url; context key = data.*_ENDPOINT
+They come from 3 different repositories (14 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=SaiUpadhyayula__spring-boot-3-microservices-course SOURCE=common-config TARGET=tempo file=k8s/manifests/applications/common-config.yml:8
+   4: metadata:
+   5:   name: common-config
+   6: data:
+   7:   LOKI_URL: "http://loki.default.svc.cluster.local:3100/loki/api/v1/push"
+>> 8:   MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: "http://tempo.default.svc.cluster.local:9411"
+   9:   PRODUCT_SERVICE_URL: "http://product-service.default.svc.cluster.local:8080"
+   10:   ORDER_SERVICE_URL: "http://order-service.default.svc.cluster.local:8081"
+   11:   INVENTORY_SERVICE_URL: "http://inventory-service.default.svc.cluster.local:8082"
+   12:   SPRING_KAFKA_BOOTSTRAP-SERVERS: "broker.default.svc.cluster.local:29092"
+
+[1] repo=hoangtien2k3__ecommerce-microservices SOURCE=ecommerce-config TARGET=rustfs file=k8s/configmap.yaml:30
+   26:   # Elasticsearch
+   27:   ELASTICSEARCH_URL: "http://elasticsearch:9200"
+   28: 
+   29:   # Object storage (RustFS - S3-compatible)
+>> 30:   STORAGE_ENDPOINT: "http://rustfs:9000"
+   31:   STORAGE_REGION: "us-east-1"
+   32:   STORAGE_BUCKET: "ecommerce-media"
+   33: 
+   34:   # Hibernate
+
+[2] repo=amasen02__freshcart-backend SOURCE=basket-config TARGET=otel-collector file=deploy/k8s/basket/configmap.yaml:9
+   5:   namespace: freshcart
+   6: data:
+   7:   ASPNETCORE_ENVIRONMENT: 'Production'
+   8:   ASPNETCORE_HTTP_PORTS: '8080'
+>> 9:   OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector.observability.svc.cluster.local:4317'
+   10:   OTEL_SERVICE_NAME: 'freshcart-basket'
+   11:   Cors__AllowedOrigins__0: 'https://www.freshcart.local'
+   12:   Jwt__Issuer: 'https://identity.freshcart.local'
+   13:   Jwt__Audience: 'https://freshcart.local'

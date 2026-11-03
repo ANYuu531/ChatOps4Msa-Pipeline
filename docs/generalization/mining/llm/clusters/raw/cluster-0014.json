@@ -1,0 +1,92 @@
+{
+ "id": "cluster-0014",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1009,
+  "completion_tokens": 343,
+  "total_tokens": 1352,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The line shows a runtime call from the shopping-cart component to the productcatalogapp via Dapr client invocation.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a case label in a switch statement, not a runtime call or connection to the mongo component.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line names a project in a build or configuration DSL, not a runtime call or connection to the identity component.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a named parameter for a health check registration, likely a label rather than a runtime call or connection to mongo.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"src:csharp; position=literal; context key=bare\",\n    \"edge\": \"component owning the source file -> component named by the literal\",\n    \"exclusions\": \"exclude literals used as labels, case labels, project names in build DSLs, or configuration keys not used for runtime calls\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"Only literals used as runtime call targets in source code files (e.g., Dapr client calls) reliably indicate dependencies; other uses of component names as literals in C# source code (labels, config keys, build DSL identifiers) do not.\"\n}",
+ "payload": {
+  "rank": 14,
+  "kind": "src:csharp",
+  "cls": "literal",
+  "detail": "bare",
+  "repos": 4,
+  "mentions": 26,
+  "samples": [
+   {
+    "repo": "vietnam-devs__coolstore-microservices",
+    "source": "?",
+    "target": "productcatalogapp",
+    "file": "src/dotnet/shopping-cart/Infrastructure/Gateways/ProductCatalogGateway.cs",
+    "line": 26,
+    "kind": "src:csharp",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "\"productcatalogapp\", \"get-product-by-id\", requestData, cancellationToken: cancellationToken);",
+    "context": "   22:         if (product is not null) return product;\n   23: \n   24:         var requestData = new ProductByIdRequest {Id = id};\n   25:         product = await _daprClient.InvokeMethodAsync<ProductByIdRequest, ProductDto>(\n>> 26:             \"productcatalogapp\", \"get-product-by-id\", requestData, cancellationToken: cancellationToken);\n   27: \n   28:         if (product is null)\n   29:         {\n   30:             throw new CoreException($\"Couldn't find out product with id={id}\");"
+   },
+   {
+    "repo": "madslundt__NetCoreMicroservicesSample",
+    "source": "?",
+    "target": "mongo",
+    "file": "Infrastructure/Outbox/OutboxExtensions.cs",
+    "line": 28,
+    "kind": "src:csharp",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "case \"mongo\":",
+    "context": "   24:                     break;\n   25:                 case \"dapr\":\n   26:                     services.AddDaprOutbox(Configuration);\n   27:                     break;\n>> 28:                 case \"mongo\":\n   29:                 case \"mongodb\":\n   30:                     services.AddMongoDbOutbox(Configuration);\n   31:                     break;\n   32:                 default:"
+   },
+   {
+    "repo": "amasen02__freshcart-backend",
+    "source": "?",
+    "target": "identity",
+    "file": "src/AspireAppHost/FreshCart.AppHost/Program.cs",
+    "line": 206,
+    "kind": "src:csharp",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": ".AddProject<Projects.FreshCart_Identity_Api>(\"identity\")",
+    "context": "   202: \n   203: // --- Services ---------------------------------------------------------------\n   204: \n   205: var identityService = distributedApplicationBuilder\n>> 206:     .AddProject<Projects.FreshCart_Identity_Api>(\"identity\")\n   207:     .WithReference(identityDatabase)\n   208:     .WithReference(distributedCache)\n   209:     .WaitFor(identityDatabase)\n   210:     .WaitFor(distributedCache);"
+   },
+   {
+    "repo": "aelassas__microservices",
+    "source": "cartmicroservice",
+    "target": "mongo",
+    "file": "src/microservices/CartMicroservice/Startup.cs",
+    "line": 68,
+    "kind": "src:csharp",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "name: \"mongo\",",
+    "context": "   64:                 mongodbConnectionString: (\n   65:                     Configuration.GetSection(\"mongo\").Get<MongoOptions>()\n   66:                     ?? throw new Exception(\"mongo configuration section not found\")\n   67:                 ).ConnectionString,\n>> 68:                 name: \"mongo\",\n   69:                 failureStatus: HealthStatus.Unhealthy\n   70:         );\n   71: \n   72:         services.AddHealthChecksUI().AddInMemoryStorage();"
+   }
+  ]
+ }
+}

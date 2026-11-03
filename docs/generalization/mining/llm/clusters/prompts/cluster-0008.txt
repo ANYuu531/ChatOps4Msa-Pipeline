@@ -1,0 +1,77 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = shell; position = url; context key = -
+They come from 5 different repositories (24 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=JoeCao__qbike SOURCE=? TARGET=zipkin file=zipkin-server/run-zipkin.sh:3
+   1: #!/usr/bin/env bash
+   2: if [ ! -f "zipkin.jar" ]; then
+>> 3:   curl -sSL https://zipkin.io/quickstart.sh | bash -s
+   4: fi
+   5: RABBIT_ADDRESSES=localhost java -jar zipkin.jar
+
+[1] repo=apssouza22__java-microservice SOURCE=resources TARGET=elk file=oauth-server/src/main/resources/docker/start.sh:3
+   1: #!/bin/bash
+   2: 
+>> 3: curl -XPUT 'http://elk:9200/_template/filebeat?pretty' -d@/etc/filebeat/filebeat.template.json
+   4: /etc/init.d/filebeat start
+   5: java -Djava.security.egd=file:/dev/./urandom -jar /app.jar
+   6: 
+
+[2] repo=falberthen__EcommerceDDD SOURCE=? TARGET=ecommerceddd-signalr file=scripts/regenerate-clients.sh:21
+   17:   echo -e "${BLUE}=== BACKEND CLIENTS (Service-to-Service) ===${NC}"
+   18:   echo ""
+   19: 
+   20:   declare -A BACKEND_SERVICES=(
+>> 21:     ["SignalR"]="http://ecommerceddd-signalr/swagger/v2/swagger.json|SignalR"
+   22:     ["IdentityServer"]="http://ecommerceddd-identityserver/swagger/v2/swagger.json|IdentityServer"
+   23:     ["ProductCatalog"]="http://ecommerceddd-product-catalog/swagger/v2/swagger.json|ProductCatalog"
+   24:     ["InventoryManagement"]="http://ecommerceddd-inventory-management/swagger/v2/swagger.json|InventoryManagement"
+   25:     ["CustomerManagement"]="http://ecommerceddd-customer-management/swagger/v2/swagger.json|CustomerManagement"
+
+[3] repo=hoangtien2k3__ecommerce-microservices SOURCE=? TARGET=admin file=k3d-setup.sh:361
+   357: printf "\n"
+   358: printf "  ${BOLD}%-16s${NC}  %s\n" "Service" "URL"
+   359: printf "  ${DIM}%-16s  %s${NC}\n"  "───────────────" "───────────────────────────────────────────"
+   360: printf "  ${BOLD}%-16s${NC}  ${CYAN}%s${NC}\n" "Frontend"       "http://ecommerce.local"
+>> 361: printf "  ${BOLD}%-16s${NC}  ${CYAN}%s${NC}\n" "Admin"          "http://admin.ecommerce.local"
+   362: printf "  ${BOLD}%-16s${NC}  ${CYAN}%s${NC}\n" "API Gateway"    "http://api.ecommerce.local"
+   363: printf "  ${BOLD}%-16s${NC}  ${CYAN}%s${NC}\n" "Keycloak"       "http://keycloak.ecommerce.local"
+   364: printf "  ${BOLD}%-16s${NC}  ${CYAN}%s${NC}\n" "RustFS Console" "http://rustfs.ecommerce.local/rustfs/console/"
+   365: printf "\n"
+
+[4] repo=hantsy__spring-microservice-sample SOURCE=? TARGET=registry file=swarm-vbox-setup.sh:18
+   14: echo "======> Creating $managers manager machines ...";
+   15: for node in $(seq 1 $managers);
+   16: do
+   17: 	echo "======> Creating manager$node machine ...";
+>> 18: 	docker-machine create -d virtualbox --virtualbox-cpu-count 1 --virtualbox-memory "1024" --virtualbox-disk-size "5000"  --engine-registry-mirror https://registry.docker-cn.com manager$node;
+   19: done
+   20: 
+   21: # create worker machines
+   22: echo "======> Creating $workers worker machines ...";

@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0098",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 764,
+  "completion_tokens": 210,
+  "total_tokens": 974,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The line calls builder.AddPostgres with the name 'postgres', indicating the component owning this code depends on the 'postgres' component at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The line calls distributedApplicationBuilder.AddPostgres with the name 'postgres', indicating the component owning this code depends on the 'postgres' component at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"src:csharp + literal + call addpostgres\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"Both samples show runtime dependencies from the component owning the source code to the named 'postgres' component via AddPostgres calls, so a rule adding edges on this syntax is reliable.\"\n}",
+ "payload": {
+  "rank": 98,
+  "kind": "src:csharp",
+  "cls": "literal",
+  "detail": "call addpostgres",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "postgres",
+    "file": "src/Aspire/src/AppHost/Program.cs",
+    "line": 11,
+    "kind": "src:csharp",
+    "cls": "literal",
+    "detail": "call addpostgres",
+    "tag": "file-read",
+    "text": "var postgres = builder.AddPostgres(\"postgres\", pgUsername, pgPassword)",
+    "context": "   7: // 1. Database Services\n   8: var pgUsername = builder.AddParameter(\"pg-username\", \"postgres\", secret: true);\n   9: var pgPassword = builder.AddParameter(\"pg-password\", \"postgres\", secret: true);\n   10: \n>> 11: var postgres = builder.AddPostgres(\"postgres\", pgUsername, pgPassword)\n   12:     .WithImage(\"postgres:17\")\n   13:     .WithEndpoint(\n   14:         \"tcp\",\n   15:         e =>"
+   },
+   {
+    "repo": "amasen02__freshcart-backend",
+    "source": "?",
+    "target": "postgres",
+    "file": "src/AspireAppHost/FreshCart.AppHost/Program.cs",
+    "line": 58,
+    "kind": "src:csharp",
+    "cls": "literal",
+    "detail": "call addpostgres",
+    "tag": "file-read",
+    "text": ".AddPostgres(\"postgres\", password: postgresPassword);",
+    "context": "   54: var paymentReadDatabase = sqlServer.AddDatabase(\"paymentreaddb\")\n   55:     .WithCreationScript(\"IF DB_ID(N'paymentreaddb') IS NULL CREATE DATABASE [paymentreaddb];\");\n   56: \n   57: var postgres = distributedApplicationBuilder\n>> 58:     .AddPostgres(\"postgres\", password: postgresPassword);\n   59: if (usePersistentBackingResources)\n   60: {\n   61:     postgres.WithDataVolume().WithLifetime(ContainerLifetime.Persistent);\n   62: }"
+   }
+  ]
+ }
+}

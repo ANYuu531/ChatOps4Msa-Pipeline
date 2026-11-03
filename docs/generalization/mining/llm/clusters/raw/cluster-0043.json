@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0043",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 894,
+  "completion_tokens": 247,
+  "total_tokens": 1141,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is commented out and thus does not represent a runtime dependency.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is commented out and appears in a docs service, so it is documentation, not a runtime dependency.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The environment variable KAFKA_CONNECT_URIS in debezium-ui points to debezium-connect, indicating a runtime connection from debezium-ui to debezium-connect.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"compose; environment.* url\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"Only uncommented environment variables with URLs referencing other components indicate runtime dependencies; commented lines or documentation do not, so no single syntax-only rule can separate dependencies from non-dependencies here.\"\n}",
+ "payload": {
+  "rank": 43,
+  "kind": "compose",
+  "cls": "url",
+  "detail": "<service>.environment.*",
+  "repos": 3,
+  "mentions": 5,
+  "samples": [
+   {
+    "repo": "SaiUpadhyayula__spring-boot-3-microservices-course",
+    "source": "kafka-ui",
+    "target": "schema-registry",
+    "file": "docker-compose.yml",
+    "line": 71,
+    "kind": "compose",
+    "cls": "url",
+    "detail": "<service>.environment.*",
+    "tag": "file-read",
+    "text": "#      KAFKA_CLUSTERS_SCHEMAREGISTRY: http://schema-registry:8081",
+    "context": "   67:       - broker\n   68:     environment:\n   69:       KAFKA_CLUSTERS_NAME: local\n   70:       KAFKA_CLUSTERS_BOOTSTRAPSERVERS: broker:29092\n>> 71:       #      KAFKA_CLUSTERS_SCHEMAREGISTRY: http://schema-registry:8081\n   72:       DYNAMIC_CONFIG_ENABLED: 'true'\n   73:   keycloak-mysql:\n   74:     container_name: keycloak-mysql\n   75:     image: mysql:8"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "docs",
+    "target": "acl",
+    "file": "docs/src/deploy/docker-compose/stable/pgconfig/compose.yml",
+    "line": 36,
+    "kind": "compose",
+    "cls": "url",
+    "detail": "<service>.environment.*",
+    "tag": "file-read",
+    "text": "#ACL_URL: http://acl:8080/acl/api",
+    "context": "   32:     # 3. Change SPRING_PROFILES_ACTIVE to include \"standalone\"\n   33:     # 4. Remove or disable the config and discovery services\n   34:     # ============================================================================\n   35: \n>> 36:     #ACL_URL: http://acl:8080/acl/api\n   37:     #ACL_USERNAME: admin\n   38:     #ACL_PASSWORD: s3cr3t\n   39: \n   40:     #PGCONFIG_HOST: geoserverdb"
+   },
+   {
+    "repo": "ionutbalosin__ecommerce-app",
+    "source": "debezium-ui",
+    "target": "debezium-connect",
+    "file": "docker-compose-debezium.yml",
+    "line": 44,
+    "kind": "compose",
+    "cls": "url",
+    "detail": "<service>.environment.*",
+    "tag": "file-read",
+    "text": "KAFKA_CONNECT_URIS: http://debezium-connect.local:8083",
+    "context": "   40:       - debezium-connect\n   41:     ports:\n   42:       - 18080:8080\n   43:     environment:\n>> 44:       KAFKA_CONNECT_URIS: http://debezium-connect.local:8083\n   45: networks:\n   46:   ecommerce-network:\n   47:     name: ecommerce-app"
+   }
+  ]
+ }
+}

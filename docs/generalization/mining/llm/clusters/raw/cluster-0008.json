@@ -1,0 +1,105 @@
+{
+ "id": "cluster-0008",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1401,
+  "completion_tokens": 367,
+  "total_tokens": 1768,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The curl command downloads and runs a script from an external URL unrelated to the TARGET component declared in the repo.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The shell script issues an HTTP request directly to 'elk', indicating a runtime dependency from the script's owning component to the 'elk' service.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The URL is part of a static associative array declaration used for documentation or client generation, not an actual runtime call.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line prints a URL as part of a formatted output, which is informational and not a runtime connection.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The docker-machine create command uses a public registry URL unrelated to the declared TARGET component 'registry'.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"shell file; url in command argument (e.g. curl or HTTP request)\",\n    \"edge\": \"component owning the shell script -> TARGET named in the URL\",\n    \"exclusions\": \"lines that only print URLs or declare them in variables/arrays without runtime connection\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"Only shell lines that perform actual runtime network calls (e.g., curl commands) to a TARGET URL indicate dependencies; printing or declaring URLs does not.\"\n}",
+ "payload": {
+  "rank": 8,
+  "kind": "shell",
+  "cls": "url",
+  "detail": "-",
+  "repos": 5,
+  "mentions": 24,
+  "samples": [
+   {
+    "repo": "JoeCao__qbike",
+    "source": "?",
+    "target": "zipkin",
+    "file": "zipkin-server/run-zipkin.sh",
+    "line": 3,
+    "kind": "shell",
+    "cls": "url",
+    "detail": "-",
+    "tag": "unread",
+    "text": "curl -sSL https://zipkin.io/quickstart.sh | bash -s",
+    "context": "   1: #!/usr/bin/env bash\n   2: if [ ! -f \"zipkin.jar\" ]; then\n>> 3:   curl -sSL https://zipkin.io/quickstart.sh | bash -s\n   4: fi\n   5: RABBIT_ADDRESSES=localhost java -jar zipkin.jar"
+   },
+   {
+    "repo": "apssouza22__java-microservice",
+    "source": "resources",
+    "target": "elk",
+    "file": "oauth-server/src/main/resources/docker/start.sh",
+    "line": 3,
+    "kind": "shell",
+    "cls": "url",
+    "detail": "-",
+    "tag": "unread",
+    "text": "curl -XPUT 'http://elk:9200/_template/filebeat?pretty' -d@/etc/filebeat/filebeat.template.json",
+    "context": "   1: #!/bin/bash\n   2: \n>> 3: curl -XPUT 'http://elk:9200/_template/filebeat?pretty' -d@/etc/filebeat/filebeat.template.json\n   4: /etc/init.d/filebeat start\n   5: java -Djava.security.egd=file:/dev/./urandom -jar /app.jar\n   6: "
+   },
+   {
+    "repo": "falberthen__EcommerceDDD",
+    "source": "?",
+    "target": "ecommerceddd-signalr",
+    "file": "scripts/regenerate-clients.sh",
+    "line": 21,
+    "kind": "shell",
+    "cls": "url",
+    "detail": "-",
+    "tag": "unread",
+    "text": "[\"SignalR\"]=\"http://ecommerceddd-signalr/swagger/v2/swagger.json|SignalR\"",
+    "context": "   17:   echo -e \"${BLUE}=== BACKEND CLIENTS (Service-to-Service) ===${NC}\"\n   18:   echo \"\"\n   19: \n   20:   declare -A BACKEND_SERVICES=(\n>> 21:     [\"SignalR\"]=\"http://ecommerceddd-signalr/swagger/v2/swagger.json|SignalR\"\n   22:     [\"IdentityServer\"]=\"http://ecommerceddd-identityserver/swagger/v2/swagger.json|IdentityServer\"\n   23:     [\"ProductCatalog\"]=\"http://ecommerceddd-product-catalog/swagger/v2/swagger.json|ProductCatalog\"\n   24:     [\"InventoryManagement\"]=\"http://ecommerceddd-inventory-management/swagger/v2/swagger.json|InventoryManagement\"\n   25:     [\"CustomerManagement\"]=\"http://ecommerceddd-customer-management/swagger/v2/swagger.json|CustomerManagement\""
+   },
+   {
+    "repo": "hoangtien2k3__ecommerce-microservices",
+    "source": "?",
+    "target": "admin",
+    "file": "k3d-setup.sh",
+    "line": 361,
+    "kind": "shell",
+    "cls": "url",
+    "detail": "-",
+    "tag": "unread",
+    "text": "printf \"  ${BOLD}%-16s${NC}  ${CYAN}%s${NC}\\n\" \"Admin\"          \"http://admin.ecommerce.local\"",
+    "context": "   357: printf \"\\n\"\n   358: printf \"  ${BOLD}%-16s${NC}  %s\\n\" \"Service\" \"URL\"\n   359: printf \"  ${DIM}%-16s  %s${NC}\\n\"  \"───────────────\" \"───────────────────────────────────────────\"\n   360: printf \"  ${BOLD}%-16s${NC}  ${CYAN}%s${NC}\\n\" \"Frontend\"       \"http://ecommerce.local\"\n>> 361: printf \"  ${BOLD}%-16s${NC}  ${CYAN}%s${NC}\\n\" \"Admin\"          \"http://admin.ecommerce.local\"\n   362: printf \"  ${BOLD}%-16s${NC}  ${CYAN}%s${NC}\\n\" \"API Gateway\"    \"http://api.ecommerce.local\"\n   363: printf \"  ${BOLD}%-16s${NC}  ${CYAN}%s${NC}\\n\" \"Keycloak\"       \"http://keycloak.ecommerce.local\"\n   364: printf \"  ${BOLD}%-16s${NC}  ${CYAN}%s${NC}\\n\" \"RustFS Console\" \"http://rustfs.ecommerce.local/rustfs/console/\"\n   365: printf \"\\n\""
+   },
+   {
+    "repo": "hantsy__spring-microservice-sample",
+    "source": "?",
+    "target": "registry",
+    "file": "swarm-vbox-setup.sh",
+    "line": 18,
+    "kind": "shell",
+    "cls": "url",
+    "detail": "-",
+    "tag": "unread",
+    "text": "docker-machine create -d virtualbox --virtualbox-cpu-count 1 --virtualbox-memory \"1024\" --virtualbox-disk-size \"5000\"  --engine-registry-mirror https://registry.docker-cn.com manager$node;",
+    "context": "   14: echo \"======> Creating $managers manager machines ...\";\n   15: for node in $(seq 1 $managers);\n   16: do\n   17: \techo \"======> Creating manager$node machine ...\";\n>> 18: \tdocker-machine create -d virtualbox --virtualbox-cpu-count 1 --virtualbox-memory \"1024\" --virtualbox-disk-size \"5000\"  --engine-registry-mirror https://registry.docker-cn.com manager$node;\n   19: done\n   20: \n   21: # create worker machines\n   22: echo \"======> Creating $workers worker machines ...\";"
+   }
+  ]
+ }
+}

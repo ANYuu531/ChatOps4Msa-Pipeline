@@ -1,0 +1,118 @@
+{
+ "id": "cluster-0007",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1726,
+  "completion_tokens": 384,
+  "total_tokens": 2110,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is commented out and thus does not cause a runtime connection from angular to identityserver.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The URL is part of mock configuration data and does not cause core to connect to minio at runtime.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The tickets component uses the environment variable containing the nats-service URL to connect to nats-service at runtime.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The frontend component configures an OIDC authority URL pointing to keycloak, indicating a runtime dependency.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The micr-prisma component sets a service endpoint URL to prisma, indicating it connects to prisma at runtime.\"\n    },\n    {\n      \"i\": 5,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The tools component configures an SMTP connection URI pointing to mailslurper, indicating a runtime dependency.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"src:typescript; position=url; context key=bare\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"exclude lines that are commented out or appear only in mock/test data files\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"Most bare URL strings in TypeScript source files indicate runtime dependencies from the owning component to the named target, except when commented out or clearly mock/test data.\"\n}",
+ "payload": {
+  "rank": 7,
+  "kind": "src:typescript",
+  "cls": "url",
+  "detail": "bare",
+  "repos": 6,
+  "mentions": 13,
+  "samples": [
+   {
+    "repo": "phongnguyend__Practical.CleanArchitecture",
+    "source": "angular",
+    "target": "identityserver",
+    "file": "src/UIs/angular/src/environments/environment.ts",
+    "line": 10,
+    "kind": "src:typescript",
+    "cls": "url",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "//Authority: \"http://identityserver\",",
+    "context": "   6:   production: false,\n   7:   OpenIdConnect: {\n   8:     Authority: \"https://localhost:44367\",\n   9:     //Authority: \"http://host.docker.internal:9000/\",\n>> 10:     //Authority: \"http://identityserver\",\n   11:     ClientId: \"ClassifiedAds.Angular\",\n   12:   },\n   13:   ResourceServer: {\n   14:     Endpoint: \"https://localhost:44312/api/\","
+   },
+   {
+    "repo": "mateaix__matecloud",
+    "source": "core",
+    "target": "minio",
+    "file": "mate-ui/packages/core/src/api/mock/data.ts",
+    "line": 118,
+    "kind": "src:typescript",
+    "cls": "url",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "{ id: '7', configKey: 'sys.oss.endpoint', configValue: 'http://minio:9000', configName: 'OSS Endpoint', builtIn: false, remark: '', createdAt: '2025-03-15 14:23:00' },",
+    "context": "   114:   { id: '3', configKey: 'sys.login.maxFailCount', configValue: '5', configName: '登录失败锁定次数', builtIn: true, remark: '达到次数后锁定账号', createdAt: '2025-01-01 10:00:00' },\n   115:   { id: '4', configKey: 'sys.site.title', configValue: 'MateCloud Admin', configName: '站点标题', builtIn: false, remark: '', createdAt: '2025-02-10 09:30:00' },\n   116:   { id: '5', configKey: 'sys.site.copyright', configValue: '© 2026 MateCloud', configName: '版权信息', builtIn: false, remark: '', createdAt: '2025-02-10 09:31:00' },\n   117:   { id: '6', configKey: 'sys.oss.provider', configValue: 'minio', configName: '对象存储提供商', builtIn: false, remark: 'minio / aliyun / qiniu / s3', createdAt: '2025-03-15 14:22:00' },\n>> 118:   { id: '7', configKey: 'sys.oss.endpoint', configValue: 'http://minio:9000', configName: 'OSS Endpoint', builtIn: false, remark: '', createdAt: '2025-03-15 14:23:00' },\n   119:   { id: '8', configKey: 'sys.mail.host', configValue: 'smtp.example.com', configName: '邮件服务器', builtIn: false, remark: '', createdAt: '2025-04-01 11:00:00' },\n   120:   { id: '9', configKey: 'sys.sms.signature', configValue: 'MateCloud', configName: '短信签名', builtIn: false, remark: '', createdAt: '2025-04-02 11:00:00' },\n   121:   { id: '10', configKey: 'sys.tenant.enabled', configValue: 'false', configName: '多租户开关', builtIn: true, remark: '开启后数据自动按租户隔离', createdAt: '2025-01-01 10:00:00' },\n   122: ]"
+   },
+   {
+    "repo": "saalikmubeen__microservices-architectured-app",
+    "source": "tickets",
+    "target": "nats-service",
+    "file": "tickets/src/index.ts",
+    "line": 30,
+    "kind": "src:typescript",
+    "cls": "url",
+    "detail": "bare",
+    "tag": "line-read",
+    "text": "process.env.NATS_URL // \"http://nats-service:4222\"",
+    "context": "   26:     try {\n   27:         await natsInitializer.connect(\n   28:             process.env.NATS_CLUSTER_ID, // \"ticketing\"\n   29:             process.env.NATS_CLIENT_ID, //\"abc123\",\n>> 30:             process.env.NATS_URL // \"http://nats-service:4222\"\n   31:         );\n   32: \n   33:         natsInitializer.client.on(\"close\", () => {\n   34:             {"
+   },
+   {
+    "repo": "SaiUpadhyayula__spring-boot-3-microservices-course",
+    "source": "frontend",
+    "target": "keycloak",
+    "file": "frontend/src/app/config/auth.config.ts",
+    "line": 5,
+    "kind": "src:typescript",
+    "cls": "url",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "authority: 'http://keycloak.default.svc.cluster.local:8080/realms/spring-microservices-security-realm',",
+    "context": "   1: import { PassedInitialConfig } from 'angular-auth-oidc-client';\n   2: \n   3: export const authConfig: PassedInitialConfig = {\n   4:   config: {\n>> 5:     authority: 'http://keycloak.default.svc.cluster.local:8080/realms/spring-microservices-security-realm',\n   6:     redirectUrl: window.location.origin,\n   7:     postLogoutRedirectUri: window.location.origin,\n   8:     clientId: 'angular-client',\n   9:     scope: 'openid profile offline_access',"
+   },
+   {
+    "repo": "mabuonomo__example-nestjs-microservices-grpc",
+    "source": "micr-prisma",
+    "target": "prisma",
+    "file": "microservices/micr_prisma/src/prisma/prisma.service.ts",
+    "line": 8,
+    "kind": "src:typescript",
+    "cls": "url",
+    "detail": "bare",
+    "tag": "line-read",
+    "text": "endpoint: 'http://prisma:4466',",
+    "context": "   4: @Injectable()\n   5: export class PrismaService extends Prisma {\n   6:   constructor() {\n   7:     super({\n>> 8:       endpoint: 'http://prisma:4466',\n   9:       debug: false,\n   10:     });\n   11:   }\n   12: }"
+   },
+   {
+    "repo": "getlarge__ticketing",
+    "source": "tools",
+    "target": "mailslurper",
+    "file": "tools/ory/mappings.ts",
+    "line": 57,
+    "kind": "src:typescript",
+    "cls": "url",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "'smtps://test:test@mailslurper:1025/?skip_ssl_verify=true';",
+    "context": "   53:     require_valid_protocol: true,\n   54:     protocols: ['smtp', 'smtps'],\n   55:   })\n   56:   courier_smtp_connection_uri?: string =\n>> 57:     'smtps://test:test@mailslurper:1025/?skip_ssl_verify=true';\n   58: \n   59:   @Expose()\n   60:   @IsOptional()\n   61:   @IsString()"
+   }
+  ]
+ }
+}

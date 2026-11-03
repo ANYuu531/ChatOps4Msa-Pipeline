@@ -1,0 +1,73 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = compose; position = key; context key = <service>.environment.*_URL
+They come from 4 different repositories (9 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=JavatoDev-com__internet-banking-concept-microservices SOURCE=keycloak_web TARGET=keycloak file=docker-compose/docker-compose-support-apps.yml:18
+   14:     image: quay.io/keycloak/keycloak:23.0.7
+   15:     container_name: keycloak_web
+   16:     environment:
+   17:       KC_DB: postgres
+>> 18:       KC_DB_URL: jdbc:postgresql://keycloakdb:5432/keycloak
+   19:       KC_DB_USERNAME: keycloak
+   20:       KC_DB_PASSWORD: password
+   21:       KEYCLOAK_ADMIN: admin
+   22:       KEYCLOAK_ADMIN_PASSWORD: password
+
+[1] repo=geoserver__geoserver-cloud SOURCE=docs TARGET=acl file=docs/src/deploy/docker-compose/stable/pgconfig/compose.yml:70
+   66:     # - When scaling services dynamically
+   67:     #
+   68:     # ALTERNATIVE:
+   69:     # - For Kubernetes: Use ConfigMaps/Secrets with standalone profile instead
+>> 70:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_URL: http://acl:8080/acl/api
+   71:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_USERNAME: admin
+   72:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_PASSWORD: s3cr3t
+   73:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_HOST: geoserverdb
+   74:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_PORT: 5432
+
+[2] repo=cuongnh28__spring-microservices-blueprint SOURCE=account-service-app TARGET=account-service file=docker-compose.yml:28
+   24:     image: account-service-app:latest
+   25:     container_name: account-service-app
+   26:     restart: unless-stopped
+   27:     environment:
+>> 28:       DB_URL: jdbc:postgresql://account-service-db:5432/account-service
+   29:       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+   30:       JAVA_OPTS: "-Xmx512m -Xms256m"
+   31:     ports:
+   32:       - "8088:8088"
+
+[3] repo=ThoreauZZ__spring-cloud-example SOURCE=admin TARGET=turbine file=docker-compose-v3.yml:110
+   106:       - "9003:9003"
+   107:     environment:
+   108:       SERVICE_PORT: 9003
+   109:       REGISTRY_URL: http://discovery:9001/eureka
+>> 110:       TURBINE_URL: http://discovery:9010/turbine.stream
+   111: 
+   112: 
+   113:   comx:
+   114:     image: erdaoya/cloud-service-comx

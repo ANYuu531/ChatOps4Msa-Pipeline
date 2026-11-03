@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0050",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 826,
+  "completion_tokens": 255,
+  "total_tokens": 1081,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is inside a config file defining a receiver's endpoint for OTLP gRPC, which configures where this component listens, not where it calls.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"Same as sample 0, this is a receiver endpoint configuration indicating where this component accepts connections, not a runtime call to TARGET.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"Same as samples 0 and 1, this is a receiver endpoint configuration, not a client call to TARGET.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml + protocols.grpc.endpoint\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show receiver endpoint configurations, which do not indicate runtime dependencies from the owning component to TARGET, so no general syntactic rule can separate dependency from non-dependency here.\"\n}",
+ "payload": {
+  "rank": 50,
+  "kind": "yaml",
+  "cls": "hostport",
+  "detail": "protocols.grpc.endpoint",
+  "repos": 3,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "tempo",
+    "file": "deployments/configs/tempo.yaml",
+    "line": 15,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "protocols.grpc.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"tempo:4317\"",
+    "context": "   11:   receivers:\n   12:     otlp:\n   13:       protocols:\n   14:         grpc:\n>> 15:           endpoint: \"tempo:4317\"\n   16: \n   17: ingester:\n   18:   max_block_duration: 5m               # cut the headblock when this much time passes. this is being set for demo purposes and should probably be left alone normally\n   19: "
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "tempo",
+    "file": "deployments/configs/tempo.yaml",
+    "line": 15,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "protocols.grpc.endpoint",
+    "tag": "unread",
+    "text": "endpoint: 'tempo:4317'",
+    "context": "   11:   receivers:\n   12:     otlp:\n   13:       protocols:\n   14:         grpc:\n>> 15:           endpoint: 'tempo:4317'\n   16:         http:\n   17:           endpoint: 'tempo:4318'\n   18: \n   19: ingester:"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "tempo",
+    "file": "deployments/configs/tempo.yaml",
+    "line": 15,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "protocols.grpc.endpoint",
+    "tag": "unread",
+    "text": "endpoint: \"tempo:4317\"",
+    "context": "   11:   receivers:\n   12:     otlp:\n   13:       protocols:\n   14:         grpc:\n>> 15:           endpoint: \"tempo:4317\"\n   16: \n   17: ingester:\n   18:   max_block_duration: 5m               # cut the headblock when this much time passes. this is being set for demo purposes and should probably be left alone normally\n   19: "
+   }
+  ]
+ }
+}

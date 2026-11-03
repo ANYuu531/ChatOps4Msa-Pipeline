@@ -1,0 +1,73 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:java; position = literal; context key = bare
+They come from 4 different repositories (16 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=mateaix__matecloud SOURCE=mate-file-starter TARGET=minio file=mate-starters/mate-file-starter/src/main/java/vip/mate/starter/file/annotation/FileProvider.java:42
+   38: @Target(ElementType.TYPE)
+   39: @Retention(RetentionPolicy.RUNTIME)
+   40: public @interface FileProvider {
+   41: 
+>> 42:     /** Provider type key, e.g. {@code "minio"}. */
+   43:     String value();
+   44: 
+   45:     /** Human-readable description (optional). */
+   46:     String describe() default "";
+
+[1] repo=aws-containers__retail-store-sample-app SOURCE=ui TARGET=cart file=src/ui/src/main/java/com/amazon/sample/ui/web/CartController.java:54
+   50:     String sessionId = SessionIDUtil.getSessionId(request);
+   51: 
+   52:     model.addAttribute("fullCart", cartsService.getCart(sessionId));
+   53: 
+>> 54:     return "cart";
+   55:   }
+   56: 
+   57:   @PostMapping
+   58:   public Mono<String> add(
+
+[2] repo=aliyun__alibabacloud-microservice-demo SOURCE=mock-server TARGET=mysql file=arms-demo/mock-server/src/main/java/com/alibaba/arms/mock/server/service/MysqlService.java:88
+   84:     }
+   85: 
+   86:     @Override
+   87:     public String getComponentName() {
+>> 88:         return "mysql";
+   89:     }
+   90: 
+   91:     @Override
+   92:     public void execute() {
+
+[3] repo=geoserver__geoserver-cloud SOURCE=geoserver-configuration TARGET=extensions file=src/config/geoserver-configuration/src/main/java/org/geoserver/configuration/core/main/GeoServerMainConfiguration.java:32
+   28:             "rawCatalog", // provided by GeoServerBackendConfigurer#rawCatalog
+   29:             "accessRulesDao", // provided by GeoServerBackendConfigurer#accessRulesDao
+   30:             "catalogFacade", // provided by GeoServerBackendConfigurer#catalogFacade
+   31:             "dataDirectory", // provided by GeoServerBackendConfigurer#dataDirectory
+>> 32:             "extensions", // provided by CoreBackendConfiguration#extensions
+   33:             "geoServer", // provided by GeoServerBackendConfigurer#geoServer
+   34:             "geoserverFacade", // provided by GeoServerBackendConfigurer#geoserverFacade
+   35:             "geoServerLoader", // provided by GeoServerBackendConfigurer#geoServerLoader
+   36:             "geoServerSecurityManager", // provided by GeoServerBackendConfigurer#geoServerSecurityManager

@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0064",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 718,
+  "completion_tokens": 252,
+  "total_tokens": 970,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"In an Istio VirtualService YAML, the route.destination.host specifies the actual service host that the virtual service routes traffic to, so the SOURCE component (customermanagementapi-virtual-service) depends on TARGET (customermanagementapi) at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"In a Kubernetes Istio VirtualService YAML, the route.destination.host is the service address that the virtual service routes to, so the SOURCE component (address-service-deployment) depends on TARGET (address-service) at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml key route.destination.host\",\n    \"edge\": \"SOURCE component -> TARGET component named in route.destination.host\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show that the component owning the YAML file routes traffic to the TARGET service named in route.destination.host, so drawing an edge from SOURCE to TARGET on this key in YAML files correctly captures runtime dependencies.\"\n}",
+ "payload": {
+  "rank": 64,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "route.destination.host",
+  "repos": 2,
+  "mentions": 12,
+  "samples": [
+   {
+    "repo": "EdwinVW__pitstop",
+    "source": "customermanagementapi-virtual-service",
+    "target": "customermanagementapi",
+    "file": "src/k8s/customermanagementapi-canary.yaml",
+    "line": 29,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "route.destination.host",
+    "tag": "unread",
+    "text": "host: customermanagementapi",
+    "context": "   25:     - customermanagementapi\n   26:   http:\n   27:     - route:\n   28:       - destination:\n>> 29:           host: customermanagementapi\n   30:           subset: v1\n   31:         weight: 75\n   32:       - destination:\n   33:           host: customermanagementapi"
+   },
+   {
+    "repo": "alexcheng1982__happyride",
+    "source": "address-service-deployment",
+    "target": "address-service",
+    "file": "devops/k8s/istio/address-service-deployment.yaml",
+    "line": 12,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "route.destination.host",
+    "tag": "unread",
+    "text": "host: address-service.happyride.svc.cluster.local",
+    "context": "   8:   http:\n   9:     - name: \"address-service-http\"\n   10:       route:\n   11:         - destination:\n>> 12:             host: address-service.happyride.svc.cluster.local\n   13:             subset: blue\n   14:           weight: 99\n   15:         - destination:\n   16:             host: address-service.happyride.svc.cluster.local"
+   }
+  ]
+ }
+}

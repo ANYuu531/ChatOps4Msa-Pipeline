@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0051",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 931,
+  "completion_tokens": 249,
+  "total_tokens": 1180,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is commented out and part of a telemetry scrape configuration, which is metadata for monitoring, not a runtime call.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The file is a config for tempo, but without knowing which component mounts or uses this config, it is unclear if the SOURCE depends on TARGET at runtime.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"Same as sample 0, the line is commented out and part of a monitoring scrape config, not a runtime dependency.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml; protocols.http.endpoint\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"The samples include commented-out monitoring config lines and an unclear config usage, so no single syntactic rule on yaml protocols.http.endpoint reliably indicates a runtime dependency.\"\n}",
+ "payload": {
+  "rank": 51,
+  "kind": "yaml",
+  "cls": "hostport",
+  "detail": "protocols.http.endpoint",
+  "repos": 3,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "node-exporter",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 32,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "protocols.http.endpoint",
+    "tag": "unread",
+    "text": "#            - targets: [ 'node-exporter:9100' ]",
+    "context": "   28: #      scrape_configs:\n   29: #        - job_name: 'node-exporter'\n   30: #          scrape_interval: 10s\n   31: #          static_configs:\n>> 32: #            - targets: [ 'node-exporter:9100' ]\n   33: \n   34: \n   35: # Processors in the OpenTelemetry Collector modify and enhance telemetry data by filtering, transforming, enriching, or batching it to prepare it for export.\n   36: # https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "tempo",
+    "file": "deployments/configs/tempo.yaml",
+    "line": 17,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "protocols.http.endpoint",
+    "tag": "unread",
+    "text": "endpoint: 'tempo:4318'",
+    "context": "   13:       protocols:\n   14:         grpc:\n   15:           endpoint: 'tempo:4317'\n   16:         http:\n>> 17:           endpoint: 'tempo:4318'\n   18: \n   19: ingester:\n   20:   max_block_duration: 5m # cut the headblock when this much time passes. this is being set for demo purposes and should probably be left alone normally\n   21: "
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "node-exporter",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 32,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "protocols.http.endpoint",
+    "tag": "unread",
+    "text": "#            - targets: [ 'node-exporter:9100' ]",
+    "context": "   28: #      scrape_configs:\n   29: #        - job_name: 'node-exporter'\n   30: #          scrape_interval: 10s\n   31: #          static_configs:\n>> 32: #            - targets: [ 'node-exporter:9100' ] \n   33: \n   34: \n   35: # Processors in the OpenTelemetry Collector modify and enhance telemetry data by filtering, transforming, enriching, or batching it to prepare it for export.\n   36: # https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor"
+   }
+  ]
+ }
+}

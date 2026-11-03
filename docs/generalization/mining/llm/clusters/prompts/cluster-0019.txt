@@ -1,0 +1,66 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = dotenv; position = key; context key = *_URL
+They come from 4 different repositories (7 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=ivanpaulovich__clean-architecture-manga SOURCE=wallet-spa TARGET=identity-server file=wallet-spa/.env.docker:5
+   1: HTTPS=false
+   2: PORT=3000
+   3: REACT_APP_ACCOUNTS_API=https://wallet.local:8081/accounts-api
+   4: REACT_APP_AUDIENCE=https://wallet.local:8081/identity-server
+>> 5: REACT_APP_AUTH_URL=https://wallet.local:8081/identity-server
+   6: REACT_APP_AUTHORITY=https://wallet.local:8081/identity-server
+   7: REACT_APP_IDENTITY_CLIENT_ID=spa
+   8: REACT_APP_ISSUER=https://wallet.local:8081/identity-server
+   9: REACT_APP_LOGOFF_REDIRECT_URL=https://wallet.local:8081/logout
+
+[1] repo=ebosas__microservices SOURCE=? TARGET=postgres file=.env:8
+   4: # Docker Compose environment
+   5: POSTGRES_PASSWORD = demopsw
+   6: 
+   7: # Connection strings
+>> 8: POSTGRES_URL = postgres://postgres:demopsw@postgres:5432/microservices
+   9: RABBIT_URL   = amqp://guest:guest@rabbitmq:5672
+   10: REDIS_URL    = redis:6379
+   11: SERVER_ADDR  = 0.0.0.0:8080
+   12: 
+
+[2] repo=tkssharma__12-factor-app-microservices SOURCE=base-nestjs-template-01 TARGET=postgres file=base-nestjs-template #01/.env.example:2
+   1: NODE_ENV=local
+>> 2: DATABASE_URL= postgres://api:development_pass@localhost:5434/starter-api
+
+[3] repo=NesoHQ__bgce-archive SOURCE=postal TARGET=redis file=postal/.env.example:25
+   21: 
+   22: # Redis Configuration
+   23: # Local dev: redis://localhost:6379
+   24: # Production (K8s): redis://redis-archive.default.svc.cluster.local:6379
+>> 25: READ_REDIS_URL=redis://localhost:6379
+   26: WRITE_REDIS_URL=redis://localhost:6379
+   27: ENABLE_REDIS_TLS_MODE=false
+   28: 
+   29: # Database Configuration

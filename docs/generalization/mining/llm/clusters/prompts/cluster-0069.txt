@@ -1,0 +1,47 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = dotenv; position = url; context key = *_URL
+They come from 2 different repositories (6 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=ebosas__microservices SOURCE=? TARGET=postgres file=.env:8
+   4: # Docker Compose environment
+   5: POSTGRES_PASSWORD = demopsw
+   6: 
+   7: # Connection strings
+>> 8: POSTGRES_URL = postgres://postgres:demopsw@postgres:5432/microservices
+   9: RABBIT_URL   = amqp://guest:guest@rabbitmq:5672
+   10: REDIS_URL    = redis:6379
+   11: SERVER_ADDR  = 0.0.0.0:8080
+   12: 
+
+[1] repo=mostafacs__ecommerce-microservices-spring-reactive-webflux SOURCE=? TARGET=config-server file=common.env:1
+>> 1: CONFIG_SERVICE_URL=http://config-server:8111
+   2: DISCOVERY_SERVER_URL=http://discovery-server:2222/eureka/
+   3: JWKS_URL=http://authentication-server:8087/.well-known/jwks
+   4: DATABASE_HOST=postgresdb
+   5: DATABASE_NAME=ecommerce

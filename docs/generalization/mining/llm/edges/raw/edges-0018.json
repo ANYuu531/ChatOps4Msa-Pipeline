@@ -1,0 +1,248 @@
+{
+ "id": "edges-0018",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1792,
+  "completion_tokens": 382,
+  "total_tokens": 2174,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml shows discovery-server service definition but no evidence that product-service depends on or calls discovery-server at runtime.\"}, {\"i\": 1, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml shows authentication-server service definition but no evidence that order-service depends on or calls authentication-server at runtime.\"}, {\"i\": 2, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml shows postgresdb service definition but no evidence that monitor depends on or connects to postgresdb at runtime.\"}, {\"i\": 3, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml shows rabbit service definition but no evidence that gateway depends on or connects to rabbit at runtime.\"}, {\"i\": 4, \"verdict\": \"unsure\", \"reason\": \"env.py reads DB_HOST environment variable but no direct evidence that orders service connects to postgres at runtime.\"}, {\"i\": 5, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml shows rabbit service definition but no evidence that products service depends on or connects to rabbit at runtime.\"}, {\"i\": 6, \"verdict\": \"correct\", \"reason\": \"nginx.conf proxy_pass directive routes gateway requests to commandsapi, showing runtime dependency.\"}, {\"i\": 7, \"verdict\": \"correct\", \"reason\": \"code creates bus connection to messagebroker from configuration, showing runtime dependency.\"}, {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"nginx.conf proxy_pass directives route gateway requests to queriesapi, showing runtime dependency.\"}, {\"i\": 9, \"verdict\": \"correct\", \"reason\": \"application.yml datasource url uses MYSQL_HOST and MYSQL_PORT, showing runtime dependency on mysql.\"}]}",
+ "payload": [
+  {
+   "repo": "mostafacs__ecommerce-microservices-spring-reactive-webflux",
+   "source": "product-service",
+   "target": "discovery-server",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 29,
+     "kind": "compose",
+     "context": "   25:     links:\n   26:       - postgresdb\n   27: \n   28: \n>> 29:   discovery-server:\n   30:     build: system/discovery-server\n   31:     env_file:\n   32:       - common.env\n   33:     ports:"
+    }
+   ]
+  },
+  {
+   "repo": "mostafacs__ecommerce-microservices-spring-reactive-webflux",
+   "source": "order-service",
+   "target": "authentication-server",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 41,
+     "kind": "compose",
+     "context": "   37:     links:\n   38:       - config-server\n   39: \n   40: \n>> 41:   authentication-server:\n   42:     build: system/authentication\n   43:     env_file:\n   44:       - common.env\n   45:     environment:"
+    }
+   ]
+  },
+  {
+   "repo": "mostafacs__ecommerce-microservices-spring-reactive-webflux",
+   "source": "monitor",
+   "target": "postgresdb",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 5,
+     "kind": "compose",
+     "context": "   1: version: '2.1'\n   2: \n   3: services:\n   4: \n>> 5:   postgresdb:\n   6:     build: storage/postgresdb\n   7:     env_file:\n   8:       - common.env\n   9:     ports:"
+    }
+   ]
+  },
+  {
+   "repo": "nameko__nameko-examples",
+   "source": "gateway",
+   "target": "rabbit",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 3,
+     "kind": "compose",
+     "context": "   1: version: \"2\"\n   2: services:\n>> 3:   rabbit:\n   4:     container_name: nameko-example-rabbitmq\n   5:     image: rabbitmq:3.7-management\n   6:     ports:\n   7:         - \"15673:15672\" # Exposing RabbitMQ web management on different port for convenience"
+    }
+   ]
+  },
+  {
+   "repo": "nameko__nameko-examples",
+   "source": "orders",
+   "target": "postgres",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: orders/alembic/env.py:37",
+     "file": "orders/alembic/env.py",
+     "line": 37,
+     "kind": "src:python",
+     "context": "   33:         \"{db_port}/{db_name}\"\n   34:     ).format(\n   35:         db_user=os.getenv(\"DB_USER\", \"postgres\"),\n   36:         db_pass=os.getenv(\"DB_PASSWORD\", \"password\"),\n>> 37:         db_host=os.getenv(\"DB_HOST\", \"localhost\"),\n   38:         db_port=os.getenv(\"DB_PORT\", \"5432\"),\n   39:         db_name=os.getenv(\"DB_NAME\", \"orders\"),\n   40:     )\n   41: "
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "nameko__nameko-examples",
+   "source": "products",
+   "target": "rabbit",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 3,
+     "kind": "compose",
+     "context": "   1: version: \"2\"\n   2: services:\n>> 3:   rabbit:\n   4:     container_name: nameko-example-rabbitmq\n   5:     image: rabbitmq:3.7-management\n   6:     ports:\n   7:         - \"15673:15672\" # Exposing RabbitMQ web management on different port for convenience"
+    }
+   ]
+  },
+  {
+   "repo": "netcorebcn__quiz",
+   "source": "gateway",
+   "target": "commandsapi",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/gateway/nginx.conf:37",
+     "file": "src/gateway/nginx.conf",
+     "line": 37,
+     "kind": "nginx",
+     "context": "   33:             proxy_set_header   X-Forwarded-Host $server_name;\n   34:         }\n   35: \n   36:         location /commands/ {\n>> 37:             proxy_pass         http://commandsapi/;\n   38:             proxy_redirect     off;\n   39:             proxy_set_header   Host $host;\n   40:             proxy_set_header   X-Real-IP $remote_addr;\n   41:             proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;"
+    }
+   ]
+  },
+  {
+   "repo": "netcorebcn__quiz",
+   "source": "queries",
+   "target": "messagebroker",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Quiz.Queries.Api/QuizResultsAppService.cs:87",
+     "file": "src/Quiz.Queries.Api/QuizResultsAppService.cs",
+     "line": 87,
+     "kind": "src:csharp",
+     "context": "   83:     public static class QuizResultsAppServiceExtensions\n   84:     {\n   85:         public static IServiceCollection AddQuizResultsApp(this IServiceCollection services, IConfiguration configuration) => services\n   86:             .AddEasyWebSockets()\n>> 87:             .AddSingleton<IBus>(RabbitHutch.CreateBus(configuration[\"messagebroker\"]?.Trim() ?? \"amqp://guest:guest@localhost:5672\"))\n   88:             .AddSingleton<QuizResultsAppService>();\n   89:         \n   90:         public static IApplicationBuilder UseQuizResultsApp(this IApplicationBuilder app)\n   91:         {"
+    },
+    {
+     "ref": "code: docker-compose.override.yml",
+     "file": "docker-compose.override.yml",
+     "line": 13,
+     "kind": "compose",
+     "context": "   9:     ports:\n   10:       - \"81:80\"\n   11:     environment: \n   12:       dbconnection: ${DB_CONNECTION}\n>> 13:       messagebroker: ${MESSAGE_BROKER}\n   14:   \n   15:   queries:\n   16:     ports:\n   17:       - \"82:80\""
+    }
+   ]
+  },
+  {
+   "repo": "netcorebcn__quiz",
+   "source": "gateway",
+   "target": "queriesapi",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/gateway/nginx.conf:46",
+     "file": "src/gateway/nginx.conf",
+     "line": 46,
+     "kind": "nginx",
+     "context": "   42:             proxy_set_header   X-Forwarded-Host $server_name;\n   43:         }\n   44: \n   45:         location /queries/ {\n>> 46:             proxy_pass         http://queriesapi/;\n   47:             proxy_redirect     off;\n   48:             proxy_set_header   Host $host;\n   49:             proxy_set_header   X-Real-IP $remote_addr;\n   50:             proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;"
+    },
+    {
+     "ref": "code: src/gateway/nginx.conf:55",
+     "file": "src/gateway/nginx.conf",
+     "line": 55,
+     "kind": "nginx",
+     "context": "   51:             proxy_set_header   X-Forwarded-Host $server_name;\n   52:         }\n   53: \n   54:         location /queries/ws {\n>> 55:             proxy_pass http://queriesapi/ws;\n   56:             proxy_http_version 1.1;\n   57:             proxy_set_header Upgrade $http_upgrade;\n   58:             proxy_set_header Connection \"Upgrade\";\n   59:         }"
+    }
+   ]
+  },
+  {
+   "repo": "nplszfl__OmniTradeERP",
+   "source": "erp-product-service",
+   "target": "mysql",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.minimal.yml#depends_on",
+     "file": "docker-compose.minimal.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: erp-product-service/src/main/resources/application.yml",
+     "file": "erp-product-service/src/main/resources/application.yml",
+     "line": 34,
+     "kind": "spring-yaml",
+     "context": "   30:         port: 8722\n   31:       eager: true\n   32: \n   33:   datasource:\n>> 34:     driver-class-name: com.mysql.cj.jdbc.Driver\n   35:     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/erp_product?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true\n   36:     username: root\n   37:     password: root\n   38: "
+    }
+   ]
+  }
+ ]
+}

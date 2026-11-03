@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = url; context key = scrape_configs.static_configs.targets
+They come from 3 different repositories (6 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=meysamhadeli__booking-microservices SOURCE=? TARGET=prometheus file=deployments/configs/prometheus.yaml:21
+   17:   - job_name: "prometheus"
+   18:     static_configs:
+   19:       - targets: ["prometheus:9090"]
+   20: 
+>> 21: #  # https://prometheus.io/docs/guides/node-exporter/
+   22: #  # https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-prometheus/prometheus-config-examples/docker-compose-linux/
+   23: #  - job_name: "node-exporter"
+   24: #    static_configs:
+   25: #      - targets: [ 'node-exporter:9100' ]
+
+[1] repo=meysamhadeli__booking-microservices-nestjs SOURCE=? TARGET=prometheus file=deployments/configs/prometheus.yaml:28
+   24: - job_name: "prometheus"
+   25:   static_configs:
+   26:   - targets: [ "prometheus:9090" ]
+   27: 
+>> 28: #  # https://prometheus.io/docs/guides/node-exporter/
+   29: #  # https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-prometheus/prometheus-config-examples/docker-compose-linux/
+   30: #  - job_name: "node-exporter"
+   31: #    static_configs:
+   32: #      - targets: [ 'node-exporter:9100' ]
+
+[2] repo=meysamhadeli__booking-microservices-java-spring-boot SOURCE=? TARGET=prometheus file=deployments/configs/prometheus.yaml:21
+   17:   - job_name: "prometheus"
+   18:     static_configs:
+   19:       - targets: ["prometheus:9090"]
+   20: 
+>> 21: #  # https://prometheus.io/docs/guides/node-exporter/
+   22: #  # https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-prometheus/prometheus-config-examples/docker-compose-linux/
+   23: #  - job_name: "node-exporter"
+   24: #    static_configs:
+   25: #      - targets: [ 'node-exporter:9100' ]

@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:java; position = url; context key = bare
+They come from 3 different repositories (4 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=mateaix__matecloud SOURCE=mate-system TARGET=host file=mate-biz/mate-system/src/main/java/vip/mate/system/admin/application/query/impl/MonitorQueryServiceImpl.java:292
+   288: 
+   289:     /**
+   290:      * Discover the platform services from Nacos: filter to {@code mate-*},
+   291:      * drop Dubbo provider entries ({@code *-dubbo}), then resolve each to its
+>> 292:      * first instance's {@code http://host:port} base URL. The display name
+   293:      * strips the {@code mate-} prefix to match the original UI labels
+   294:      * (gateway / auth / system / notice).
+   295:      */
+   296:     private List<String[]> discoverServices() {
+
+[1] repo=hoangtien2k3__ecommerce-microservices SOURCE=auth-service TARGET=admin file=auth-service/src/main/java/com/ecommerce/authservice/config/SsoProperties.java:33
+   29: 
+   30:     /** Frontend callback pages allowed to receive the login ticket (anti open-redirect). */
+   31:     private List<String> allowedRedirectUris = List.of(
+   32:             "http://ecommerce.local/auth/callback",
+>> 33:             "http://admin.ecommerce.local/auth/callback",
+   34:             "http://localhost:3000/auth/callback",
+   35:             "http://localhost:3001/auth/callback"
+   36:     );
+   37: 
+
+[2] repo=geoserver__geoserver-cloud SOURCE=geoserver-acl TARGET=acl file=src/extensions/security/geoserver-acl/src/main/java/org/geoserver/cloud/autoconfigure/extensions/security/acl/AclExtensionAutoConfiguration.java:54
+   50:  *   extension.security.acl.enabled: true
+   51:  *   acl:
+   52:  *     client:
+   53:  *       enabled: true
+>> 54:  *       basePath: http://acl:8080/api
+   55:  *       username: geoserver
+   56:  *       password: pwd
+   57:  *       caching: true
+   58:  *       startupCheck: true

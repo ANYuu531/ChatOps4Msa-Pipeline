@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = url; context key = exporters.elasticsearch.endpoints
+They come from 2 different repositories (2 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=phongnguyend__Practical.CleanArchitecture SOURCE=? TARGET=elk file=tools/opentelemetry/otel-collector-config.yaml:20
+   16:     tls:
+   17:       insecure: true
+   18:   elasticsearch:
+   19:     endpoints:
+>> 20:       - 'http://elk:9200'
+   21: processors:
+   22:   batch: null
+   23: extensions:
+   24:   health_check: null
+
+[1] repo=thangchung__coffeeshop-on-nomad SOURCE=? TARGET=elk file=otel-collector-config.yaml:25
+   21:       insecure: true
+   22: 
+   23:   elasticsearch:
+   24:     endpoints:
+>> 25:     - "http://elk:9200"
+   26: 
+   27: processors:
+   28:   batch:
+   29: 

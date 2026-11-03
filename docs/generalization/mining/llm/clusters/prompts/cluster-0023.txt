@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = compose; position = key; context key = <service>.environment.*_HOST
+They come from 3 different repositories (119 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=geoserver__geoserver-cloud SOURCE=docs TARGET=geoserverdb file=docs/src/deploy/docker-compose/stable/pgconfig/compose.yml:73
+   69:     # - For Kubernetes: Use ConfigMaps/Secrets with standalone profile instead
+   70:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_URL: http://acl:8080/acl/api
+   71:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_USERNAME: admin
+   72:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_PASSWORD: s3cr3t
+>> 73:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_HOST: geoserverdb
+   74:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_PORT: 5432
+   75:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_DATABASE: geoserver
+   76:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_USERNAME: geoserver
+   77:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_PASSWORD: geoserver
+
+[1] repo=nplszfl__OmniTradeERP SOURCE=user-service TARGET=mysql file=docker-compose.minimal.yml:114
+   110:     ports:
+   111:       - "8084:8084"
+   112:     environment:
+   113:       NACOS_SERVER_ADDR: nacos:8848
+>> 114:       MYSQL_HOST: mysql
+   115:       REDIS_HOST: redis
+   116:       TZ: Asia/Shanghai
+   117:       JAVA_OPTS: "-Xms256m -Xmx512m -XX:+UseG1GC"
+   118:     depends_on:
+
+[2] repo=ThoreauZZ__spring-cloud-example SOURCE=eureka TARGET=discovery file=docker-compose.yml:25
+   21:     ports:
+   22:       - "9001:9001"
+   23:     environment:
+   24:       JAVA_OPTS: -Xmx128m
+>> 25:       SERVICE_HOST: discovery
+   26:       SERVICE_PORT: 9001
+   27:     healthcheck:
+   28:       test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+   29:       interval: 1m30s

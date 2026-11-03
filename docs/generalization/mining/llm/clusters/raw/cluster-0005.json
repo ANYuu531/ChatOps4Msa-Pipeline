@@ -1,0 +1,118 @@
+{
+ "id": "cluster-0005",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1302,
+  "completion_tokens": 386,
+  "total_tokens": 1688,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The word 'connect' appears as a property name checked on an object, not as a component address or call target.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"'user' is a string literal used as a constant or label in a dictionary, not a runtime call or connection.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"'node' is a test environment name in a Jest config file, not a runtime component address.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"Same as sample 2, 'node' is a test environment string in a Jest config, not a runtime dependency.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"'tools' is a string literal in a commitlint config scope enum, not a runtime component address.\"\n    },\n    {\n      \"i\": 5,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"'messages' appears in a comment describing an option name, not a runtime call or connection.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:javascript + literal + bare\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show string literals or identifiers used as labels, config values, or comments, not runtime calls or connections, so no general syntactic rule can separate dependencies from non-dependencies here.\"\n}",
+ "payload": {
+  "rank": 5,
+  "kind": "src:javascript",
+  "cls": "literal",
+  "detail": "bare",
+  "repos": 7,
+  "mentions": 13,
+  "samples": [
+   {
+    "repo": "phongnguyend__Practical.CleanArchitecture",
+    "source": "classifiedads-webmvc",
+    "target": "connect",
+    "file": "src/Monolith/ClassifiedAds.WebMVC/wwwroot/lib/signalr/signalr.js",
+    "line": 3897,
+    "kind": "src:javascript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "return transport && typeof (transport) === \"object\" && \"connect\" in transport;",
+    "context": "   3893:             }\n   3894:         }\n   3895:     };\n   3896:     HttpConnection.prototype.isITransport = function (transport) {\n>> 3897:         return transport && typeof (transport) === \"object\" && \"connect\" in transport;\n   3898:     };\n   3899:     HttpConnection.prototype.stopConnection = function (error) {\n   3900:         this.logger.log(_ILogger__WEBPACK_IMPORTED_MODULE_1__[\"LogLevel\"].Debug, \"HttpConnection.stopConnection(\" + error + \") called while in state \" + this.connectionState + \".\");\n   3901:         this.transport = undefined;"
+   },
+   {
+    "repo": "oracle-quickstart__oci-cloudnative",
+    "source": "storefront",
+    "target": "user",
+    "file": "src/storefront/src/scripts/shop/constants.js",
+    "line": 12,
+    "kind": "src:javascript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "USER:     'user',",
+    "context": "   8:     HTTP:     'http',\n   9:     ROUTER:   'router',\n   10:     PAGE:     'page',\n   11:     UI:       'ui',\n>> 12:     USER:     'user',\n   13:     CART:     'cart',\n   14:     CATALOG:  'catalog',\n   15:     CONFIG:   'config',\n   16:     ORDER:    'order',"
+   },
+   {
+    "repo": "tkssharma__nodejs-microservices-patterns",
+    "source": "nodejs-express-typescript",
+    "target": "node",
+    "file": "nodejs-express-typescript/jest.config.js",
+    "line": 126,
+    "kind": "src:javascript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "testEnvironment: 'node',",
+    "context": "   122:   // A list of paths to snapshot serializer modules Jest should use for snapshot testing\n   123:   // snapshotSerializers: [],\n   124: \n   125:   // The test environment that will be used for testing\n>> 126:   testEnvironment: 'node',\n   127: \n   128:   // Options that will be passed to the testEnvironment\n   129:   // testEnvironmentOptions: {},\n   130: "
+   },
+   {
+    "repo": "tkssharma__12-factor-app-microservices",
+    "source": "nestjs-typeorm-postgres-jest-07",
+    "target": "node",
+    "file": "nestjs-typeorm-postgres-jest #07/jest.config.js",
+    "line": 15,
+    "kind": "src:javascript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "\"testEnvironment\": \"node\",",
+    "context": "   11:   \"transform\": {\n   12:     \"^.+\\\\.(t|j)s$\": \"ts-jest\"\n   13:   },\n   14:   \"coverageDirectory\": \"./coverage\",\n>> 15:   \"testEnvironment\": \"node\",\n   16:   \"roots\": [\n   17:     \"<rootDir>/\"\n   18:   ]\n   19: }"
+   },
+   {
+    "repo": "getlarge__ticketing",
+    "source": "?",
+    "target": "tools",
+    "file": "commitlint.config.js",
+    "line": 114,
+    "kind": "src:javascript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "[...JSON.parse(projects), 'tools', 'workspace'],",
+    "context": "   110:      */\n   111:     'scope-enum': [\n   112:       2,\n   113:       'always',\n>> 114:       [...JSON.parse(projects), 'tools', 'workspace'],\n   115:     ],\n   116:   },\n   117:   /*\n   118:    * Prompt config for commit message support"
+   },
+   {
+    "repo": "kalintsenkov__BettingSystem",
+    "source": "client",
+    "target": "messages",
+    "file": "src/Client/src/assets/js/jquery-ui.js",
+    "line": 6209,
+    "kind": "src:javascript",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "// Live region extension, adding a `messages` option",
+    "context": "   6205: \t\t} );\n   6206: \t}\n   6207: } );\n   6208: \n>> 6209: // Live region extension, adding a `messages` option\n   6210: // NOTE: This is an experimental API. We are still investigating\n   6211: // a full solution for string manipulation and internationalization.\n   6212: $.widget( \"ui.autocomplete\", $.ui.autocomplete, {\n   6213: \toptions: {"
+   }
+  ]
+ }
+}

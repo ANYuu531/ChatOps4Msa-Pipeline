@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0033",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 902,
+  "completion_tokens": 268,
+  "total_tokens": 1170,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"unsure\", \"reason\": \"The url value is read from a global config key 'nats.url', but it is unclear if this config is owned by SOURCE or another component.\"}, {\"i\": 1, \"verdict\": \"dependency\", \"reason\": \"The client component issues an HTTP request to a URL path '/user/api/currentUser/getAuth' clearly targeting the user component at runtime.\"}, {\"i\": 2, \"verdict\": \"not-dependency\", \"reason\": \"The 'url' here is a database connection string literal inside a config service; 'mongodb' is a database type, not a component name, so no runtime call to a component named 'mongodb' occurs.\"}], \"rule\": {\"general\": false, \"trigger\": \"src:typescript key url\", \"edge\": \"unspecified\", \"exclusions\": \"no syntactic pattern cleanly separates dependencies from non-dependencies in url keys\", \"confidence\": \"high\"}, \"summary\": \"The presence of a TARGET name in a 'url' key in TypeScript source files does not reliably indicate a runtime dependency, as it can be a config value, a literal DB connection string, or an HTTP path; only some usages correspond to real dependencies.\"}",
+ "payload": {
+  "rank": 33,
+  "kind": "src:typescript",
+  "cls": "key",
+  "detail": "key url",
+  "repos": 3,
+  "mentions": 10,
+  "samples": [
+   {
+    "repo": "juicycleff__ultimate-backend",
+    "source": "?",
+    "target": "nats",
+    "file": "libs/core/src/setup/microservices.setup.ts",
+    "line": 46,
+    "kind": "src:typescript",
+    "cls": "key",
+    "detail": "key url",
+    "tag": "unread",
+    "text": "url: NestCloud.global.boot.get('nats.url'),",
+    "context": "   42:   if (enableNats) {\n   43:     app.connectMicroservice({\n   44:       transport: Transport.NATS,\n   45:       options: {\n>> 46:         url: NestCloud.global.boot.get('nats.url'),\n   47:         queue: 'd4_srv_queue',\n   48:       },\n   49:     });\n   50:   }"
+   },
+   {
+    "repo": "jingsewu__open-wes",
+    "source": "client",
+    "target": "user",
+    "file": "client/src/pages/index.tsx",
+    "line": 157,
+    "kind": "src:typescript",
+    "cls": "key",
+    "detail": "key url",
+    "tag": "line-read",
+    "text": "url: \"/user/api/currentUser/getAuth\"",
+    "context": "   153:                 method: \"get\",\n   154:                 headers: {\n   155:                     terminalType: \"PC\"\n   156:                 },\n>> 157:                 url: \"/user/api/currentUser/getAuth\"\n   158:             }).then((res: any) => {\n   159:                 let menus = res.data.menus\n   160:                 localStorage.setItem(\"permissions\", res.data.permissions)\n   161:                 let applications: string[] = Object.keys(menus)"
+   },
+   {
+    "repo": "tkssharma__12-factor-app-microservices",
+    "source": "nestjs-graphql-typeorm-05",
+    "target": "mongodb",
+    "file": "nestjs-graphql-typeorm #05/src/config/typeorm/typeorm.service.ts",
+    "line": 10,
+    "kind": "src:typescript",
+    "cls": "key",
+    "detail": "key url",
+    "tag": "unread",
+    "text": "url: 'mongodb://chnirt:chin04071803@ds055690.mlab.com:55690/nest-graphql',",
+    "context": "   6: export class TypeormService implements TypeOrmOptionsFactory {\n   7: \tasync createTypeOrmOptions(): Promise<TypeOrmModuleOptions> {\n   8: \t\treturn {\n   9: \t\t\ttype: 'mongodb',\n>> 10: \t\t\turl: 'mongodb://chnirt:chin04071803@ds055690.mlab.com:55690/nest-graphql',\n   11: \t\t\tentities: getMetadataArgsStorage().tables.map(tbl => tbl.target),\n   12: \t\t\t// entities: [User],\n   13: \t\t\t// entities: [__dirname + '/**/*.entity.ts'],\n   14: \t\t\tsynchronize: true,"
+   }
+  ]
+ }
+}

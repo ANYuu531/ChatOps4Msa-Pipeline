@@ -1,0 +1,105 @@
+{
+ "id": "cluster-0009",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1227,
+  "completion_tokens": 372,
+  "total_tokens": 1599,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The account service sets DATABASE_URL to connect to account_db, indicating a runtime dependency.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The account service sets DATABASE_URL to connect to account_db, indicating a runtime dependency.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The docs service sets an environment variable with a URL pointing to acl, indicating it calls acl at runtime.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The schema-registry URL is set in debezium-connect service environment, but the URL points to schema-registry.local, which is not the declared component schema-registry; likely this config is mounted into debezium-connect but the actual caller is another component.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The ext service sets REGISTRY_URL to discovery, indicating ext calls discovery at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"compose file; environment.*_URL\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"URLs that do not resolve to declared components or are not used by the SOURCE container at runtime\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"Most environment variables named *_URL in compose files indicate runtime dependencies from the service defining them to the target component, but some URLs may not correspond to declared components or may be used by other components, preventing a simple general rule.\"\n}",
+ "payload": {
+  "rank": 9,
+  "kind": "compose",
+  "cls": "url",
+  "detail": "<service>.environment.*_URL",
+  "repos": 5,
+  "mentions": 16,
+  "samples": [
+   {
+    "repo": "rasadov__EcommerceAPI",
+    "source": "account",
+    "target": "account_db",
+    "file": "docker-compose.yaml",
+    "line": 96,
+    "kind": "compose",
+    "cls": "url",
+    "detail": "<service>.environment.*_URL",
+    "tag": "file-read",
+    "text": "DATABASE_URL: postgres://rasadov:123456@account_db/rasadov?sslmode=disable",
+    "context": "   92:       dockerfile: docker/services/account.dockerfile\n   93:     depends_on:\n   94:       - account_db\n   95:     environment:\n>> 96:       DATABASE_URL: postgres://rasadov:123456@account_db/rasadov?sslmode=disable\n   97:     restart: on-failure\n   98: \n   99:   product:\n   100:     container_name: \"product\""
+   },
+   {
+    "repo": "tinrab__spidey",
+    "source": "account",
+    "target": "account_db",
+    "file": "docker-compose.yaml",
+    "line": 11,
+    "kind": "compose",
+    "cls": "url",
+    "detail": "<service>.environment.*_URL",
+    "tag": "file-read",
+    "text": "DATABASE_URL: postgres://spidey:123456@account_db/spidey?sslmode=disable",
+    "context": "   7:       dockerfile: ./account/app.dockerfile\n   8:     depends_on:\n   9:       - account_db\n   10:     environment:\n>> 11:       DATABASE_URL: postgres://spidey:123456@account_db/spidey?sslmode=disable\n   12:     restart: on-failure\n   13: \n   14:   catalog:\n   15:     build:"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "docs",
+    "target": "acl",
+    "file": "docs/src/deploy/docker-compose/stable/pgconfig/compose.yml",
+    "line": 70,
+    "kind": "compose",
+    "cls": "url",
+    "detail": "<service>.environment.*_URL",
+    "tag": "file-read",
+    "text": "SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_URL: http://acl:8080/acl/api",
+    "context": "   66:     # - When scaling services dynamically\n   67:     #\n   68:     # ALTERNATIVE:\n   69:     # - For Kubernetes: Use ConfigMaps/Secrets with standalone profile instead\n>> 70:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_URL: http://acl:8080/acl/api\n   71:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_USERNAME: admin\n   72:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_PASSWORD: s3cr3t\n   73:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_HOST: geoserverdb\n   74:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_PORT: 5432"
+   },
+   {
+    "repo": "ionutbalosin__ecommerce-app",
+    "source": "debezium-connect",
+    "target": "schema-registry",
+    "file": "docker-compose-debezium.yml",
+    "line": 29,
+    "kind": "compose",
+    "cls": "url",
+    "detail": "<service>.environment.*_URL",
+    "tag": "file-read",
+    "text": "KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry.local:18081",
+    "context": "   25:       KEY_CONVERTER: io.confluent.connect.avro.AvroConverter\n   26:       VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter\n   27:       INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter\n   28:       INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter\n>> 29:       KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry.local:18081\n   30:       VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry.local:18081\n   31:   #-------------#\n   32:   # Debezium UI #\n   33:   #-------------#"
+   },
+   {
+    "repo": "ThoreauZZ__spring-cloud-example",
+    "source": "ext",
+    "target": "discovery",
+    "file": "docker-compose-v3.yml",
+    "line": 85,
+    "kind": "compose",
+    "cls": "url",
+    "detail": "<service>.environment.*_URL",
+    "tag": "file-read",
+    "text": "REGISTRY_URL: http://discovery:9001/eureka",
+    "context": "   81:     ports:\n   82:       - \"9005:9005\"\n   83:     environment:\n   84:       SERVICE_PORT: 9005\n>> 85:       REGISTRY_URL: http://discovery:9001/eureka\n   86: \n   87:   gateway:\n   88:     image: erdaoya/cloud-api-gateway\n   89:     ports:"
+   }
+  ]
+ }
+}

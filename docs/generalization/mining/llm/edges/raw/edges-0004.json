@@ -1,0 +1,234 @@
+{
+ "id": "edges-0004",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1240,
+  "completion_tokens": 368,
+  "total_tokens": 1608,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose only indicates startup order, not runtime dependency or calls.\"}, {\"i\": 1, \"verdict\": \"correct\", \"reason\": \"nginx proxy_pass to classification service URL shows nginx routes requests to classification at runtime.\"}, {\"i\": 2, \"verdict\": \"correct\", \"reason\": \"nginx proxy_pass to ner service URL shows nginx routes requests to ner at runtime.\"}, {\"i\": 3, \"verdict\": \"correct\", \"reason\": \"nginx proxy_pass to summary service URL shows nginx routes requests to summary at runtime.\"}, {\"i\": 4, \"verdict\": \"unsure\", \"reason\": \"appsettings config shows mongo connection string but no code evidence of runtime calls; depends_on only shows startup order.\"}, {\"i\": 5, \"verdict\": \"unsure\", \"reason\": \"appsettings config shows mongo connection string but no code evidence of runtime calls; depends_on only shows startup order.\"}, {\"i\": 6, \"verdict\": \"unsure\", \"reason\": \"appsettings config shows mongo connection string but no code evidence of runtime calls; depends_on only shows startup order.\"}, {\"i\": 7, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose only indicates startup order, not runtime dependency or calls.\"}, {\"i\": 8, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose only indicates startup order, not runtime dependency or calls.\"}, {\"i\": 9, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose only indicates startup order, not runtime dependency or calls.\"}]}",
+ "payload": [
+  {
+   "repo": "Toktik-Team__toktik",
+   "source": "otel-collector",
+   "target": "jaeger-all-in-one",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "abhimishra91__insight",
+   "source": "nginx",
+   "target": "classification",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src_fastapi/docker-compose.yml#depends_on",
+     "file": "src_fastapi/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: src_fastapi/nginx_config.conf:5",
+     "file": "src_fastapi/nginx_config.conf",
+     "line": 5,
+     "kind": "nginx",
+     "context": "   1: server {\n   2:   listen 8080;\n   3: \n   4:   location /api/v1/classification {\n>> 5:     proxy_pass http://classification:8000/api/v1/classification;\n   6:   }\n   7: \n   8:   location /api/v1/sentiment {\n   9:     proxy_pass http://sentiment:8000/api/v1/sentiment;"
+    }
+   ]
+  },
+  {
+   "repo": "abhimishra91__insight",
+   "source": "nginx",
+   "target": "ner",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src_fastapi/docker-compose.yml#depends_on",
+     "file": "src_fastapi/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: src_fastapi/nginx_config.conf:17",
+     "file": "src_fastapi/nginx_config.conf",
+     "line": 17,
+     "kind": "nginx",
+     "context": "   13:     proxy_pass http://summary:8000/api/v1/summary;\n   14:   }\n   15: \n   16:   location /api/v1/ner {\n>> 17:     proxy_pass http://ner:8000/api/v1/ner;\n   18:   }\n   19: \n   20: }"
+    }
+   ]
+  },
+  {
+   "repo": "abhimishra91__insight",
+   "source": "nginx",
+   "target": "summary",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src_fastapi/docker-compose.yml#depends_on",
+     "file": "src_fastapi/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: src_fastapi/nginx_config.conf:13",
+     "file": "src_fastapi/nginx_config.conf",
+     "line": 13,
+     "kind": "nginx",
+     "context": "   9:     proxy_pass http://sentiment:8000/api/v1/sentiment;\n   10:   }\n   11: \n   12:   location /api/v1/summary {\n>> 13:     proxy_pass http://summary:8000/api/v1/summary;\n   14:   }\n   15: \n   16:   location /api/v1/ner {\n   17:     proxy_pass http://ner:8000/api/v1/ner;"
+    }
+   ]
+  },
+  {
+   "repo": "aelassas__microservices",
+   "source": "cart",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/microservices/CartMicroservice/appsettings.Production.json",
+     "file": "src/microservices/CartMicroservice/appsettings.Production.json",
+     "line": 13,
+     "kind": "appsettings",
+     "context": "   9:   \"AllowedHosts\": \"*\",\n   10:   \"jwt\": {\n   11:     \"secret\": \"9095a623-a23a-481a-aa0c-e0ad96edc103\"\n   12:   },\n>> 13:   \"mongo\": {\n   14:     \"connectionString\": \"mongodb://mongo\",\n   15:     \"database\": \"store-cart\"\n   16:   },\n   17:   \"HealthChecksUI\": {"
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "aelassas__microservices",
+   "source": "catalog",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/microservices/CatalogMicroservice/appsettings.Production.json",
+     "file": "src/microservices/CatalogMicroservice/appsettings.Production.json",
+     "line": 13,
+     "kind": "appsettings",
+     "context": "   9:   \"AllowedHosts\": \"*\",\n   10:   \"jwt\": {\n   11:     \"secret\": \"9095a623-a23a-481a-aa0c-e0ad96edc103\"\n   12:   },\n>> 13:   \"mongo\": {\n   14:     \"connectionString\": \"mongodb://mongo\",\n   15:     \"database\": \"store-catalog\"\n   16:   },\n   17:   \"HealthChecksUI\": {"
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "aelassas__microservices",
+   "source": "frontendgw",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/gateways/FrontendGateway/appsettings.Production.json",
+     "file": "src/gateways/FrontendGateway/appsettings.Production.json",
+     "line": 13,
+     "kind": "appsettings",
+     "context": "   9:   \"AllowedHosts\": \"*\",\n   10:   \"jwt\": {\n   11:     \"secret\": \"9095a623-a23a-481a-aa0c-e0ad96edc103\"\n   12:   },\n>> 13:   \"mongo\": {\n   14:     \"connectionString\": \"mongodb://mongo\"\n   15:   },\n   16:   \"HealthChecksUI\": {\n   17:     \"HealthChecks\": ["
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "aidanwhiteley__books",
+   "source": "api-gateway-tier",
+   "target": "service-registry-tier",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "aidanwhiteley__books",
+   "source": "web-tier-caddy-htmx",
+   "target": "data-tier-mongo",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "aidanwhiteley__books",
+   "source": "web-tier-react",
+   "target": "api-tier-java",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    }
+   ]
+  }
+ ]
+}

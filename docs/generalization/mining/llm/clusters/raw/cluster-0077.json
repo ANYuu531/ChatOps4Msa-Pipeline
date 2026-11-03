@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0077",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 663,
+  "completion_tokens": 162,
+  "total_tokens": 825,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"not-dependency\", \"reason\": \"The line is a service declaration key in a Docker Compose file, not an address or reference from another component.\"}, {\"i\": 1, \"verdict\": \"not-dependency\", \"reason\": \"The line is a service declaration key in a Docker Compose file, not an address or reference from another component.\"}], \"rule\": {\"general\": false, \"trigger\": \"yaml key under services.gateway\", \"edge\": \"N/A\", \"exclusions\": \"N/A\", \"confidence\": \"high\"}, \"summary\": \"Service keys under 'services' in Docker Compose or similar YAML files are declarations, not runtime dependency references, so no edges should be drawn from these lines.\"}",
+ "payload": {
+  "rank": 77,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "services.gateway",
+  "repos": 2,
+  "mentions": 5,
+  "samples": [
+   {
+    "repo": "apssouza22__java-microservice",
+    "source": "?",
+    "target": "gateway",
+    "file": "assets/proxy-docker-compose.yml",
+    "line": 16,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "services.gateway",
+    "tag": "unread",
+    "text": "gateway:",
+    "context": "   12:     external_links:\n   13:       - elk\n   14:       - kafka\n   15:     \n>> 16:   gateway:\n   17:     image: todo/api-gateway\n   18:     ports:\n   19:       - 8018\n   20:     networks:"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "?",
+    "target": "gateway",
+    "file": "compose/standalone.yml",
+    "line": 32,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "services.gateway",
+    "tag": "unread",
+    "text": "gateway:",
+    "context": "   28:     deploy:\n   29:       replicas: 0\n   30: \n   31:   # Apply standalone profile to all services\n>> 32:   gateway:\n   33:     environment:\n   34:       SPRING_PROFILES_INCLUDE: \"standalone\"\n   35:     depends_on: {}\n   36: "
+   }
+  ]
+ }
+}

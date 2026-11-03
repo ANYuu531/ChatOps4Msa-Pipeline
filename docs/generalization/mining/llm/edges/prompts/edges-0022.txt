@@ -1,0 +1,111 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=sczyh30__vertx-blueprint-microservice cache-infrastructure -> redis (type db)
+  cited code: docker/docker-compose.yml#depends_on
+
+
+[1] repo=sczyh30__vertx-blueprint-microservice order-microservice -> logstash (type sync-http)
+  cited code: docker/docker-compose.yml#depends_on
+
+
+[2] repo=sdgmf__go-project-sample jaeger-query -> cassandra (type db)
+  cited code: deployments/docker-compose.yml
+   67:     expose:
+   68:       - 53/udp
+   69:   jaeger-collector:
+   70:     image: jaegertracing/jaeger-collector
+>> 71:     command: ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra", "--collector.zipkin.http-port=9411"]
+   72:     ports:
+   73:       - "14269"
+   74:       - "14268:14268"
+   75:       - "14267"
+
+[3] repo=sdgmf__go-project-sample products -> db (type sync-http)
+  cited code: deployments/docker-compose.yml#depends_on
+
+  cited code: deployments/docker-compose.yml
+   3:   details:
+   4:     build:
+   5:       context: ..
+   6:       dockerfile: "build/details/Dockerfile"
+>> 7:     command: ./wait-for db:3306 -t 30 -- ./app
+   8:     depends_on:
+   9:       - db
+   10:       - consul
+   11:       - jaeger-agent
+
+[4] repo=sdgmf__go-project-sample ratings -> db (type sync-http)
+  cited code: deployments/docker-compose.yml#depends_on
+
+  cited code: deployments/docker-compose.yml
+   3:   details:
+   4:     build:
+   5:       context: ..
+   6:       dockerfile: "build/details/Dockerfile"
+>> 7:     command: ./wait-for db:3306 -t 30 -- ./app
+   8:     depends_on:
+   9:       - db
+   10:       - consul
+   11:       - jaeger-agent
+
+[5] repo=sivaprasadreddy__spring-boot-microservices-series catalog-service -> setup-vault (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+
+[6] repo=sivaprasadreddy__spring-boot-microservices-series inventory-service -> config-server (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: inventory-service/src/main/resources/bootstrap-docker.properties
+>> 1: spring.cloud.config.uri=http://config-server:8888
+   2: # Vault
+   3: spring.cloud.vault.host=vault
+   4: spring.rabbitmq.addresses=rabbitmq:5672
+
+[7] repo=sivaprasadreddy__spring-boot-microservices-series setup-vault -> vault (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   18:     ports:
+   19:       - "5672:5672"
+   20:       - "15672:15672"
+   21: 
+>> 22:   vault:
+   23:     image: vault:1.4.0
+   24:     container_name: vault
+   25:     cap_add:
+   26:       - IPC_LOCK
+
+[8] repo=tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes k8n-service-products -> tempo (type sync-http)
+  cited code: docker-compose.yml
+   114:     depends_on:
+   115:       - loki
+   116:     logging: *default-logging
+   117: 
+>> 118:   tempo:
+   119:     image: grafana/tempo:2.1.1
+   120:     container_name: tempo
+   121:     command: [ "--target=all", "--storage.trace.backend=local", "--storage.trace.local.path=/var/tempo", "--auth.enabled=false" ]
+   122:     ports:
+
+[9] repo=tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes k8n-service-orders -> tempo (type sync-http)
+  cited code: docker-compose.yml
+   114:     depends_on:
+   115:       - loki
+   116:     logging: *default-logging
+   117: 
+>> 118:   tempo:
+   119:     image: grafana/tempo:2.1.1
+   120:     container_name: tempo
+   121:     command: [ "--target=all", "--storage.trace.backend=local", "--storage.trace.local.path=/var/tempo", "--auth.enabled=false" ]
+   122:     ports:

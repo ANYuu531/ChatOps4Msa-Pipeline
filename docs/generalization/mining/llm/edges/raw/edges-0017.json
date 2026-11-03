@@ -1,0 +1,220 @@
+{
+ "id": "edges-0017",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1648,
+  "completion_tokens": 410,
+  "total_tokens": 2058,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose.yml and Kubernetes deployment metadata only indicate startup order or deployment grouping, not runtime dependency or calls.\"}, {\"i\": 1, \"verdict\": \"correct\", \"reason\": \"The apigateway route configuration explicitly routes HTTP requests to the flight service URI, showing runtime dependency.\"}, {\"i\": 2, \"verdict\": \"wrong\", \"reason\": \"The code only sets URIs as problem type identifiers (metadata), not actual calls or runtime dependencies.\"}, {\"i\": 3, \"verdict\": \"wrong\", \"reason\": \"depends_on in docker-compose indicates startup order, not runtime HTTP calls from grafana to prometheus.\"}, {\"i\": 4, \"verdict\": \"unsure\", \"reason\": \"Environment variable setting an endpoint URL suggests possible runtime calls but no direct evidence of actual calls or connections.\"}, {\"i\": 5, \"verdict\": \"wrong\", \"reason\": \"The cited code only defines the loki service in docker-compose, no evidence that otel-collector calls or connects to loki.\"}, {\"i\": 6, \"verdict\": \"wrong\", \"reason\": \"depends_on and service definition only show deployment/startup order, no evidence booking service connects to postgres at runtime.\"}, {\"i\": 7, \"verdict\": \"wrong\", \"reason\": \"Image name containing 'kafka' and depends_on do not prove that random-chat calls or connects to kafka at runtime.\"}, {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"Environment variable REDIS_ADDRS listing redis-node-0 address shows uploader is configured to connect to redis-node-0 at runtime.\"}, {\"i\": 9, \"verdict\": \"wrong\", \"reason\": \"depends_on only indicates startup order, no evidence redis-node-5 connects to redis-node-4 at runtime.\"}]}",
+ "payload": [
+  {
+   "repo": "meysamhadeli__booking-microservices-expressjs",
+   "source": "identity",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deployments/kubernetes/identity-deployment.yaml",
+     "file": "deployments/kubernetes/identity-deployment.yaml",
+     "line": 0,
+     "kind": "yaml",
+     "context": "   apiVersion: apps/v1\n   kind: Deployment\n   metadata:\n     name: identity\n     namespace: booking\n   spec:\n     replicas: 1\n     selector:\n       matchLabels:"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+   "source": "apigateway",
+   "target": "flight",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/apigateway/src/main/resources/application-dev.yml",
+     "file": "src/apigateway/src/main/resources/application-dev.yml",
+     "line": 17,
+     "kind": "spring-yaml",
+     "context": "   13:       routes:\n   14:         - id: flight-service\n   15:           uri: http://localhost:8082\n   16:           predicates:\n>> 17:             - Path=/api/{version}/flight/**\n   18:           filters:\n   19:             - TokenRelay\n   20:         - id: passenger-service\n   21:           uri: http://localhost:8083"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+   "source": "buildingblocks",
+   "target": "problems",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/buildingblocks/src/main/java/buildingblocks/keycloak/CustomAuthenticationEntryPoint.java:40",
+     "file": "src/buildingblocks/src/main/java/buildingblocks/keycloak/CustomAuthenticationEntryPoint.java",
+     "line": 40,
+     "kind": "src:java",
+     "context": "   36:     );\n   37: \n   38:     problemDetail.setTitle(authException.getClass().getSimpleName());\n   39:     problemDetail.setDetail(authException.getMessage());\n>> 40:     problemDetail.setType(URI.create(\"https://problems/\" + authException.getClass().getSimpleName().toLowerCase()));\n   41:     problemDetail.setProperty(\"timestamp\", Instant.now().toString());\n   42:     problemDetail.setInstance(URI.create(request.getRequestURI()));\n   43:     response.setStatus(getStatus(authException).value());\n   44:     response.setContentType(MediaType.APPLICATION_JSON_VALUE);"
+    },
+    {
+     "ref": "code: src/buildingblocks/src/main/java/buildingblocks/problemdetails/CustomProblemDetailsHandler.java:93",
+     "file": "src/buildingblocks/src/main/java/buildingblocks/problemdetails/CustomProblemDetailsHandler.java",
+     "line": 93,
+     "kind": "src:java",
+     "context": "   89:       details.status(),\n   90:       details.detail()\n   91:     );\n   92: \n>> 93:     problemDetail.setType(URI.create(\"https://problems/\" + details.title().toLowerCase()));\n   94:     problemDetail.setTitle(details.title());\n   95:     problemDetail.setProperty(\"timestamp\", Instant.now());\n   96: \n   97:     // Add stack trace in development environment"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+   "source": "grafana",
+   "target": "prometheus",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose/docker-compose.infrastructure.yaml#depends_on",
+     "file": "deployments/docker-compose/docker-compose.infrastructure.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-nestjs",
+   "source": "otel-collector",
+   "target": "aspire-dashboard",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose/docker-compose.yaml",
+     "file": "deployments/docker-compose/docker-compose.yaml",
+     "line": 143,
+     "kind": "compose",
+     "context": "   139:       - \"4318:4318\" # OTLP http receiver\n   140:       - \"55679:55679\" # zpages extension\n   141:     environment:\n   142:       # set enviroments for otel collector configs to set Exporter endpoints (with defaults matching your original config)\n>> 143:       - ASPIRE_OTLP_ENDPOINT=http://aspire-dashboard:18889 # Using Docker network DNS\n   144:       - ASPIRE_API_KEY=your_api_key\n   145:       - PROMETHEUS_ENDPOINT=0.0.0.0:8889\n   146:       - PROMETHEUS_REMOTE_WRITE_ENDPOINT=http://prometheus:9090/api/v1/write\n   147:       - LOKI_ENDPOINT=http://loki:3100/otlp"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-nestjs",
+   "source": "otel-collector",
+   "target": "loki",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose/docker-compose.yaml",
+     "file": "deployments/docker-compose/docker-compose.yaml",
+     "line": 83,
+     "kind": "compose",
+     "context": "   79: \n   80:     #######################################################\n   81:     #  Loki\n   82:     #######################################################\n>> 83:   loki:\n   84:     image: grafana/loki:latest\n   85:     hostname: loki\n   86:     container_name: loki\n   87:     expose:"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-nestjs",
+   "source": "booking",
+   "target": "postgres",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose/docker-compose.yaml#depends_on",
+     "file": "deployments/docker-compose/docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deployments/docker-compose/docker-compose.yaml",
+     "file": "deployments/docker-compose/docker-compose.yaml",
+     "line": 21,
+     "kind": "compose",
+     "context": "   17: \n   18:     #######################################################\n   19:     #  Postgress\n   20:     #######################################################\n>> 21:   postgres:\n   22:     container_name: postgres\n   23:     image: postgres:latest\n   24:     restart: unless-stopped\n   25:     ports:"
+    }
+   ]
+  },
+  {
+   "repo": "minghsu0107__go-random-chat",
+   "source": "random-chat",
+   "target": "kafka",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yaml#depends_on",
+     "file": "deployments/docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deployments/docker-compose.yaml",
+     "file": "deployments/docker-compose.yaml",
+     "line": 23,
+     "kind": "compose",
+     "context": "   19:       - 8080:8080\n   20:     volumes:\n   21:       - /var/run/docker.sock:/var/run/docker.sock\n   22:   web:\n>> 23:     image: minghsu0107/random-chat-web:kafka\n   24:     restart: always\n   25:     expose:\n   26:       - \"80\"\n   27:     environment:"
+    }
+   ]
+  },
+  {
+   "repo": "minghsu0107__go-random-chat",
+   "source": "uploader",
+   "target": "redis-node-0",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yaml",
+     "file": "deployments/docker-compose.yaml",
+     "line": 65,
+     "kind": "compose",
+     "context": "   61:       CASSANDRA_USER: ming\n   62:       CASSANDRA_PASSWORD: cassandrapass\n   63:       CASSANDRA_KEYSPACE: randomchat\n   64:       REDIS_PASSWORD: ${REDIS_PASSWORD}\n>> 65:       REDIS_ADDRS: redis-node-0:6379,redis-node-1:6379,redis-node-2:6379,redis-node-3:6379,redis-node-4:6379,redis-node-5:6379\n   66:       REDIS_EXPIRATIONHOUR: \"24\"\n   67:       OBSERVABILITY_PROMETHEUS_PORT: \"8080\"\n   68:       OBSERVABILITY_TRACING_OTLPENDPOINT: jaeger:4318\n   69:     labels:"
+    }
+   ]
+  },
+  {
+   "repo": "minghsu0107__go-random-chat",
+   "source": "redis-node-5",
+   "target": "redis-node-4",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yaml#depends_on",
+     "file": "deployments/docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    }
+   ]
+  }
+ ]
+}

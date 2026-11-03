@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0066",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 757,
+  "completion_tokens": 229,
+  "total_tokens": 986,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The CMD line uses dockerize to wait for a TCP connection to bookstore-mysql-db, indicating a runtime dependency from bookstore-catalog-service to bookstore-mysql-db.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The git remote URL points to github.com to fetch source code during image build, which is a build-time operation and not a runtime dependency on github.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"dockerfile; CMD line containing a tcp:// URL\",\n    \"edge\": \"component owning the Dockerfile -> component named in the tcp:// URL\",\n    \"exclusions\": \"lines that are RUN commands or other build-time commands referencing external URLs\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"Only tcp:// URLs in CMD lines of Dockerfiles reliably indicate runtime dependencies, while URLs in RUN commands for fetching source code do not.\"\n}",
+ "payload": {
+  "rank": 66,
+  "kind": "dockerfile",
+  "cls": "url",
+  "detail": "-",
+  "repos": 2,
+  "mentions": 8,
+  "samples": [
+   {
+    "repo": "devdcores__BookStoreApp-Distributed-Application",
+    "source": "bookstore-catalog-service",
+    "target": "bookstore-mysql-db",
+    "file": "bookstore-catalog-service/Dockerfile",
+    "line": 14,
+    "kind": "dockerfile",
+    "cls": "url",
+    "detail": "-",
+    "tag": "file-read",
+    "text": "CMD ./dockerize -wait tcp://bookstore-mysql-db:3306 -timeout 15m java -Djava.security.egd=file:/dev/./urandom -jar /catalog-service.jar",
+    "context": "   10: COPY dockerize dockerize\n   11: \n   12: COPY ./images /images\n   13: \n>> 14: CMD ./dockerize -wait tcp://bookstore-mysql-db:3306 -timeout 15m java -Djava.security.egd=file:/dev/./urandom -jar /catalog-service.jar"
+   },
+   {
+    "repo": "walkline__ToCloud9",
+    "source": "trinitycore",
+    "target": "github",
+    "file": "game-server/trinitycore/Dockerfile",
+    "line": 25,
+    "kind": "dockerfile",
+    "cls": "url",
+    "detail": "-",
+    "tag": "file-read",
+    "text": "git remote add origin https://github.com/TrinityCore/TrinityCore.git && \\",
+    "context": "   21: RUN update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang 100\n   22: \n   23: RUN mkdir repo\n   24: RUN cd repo && git init && \\\n>> 25:     git remote add origin https://github.com/TrinityCore/TrinityCore.git && \\\n   26:     git fetch --depth 1 origin e11613eeb5dcad16f5908c9c7dd8109baabe9272 && \\\n   27:     git checkout FETCH_HEAD\n   28: \n   29: COPY game-server/trinitycore/e11613eeb5.diff ./repo/e11613eeb5.diff"
+   }
+  ]
+ }
+}

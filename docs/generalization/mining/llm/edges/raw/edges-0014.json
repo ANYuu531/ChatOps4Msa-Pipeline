@@ -1,0 +1,234 @@
+{
+ "id": "edges-0014",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1439,
+  "completion_tokens": 384,
+  "total_tokens": 1823,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"correct\", \"reason\": \"nginx config proxies requests under /identity-server to https://identity-server, showing nginx routes to identity-server.\"}, {\"i\": 1, \"verdict\": \"correct\", \"reason\": \"nginx config proxies requests under /accounts-api to https://accounts-api, showing nginx routes to accounts-api.\"}, {\"i\": 2, \"verdict\": \"wrong\", \"reason\": \"the URL is a constant string in code and not used to make runtime calls to raw.githubusercontent.com.\"}, {\"i\": 3, \"verdict\": \"unsure\", \"reason\": \"bootstrap.yml shows nacos config server address but no explicit runtime call or client usage shown.\"}, {\"i\": 4, \"verdict\": \"wrong\", \"reason\": \"only docker-compose depends_on metadata shown, no runtime evidence of gateway-server connecting to mysql.\"}, {\"i\": 5, \"verdict\": \"wrong\", \"reason\": \"only docker-compose depends_on metadata shown, no runtime evidence of station-server connecting to redis.\"}, {\"i\": 6, \"verdict\": \"wrong\", \"reason\": \"environment variable NATS_HOST set but no shown code or config proving runtime connection or usage.\"}, {\"i\": 7, \"verdict\": \"wrong\", \"reason\": \"depends_on and environment variables set but no shown runtime call or connection from service-tenant to consul.\"}, {\"i\": 8, \"verdict\": \"wrong\", \"reason\": \"environment variable CONSUL_HOST set but no shown runtime call or connection from services-notification to consul-cluster.\"}, {\"i\": 9, \"verdict\": \"wrong\", \"reason\": \"docker-compose container_name and image for sqlserver shown but no runtime evidence betting service connects to sqlserver.\"}]}",
+ "payload": [
+  {
+   "repo": "ivanpaulovich__clean-architecture-manga",
+   "source": "nginx",
+   "target": "identity-server",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: nginx/nginx.conf:36",
+     "file": "nginx/nginx.conf",
+     "line": 36,
+     "kind": "nginx",
+     "context": "   32:         proxy_set_header   X-Forwarded-Host $server_name;\n   33: \n   34:         location /identity-server {\n   35:             rewrite /identity-server/?(.*) /$1 break;\n>> 36:             proxy_pass         https://identity-server;\n   37:         }\n   38: \n   39:         location /accounts-api {\n   40:             rewrite /accounts-api/?(.*) /$1 break;"
+    },
+    {
+     "ref": "code: docker-compose/docker-compose.yml#depends_on",
+     "file": "docker-compose/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "ivanpaulovich__clean-architecture-manga",
+   "source": "nginx",
+   "target": "accounts-api",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: nginx/nginx.conf:41",
+     "file": "nginx/nginx.conf",
+     "line": 41,
+     "kind": "nginx",
+     "context": "   37:         }\n   38: \n   39:         location /accounts-api {\n   40:             rewrite /accounts-api/?(.*) /$1 break;\n>> 41:             proxy_pass         https://accounts-api;\n   42:         }\n   43: \n   44:         location / {\n   45:             proxy_pass         http://wallet-spa:3000;"
+    },
+    {
+     "ref": "code: docker-compose/docker-compose.yml#depends_on",
+     "file": "docker-compose/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "ivanpaulovich__clean-architecture-manga",
+   "source": "accounts-api",
+   "target": "raw.githubusercontent.com",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: accounts-api/src/WebApi/Modules/Common/Swagger/ConfigureSwaggerOptions.cs:22",
+     "file": "accounts-api/src/WebApi/Modules/Common/Swagger/ConfigureSwaggerOptions.cs",
+     "line": 22,
+     "kind": "src:csharp",
+     "context": "   18: {\n   19:     private const string UriString = \"http://paulovich.net\";\n   20: \n   21:     private const string UriString1 =\n>> 22:         \"https://raw.githubusercontent.com/ivanpaulovich/clean-architecture-manga/master/README.md\";\n   23: \n   24:     private readonly IApiVersionDescriptionProvider _provider;\n   25: \n   26:     /// <summary>"
+    }
+   ]
+  },
+  {
+   "repo": "jingsewu__open-wes",
+   "source": "station-server",
+   "target": "nacos",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: server/server/station-server/src/main/resources/bootstrap.yml",
+     "file": "server/server/station-server/src/main/resources/bootstrap.yml",
+     "line": 7,
+     "kind": "spring-yaml",
+     "context": "   3:     name: station\n   4:   profiles:\n   5:     active: test\n   6:   cloud:\n>> 7:     nacos:\n   8:       config:\n   9:         server-addr: ${nacos.openwes.com:nacos.openwes.com}:${nacos.port:8848}\n   10:         prefix: ${spring.application.name}\n   11:         file-extension: yml"
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "jingsewu__open-wes",
+   "source": "gateway-server",
+   "target": "mysql",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.prod.yml#depends_on",
+     "file": "docker-compose.prod.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "jingsewu__open-wes",
+   "source": "station-server",
+   "target": "redis",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.prod.yml#depends_on",
+     "file": "docker-compose.prod.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "juicycleff__ultimate-backend",
+   "source": "services-role",
+   "target": "nats-cluster",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 12,
+     "kind": "compose",
+     "context": "   8:     image: \"${DOCKER_REGISTRY}/${DOCKER_REPO:?err}/service-account:${IMAGE_TAG:?err}\"\n   9:     restart: always\n   10:     environment:\n   11:       - CONSUL_HOST=consul-cluster.default.svc.cluster.local\n>> 12:       - NATS_HOST=nats-cluster.default.svc.cluster.local\n   13:       - DISCOVERY_HOST=service-account.default.svc.cluster.local\n   14:     ports:\n   15:       - 50054:50054\n   16:     labels:"
+    }
+   ]
+  },
+  {
+   "repo": "juicycleff__ultimate-backend",
+   "source": "service-tenant",
+   "target": "consul",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.dev.yml#depends_on",
+     "file": "docker-compose.dev.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.dev.yml",
+     "file": "docker-compose.dev.yml",
+     "line": 13,
+     "kind": "compose",
+     "context": "   9:         NODE_ENV: development\n   10:     image: \"service-account:latest\"\n   11:     restart: always\n   12:     depends_on:\n>> 13:       - consul\n   14:       - redis\n   15:     environment:\n   16:       - CONSUL_HOST=consul\n   17:       - NATS_HOST=nats"
+    }
+   ]
+  },
+  {
+   "repo": "juicycleff__ultimate-backend",
+   "source": "services-notification",
+   "target": "consul-cluster",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 11,
+     "kind": "compose",
+     "context": "   7:       dockerfile: apps/service-account/Dockerfile\n   8:     image: \"${DOCKER_REGISTRY}/${DOCKER_REPO:?err}/service-account:${IMAGE_TAG:?err}\"\n   9:     restart: always\n   10:     environment:\n>> 11:       - CONSUL_HOST=consul-cluster.default.svc.cluster.local\n   12:       - NATS_HOST=nats-cluster.default.svc.cluster.local\n   13:       - DISCOVERY_HOST=service-account.default.svc.cluster.local\n   14:     ports:\n   15:       - 50054:50054"
+    }
+   ]
+  },
+  {
+   "repo": "kalintsenkov__BettingSystem",
+   "source": "betting",
+   "target": "sqlserver",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/docker-compose.yml",
+     "file": "src/docker-compose.yml",
+     "line": 6,
+     "kind": "compose",
+     "context": "   2: \n   3: services:\n   4: \n   5:     data:\n>> 6:         container_name: sqlserver\n   7:         image: mcr.microsoft.com/mssql/server:2019-latest\n   8:         ports: \n   9:             - \"1433:1433\"\n   10:         environment:"
+    }
+   ]
+  }
+ ]
+}

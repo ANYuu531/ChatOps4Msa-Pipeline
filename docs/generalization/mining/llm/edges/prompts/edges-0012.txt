@@ -1,0 +1,86 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=hamed-shirbandi__TaskoMask api-gateway -> tasks-write-api (type sync-http)
+  cited code: src/7-Docker/docker-compose.yml#depends_on
+
+
+[1] repo=hamed-shirbandi__TaskoMask aggregator -> boards-read-api (type sync-http)
+  cited code: src/7-Docker/docker-compose.yml#depends_on
+
+
+[2] repo=hantsy__spring-microservice-sample nginx-proxy -> post-service (type sync-http)
+  cited code: docker-compose.local.yml#depends_on
+
+  cited code: nginx/nginx.conf:22
+   18: 			proxy_pass http://user-service:8001;
+   19: 		}
+   20: 		location /posts {
+   21: #			rewrite ^/api/post-service/(.*) /$1 break;
+>> 22: 			proxy_pass http://post-service:8002;
+   23: 		}
+   24: 		location / {
+   25: #		    rewrite ^/api/auth-service/(.*) /$1 break;
+   26: 			proxy_pass http://auth-service:8000;
+
+[3] repo=hantsy__spring-microservice-sample user-service -> userdb (type db)
+  cited code: docker-compose.local.yml#depends_on
+
+  cited code: docker-compose.build.yml#depends_on
+
+
+[4] repo=hantsy__spring-microservice-sample post-service -> redis (type db)
+  cited code: docker-compose.local.yml#depends_on
+
+  cited code: docker-compose.build.yml#depends_on
+
+
+[5] repo=harlow__go-micro-services search -> geo (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+
+[6] repo=harlow__go-micro-services frontend -> profile (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+
+[7] repo=harlow__go-micro-services search -> rate (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+
+[8] repo=hemerajs__aither cache-service -> nats (type async)
+  cited code: cache-service/index.js:5
+   1: const Hemera = require('nats-hemera')
+   2: const HemeraJoi = require('hemera-joi')
+   3: const HemeraRedisCache = require('hemera-redis-cache')
+   4: const nats = require('nats').connect({
+>> 5:   url: process.env.NATS_URL,
+   6:   user: process.env.NATS_USER,
+   7:   pass: process.env.NATS_PW
+   8: })
+   9: 
+  cited code: docker-compose.yml#depends_on
+
+
+[9] repo=hemerajs__aither math-service -> nats (type async)
+  cited code: math-service/index.js:5
+   1: const Hemera = require('nats-hemera')
+   2: const HemeraJoi = require('hemera-joi')
+   3: const HemeraJaeger = require('hemera-jaeger')
+   4: const nats = require('nats').connect({
+>> 5:   url: process.env.NATS_URL,
+   6:   user: process.env.NATS_USER,
+   7:   pass: process.env.NATS_PW
+   8: })
+   9: const hemera = new Hemera(nats, {
+  cited code: docker-compose.yml#depends_on
+

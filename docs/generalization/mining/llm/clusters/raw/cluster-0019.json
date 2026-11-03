@@ -1,0 +1,92 @@
+{
+ "id": "cluster-0019",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 993,
+  "completion_tokens": 307,
+  "total_tokens": 1300,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"dependency\", \"reason\": \"The wallet-spa frontend uses REACT_APP_AUTH_URL to call the identity-server at runtime.\"}, {\"i\": 1, \"verdict\": \"wrong-source\", \"reason\": \"The .env file is not owned by a runtime component but likely mounted into the database or backend service that connects to postgres.\"}, {\"i\": 2, \"verdict\": \"wrong-source\", \"reason\": \"DATABASE_URL is a config for the backend service connecting to postgres, not a dependency of the base-nestjs-template-01 component itself.\"}, {\"i\": 3, \"verdict\": \"wrong-source\", \"reason\": \"READ_REDIS_URL is a config variable used by the postal component or its runtime container to connect to redis, so the dependency is from the runtime container or postal service, not from the .env file owner per se.\"}], \"rule\": {\"general\": false, \"trigger\": \"dotenv file; key position with *_URL suffix\", \"edge\": \"cannot be determined solely from syntax and file kind\", \"exclusions\": \"some *_URL keys are runtime dependencies of the component owning the file, others are config for different components or environment, so no syntactic-only rule suffices\", \"confidence\": \"high\"}, \"summary\": \"The presence of a *_URL key in dotenv files does not reliably indicate a runtime dependency from the file owner to the target component without additional context.\"}",
+ "payload": {
+  "rank": 19,
+  "kind": "dotenv",
+  "cls": "key",
+  "detail": "*_URL",
+  "repos": 4,
+  "mentions": 7,
+  "samples": [
+   {
+    "repo": "ivanpaulovich__clean-architecture-manga",
+    "source": "wallet-spa",
+    "target": "identity-server",
+    "file": "wallet-spa/.env.docker",
+    "line": 5,
+    "kind": "dotenv",
+    "cls": "key",
+    "detail": "*_URL",
+    "tag": "file-read",
+    "text": "REACT_APP_AUTH_URL=https://wallet.local:8081/identity-server",
+    "context": "   1: HTTPS=false\n   2: PORT=3000\n   3: REACT_APP_ACCOUNTS_API=https://wallet.local:8081/accounts-api\n   4: REACT_APP_AUDIENCE=https://wallet.local:8081/identity-server\n>> 5: REACT_APP_AUTH_URL=https://wallet.local:8081/identity-server\n   6: REACT_APP_AUTHORITY=https://wallet.local:8081/identity-server\n   7: REACT_APP_IDENTITY_CLIENT_ID=spa\n   8: REACT_APP_ISSUER=https://wallet.local:8081/identity-server\n   9: REACT_APP_LOGOFF_REDIRECT_URL=https://wallet.local:8081/logout"
+   },
+   {
+    "repo": "ebosas__microservices",
+    "source": "?",
+    "target": "postgres",
+    "file": ".env",
+    "line": 8,
+    "kind": "dotenv",
+    "cls": "key",
+    "detail": "*_URL",
+    "tag": "file-read",
+    "text": "POSTGRES_URL = postgres://postgres:demopsw@postgres:5432/microservices",
+    "context": "   4: # Docker Compose environment\n   5: POSTGRES_PASSWORD = demopsw\n   6: \n   7: # Connection strings\n>> 8: POSTGRES_URL = postgres://postgres:demopsw@postgres:5432/microservices\n   9: RABBIT_URL   = amqp://guest:guest@rabbitmq:5672\n   10: REDIS_URL    = redis:6379\n   11: SERVER_ADDR  = 0.0.0.0:8080\n   12: "
+   },
+   {
+    "repo": "tkssharma__12-factor-app-microservices",
+    "source": "base-nestjs-template-01",
+    "target": "postgres",
+    "file": "base-nestjs-template #01/.env.example",
+    "line": 2,
+    "kind": "dotenv",
+    "cls": "key",
+    "detail": "*_URL",
+    "tag": "unread",
+    "text": "DATABASE_URL= postgres://api:development_pass@localhost:5434/starter-api",
+    "context": "   1: NODE_ENV=local\n>> 2: DATABASE_URL= postgres://api:development_pass@localhost:5434/starter-api"
+   },
+   {
+    "repo": "NesoHQ__bgce-archive",
+    "source": "postal",
+    "target": "redis",
+    "file": "postal/.env.example",
+    "line": 25,
+    "kind": "dotenv",
+    "cls": "key",
+    "detail": "*_URL",
+    "tag": "unread",
+    "text": "READ_REDIS_URL=redis://localhost:6379",
+    "context": "   21: \n   22: # Redis Configuration\n   23: # Local dev: redis://localhost:6379\n   24: # Production (K8s): redis://redis-archive.default.svc.cluster.local:6379\n>> 25: READ_REDIS_URL=redis://localhost:6379\n   26: WRITE_REDIS_URL=redis://localhost:6379\n   27: ENABLE_REDIS_TLS_MODE=false\n   28: \n   29: # Database Configuration"
+   }
+  ]
+ }
+}

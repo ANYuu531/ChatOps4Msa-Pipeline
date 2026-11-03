@@ -1,0 +1,61 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = shell; position = hostport; context key = -
+They come from 3 different repositories (10 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=Mikaelemmmm__go-zero-looklook SOURCE=deploy TARGET=kafka file=deploy/script/gencode/gen.sh:30
+   26: 
+   27: # 创建kafka的topic
+   28: # kafka-topics.sh --create --zookeeper zookeeper:2181 --replication-factor 1 -partitions 1 --topic {topic}
+   29: # 查看消费者组情况
+>> 30: # kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group {group}
+   31: # 命令行消费
+   32: # ./kafka-console-consumer.sh  --bootstrap-server kafka:9092  --topic looklook-log   --from-beginning
+   33: # 命令生产
+   34: # ./kafka-console-producer.sh --bootstrap-server kafka:9092 --topic second
+
+[1] repo=SaiUpadhyayula__spring-boot-3-microservices-course SOURCE=? TARGET=keycloak file=k8s/kind/kind-load.sh:8
+   4: docker pull confluentinc/cp-kafka:7.5.0
+   5: docker pull confluentinc/cp-schema-registry:7.5.0
+   6: docker pull provectuslabs/kafka-ui:latest
+   7: docker pull mysql:8
+>> 8: docker pull quay.io/keycloak/keycloak:24.0.1
+   9: docker pull grafana/loki:main
+   10: docker pull prom/prometheus:v2.46.0
+   11: docker pull grafana/tempo:2.2.2
+   12: docker pull grafana/grafana:10.1.0
+
+[2] repo=thangchung__northwind-dotnet SOURCE=? TARGET=connector file=_build/scripts/init.sh:4
+   1: 
+   2: apk add --update curl && rm -rf /var/cache/apk/*
+   3: 
+>> 4: curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" connector:8083/connectors/ -d '
+   5: {
+   6:   "name": "movie_outbox_source",
+   7:   "config": {
+   8:     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",

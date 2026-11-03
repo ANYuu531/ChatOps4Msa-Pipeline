@@ -1,0 +1,220 @@
+{
+ "id": "edges-0022",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1300,
+  "completion_tokens": 397,
+  "total_tokens": 1697,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [\n  {\"i\": 0, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml 'depends_on' is an orchestration directive, not runtime dependency evidence.\"},\n  {\"i\": 1, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml 'depends_on' only indicates startup order, not runtime calls or connections.\"},\n  {\"i\": 2, \"verdict\": \"correct\", \"reason\": \"jaeger-query command line explicitly configures connection to cassandra, indicating runtime dependency.\"},\n  {\"i\": 3, \"verdict\": \"unsure\", \"reason\": \"'wait-for db:3306' ensures db is up before app starts but does not prove runtime calls from products to db.\"},\n  {\"i\": 4, \"verdict\": \"unsure\", \"reason\": \"Same as edge 3: wait-for usage and depends_on do not prove runtime dependency.\"},\n  {\"i\": 5, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml 'depends_on' only shows startup order, no runtime evidence of calls.\"},\n  {\"i\": 6, \"verdict\": \"correct\", \"reason\": \"bootstrap-docker.properties configures inventory-service to connect to config-server at runtime.\"},\n  {\"i\": 7, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml 'depends_on' and vault service definition do not show setup-vault calls vault at runtime.\"},\n  {\"i\": 8, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml 'depends_on' and tempo service definition do not prove k8n-service-products calls tempo at runtime.\"},\n  {\"i\": 9, \"verdict\": \"wrong\", \"reason\": \"docker-compose.yml 'depends_on' and tempo service definition do not prove k8n-service-orders calls tempo at runtime.\"}\n]}",
+ "payload": [
+  {
+   "repo": "sczyh30__vertx-blueprint-microservice",
+   "source": "cache-infrastructure",
+   "target": "redis",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "sczyh30__vertx-blueprint-microservice",
+   "source": "order-microservice",
+   "target": "logstash",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "sdgmf__go-project-sample",
+   "source": "jaeger-query",
+   "target": "cassandra",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yml",
+     "file": "deployments/docker-compose.yml",
+     "line": 71,
+     "kind": "compose",
+     "context": "   67:     expose:\n   68:       - 53/udp\n   69:   jaeger-collector:\n   70:     image: jaegertracing/jaeger-collector\n>> 71:     command: [\"--cassandra.keyspace=jaeger_v1_dc1\", \"--cassandra.servers=cassandra\", \"--collector.zipkin.http-port=9411\"]\n   72:     ports:\n   73:       - \"14269\"\n   74:       - \"14268:14268\"\n   75:       - \"14267\""
+    }
+   ]
+  },
+  {
+   "repo": "sdgmf__go-project-sample",
+   "source": "products",
+   "target": "db",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yml#depends_on",
+     "file": "deployments/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deployments/docker-compose.yml",
+     "file": "deployments/docker-compose.yml",
+     "line": 7,
+     "kind": "compose",
+     "context": "   3:   details:\n   4:     build:\n   5:       context: ..\n   6:       dockerfile: \"build/details/Dockerfile\"\n>> 7:     command: ./wait-for db:3306 -t 30 -- ./app\n   8:     depends_on:\n   9:       - db\n   10:       - consul\n   11:       - jaeger-agent"
+    }
+   ]
+  },
+  {
+   "repo": "sdgmf__go-project-sample",
+   "source": "ratings",
+   "target": "db",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yml#depends_on",
+     "file": "deployments/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: deployments/docker-compose.yml",
+     "file": "deployments/docker-compose.yml",
+     "line": 7,
+     "kind": "compose",
+     "context": "   3:   details:\n   4:     build:\n   5:       context: ..\n   6:       dockerfile: \"build/details/Dockerfile\"\n>> 7:     command: ./wait-for db:3306 -t 30 -- ./app\n   8:     depends_on:\n   9:       - db\n   10:       - consul\n   11:       - jaeger-agent"
+    }
+   ]
+  },
+  {
+   "repo": "sivaprasadreddy__spring-boot-microservices-series",
+   "source": "catalog-service",
+   "target": "setup-vault",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "sivaprasadreddy__spring-boot-microservices-series",
+   "source": "inventory-service",
+   "target": "config-server",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: inventory-service/src/main/resources/bootstrap-docker.properties",
+     "file": "inventory-service/src/main/resources/bootstrap-docker.properties",
+     "line": 1,
+     "kind": "properties",
+     "context": ">> 1: spring.cloud.config.uri=http://config-server:8888\n   2: # Vault\n   3: spring.cloud.vault.host=vault\n   4: spring.rabbitmq.addresses=rabbitmq:5672"
+    }
+   ]
+  },
+  {
+   "repo": "sivaprasadreddy__spring-boot-microservices-series",
+   "source": "setup-vault",
+   "target": "vault",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 22,
+     "kind": "compose",
+     "context": "   18:     ports:\n   19:       - \"5672:5672\"\n   20:       - \"15672:15672\"\n   21: \n>> 22:   vault:\n   23:     image: vault:1.4.0\n   24:     container_name: vault\n   25:     cap_add:\n   26:       - IPC_LOCK"
+    }
+   ]
+  },
+  {
+   "repo": "tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes",
+   "source": "k8n-service-products",
+   "target": "tempo",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 118,
+     "kind": "compose",
+     "context": "   114:     depends_on:\n   115:       - loki\n   116:     logging: *default-logging\n   117: \n>> 118:   tempo:\n   119:     image: grafana/tempo:2.1.1\n   120:     container_name: tempo\n   121:     command: [ \"--target=all\", \"--storage.trace.backend=local\", \"--storage.trace.local.path=/var/tempo\", \"--auth.enabled=false\" ]\n   122:     ports:"
+    }
+   ]
+  },
+  {
+   "repo": "tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes",
+   "source": "k8n-service-orders",
+   "target": "tempo",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 118,
+     "kind": "compose",
+     "context": "   114:     depends_on:\n   115:       - loki\n   116:     logging: *default-logging\n   117: \n>> 118:   tempo:\n   119:     image: grafana/tempo:2.1.1\n   120:     container_name: tempo\n   121:     command: [ \"--target=all\", \"--storage.trace.backend=local\", \"--storage.trace.local.path=/var/tempo\", \"--auth.enabled=false\" ]\n   122:     ports:"
+    }
+   ]
+  }
+ ]
+}

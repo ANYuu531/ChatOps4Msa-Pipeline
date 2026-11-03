@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0024",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 920,
+  "completion_tokens": 205,
+  "total_tokens": 1125,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"not-dependency\", \"reason\": \"The line is part of a dictionary mapping UI labels to internal keys, not a runtime call or connection.\"}, {\"i\": 1, \"verdict\": \"not-dependency\", \"reason\": \"The line defines a set of strings used as keys or labels in configuration validation, not a runtime dependency.\"}, {\"i\": 2, \"verdict\": \"not-dependency\", \"reason\": \"The line is a static mapping of service names to build/module info, not a runtime call or connection.\"}], \"rule\": {\"general\": false, \"trigger\": \"src:python literal bare\", \"edge\": \"N/A\", \"exclusions\": \"N/A\", \"confidence\": \"high\"}, \"summary\": \"All samples are dictionary or set literals containing component names as labels or metadata, not runtime dependency expressions, so no general syntactic rule can separate dependencies from non-dependencies here.\"}",
+ "payload": {
+  "rank": 24,
+  "kind": "src:python",
+  "cls": "literal",
+  "detail": "bare",
+  "repos": 3,
+  "mentions": 119,
+  "samples": [
+   {
+    "repo": "abhimishra91__insight",
+    "source": "src-streamlit",
+    "target": "classification",
+    "file": "src_streamlit/NLPfiy.py",
+    "line": 62,
+    "kind": "src:python",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "\"News Classification\": \"classification\",",
+    "context": "   58:             ],\n   59:         )\n   60:         self.service = {\n   61:             \"Project Insight\": \"about\",\n>> 62:             \"News Classification\": \"classification\",\n   63:             \"Named Entity Recognition\": \"ner\",\n   64:             \"Sentiment Analysis\": \"sentiment\",\n   65:             \"Summarization\": \"summary\",\n   66:         }"
+   },
+   {
+    "repo": "nvawntien__go-judge-system",
+    "source": "analysis",
+    "target": "judge",
+    "file": "tools/benchmark/judge/analysis/judge_analysis/metrics.py",
+    "line": 38,
+    "kind": "src:python",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "\"label\", \"release\", \"app\", \"judge\",",
+    "context": "   34: \n   35: def _system_config(run: dict) -> dict:\n   36:     value = run.get(\"system_config\")\n   37:     required = {\n>> 38:         \"label\", \"release\", \"app\", \"judge\",\n   39:     }\n   40:     if not isinstance(value, dict) or not required.issubset(value):\n   41:         return {\"available\": False, \"reason\": \"safe system configuration metadata unavailable\"}\n   42:     # Copy only the strict allowlist emitted by judge-bench. This avoids ever"
+   },
+   {
+    "repo": "nplszfl__OmniTradeERP",
+    "source": "?",
+    "target": "gateway",
+    "file": "scripts/fix-compose-ports.py",
+    "line": 21,
+    "kind": "src:python",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "\"gateway\":                      (\"erp-gateway\", 8080),",
+    "context": "   17: ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))\n   18: \n   19: # compose 服务名 → (Maven 模块目录, server.port)\n   20: CANON = {\n>> 21:     \"gateway\":                      (\"erp-gateway\", 8080),\n   22:     \"user-service\":                 (\"erp-user-service\", 8084),\n   23:     \"product-service\":              (\"erp-product-service\", 8083),\n   24:     \"order-service\":                (\"erp-order-service\", 8081),\n   25:     \"platform-service\":             (\"erp-platform-service\", 8082),"
+   }
+  ]
+ }
+}

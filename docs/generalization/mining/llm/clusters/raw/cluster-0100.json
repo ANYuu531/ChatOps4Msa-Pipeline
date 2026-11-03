@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0100",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 864,
+  "completion_tokens": 210,
+  "total_tokens": 1074,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line defines a command-line flag for a Zipkin address used for tracing configuration, not a direct runtime call or connection from events to zipkin.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line defines a command-line flag naming the usercenter service for service discovery, but does not itself represent a runtime call or connection from game to usercenter.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"src:go literal in call string (flag.String)\",\n    \"edge\": \"none\",\n    \"exclusions\": \"lines that only define command-line flags or configuration parameters\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"Lines that define command-line flags with component names as values do not imply runtime dependencies and should not produce edges.\"\n}",
+ "payload": {
+  "rank": 100,
+  "kind": "src:go",
+  "cls": "literal",
+  "detail": "call string",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "oracle-quickstart__oci-cloudnative",
+    "source": "events",
+    "target": "zipkin",
+    "file": "src/events/cmd/main.go",
+    "line": 32,
+    "kind": "src:go",
+    "cls": "literal",
+    "detail": "call string",
+    "tag": "line-read",
+    "text": "zipk = flag.String(\"zipkin\", os.Getenv(\"ZIPKIN\"), \"Zipkin address\")",
+    "context": "   28: \n   29: func main() {\n   30: \tvar (\n   31: \t\tport = flag.String(\"port\", \"8080\", \"Port to bind HTTP listener\")\n>> 32: \t\tzipk = flag.String(\"zipkin\", os.Getenv(\"ZIPKIN\"), \"Zipkin address\")\n   33: \t)\n   34: \tflag.Parse()\n   35: \tvar tracer stdopentracing.Tracer\n   36: \t{"
+   },
+   {
+    "repo": "yiv__yivnet",
+    "source": "game",
+    "target": "usercenter",
+    "file": "game/main.go",
+    "line": 40,
+    "kind": "src:go",
+    "cls": "literal",
+    "detail": "call string",
+    "tag": "file-read",
+    "text": "userCenter   = flag.String(\"userCenter.name\", \"usercenter\", \"the name of this service in service discovery\")",
+    "context": "   36: \tdebugAddr    = flag.String(\"debug.addr\", \":10021\", \"Debug and metrics listen address\")\n   37: \tzipkinAddr   = flag.String(\"zipkin.addr\", \"\", \"Enable Zipkin tracing via a Zipkin HTTP Collector endpoint\")\n   38: \tetcdAddr     = flag.String(\"etcd.addr\", \"http://etcd.yivgame.com:2379\", \"Consul agent address\")\n   39: \tserviceName  = flag.String(\"service.name\", \"gameserver\", \"the name of this service in service discovery\")\n>> 40: \tuserCenter   = flag.String(\"userCenter.name\", \"usercenter\", \"the name of this service in service discovery\")\n   41: \tretryMax     = flag.Int(\"retry.max\", 3, \"per-request retries to different instances\")\n   42: \tretryTimeout = flag.Duration(\"retry.timeout\", 500*time.Millisecond, \"per-request timeout, including retries\")\n   43: \t//first class room config\n   44: \tfrBootbet = flag.Int64(\"fr.bb\", 100, \"boot bet coins of first class room\")"
+   }
+  ]
+ }
+}

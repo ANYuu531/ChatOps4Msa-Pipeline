@@ -1,0 +1,84 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = compose; position = url; context key = <service>.environment.*_URL
+They come from 5 different repositories (16 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=rasadov__EcommerceAPI SOURCE=account TARGET=account_db file=docker-compose.yaml:96
+   92:       dockerfile: docker/services/account.dockerfile
+   93:     depends_on:
+   94:       - account_db
+   95:     environment:
+>> 96:       DATABASE_URL: postgres://rasadov:123456@account_db/rasadov?sslmode=disable
+   97:     restart: on-failure
+   98: 
+   99:   product:
+   100:     container_name: "product"
+
+[1] repo=tinrab__spidey SOURCE=account TARGET=account_db file=docker-compose.yaml:11
+   7:       dockerfile: ./account/app.dockerfile
+   8:     depends_on:
+   9:       - account_db
+   10:     environment:
+>> 11:       DATABASE_URL: postgres://spidey:123456@account_db/spidey?sslmode=disable
+   12:     restart: on-failure
+   13: 
+   14:   catalog:
+   15:     build:
+
+[2] repo=geoserver__geoserver-cloud SOURCE=docs TARGET=acl file=docs/src/deploy/docker-compose/stable/pgconfig/compose.yml:70
+   66:     # - When scaling services dynamically
+   67:     #
+   68:     # ALTERNATIVE:
+   69:     # - For Kubernetes: Use ConfigMaps/Secrets with standalone profile instead
+>> 70:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_URL: http://acl:8080/acl/api
+   71:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_USERNAME: admin
+   72:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_PASSWORD: s3cr3t
+   73:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_HOST: geoserverdb
+   74:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_PORT: 5432
+
+[3] repo=ionutbalosin__ecommerce-app SOURCE=debezium-connect TARGET=schema-registry file=docker-compose-debezium.yml:29
+   25:       KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+   26:       VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+   27:       INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+   28:       INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+>> 29:       KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry.local:18081
+   30:       VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry.local:18081
+   31:   #-------------#
+   32:   # Debezium UI #
+   33:   #-------------#
+
+[4] repo=ThoreauZZ__spring-cloud-example SOURCE=ext TARGET=discovery file=docker-compose-v3.yml:85
+   81:     ports:
+   82:       - "9005:9005"
+   83:     environment:
+   84:       SERVICE_PORT: 9005
+>> 85:       REGISTRY_URL: http://discovery:9001/eureka
+   86: 
+   87:   gateway:
+   88:     image: erdaoya/cloud-api-gateway
+   89:     ports:

@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0102",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1004,
+  "completion_tokens": 182,
+  "total_tokens": 1186,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a comment describing the configuration and does not represent an actual runtime connection or call.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a comment describing the configuration and does not represent an actual runtime connection or call.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml + hostport\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples are comments in YAML files and do not indicate runtime dependencies, so no general syntactic rule on hostport lines in YAML can distinguish dependencies here.\"\n}",
+ "payload": {
+  "rank": 102,
+  "kind": "yaml",
+  "cls": "hostport",
+  "detail": "-",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "jaeger-all-in-one",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 8,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "-",
+    "tag": "unread",
+    "text": "# to exporter components like `Jaeger` endpoint located at `jaeger-all-in-one:4317`. It also includes a health_check extension for monitoring the collector's status.",
+    "context": "   4: # https://betterstack.com/community/guides/observability/opentelemetry-collector/\n   5: # https://signoz.io/blog/opentelemetry-collector-complete-guide/\n   6: \n   7: # This configuration sets up an OpenTelemetry Collector that receives trace data via the OTLP protocol over HTTP on port 4318, applies batch processing, and then exports the processed traces\n>> 8: # to exporter components like `Jaeger` endpoint located at `jaeger-all-in-one:4317`. It also includes a health_check extension for monitoring the collector's status.\n   9: \n   10: # Receivers in the OpenTelemetry Collector are components that collect telemetry data (traces, metrics, and logs) from various sources, such as instrumented applications or agents.\n   11: # They act as entry points, converting incoming data into OpenTelemetry's internal format for processing and export.\n   12: # https://betterstack.com/community/guides/observability/opentelemetry-collector/#exploring-the-opentelemetry-collector-components"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "jaeger-all-in-one",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 8,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "-",
+    "tag": "unread",
+    "text": "# to exporter components like `Jaeger` endpoint located at `jaeger-all-in-one:4317`. It also includes a health_check extension for monitoring the collector's status.",
+    "context": "   4: # https://betterstack.com/community/guides/observability/opentelemetry-collector/\n   5: # https://signoz.io/blog/opentelemetry-collector-complete-guide/\n   6: \n   7: # This configuration sets up an OpenTelemetry Collector that receives trace data via the OTLP protocol over HTTP on port 4318, applies batch processing, and then exports the processed traces \n>> 8: # to exporter components like `Jaeger` endpoint located at `jaeger-all-in-one:4317`. It also includes a health_check extension for monitoring the collector's status.\n   9: \n   10: # Receivers in the OpenTelemetry Collector are components that collect telemetry data (traces, metrics, and logs) from various sources, such as instrumented applications or agents. \n   11: # They act as entry points, converting incoming data into OpenTelemetry's internal format for processing and export.\n   12: # https://betterstack.com/community/guides/observability/opentelemetry-collector/#exploring-the-opentelemetry-collector-components"
+   }
+  ]
+ }
+}

@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0074",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 638,
+  "completion_tokens": 203,
+  "total_tokens": 841,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The SOURCE component's bootstrap.yml configures spring.cloud.config.uri pointing to TARGET, indicating SOURCE fetches config from TARGET at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The SOURCE component's bootstrap.yml sets spring.cloud.config.uri to TARGET, showing SOURCE depends on TARGET to retrieve configuration at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"spring-yaml + context key = cloud.config.uri\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none needed; this key always indicates a runtime config server dependency\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show spring cloud config URI settings that indicate a runtime dependency from the component owning the config file to the TARGET config server.\"\n}",
+ "payload": {
+  "rank": 74,
+  "kind": "spring-yaml",
+  "cls": "url",
+  "detail": "cloud.config.uri",
+  "repos": 2,
+  "mentions": 5,
+  "samples": [
+   {
+    "repo": "idugalic__micro-company",
+    "source": "command-side-blog-service",
+    "target": "configserver",
+    "file": "command-side-blog-service/src/main/resources/bootstrap.yml",
+    "line": 16,
+    "kind": "spring-yaml",
+    "cls": "url",
+    "detail": "cloud.config.uri",
+    "tag": "unread",
+    "text": "uri: http://configserver:8888",
+    "context": "   12: spring:\n   13:   profiles: docker\n   14:   cloud:\n   15:      config:\n>> 16:         uri: http://configserver:8888\n   17:         fail-fast: true"
+   },
+   {
+    "repo": "mostafacs__ecommerce-microservices-spring-reactive-webflux",
+    "source": "authentication",
+    "target": "config-server",
+    "file": "system/authentication/src/main/resources/bootstrap.yml",
+    "line": 6,
+    "kind": "spring-yaml",
+    "cls": "url",
+    "detail": "cloud.config.uri",
+    "tag": "file-read",
+    "text": "uri: http://config-server:8111",
+    "context": "   2:   application:\n   3:     name: authentication-service\n   4:   cloud:\n   5:     config:\n>> 6:       uri: http://config-server:8111\n   7: \n   8: "
+   }
+  ]
+ }
+}

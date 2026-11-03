@@ -1,0 +1,47 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = dockerfile; position = url; context key = -
+They come from 2 different repositories (8 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=devdcores__BookStoreApp-Distributed-Application SOURCE=bookstore-catalog-service TARGET=bookstore-mysql-db file=bookstore-catalog-service/Dockerfile:14
+   10: COPY dockerize dockerize
+   11: 
+   12: COPY ./images /images
+   13: 
+>> 14: CMD ./dockerize -wait tcp://bookstore-mysql-db:3306 -timeout 15m java -Djava.security.egd=file:/dev/./urandom -jar /catalog-service.jar
+
+[1] repo=walkline__ToCloud9 SOURCE=trinitycore TARGET=github file=game-server/trinitycore/Dockerfile:25
+   21: RUN update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang 100
+   22: 
+   23: RUN mkdir repo
+   24: RUN cd repo && git init && \
+>> 25:     git remote add origin https://github.com/TrinityCore/TrinityCore.git && \
+   26:     git fetch --depth 1 origin e11613eeb5dcad16f5908c9c7dd8109baabe9272 && \
+   27:     git checkout FETCH_HEAD
+   28: 
+   29: COPY game-server/trinitycore/e11613eeb5.diff ./repo/e11613eeb5.diff

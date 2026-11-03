@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0069",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 700,
+  "completion_tokens": 207,
+  "total_tokens": 907,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The .env file is a shared environment file without a clear owning component, so it is unclear which component uses POSTGRES_URL at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The common.env file is a shared environment file, and without knowing which component loads it, we cannot determine which component depends on config-server.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"dotenv file; url position in *_URL key\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"low\"\n  },\n  \"summary\": \"Because these .env files are shared environment files without clear ownership, the syntax alone does not reliably indicate which component depends on the TARGET, so no general rule can be derived.\"\n}",
+ "payload": {
+  "rank": 69,
+  "kind": "dotenv",
+  "cls": "url",
+  "detail": "*_URL",
+  "repos": 2,
+  "mentions": 6,
+  "samples": [
+   {
+    "repo": "ebosas__microservices",
+    "source": "?",
+    "target": "postgres",
+    "file": ".env",
+    "line": 8,
+    "kind": "dotenv",
+    "cls": "url",
+    "detail": "*_URL",
+    "tag": "file-read",
+    "text": "POSTGRES_URL = postgres://postgres:demopsw@postgres:5432/microservices",
+    "context": "   4: # Docker Compose environment\n   5: POSTGRES_PASSWORD = demopsw\n   6: \n   7: # Connection strings\n>> 8: POSTGRES_URL = postgres://postgres:demopsw@postgres:5432/microservices\n   9: RABBIT_URL   = amqp://guest:guest@rabbitmq:5672\n   10: REDIS_URL    = redis:6379\n   11: SERVER_ADDR  = 0.0.0.0:8080\n   12: "
+   },
+   {
+    "repo": "mostafacs__ecommerce-microservices-spring-reactive-webflux",
+    "source": "?",
+    "target": "config-server",
+    "file": "common.env",
+    "line": 1,
+    "kind": "dotenv",
+    "cls": "url",
+    "detail": "*_URL",
+    "tag": "unread",
+    "text": "CONFIG_SERVICE_URL=http://config-server:8111",
+    "context": ">> 1: CONFIG_SERVICE_URL=http://config-server:8111\n   2: DISCOVERY_SERVER_URL=http://discovery-server:2222/eureka/\n   3: JWKS_URL=http://authentication-server:8087/.well-known/jwks\n   4: DATABASE_HOST=postgresdb\n   5: DATABASE_NAME=ecommerce"
+   }
+  ]
+ }
+}

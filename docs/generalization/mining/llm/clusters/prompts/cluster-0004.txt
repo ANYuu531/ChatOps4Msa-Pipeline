@@ -1,0 +1,90 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = url; context key = datasources.url
+They come from 8 different repositories (19 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=meysamhadeli__booking-microservices SOURCE=grafana TARGET=jaeger-all-in-one file=deployments/configs/grafana/provisioning/datasources/datasource.yml:29
+   25: 
+   26:   - name: Jaeger
+   27:     type: jaeger
+   28:     access: proxy
+>> 29:     url: http://jaeger-all-in-one:16686
+   30:     editable: false
+   31:     uid: jaeger-uid
+   32: 
+   33:   - name: Zipkin
+
+[1] repo=sdgmf__go-project-sample SOURCE=grafana TARGET=prometheus file=configs/grafana/provisioning/datasources/prometheus.yaml:7
+   3: datasources:
+   4:   - name: Prometheus
+   5:     type: prometheus
+   6:     access: proxy
+>> 7:     url: http://prometheus:9090
+   8:     isDefault: true
+   9:     editable: true
+
+[2] repo=SaiUpadhyayula__spring-boot-3-microservices-course SOURCE=grafana TARGET=prometheus file=docker/grafana/datasource.yml:7
+   3: datasources:
+   4:   - name: Prometheus
+   5:     type: prometheus
+   6:     access: proxy
+>> 7:     url: http://prometheus:9090
+   8:     editable: false
+   9:     jsonData:
+   10:       httpMethod: POST
+   11:       exemplarTraceIdDestinations:
+
+[3] repo=jingsewu__open-wes SOURCE=grafana TARGET=loki file=monitoring/grafana/provisioning/datasources/datasources.yml:14
+   10: 
+   11:   - name: Loki
+   12:     type: loki
+   13:     access: proxy
+>> 14:     url: http://loki:3100
+   15:     editable: false
+   16: 
+
+[4] repo=meysamhadeli__booking-microservices-nestjs SOURCE=grafana TARGET=tempo file=deployments/configs/grafana/provisioning/datasources/datasource.yml:31
+   27:   - name: Tempo
+   28:     type: tempo
+   29:     access: proxy
+   30:     orgId: 1
+>> 31:     url: http://tempo:3200
+   32:     basicAuth: false
+   33:     isDefault: false
+   34:     version: 1
+   35:     editable: false
+
+[5] repo=amasen02__freshcart-backend SOURCE=? TARGET=prometheus file=deploy/docker/grafana-datasources.yaml:7
+   3: datasources:
+   4:   - name: Prometheus
+   5:     type: prometheus
+   6:     access: proxy
+>> 7:     url: http://prometheus:9090
+   8:     isDefault: true
+   9:     editable: false
+   10: 

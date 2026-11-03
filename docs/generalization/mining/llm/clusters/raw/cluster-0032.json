@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0032",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 975,
+  "completion_tokens": 225,
+  "total_tokens": 1200,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"not-dependency\", \"reason\": \"The line is a commented-out example command in a shell script, not actual runtime code invoking kafka.\"}, {\"i\": 1, \"verdict\": \"not-dependency\", \"reason\": \"The line pulls a Docker image by name, which is not a runtime call or connection to the keycloak component.\"}, {\"i\": 2, \"verdict\": \"dependency\", \"reason\": \"The curl command in a shell script sends an HTTP request to connector:8083, indicating a runtime dependency from the script's owning component to connector.\"}], \"rule\": {\"general\": false, \"trigger\": \"shell + hostport\", \"edge\": \"source component -> target component\", \"exclusions\": \"lines that are comments or docker pull commands\", \"confidence\": \"medium\"}, \"summary\": \"Only actual runtime commands (e.g. curl calls) in shell scripts to host:port addresses indicate dependencies; comments and docker pull commands do not, so no single syntax-based rule suffices.\"}",
+ "payload": {
+  "rank": 32,
+  "kind": "shell",
+  "cls": "hostport",
+  "detail": "-",
+  "repos": 3,
+  "mentions": 10,
+  "samples": [
+   {
+    "repo": "Mikaelemmmm__go-zero-looklook",
+    "source": "deploy",
+    "target": "kafka",
+    "file": "deploy/script/gencode/gen.sh",
+    "line": 30,
+    "kind": "shell",
+    "cls": "hostport",
+    "detail": "-",
+    "tag": "unread",
+    "text": "# kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group {group}",
+    "context": "   26: \n   27: # 创建kafka的topic\n   28: # kafka-topics.sh --create --zookeeper zookeeper:2181 --replication-factor 1 -partitions 1 --topic {topic}\n   29: # 查看消费者组情况\n>> 30: # kafka-consumer-groups.sh --bootstrap-server kafka:9092 --describe --group {group}\n   31: # 命令行消费\n   32: # ./kafka-console-consumer.sh  --bootstrap-server kafka:9092  --topic looklook-log   --from-beginning\n   33: # 命令生产\n   34: # ./kafka-console-producer.sh --bootstrap-server kafka:9092 --topic second"
+   },
+   {
+    "repo": "SaiUpadhyayula__spring-boot-3-microservices-course",
+    "source": "?",
+    "target": "keycloak",
+    "file": "k8s/kind/kind-load.sh",
+    "line": 8,
+    "kind": "shell",
+    "cls": "hostport",
+    "detail": "-",
+    "tag": "unread",
+    "text": "docker pull quay.io/keycloak/keycloak:24.0.1",
+    "context": "   4: docker pull confluentinc/cp-kafka:7.5.0\n   5: docker pull confluentinc/cp-schema-registry:7.5.0\n   6: docker pull provectuslabs/kafka-ui:latest\n   7: docker pull mysql:8\n>> 8: docker pull quay.io/keycloak/keycloak:24.0.1\n   9: docker pull grafana/loki:main\n   10: docker pull prom/prometheus:v2.46.0\n   11: docker pull grafana/tempo:2.2.2\n   12: docker pull grafana/grafana:10.1.0"
+   },
+   {
+    "repo": "thangchung__northwind-dotnet",
+    "source": "?",
+    "target": "connector",
+    "file": "_build/scripts/init.sh",
+    "line": 4,
+    "kind": "shell",
+    "cls": "hostport",
+    "detail": "-",
+    "tag": "unread",
+    "text": "curl -X POST -H \"Accept:application/json\" -H \"Content-Type:application/json\" connector:8083/connectors/ -d '",
+    "context": "   1: \n   2: apk add --update curl && rm -rf /var/cache/apk/*\n   3: \n>> 4: curl -X POST -H \"Accept:application/json\" -H \"Content-Type:application/json\" connector:8083/connectors/ -d '\n   5: {\n   6:   \"name\": \"movie_outbox_source\",\n   7:   \"config\": {\n   8:     \"connector.class\": \"io.debezium.connector.postgresql.PostgresConnector\","
+   }
+  ]
+ }
+}

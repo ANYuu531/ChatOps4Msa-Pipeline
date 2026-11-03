@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0030",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 763,
+  "completion_tokens": 252,
+  "total_tokens": 1015,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"not-dependency\", \"reason\": \"The FROM line names a base image 'node', which is a platform/runtime image, not a runtime dependency on the 'node' component declared in the repo.\"}, {\"i\": 1, \"verdict\": \"not-dependency\", \"reason\": \"Similarly, the FROM line uses a base image 'node', unrelated to the 'node' component declared in the repo; it's a build/runtime environment, not a runtime dependency.\"}, {\"i\": 2, \"verdict\": \"not-dependency\", \"reason\": \"The FROM line specifies a base image 'keycloak', which is a platform image, not a runtime dependency on the 'keycloak' component declared in the repo.\"}], \"rule\": {\"general\": false, \"trigger\": \"dockerfile + hostport (FROM line)\", \"edge\": \"N/A\", \"exclusions\": \"N/A\", \"confidence\": \"high\"}, \"summary\": \"All samples are FROM lines in Dockerfiles specifying base images named like components, but these do not represent runtime dependencies between components; thus no general syntactic rule on FROM lines can reliably infer edges without false positives.\"}",
+ "payload": {
+  "rank": 30,
+  "kind": "dockerfile",
+  "cls": "hostport",
+  "detail": "-",
+  "repos": 3,
+  "mentions": 12,
+  "samples": [
+   {
+    "repo": "tkssharma__nodejs-microservices-patterns",
+    "source": "notification",
+    "target": "node",
+    "file": "event-driven-microservices-docker/services/notification/Dockerfile",
+    "line": 2,
+    "kind": "dockerfile",
+    "cls": "hostport",
+    "detail": "-",
+    "tag": "file-read",
+    "text": "FROM node:11.2.0-alpine",
+    "context": "   1: # Use Node v11.2 as the base image.\n>> 2: FROM node:11.2.0-alpine\n   3: \n   4: #Set the working directory\n   5: WORKDIR /usr/app\n   6: "
+   },
+   {
+    "repo": "tkssharma__12-factor-app-microservices",
+    "source": "nestjs-sequelize-postgres-03",
+    "target": "node",
+    "file": "nestjs-sequelize-postgres #03/Dockerfile",
+    "line": 1,
+    "kind": "dockerfile",
+    "cls": "hostport",
+    "detail": "-",
+    "tag": "file-read",
+    "text": "FROM node:12-buster-slim",
+    "context": ">> 1: FROM node:12-buster-slim\n   2: \n   3: ARG GITLAB_ACCESS_TOKEN\n   4: \n   5: WORKDIR /app"
+   },
+   {
+    "repo": "opexdev__core",
+    "source": "keycloak-setup",
+    "target": "keycloak",
+    "file": "auth-gateway/keycloak-setup/Dockerfile",
+    "line": 8,
+    "kind": "dockerfile",
+    "cls": "hostport",
+    "detail": "-",
+    "tag": "file-read",
+    "text": "FROM quay.io/keycloak/keycloak:26.1",
+    "context": "   4: RUN mvn dependency:go-offline\n   5: COPY spi/src ./src\n   6: RUN mvn clean install\n   7: \n>> 8: FROM quay.io/keycloak/keycloak:26.1\n   9: COPY --from=builder /build/spi/target/*.jar /opt/keycloak/providers/\n   10: COPY realms/ /opt/keycloak/data/import/"
+   }
+  ]
+ }
+}

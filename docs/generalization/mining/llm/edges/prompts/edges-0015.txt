@@ -1,0 +1,98 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=kalintsenkov__BettingSystem watchdog -> games (type sync-http)
+  cited code: src/docker-compose.yml#depends_on
+
+  cited code: src/docker-compose.yml
+   96:         depends_on:
+   97:             - data
+   98:             - messages
+   99:             
+>> 100:     games:
+   101:         container_name: games
+   102:         image: kalintsenkov/bettingsystem-games-service:1.0
+   103:         build:
+   104:             context: ./Server
+
+[1] repo=kalintsenkov__BettingSystem teams -> sqlserver (type db)
+  cited code: src/docker-compose.yml
+   2: 
+   3: services:
+   4: 
+   5:     data:
+>> 6:         container_name: sqlserver
+   7:         image: mcr.microsoft.com/mssql/server:2019-latest
+   8:         ports: 
+   9:             - "1433:1433"
+   10:         environment:
+
+[2] repo=kreta__Kreta nginx -> php (type sync-http)
+  cited code: etc/docker/docker-compose.yml#depends_on
+
+
+[3] repo=kreta__Kreta nginx -> node (type sync-http)
+  cited code: etc/docker/docker-compose.yml#depends_on
+
+
+[4] repo=kreta__Kreta php -> db (type sync-http)
+  cited code: etc/docker/docker-compose.yml#depends_on
+
+
+[5] repo=mabuonomo__example-nestjs-microservices-grpc prisma -> mysql (type db)
+  cited code: docker-compose.yml#depends_on
+
+
+[6] repo=madslundt__NetCoreMicroservicesSample users_service -> consul (type sync-http)
+  cited code: Src/UsersService/appsettings.json
+   48:   "ElasticApm": {
+   49:     "ServerUrls": "http://apm:8200"
+   50:   },
+   51:   "ConsulOptions": {
+>> 52:     "ConsulAddress": "http://consul:8500",
+   53:     "ServiceAddress": "http://users_service",
+   54:     "ServiceName": "UsersService",
+   55:     "DisableAgentCheck": false,
+   56:     "Tags": []
+  cited code: Compose/docker-compose.services.yml#depends_on
+
+
+[7] repo=madslundt__NetCoreMicroservicesSample api -> reviews_service (type sync-http)
+  cited code: Compose/docker-compose.ocelot.yml#depends_on
+
+
+[8] repo=madslundt__NetCoreMicroservicesSample users_service -> mongo (type db)
+  cited code: Src/UsersService/appsettings.json
+   83:       }
+   84:     ]
+   85:   },
+   86:   "OutboxOptions": {
+>> 87:     "OutboxType": "mongo",
+   88:     "DatabaseName": "OutboxDb",
+   89:     "CollectionName": "UserMessages",
+   90:     "ConnectionString": "mongodb://mongo:27017",
+   91:     "DeleteAfter": false
+  cited code: Compose/docker-compose.services.yml#depends_on
+
+
+[9] repo=mateaix__matecloud mate-system -> api.openai.com (type external)
+  cited code: mate-biz/mate-system/src/main/java/vip/mate/system/admin/application/model/ModelProviderDescriptors.java:48
+   44:     static {
+   45:         register(ModelVendor.OPENAI, ProviderDescriptor.builder("OPENAI", "OpenAI")
+   46:                         .describe("OpenAI 兼容接口(GPT / text-embedding / TTS / Whisper)")
+   47:                         .secret("apiKey", "API Key", true)
+>> 48:                         .text("baseUrl", "Base URL", false, "https://api.openai.com")
+   49:                         .build(),
+   50:                 List.of(ModelType.LLM, ModelType.EMBEDDING, ModelType.TTS, ModelType.STT,
+   51:                         ModelType.IMAGE, ModelType.MODERATION));
+   52: 

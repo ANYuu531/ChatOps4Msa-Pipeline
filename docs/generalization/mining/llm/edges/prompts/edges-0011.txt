@@ -1,0 +1,100 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=getlarge__ticketing orders-service -> ticketing.dev (type external)
+  cited code: docker-compose.yaml
+   105:       NODE_ENV: ${NODE_ENV:-development}
+   106:       LOG_LEVEL: ${LOG_LEVEL:-info}
+   107:       PORT: ${AUTH_HTTP_PORT:-3000}
+   108:       SERVER_URL: http://localhost:${AUTH_HTTP_PORT:-3000}
+>> 109:       PROXY_SERVER_URLS: ${PROXY_SERVER_URLS:-http://ticketing.dev}
+   110:       FRONTEND_URL: ${FRONTEND_URL:-http://ticketing.dev}
+   111:       JWT_ALGORITHM: ${JWT_ALGORITHM:-ES256}
+   112:       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-60m}
+   113:       JWT_ISSUER: ${JWT_ISSUER:-ticketing.dev}
+
+[1] repo=getlarge__ticketing kratos-selfservice-ui-node -> hydra (type sync-http)
+  cited code: docker-compose.yaml
+   425:     image: oryd/kratos-selfservice-ui-node:v1.1.0
+   426:     environment:
+   427:       - KRATOS_PUBLIC_URL=http://kratos:4433
+   428:       - KRATOS_BROWSER_URL=http://127.0.0.1:4433
+>> 429:       - HYDRA_ADMIN_URL=http://hydra:4445
+   430:       - KRATOS_ADMIN_URL=http://kratos:4434
+   431:       - PORT=4455
+   432:       - COOKIE_SECRET=changeme
+   433:       - CSRF_COOKIE_NAME=cookie_name
+
+[2] repo=getlarge__ticketing payments-service -> mongo-primary (type db)
+  cited code: docker-compose.yaml
+   21:   keto_postgres_volume:
+   22: 
+   23: services:
+   24:   # region Storage
+>> 25:   mongo-primary:
+   26:     image: mongo:7
+   27:     container_name: ticketing-mongo-primary
+   28:     hostname: ticketing-mongo-primary
+   29:     volumes:
+
+[3] repo=go-kratos__beer-shop user-service -> user-db (type db)
+  cited code: deploy/docker-compose/docker-compose.yaml#depends_on
+
+
+[4] repo=go-kratos__beer-shop kafka -> zookeeper (type sync-http)
+  cited code: deploy/docker-compose/docker-compose.yaml#depends_on
+
+  cited code: deploy/docker-compose/docker-compose.yaml
+   50:       MYSQL_ROOT_PASSWORD: dangerous
+   51:   payment-service:
+   52:     image: go-kratos/beer-payment-service:0.1.0
+   53:     hostname: cart-service
+>> 54:   zookeeper:
+   55:     image: docker.io/bitnami/zookeeper:3.7
+   56:     ports:
+   57:       - "2181:2181"
+   58:     environment:
+
+[5] repo=go-kratos__beer-shop catalog-service -> catalog-db (type db)
+  cited code: deploy/docker-compose/docker-compose.yaml#depends_on
+
+
+[6] repo=go-saas__kit apisix -> user (type sync-http)
+  cited code: docker-compose.ms.yml#depends_on
+
+
+[7] repo=go-saas__kit kafka-ui -> kafka (type async)
+  cited code: docker-compose.kafka.yml
+   1: version: '3.7'
+   2: services:
+   3: 
+>> 4:   kafka:
+   5:     image: bitnami/kafka:3.5.1
+   6:     environment:
+   7:       - KAFKA_CFG_PROCESS_ROLES=broker,controller
+   8:       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+
+[8] repo=go-saas__kit realtime -> user (type sync-http)
+  cited code: docker-compose.ms.yml#depends_on
+
+
+[9] repo=hamed-shirbandi__TaskoMask owners-read-api -> stageidentity.taskomask.ir (type external)
+  cited code: src/2-Services/Owners/Api/Owners.Read.Api/appsettings.Staging.json
+   8:   "Caching": {
+   9:     "Enabled": false
+   10:   },
+   11:   "Jwt": {
+>> 12:     "Authority": "https://stageidentity.taskomask.ir"
+   13:   }
+   14: }
+   15: 

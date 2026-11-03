@@ -1,0 +1,118 @@
+{
+ "id": "cluster-0003",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1275,
+  "completion_tokens": 388,
+  "total_tokens": 1663,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [\n  {\"i\": 0, \"verdict\": \"not-dependency\", \"reason\": \"The literal \\\"geo\\\" is a string constant used in a switch-case, likely a command name or label, not a runtime address or connection to the geo component.\"},\n  {\"i\": 1, \"verdict\": \"not-dependency\", \"reason\": \"The literal \\\"reviews\\\" is a JSON struct tag key, used for serialization, not a runtime dependency on the reviews component.\"},\n  {\"i\": 2, \"verdict\": \"not-dependency\", \"reason\": \"The literal \\\"forwarder\\\" is a command name string in a CLI definition, not a runtime call or connection to the forwarder component.\"},\n  {\"i\": 3, \"verdict\": \"not-dependency\", \"reason\": \"The literal \\\"user\\\" is a string returned by a method, likely an identifier or label, not a runtime dependency on the user component.\"},\n  {\"i\": 4, \"verdict\": \"not-dependency\", \"reason\": \"The literal \\\"query\\\" is a JSON key in a map literal used to build an Elasticsearch query body, not a runtime dependency on a query component.\"},\n  {\"i\": 5, \"verdict\": \"not-dependency\", \"reason\": \"The literal \\\"redis\\\" is a mapstructure tag key in a config struct field, used for config unmarshalling, not a runtime dependency on the redis component.\"}\n],\n\"rule\": {\"general\": false, \"trigger\": \"src:go literal bare\", \"edge\": \"\", \"exclusions\": \"\", \"confidence\": \"high\"},\n\"summary\": \"All samples show literals used as labels, struct tags, command names, or JSON keys, not runtime addresses; no single syntactic rule on bare literals in Go source files can separate dependencies from non-dependencies here.\"}",
+ "payload": {
+  "rank": 3,
+  "kind": "src:go",
+  "cls": "literal",
+  "detail": "bare",
+  "repos": 10,
+  "mentions": 38,
+  "samples": [
+   {
+    "repo": "harlow__go-micro-services",
+    "source": "?",
+    "target": "geo",
+    "file": "cmd/go-micro-services/main.go",
+    "line": 61,
+    "kind": "src:go",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "case \"geo\":",
+    "context": "   57: \n   58: \tvar srv server\n   59: \n   60: \tswitch cmd {\n>> 61: \tcase \"geo\":\n   62: \t\tsrv = geosrv.New()\n   63: \tcase \"rate\":\n   64: \t\tsrv = ratesrv.New()\n   65: \tcase \"profile\":"
+   },
+   {
+    "repo": "sdgmf__go-project-sample",
+    "source": "?",
+    "target": "reviews",
+    "file": "internal/pkg/models/product.go",
+    "line": 6,
+    "kind": "src:go",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "Reviews []*Review `json:\"reviews\"`",
+    "context": "   2: \n   3: type Product struct {\n   4: \tDetail *Detail `json:\"detail\"`\n   5: \tRating *Rating `json:\"rating\"`\n>> 6: \tReviews []*Review `json:\"reviews\"`\n   7: }\n   8: "
+   },
+   {
+    "repo": "minghsu0107__go-random-chat",
+    "source": "?",
+    "target": "forwarder",
+    "file": "cmd/forwarder.go",
+    "line": 12,
+    "kind": "src:go",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "Use:   \"forwarder\",",
+    "context": "   8: \t\"github.com/spf13/cobra\"\n   9: )\n   10: \n   11: var forwarderCmd = &cobra.Command{\n>> 12: \tUse:   \"forwarder\",\n   13: \tShort: \"forwarder server\",\n   14: \tRun: func(cmd *cobra.Command, args []string) {\n   15: \t\tserver, err := wire.InitializeForwarderServer(\"forwarder\")\n   16: \t\tif err != nil {"
+   },
+   {
+    "repo": "go-saas__kit",
+    "source": "?",
+    "target": "user",
+    "file": "pkg/authz/authz/subjects.go",
+    "line": 27,
+    "kind": "src:go",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "return \"user\"",
+    "context": "   23: \n   24: }\n   25: \n   26: func (u *UserSubject) GetName() string {\n>> 27: \treturn \"user\"\n   28: }\n   29: func (u *UserSubject) GetIdentity() string {\n   30: \treturn fmt.Sprintf(\"%s/%s\", u.GetName(), u.userId)\n   31: }"
+   },
+   {
+    "repo": "tinrab__meower",
+    "source": "?",
+    "target": "query",
+    "file": "search/elastic.go",
+    "line": 49,
+    "kind": "src:go",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "\"query\": map[string]interface{}{",
+    "context": "   45: \n   46: func (r *ElasticRepository) SearchMeows(ctx context.Context, query string, skip uint64, take uint64) (result []schema.Meow, err error) {\n   47: \tvar buf bytes.Buffer\n   48: \treqBody := map[string]interface{}{\n>> 49: \t\t\"query\": map[string]interface{}{\n   50: \t\t\t\"multi_match\": map[string]interface{}{\n   51: \t\t\t\t\"query\":            query,\n   52: \t\t\t\t\"fields\":           []string{\"body\"},\n   53: \t\t\t\t\"fuzziness\":        3,"
+   },
+   {
+    "repo": "AleksK1NG__Go-CQRS-Kafka-gRPC-Microservices",
+    "source": "reader_service",
+    "target": "redis",
+    "file": "reader_service/config/config.go",
+    "line": 33,
+    "kind": "src:go",
+    "cls": "literal",
+    "detail": "bare",
+    "tag": "unread",
+    "text": "Redis            *redis.Config       `mapstructure:\"redis\"`",
+    "context": "   29: \tGRPC             GRPC                `mapstructure:\"grpc\"`\n   30: \tPostgresql       *postgres.Config    `mapstructure:\"postgres\"`\n   31: \tKafka            *kafkaClient.Config `mapstructure:\"kafka\"`\n   32: \tMongo            *mongodb.Config     `mapstructure:\"mongo\"`\n>> 33: \tRedis            *redis.Config       `mapstructure:\"redis\"`\n   34: \tMongoCollections MongoCollections    `mapstructure:\"mongoCollections\"`\n   35: \tProbes           probes.Config       `mapstructure:\"probes\"`\n   36: \tServiceSettings  ServiceSettings     `mapstructure:\"serviceSettings\"`\n   37: \tJaeger           *tracing.Config     `mapstructure:\"jaeger\"`"
+   }
+  ]
+ }
+}

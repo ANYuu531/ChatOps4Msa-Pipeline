@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0091",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 725,
+  "completion_tokens": 202,
+  "total_tokens": 927,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The code calls this.mongo.pingCheck('mongo'), indicating SOURCE directly depends on TARGET mongo at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The code calls this.redis.pingCheck('redis'), indicating SOURCE expiration directly depends on TARGET redis at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"src:typescript; position=literal; context key=call pingcheck\",\n    \"edge\": \"SOURCE -> TARGET named in the pingCheck literal argument\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show runtime dependencies when a component calls pingCheck with a literal naming another component, so drawing edges from SOURCE to TARGET in such calls is a reliable rule.\"\n}",
+ "payload": {
+  "rank": 91,
+  "kind": "src:typescript",
+  "cls": "literal",
+  "detail": "call pingcheck",
+  "repos": 2,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "juicycleff__ultimate-backend",
+    "source": "?",
+    "target": "mongo",
+    "file": "libs/core/src/heath-indicators/base-health.service.ts",
+    "line": 54,
+    "kind": "src:typescript",
+    "cls": "literal",
+    "detail": "call pingcheck",
+    "tag": "file-read",
+    "text": "async () => this.mongo.pingCheck('mongo'),",
+    "context": "   50:       const healthEndpoint: TerminusEndpoint = {\n   51:         url: '/health',\n   52:         healthIndicators: [\n   53:           ...healths,\n>> 54:           async () => this.mongo.pingCheck('mongo'),\n   55:         ],\n   56:       };\n   57:       return {\n   58:         endpoints: [healthEndpoint],"
+   },
+   {
+    "repo": "getlarge__ticketing",
+    "source": "expiration",
+    "target": "redis",
+    "file": "apps/expiration/src/app/health/health.controller.ts",
+    "line": 81,
+    "kind": "src:typescript",
+    "cls": "literal",
+    "detail": "call pingcheck",
+    "tag": "unread",
+    "text": "this.redis.pingCheck('redis', {",
+    "context": "   77:         this.http.pingCheck('http', 'https://google.com', {\n   78:           timeout: HEALTH_HTTP_PING_TIMEOUT,\n   79:         }),\n   80:       () =>\n>> 81:         this.redis.pingCheck('redis', {\n   82:           options: new RedisConfig(this.configService).options,\n   83:           timeout: HEALTH_REDIS_PING_TIMEOUT,\n   84:         }),\n   85:       () => this.microservice.pingCheck('rpc', this.microserviceOptions),"
+   }
+  ]
+ }
+}

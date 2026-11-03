@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0105",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 696,
+  "completion_tokens": 170,
+  "total_tokens": 866,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"not-dependency\", \"reason\": \"The 'user-service:' key in a top-level Docker Compose service definition declares the service itself, not a runtime dependency of another component.\"}, {\"i\": 1, \"verdict\": \"not-dependency\", \"reason\": \"Similarly, 'user-service:' here declares a service in the Docker Compose file and does not indicate a runtime call or connection from another component.\"}], \"rule\": {\"general\": false, \"trigger\": \"yaml key under top-level services\", \"edge\": \"N/A\", \"exclusions\": \"N/A\", \"confidence\": \"high\"}, \"summary\": \"Top-level service keys in Docker Compose or similar YAML files declare components rather than dependencies, so no edges should be drawn from these lines.\"}",
+ "payload": {
+  "rank": 105,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "services.user-service",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "hantsy__spring-microservice-sample",
+    "source": "?",
+    "target": "user-service",
+    "file": "docker-stack.yml",
+    "line": 48,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "services.user-service",
+    "tag": "unread",
+    "text": "user-service:",
+    "context": "   44:         parallelism: 2\n   45:       restart_policy:\n   46:         condition: on-failure\n   47:   \n>> 48:   user-service: \n   49:     image: hantsy/user-service\n   50:     environment:\n   51:       SPRING_DATASOURCE_URL: jdbc:mysql://userdb:3306/userdb\n   52:       SPRING_REDIS_HOST: redis"
+   },
+   {
+    "repo": "dashersw__cote-workshop",
+    "source": "?",
+    "target": "user-service",
+    "file": "docker-swarm.yml",
+    "line": 95,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "services.user-service",
+    "tag": "unread",
+    "text": "user-service:",
+    "context": "   91:       - COTE_DISCOVERY_REDIS_HOST=redis\n   92:     depends_on:\n   93:       - db\n   94: \n>> 95:   user-service:\n   96:     networks:\n   97:       - cote\n   98:     image: dashersw/cote-workshop\n   99:     command: node services/user-service.js"
+   }
+  ]
+ }
+}

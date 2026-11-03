@@ -1,0 +1,118 @@
+{
+ "id": "cluster-0001",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1260,
+  "completion_tokens": 410,
+  "total_tokens": 1670,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Prometheus scrapes metrics from the target 'looklook:4001', so prometheus depends on looklook at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Prometheus scrapes metrics from 'otel-collector:8889' and 'otel-collector:8888', so prometheus depends on otel-collector.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The SOURCE component is unknown, so it is unclear which component owns this prometheus.yaml and thus who depends on otel-collector.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Prometheus scrapes metrics from 'grafana:3000', so prometheus depends on grafana.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"dependency\",\n      \"reason\": \"Prometheus scrapes metrics from 'station:9040', so prometheus depends on station.\"\n    },\n    {\n      \"i\": 5,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The SOURCE component is unknown, so it is unclear which component owns this prometheus-consul.yml and thus who depends on consul.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml file; key path includes scrape_configs.static_configs.targets\",\n    \"edge\": \"SOURCE component owning the prometheus scrape config -> TARGET component named in targets\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"In Prometheus scrape_configs static_configs.targets entries, the component owning the Prometheus config depends on the components named as targets because it scrapes metrics from them at runtime.\"\n}",
+ "payload": {
+  "rank": 1,
+  "kind": "yaml",
+  "cls": "hostport",
+  "detail": "scrape_configs.static_configs.targets",
+  "repos": 14,
+  "mentions": 51,
+  "samples": [
+   {
+    "repo": "Mikaelemmmm__go-zero-looklook",
+    "source": "prometheus",
+    "target": "looklook",
+    "file": "deploy/prometheus/server/prometheus.yml",
+    "line": 14,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "scrape_configs.static_configs.targets",
+    "tag": "unread",
+    "text": "- targets: [ 'looklook:4001' ]",
+    "context": "   10:       - targets: ['127.0.0.1:9090']\n   11: \n   12:   - job_name: 'order-api'\n   13:     static_configs:\n>> 14:       - targets: [ 'looklook:4001' ]\n   15:         labels:\n   16:           job: order-api\n   17:           app: order-api\n   18:           env: dev"
+   },
+   {
+    "repo": "phongnguyend__Practical.CleanArchitecture",
+    "source": "prometheus",
+    "target": "otel-collector",
+    "file": "tools/opentelemetry/prometheus/prometheus.yml",
+    "line": 6,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "scrape_configs.static_configs.targets",
+    "tag": "unread",
+    "text": "- 'otel-collector:8889'",
+    "context": "   2:   - job_name: otel-collector\n   3:     scrape_interval: 10s\n   4:     static_configs:\n   5:       - targets:\n>> 6:           - 'otel-collector:8889'\n   7:       - targets:\n   8:           - 'otel-collector:8888'\n   9:   - job_name: webapi\n   10:     scrape_interval: 15s"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "otel-collector",
+    "file": "deployments/configs/prometheus.yaml",
+    "line": 14,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "scrape_configs.static_configs.targets",
+    "tag": "unread",
+    "text": "- targets: [ 'otel-collector:8889' ]",
+    "context": "   10:   - job_name: \"otel-collector\"\n   11:     scrape_interval: 10s\n   12:     static_configs:\n   13:       # otel-collector Prometheus exporter metrics\n>> 14:       - targets: [ 'otel-collector:8889' ]\n   15:       - targets: [ 'otel-collector:8888' ]\n   16: \n   17:   - job_name: \"prometheus\"\n   18:     static_configs:"
+   },
+   {
+    "repo": "sdgmf__go-project-sample",
+    "source": "prometheus",
+    "target": "grafana",
+    "file": "configs/prometheus/prometheus.yml",
+    "line": 19,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "scrape_configs.static_configs.targets",
+    "tag": "unread",
+    "text": "- \"grafana:3000\"",
+    "context": "   15:         target_label: app\n   16:   - job_name: grafana\n   17:     static_configs:\n   18:       - targets:\n>> 19:           - \"grafana:3000\"\n   20:   - job_name: prometheus\n   21:     static_configs:\n   22:       - targets:\n   23:           - \"localhost:9090\""
+   },
+   {
+    "repo": "jingsewu__open-wes",
+    "source": "prometheus",
+    "target": "station",
+    "file": "monitoring/prometheus/prometheus.yml",
+    "line": 25,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "scrape_configs.static_configs.targets",
+    "tag": "unread",
+    "text": "- targets: [\"station:9040\"]",
+    "context": "   21:   - job_name: \"station-server\"\n   22:     metrics_path: \"/actuator/prometheus\"\n   23:     scrape_interval: 15s\n   24:     static_configs:\n>> 25:       - targets: [\"station:9040\"]\n   26: \n   27:   - job_name: \"gateway-server\"\n   28:     metrics_path: \"/actuator/prometheus\"\n   29:     scrape_interval: 15s"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "?",
+    "target": "consul",
+    "file": "compose/monitoring/prometheus-consul.yml",
+    "line": 57,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "scrape_configs.static_configs.targets",
+    "tag": "unread",
+    "text": "- targets: ['consul:8500']",
+    "context": "   53:   # Discovery service (Consul)\n   54:   - job_name: 'discovery'\n   55:     metrics_path: '/metrics'\n   56:     static_configs:\n>> 57:       - targets: ['consul:8500']\n   58:         labels:\n   59:           service: 'discovery'\n   60:           application: 'consul'\n   61: "
+   }
+  ]
+ }
+}

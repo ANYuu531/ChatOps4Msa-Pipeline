@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0090",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 717,
+  "completion_tokens": 196,
+  "total_tokens": 913,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The client component creates an axios instance with baseURL pointing to ingress-nginx-controller, indicating a runtime HTTP call dependency.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The frontend component creates an axios instance with baseURL set to ingress-nginx-controller, showing a runtime HTTP dependency.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"src:javascript + url + bare\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show runtime HTTP client creation targeting the named component, so drawing edges from the source component to the target component on bare URL strings in JavaScript source files is a reliable rule.\"\n}",
+ "payload": {
+  "rank": 90,
+  "kind": "src:javascript",
+  "cls": "url",
+  "detail": "bare",
+  "repos": 2,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "saalikmubeen__microservices-architectured-app",
+    "source": "client",
+    "target": "ingress-nginx-controller",
+    "file": "client/buildClient.js",
+    "line": 9,
+    "kind": "src:javascript",
+    "cls": "url",
+    "detail": "bare",
+    "tag": "file-read",
+    "text": "\"http://ingress-nginx-controller.ingress-nginx.svc.cluster.local\",",
+    "context": "   5:         // We are on the server\n   6: \n   7:         return axios.create({\n   8:             baseURL:\n>> 9:                 \"http://ingress-nginx-controller.ingress-nginx.svc.cluster.local\",\n   10:             headers: req.headers,\n   11:         });\n   12:     } else {\n   13:         // We must be on the browser"
+   },
+   {
+    "repo": "JarrodMalkovic__auction-website",
+    "source": "frontend",
+    "target": "ingress-nginx-controller",
+    "file": "services/frontend/src/api/base-client.js",
+    "line": 6,
+    "kind": "src:javascript",
+    "cls": "url",
+    "detail": "bare",
+    "tag": "line-read",
+    "text": "baseURL: 'http://ingress-nginx-controller.ingress-nginx.svc.cluster.local',",
+    "context": "   2: \n   3: const buildClient = (context) => {\n   4:   if(typeof window === 'undefined'){\n   5:     return axios.create({\n>> 6:       baseURL: 'http://ingress-nginx-controller.ingress-nginx.svc.cluster.local',\n   7:       headers: context.req.headers\n   8:     })\n   9:   }else{\n   10:     return axios.create({"
+   }
+  ]
+ }
+}

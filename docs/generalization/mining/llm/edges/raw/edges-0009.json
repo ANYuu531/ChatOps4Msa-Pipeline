@@ -1,0 +1,234 @@
+{
+ "id": "edges-0009",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1834,
+  "completion_tokens": 417,
+  "total_tokens": 2251,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"correct\", \"reason\": \"The environment variable CUSTOMCONNSTR_DefaultConnection in the web-status service points to the database service, indicating a runtime dependency.\"}, {\"i\": 1, \"verdict\": \"wrong\", \"reason\": \"Only 'depends_on' metadata is cited without evidence that api-identity actually connects to or sends messages to rabbitmq at runtime.\"}, {\"i\": 2, \"verdict\": \"unsure\", \"reason\": \"The environment variable ZIPKIN_HOST is set to bookstore-zipkin, but no direct evidence of runtime calls or connections is shown.\"}, {\"i\": 3, \"verdict\": \"correct\", \"reason\": \"The API gateway routing configuration maps /payment/** paths to bookstore-payment-service, indicating runtime routing dependency.\"}, {\"i\": 4, \"verdict\": \"wrong\", \"reason\": \"Only the declaration of bookstore-influxdb service is shown, no evidence that bookstore-chronograf calls or connects to it.\"}, {\"i\": 5, \"verdict\": \"wrong\", \"reason\": \"Only the declaration of rabbitmq service is shown, no evidence that database depends on or connects to rabbitmq.\"}, {\"i\": 6, \"verdict\": \"wrong\", \"reason\": \"Only the declaration of rabbitmq service is shown, no evidence that backend depends on or connects to rabbitmq.\"}, {\"i\": 7, \"verdict\": \"wrong\", \"reason\": \"Only the declaration of redis service is shown, no evidence that database depends on or connects to redis.\"}, {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"The assessment.api configures JWT bearer authentication with IdentityServerURL pointing to identity.api, indicating runtime dependency.\"}, {\"i\": 9, \"verdict\": \"wrong\", \"reason\": \"The URL to tools.ietf.org is used only as a string in error details, not as a runtime dependency or call.\"}]}",
+ "payload": [
+  {
+   "repo": "desenvolvedor-io__dev-store",
+   "source": "web-status",
+   "target": "database",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose-local.yml",
+     "file": "docker/docker-compose-local.yml",
+     "line": 29,
+     "kind": "compose",
+     "context": "   25:             dockerfile: ./services/DevStore.Identity.API/Dockerfile        \n   26:         restart: always\n   27:         environment:\n   28:             <<: *common-variables\n>> 29:             CUSTOMCONNSTR_DefaultConnection: \"Server=database;Database=LocalDSUsers;User Id=sa;Password=MyDB@123;MultipleActiveResultSets=true;TrustServerCertificate=True;\"\n   30:         volumes:\n   31:             - ./certs:/https:ro\n   32:         depends_on:\n   33:             generate-pfx:"
+    },
+    {
+     "ref": "code: docker/docker-compose.yml",
+     "file": "docker/docker-compose.yml",
+     "line": 22,
+     "kind": "compose",
+     "context": "   18:         container_name: devstore-api-identity\n   19:         restart: always\n   20:         environment:            \n   21:             <<: *common-variables\n>> 22:             CUSTOMCONNSTR_DefaultConnection: \"Server=database;Database=DSUsers;MultipleActiveResultSets=true;User Id=sa;Password=MyDB@123;MultipleActiveResultSets=true;TrustServerCertificate=True;\"\n   23:         volumes:\n   24:             - ./certs:/https:ro\n   25:         depends_on:\n   26:             generate-pfx:"
+    }
+   ]
+  },
+  {
+   "repo": "desenvolvedor-io__dev-store",
+   "source": "api-identity",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose-local.yml#depends_on",
+     "file": "docker/docker-compose-local.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "devdcores__BookStoreApp-Distributed-Application",
+   "source": "bookstore-order-service",
+   "target": "bookstore-zipkin",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 51,
+     "kind": "compose",
+     "context": "   47:     networks:\n   48:       - bookstore-app-network\n   49:     environment:\n   50:       - SERVER_PORT=8765\n>> 51:       - ZIPKIN_HOST=bookstore-zipkin:9411\n   52:       - SPRING_PROFILES_ACTIVE=docker\n   53: \n   54:   bookstore-account-service:\n   55:     build:"
+    }
+   ]
+  },
+  {
+   "repo": "devdcores__BookStoreApp-Distributed-Application",
+   "source": "bookstore-zuul-api-gateway-server",
+   "target": "bookstore-payment-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: bookstore-api-gateway-service/src/main/resources/application.yml",
+     "file": "bookstore-api-gateway-service/src/main/resources/application.yml",
+     "line": 42,
+     "kind": "spring-yaml",
+     "context": "   38:       path: /order/**\n   39:       serviceId: bookstore-order-service\n   40:     payment:\n   41:       path: /payment/**\n>> 42:       serviceId: bookstore-payment-service\n   43:   ribbon:\n   44:     eager-load:\n   45:       enabled: true\n   46:   ribbon-isolation-strategy: THREAD"
+    }
+   ]
+  },
+  {
+   "repo": "devdcores__BookStoreApp-Distributed-Application",
+   "source": "bookstore-chronograf",
+   "target": "bookstore-influxdb",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 198,
+     "kind": "compose",
+     "context": "   194:       - /var/run/docker.sock:/var/run/docker.sock\n   195:     networks:\n   196:       - bookstore-app-network\n   197: \n>> 198:   bookstore-influxdb:\n   199:     image: influxdb\n   200:     container_name: bookstore-influxdb\n   201:     hostname: bookstore-influxdb\n   202:     volumes:"
+    }
+   ]
+  },
+  {
+   "repo": "ebosas__microservices",
+   "source": "database",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 2,
+     "kind": "compose",
+     "context": "   1: services:\n>> 2:     rabbitmq:\n   3:         image: \"rabbitmq:3-management-alpine\"\n   4:         ports:\n   5:             - 5672:5672\n   6:             - 15672:15672"
+    }
+   ]
+  },
+  {
+   "repo": "ebosas__microservices",
+   "source": "backend",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 2,
+     "kind": "compose",
+     "context": "   1: services:\n>> 2:     rabbitmq:\n   3:         image: \"rabbitmq:3-management-alpine\"\n   4:         ports:\n   5:             - 5672:5672\n   6:             - 15672:15672"
+    }
+   ]
+  },
+  {
+   "repo": "ebosas__microservices",
+   "source": "database",
+   "target": "redis",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 27,
+     "kind": "compose",
+     "context": "   23:             test: [\"CMD-SHELL\", \"pg_isready -U postgres\"]\n   24:             interval: 10s\n   25:             timeout: 10s\n   26:             retries: 5\n>> 27:     redis:\n   28:         image: \"redis:6-alpine\"\n   29:         ports:\n   30:             - 6379:6379\n   31:         healthcheck:"
+    }
+   ]
+  },
+  {
+   "repo": "ebubekirdinc__SuuCat",
+   "source": "assessment.api",
+   "target": "identity.api",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Services/Assessment/src/WebUI/Program.cs:20",
+     "file": "src/Services/Assessment/src/WebUI/Program.cs",
+     "line": 20,
+     "kind": "src:csharp",
+     "context": "   16: builder.Services.AddWebUIServices();\n   17: builder.Services.AddAuthentication(\"Bearer\")\n   18:     .AddJwtBearer(\"Bearer\", options =>\n   19:     {\n>> 20:         options.Authority = builder.Configuration[\"IdentityServerURL\"];\n   21:         options.Audience = \"resource_assessment\"; \n   22:         options.RequireHttpsMetadata = false;\n   23:         // options.TokenValidationParameters = new TokenValidationParameters\n   24:         // {"
+    },
+    {
+     "ref": "code: docker-compose.override.yml",
+     "file": "docker-compose.override.yml",
+     "line": 116,
+     "kind": "compose",
+     "context": "   112:     environment:\n   113:       - ASPNETCORE_ENVIRONMENT=Development\n   114:       - \"ConnectionStrings:DefaultConnection=Server=notificationdb;Port=5432;Database=NotificationDb;User Id=admin;Password=admin1234;\"\n   115:       - RabbitMQUrl=rabbitmq\n>> 116:       - IdentityServerURL=http://identity.api\n   117:       - \"ElasticConfiguration:Uri=http://elasticsearch:9200\"\n   118:     depends_on:\n   119:       - notificationdb\n   120:       - rabbitmq"
+    }
+   ]
+  },
+  {
+   "repo": "ebubekirdinc__SuuCat",
+   "source": "assessment.api",
+   "target": "tools.ietf.org",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs:52",
+     "file": "src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs",
+     "line": 52,
+     "kind": "src:csharp",
+     "context": "   48:         var exception = (ValidationException)context.Exception;\n   49: \n   50:         var details = new ValidationProblemDetails(exception.Errors)\n   51:         {\n>> 52:             Type = \"https://tools.ietf.org/html/rfc7231#section-6.5.1\"\n   53:         };\n   54: \n   55:         context.Result = new BadRequestObjectResult(details);\n   56: "
+    },
+    {
+     "ref": "code: src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs:64",
+     "file": "src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs",
+     "line": 64,
+     "kind": "src:csharp",
+     "context": "   60:     private void HandleInvalidModelStateException(ExceptionContext context)\n   61:     {\n   62:         var details = new ValidationProblemDetails(context.ModelState)\n   63:         {\n>> 64:             Type = \"https://tools.ietf.org/html/rfc7231#section-6.5.1\"\n   65:         };\n   66: \n   67:         context.Result = new BadRequestObjectResult(details);\n   68: "
+    }
+   ]
+  }
+ ]
+}

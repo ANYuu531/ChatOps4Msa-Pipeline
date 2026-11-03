@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0095",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 705,
+  "completion_tokens": 211,
+  "total_tokens": 916,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"unsure\",\n      \"reason\": \"The .env file line shows a connection string referencing 'mongodb', but the owning component of this .env file is unknown, so we cannot confirm if SOURCE depends on TARGET.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"unsure\",\n      \"reason\": \"Similarly, the .env line references 'mongodb' in a connection string, but without knowing which component this .env file configures, we cannot confirm the dependency.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"dotenv + url position\",\n    \"edge\": \"unknown -> TARGET\",\n    \"exclusions\": \"unknown\",\n    \"confidence\": \"low\"\n  },\n  \"summary\": \"Without knowing which component owns the .env file, the presence of a TARGET name in a url-like value in dotenv files is insufficient to infer a dependency edge.\"\n}",
+ "payload": {
+  "rank": 95,
+  "kind": "dotenv",
+  "cls": "url",
+  "detail": "*",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "uid4oe__grpc-web-demo",
+    "source": "?",
+    "target": "mongodb",
+    "file": ".env",
+    "line": 12,
+    "kind": "dotenv",
+    "cls": "url",
+    "detail": "*",
+    "tag": "file-read",
+    "text": "MONGO_CONN=mongodb://mongodb:27017",
+    "context": "   8: MONGO_INITDB_ROOT_PASSWORD=admin\n   9: MONGO_INITDB_DATABASE=oe\n   10: MONGO_INITDB_USER=oe\n   11: MONGO_INITDB_PWD=oe\n>> 12: MONGO_CONN=mongodb://mongodb:27017\n   13: PARTNER_MONGO_COLLECTION=partner\n   14: OFFER_MONGO_COLLECTION=offer\n   15: \n   16: POSTGRES_USER=oe"
+   },
+   {
+    "repo": "uid4oe__microservices-go-grpc",
+    "source": "?",
+    "target": "mongodb",
+    "file": ".env",
+    "line": 8,
+    "kind": "dotenv",
+    "cls": "url",
+    "detail": "*",
+    "tag": "file-read",
+    "text": "MONGO_CONN=mongodb://mongodb:27017",
+    "context": "   4: MONGO_INITDB_ROOT_PASSWORD=admin\n   5: MONGO_INITDB_DATABASE=oe\n   6: MONGO_INITDB_USER=oe\n   7: MONGO_INITDB_PWD=oe\n>> 8: MONGO_CONN=mongodb://mongodb:27017\n   9: MONGO_COLLECTION=user\n   10: USER_GRPC_SERVICE=user-service:50051\n   11: \n   12: POSTGRES_USER=oe"
+   }
+  ]
+ }
+}

@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:go; position = key; context key = key addr
+They come from 2 different repositories (4 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=tinrab__meower SOURCE=? TARGET=postgres file=meow-service/main.go:42
+   38: 	}
+   39: 
+   40: 	// Connect to PostgreSQL
+   41: 	retry.ForeverSleep(2*time.Second, func(attempt int) error {
+>> 42: 		addr := fmt.Sprintf("postgres://%s:%s@postgres/%s?sslmode=disable", cfg.PostgresUser, cfg.PostgresPassword, cfg.PostgresDB)
+   43: 		repo, err := db.NewPostgres(addr)
+   44: 		if err != nil {
+   45: 			log.Println(err)
+   46: 			return err
+
+[1] repo=wsrh8888__beaver-server SOURCE=gateway_admin TARGET=etcd file=app/gateway/gateway_admin/core/proxy.go:96
+   92: 	}
+   93: 
+   94: 	// 固定使用 backend_admin 作为服务 key
+   95: 	backendKey := "backend_admin"
+>> 96: 	addr := etcd.GetServiceAddr(p.Config.Etcd, backendKey)
+   97: 	if addr == "" {
+   98: 		return "", fmt.Errorf("从 etcd 获取后端服务地址失败: %s", backendKey)
+   99: 	}
+   100: 

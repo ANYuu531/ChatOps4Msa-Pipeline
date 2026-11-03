@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0053",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 986,
+  "completion_tokens": 225,
+  "total_tokens": 1211,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"Line 58 is a comment referencing documentation URLs and does not indicate a runtime connection.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"Line 70 is a comment referencing documentation URLs and does not indicate a runtime connection.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"Line 58 is a comment referencing documentation URLs and does not indicate a runtime connection.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml key exporters.prometheusremotewrite.endpoint\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"Lines that are comments or documentation URLs\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All marked lines are comments and do not represent runtime dependencies, so no general syntactic rule can separate dependency edges here.\"\n}",
+ "payload": {
+  "rank": 53,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "exporters.prometheusremotewrite.endpoint",
+  "repos": 3,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "loki",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 58,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "exporters.prometheusremotewrite.endpoint",
+    "tag": "unread",
+    "text": "# https://grafana.com/docs/loki/latest/send-data/otel/",
+    "context": "   54: \n   55:   prometheusremotewrite:\n   56:     endpoint: \"http://prometheus:9090/api/v1/write\"\n   57: \n>> 58:   # https://grafana.com/docs/loki/latest/send-data/otel/\n   59:   # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/lokiexporter/README.md\n   60:   otlphttp/loki:\n   61:     endpoint: \"http://loki:3100/otlp\"\n   62:     tls:"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "loki",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 70,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "exporters.prometheusremotewrite.endpoint",
+    "tag": "unread",
+    "text": "# https://grafana.com/docs/loki/latest/send-data/otel/",
+    "context": "   66: \n   67:   prometheusremotewrite:\n   68:     endpoint: ${env:PROMETHEUS_REMOTE_WRITE_ENDPOINT:-\"http://prometheus:9090/api/v1/write\"}\n   69: \n>> 70:   # https://grafana.com/docs/loki/latest/send-data/otel/\n   71:   # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/lokiexporter/README.md\n   72:   otlphttp/loki:\n   73:     endpoint: ${env:LOKI_ENDPOINT:-\"http://loki:3100/otlp\"}\n   74:     tls:"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "loki",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 58,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "exporters.prometheusremotewrite.endpoint",
+    "tag": "unread",
+    "text": "# https://grafana.com/docs/loki/latest/send-data/otel/",
+    "context": "   54: \n   55:   prometheusremotewrite:\n   56:     endpoint: \"http://prometheus:9090/api/v1/write\"\n   57: \n>> 58:   # https://grafana.com/docs/loki/latest/send-data/otel/\n   59:   # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/lokiexporter/README.md\n   60:   otlphttp/loki:\n   61:     endpoint: \"http://loki:3100/otlp\"\n   62:     tls:"
+   }
+  ]
+ }
+}

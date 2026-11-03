@@ -1,0 +1,84 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = url; context key = exporters.zipkin.endpoint
+They come from 5 different repositories (5 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=phongnguyend__Practical.CleanArchitecture SOURCE=? TARGET=zipkin file=tools/opentelemetry/otel-collector-config.yaml:12
+   8:     endpoint: '0.0.0.0:8889'
+   9:     const_labels:
+   10:       label1: value1
+   11:   zipkin:
+>> 12:     endpoint: 'http://zipkin:9411/api/v2/spans'
+   13:     format: proto
+   14:   otlp/jaeger:
+   15:     endpoint: 'jaeger-all-in-one:4317'
+   16:     tls:
+
+[1] repo=meysamhadeli__booking-microservices SOURCE=? TARGET=zipkin-all-in-one file=deployments/configs/otel-collector-config.yaml:79
+   75:   elasticsearch:
+   76:     endpoint: "http://elasticsearch:9200"
+   77: 
+   78:   zipkin:
+>> 79:     endpoint: "http://zipkin-all-in-one:9411/api/v2/spans"
+   80:     format: proto
+   81: 
+   82:   # export collected telemetry traces to jaeger OTLP grpc port, we can send data to other available endpoints and ports on jaeger as well
+   83:   otlp/jaeger:
+
+[2] repo=meysamhadeli__booking-microservices-expressjs SOURCE=otel-collector-config TARGET=zipkin file=deployments/kubernetes/otel-collector-configmap.yaml:21
+   17:       batch:
+   18: 
+   19:     exporters:
+   20:       zipkin:
+>> 21:         endpoint: http://zipkin:9411/api/v2/spans
+   22:       debug:
+   23:         verbosity: normal
+   24: 
+   25:     service:
+
+[3] repo=meysamhadeli__booking-microservices-java-spring-boot SOURCE=? TARGET=zipkin-all-in-one file=deployments/configs/otel-collector-config.yaml:79
+   75:   elasticsearch:
+   76:     endpoint: "http://elasticsearch:9200"
+   77:   
+   78:   zipkin:
+>> 79:     endpoint: "http://zipkin-all-in-one:9411/api/v2/spans"
+   80:     format: proto
+   81: 
+   82:   # export collected telemetry traces to jaeger OTLP grpc port, we can send data to other available endpoints and ports on jaeger as well
+   83:   otlp/jaeger:
+
+[4] repo=thangchung__coffeeshop-on-nomad SOURCE=? TARGET=zipkin-all-in-one file=otel-collector-config.yaml:15
+   11: 
+   12:   logging:
+   13: 
+   14:   zipkin:
+>> 15:     endpoint: "http://zipkin-all-in-one:9411/api/v2/spans"
+   16:     format: proto
+   17: 
+   18:   jaeger:
+   19:     endpoint: jaeger-all-in-one:14250

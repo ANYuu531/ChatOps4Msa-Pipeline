@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0068",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 694,
+  "completion_tokens": 220,
+  "total_tokens": 914,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The appgateway's appsettings.json defines a cluster destination address pointing to productapp, indicating appgateway calls productapp at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The appgateway's appsettings.json defines a cluster destination address pointing to productcatalogapp, indicating appgateway calls productcatalogapp at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"appsettings.json; position=url; context key=address\",\n    \"edge\": \"SOURCE component -> TARGET component named in the URL\",\n    \"exclusions\": \"none needed because all such URLs in appsettings.json clusters represent runtime destinations\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"In appsettings.json files, URLs under cluster destination addresses represent runtime calls from the owning component to the named target component, so edges should be drawn accordingly.\"\n}",
+ "payload": {
+  "rank": 68,
+  "kind": "appsettings",
+  "cls": "url",
+  "detail": "address",
+  "repos": 2,
+  "mentions": 6,
+  "samples": [
+   {
+    "repo": "thangchung__clean-architecture-dotnet",
+    "source": "appgateway",
+    "target": "productapp",
+    "file": "samples/AppGateway/appsettings.json",
+    "line": 72,
+    "kind": "appsettings",
+    "cls": "url",
+    "detail": "address",
+    "tag": "file-read",
+    "text": "\"Address\": \"http://productapp\"",
+    "context": "   68:     \"Clusters\": {\n   69:       \"productappcluster\": {\n   70:         \"Destinations\": {\n   71:           \"productappcluster/destination1\": {\n>> 72:             \"Address\": \"http://productapp\"\n   73:           }\n   74:         }\n   75:       },\n   76:       \"customerappcluster\": {"
+   },
+   {
+    "repo": "thangchung__northwind-dotnet",
+    "source": "appgateway",
+    "target": "productcatalogapp",
+    "file": "AppGateway/appsettings.json",
+    "line": 68,
+    "kind": "appsettings",
+    "cls": "url",
+    "detail": "address",
+    "tag": "file-read",
+    "text": "\"Address\": \"http://productcatalogapp:5002\"",
+    "context": "   64:     \"Clusters\": {\n   65:       \"productappcluster\": {\n   66:         \"Destinations\": {\n   67:           \"destination1\": {\n>> 68:             \"Address\": \"http://productcatalogapp:5002\"\n   69:           }\n   70:         }\n   71:       },\n   72:       \"saleappcluster\": {"
+   }
+  ]
+ }
+}

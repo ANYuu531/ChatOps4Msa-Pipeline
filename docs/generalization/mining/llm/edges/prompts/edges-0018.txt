@@ -1,0 +1,160 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=mostafacs__ecommerce-microservices-spring-reactive-webflux product-service -> discovery-server (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   25:     links:
+   26:       - postgresdb
+   27: 
+   28: 
+>> 29:   discovery-server:
+   30:     build: system/discovery-server
+   31:     env_file:
+   32:       - common.env
+   33:     ports:
+
+[1] repo=mostafacs__ecommerce-microservices-spring-reactive-webflux order-service -> authentication-server (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   37:     links:
+   38:       - config-server
+   39: 
+   40: 
+>> 41:   authentication-server:
+   42:     build: system/authentication
+   43:     env_file:
+   44:       - common.env
+   45:     environment:
+
+[2] repo=mostafacs__ecommerce-microservices-spring-reactive-webflux monitor -> postgresdb (type db)
+  cited code: docker-compose.yml
+   1: version: '2.1'
+   2: 
+   3: services:
+   4: 
+>> 5:   postgresdb:
+   6:     build: storage/postgresdb
+   7:     env_file:
+   8:       - common.env
+   9:     ports:
+
+[3] repo=nameko__nameko-examples gateway -> rabbit (type async)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   1: version: "2"
+   2: services:
+>> 3:   rabbit:
+   4:     container_name: nameko-example-rabbitmq
+   5:     image: rabbitmq:3.7-management
+   6:     ports:
+   7:         - "15673:15672" # Exposing RabbitMQ web management on different port for convenience
+
+[4] repo=nameko__nameko-examples orders -> postgres (type db)
+  cited code: orders/alembic/env.py:37
+   33:         "{db_port}/{db_name}"
+   34:     ).format(
+   35:         db_user=os.getenv("DB_USER", "postgres"),
+   36:         db_pass=os.getenv("DB_PASSWORD", "password"),
+>> 37:         db_host=os.getenv("DB_HOST", "localhost"),
+   38:         db_port=os.getenv("DB_PORT", "5432"),
+   39:         db_name=os.getenv("DB_NAME", "orders"),
+   40:     )
+   41: 
+  cited code: docker-compose.yml#depends_on
+
+
+[5] repo=nameko__nameko-examples products -> rabbit (type async)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   1: version: "2"
+   2: services:
+>> 3:   rabbit:
+   4:     container_name: nameko-example-rabbitmq
+   5:     image: rabbitmq:3.7-management
+   6:     ports:
+   7:         - "15673:15672" # Exposing RabbitMQ web management on different port for convenience
+
+[6] repo=netcorebcn__quiz gateway -> commandsapi (type sync-http)
+  cited code: src/gateway/nginx.conf:37
+   33:             proxy_set_header   X-Forwarded-Host $server_name;
+   34:         }
+   35: 
+   36:         location /commands/ {
+>> 37:             proxy_pass         http://commandsapi/;
+   38:             proxy_redirect     off;
+   39:             proxy_set_header   Host $host;
+   40:             proxy_set_header   X-Real-IP $remote_addr;
+   41:             proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+
+[7] repo=netcorebcn__quiz queries -> messagebroker (type async)
+  cited code: src/Quiz.Queries.Api/QuizResultsAppService.cs:87
+   83:     public static class QuizResultsAppServiceExtensions
+   84:     {
+   85:         public static IServiceCollection AddQuizResultsApp(this IServiceCollection services, IConfiguration configuration) => services
+   86:             .AddEasyWebSockets()
+>> 87:             .AddSingleton<IBus>(RabbitHutch.CreateBus(configuration["messagebroker"]?.Trim() ?? "amqp://guest:guest@localhost:5672"))
+   88:             .AddSingleton<QuizResultsAppService>();
+   89:         
+   90:         public static IApplicationBuilder UseQuizResultsApp(this IApplicationBuilder app)
+   91:         {
+  cited code: docker-compose.override.yml
+   9:     ports:
+   10:       - "81:80"
+   11:     environment: 
+   12:       dbconnection: ${DB_CONNECTION}
+>> 13:       messagebroker: ${MESSAGE_BROKER}
+   14:   
+   15:   queries:
+   16:     ports:
+   17:       - "82:80"
+
+[8] repo=netcorebcn__quiz gateway -> queriesapi (type sync-http)
+  cited code: src/gateway/nginx.conf:46
+   42:             proxy_set_header   X-Forwarded-Host $server_name;
+   43:         }
+   44: 
+   45:         location /queries/ {
+>> 46:             proxy_pass         http://queriesapi/;
+   47:             proxy_redirect     off;
+   48:             proxy_set_header   Host $host;
+   49:             proxy_set_header   X-Real-IP $remote_addr;
+   50:             proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+  cited code: src/gateway/nginx.conf:55
+   51:             proxy_set_header   X-Forwarded-Host $server_name;
+   52:         }
+   53: 
+   54:         location /queries/ws {
+>> 55:             proxy_pass http://queriesapi/ws;
+   56:             proxy_http_version 1.1;
+   57:             proxy_set_header Upgrade $http_upgrade;
+   58:             proxy_set_header Connection "Upgrade";
+   59:         }
+
+[9] repo=nplszfl__OmniTradeERP erp-product-service -> mysql (type db)
+  cited code: docker-compose.minimal.yml#depends_on
+
+  cited code: erp-product-service/src/main/resources/application.yml
+   30:         port: 8722
+   31:       eager: true
+   32: 
+   33:   datasource:
+>> 34:     driver-class-name: com.mysql.cj.jdbc.Driver
+   35:     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/erp_product?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+   36:     username: root
+   37:     password: root
+   38: 

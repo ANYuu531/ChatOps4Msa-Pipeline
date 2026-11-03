@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0097",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 743,
+  "completion_tokens": 193,
+  "total_tokens": 936,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"samples\": [{\"i\": 0, \"verdict\": \"dependency\", \"reason\": \"The call to AddMongoDB with the target name 'mongo' configures a runtime dependency from the component owning this source code to the 'mongo' component.\"}, {\"i\": 1, \"verdict\": \"dependency\", \"reason\": \"The AddMongoDB call with the target 'mongodb' similarly indicates a runtime dependency from the source component to the 'mongodb' component.\"}], \"rule\": {\"general\": true, \"trigger\": \"src:csharp; position=literal; context key=call addmongodb\", \"edge\": \"SOURCE -> TARGET\", \"exclusions\": \"none\", \"confidence\": \"high\"}, \"summary\": \"All samples show that a call to AddMongoDB in C# source code literals indicates a runtime dependency from the source component to the named target component, so a general rule adding edges for such calls is reliable.\"}",
+ "payload": {
+  "rank": 97,
+  "kind": "src:csharp",
+  "cls": "literal",
+  "detail": "call addmongodb",
+  "repos": 2,
+  "mentions": 2,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "mongo",
+    "file": "src/Aspire/src/AppHost/Program.cs",
+    "line": 43,
+    "kind": "src:csharp",
+    "cls": "literal",
+    "detail": "call addmongodb",
+    "tag": "file-read",
+    "text": "var mongo = builder.AddMongoDB(\"mongo\", userName: mongoUsername, password: mongoPassword)",
+    "context": "   39: \n   40: var mongoUsername = builder.AddParameter(\"mongo-username\", \"root\", secret: true);\n   41: var mongoPassword = builder.AddParameter(\"mongo-password\", \"secret\", secret: true);\n   42: \n>> 43: var mongo = builder.AddMongoDB(\"mongo\", userName: mongoUsername, password: mongoPassword)\n   44:     .WithImage(\"mongo:8.0\")\n   45:     .WithEndpoint(\n   46:         \"tcp\",\n   47:         e =>"
+   },
+   {
+    "repo": "amasen02__freshcart-backend",
+    "source": "?",
+    "target": "mongodb",
+    "file": "src/AspireAppHost/FreshCart.AppHost/Program.cs",
+    "line": 103,
+    "kind": "src:csharp",
+    "cls": "literal",
+    "detail": "call addmongodb",
+    "tag": "file-read",
+    "text": ".AddMongoDB(\"mongodb\")",
+    "context": "   99:     .Replace(\"\\r\\n\", \"\\n\", StringComparison.Ordinal)\n   100:     .Replace('\\r', '\\n');\n   101: \n   102: var mongo = distributedApplicationBuilder\n>> 103:     .AddMongoDB(\"mongodb\")\n   104:     .WithEntrypoint(\"/bin/bash\")\n   105:     .WithArgs(context =>\n   106:     {\n   107:         context.Args.Clear();"
+   }
+  ]
+ }
+}

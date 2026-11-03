@@ -1,0 +1,95 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:javascript; position = literal; context key = bare
+They come from 7 different repositories (13 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=phongnguyend__Practical.CleanArchitecture SOURCE=classifiedads-webmvc TARGET=connect file=src/Monolith/ClassifiedAds.WebMVC/wwwroot/lib/signalr/signalr.js:3897
+   3893:             }
+   3894:         }
+   3895:     };
+   3896:     HttpConnection.prototype.isITransport = function (transport) {
+>> 3897:         return transport && typeof (transport) === "object" && "connect" in transport;
+   3898:     };
+   3899:     HttpConnection.prototype.stopConnection = function (error) {
+   3900:         this.logger.log(_ILogger__WEBPACK_IMPORTED_MODULE_1__["LogLevel"].Debug, "HttpConnection.stopConnection(" + error + ") called while in state " + this.connectionState + ".");
+   3901:         this.transport = undefined;
+
+[1] repo=oracle-quickstart__oci-cloudnative SOURCE=storefront TARGET=user file=src/storefront/src/scripts/shop/constants.js:12
+   8:     HTTP:     'http',
+   9:     ROUTER:   'router',
+   10:     PAGE:     'page',
+   11:     UI:       'ui',
+>> 12:     USER:     'user',
+   13:     CART:     'cart',
+   14:     CATALOG:  'catalog',
+   15:     CONFIG:   'config',
+   16:     ORDER:    'order',
+
+[2] repo=tkssharma__nodejs-microservices-patterns SOURCE=nodejs-express-typescript TARGET=node file=nodejs-express-typescript/jest.config.js:126
+   122:   // A list of paths to snapshot serializer modules Jest should use for snapshot testing
+   123:   // snapshotSerializers: [],
+   124: 
+   125:   // The test environment that will be used for testing
+>> 126:   testEnvironment: 'node',
+   127: 
+   128:   // Options that will be passed to the testEnvironment
+   129:   // testEnvironmentOptions: {},
+   130: 
+
+[3] repo=tkssharma__12-factor-app-microservices SOURCE=nestjs-typeorm-postgres-jest-07 TARGET=node file=nestjs-typeorm-postgres-jest #07/jest.config.js:15
+   11:   "transform": {
+   12:     "^.+\\.(t|j)s$": "ts-jest"
+   13:   },
+   14:   "coverageDirectory": "./coverage",
+>> 15:   "testEnvironment": "node",
+   16:   "roots": [
+   17:     "<rootDir>/"
+   18:   ]
+   19: }
+
+[4] repo=getlarge__ticketing SOURCE=? TARGET=tools file=commitlint.config.js:114
+   110:      */
+   111:     'scope-enum': [
+   112:       2,
+   113:       'always',
+>> 114:       [...JSON.parse(projects), 'tools', 'workspace'],
+   115:     ],
+   116:   },
+   117:   /*
+   118:    * Prompt config for commit message support
+
+[5] repo=kalintsenkov__BettingSystem SOURCE=client TARGET=messages file=src/Client/src/assets/js/jquery-ui.js:6209
+   6205: 		} );
+   6206: 	}
+   6207: } );
+   6208: 
+>> 6209: // Live region extension, adding a `messages` option
+   6210: // NOTE: This is an experimental API. We are still investigating
+   6211: // a full solution for string manipulation and internationalization.
+   6212: $.widget( "ui.autocomplete", $.ui.autocomplete, {
+   6213: 	options: {

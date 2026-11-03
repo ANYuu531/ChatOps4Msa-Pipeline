@@ -1,0 +1,46 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = spring-yaml; position = url; context key = cloud.config.uri
+They come from 2 different repositories (5 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=idugalic__micro-company SOURCE=command-side-blog-service TARGET=configserver file=command-side-blog-service/src/main/resources/bootstrap.yml:16
+   12: spring:
+   13:   profiles: docker
+   14:   cloud:
+   15:      config:
+>> 16:         uri: http://configserver:8888
+   17:         fail-fast: true
+
+[1] repo=mostafacs__ecommerce-microservices-spring-reactive-webflux SOURCE=authentication TARGET=config-server file=system/authentication/src/main/resources/bootstrap.yml:6
+   2:   application:
+   3:     name: authentication-service
+   4:   cloud:
+   5:     config:
+>> 6:       uri: http://config-server:8111
+   7: 
+   8: 

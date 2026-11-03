@@ -1,0 +1,72 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:java; position = literal; context key = assign *
+They come from 4 different repositories (11 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=mateaix__matecloud SOURCE=mate-api TARGET=admin file=mate-common/mate-api/src/main/java/vip/mate/api/rpc/RpcConstants.java:34
+   30:     public static final int LONG_TIMEOUT = 15000;
+   31:     public static final int DEFAULT_RETRIES = 2;
+   32:     public static final int NO_RETRY = 0;
+   33:     public static final String GROUP_SYSTEM = "system";
+>> 34:     public static final String GROUP_ADMIN = "admin";
+   35:     public static final String GROUP_NOTICE = "notice";
+   36: }
+   37: 
+
+[1] repo=aliyun__alibabacloud-microservice-demo SOURCE=mock-client TARGET=insights-server-0 file=arms-demo/mock-client/src/main/java/com/alibaba/arms/demo/client/utils/InvocationUtils.java:10
+   6: 
+   7: import java.util.ArrayList;
+   8: 
+   9: public class InvocationUtils {
+>> 10:     private static final String SERVICE_0 = "insights-server-0";
+   11: 
+   12:     private static final String SERVICE_1 = "insights-server-1";
+   13: 
+   14:     private static final String SERVICE_2 = "insights-server-2";
+
+[2] repo=jingsewu__open-wes SOURCE=script-plugin-api TARGET=station file=server/modules-plugin/script-plugin-api/src/main/java/org/openwes/script/plugin/api/ScriptPluginApiConstants.java:14
+   10:     /** Platform contract version; a plugin's sdk_version must equal this or enabling is refused. */
+   11:     public static final String CONTRACT_VERSION = "1.0";
+   12: 
+   13:     public static final String APP_WES = "wes";
+>> 14:     public static final String APP_STATION = "station";
+   15: 
+   16:     /** Target apps that may host script plugins. A single plugin never spans both (spec: no cross-app plugins in v1). */
+   17:     public static final List<String> SUPPORTED_APPS = List.of(APP_WES, APP_STATION);
+   18: }
+
+[3] repo=geoserver__geoserver-cloud SOURCE=events TARGET=geoserver file=src/catalog/events/src/main/java/org/geoserver/cloud/event/GeoServerEvent.java:107
+   103:     /**
+   104:      * {@code getObjectId()} object identifier for changes performed to the {@link GeoServerInfo global config} itself
+   105:      * (e.g. {@code updateSequence} and the like)
+   106:      */
+>> 107:     private static final String GEOSERVER_ID = "geoserver";
+   108: 
+   109:     /** {@code getObjectId()} object identifier for changes performed to the {@link LoggingInfo} config */
+   110:     private static final String LOGGING_ID = "logging";
+   111: 

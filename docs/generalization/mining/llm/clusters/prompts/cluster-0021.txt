@@ -1,0 +1,73 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = key; context key = data.*_HOST
+They come from 4 different repositories (6 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=mateaix__matecloud SOURCE=matecloud-config TARGET=nacos file=deploy/k8s/configmap.yaml:8
+   4:   name: matecloud-config
+   5:   namespace: matecloud
+   6: data:
+   7:   SPRING_PROFILES_ACTIVE: "prod"
+>> 8:   NACOS_HOST: "nacos.matecloud.svc.cluster.local"
+   9:   NACOS_PORT: "8848"
+   10:   # 空 = public 命名空间(与 init-nacos.sh 推送目标一致)。
+   11:   # 如需多环境隔离，可在 Nacos 控制台手动建命名空间后填入其 ID。
+   12:   NACOS_NAMESPACE: ""
+
+[1] repo=hoangtien2k3__ecommerce-microservices SOURCE=ecommerce-config TARGET=postgres file=k8s/configmap.yaml:8
+   4:   name: ecommerce-config
+   5:   namespace: ecommerce
+   6: data:
+   7:   # PostgresSQL
+>> 8:   POSTGRES_HOST: "postgres"
+   9:   POSTGRES_PORT: "5432"
+   10:   POSTGRES_DB: "ecommerce"
+   11: 
+   12:   # Keycloak
+
+[2] repo=meysamhadeli__booking-microservices-expressjs SOURCE=booking-config TARGET=postgres file=deployments/kubernetes/configmap.yaml:8
+   4:   name: booking-config
+   5:   namespace: booking
+   6: data:
+   7:   NODE_ENV: production
+>> 8:   POSTGRES_HOST: postgres
+   9:   POSTGRES_PORT: "5432"
+   10:   POSTGRES_USER: postgres
+   11:   POSTGRES_USERNAME: postgres
+   12:   POSTGRES_SYNCHRONIZE: "false"
+
+[3] repo=nplszfl__OmniTradeERP SOURCE=nacos-config TARGET=mysql-service file=k8s/nacos.yaml:8
+   4:   name: nacos-config
+   5:   namespace: erp
+   6: data:
+   7:   MODE: "standalone"
+>> 8:   MYSQL_SERVICE_HOST: "mysql-service"
+   9:   MYSQL_SERVICE_PORT: "3306"
+   10:   MYSQL_SERVICE_DB_NAME: "nacos"
+   11:   MYSQL_SERVICE_USER: "root"
+   12:   MYSQL_SERVICE_PASSWORD: "root"

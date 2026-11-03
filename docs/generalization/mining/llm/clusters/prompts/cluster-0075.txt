@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:go; position = hostport; context key = assign address
+They come from 2 different repositories (5 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=aliyun__alibabacloud-microservice-demo SOURCE=c TARGET=go-grpc-demo-d file=mse-go-demo/multiframe/C/http/internal/logic/call_server_d.go:11
+   7: 	"google.golang.org/grpc"
+   8: )
+   9: 
+   10: const (
+>> 11: 	address = "go-grpc-demo-d:50053"
+   12: )
+   13: 
+   14: var dClient d_api.CServiceClient
+   15: 
+
+[1] repo=nvawntien__go-judge-system SOURCE=judge TARGET=problem-service file=workers/judge/internal/container/providers.go:90
+   86: func ProvideProblemGRPCConfig(cfg *config.Config) (config.ProblemGRPCConfig, error) {
+   87: 	problemCfg := cfg.ProblemGRPC
+   88: 	problemCfg.Address = strings.TrimSpace(problemCfg.Address)
+   89: 	if problemCfg.Address == "" {
+>> 90: 		problemCfg.Address = "problem-service:9092"
+   91: 	}
+   92: 	if problemCfg.Timeout == 0 {
+   93: 		problemCfg.Timeout = 5 * time.Second
+   94: 	}

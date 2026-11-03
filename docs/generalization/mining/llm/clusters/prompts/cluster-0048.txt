@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = key; context key = <service>.environment.*
+They come from 3 different repositories (4 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=apssouza22__java-microservice SOURCE=? TARGET=kafka file=assets/event-docker-compose.yml:22
+   18:     environment:
+   19:       KAFKA_ADVERTISED_HOST_NAME: 172.19.0.1
+   20:       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+   21:       KAFKA_CREATE_TOPICS: "todo-mail:1:1"
+>> 22:       KAFKA_ADVERTISED_HOST_NAME: "kafka"
+   23:     volumes:
+   24:       - /var/run/docker.sock:/var/run/docker.sock
+   25:     hostname: kafka
+   26:     container_name: kafka
+
+[1] repo=geoserver__geoserver-cloud SOURCE=? TARGET=geodatabase file=compose/pgbouncer.yml:10
+   6:     extends:
+   7:       file: templates.yml
+   8:       service: pgbouncertemplate
+   9:     environment:
+>> 10:       PGBOUNCER_DATABASE: geodatabase
+   11:       POSTGRESQL_HOST: geodatabase_pg
+   12:       POSTGRESQL_DATABASE: geoserver
+   13:       POSTGRESQL_USERNAME: geoserver
+   14:       POSTGRESQL_PASSWORD: geoserver
+
+[2] repo=hantsy__spring-microservice-sample SOURCE=? TARGET=userdb file=docker-stack.yml:111
+   107:     environment:
+   108:       MYSQL_ROOT_PASSWORD: mysecret
+   109:       MYSQL_USER: user
+   110:       MYSQL_PASSWORD: password
+>> 111:       MYSQL_DATABASE: userdb
+   112:     volumes:
+   113:       - userdata:/var/lib/mysql
+   114:     networks:
+   115:       - backend

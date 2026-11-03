@@ -1,0 +1,57 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = dotenv; position = key; context key = *
+They come from 3 different repositories (6 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=ivanpaulovich__clean-architecture-manga SOURCE=wallet-spa TARGET=identity-server file=wallet-spa/vs.debug.env:1
+>> 1: REACT_APP_AUTHORITY=https://wallet.local:8081/identity-server
+   2: REACT_APP_REDIRECT_URI=https://wallet.local:8081/callback
+   3: REACT_APP_POST_LOGOUT_REDIRECT_URI=https://wallet.local:8081
+   4: REACT_APP_ACCOUNTS_API=https://wallet.local:8081/accounts-api
+
+[1] repo=netcorebcn__quiz SOURCE=? TARGET=gateway file=.env:5
+   1: TAG=latest
+   2: REGISTRY=local
+   3: 
+   4: 
+>> 5: QUIZ_GATEWAY=./src/gateway/
+   6: QUIZ_COMMANDS=./src/Quiz.Commands.Api/
+   7: QUIZ_COMMANDS_UNITTESTS=./test/Quiz.Commands.Tests/
+   8: QUIZ_QUERIES=./src/Quiz.Queries.Api/
+   9: QUIZ_QUERIES_UNITTESTS=./test/Quiz.Queries.Tests/
+
+[2] repo=aidanwhiteley__books SOURCE=? TARGET=service-registry-tier file=.env:55
+   51: SPRING_SECURITY_OUATH2_CLIENT_REGISTRATION_FACEBOOK_CLIENT_ID=dummyValue-CHANGE_ME
+   52: # If JAVA_BOOKS_AUTO_AUTH_USER is not true, must match the value you set up in the Facebook APIs console
+   53: SPRING_SECURITY_OUATH2_CLIENT_REGISTRATION_FACEBOOK_CLIENT_SECRET=dummyValue-CHANGE_ME
+   54: # Service name for the Service Registry defined in docker-compose.yml - is also used by the API gateway tier and Spring Boot Admin tier
+>> 55: SERVICE_REGISTRY=service-registry-tier
+   56: 
+   57: # #############################################################################
+   58: # Environment variables used by the books MongoDB based data tier
+   59: # #############################################################################

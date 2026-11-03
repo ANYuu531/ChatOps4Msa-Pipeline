@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0023",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 984,
+  "completion_tokens": 284,
+  "total_tokens": 1268,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The SOURCE component 'docs' is a documentation component and unlikely to call or connect to 'geoserverdb' at runtime; the environment variable is probably for documentation or example purposes.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The 'user-service' component sets MYSQL_HOST to 'mysql', indicating it connects to the 'mysql' service at runtime.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The 'eureka' service sets SERVICE_HOST to 'discovery', indicating it connects to the 'discovery' service at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"compose; position=key; context key=*.environment.*_HOST\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"when SOURCE is a non-runtime component such as documentation or config-only service\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"Environment variables named *_HOST in docker-compose service environment sections generally indicate runtime dependencies from the service defining them to the named target service, except when the defining service is non-runtime like documentation.\"\n}",
+ "payload": {
+  "rank": 23,
+  "kind": "compose",
+  "cls": "key",
+  "detail": "<service>.environment.*_HOST",
+  "repos": 3,
+  "mentions": 119,
+  "samples": [
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "docs",
+    "target": "geoserverdb",
+    "file": "docs/src/deploy/docker-compose/stable/pgconfig/compose.yml",
+    "line": 73,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "<service>.environment.*_HOST",
+    "tag": "file-read",
+    "text": "SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_HOST: geoserverdb",
+    "context": "   69:     # - For Kubernetes: Use ConfigMaps/Secrets with standalone profile instead\n   70:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_URL: http://acl:8080/acl/api\n   71:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_USERNAME: admin\n   72:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_ACL_PASSWORD: s3cr3t\n>> 73:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_HOST: geoserverdb\n   74:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_PORT: 5432\n   75:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_DATABASE: geoserver\n   76:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_USERNAME: geoserver\n   77:     SPRING_CLOUD_CONFIG_SERVER_OVERRIDES_PGCONFIG_PASSWORD: geoserver"
+   },
+   {
+    "repo": "nplszfl__OmniTradeERP",
+    "source": "user-service",
+    "target": "mysql",
+    "file": "docker-compose.minimal.yml",
+    "line": 114,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "<service>.environment.*_HOST",
+    "tag": "file-read",
+    "text": "MYSQL_HOST: mysql",
+    "context": "   110:     ports:\n   111:       - \"8084:8084\"\n   112:     environment:\n   113:       NACOS_SERVER_ADDR: nacos:8848\n>> 114:       MYSQL_HOST: mysql\n   115:       REDIS_HOST: redis\n   116:       TZ: Asia/Shanghai\n   117:       JAVA_OPTS: \"-Xms256m -Xmx512m -XX:+UseG1GC\"\n   118:     depends_on:"
+   },
+   {
+    "repo": "ThoreauZZ__spring-cloud-example",
+    "source": "eureka",
+    "target": "discovery",
+    "file": "docker-compose.yml",
+    "line": 25,
+    "kind": "compose",
+    "cls": "key",
+    "detail": "<service>.environment.*_HOST",
+    "tag": "file-read",
+    "text": "SERVICE_HOST: discovery",
+    "context": "   21:     ports:\n   22:       - \"9001:9001\"\n   23:     environment:\n   24:       JAVA_OPTS: -Xmx128m\n>> 25:       SERVICE_HOST: discovery\n   26:       SERVICE_PORT: 9001\n   27:     healthcheck:\n   28:       test: [\"CMD\", \"curl\", \"-f\", \"http://localhost:9001/health\"]\n   29:       interval: 1m30s"
+   }
+  ]
+ }
+}

@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0063",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 788,
+  "completion_tokens": 225,
+  "total_tokens": 1013,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is a static string constant declaration in a utility class, likely used as a label or configuration key rather than indicating a runtime call from mock-client to insights-redis-server.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line declares a constant string in a shared commons module, which does not itself call user-service at runtime; it is a label or identifier used elsewhere.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:java; position=literal; context key=assign *_SERVICE\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples are constant string declarations in Java source files that do not themselves imply runtime dependencies; no general syntactic rule on such assignments alone can reliably infer edges without false positives.\"\n}",
+ "payload": {
+  "rank": 63,
+  "kind": "src:java",
+  "cls": "literal",
+  "detail": "assign *_SERVICE",
+  "repos": 2,
+  "mentions": 13,
+  "samples": [
+   {
+    "repo": "aliyun__alibabacloud-microservice-demo",
+    "source": "mock-client",
+    "target": "insights-redis-server",
+    "file": "arms-demo/mock-client/src/main/java/com/alibaba/arms/demo/client/utils/InvocationUtils.java",
+    "line": 18,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "assign *_SERVICE",
+    "tag": "file-read",
+    "text": "private static final String REDIS_SERVICE = \"insights-redis-server\";",
+    "context": "   14:     private static final String SERVICE_2 = \"insights-server-2\";\n   15: \n   16:     private static final String SERVICE_3 = \"insights-server-3\";\n   17:     \n>> 18:     private static final String REDIS_SERVICE = \"insights-redis-server\";\n   19: \n   20:     private static final String MYSQL_SERVICE = \"insights-mysql-server\";\n   21: \n   22:     private static final String MYSQL_SERVICE_CONNECTION = \"insights-mysql-connection\";"
+   },
+   {
+    "repo": "merikbest__twitter-spring-reactjs",
+    "source": "commons",
+    "target": "user-service",
+    "file": "commons/src/main/java/com/gmail/merikbest2015/commons/constants/FeignConstants.java",
+    "line": 4,
+    "kind": "src:java",
+    "cls": "literal",
+    "detail": "assign *_SERVICE",
+    "tag": "file-read",
+    "text": "public static final String USER_SERVICE = \"user-service\";",
+    "context": "   1: package com.gmail.merikbest2015.commons.constants;\n   2: \n   3: public class FeignConstants {\n>> 4:     public static final String USER_SERVICE = \"user-service\";\n   5:     public static final String TWEET_SERVICE = \"tweet-service\";\n   6:     public static final String TOPIC_SERVICE = \"topic-service\";\n   7:     public static final String LISTS_SERVICE = \"lists-service\";\n   8:     public static final String CHAT_SERVICE = \"chat-service\";"
+   }
+  ]
+ }
+}

@@ -1,0 +1,213 @@
+{
+ "id": "edges-0008",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1142,
+  "completion_tokens": 408,
+  "total_tokens": 1550,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [\n  {\"i\": 0, \"verdict\": \"correct\", \"reason\": \"SPRING_KAFKA_BOOTSTRAP_SERVERS environment variable in account-service-app points to kafka, indicating runtime dependency.\"},\n  {\"i\": 1, \"verdict\": \"unsure\", \"reason\": \"Only docker-compose.yml#depends_on cited without showing lines or environment/config indicating fluentd sends data to elasticsearch.\"},\n  {\"i\": 2, \"verdict\": \"correct\", \"reason\": \"@FeignClient annotation in product-service references account-service with URL, showing runtime HTTP call dependency.\"},\n  {\"i\": 3, \"verdict\": \"unsure\", \"reason\": \"Only docker-compose.yml#depends_on cited without shown lines or config proving background-mqtt connects to mongo.\"},\n  {\"i\": 4, \"verdict\": \"unsure\", \"reason\": \"Only docker-compose.yml#depends_on cited without shown evidence that web-book-collection connects to mongo at runtime.\"},\n  {\"i\": 5, \"verdict\": \"correct\", \"reason\": \"docker-compose.yml shows mongo service defined and mongo-express depends_on mongo, implying runtime dependency.\"},\n  {\"i\": 6, \"verdict\": \"unsure\", \"reason\": \"Only docker-compose.yml#depends_on cited without shown evidence that purchase-service calls db synchronously.\"},\n  {\"i\": 7, \"verdict\": \"unsure\", \"reason\": \"Only docker-compose.yml#depends_on cited without shown evidence that lb routes or calls admin service.\"},\n  {\"i\": 8, \"verdict\": \"unsure\", \"reason\": \"Only docker-compose.yml#depends_on cited without shown evidence that lb routes or calls monitoring service.\"},\n  {\"i\": 9, \"verdict\": \"correct\", \"reason\": \"appsettings JSON config in web-mvc sets CatalogUrl to devstore-api-catalog, indicating runtime HTTP dependency.\"}\n]}",
+ "payload": [
+  {
+   "repo": "cuongnh28__spring-microservices-blueprint",
+   "source": "kafdrop",
+   "target": "kafka",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 29,
+     "kind": "compose",
+     "context": "   25:     container_name: account-service-app\n   26:     restart: unless-stopped\n   27:     environment:\n   28:       DB_URL: jdbc:postgresql://account-service-db:5432/account-service\n>> 29:       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092\n   30:       JAVA_OPTS: \"-Xmx512m -Xms256m\"\n   31:     ports:\n   32:       - \"8088:8088\"\n   33:       - \"5005:5005\""
+    }
+   ]
+  },
+  {
+   "repo": "cuongnh28__spring-microservices-blueprint",
+   "source": "fluentd",
+   "target": "elasticsearch",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "cuongnh28__spring-microservices-blueprint",
+   "source": "product-service-app",
+   "target": "account-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: product-service/src/main/java/com/demo/feign/UserFeignClient.java:14",
+     "file": "product-service/src/main/java/com/demo/feign/UserFeignClient.java",
+     "line": 14,
+     "kind": "src:java",
+     "context": "   10:  * @author Vito Nguyen (<a href=\"https://github.com/cuongnh28\">...</a>)\n   11:  */\n   12: \n   13: @FeignClient(\n>> 14:     name = \"account-service\", \n   15:     url = \"http://account-service-app:8088\", \n   16:     configuration = {CommonOpenFeignConfig.class}\n   17: )\n   18: public interface UserFeignClient {"
+    }
+   ]
+  },
+  {
+   "repo": "danionescu0__docker-flask-mongodb-example",
+   "source": "background-mqtt",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "danionescu0__docker-flask-mongodb-example",
+   "source": "web-book-collection",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "danionescu0__docker-flask-mongodb-example",
+   "source": "mongo-express",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 35,
+     "kind": "compose",
+     "context": "   31:         volumes:\n   32:           - grafana_data:/var/lib/grafana\n   33: \n   34:     # Genaral purpose database\n>> 35:     mongo:\n   36:         image: mongo:4.4.5-bionic\n   37:         hostname: mongodb\n   38:         ports:\n   39:             - '27017:27017'"
+    }
+   ]
+  },
+  {
+   "repo": "dashersw__cote-workshop",
+   "source": "purchase-service",
+   "target": "db",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "dashersw__cote-workshop",
+   "source": "lb",
+   "target": "admin",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "dashersw__cote-workshop",
+   "source": "lb",
+   "target": "monitoring",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  },
+  {
+   "repo": "desenvolvedor-io__dev-store",
+   "source": "web-mvc",
+   "target": "devstore-api-catalog",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/web/DevStore.WebApp.MVC/appsettings.Docker.json",
+     "file": "src/web/DevStore.WebApp.MVC/appsettings.Docker.json",
+     "line": 33,
+     "kind": "appsettings",
+     "context": "   29:       \"Application\": \"DevStoreWeb\"\n   30:     }\n   31:   },\n   32:   \"AuthUrl\": \"https://devstore-api-identity\",\n>> 33:   \"CatalogUrl\": \"https://devstore-api-catalog\",\n   34:   \"CustomerUrl\": \"https://devstore-api-customers\",\n   35:   \"CheckoutBffUrl\": \"https://devstore-api-bff-checkout\"\n   36: }"
+    },
+    {
+     "ref": "code: src/web/DevStore.WebApp.MVC/appsettings.Production.json",
+     "file": "src/web/DevStore.WebApp.MVC/appsettings.Production.json",
+     "line": 33,
+     "kind": "appsettings",
+     "context": "   29:       \"Application\": \"DevStoreWeb\"\n   30:     }\n   31:   },\n   32:   \"AuthUrl\": \"https://devstore-api-identity\",\n>> 33:   \"CatalogUrl\": \"https://devstore-api-catalog\",\n   34:   \"CustomerUrl\": \"https://devstore-api-customers\",\n   35:   \"CheckoutBffUrl\": \"https://devstore-api-bff-checkout\"\n   36: }"
+    }
+   ]
+  }
+ ]
+}

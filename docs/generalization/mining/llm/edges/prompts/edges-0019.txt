@@ -1,0 +1,132 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=nplszfl__OmniTradeERP erp-customer-service -> nacos (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: erp-customer-service/src/main/resources/application.yml
+   7:     #    Spring Cloud 的 ConfigDataMissingEnvironmentPostProcessor 会检查
+   8:     #    spring.config.import，没配就直接抛 "No spring.config.import set" → 服务起不来。
+   9:     #    optional: 前缀表示 Nacos 不可达时不阻塞启动（降级用本地配置）。
+   10:     import:
+>> 11:       - optional:nacos:${spring.application.name}.yml
+   12:   application:
+   13:     name: erp-customer-service
+   14:   cloud:
+   15:     nacos:
+
+[1] repo=nplszfl__OmniTradeERP erp-warehouse-service -> rabbitmq (type async)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   68:       timeout: 5s
+   69:       retries: 5
+   70: 
+   71:   # RabbitMQ
+>> 72:   rabbitmq:
+   73:     image: rabbitmq:3-management-alpine
+   74:     container_name: erp-rabbitmq
+   75:     environment:
+   76:       RABBITMQ_DEFAULT_USER: guest
+
+[2] repo=nvawntien__go-judge-system envoy -> gateway (type sync-http)
+  cited code: envoy/envoy.prod.yaml
+   76:                             idle_timeout: 75s
+   77:                         - match:
+   78:                             prefix: /api/
+   79:                           route:
+>> 80:                             cluster: gateway
+   81:                             timeout: 45s
+   82:                         - match:
+   83:                             prefix: /avatars/
+   84:                           route:
+  cited code: envoy/envoy.yaml
+   76:                             idle_timeout: 75s
+   77:                         - match:
+   78:                             prefix: /api/
+   79:                           route:
+>> 80:                             cluster: gateway
+   81:                             timeout: 45s
+   82:                 http_filters:
+   83:                   - name: envoy.filters.http.router
+   84:                     typed_config:
+
+[3] repo=nvawntien__go-judge-system auth-service -> minio (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+
+[4] repo=nvawntien__go-judge-system auth-service -> postgres (type db)
+  cited code: docker-compose.yml#depends_on
+
+
+[5] repo=opexdev__core market -> consul (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   158:       - IPC_LOCK
+   159:     deploy:
+   160:       restart_policy:
+   161:         condition: on-failure
+>> 162:   consul:
+   163:     image: hashicorp/consul
+   164:     environment:
+   165:       - CONSUL_BIND_INTERFACE=eth0
+   166:     networks:
+
+[6] repo=opexdev__core eventlog -> vault (type sync-http)
+  cited code: docker-compose.yml
+   135:       - default
+   136:     deploy:
+   137:       restart_policy:
+   138:         condition: on-failure
+>> 139:   vault:
+   140:     image: ghcr.io/opexdev/vault-opex
+   141:     volumes:
+   142:       - vault-data:/vault/file
+   143:     environment:
+
+[7] repo=opexdev__core market -> vault (type sync-http)
+  cited code: docker-compose.yml
+   135:       - default
+   136:     deploy:
+   137:       restart_policy:
+   138:         condition: on-failure
+>> 139:   vault:
+   140:     image: ghcr.io/opexdev/vault-opex
+   141:     volumes:
+   142:       - vault-data:/vault/file
+   143:     environment:
+
+[8] repo=oracle-quickstart__oci-cloudnative payment -> zipkin (type sync-http)
+  cited code: src/payment/docker/docker-compose-zipkin.yml
+   11:       - NET_BIND_SERVICE
+   12:     read_only: true
+   13:     environment:
+   14:       - reschedule=on-node-failure
+>> 15:       - ZIPKIN=http://zipkin:9411/api/v1/spans
+   16:     ports:
+   17:       - "8082:80"
+   18:   zipkin:
+   19:     image: openzipkin/zipkin 
+
+[9] repo=oracle-quickstart__oci-cloudnative api -> mushop-events (type sync-http)
+  cited code: deploy/complete/kubernetes/manifests/api-dep.yaml
+   41:           value: http://carts
+   42:         - name: USERS_URL
+   43:           value: http://user
+   44:         - name: EVENTS_URL
+>> 45:           value: http://mushop-events
+   46:         - name: STATIC_MEDIA_URL
+   47:           value: /assets
+   48:         - name: NEWSLETTER_SUBSCRIBE_URL
+   49:           value: ""

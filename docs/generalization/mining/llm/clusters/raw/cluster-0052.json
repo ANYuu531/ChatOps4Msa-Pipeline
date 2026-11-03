@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0052",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 896,
+  "completion_tokens": 232,
+  "total_tokens": 1128,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The prometheus component is configured to scrape metrics from the consul service at runtime, indicating a runtime dependency.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The bookstore-prometheus component scrapes metrics from bookstore-consul-discovery via consul_sd_configs, showing a runtime dependency.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The geoserver-cloud component is configured to scrape metrics from consul, indicating a runtime dependency.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml; scrape_configs.consul_sd_configs.server\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show that the component owning the prometheus scrape_configs with consul_sd_configs.server depends at runtime on the TARGET service named in that server field.\"\n}",
+ "payload": {
+  "rank": 52,
+  "kind": "yaml",
+  "cls": "hostport",
+  "detail": "scrape_configs.consul_sd_configs.server",
+  "repos": 3,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "sdgmf__go-project-sample",
+    "source": "prometheus",
+    "target": "consul",
+    "file": "configs/prometheus/prometheus.yml",
+    "line": 9,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "scrape_configs.consul_sd_configs.server",
+    "tag": "unread",
+    "text": "- server: consul:8500",
+    "context": "   5:   - /rules/*.yml\n   6: scrape_configs:\n   7:   - job_name: consul\n   8:     consul_sd_configs:\n>> 9:       - server: consul:8500\n   10:         datacenter: dc1\n   11:         tags:\n   12:           - http\n   13:     relabel_configs:"
+   },
+   {
+    "repo": "devdcores__BookStoreApp-Distributed-Application",
+    "source": "bookstore-prometheus",
+    "target": "bookstore-consul-discovery",
+    "file": "bookstore-prometheus/prometheus.yml",
+    "line": 28,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "scrape_configs.consul_sd_configs.server",
+    "tag": "unread",
+    "text": "- server: 'bookstore-consul-discovery:8500' # Host Ip where Consul is running.",
+    "context": "   24:     metrics_path: '/actuator/prometheus'\n   25:     scrape_interval: 5s\n   26:     static_configs:\n   27:     consul_sd_configs:\n>> 28:       - server: 'bookstore-consul-discovery:8500' # Host Ip where Consul is running.\n   29:     relabel_configs:\n   30:       - source_labels: ['__meta_consul_tags']\n   31:         action: keep\n   32:       - source_labels: ['__meta_consul_service']"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "?",
+    "target": "consul",
+    "file": "compose/monitoring/prometheus-consul.yml",
+    "line": 15,
+    "kind": "yaml",
+    "cls": "hostport",
+    "detail": "scrape_configs.consul_sd_configs.server",
+    "tag": "unread",
+    "text": "- server: 'consul:8500'",
+    "context": "   11: \n   12:   - job_name: 'geoserver-cloud-services'\n   13:     metrics_path: '/actuator/prometheus'\n   14:     consul_sd_configs:\n>> 15:       - server: 'consul:8500'\n   16:         refresh_interval: 30s\n   17:     relabel_configs:\n   18:       # Spring Cloud Consul registers an extra <service>-management service for\n   19:       # the separate management port. The main registration (rewritten to 8081"
+   }
+  ]
+ }
+}

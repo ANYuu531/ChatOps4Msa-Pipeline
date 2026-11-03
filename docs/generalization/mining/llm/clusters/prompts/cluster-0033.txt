@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:typescript; position = key; context key = key url
+They come from 3 different repositories (10 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=juicycleff__ultimate-backend SOURCE=? TARGET=nats file=libs/core/src/setup/microservices.setup.ts:46
+   42:   if (enableNats) {
+   43:     app.connectMicroservice({
+   44:       transport: Transport.NATS,
+   45:       options: {
+>> 46:         url: NestCloud.global.boot.get('nats.url'),
+   47:         queue: 'd4_srv_queue',
+   48:       },
+   49:     });
+   50:   }
+
+[1] repo=jingsewu__open-wes SOURCE=client TARGET=user file=client/src/pages/index.tsx:157
+   153:                 method: "get",
+   154:                 headers: {
+   155:                     terminalType: "PC"
+   156:                 },
+>> 157:                 url: "/user/api/currentUser/getAuth"
+   158:             }).then((res: any) => {
+   159:                 let menus = res.data.menus
+   160:                 localStorage.setItem("permissions", res.data.permissions)
+   161:                 let applications: string[] = Object.keys(menus)
+
+[2] repo=tkssharma__12-factor-app-microservices SOURCE=nestjs-graphql-typeorm-05 TARGET=mongodb file=nestjs-graphql-typeorm #05/src/config/typeorm/typeorm.service.ts:10
+   6: export class TypeormService implements TypeOrmOptionsFactory {
+   7: 	async createTypeOrmOptions(): Promise<TypeOrmModuleOptions> {
+   8: 		return {
+   9: 			type: 'mongodb',
+>> 10: 			url: 'mongodb://chnirt:chin04071803@ds055690.mlab.com:55690/nest-graphql',
+   11: 			entities: getMetadataArgsStorage().tables.map(tbl => tbl.target),
+   12: 			// entities: [User],
+   13: 			// entities: [__dirname + '/**/*.entity.ts'],
+   14: 			synchronize: true,

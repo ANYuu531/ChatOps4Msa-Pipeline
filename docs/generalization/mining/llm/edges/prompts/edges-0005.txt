@@ -1,0 +1,142 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=alexcheng1982__happyride istio-ingressgateway -> address-service (type sync-http)
+  cited code: devops/k8s/istio/address-service-external.yaml
+   15:       rewrite:
+   16:         uri: "/"         
+   17:       route:
+   18:         - destination:
+>> 19:             host: address-service.happyride.svc.cluster.local
+   20:     - name: "passenger-service-external"
+   21:       match:
+   22:         - uri:
+   23:             prefix: "/passenger"
+
+[1] repo=alexcheng1982__happyride cdc-service -> postgres-trip-validation (type db)
+  cited code: devops/dev/docker-compose.yml#depends_on
+
+  cited code: devops/dev/docker-compose.yml
+   70:       POSTGRES_DB: happyride-dispatch
+   71:       POSTGRES_USER: postgres
+   72:       POSTGRES_PASSWORD: postgres
+   73: 
+>> 74:   postgres-trip-validation:
+   75:     image: eventuateio/eventuate-postgres:0.14.0.RELEASE
+   76:     ports:
+   77:       - "8434:5432"
+   78:     environment:
+
+[2] repo=alexcheng1982__happyride passenger-service -> address-postgres (type db)
+  cited code: happyride/service/passenger-service/src/main/resources/application.yml
+   spring:
+     jpa:
+       open-in-view: false
+       hibernate:
+         ddl-auto: validate
+       properties:
+         hibernate:
+           dialect: org.hibernate.dialect.PostgreSQLDialect
+           default_schema: happyride
+
+[3] repo=aliyun__alibabacloud-microservice-demo zuul-gateway -> frontend (type sync-http)
+  cited code: src/zuul-gateway/src/main/resources/application.properties
+   3: spring.cloud.nacos.discovery.server-addr=localhost:8848
+   4: 
+   5: zuul.routes.test.id=test
+   6: zuul.routes.test.path=/**
+>> 7: zuul.routes.test.service-id=frontend
+   8: 
+   9: 
+   10: #zuul.routes.test2.id=test2
+   11: #zuul.routes.test2.path=/test2/**
+
+[4] repo=aliyun__alibabacloud-microservice-demo mock-server -> insights-http-service-1 (type sync-http)
+  cited code: arms-demo/mock-server/src/main/resources/application.properties
+   3: spring.application.name=${SERVICE_NAME}
+   4: service.names=insights-server-0,insights-server-1,insights-server-2,insights-server-3,insights-http-server-0,insights-http-server-1,\
+   5:   insights-redis-server,insights-mysql-server,insights-mysql-connection
+   6: service.serverUrls=http://insights-service-0:9190/,http://insights-service-1:9190/,http://insights-service-2:9190/,http://insights-service-3:9190/,\
+>> 7:   http://insights-http-service-0:9190/,http://insights-http-service-1:9190/,\
+   8:   http://insights-redis-service:9190/,http://insights-mysql-service:9190/,http://insights-mysql-connection-service:9190/
+   9: 
+   10: #外部服务地址
+   11: external.service.addr=http://insights-http-service-0:9190/
+
+[5] repo=aliyun__alibabacloud-microservice-demo provider -> product-mysql (type db)
+  cited code: src/productservice/productservice-provider/src/main/resources/application.properties
+   3: management.endpoints.web.exposure.include=*
+   4: 
+   5: #database
+   6: spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+>> 7: spring.datasource.url=jdbc:mysql://product-mysql:3306/product?characterEncoding=utf8&useSSL=false&serverTimezone=GMT
+   8: spring.datasource.username=root
+   9: spring.datasource.password=productservice
+   10: spring.jpa.hibernate.ddl-auto=update
+   11: spring.jpa.show-sql=false
+
+[6] repo=alperenkucukali__dotnet-microservices account.api -> accountdb (type db)
+  cited code: src/Services/Account/Account.API/appsettings.json
+   1: {
+   2:   "ConnectionStrings": {
+>> 3:     "AccountConnectionString": "Server=accountdb;Database=AccountDb;User Id=admin;Password=admin1234;"
+   4:   },
+   5:   "GrpcSettings": {
+   6:     "CustomerUrl": "http://localhost:5001"
+   7:   },
+  cited code: src/Services/Account/Account.API/appsettings.Development.json
+   1: {
+   2:   "ConnectionStrings": {
+>> 3:     "AccountConnectionString": "Server=accountdb;Database=AccountDb;User Id=admin;Password=admin1234;"
+   4:   },
+   5:   "GrpcSettings": {
+   6:     "CustomerUrl": "http://localhost:5001"
+   7:   },
+
+[7] repo=alperenkucukali__dotnet-microservices webstatus -> customer.api (type sync-http)
+  cited code: src/docker-compose.override.yml
+   93:     container_name: account.api
+   94:     environment:
+   95:       - ASPNETCORE_ENVIRONMENT=Development
+   96:       - "DatabaseSettings:ConnectionString=Server=accountdb;Port=5432;Database=AccountDb;User Id=admin;Password=admin1234;"
+>> 97:       - "GrpcSettings:CustomerUrl=http://customer.grpc"
+   98:       - "EventBusSettings:HostAddress=amqp://guest:guest@rabbitmq:5672"
+   99:       - "ElasticConfiguration:Uri=http://elasticsearch:9200"
+   100:     depends_on:
+   101:       - accountdb
+
+[8] repo=alperenkucukali__dotnet-microservices account.api -> elasticsearch (type db)
+  cited code: src/docker-compose.override.yml
+   81:     environment:
+   82:       - ASPNETCORE_ENVIRONMENT=Development
+   83:       - "DatabaseSettings:ConnectionString=mongodb://transactiondb:27017"
+   84:       - "EventBusSettings:HostAddress=amqp://guest:guest@rabbitmq:5672"
+>> 85:       - "ElasticConfiguration:Uri=http://elasticsearch:9200"
+   86:     depends_on:
+   87:       - transactiondb
+   88:       - rabbitmq
+   89:     ports:
+
+[9] repo=amasen02__freshcart-backend ordering -> sqlserver (type db)
+  cited code: deploy/docker/docker-compose.yaml#depends_on
+
+  cited code: deploy/docker/docker-compose.yaml
+   13: services:
+   14: 
+   15:   # --- Relational stores -------------------------------------------------------
+   16: 
+>> 17:   sqlserver:
+   18:     image: mcr.microsoft.com/mssql/server:2022-latest
+   19:     container_name: freshcart-sqlserver
+   20:     environment:
+   21:       ACCEPT_EULA: "Y"

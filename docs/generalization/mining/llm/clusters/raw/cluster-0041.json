@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0041",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 975,
+  "completion_tokens": 235,
+  "total_tokens": 1210,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The marked line is a commented-out documentation URL, not an actual target or runtime address.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The marked line is a commented-out documentation URL, not an actual target or runtime address.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The marked line is a commented-out documentation URL, not an actual target or runtime address.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml file; key path scrape_configs.static_configs.targets\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"Lines that are commented out or contain only documentation URLs should not trigger edges\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All marked lines are commented-out documentation URLs, not runtime target addresses, so no dependency edges should be drawn from them.\"\n}",
+ "payload": {
+  "rank": 41,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "scrape_configs.static_configs.targets",
+  "repos": 3,
+  "mentions": 6,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/prometheus.yaml",
+    "line": 21,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "scrape_configs.static_configs.targets",
+    "tag": "unread",
+    "text": "#  # https://prometheus.io/docs/guides/node-exporter/",
+    "context": "   17:   - job_name: \"prometheus\"\n   18:     static_configs:\n   19:       - targets: [\"prometheus:9090\"]\n   20: \n>> 21: #  # https://prometheus.io/docs/guides/node-exporter/\n   22: #  # https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-prometheus/prometheus-config-examples/docker-compose-linux/\n   23: #  - job_name: \"node-exporter\"\n   24: #    static_configs:\n   25: #      - targets: [ 'node-exporter:9100' ]"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/prometheus.yaml",
+    "line": 28,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "scrape_configs.static_configs.targets",
+    "tag": "unread",
+    "text": "#  # https://prometheus.io/docs/guides/node-exporter/",
+    "context": "   24: - job_name: \"prometheus\"\n   25:   static_configs:\n   26:   - targets: [ \"prometheus:9090\" ]\n   27: \n>> 28: #  # https://prometheus.io/docs/guides/node-exporter/\n   29: #  # https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-prometheus/prometheus-config-examples/docker-compose-linux/\n   30: #  - job_name: \"node-exporter\"\n   31: #    static_configs:\n   32: #      - targets: [ 'node-exporter:9100' ]"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/prometheus.yaml",
+    "line": 21,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "scrape_configs.static_configs.targets",
+    "tag": "unread",
+    "text": "#  # https://prometheus.io/docs/guides/node-exporter/",
+    "context": "   17:   - job_name: \"prometheus\"\n   18:     static_configs:\n   19:       - targets: [\"prometheus:9090\"]\n   20: \n>> 21: #  # https://prometheus.io/docs/guides/node-exporter/\n   22: #  # https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-prometheus/prometheus-config-examples/docker-compose-linux/\n   23: #  - job_name: \"node-exporter\"\n   24: #    static_configs:\n   25: #      - targets: [ 'node-exporter:9100' ]"
+   }
+  ]
+ }
+}

@@ -1,0 +1,132 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=meysamhadeli__booking-microservices-expressjs identity -> rabbitmq (type async)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: deployments/kubernetes/identity-deployment.yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: identity
+     namespace: booking
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+
+[1] repo=meysamhadeli__booking-microservices-java-spring-boot apigateway -> flight (type sync-http)
+  cited code: src/apigateway/src/main/resources/application-dev.yml
+   13:       routes:
+   14:         - id: flight-service
+   15:           uri: http://localhost:8082
+   16:           predicates:
+>> 17:             - Path=/api/{version}/flight/**
+   18:           filters:
+   19:             - TokenRelay
+   20:         - id: passenger-service
+   21:           uri: http://localhost:8083
+
+[2] repo=meysamhadeli__booking-microservices-java-spring-boot buildingblocks -> problems (type sync-http)
+  cited code: src/buildingblocks/src/main/java/buildingblocks/keycloak/CustomAuthenticationEntryPoint.java:40
+   36:     );
+   37: 
+   38:     problemDetail.setTitle(authException.getClass().getSimpleName());
+   39:     problemDetail.setDetail(authException.getMessage());
+>> 40:     problemDetail.setType(URI.create("https://problems/" + authException.getClass().getSimpleName().toLowerCase()));
+   41:     problemDetail.setProperty("timestamp", Instant.now().toString());
+   42:     problemDetail.setInstance(URI.create(request.getRequestURI()));
+   43:     response.setStatus(getStatus(authException).value());
+   44:     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+  cited code: src/buildingblocks/src/main/java/buildingblocks/problemdetails/CustomProblemDetailsHandler.java:93
+   89:       details.status(),
+   90:       details.detail()
+   91:     );
+   92: 
+>> 93:     problemDetail.setType(URI.create("https://problems/" + details.title().toLowerCase()));
+   94:     problemDetail.setTitle(details.title());
+   95:     problemDetail.setProperty("timestamp", Instant.now());
+   96: 
+   97:     // Add stack trace in development environment
+
+[3] repo=meysamhadeli__booking-microservices-java-spring-boot grafana -> prometheus (type sync-http)
+  cited code: deployments/docker-compose/docker-compose.infrastructure.yaml#depends_on
+
+
+[4] repo=meysamhadeli__booking-microservices-nestjs otel-collector -> aspire-dashboard (type sync-http)
+  cited code: deployments/docker-compose/docker-compose.yaml
+   139:       - "4318:4318" # OTLP http receiver
+   140:       - "55679:55679" # zpages extension
+   141:     environment:
+   142:       # set enviroments for otel collector configs to set Exporter endpoints (with defaults matching your original config)
+>> 143:       - ASPIRE_OTLP_ENDPOINT=http://aspire-dashboard:18889 # Using Docker network DNS
+   144:       - ASPIRE_API_KEY=your_api_key
+   145:       - PROMETHEUS_ENDPOINT=0.0.0.0:8889
+   146:       - PROMETHEUS_REMOTE_WRITE_ENDPOINT=http://prometheus:9090/api/v1/write
+   147:       - LOKI_ENDPOINT=http://loki:3100/otlp
+
+[5] repo=meysamhadeli__booking-microservices-nestjs otel-collector -> loki (type sync-http)
+  cited code: deployments/docker-compose/docker-compose.yaml
+   79: 
+   80:     #######################################################
+   81:     #  Loki
+   82:     #######################################################
+>> 83:   loki:
+   84:     image: grafana/loki:latest
+   85:     hostname: loki
+   86:     container_name: loki
+   87:     expose:
+
+[6] repo=meysamhadeli__booking-microservices-nestjs booking -> postgres (type db)
+  cited code: deployments/docker-compose/docker-compose.yaml#depends_on
+
+  cited code: deployments/docker-compose/docker-compose.yaml
+   17: 
+   18:     #######################################################
+   19:     #  Postgress
+   20:     #######################################################
+>> 21:   postgres:
+   22:     container_name: postgres
+   23:     image: postgres:latest
+   24:     restart: unless-stopped
+   25:     ports:
+
+[7] repo=minghsu0107__go-random-chat random-chat -> kafka (type async)
+  cited code: deployments/docker-compose.yaml#depends_on
+
+  cited code: deployments/docker-compose.yaml
+   19:       - 8080:8080
+   20:     volumes:
+   21:       - /var/run/docker.sock:/var/run/docker.sock
+   22:   web:
+>> 23:     image: minghsu0107/random-chat-web:kafka
+   24:     restart: always
+   25:     expose:
+   26:       - "80"
+   27:     environment:
+
+[8] repo=minghsu0107__go-random-chat uploader -> redis-node-0 (type db)
+  cited code: deployments/docker-compose.yaml
+   61:       CASSANDRA_USER: ming
+   62:       CASSANDRA_PASSWORD: cassandrapass
+   63:       CASSANDRA_KEYSPACE: randomchat
+   64:       REDIS_PASSWORD: ${REDIS_PASSWORD}
+>> 65:       REDIS_ADDRS: redis-node-0:6379,redis-node-1:6379,redis-node-2:6379,redis-node-3:6379,redis-node-4:6379,redis-node-5:6379
+   66:       REDIS_EXPIRATIONHOUR: "24"
+   67:       OBSERVABILITY_PROMETHEUS_PORT: "8080"
+   68:       OBSERVABILITY_TRACING_OTLPENDPOINT: jaeger:4318
+   69:     labels:
+
+[9] repo=minghsu0107__go-random-chat redis-node-5 -> redis-node-4 (type db)
+  cited code: deployments/docker-compose.yaml#depends_on
+

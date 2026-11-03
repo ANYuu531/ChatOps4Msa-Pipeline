@@ -1,0 +1,227 @@
+{
+ "id": "edges-0021",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1540,
+  "completion_tokens": 424,
+  "total_tokens": 1964,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"wrong\", \"reason\": \"The cited docker-compose.yaml lines only show the 'order' service definition but no evidence that 'graphql' depends on 'order' at runtime.\"}, {\"i\": 1, \"verdict\": \"wrong\", \"reason\": \"The cited lines only define the 'product' service but do not show 'recommender-sync' calling or connecting to 'product'.\"}, {\"i\": 2, \"verdict\": \"wrong\", \"reason\": \"The cited lines only define the 'kafka' service but do not show 'recommender-sync' depending on or connecting to 'kafka'.\"}, {\"i\": 3, \"verdict\": \"wrong\", \"reason\": \"The config files show gateway-service configuration for config-service URI, not discovery-service; no evidence gateway-service calls discovery-service.\"}, {\"i\": 4, \"verdict\": \"wrong\", \"reason\": \"The cited lines only define the 'sc-zipkin' service but do not show 'sc-gateway' calling or connecting to it.\"}, {\"i\": 5, \"verdict\": \"correct\", \"reason\": \"The environment variables in 'sc-user' explicitly reference 'sc-eureka' host and port, indicating runtime dependency.\"}, {\"i\": 6, \"verdict\": \"correct\", \"reason\": \"The code creates an axios client with baseURL pointing to ingress-nginx-controller, showing runtime HTTP calls.\"}, {\"i\": 7, \"verdict\": \"unsure\", \"reason\": \"The environment variable NATS_URL points to nats-service but no direct evidence of runtime calls or message sending is shown.\"}, {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"The MONGO_URI environment variable points to auth-mongo-service, indicating runtime DB dependency.\"}, {\"i\": 9, \"verdict\": \"unsure\", \"reason\": \"No cited code shown for this edge to judge runtime dependency.\"}]}",
+ "payload": [
+  {
+   "repo": "rasadov__EcommerceAPI",
+   "source": "graphql",
+   "target": "order",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 113,
+     "kind": "compose",
+     "context": "   109:       DATABASE_URL: http://product_db:9200\n   110:       KAFKA_BOOTSTRAP_SERVERS: kafka:9092\n   111:     restart: on-failure\n   112: \n>> 113:   order:\n   114:     container_name: \"order\"\n   115:     image: \"rasadov/order:latest\"\n   116:     build:\n   117:       context: ."
+    }
+   ]
+  },
+  {
+   "repo": "rasadov__EcommerceAPI",
+   "source": "recommender-sync",
+   "target": "product",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 99,
+     "kind": "compose",
+     "context": "   95:     environment:\n   96:       DATABASE_URL: postgres://rasadov:123456@account_db/rasadov?sslmode=disable\n   97:     restart: on-failure\n   98: \n>> 99:   product:\n   100:     container_name: \"product\"\n   101:     image: \"rasadov/product:latest\"\n   102:     build:\n   103:       context: ."
+    }
+   ]
+  },
+  {
+   "repo": "rasadov__EcommerceAPI",
+   "source": "recommender-sync",
+   "target": "kafka",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml#depends_on",
+     "line": 0,
+     "kind": "other:.yaml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 10,
+     "kind": "compose",
+     "context": "   6:       dockerfile: docker/base.dockerfile\n   7:     profiles:\n   8:       - build-only\n   9: \n>> 10:   kafka:\n   11:     container_name: kafka\n   12:     hostname: kafka\n   13:     image: docker.io/apache/kafka:4.1.1\n   14:     volumes:"
+    }
+   ]
+  },
+  {
+   "repo": "rcherara__microservice-architecture",
+   "source": "gateway-service",
+   "target": "discovery-service",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: config-service/src/main/resources/config/gateway-service-staging.yml",
+     "file": "config-service/src/main/resources/config/gateway-service-staging.yml",
+     "line": 0,
+     "kind": "yaml",
+     "context": "   server:\n     port: ${CONFIG_PORT:8080}\n   spring:\n     application: #app discovery  config\n       name: Gateway-Service\n     cloud:\n       config:\n         uri: http://${CONFIG_SERVICE:localhost}:${CONFIG_PORT:7761}\n         fail-fast: true"
+    },
+    {
+     "ref": "code: config-service/src/main/resources/config/gateway-service-production.yml",
+     "file": "config-service/src/main/resources/config/gateway-service-production.yml",
+     "line": 0,
+     "kind": "yaml",
+     "context": "   server:\n     port: ${CONFIG_PORT:8080}\n   spring:\n     application: #app discovery  config\n       name: Gateway-Service\n     cloud:\n       config:\n         uri: http://${CONFIG_SERVICE:localhost}:${CONFIG_PORT:7761}\n         fail-fast: true"
+    }
+   ]
+  },
+  {
+   "repo": "rcherara__microservice-architecture",
+   "source": "sc-gateway",
+   "target": "sc-zipkin",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 27,
+     "kind": "compose",
+     "context": "   23:     image: 'rcherara/spring-cloud-learn/discovery-service:1.0.0-SNAPSHOT'\n   24:     ports:\n   25:       - 8761:8761\n   26:     command: java -Djava.security.egd=file:/dev/./urandom -jar /app.jar\n>> 27:   sc-zipkin:\n   28:     image: openzipkin/zipkin\n   29:     container_name: sc-zipkin\n   30:     ports:\n   31:       # Port used for the Zipkin UI and HTTP Api"
+    }
+   ]
+  },
+  {
+   "repo": "rcherara__microservice-architecture",
+   "source": "sc-user",
+   "target": "sc-eureka",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 39,
+     "kind": "compose",
+     "context": "   35:     image: 'zhixilang/spring-cloud-learn/sc-user:1.0.0-SNAPSHOT'\n   36:     expose:\n   37:       - 8081\n   38:     environment:\n>> 39:       - EUREKA_HOST=sc-eureka\n   40:       - EUREKA_PORT=8761\n   41:       - ZIP_KIN_SERVER_HOST=sc-zipkin\n   42:       - ZIP_KIN_SERVER_PORT=9411\n   43:     links:"
+    }
+   ]
+  },
+  {
+   "repo": "saalikmubeen__microservices-architectured-app",
+   "source": "client-deployment",
+   "target": "ingress-nginx-controller",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: client/buildClient.js:8",
+     "file": "client/buildClient.js",
+     "line": 8,
+     "kind": "src:javascript",
+     "context": "   4:     if (typeof window === \"undefined\") {\n   5:         // We are on the server\n   6: \n   7:         return axios.create({\n>> 8:             baseURL:\n   9:                 \"http://ingress-nginx-controller.ingress-nginx.svc.cluster.local\",\n   10:             headers: req.headers,\n   11:         });\n   12:     } else {"
+    }
+   ]
+  },
+  {
+   "repo": "saalikmubeen__microservices-architectured-app",
+   "source": "tickets-deployment",
+   "target": "nats-service",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: infra/k8s/tickets-deployment.yaml",
+     "file": "infra/k8s/tickets-deployment.yaml",
+     "line": 32,
+     "kind": "yaml",
+     "context": "   28:                       - name: NATS_CLUSTER_ID\n   29:                         value: \"ticketing\"\n   30: \n   31:                       - name: NATS_URL\n>> 32:                         value: \"http://nats-service:4222\"\n   33: \n   34:                       - name: NATS_CLIENT_ID\n   35:                         valueFrom:\n   36:                             fieldRef:"
+    }
+   ]
+  },
+  {
+   "repo": "saalikmubeen__microservices-architectured-app",
+   "source": "auth-deployment",
+   "target": "auth-mongo-service",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: infra/k8s/auth-deployment.yaml",
+     "file": "infra/k8s/auth-deployment.yaml",
+     "line": 26,
+     "kind": "yaml",
+     "context": "   22:                                 name: jwt-secret\n   23:                                 key: SECRET\n   24: \n   25:                       - name: MONGO_URI \n>> 26:                         value: \"mongodb://auth-mongo-service:27017/auth\"\n   27: ---\n   28: apiVersion: v1\n   29: kind: Service\n   30: metadata:"
+    }
+   ]
+  },
+  {
+   "repo": "sczyh30__vertx-blueprint-microservice",
+   "source": "inventory-microservice",
+   "target": "redis",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml#depends_on",
+     "line": 0,
+     "kind": "other:.yml#depends_on",
+     "context": ""
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = hostport; context key = protocols.http.endpoint
+They come from 3 different repositories (3 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=meysamhadeli__booking-microservices SOURCE=? TARGET=node-exporter file=deployments/configs/otel-collector-config.yaml:32
+   28: #      scrape_configs:
+   29: #        - job_name: 'node-exporter'
+   30: #          scrape_interval: 10s
+   31: #          static_configs:
+>> 32: #            - targets: [ 'node-exporter:9100' ]
+   33: 
+   34: 
+   35: # Processors in the OpenTelemetry Collector modify and enhance telemetry data by filtering, transforming, enriching, or batching it to prepare it for export.
+   36: # https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor
+
+[1] repo=meysamhadeli__booking-microservices-nestjs SOURCE=? TARGET=tempo file=deployments/configs/tempo.yaml:17
+   13:       protocols:
+   14:         grpc:
+   15:           endpoint: 'tempo:4317'
+   16:         http:
+>> 17:           endpoint: 'tempo:4318'
+   18: 
+   19: ingester:
+   20:   max_block_duration: 5m # cut the headblock when this much time passes. this is being set for demo purposes and should probably be left alone normally
+   21: 
+
+[2] repo=meysamhadeli__booking-microservices-java-spring-boot SOURCE=? TARGET=node-exporter file=deployments/configs/otel-collector-config.yaml:32
+   28: #      scrape_configs:
+   29: #        - job_name: 'node-exporter'
+   30: #          scrape_interval: 10s
+   31: #          static_configs:
+>> 32: #            - targets: [ 'node-exporter:9100' ] 
+   33: 
+   34: 
+   35: # Processors in the OpenTelemetry Collector modify and enhance telemetry data by filtering, transforming, enriching, or batching it to prepare it for export.
+   36: # https://github.com/open-telemetry/opentelemetry-collector/tree/main/processor

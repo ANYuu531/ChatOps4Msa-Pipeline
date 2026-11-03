@@ -1,0 +1,138 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=aws-containers__retail-store-sample-app orders -> orders-db (type db)
+  cited code: src/orders/docker-compose.yml#depends_on
+
+  cited code: src/orders/docker-compose.yml
+   16:     environment:
+   17:       - reschedule=on-node-failure
+   18:       - SERVER_TOMCAT_ACCESSLOG_ENABLED=true
+   19:       - RETAIL_ORDERS_PERSISTENCE_PROVIDER=postgres
+>> 20:       - RETAIL_ORDERS_PERSISTENCE_ENDPOINT=orders-db:5432
+   21:       - RETAIL_ORDERS_PERSISTENCE_NAME=orders
+   22:       - RETAIL_ORDERS_PERSISTENCE_USERNAME=orders_user
+   23:       - RETAIL_ORDERS_PERSISTENCE_PASSWORD=${DB_PASSWORD}
+   24:       - RETAIL_ORDERS_MESSAGING_PROVIDER=rabbitmq
+
+[1] repo=buptmiao__microservice-app apigateway -> zipkin (type sync-http)
+  cited code: tracer/docker-compose.yml#depends_on
+
+  cited code: tracer/docker-compose.yml
+   33:       - 9200:9200
+   34:     networks:
+   35:       - back-tier
+   36: 
+>> 37:     # The zipkin process services the UI, and also exposes a POST endpoint that
+   38:     # instrumentation can send trace data to. Scribe is enabled by default.
+   39:   zipkin:
+   40:     image: openzipkin/zipkin:1.17.0
+   41:     container_name: zipkin
+
+[2] repo=buptmiao__microservice-app topic -> etcd (type sync-http)
+  cited code: tracer/docker-compose.yml#depends_on
+
+  cited code: docker/docker-compose.yml#depends_on
+
+
+[3] repo=buptmiao__microservice-app grafana -> prometheus (type sync-http)
+  cited code: monitor/docker-compose.yml#depends_on
+
+
+[4] repo=charlessolar__eShopOnContainersDDD presentation -> seq (type sync-http)
+  cited code: src/Contexts/Basket/Presentation/Program.cs:122
+   118:         .ReadFrom.Configuration(configuration)
+   119:         .ReadFrom.Services(services)
+   120:         .Enrich.FromLogContext()
+   121:         .WriteTo.Console()
+>> 122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? "http://seq" : seqServerUrl)
+   123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? "http://logstash:8080" : logstashUrl, queueLimitBytes: null);
+   124: 
+   125: }
+   126: 
+  cited code: src/Contexts/Identity/Presentation/Program.cs:122
+   118:         .ReadFrom.Configuration(configuration)
+   119:         .ReadFrom.Services(services)
+   120:         .Enrich.FromLogContext()
+   121:         .WriteTo.Console()
+>> 122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? "http://seq" : seqServerUrl)
+   123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? "http://logstash:8080" : logstashUrl, queueLimitBytes: null);
+   124: 
+   125: }
+   126: 
+
+[5] repo=charlessolar__eShopOnContainersDDD domain -> rabbitmq (type async)
+  cited code: docker-compose.yml#depends_on
+
+
+[6] repo=charlessolar__eShopOnContainersDDD presentation -> logstash (type sync-http)
+  cited code: src/Contexts/Basket/Presentation/Program.cs:123
+   119:         .ReadFrom.Services(services)
+   120:         .Enrich.FromLogContext()
+   121:         .WriteTo.Console()
+   122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? "http://seq" : seqServerUrl)
+>> 123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? "http://logstash:8080" : logstashUrl, queueLimitBytes: null);
+   124: 
+   125: }
+   126: 
+   127: IConfiguration GetConfiguration()
+  cited code: src/Contexts/Identity/Presentation/Program.cs:123
+   119:         .ReadFrom.Services(services)
+   120:         .Enrich.FromLogContext()
+   121:         .WriteTo.Console()
+   122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? "http://seq" : seqServerUrl)
+>> 123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? "http://logstash:8080" : logstashUrl, queueLimitBytes: null);
+   124: 
+   125: }
+   126: 
+   127: IConfiguration GetConfiguration()
+
+[7] repo=codergogoi__nodejs_microservice products -> customer (type sync-http)
+  cited code: products/src/utils/index.js:62
+   58: };
+   59: 
+   60: //Raise Events
+   61: module.exports.PublishCustomerEvent = async (payload) => {
+>> 62:   axios.post("http://customer:8001/app-events/", {
+   63:     payload,
+   64:   });
+   65: 
+   66:   //     axios.post(`${BASE_URL}/customer/app-events/`,{
+
+[8] repo=codergogoi__nodejs_microservice customer -> nosql-db (type db)
+  cited code: customer/src/config/index.js:12
+   8: }
+   9: 
+   10: module.exports = {
+   11:   PORT: process.env.PORT,
+>> 12:   DB_URL: process.env.MONGODB_URI,
+   13:   APP_SECRET: process.env.APP_SECRET,
+   14:   EXCHANGE_NAME: process.env.EXCHANGE_NAME,
+   15:   MSG_QUEUE_URL: process.env.MSG_QUEUE_URL,
+   16:   CUSTOMER_SERVICE: "customer_service",
+  cited code: docker-compose.yml#depends_on
+
+
+[9] repo=codergogoi__nodejs_microservice shopping -> nosql-db (type db)
+  cited code: shopping/src/config/index.js:12
+   8: }
+   9: 
+   10: module.exports = {
+   11:   PORT: process.env.PORT,
+>> 12:   DB_URL: process.env.MONGODB_URI,
+   13:   APP_SECRET: process.env.APP_SECRET,
+   14:   BASE_URL: process.env.BASE_URL,
+   15:   EXCHANGE_NAME: process.env.EXCHANGE_NAME,
+   16:   MSG_QUEUE_URL: process.env.MSG_QUEUE_URL,
+  cited code: docker-compose.yml#depends_on
+

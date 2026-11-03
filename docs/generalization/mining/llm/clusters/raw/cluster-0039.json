@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0039",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 892,
+  "completion_tokens": 286,
+  "total_tokens": 1178,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The environment variable REACT_APP_AUTHORITY contains a URL pointing to identity-server, indicating wallet-spa calls identity-server at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The value './src/gateway/' is a local filesystem path, likely a source code folder reference, not a runtime address to the gateway component.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"unsure\",\n      \"reason\": \"SERVICE_REGISTRY=service-registry-tier is a service name used by multiple components; without knowing which component owns this .env file or how it is used at runtime, dependency cannot be confirmed.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"dotenv; position=key\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"Only environment variables whose values are runtime addresses (e.g. URLs) to TARGET indicate dependencies; simple key-value pairs in dotenv files at the key position do not reliably indicate runtime dependencies, so no single syntactic rule on dotenv keys alone can separate dependencies from non-dependencies.\"\n}",
+ "payload": {
+  "rank": 39,
+  "kind": "dotenv",
+  "cls": "key",
+  "detail": "*",
+  "repos": 3,
+  "mentions": 6,
+  "samples": [
+   {
+    "repo": "ivanpaulovich__clean-architecture-manga",
+    "source": "wallet-spa",
+    "target": "identity-server",
+    "file": "wallet-spa/vs.debug.env",
+    "line": 1,
+    "kind": "dotenv",
+    "cls": "key",
+    "detail": "*",
+    "tag": "unread",
+    "text": "REACT_APP_AUTHORITY=https://wallet.local:8081/identity-server",
+    "context": ">> 1: REACT_APP_AUTHORITY=https://wallet.local:8081/identity-server\n   2: REACT_APP_REDIRECT_URI=https://wallet.local:8081/callback\n   3: REACT_APP_POST_LOGOUT_REDIRECT_URI=https://wallet.local:8081\n   4: REACT_APP_ACCOUNTS_API=https://wallet.local:8081/accounts-api"
+   },
+   {
+    "repo": "netcorebcn__quiz",
+    "source": "?",
+    "target": "gateway",
+    "file": ".env",
+    "line": 5,
+    "kind": "dotenv",
+    "cls": "key",
+    "detail": "*",
+    "tag": "unread",
+    "text": "QUIZ_GATEWAY=./src/gateway/",
+    "context": "   1: TAG=latest\n   2: REGISTRY=local\n   3: \n   4: \n>> 5: QUIZ_GATEWAY=./src/gateway/\n   6: QUIZ_COMMANDS=./src/Quiz.Commands.Api/\n   7: QUIZ_COMMANDS_UNITTESTS=./test/Quiz.Commands.Tests/\n   8: QUIZ_QUERIES=./src/Quiz.Queries.Api/\n   9: QUIZ_QUERIES_UNITTESTS=./test/Quiz.Queries.Tests/"
+   },
+   {
+    "repo": "aidanwhiteley__books",
+    "source": "?",
+    "target": "service-registry-tier",
+    "file": ".env",
+    "line": 55,
+    "kind": "dotenv",
+    "cls": "key",
+    "detail": "*",
+    "tag": "unread",
+    "text": "SERVICE_REGISTRY=service-registry-tier",
+    "context": "   51: SPRING_SECURITY_OUATH2_CLIENT_REGISTRATION_FACEBOOK_CLIENT_ID=dummyValue-CHANGE_ME\n   52: # If JAVA_BOOKS_AUTO_AUTH_USER is not true, must match the value you set up in the Facebook APIs console\n   53: SPRING_SECURITY_OUATH2_CLIENT_REGISTRATION_FACEBOOK_CLIENT_SECRET=dummyValue-CHANGE_ME\n   54: # Service name for the Service Registry defined in docker-compose.yml - is also used by the API gateway tier and Spring Boot Admin tier\n>> 55: SERVICE_REGISTRY=service-registry-tier\n   56: \n   57: # #############################################################################\n   58: # Environment variables used by the books MongoDB based data tier\n   59: # #############################################################################"
+   }
+  ]
+ }
+}

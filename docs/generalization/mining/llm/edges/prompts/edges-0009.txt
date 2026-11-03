@@ -1,0 +1,154 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=desenvolvedor-io__dev-store web-status -> database (type db)
+  cited code: docker/docker-compose-local.yml
+   25:             dockerfile: ./services/DevStore.Identity.API/Dockerfile        
+   26:         restart: always
+   27:         environment:
+   28:             <<: *common-variables
+>> 29:             CUSTOMCONNSTR_DefaultConnection: "Server=database;Database=LocalDSUsers;User Id=sa;Password=MyDB@123;MultipleActiveResultSets=true;TrustServerCertificate=True;"
+   30:         volumes:
+   31:             - ./certs:/https:ro
+   32:         depends_on:
+   33:             generate-pfx:
+  cited code: docker/docker-compose.yml
+   18:         container_name: devstore-api-identity
+   19:         restart: always
+   20:         environment:            
+   21:             <<: *common-variables
+>> 22:             CUSTOMCONNSTR_DefaultConnection: "Server=database;Database=DSUsers;MultipleActiveResultSets=true;User Id=sa;Password=MyDB@123;MultipleActiveResultSets=true;TrustServerCertificate=True;"
+   23:         volumes:
+   24:             - ./certs:/https:ro
+   25:         depends_on:
+   26:             generate-pfx:
+
+[1] repo=desenvolvedor-io__dev-store api-identity -> rabbitmq (type async)
+  cited code: docker/docker-compose-local.yml#depends_on
+
+  cited code: docker/docker-compose.yml#depends_on
+
+
+[2] repo=devdcores__BookStoreApp-Distributed-Application bookstore-order-service -> bookstore-zipkin (type sync-http)
+  cited code: docker-compose.yml
+   47:     networks:
+   48:       - bookstore-app-network
+   49:     environment:
+   50:       - SERVER_PORT=8765
+>> 51:       - ZIPKIN_HOST=bookstore-zipkin:9411
+   52:       - SPRING_PROFILES_ACTIVE=docker
+   53: 
+   54:   bookstore-account-service:
+   55:     build:
+
+[3] repo=devdcores__BookStoreApp-Distributed-Application bookstore-zuul-api-gateway-server -> bookstore-payment-service (type sync-http)
+  cited code: bookstore-api-gateway-service/src/main/resources/application.yml
+   38:       path: /order/**
+   39:       serviceId: bookstore-order-service
+   40:     payment:
+   41:       path: /payment/**
+>> 42:       serviceId: bookstore-payment-service
+   43:   ribbon:
+   44:     eager-load:
+   45:       enabled: true
+   46:   ribbon-isolation-strategy: THREAD
+
+[4] repo=devdcores__BookStoreApp-Distributed-Application bookstore-chronograf -> bookstore-influxdb (type sync-http)
+  cited code: docker-compose.yml
+   194:       - /var/run/docker.sock:/var/run/docker.sock
+   195:     networks:
+   196:       - bookstore-app-network
+   197: 
+>> 198:   bookstore-influxdb:
+   199:     image: influxdb
+   200:     container_name: bookstore-influxdb
+   201:     hostname: bookstore-influxdb
+   202:     volumes:
+
+[5] repo=ebosas__microservices database -> rabbitmq (type async)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   1: services:
+>> 2:     rabbitmq:
+   3:         image: "rabbitmq:3-management-alpine"
+   4:         ports:
+   5:             - 5672:5672
+   6:             - 15672:15672
+
+[6] repo=ebosas__microservices backend -> rabbitmq (type async)
+  cited code: docker-compose.yml#depends_on
+
+  cited code: docker-compose.yml
+   1: services:
+>> 2:     rabbitmq:
+   3:         image: "rabbitmq:3-management-alpine"
+   4:         ports:
+   5:             - 5672:5672
+   6:             - 15672:15672
+
+[7] repo=ebosas__microservices database -> redis (type db)
+  cited code: docker-compose.yml
+   23:             test: ["CMD-SHELL", "pg_isready -U postgres"]
+   24:             interval: 10s
+   25:             timeout: 10s
+   26:             retries: 5
+>> 27:     redis:
+   28:         image: "redis:6-alpine"
+   29:         ports:
+   30:             - 6379:6379
+   31:         healthcheck:
+
+[8] repo=ebubekirdinc__SuuCat assessment.api -> identity.api (type sync-http)
+  cited code: src/Services/Assessment/src/WebUI/Program.cs:20
+   16: builder.Services.AddWebUIServices();
+   17: builder.Services.AddAuthentication("Bearer")
+   18:     .AddJwtBearer("Bearer", options =>
+   19:     {
+>> 20:         options.Authority = builder.Configuration["IdentityServerURL"];
+   21:         options.Audience = "resource_assessment"; 
+   22:         options.RequireHttpsMetadata = false;
+   23:         // options.TokenValidationParameters = new TokenValidationParameters
+   24:         // {
+  cited code: docker-compose.override.yml
+   112:     environment:
+   113:       - ASPNETCORE_ENVIRONMENT=Development
+   114:       - "ConnectionStrings:DefaultConnection=Server=notificationdb;Port=5432;Database=NotificationDb;User Id=admin;Password=admin1234;"
+   115:       - RabbitMQUrl=rabbitmq
+>> 116:       - IdentityServerURL=http://identity.api
+   117:       - "ElasticConfiguration:Uri=http://elasticsearch:9200"
+   118:     depends_on:
+   119:       - notificationdb
+   120:       - rabbitmq
+
+[9] repo=ebubekirdinc__SuuCat assessment.api -> tools.ietf.org (type external)
+  cited code: src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs:52
+   48:         var exception = (ValidationException)context.Exception;
+   49: 
+   50:         var details = new ValidationProblemDetails(exception.Errors)
+   51:         {
+>> 52:             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+   53:         };
+   54: 
+   55:         context.Result = new BadRequestObjectResult(details);
+   56: 
+  cited code: src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs:64
+   60:     private void HandleInvalidModelStateException(ExceptionContext context)
+   61:     {
+   62:         var details = new ValidationProblemDetails(context.ModelState)
+   63:         {
+>> 64:             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+   65:         };
+   66: 
+   67:         context.Result = new BadRequestObjectResult(details);
+   68: 

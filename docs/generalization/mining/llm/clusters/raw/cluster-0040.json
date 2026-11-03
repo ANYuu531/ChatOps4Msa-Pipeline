@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0040",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1045,
+  "completion_tokens": 227,
+  "total_tokens": 1272,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The marked line is a commented-out explanatory note, not an actual runtime address or connection.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The marked line is a commented-out explanatory note, not an actual runtime address or connection.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The marked line is a commented-out explanatory note, not an actual runtime address or connection.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml file at key otlphttp/loki.tls.insecure\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"Lines that are comments or explanatory notes\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All marked lines are comments or documentation notes, so no runtime dependency edges should be drawn from them.\"\n}",
+ "payload": {
+  "rank": 40,
+  "kind": "yaml",
+  "cls": "url",
+  "detail": "otlphttp/loki.tls.insecure",
+  "repos": 3,
+  "mentions": 6,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "loki",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 65,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "otlphttp/loki.tls.insecure",
+    "tag": "unread",
+    "text": "#  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint",
+    "context": "   61:     endpoint: \"http://loki:3100/otlp\"\n   62:     tls:\n   63:       insecure: true\n   64: \n>> 65:       #  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint\n   66:       #  loki:\n   67:       #    endpoint: \"http://loki:3100/loki/api/v1/push\"\n   68:       #    tls:\n   69:       #      insecure: true"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "loki",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 76,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "otlphttp/loki.tls.insecure",
+    "tag": "unread",
+    "text": "#  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint",
+    "context": "   72:   otlphttp/loki:\n   73:     endpoint: ${env:LOKI_ENDPOINT:-\"http://loki:3100/otlp\"}\n   74:     tls:\n   75:       insecure: true\n>> 76:       #  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint\n   77:       #  loki:\n   78:       #    endpoint: \"http://loki:3100/loki/api/v1/push\"\n   79:       #    tls:\n   80:       #      insecure: true"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "loki",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 65,
+    "kind": "yaml",
+    "cls": "url",
+    "detail": "otlphttp/loki.tls.insecure",
+    "tag": "unread",
+    "text": "#  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint",
+    "context": "   61:     endpoint: \"http://loki:3100/otlp\"\n   62:     tls:\n   63:       insecure: true\n   64:       \n>> 65:       #  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint\n   66:       #  loki:\n   67:       #    endpoint: \"http://loki:3100/loki/api/v1/push\"\n   68:       #    tls:\n   69:       #      insecure: true"
+   }
+  ]
+ }
+}

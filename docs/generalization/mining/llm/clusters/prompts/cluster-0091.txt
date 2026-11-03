@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:typescript; position = literal; context key = call pingcheck
+They come from 2 different repositories (3 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=juicycleff__ultimate-backend SOURCE=? TARGET=mongo file=libs/core/src/heath-indicators/base-health.service.ts:54
+   50:       const healthEndpoint: TerminusEndpoint = {
+   51:         url: '/health',
+   52:         healthIndicators: [
+   53:           ...healths,
+>> 54:           async () => this.mongo.pingCheck('mongo'),
+   55:         ],
+   56:       };
+   57:       return {
+   58:         endpoints: [healthEndpoint],
+
+[1] repo=getlarge__ticketing SOURCE=expiration TARGET=redis file=apps/expiration/src/app/health/health.controller.ts:81
+   77:         this.http.pingCheck('http', 'https://google.com', {
+   78:           timeout: HEALTH_HTTP_PING_TIMEOUT,
+   79:         }),
+   80:       () =>
+>> 81:         this.redis.pingCheck('redis', {
+   82:           options: new RedisConfig(this.configService).options,
+   83:           timeout: HEALTH_REDIS_PING_TIMEOUT,
+   84:         }),
+   85:       () => this.microservice.pingCheck('rpc', this.microserviceOptions),

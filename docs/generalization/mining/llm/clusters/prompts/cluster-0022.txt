@@ -1,0 +1,73 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = json; position = key; context key = url
+They come from 4 different repositories (5 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=meysamhadeli__booking-microservices SOURCE=grafana TARGET=rabbitmq file=deployments/configs/grafana/dashboards/rabbitmq.json:78
+   74:       "targetBlank": true,
+   75:       "title": "Monitoring with Prometheus & Grafana",
+   76:       "tooltip": "",
+   77:       "type": "link",
+>> 78:       "url": "https://www.rabbitmq.com/prometheus.html"
+   79:     }
+   80:   ],
+   81:   "liveNow": false,
+   82:   "panels": [
+
+[1] repo=meysamhadeli__booking-microservices-java-spring-boot SOURCE=grafana TARGET=rabbitmq file=deployments/configs/grafana/dashboards/rabbitmq.json:78
+   74:       "targetBlank": true,
+   75:       "title": "Monitoring with Prometheus & Grafana",
+   76:       "tooltip": "",
+   77:       "type": "link",
+>> 78:       "url": "https://www.rabbitmq.com/prometheus.html"
+   79:     }
+   80:   ],
+   81:   "liveNow": false,
+   82:   "panels": [
+
+[2] repo=opexdev__core SOURCE=keycloak-gateway TARGET=keycloak file=user-management/keycloak-gateway/src/main/resources/META-INF/keycloak-server.json:206
+   202:     "default": {
+   203:       "enabled": true
+   204:     },
+   205:     "hachicorp-vault": {
+>> 206:       "url": "${keycloak.hashicorp.url}",
+   207:       "appId": "${spring.application.name}",
+   208:       "engine-name": "secret",
+   209:       "enabled": "${keycloak.vault.files-plaintext.provider.enabled:true}"
+   210:     }
+
+[3] repo=getlarge__ticketing SOURCE=? TARGET=kratos file=infra/ory/oathkeeper/rules-template.json:10
+   6:       "url": "##kratos_public_url##",
+   7:       "strip_path": "/.ory/kratos/public"
+   8:     },
+   9:     "match": {
+>> 10:       "url": "##oathkeeper_public_url##/.ory/kratos/public/<\\*\\*>",
+   11:       "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"]
+   12:     },
+   13:     "authenticators": [
+   14:       {

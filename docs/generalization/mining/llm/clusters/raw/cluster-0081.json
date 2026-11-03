@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0081",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 873,
+  "completion_tokens": 227,
+  "total_tokens": 1100,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line defines a configuration schema default value for a Postgres username, which is metadata and does not itself cause the building-blocks component to call or connect to the postgres component at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"Similarly, this line is a configuration schema default value declaration and does not imply that building-blocks calls or connects to postgres at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:javascript; position=literal; context key=call default\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"These samples are configuration default values appearing as literals in JavaScript source files and do not represent runtime calls or connections, so no general syntactic rule can separate dependency from non-dependency in this pattern.\"\n}",
+ "payload": {
+  "rank": 81,
+  "kind": "src:javascript",
+  "cls": "literal",
+  "detail": "call default",
+  "repos": 2,
+  "mentions": 4,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "building-blocks",
+    "target": "postgres",
+    "file": "src/building-blocks/configs/configs.js",
+    "line": 29,
+    "kind": "src:javascript",
+    "cls": "literal",
+    "detail": "call default",
+    "tag": "file-read",
+    "text": "POSTGRES_USERNAME: joi_1.default.string().default('postgres').description('Postgres username'),",
+    "context": "   25:         .default('1 days')\n   26:         .description('days after which refresh tokens expire'),\n   27:     POSTGRES_HOST: joi_1.default.string().default('localhost').description('Postgres host'),\n   28:     POSTGRES_PORT: joi_1.default.number().default(5432).description('Postgres host'),\n>> 29:     POSTGRES_USERNAME: joi_1.default.string().default('postgres').description('Postgres username'),\n   30:     POSTGRES_PASSWORD: joi_1.default.string().default('postgres').description('Postgres password'),\n   31:     POSTGRES_Database: joi_1.default.string()\n   32:         .default('default_database')\n   33:         .description('Postgres database name'),"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-expressjs",
+    "source": "building-blocks",
+    "target": "postgres",
+    "file": "src/building-blocks/config/config.js",
+    "line": 18,
+    "kind": "src:javascript",
+    "cls": "literal",
+    "detail": "call default",
+    "tag": "file-read",
+    "text": "POSTGRES_USERNAME: joi_1.default.string().default('postgres').description('Postgres username'),",
+    "context": "   14:     SERVICE_NAME: joi_1.default.string(),\n   15:     PORT: joi_1.default.number().default(3000),\n   16:     POSTGRES_HOST: joi_1.default.string().default('localhost').description('Postgres host'),\n   17:     POSTGRES_PORT: joi_1.default.number().default(5432).description('Postgres host'),\n>> 18:     POSTGRES_USERNAME: joi_1.default.string().default('postgres').description('Postgres username'),\n   19:     POSTGRES_PASSWORD: joi_1.default.string().default('postgres').description('Postgres password'),\n   20:     POSTGRES_Database: joi_1.default.string()\n   21:         .default('default_database')\n   22:         .description('Postgres database name'),"
+   }
+  ]
+ }
+}

@@ -1,0 +1,94 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes k8n-service-gateway -> containerized-accounts (type sync-http)
+  cited code: containerized-gateway/src/main/resources/application.yml
+   server:
+     port: ${PORT:8762}
+   
+   spring:
+     application:
+       name: containerized-gateway
+     logstash:
+       server: logstash
+       port: 5000
+
+[1] repo=thangchung__clean-architecture-dotnet settingapp-dapr -> placement (type sync-http)
+  cited code: docker-compose.yml
+   12:     ports:
+   13:       - "5000:80"
+   14:     depends_on:
+   15:       - redis
+>> 16:       - placement
+   17:       - productapp
+   18:       - customerapp
+   19:       - settingapp
+   20:     networks:
+
+[2] repo=thangchung__clean-architecture-dotnet webapigatewayapp -> placement (type sync-http)
+  cited code: docker-compose.yml#depends_on
+
+
+[3] repo=thangchung__clean-architecture-dotnet samples -> bob.com (type external)
+  cited code: samples/IdentityServer/Quickstart/TestUsers.cs:58
+   54:                             new Claim(JwtClaimTypes.GivenName, "Bob"),
+   55:                             new Claim(JwtClaimTypes.FamilyName, "Smith"),
+   56:                             new Claim(JwtClaimTypes.Email, "BobSmith@email.com"),
+   57:                             new Claim(JwtClaimTypes.EmailVerified, "true", ClaimValueTypes.Boolean),
+>> 58:                             new Claim(JwtClaimTypes.WebSite, "http://bob.com"),
+   59:                             new Claim(JwtClaimTypes.Address, JsonSerializer.Serialize(address), IdentityServerConstants.ClaimValueTypes.Json)
+   60:                         }
+   61:                     }
+   62:                 };
+
+[4] repo=thangchung__coffeeshop-on-nomad otel-collector -> jaeger-all-in-one (type sync-http)
+  cited code: docker-compose-o11y.yaml#depends_on
+
+
+[5] repo=thangchung__coffeeshop-on-nomad reverse-proxy -> counter-service (type sync-http)
+  cited code: docker-compose.yaml#depends_on
+
+  cited code: docker-compose-o11y.yaml#depends_on
+
+
+[6] repo=thangchung__coffeeshop-on-nomad barista-service -> postgresql (type db)
+  cited code: src/BaristaService/Program.cs:31
+   27:     .AddCustomValidators(new[] {typeof(BaristaItem)});
+   28: 
+   29: builder.Services
+   30:     .AddPostgresDbContext<MainDbContext>(
+>> 31:         builder.Configuration.GetConnectionString("baristadb"),
+   32:         null,
+   33:         svc => svc.AddRepository(typeof(Repository<>)))
+   34:     .AddDatabaseDeveloperPageExceptionFilter();
+   35: 
+  cited code: docker-compose.yaml#depends_on
+
+
+[7] repo=thangchung__magazine-website consul3 -> consul1 (type sync-http)
+  cited code: deploy/docker-compose-consul-only.yml#depends_on
+
+  cited code: deploy/docker-compose.yml#depends_on
+
+
+[8] repo=thangchung__magazine-website registrator -> consul1 (type sync-http)
+  cited code: deploy/docker-compose-consul-only.yml#depends_on
+
+  cited code: deploy/docker-compose.yml#depends_on
+
+
+[9] repo=thangchung__magazine-website consul2 -> consul1 (type sync-http)
+  cited code: deploy/docker-compose-consul-only.yml#depends_on
+
+  cited code: deploy/docker-compose.yml#depends_on
+

@@ -1,0 +1,73 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = url; context key = containers.env.value
+They come from 4 different repositories (36 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=hoangtien2k3__ecommerce-microservices SOURCE=auth-service TARGET=admin file=k8s/backend/auth-service.yaml:70
+   66:               value: http://api.ecommerce.local/api/v1/auth/callback
+   67:             - name: SSO_DEFAULT_FRONTEND_REDIRECT
+   68:               value: http://ecommerce.local/auth/callback
+   69:             - name: SSO_ALLOWED_REDIRECT_URIS
+>> 70:               value: http://ecommerce.local/auth/callback,http://admin.ecommerce.local/auth/callback,http://localhost:3000/auth/callback,http://localhost:3001/auth/callback
+   71:           startupProbe:
+   72:             httpGet:
+   73:               path: /actuator/health
+   74:               port: 9000
+
+[1] repo=oracle-quickstart__oci-cloudnative SOURCE=mushop-api TARGET=mushop-catalogue file=deploy/complete/kubernetes/mushop.yaml:736
+   732:             value: "catalogue"
+   733:           - name: SESSION_REDIS
+   734:             value: mushop-session
+   735:           - name: CATALOGUE_URL
+>> 736:             value: http://mushop-catalogue
+   737:           - name: ORDERS_URL
+   738:             value: http://mushop-orders
+   739:           - name: CARTS_URL
+   740:             value: http://mushop-carts
+
+[2] repo=getlarge__ticketing SOURCE=rmq-depl TARGET=auth-srv file=infra/k8s/deps/rmq-depl.yaml:24
+   20:               value: '-rabbit auth_backends [rabbit_auth_backend_internal,rabbit_auth_backend_cache]
+   21:                 -rabbitmq_auth_backend_cache cached_backend rabbit_auth_backend_http
+   22:                 -rabbitmq_auth_backend_cache cache_ttl 5000
+   23:                 -rabbitmq_auth_backend_http http_method post
+>> 24:                 -rabbitmq_auth_backend_http user_path "http://auth-srv:3000/user"
+   25:                 -rabbitmq_auth_backend_http vhost_path "http://auth-srv:3000/vhost"
+   26:                 -rabbitmq_auth_backend_http resource_path "http://auth-srv:3000/resource"
+   27:                 -rabbitmq_auth_backend_http topic_path "http://auth-srv:3000/topic"'
+   28:           resources:
+
+[3] repo=fdonnet__ubik_accounting SOURCE=accounting-sales-vat-tax-api TARGET=ubik-rabbitmq file=deploy/accounting-tax-api/accounting-tax-api-deploy.yaml:27
+   23:           value: 'Host=ubik-postgres-postgresql;Port=5432;Database=ubik_accounting_salestax;Username=postgres;Password=test01'
+   24:         - name: ASPNETCORE_ENVIRONMENT
+   25:           value: Development
+   26:         - name: MessageBroker__Host
+>> 27:           value: 'amqp://ubik-rabbitmq:5672'
+   28:         - name: AuthServer__MetadataAddress
+   29:           value: "https://keycloak-local/realms/ubik/.well-known/openid-configuration"
+   30:         - name: AuthServer__Authority
+   31:           value: "https://keycloak-local/realms/ubik"

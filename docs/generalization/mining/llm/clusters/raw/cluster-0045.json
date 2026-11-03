@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0045",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 885,
+  "completion_tokens": 254,
+  "total_tokens": 1139,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is commented out and part of a Prometheus scrape configuration, which is metadata for monitoring, not a runtime call or connection.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is commented out and part of a Prometheus scrape configuration, which is metadata for monitoring, not a runtime call or connection.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The line is commented out and part of a Prometheus scrape configuration, which is metadata for monitoring, not a runtime call or connection.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml key protocols.http.endpoint\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples are commented-out Prometheus scrape configs in YAML and do not represent runtime dependencies, so no general syntactic rule can separate dependency from non-dependency here.\"\n}",
+ "payload": {
+  "rank": 45,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "protocols.http.endpoint",
+  "repos": 3,
+  "mentions": 5,
+  "samples": [
+   {
+    "repo": "meysamhadeli__booking-microservices",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 26,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "protocols.http.endpoint",
+    "tag": "unread",
+    "text": "#  prometheus:",
+    "context": "   22:       grpc:\n   23:         endpoint: 0.0.0.0:4317\n   24:       http:\n   25:         endpoint: 0.0.0.0:4318\n>> 26: #  prometheus:\n   27: #    config:\n   28: #      scrape_configs:\n   29: #        - job_name: 'node-exporter'\n   30: #          scrape_interval: 10s"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-nestjs",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 26,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "protocols.http.endpoint",
+    "tag": "unread",
+    "text": "#  prometheus:",
+    "context": "   22:       grpc:\n   23:         endpoint: 0.0.0.0:4317\n   24:       http:\n   25:         endpoint: 0.0.0.0:4318\n>> 26: #  prometheus:\n   27: #    config:\n   28: #      scrape_configs:\n   29: #        - job_name: 'node-exporter'\n   30: #          scrape_interval: 10s"
+   },
+   {
+    "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+    "source": "?",
+    "target": "prometheus",
+    "file": "deployments/configs/otel-collector-config.yaml",
+    "line": 26,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "protocols.http.endpoint",
+    "tag": "unread",
+    "text": "#  prometheus:",
+    "context": "   22:       grpc:\n   23:         endpoint: 0.0.0.0:4317\n   24:       http:\n   25:         endpoint: 0.0.0.0:4318\n>> 26: #  prometheus:\n   27: #    config:\n   28: #      scrape_configs:\n   29: #        - job_name: 'node-exporter'\n   30: #          scrape_interval: 10s"
+   }
+  ]
+ }
+}

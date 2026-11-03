@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:csharp; position = literal; context key = call addpostgres
+They come from 2 different repositories (2 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=meysamhadeli__booking-microservices SOURCE=? TARGET=postgres file=src/Aspire/src/AppHost/Program.cs:11
+   7: // 1. Database Services
+   8: var pgUsername = builder.AddParameter("pg-username", "postgres", secret: true);
+   9: var pgPassword = builder.AddParameter("pg-password", "postgres", secret: true);
+   10: 
+>> 11: var postgres = builder.AddPostgres("postgres", pgUsername, pgPassword)
+   12:     .WithImage("postgres:17")
+   13:     .WithEndpoint(
+   14:         "tcp",
+   15:         e =>
+
+[1] repo=amasen02__freshcart-backend SOURCE=? TARGET=postgres file=src/AspireAppHost/FreshCart.AppHost/Program.cs:58
+   54: var paymentReadDatabase = sqlServer.AddDatabase("paymentreaddb")
+   55:     .WithCreationScript("IF DB_ID(N'paymentreaddb') IS NULL CREATE DATABASE [paymentreaddb];");
+   56: 
+   57: var postgres = distributedApplicationBuilder
+>> 58:     .AddPostgres("postgres", password: postgresPassword);
+   59: if (usePersistentBackingResources)
+   60: {
+   61:     postgres.WithDataVolume().WithLifetime(ContainerLifetime.Persistent);
+   62: }

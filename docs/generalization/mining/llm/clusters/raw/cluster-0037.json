@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0037",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 844,
+  "completion_tokens": 304,
+  "total_tokens": 1148,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The 'host' key is set from a config object and likely refers to a database hostname, but this line alone does not show that the SOURCE component calls or connects to TARGET at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The 'host' key is assigned a variable named 'host' or false, which is a server config option for the desktop component itself, not a runtime call or connection to a separate TARGET component.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The 'host' key in Sequelize constructor config directly specifies the hostname of the TARGET database service, indicating that SOURCE connects to TARGET at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"src:typescript key host\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"The same syntactic pattern 'key host' in TypeScript source files includes both runtime dependencies (e.g., DB host in Sequelize config) and non-dependencies (e.g., local server config or config object references), so no single general rule based on syntax and file kind alone can separate them.\"\n}",
+ "payload": {
+  "rank": 37,
+  "kind": "src:typescript",
+  "cls": "key",
+  "detail": "key host",
+  "repos": 3,
+  "mentions": 8,
+  "samples": [
+   {
+    "repo": "juicycleff__ultimate-backend",
+    "source": "?",
+    "target": "eventstore",
+    "file": "libs/core/src/services/configs/eventstore-config.service.ts",
+    "line": 22,
+    "kind": "src:typescript",
+    "cls": "key",
+    "detail": "key host",
+    "tag": "unread",
+    "text": "host: database?.eventstore?.hostname,",
+    "context": "   18: \n   19:     return {\n   20:       type: 'event-store',\n   21:       tcpEndpoint: {\n>> 22:         host: database?.eventstore?.hostname,\n   23:         port: database?.eventstore?.tcpPort,\n   24:       },\n   25:       options: {\n   26:         defaultUserCredentials: {"
+   },
+   {
+    "repo": "mateaix__matecloud",
+    "source": "desktop",
+    "target": "host",
+    "file": "mate-ui/apps/desktop/vite.config.ts",
+    "line": 19,
+    "kind": "src:typescript",
+    "cls": "key",
+    "detail": "key host",
+    "tag": "file-read",
+    "text": "host: host || false,",
+    "context": "   15:   clearScreen: false,\n   16:   server: {\n   17:     port: 5175,\n   18:     strictPort: true,\n>> 19:     host: host || false,\n   20:     hmr: host\n   21:       ? { protocol: 'ws', host, port: 5176 }\n   22:       : undefined,\n   23:     proxy: {"
+   },
+   {
+    "repo": "JarrodMalkovic__auction-website",
+    "source": "payments",
+    "target": "bid-mysql-srv",
+    "file": "services/payments/src/models/index.ts",
+    "line": 10,
+    "kind": "src:typescript",
+    "cls": "key",
+    "detail": "key host",
+    "tag": "line-read",
+    "text": "host: 'bid-mysql-srv',",
+    "context": "   6: const db =\n   7:   process.env.NODE_ENV == 'test'\n   8:     ? new Sequelize('sqlite::memory:', { logging: false })\n   9:     : new Sequelize('mysql', 'root', process.env.MYSQL_ROOT_PASSWORD, {\n>> 10:         host: 'bid-mysql-srv',\n   11:         dialect: 'mysql',\n   12:       });\n   13: \n   14: const Listing = ListingFactory(db);"
+   }
+  ]
+ }
+}

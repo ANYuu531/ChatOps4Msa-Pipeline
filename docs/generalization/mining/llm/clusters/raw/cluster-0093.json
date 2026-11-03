@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0093",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 644,
+  "completion_tokens": 226,
+  "total_tokens": 870,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The database name 'cart-db' is a runtime dependency of the microservice that uses this config file (likely the cart service), not the config file itself.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The 'database: customer' setting is used by the service that mounts or runs with this config (likely the customer service), not the config-server component that owns the config file.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml key at data.mongodb.database\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"The database name in a yaml config key 'data.mongodb.database' is a runtime dependency of the service that uses the config, not the component owning the config file, so no general syntactic rule can correctly infer edges here.\"\n}",
+ "payload": {
+  "rank": 93,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "data.mongodb.database",
+  "repos": 2,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "go-kratos__beer-shop",
+    "source": "?",
+    "target": "cart-db",
+    "file": "app/cart/service/configs/config.yaml",
+    "line": 13,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "data.mongodb.database",
+    "tag": "unread",
+    "text": "database: \"cart-db\"",
+    "context": "   9:     timeout: 1s\n   10: data:\n   11:   mongodb:\n   12:     uri: \"mongodb://localhost:27017/\"\n>> 13:     database: \"cart-db\"\n   14: "
+   },
+   {
+    "repo": "PramithaMJ__fully-completed-microservices-Java-Springboot",
+    "source": "config-server",
+    "target": "customer",
+    "file": "services/config-server/src/main/resources/configurations/customer-service.yml",
+    "line": 10,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "data.mongodb.database",
+    "tag": "file-read",
+    "text": "database: customer",
+    "context": "   6:       username: alibou\n   7:       password: alibou\n   8:       host: localhost\n   9:       port: 27017\n>> 10:       database: customer\n   11:       authentication-database: admin"
+   }
+  ]
+ }
+}

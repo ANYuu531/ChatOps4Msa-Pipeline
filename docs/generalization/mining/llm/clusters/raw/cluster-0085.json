@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0085",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 667,
+  "completion_tokens": 222,
+  "total_tokens": 889,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The .gitmodules url points to a git submodule repository used as source code dependency, not a runtime dependency from the component owning the line to the TARGET.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The .gitmodules url references a git submodule repository; this is a source-level inclusion, not a runtime dependency from the component owning the line to TARGET.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \".gitmodules file, key position, context key = url\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"URLs in .gitmodules files under the 'url' key indicate source code submodules, not runtime dependencies, so no edges should be drawn from the component owning the line to the TARGET.\"\n}",
+ "payload": {
+  "rank": 85,
+  "kind": "other:.gitmodules",
+  "cls": "key",
+  "detail": "url",
+  "repos": 2,
+  "mentions": 3,
+  "samples": [
+   {
+    "repo": "sdgmf__go-project-sample",
+    "source": "?",
+    "target": "grafana",
+    "file": ".gitmodules",
+    "line": 3,
+    "kind": "other:.gitmodules",
+    "cls": "key",
+    "detail": "url",
+    "tag": "unread",
+    "text": "url = https://github.com/grafana/grafonnet-lib.git",
+    "context": "   1: [submodule \"scripts/grafana/grafonnet-lib\"]\n   2: \tpath = scripts/grafana/grafonnet-lib\n>> 3: \turl = https://github.com/grafana/grafonnet-lib.git\n   4: "
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "?",
+    "target": "geoserver",
+    "file": ".gitmodules",
+    "line": 3,
+    "kind": "other:.gitmodules",
+    "cls": "key",
+    "detail": "url",
+    "tag": "unread",
+    "text": "url = https://github.com/geoserver/geoserver-cloud-config",
+    "context": "   1: [submodule \"config\"]\n   2: \tpath = config\n>> 3: \turl = https://github.com/geoserver/geoserver-cloud-config\n   4: \tbranch = master\n   5: [submodule \"geoserver\"]\n   6: \tpath = geoserver_submodule/geoserver\n   7: \turl = https://github.com/camptocamp/geoserver.git"
+   }
+  ]
+ }
+}

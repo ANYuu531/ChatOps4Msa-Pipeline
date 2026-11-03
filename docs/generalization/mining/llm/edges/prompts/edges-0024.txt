@@ -1,0 +1,124 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=thangchung__northwind-dotnet productcatalogapp -> schema-registry (type sync-http)
+  cited code: docker-compose.yaml#depends_on
+
+  cited code: docker-compose.yaml
+   58:     restart: always
+   59:     networks:
+   60:       - northwind-network
+   61: 
+>> 62:   schema-registry:
+   63:     image: confluentinc/cp-schema-registry:7.3.0
+   64:     hostname: schema-registry
+   65:     container_name: schema-registry
+   66:     environment:
+
+[1] repo=thangchung__northwind-dotnet shippingapp -> mongo (type db)
+  cited code: Shipping/Extensions.cs:124
+   120:                 rider.AddSagaStateMachine<ShipmentStateMachine, ShipmentState, ShipmentStateMachineDefinition>()
+   121:                     /*.InMemoryRepository();*/
+   122:                     .MongoDbRepository(r =>
+   123:                     {
+>> 124:                         r.Connection = config.GetValue("MassTransit:Sagas:MongoDbUrl","mongodb://127.0.0.1");
+   125:                         r.DatabaseName = "shipments";
+   126:                     });
+   127: 
+   128:                 rider.AddProducer<ShipmentDispatched>(nameof(ShipmentDispatched));
+  cited code: docker-compose.yaml#depends_on
+
+
+[2] repo=thangchung__northwind-dotnet shippingapp -> seq (type sync-http)
+  cited code: docker-compose.yaml#depends_on
+
+  cited code: docker-compose.yaml
+   114:     restart: always
+   115:     networks:
+   116:       - northwind-network
+   117: 
+>> 118:   seq:
+   119:     image: datalust/seq
+   120:     environment:
+   121:       - ACCEPT_EULA=Y
+   122:     ports:
+
+[3] repo=tinrab__meower pusher -> nats (type async)
+  cited code: docker-compose.yaml#depends_on
+
+  cited code: docker-compose.yaml
+   5:     build: .
+   6:     command: meow-service
+   7:     depends_on:
+   8:       - postgres
+>> 9:       - nats
+   10:     ports:
+   11:       - "8080"
+   12:     environment:
+   13:       POSTGRES_DB: meower
+
+[4] repo=tinrab__meower nginx -> meow (type sync-http)
+  cited code: docker-compose.yaml#depends_on
+
+
+[5] repo=tinrab__meower nginx -> query (type sync-http)
+  cited code: docker-compose.yaml#depends_on
+
+
+[6] repo=tinrab__spidey order -> account (type sync-http)
+  cited code: docker-compose.yaml
+   1: version: "3.7"
+   2: 
+   3: services:
+>> 4:   account:
+   5:     build:
+   6:       context: .
+   7:       dockerfile: ./account/app.dockerfile
+   8:     depends_on:
+
+[7] repo=tinrab__spidey graphql -> account (type sync-http)
+  cited code: docker-compose.yaml#depends_on
+
+  cited code: docker-compose.yaml
+   1: version: "3.7"
+   2: 
+   3: services:
+>> 4:   account:
+   5:     build:
+   6:       context: .
+   7:       dockerfile: ./account/app.dockerfile
+   8:     depends_on:
+
+[8] repo=tinrab__spidey graphql -> order (type sync-http)
+  cited code: docker-compose.yaml
+   20:     environment:
+   21:       DATABASE_URL: http://catalog_db:9200
+   22:     restart: on-failure
+   23: 
+>> 24:   order:
+   25:     build:
+   26:       context: .
+   27:       dockerfile: ./order/app.dockerfile
+   28:     depends_on:
+
+[9] repo=tkssharma__nodejs-microservices-patterns nginx -> node-app (type sync-http)
+  cited code: nodejs-microservice-using-docker-Part-2/nginx/nginx.conf:18
+   14: 	server {
+   15: 	      listen 80;
+   16: 	 
+   17: 	      location / {
+>> 18: 	        proxy_pass http://node-app;
+   19: 	        proxy_http_version 1.1;
+   20: 	        proxy_set_header Upgrade $http_upgrade;
+   21: 	        proxy_set_header Connection 'upgrade';
+   22: 	        proxy_set_header Host $host;

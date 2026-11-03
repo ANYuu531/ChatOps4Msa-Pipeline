@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0059",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 717,
+  "completion_tokens": 208,
+  "total_tokens": 925,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The microservice-discovery-eureka component configures a client URL to connect to the eureka service at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The cloud-server-config component is a config server that provides configuration data; it does not itself call or connect to eureka at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"spring-yaml; key = client.serviceUrl.defaultZone\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"The presence of client.serviceUrl.defaultZone in spring-yaml files sometimes indicates a runtime dependency but sometimes is only configuration data for other components, so no single syntactic rule can reliably distinguish dependencies here.\"\n}",
+ "payload": {
+  "rank": 59,
+  "kind": "spring-yaml",
+  "cls": "key",
+  "detail": "client.serviceUrl.defaultZone",
+  "repos": 2,
+  "mentions": 23,
+  "samples": [
+   {
+    "repo": "JoeCao__qbike",
+    "source": "microservice-discovery-eureka",
+    "target": "eureka",
+    "file": "microservice-discovery-eureka/src/main/resources/application-docker.yml",
+    "line": 11,
+    "kind": "spring-yaml",
+    "cls": "key",
+    "detail": "client.serviceUrl.defaultZone",
+    "tag": "file-read",
+    "text": "defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/",
+    "context": "   7:   client:\n   8:     registerWithEureka: false\n   9:     fetchRegistry: false\n   10:     serviceUrl:\n>> 11:       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/\n   12: \n   13: # 参考文档：http://projects.spring.io/spring-cloud/docs/1.0.3/spring-cloud.html#_standalone_mode\n   14: # 参考文档：http://my.oschina.net/buwei/blog/618756"
+   },
+   {
+    "repo": "ThoreauZZ__spring-cloud-example",
+    "source": "cloud-server-config",
+    "target": "eureka",
+    "file": "cloud-server-config/src/main/resources/bootstrap.yml",
+    "line": 28,
+    "kind": "spring-yaml",
+    "cls": "key",
+    "detail": "client.serviceUrl.defaultZone",
+    "tag": "unread",
+    "text": "defaultZone: http://localhost:9001/eureka/",
+    "context": "   24: \n   25: eureka:\n   26:   client:\n   27:     serviceUrl:\n>> 28:       defaultZone: http://localhost:9001/eureka/\n   29: \n   30: \n   31: ---\n   32: spring:"
+   }
+  ]
+ }
+}

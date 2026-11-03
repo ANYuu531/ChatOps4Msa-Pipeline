@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0034",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 932,
+  "completion_tokens": 304,
+  "total_tokens": 1236,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The spring.datasource.url in mate-cli config points to mysql, indicating mate-cli connects to mysql at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The config-server's datasource url points to localhost, which is not a runtime dependency of config-server itself but of the payment-service component that this config configures.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The config-repo's datasource url points to mysql, but config-repo is a config repository; the runtime dependency is of the component that mounts this config (likely the zipkin service), not config-repo itself.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"yaml key spring.datasource.url\",\n    \"edge\": \"component owning the config file -> component named in the jdbc url host\",\n    \"exclusions\": \"when the yaml file is a config repository or config server config file not owned by the component itself but by another component\",\n    \"confidence\": \"medium\"\n  },\n  \"summary\": \"spring.datasource.url keys in component-owned yaml files generally indicate a runtime dependency from that component to the named database component, except when the yaml is a config file for another component or a config repository.\"\n}",
+ "payload": {
+  "rank": 34,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "spring.datasource.url",
+  "repos": 3,
+  "mentions": 9,
+  "samples": [
+   {
+    "repo": "mateaix__matecloud",
+    "source": "mate-cli",
+    "target": "mysql",
+    "file": "mate-cli/src/main/resources/mate-infra-prod-template.yml",
+    "line": 23,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "spring.datasource.url",
+    "tag": "unread",
+    "text": "url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:matecloud}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=true&rewriteBatchedStatements=true",
+    "context": "   19: spring:\n   20:   # ---- MySQL / Druid (prod-grade pool sizes) ----\n   21:   datasource:\n   22:     driver-class-name: com.mysql.cj.jdbc.Driver\n>> 23:     url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:matecloud}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=true&rewrite\n   24:     username: ${MYSQL_USER}\n   25:     password: ${MYSQL_PASSWORD}\n   26:     type: com.alibaba.druid.pool.DruidDataSource\n   27:     druid:"
+   },
+   {
+    "repo": "PramithaMJ__fully-completed-microservices-Java-Springboot",
+    "source": "config-server",
+    "target": "postgresql",
+    "file": "services/config-server/src/main/resources/configurations/payment-service.yml",
+    "line": 6,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "spring.datasource.url",
+    "tag": "file-read",
+    "text": "url: jdbc:postgresql://localhost:5432/payment",
+    "context": "   2:   port: 8060\n   3: spring:\n   4:   datasource:\n   5:     driver-class-name: org.postgresql.Driver\n>> 6:     url: jdbc:postgresql://localhost:5432/payment\n   7:     username: alibou\n   8:     password: alibou\n   9:   jpa:\n   10:     hibernate:"
+   },
+   {
+    "repo": "ThoreauZZ__spring-cloud-example",
+    "source": "config-repo",
+    "target": "zipkin",
+    "file": "config-repo/cloud-zipkin-ui-docker.yml",
+    "line": 6,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "spring.datasource.url",
+    "tag": "file-read",
+    "text": "url: jdbc:mysql://mysql:3306/zipkin?useUnicode=true&characterEncoding=UTF-8",
+    "context": "   2:   datasource:\n   3:     schema: classpath:/mysql.sql\n   4:     driver-class-name: com.mysql.jdbc.Driver\n   5:     type: com.alibaba.druid.pool.DruidDataSource\n>> 6:     url: jdbc:mysql://mysql:3306/zipkin?useUnicode=true&characterEncoding=UTF-8\n   7:     username: root\n   8:     password: 1234\n   9:     initialize: true\n   10:     continueOnError: true"
+   }
+  ]
+ }
+}

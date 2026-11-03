@@ -1,0 +1,79 @@
+{
+ "id": "cluster-0026",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 1026,
+  "completion_tokens": 267,
+  "total_tokens": 1293,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The DefaultConnection string in devstore-webapp-status config points to database-status, indicating devstore-webapp-status connects to database-status at runtime.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The DefaultConnection string in ecommerceddd-identityserver config points to postgres, showing ecommerceddd-identityserver depends on postgres at runtime.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"dependency\",\n      \"reason\": \"The DefaultConnection string in webui config points to orderdb, meaning webui connects to orderdb at runtime.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": true,\n    \"trigger\": \"appsettings; position = key; context key = defaultconnection\",\n    \"edge\": \"SOURCE -> TARGET\",\n    \"exclusions\": \"none\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"All samples show runtime dependencies from the component owning the appsettings file to the component named in the DefaultConnection string, so drawing edges from SOURCE to TARGET on appsettings DefaultConnection keys is a reliable rule.\"\n}",
+ "payload": {
+  "rank": 26,
+  "kind": "appsettings",
+  "cls": "key",
+  "detail": "defaultconnection",
+  "repos": 3,
+  "mentions": 28,
+  "samples": [
+   {
+    "repo": "desenvolvedor-io__dev-store",
+    "source": "devstore-webapp-status",
+    "target": "database-status",
+    "file": "src/web/DevStore.WebApp.Status/appsettings.Docker.json",
+    "line": 26,
+    "kind": "appsettings",
+    "cls": "key",
+    "detail": "defaultconnection",
+    "tag": "file-read",
+    "text": "\"DefaultConnection\": \"Server=database-status;Database=DSStatus;MultipleActiveResultSets=true;User Id=sa;Password=MyDB@123\"",
+    "context": "   22:       \"Application\": \"DevStoreWeb\"\n   23:     }\n   24:   },\n   25:   \"ConnectionStrings\": {\n>> 26:     \"DefaultConnection\": \"Server=database-status;Database=DSStatus;MultipleActiveResultSets=true;User Id=sa;Password=MyDB@123\"\n   27:   },\n   28:   \"ENDPOINTS\": \"Identity API|https://api-identity/healthz-infra;BFF Checkout|https://api-bff-checkout/healthz-infra;Frontend Web|https://web-mvc/healthz-infra;Shopping Cart API|https://api-cart/health\n   29: }"
+   },
+   {
+    "repo": "falberthen__EcommerceDDD",
+    "source": "ecommerceddd-identityserver",
+    "target": "postgres",
+    "file": "src/Crosscutting/EcommerceDDD.IdentityServer/appsettings.json",
+    "line": 10,
+    "kind": "appsettings",
+    "cls": "key",
+    "detail": "defaultconnection",
+    "tag": "file-read",
+    "text": "\"DefaultConnection\": \"host=postgresql;port=5432;timeout=15;pooling=True;minpoolsize=1;maxpoolsize=100;database='identityserverdb';User Id='postgres';pwd='P@55w0rd'\"",
+    "context": "   6:       \"Microsoft.AspNetCore\": \"Warning\"\n   7:     }\n   8:   },\n   9:   \"ConnectionStrings\": {\n>> 10:     \"DefaultConnection\": \"host=postgresql;port=5432;timeout=15;pooling=True;minpoolsize=1;maxpoolsize=100;database='identityserverdb';User Id='postgres';pwd='P@55w0rd'\"\n   11:   },\n   12:   \"AllowedHosts\": \"*\",\n   13:   \"TokenIssuerSettings\": {\n   14:     \"Authority\": \"http://ecommerceddd-identityserver\","
+   },
+   {
+    "repo": "ebubekirdinc__SuuCat",
+    "source": "webui",
+    "target": "orderdb",
+    "file": "src/Services/Order/src/WebUI/appsettings.json",
+    "line": 6,
+    "kind": "appsettings",
+    "cls": "key",
+    "detail": "defaultconnection",
+    "tag": "file-read",
+    "text": "\"DefaultConnection\": \"Server=orderdb;Port=5432;Database=OrderDb;User Id=admin;Password=admin1234;\",",
+    "context": "   2:   \"IdentityServerURL\": \"http://localhost:5001\",\n   3:   \"UseInMemoryDatabase\": false,\n   4:   \"RabbitMQUrl\": \"localhost\",\n   5:   \"ConnectionStrings\": {\n>> 6:     \"DefaultConnection\": \"Server=orderdb;Port=5432;Database=OrderDb;User Id=admin;Password=admin1234;\",\n   7:     \"//use_this_to_debug_locally\": \"Server=localhost;Port=5435;Database=OrderDb;User Id=admin;Password=admin1234;\"\n   8:   },\n   9:   \"Serilog\": {\n   10:     \"MinimumLevel\": {"
+   }
+  ]
+ }
+}

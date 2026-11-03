@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = url; context key = otlphttp/loki.tls.insecure
+They come from 3 different repositories (6 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=meysamhadeli__booking-microservices SOURCE=? TARGET=loki file=deployments/configs/otel-collector-config.yaml:65
+   61:     endpoint: "http://loki:3100/otlp"
+   62:     tls:
+   63:       insecure: true
+   64: 
+>> 65:       #  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint
+   66:       #  loki:
+   67:       #    endpoint: "http://loki:3100/loki/api/v1/push"
+   68:       #    tls:
+   69:       #      insecure: true
+
+[1] repo=meysamhadeli__booking-microservices-nestjs SOURCE=? TARGET=loki file=deployments/configs/otel-collector-config.yaml:76
+   72:   otlphttp/loki:
+   73:     endpoint: ${env:LOKI_ENDPOINT:-"http://loki:3100/otlp"}
+   74:     tls:
+   75:       insecure: true
+>> 76:       #  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint
+   77:       #  loki:
+   78:       #    endpoint: "http://loki:3100/loki/api/v1/push"
+   79:       #    tls:
+   80:       #      insecure: true
+
+[2] repo=meysamhadeli__booking-microservices-java-spring-boot SOURCE=? TARGET=loki file=deployments/configs/otel-collector-config.yaml:65
+   61:     endpoint: "http://loki:3100/otlp"
+   62:     tls:
+   63:       insecure: true
+   64:       
+>> 65:       #  # we can also use `loki component` from `opentelemetry-collector-contrib` if we don't want to use builtin `otlphttp` exporter type and `http://loki:3100/otlp` loki endpoint
+   66:       #  loki:
+   67:       #    endpoint: "http://loki:3100/loki/api/v1/push"
+   68:       #    tls:
+   69:       #      insecure: true

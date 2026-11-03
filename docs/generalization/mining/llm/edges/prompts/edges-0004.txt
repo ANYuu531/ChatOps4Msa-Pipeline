@@ -1,0 +1,111 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
+whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
+sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"  - the evidence supports the edge as drawn
+  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
+               declaration never used, documentation/metadata, test-only, ...)
+  "unsure"   - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=Toktik-Team__toktik otel-collector -> jaeger-all-in-one (type sync-http)
+  cited code: docker-compose.yaml#depends_on
+
+
+[1] repo=abhimishra91__insight nginx -> classification (type sync-http)
+  cited code: src_fastapi/docker-compose.yml#depends_on
+
+  cited code: src_fastapi/nginx_config.conf:5
+   1: server {
+   2:   listen 8080;
+   3: 
+   4:   location /api/v1/classification {
+>> 5:     proxy_pass http://classification:8000/api/v1/classification;
+   6:   }
+   7: 
+   8:   location /api/v1/sentiment {
+   9:     proxy_pass http://sentiment:8000/api/v1/sentiment;
+
+[2] repo=abhimishra91__insight nginx -> ner (type sync-http)
+  cited code: src_fastapi/docker-compose.yml#depends_on
+
+  cited code: src_fastapi/nginx_config.conf:17
+   13:     proxy_pass http://summary:8000/api/v1/summary;
+   14:   }
+   15: 
+   16:   location /api/v1/ner {
+>> 17:     proxy_pass http://ner:8000/api/v1/ner;
+   18:   }
+   19: 
+   20: }
+
+[3] repo=abhimishra91__insight nginx -> summary (type sync-http)
+  cited code: src_fastapi/docker-compose.yml#depends_on
+
+  cited code: src_fastapi/nginx_config.conf:13
+   9:     proxy_pass http://sentiment:8000/api/v1/sentiment;
+   10:   }
+   11: 
+   12:   location /api/v1/summary {
+>> 13:     proxy_pass http://summary:8000/api/v1/summary;
+   14:   }
+   15: 
+   16:   location /api/v1/ner {
+   17:     proxy_pass http://ner:8000/api/v1/ner;
+
+[4] repo=aelassas__microservices cart -> mongo (type db)
+  cited code: src/microservices/CartMicroservice/appsettings.Production.json
+   9:   "AllowedHosts": "*",
+   10:   "jwt": {
+   11:     "secret": "9095a623-a23a-481a-aa0c-e0ad96edc103"
+   12:   },
+>> 13:   "mongo": {
+   14:     "connectionString": "mongodb://mongo",
+   15:     "database": "store-cart"
+   16:   },
+   17:   "HealthChecksUI": {
+  cited code: docker-compose.yml#depends_on
+
+
+[5] repo=aelassas__microservices catalog -> mongo (type db)
+  cited code: src/microservices/CatalogMicroservice/appsettings.Production.json
+   9:   "AllowedHosts": "*",
+   10:   "jwt": {
+   11:     "secret": "9095a623-a23a-481a-aa0c-e0ad96edc103"
+   12:   },
+>> 13:   "mongo": {
+   14:     "connectionString": "mongodb://mongo",
+   15:     "database": "store-catalog"
+   16:   },
+   17:   "HealthChecksUI": {
+  cited code: docker-compose.yml#depends_on
+
+
+[6] repo=aelassas__microservices frontendgw -> mongo (type db)
+  cited code: src/gateways/FrontendGateway/appsettings.Production.json
+   9:   "AllowedHosts": "*",
+   10:   "jwt": {
+   11:     "secret": "9095a623-a23a-481a-aa0c-e0ad96edc103"
+   12:   },
+>> 13:   "mongo": {
+   14:     "connectionString": "mongodb://mongo"
+   15:   },
+   16:   "HealthChecksUI": {
+   17:     "HealthChecks": [
+  cited code: docker-compose.yml#depends_on
+
+
+[7] repo=aidanwhiteley__books api-gateway-tier -> service-registry-tier (type sync-http)
+  cited code: docker-compose.yaml#depends_on
+
+
+[8] repo=aidanwhiteley__books web-tier-caddy-htmx -> data-tier-mongo (type db)
+  cited code: docker-compose.yaml#depends_on
+
+
+[9] repo=aidanwhiteley__books web-tier-react -> api-tier-java (type sync-http)
+  cited code: docker-compose.yaml#depends_on
+

@@ -1,0 +1,62 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:java; position = literal; context key = call get
+They come from 3 different repositories (8 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=mateaix__matecloud SOURCE=mate-sso-starter TARGET=mobile file=mate-starters/mate-sso-starter/src/main/java/vip/mate/starter/sso/provider/FeishuProvider.java:176
+   172:         return new ExternalUser(
+   173:                 str(u.get("user_id")),
+   174:                 str(u.get("union_id")),
+   175:                 str(u.get("name")),
+>> 176:                 str(u.get("mobile")),
+   177:                 str(u.get("email")),
+   178:                 str(asMap(u.get("avatar")).get("avatar_240")),
+   179:                 deptIds,
+   180:                 enabled,
+
+[1] repo=geoserver__geoserver-cloud SOURCE=pgconfig TARGET=security file=src/catalog/backends/pgconfig/src/main/java/org/geoserver/cloud/config/catalog/backend/pgconfig/PgconfigGeoServerResourceLoader.java:40
+   36:      * constructed. On a fresh database that ordering left the REST API with empty access rules, denying every request
+   37:      * with a 403 status code.
+   38:      */
+   39:     private void createSecurityDirectory(PgconfigResourceStore store) {
+>> 40:         store.get("security").dir();
+   41:     }
+   42: 
+   43:     public @NonNull LockProvider getLockProvider() {
+   44:         return resourceStore.getLockProvider();
+
+[2] repo=opexdev__core SOURCE=keycloak-gateway TARGET=auth file=user-management/keycloak-gateway/src/main/kotlin/co/nilin/opex/auth/gateway/extension/VaultService.java:28
+   24: 
+   25:     public ByteBuffer getSecretFromVault(String vaultUrl, String realm, String vaultSecretEngineName, String secretName, String vaultAppId, String vaultUserId, int secretVersion) {
+   26:         try {
+   27:             //curl \    --method POST \    --data '{"user_id": ":user_id"}' \    http://127.0.0.1:8200/v1/auth/app-id/login/:app_id
+>> 28:             String vaultToken = SimpleHttp.doPost(vaultUrl + "v1//auth/app-id/login/" + vaultAppId, session).json(new UserId(vaultUserId)).asJson().get("auth").get("client_token").textValue();
+   29:             JsonNode node = SimpleHttp.doGet(vaultUrl + "v1/" + vaultSecretEngineName + "/" + realm + "?version=" + secretVersion, session).header("X-Vault-Token", vaultToken).asJson();
+   30:             byte[] secretBytes = node.get("data").get(secretName).textValue().getBytes(StandardCharsets.UTF_8);
+   31:             return ByteBuffer.wrap(secretBytes);
+   32:         } catch (IOException e) {

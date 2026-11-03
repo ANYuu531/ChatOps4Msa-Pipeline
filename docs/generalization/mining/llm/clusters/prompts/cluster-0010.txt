@@ -1,0 +1,84 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:java; position = literal; context key = call feignclient
+They come from 5 different repositories (13 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=apssouza22__java-microservice SOURCE=oauth-server TARGET=user file=oauth-server/src/main/java/com/apssouza/clients/UserClient.java:15
+   11: /**
+   12:  *
+   13:  * @author apssouza
+   14:  */
+>> 15: @FeignClient("user")
+   16: @Component
+   17: public interface UserClient {
+   18:     
+   19:     @RequestMapping(value = "/accounts/search", method = RequestMethod.GET)
+
+[1] repo=aliyun__alibabacloud-microservice-demo SOURCE=nacos-service-consumer TARGET=service-provider file=microservice-doc-demo/spring-cloud-simplest-demo/nacos-service-consumer/src/main/java/com/aliware/edas/EchoService.java:11
+   7: 
+   8: /**
+   9:  * @author edas
+   10:  */
+>> 11: @FeignClient(name = "service-provider")
+   12: public interface EchoService {
+   13:     @RequestMapping(value = "/echo/{str}", method = RequestMethod.GET)
+   14:     String echo(@PathVariable("str") String str);
+   15: }
+
+[2] repo=devdcores__BookStoreApp-Distributed-Application SOURCE=bookstore-feign TARGET=bookstore-order-service file=bookstore-feign/src/main/java/com/devd/spring/bookstorecommons/feign/OrderFeignClient.java:8
+   4: 
+   5: /**
+   6:  * @author: Devaraj Reddy, Date : 2019-07-02
+   7:  */
+>> 8: @FeignClient("bookstore-order-service")
+   9: public interface OrderFeignClient {
+   10: 
+   11: 
+   12: }
+
+[3] repo=ThoreauZZ__spring-cloud-example SOURCE=cloud-service-client TARGET=cloud-service-user file=cloud-service-client/src/main/java/com/erdaoya/springcloud/client/client/UserFeignClient.java:12
+   8: /**
+   9:  * 2016/12/25 21:43
+   10:  * @author erdaoya
+   11:  */
+>> 12: @FeignClient(value = "cloud-service-user")
+   13: public interface UserFeignClient {
+   14: 
+   15:     @RequestMapping(value = "/user/personalInfo",method = RequestMethod.GET)
+   16:     Object getUser(@RequestParam(value = "id") String id);
+
+[4] repo=tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes SOURCE=containerized-main TARGET=containerized-products file=containerized-main/src/main/java/com/tanerdiler/microservice/main/repository/ProductServiceClient.java:12
+   8: 
+   9: import java.util.List;
+   10: 
+   11: @Component
+>> 12: @FeignClient("containerized-products")
+   13: public interface ProductServiceClient
+   14: {
+   15: 	@GetMapping(value = "/product/api/v1/products/{productId}")
+   16: 	Product findById(@PathVariable("productId") Integer orderId);

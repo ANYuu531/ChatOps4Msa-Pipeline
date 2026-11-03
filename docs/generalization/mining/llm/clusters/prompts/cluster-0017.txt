@@ -1,0 +1,73 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = yaml; position = key; context key = spec.rules.host
+They come from 4 different repositories (11 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=mateaix__matecloud SOURCE=mate-gateway TARGET=host file=deploy/k8s/mate-gateway.yaml:72
+   68:     nginx.ingress.kubernetes.io/rewrite-target: /
+   69: spec:
+   70:   ingressClassName: nginx
+   71:   rules:
+>> 72:     - host: api.matecloud.local
+   73:       http:
+   74:         paths:
+   75:           - path: /
+   76:             pathType: Prefix
+
+[1] repo=hoangtien2k3__ecommerce-microservices SOURCE=ecommerce-ingress TARGET=admin file=k8s/ingress/ingress.yaml:38
+   34:                 name: frontend
+   35:                 port:
+   36:                   number: 3000
+   37:     # Admin dashboard
+>> 38:     - host: admin.ecommerce.local
+   39:       http:
+   40:         paths:
+   41:           - path: /
+   42:             pathType: Prefix
+
+[2] repo=oracle-quickstart__oci-cloudnative SOURCE=mushop TARGET=host file=deploy/complete/kubernetes/mushop.yaml:17
+   13: spec:
+   14:   ingressClassName: nginx
+   15:   rules:
+   16:     # change this for user-specific ingress
+>> 17:     - host: mushop.example.com
+   18:       http:
+   19:         paths:
+   20:         - path: /
+   21:           backend:
+
+[3] repo=vany0114__microservices-dotnetcore-docker-sf-k8s SOURCE=frontend TARGET=duber file=deploy/k8s/local/website/website-ingress.yaml:7
+   3: metadata:
+   4:   name: frontend
+   5: spec:
+   6:   rules:
+>> 7:   - host: duber.local.com
+   8:     http:
+   9:       paths:
+   10:       - path: /
+   11:         backend:

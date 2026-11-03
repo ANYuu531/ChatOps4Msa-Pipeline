@@ -1,0 +1,51 @@
+You are helping to improve a static dependency extractor for microservice systems.
+The extractor reads a repository (source code, Docker Compose, Kubernetes/Helm, config files) and
+draws an edge "A -> B" when component A calls, connects to, or sends messages to component B at runtime.
+
+Below are places where a name that the repository itself declares as a component (TARGET) appears
+in an address-like position, but the extractor drew NO edge from the component that owns the line
+(SOURCE) to TARGET. All samples share one syntactic shape:
+  file kind = src:javascript; position = literal; context key = call default
+They come from 2 different repositories (4 mentions in total).
+
+For each sample, judge whether the marked line (>>) shows that SOURCE depends on TARGET at runtime:
+  "dependency"     - SOURCE really calls / connects to / sends to TARGET
+  "wrong-source"   - it is a runtime dependency on TARGET, but of a different component than SOURCE
+                     (say which one in "reason", e.g. the component a config file is mounted into)
+  "not-dependency" - e.g. a label, a name, documentation, monitoring metadata, a dashboard query,
+                     a test fixture, a value that is never used to reach TARGET
+  "unsure"         - the context is not enough
+Then say whether ONE general rule, stated in terms of syntax and file kind only (it must not name any
+specific project, service, host or company), would turn the "dependency" samples into edges without
+also drawing the "not-dependency" ones. If the samples are mixed and no syntactic feature separates
+them, say so with "general": false.
+
+Answer as JSON:
+{"samples": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}],
+  "rule": {"general": true|false, "trigger": "<file kind + syntactic position>",
+           "edge": "<which component -> which component>", "exclusions": "<when not to draw>",
+           "confidence": "high|medium|low"},
+  "summary": "<one sentence>"}
+
+Samples:
+[0] repo=meysamhadeli__booking-microservices-nestjs SOURCE=building-blocks TARGET=postgres file=src/building-blocks/configs/configs.js:29
+   25:         .default('1 days')
+   26:         .description('days after which refresh tokens expire'),
+   27:     POSTGRES_HOST: joi_1.default.string().default('localhost').description('Postgres host'),
+   28:     POSTGRES_PORT: joi_1.default.number().default(5432).description('Postgres host'),
+>> 29:     POSTGRES_USERNAME: joi_1.default.string().default('postgres').description('Postgres username'),
+   30:     POSTGRES_PASSWORD: joi_1.default.string().default('postgres').description('Postgres password'),
+   31:     POSTGRES_Database: joi_1.default.string()
+   32:         .default('default_database')
+   33:         .description('Postgres database name'),
+
+[1] repo=meysamhadeli__booking-microservices-expressjs SOURCE=building-blocks TARGET=postgres file=src/building-blocks/config/config.js:18
+   14:     SERVICE_NAME: joi_1.default.string(),
+   15:     PORT: joi_1.default.number().default(3000),
+   16:     POSTGRES_HOST: joi_1.default.string().default('localhost').description('Postgres host'),
+   17:     POSTGRES_PORT: joi_1.default.number().default(5432).description('Postgres host'),
+>> 18:     POSTGRES_USERNAME: joi_1.default.string().default('postgres').description('Postgres username'),
+   19:     POSTGRES_PASSWORD: joi_1.default.string().default('postgres').description('Postgres password'),
+   20:     POSTGRES_Database: joi_1.default.string()
+   21:         .default('default_database')
+   22:         .description('Postgres database name'),

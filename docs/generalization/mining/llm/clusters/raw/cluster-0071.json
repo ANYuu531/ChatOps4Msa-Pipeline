@@ -1,0 +1,66 @@
+{
+ "id": "cluster-0071",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 781,
+  "completion_tokens": 211,
+  "total_tokens": 992,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"samples\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"not-dependency\",\n      \"reason\": \"The file is under docs/, so it is documentation, not a runtime config used by the docs component.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"wrong-source\",\n      \"reason\": \"The spring-boot config file sets rabbitmq host for the spring-boot component, so the dependency is from spring-boot to rabbitmq, but the config file itself is not a component.\"\n    }\n  ],\n  \"rule\": {\n    \"general\": false,\n    \"trigger\": \"yaml key spring.rabbitmq.host\",\n    \"edge\": \"N/A\",\n    \"exclusions\": \"N/A\",\n    \"confidence\": \"high\"\n  },\n  \"summary\": \"The samples differ in whether the yaml key is in a runtime config file owned by the component or in documentation; thus no single syntax-based rule can separate dependency from non-dependency cases.\"\n}",
+ "payload": {
+  "rank": 71,
+  "kind": "yaml",
+  "cls": "key",
+  "detail": "spring.rabbitmq.host",
+  "repos": 2,
+  "mentions": 6,
+  "samples": [
+   {
+    "repo": "mateaix__matecloud",
+    "source": "docs",
+    "target": "host",
+    "file": "docs/nacos-templates/mate-infra-dev.yml",
+    "line": 54,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "spring.rabbitmq.host",
+    "tag": "file-read",
+    "text": "host: ${RABBITMQ_HOST:127.0.0.1}",
+    "context": "   50:           max-wait: 2000\n   51: \n   52:   # ---- RabbitMQ ----\n   53:   rabbitmq:\n>> 54:     host: ${RABBITMQ_HOST:127.0.0.1}\n   55:     port: ${RABBITMQ_PORT:5672}\n   56:     username: ${RABBITMQ_USER:matecloud}\n   57:     password: ${RABBITMQ_PASS:matecloud123}\n   58:     virtual-host: ${RABBITMQ_VHOST:/}"
+   },
+   {
+    "repo": "geoserver__geoserver-cloud",
+    "source": "spring-boot",
+    "target": "rabbitmq",
+    "file": "src/starters/spring-boot/src/main/resources/geoserver_spring_cloud_profiles.yml",
+    "line": 54,
+    "kind": "yaml",
+    "cls": "key",
+    "detail": "spring.rabbitmq.host",
+    "tag": "unread",
+    "text": "host: ${rabbitmq.host:rabbitmq}",
+    "context": "   50:     stream:\n   51:       # Prevents Stream from treating every java Function bean as a Rabbit queue\n   52:       function.autodetect: false\n   53:   rabbitmq:\n>> 54:     host: ${rabbitmq.host:rabbitmq}\n   55:     port: ${rabbitmq.port:5672}\n   56:     username: ${rabbitmq.user:guest}\n   57:     password: ${rabbitmq.password:guest}\n   58:     virtual-host: ${rabbitmq.vhost:}"
+   }
+  ]
+ }
+}
