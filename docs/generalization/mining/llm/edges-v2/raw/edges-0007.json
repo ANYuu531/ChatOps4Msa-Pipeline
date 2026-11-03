@@ -1,0 +1,241 @@
+{
+ "id": "edges-0007",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 3366,
+  "completion_tokens": 464,
+  "total_tokens": 3830,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [\n  {\"i\": 0, \"verdict\": \"correct\", \"reason\": \"The environment variable RETAIL_ORDERS_PERSISTENCE_ENDPOINT=orders-db:5432 shows runtime connection to orders-db, and depends_on ensures startup order.\"},\n  {\"i\": 1, \"verdict\": \"correct\", \"reason\": \"The apigateway is configured with '-zipkin.addr=http://zipkin:9411/api/v1/spans', showing it calls zipkin at runtime, supported by depends_on.\"},\n  {\"i\": 2, \"verdict\": \"correct\", \"reason\": \"The topic service command includes '-etcd.addr=http://etcd:2379', showing runtime connection to etcd, supported by depends_on.\"},\n  {\"i\": 3, \"verdict\": \"declared-only\", \"reason\": \"depends_on prometheus shows start order, but no code or config shows grafana calls or connects to prometheus at runtime.\"},\n  {\"i\": 4, \"verdict\": \"correct\", \"reason\": \"The code calls .WriteTo.Seq(...) with a URL pointing to seq, showing runtime logging calls to seq.\"},\n  {\"i\": 5, \"verdict\": \"declared-only\", \"reason\": \"depends_on rabbitmq only declares start order; no code evidence shows domain calls or connects to rabbitmq at runtime.\"},\n  {\"i\": 6, \"verdict\": \"correct\", \"reason\": \"The code calls .WriteTo.Http(...) with a URL pointing to logstash, showing runtime HTTP calls to logstash.\"},\n  {\"i\": 7, \"verdict\": \"correct\", \"reason\": \"Code calls axios.post('http://customer:8001/app-events/'), showing runtime HTTP calls from products to customer.\"},\n  {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"Environment variable DB_URL points to nosql-db and depends_on nosql-db ensures startup order, showing runtime DB connection.\"},\n  {\"i\": 9, \"verdict\": \"correct\", \"reason\": \"Environment variable DB_URL points to nosql-db and depends_on nosql-db ensures startup order, showing runtime DB connection.\"}\n]}",
+ "payload": [
+  {
+   "repo": "aws-containers__retail-store-sample-app",
+   "source": "orders",
+   "target": "orders-db",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/orders/docker-compose.yml#depends_on",
+     "file": "src/orders/docker-compose.yml",
+     "line": 31,
+     "kind": "compose",
+     "context": "   25:       - RETAIL_ORDERS_MESSAGING_RABBITMQ_ADDRESSES=rabbitmq:5672\n   26:       - RETAIL_ORDERS_MESSAGING_RABBITMQ_USERNAME=rabbitmq\n   27:       - RETAIL_ORDERS_MESSAGING_RABBITMQ_PASSWORD=${DB_PASSWORD}\n   28:     ports:\n   29:       - \"8083:8080\"\n   30:     depends_on:\n>> 31:       orders-db:\n   32:         condition: service_healthy\n   33:         restart: true\n   34:     healthcheck:\n   35:       test:\n   36:         [\"CMD-SHELL\", \"curl -f http://localhost:8080/actuator/health || exit 1\"]\n   37:       interval: 10s"
+    },
+    {
+     "ref": "code: src/orders/docker-compose.yml",
+     "file": "src/orders/docker-compose.yml",
+     "line": 20,
+     "kind": "compose",
+     "context": "   14:     tmpfs:\n   15:       - /tmp:rw,noexec,nosuid\n   16:     environment:\n   17:       - reschedule=on-node-failure\n   18:       - SERVER_TOMCAT_ACCESSLOG_ENABLED=true\n   19:       - RETAIL_ORDERS_PERSISTENCE_PROVIDER=postgres\n>> 20:       - RETAIL_ORDERS_PERSISTENCE_ENDPOINT=orders-db:5432\n   21:       - RETAIL_ORDERS_PERSISTENCE_NAME=orders\n   22:       - RETAIL_ORDERS_PERSISTENCE_USERNAME=orders_user\n   23:       - RETAIL_ORDERS_PERSISTENCE_PASSWORD=${DB_PASSWORD}\n   24:       - RETAIL_ORDERS_MESSAGING_PROVIDER=rabbitmq\n   25:       - RETAIL_ORDERS_MESSAGING_RABBITMQ_ADDRESSES=rabbitmq:5672\n   26:       - RETAIL_ORDERS_MESSAGING_RABBITMQ_USERNAME=rabbitmq"
+    }
+   ]
+  },
+  {
+   "repo": "buptmiao__microservice-app",
+   "source": "apigateway",
+   "target": "zipkin",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: tracer/docker-compose.yml#depends_on",
+     "file": "tracer/docker-compose.yml",
+     "line": 124,
+     "kind": "compose",
+     "context": "   118:       - 8080\n   119:     ports:\n   120:       - 8080:8080\n   121:       - 6060:6060\n   122:     depends_on:\n   123:       - etcd\n>> 124:       - zipkin\n   125:     networks:\n   126:       - back-tier\n   127:       - front-tier\n   128: "
+    },
+    {
+     "ref": "code: tracer/docker-compose.yml",
+     "file": "tracer/docker-compose.yml",
+     "line": 116,
+     "kind": "compose",
+     "context": "   110:   apigateway:\n   111:     image: buptmiao/apigateway:v1.0.1\n   112: \n   113:     command:\n   114:       - '-http.addr=0.0.0.0:8080'\n   115:       - '-etcd.addr=http://etcd:2379'\n>> 116:       - '-zipkin.addr=http://zipkin:9411/api/v1/spans'\n   117:     expose:\n   118:       - 8080\n   119:     ports:\n   120:       - 8080:8080\n   121:       - 6060:6060\n   122:     depends_on:"
+    }
+   ]
+  },
+  {
+   "repo": "buptmiao__microservice-app",
+   "source": "topic",
+   "target": "etcd",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: tracer/docker-compose.yml#depends_on",
+     "file": "tracer/docker-compose.yml",
+     "line": 101,
+     "kind": "compose",
+     "context": "   95:       - '-zipkin.addr=http://zipkin:9411/api/v1/spans'\n   96:     networks:\n   97:       - back-tier\n   98:   topic:\n   99:     image: buptmiao/topic:v1.0.1\n   100:     depends_on:\n>> 101:       - etcd\n   102:       - zipkin\n   103:     command:\n   104:       - '-addr=topic:8084'\n   105:       - '-etcd.addr=http://etcd:2379'\n   106:       - '-zipkin.addr=http://zipkin:9411/api/v1/spans'\n   107:     networks:"
+    },
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml",
+     "line": 49,
+     "kind": "compose",
+     "context": "   43:       - '-etcd.addr=http://etcd:2379'\n   44:     networks:\n   45:       - back-tier\n   46:   topic:\n   47:     image: buptmiao/topic:v1.0.1\n   48:     depends_on:\n>> 49:       - etcd\n   50:     command:\n   51:       - '-addr=topic:8084'\n   52:       - '-etcd.addr=http://etcd:2379'\n   53:     networks:\n   54:       - back-tier\n   55: "
+    }
+   ]
+  },
+  {
+   "repo": "buptmiao__microservice-app",
+   "source": "grafana",
+   "target": "prometheus",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: monitor/docker-compose.yml#depends_on",
+     "file": "monitor/docker-compose.yml",
+     "line": 61,
+     "kind": "compose",
+     "context": "   55:     networks:\n   56:       - back-tier\n   57: \n   58:   grafana:\n   59:     image: grafana/grafana\n   60:     depends_on:\n>> 61:       - prometheus\n   62:     ports:\n   63:       - 3000:3000\n   64:     volumes:\n   65:       - ./grafana/:/var/lib/grafana\n   66:     environment:\n   67:       - GF_SECURITY_ADMIN_PASSWORD=admin"
+    }
+   ]
+  },
+  {
+   "repo": "charlessolar__eShopOnContainersDDD",
+   "source": "presentation",
+   "target": "seq",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Contexts/Basket/Presentation/Program.cs:122",
+     "file": "src/Contexts/Basket/Presentation/Program.cs",
+     "line": 122,
+     "kind": "src:csharp",
+     "context": "   116:         .MinimumLevel.Override(\"Microsoft.AspNetCore\", LogEventLevel.Warning)\n   117:         .Enrich.WithProperty(\"ApplicationContext\", Program.AppName)\n   118:         .ReadFrom.Configuration(configuration)\n   119:         .ReadFrom.Services(services)\n   120:         .Enrich.FromLogContext()\n   121:         .WriteTo.Console()\n>> 122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? \"http://seq\" : seqServerUrl)\n   123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? \"http://logstash:8080\" : logstashUrl, queueLimitBytes: null);\n   124: \n   125: }\n   126: \n   127: IConfiguration GetConfiguration()\n   128: {"
+    },
+    {
+     "ref": "code: src/Contexts/Identity/Presentation/Program.cs:122",
+     "file": "src/Contexts/Identity/Presentation/Program.cs",
+     "line": 122,
+     "kind": "src:csharp",
+     "context": "   116:         .MinimumLevel.Override(\"Microsoft.AspNetCore\", LogEventLevel.Warning)\n   117:         .Enrich.WithProperty(\"ApplicationContext\", Program.AppName)\n   118:         .ReadFrom.Configuration(configuration)\n   119:         .ReadFrom.Services(services)\n   120:         .Enrich.FromLogContext()\n   121:         .WriteTo.Console()\n>> 122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? \"http://seq\" : seqServerUrl)\n   123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? \"http://logstash:8080\" : logstashUrl, queueLimitBytes: null);\n   124: \n   125: }\n   126: \n   127: IConfiguration GetConfiguration()\n   128: {"
+    }
+   ]
+  },
+  {
+   "repo": "charlessolar__eShopOnContainersDDD",
+   "source": "domain",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 10,
+     "kind": "compose",
+     "context": "   4:   domain:\n   5:     image: eshop/domain:${TAG:-latest}\n   6:     build:\n   7:       context: .\n   8:       dockerfile: src/Endpoints/Domain/Dockerfile\n   9:     depends_on:\n>> 10:       - rabbitmq\n   11:       - eventstore\n   12:     restart: always\n   13:   mongo:\n   14:     image: eshop/mongodb:${TAG:-latest}\n   15:     build:\n   16:       context: ."
+    }
+   ]
+  },
+  {
+   "repo": "charlessolar__eShopOnContainersDDD",
+   "source": "presentation",
+   "target": "logstash",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Contexts/Basket/Presentation/Program.cs:123",
+     "file": "src/Contexts/Basket/Presentation/Program.cs",
+     "line": 123,
+     "kind": "src:csharp",
+     "context": "   117:         .Enrich.WithProperty(\"ApplicationContext\", Program.AppName)\n   118:         .ReadFrom.Configuration(configuration)\n   119:         .ReadFrom.Services(services)\n   120:         .Enrich.FromLogContext()\n   121:         .WriteTo.Console()\n   122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? \"http://seq\" : seqServerUrl)\n>> 123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? \"http://logstash:8080\" : logstashUrl, queueLimitBytes: null);\n   124: \n   125: }\n   126: \n   127: IConfiguration GetConfiguration()\n   128: {\n   129:     var builder = new ConfigurationBuilder()"
+    },
+    {
+     "ref": "code: src/Contexts/Identity/Presentation/Program.cs:123",
+     "file": "src/Contexts/Identity/Presentation/Program.cs",
+     "line": 123,
+     "kind": "src:csharp",
+     "context": "   117:         .Enrich.WithProperty(\"ApplicationContext\", Program.AppName)\n   118:         .ReadFrom.Configuration(configuration)\n   119:         .ReadFrom.Services(services)\n   120:         .Enrich.FromLogContext()\n   121:         .WriteTo.Console()\n   122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? \"http://seq\" : seqServerUrl)\n>> 123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? \"http://logstash:8080\" : logstashUrl, queueLimitBytes: null);\n   124: \n   125: }\n   126: \n   127: IConfiguration GetConfiguration()\n   128: {\n   129:     var builder = new ConfigurationBuilder()"
+    }
+   ]
+  },
+  {
+   "repo": "codergogoi__nodejs_microservice",
+   "source": "products",
+   "target": "customer",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: products/src/utils/index.js:62",
+     "file": "products/src/utils/index.js",
+     "line": 62,
+     "kind": "src:javascript",
+     "context": "   56:     throw new Error(\"Data Not found!\");\n   57:   }\n   58: };\n   59: \n   60: //Raise Events\n   61: module.exports.PublishCustomerEvent = async (payload) => {\n>> 62:   axios.post(\"http://customer:8001/app-events/\", {\n   63:     payload,\n   64:   });\n   65: \n   66:   //     axios.post(`${BASE_URL}/customer/app-events/`,{\n   67:   //         payload\n   68:   //     });"
+    }
+   ]
+  },
+  {
+   "repo": "codergogoi__nodejs_microservice",
+   "source": "customer",
+   "target": "nosql-db",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: customer/src/config/index.js:12",
+     "file": "customer/src/config/index.js",
+     "line": 12,
+     "kind": "src:javascript",
+     "context": "   6: } else {\n   7:   dotEnv.config();\n   8: }\n   9: \n   10: module.exports = {\n   11:   PORT: process.env.PORT,\n>> 12:   DB_URL: process.env.MONGODB_URI,\n   13:   APP_SECRET: process.env.APP_SECRET,\n   14:   EXCHANGE_NAME: process.env.EXCHANGE_NAME,\n   15:   MSG_QUEUE_URL: process.env.MSG_QUEUE_URL,\n   16:   CUSTOMER_SERVICE: \"customer_service\",\n   17:   SHOPPING_SERVICE: \"shopping_service\",\n   18: };"
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 59,
+     "kind": "compose",
+     "context": "   53:       context: ./customer\n   54:     container_name: customer\n   55:     ports:\n   56:       - \"8001:8001\"\n   57:     restart: always\n   58:     depends_on:\n>> 59:       - \"nosql-db\"\n   60:       - \"rabbitmq\"\n   61:     volumes:\n   62:       - .:/app/\n   63:       - /app/customer/node_modules\n   64:     env_file:\n   65:       - ./customer/.env.dev"
+    }
+   ]
+  },
+  {
+   "repo": "codergogoi__nodejs_microservice",
+   "source": "shopping",
+   "target": "nosql-db",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: shopping/src/config/index.js:12",
+     "file": "shopping/src/config/index.js",
+     "line": 12,
+     "kind": "src:javascript",
+     "context": "   6: } else {\n   7:   dotEnv.config();\n   8: }\n   9: \n   10: module.exports = {\n   11:   PORT: process.env.PORT,\n>> 12:   DB_URL: process.env.MONGODB_URI,\n   13:   APP_SECRET: process.env.APP_SECRET,\n   14:   BASE_URL: process.env.BASE_URL,\n   15:   EXCHANGE_NAME: process.env.EXCHANGE_NAME,\n   16:   MSG_QUEUE_URL: process.env.MSG_QUEUE_URL,\n   17:   CUSTOMER_SERVICE: \"customer_service\",\n   18:   SHOPPING_SERVICE: \"shopping_service\","
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 43,
+     "kind": "compose",
+     "context": "   37:       context: ./shopping\n   38:     container_name: shopping\n   39:     ports:\n   40:       - \"8003:8003\"\n   41:     restart: always\n   42:     depends_on:\n>> 43:       - \"nosql-db\"\n   44:       - \"rabbitmq\"\n   45:     volumes:\n   46:       - .:/app\n   47:       - /app/shopping/node_modules\n   48:     env_file:\n   49:       - ./shopping/.env.dev"
+    }
+   ]
+  }
+ ]
+}

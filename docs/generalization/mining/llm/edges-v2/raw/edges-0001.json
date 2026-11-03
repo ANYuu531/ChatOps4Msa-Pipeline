@@ -1,0 +1,220 @@
+{
+ "id": "edges-0001",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 3067,
+  "completion_tokens": 536,
+  "total_tokens": 3603,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [\n  {\"i\": 0, \"verdict\": \"correct\", \"reason\": \"The @FeignClient annotation with name 'core-banking-service' and a method with @GetMapping shows a documented runtime HTTP client call from internet-banking-user-service to core-banking-service.\"},\n  {\"i\": 1, \"verdict\": \"correct\", \"reason\": \"The @FeignClient annotation with name 'core-banking-service' and request mappings in the interface show documented runtime HTTP calls from internet-banking-utility-payment-service to core-banking-service.\"},\n  {\"i\": 2, \"verdict\": \"declared-only\", \"reason\": \"The docker-compose entrypoint uses wait-for-it.sh to wait for internet-banking-service-registry, and the dependency on spring-cloud-starter-netflix-eureka-client is declared, but no direct runtime call or connection is shown.\"},\n  {\"i\": 3, \"verdict\": \"correct\", \"reason\": \"The RestTemplate.postForObject call to 'http://qbike-uc/users' in code shows a documented runtime HTTP call from testclient to qbike-uc.\"},\n  {\"i\": 4, \"verdict\": \"declared-only\", \"reason\": \"The configuration sets eureka client serviceUrl, declaring the dependency, but no code or runtime call is shown to confirm actual runtime connection.\"},\n  {\"i\": 5, \"verdict\": \"declared-only\", \"reason\": \"The environment variable REDIS_HOST=redis in docker-compose declares a dependency, but no code or runtime call is shown to confirm actual runtime connection.\"},\n  {\"i\": 6, \"verdict\": \"declared-only\", \"reason\": \"The docker-compose depends_on entry declares start order dependency on kafka for filebeat, but no runtime call or message sending is shown.\"},\n  {\"i\": 7, \"verdict\": \"declared-only\", \"reason\": \"The docker-compose depends_on entry declares start order dependency on elasticsearch for go-stash, but no runtime call or connection is shown.\"},\n  {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"The nginx proxy_pass directives to http://looklook:1001 and http://looklook:1002 show documented runtime HTTP routing from deploy to looklook.\"},\n  {\"i\": 9, \"verdict\": \"declared-only\", \"reason\": \"The docker-compose depends_on and environment variable BGCE_DB_DSN declare dependency on postgres, but no runtime call or connection is shown in the cited evidence.\"}\n]}",
+ "payload": [
+  {
+   "repo": "JavatoDev-com__internet-banking-concept-microservices",
+   "source": "internet-banking-user-service",
+   "target": "core-banking-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: internet-banking-user-service/src/main/java/com/javatodev/finance/service/rest/BankingCoreRestClient.java:9",
+     "file": "internet-banking-user-service/src/main/java/com/javatodev/finance/service/rest/BankingCoreRestClient.java",
+     "line": 9,
+     "kind": "src:java",
+     "context": "   3: import com.javatodev.finance.model.rest.response.UserResponse;\n   4: \n   5: import org.springframework.cloud.openfeign.FeignClient;\n   6: import org.springframework.web.bind.annotation.GetMapping;\n   7: import org.springframework.web.bind.annotation.PathVariable;\n   8: \n>> 9: @FeignClient(name = \"core-banking-service\")\n   10: public interface BankingCoreRestClient {\n   11: \n   12:     @GetMapping(\"/api/v1/user/{identification}\")\n   13:     UserResponse readUser(@PathVariable(\"identification\") String identification);\n   14: \n   15: }"
+    }
+   ]
+  },
+  {
+   "repo": "JavatoDev-com__internet-banking-concept-microservices",
+   "source": "internet-banking-utility-payment-service",
+   "target": "core-banking-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: internet-banking-utility-payment-service/src/main/java/com/javatodev/finance/service/rest/BankingCoreRestClient.java:14",
+     "file": "internet-banking-utility-payment-service/src/main/java/com/javatodev/finance/service/rest/BankingCoreRestClient.java",
+     "line": 14,
+     "kind": "src:java",
+     "context": "   8: import org.springframework.cloud.openfeign.FeignClient;\n   9: import org.springframework.web.bind.annotation.PathVariable;\n   10: import org.springframework.web.bind.annotation.RequestBody;\n   11: import org.springframework.web.bind.annotation.RequestMapping;\n   12: import org.springframework.web.bind.annotation.RequestMethod;\n   13: \n>> 14: @FeignClient(name = \"core-banking-service\", configuration = CustomFeignClientConfiguration.class)\n   15: public interface BankingCoreRestClient {\n   16: \n   17:     @RequestMapping(path = \"/api/v1/account/bank-account/{account_number}\", method = RequestMethod.GET)\n   18:     AccountResponse readAccount(@PathVariable(\"account_number\") String accountNumber);\n   19: \n   20:     @RequestMapping(path = \"/api/v1/transaction/util-payment\", method = RequestMethod.POST)"
+    }
+   ]
+  },
+  {
+   "repo": "JavatoDev-com__internet-banking-concept-microservices",
+   "source": "internet-banking-user-service",
+   "target": "internet-banking-service-registry",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose/docker-compose.yml",
+     "file": "docker-compose/docker-compose.yml",
+     "line": 94,
+     "kind": "compose",
+     "context": "   88: \n   89:   internet-banking-user-service:\n   90:     image: javatodev/internet-banking-user-service\n   91:     container_name: internet-banking-user-service\n   92:     ports:\n   93:       - 8083:8083\n>> 94:     entrypoint: [\"./wait-for-it.sh\", \"internet-banking-service-registry:8081\", \"--timeout=50\", \"--\", \"./wait-for-it.sh\", \"internet-banking-config-server:8090\", \"--timeout=50\", \"--\", \"./wait-for-it.sh\"\n   95:     networks:\n   96:       javatodev_ib_network:\n   97:         ipv4_address: 172.25.0.5\n   98: \n   99:   internet-banking-fund-transfer-service:\n   100:     image: javatodev/internet-banking-fund-transfer-service"
+    },
+    {
+     "ref": "code: internet-banking-user-service/build.gradle",
+     "file": "internet-banking-user-service/build.gradle",
+     "line": 31,
+     "kind": "other:.gradle",
+     "context": "   25:     set('springCloudVersion', \"2023.0.0\")\n   26: }\n   27: \n   28: dependencies {\n   29:     implementation 'org.springframework.boot:spring-boot-starter-web'\n   30:     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'\n>> 31:     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'\n   32: \n   33:     //SPRING BOOT - TRACING\n   34:     implementation 'org.springframework.boot:spring-boot-starter-actuator'\n   35:     implementation 'io.micrometer:micrometer-tracing-bridge-brave'\n   36:     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'\n   37:     implementation 'io.github.openfeign:feign-micrometer'"
+    }
+   ]
+  },
+  {
+   "repo": "JoeCao__qbike",
+   "source": "testclient",
+   "target": "qbike-uc",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: testclient/src/main/java/club/newtech/qbike/client/api/UserApi.java:15",
+     "file": "testclient/src/main/java/club/newtech/qbike/client/api/UserApi.java",
+     "line": 15,
+     "kind": "src:java",
+     "context": "   9: @Component\n   10: public class UserApi {\n   11:     @Autowired\n   12:     RestTemplate restTemplate;\n   13: \n   14:     public void newUser(User user) {\n>> 15:         restTemplate.postForObject(\"http://qbike-uc/users\", user, User.class);\n   16:     }\n   17: \n   18:     public void newIntention(MyIntention myIntention) {\n   19:         restTemplate.postForObject(\"http://qbike-intention/intentions/place\", myIntention, MyIntention.class);\n   20:     }\n   21: }"
+    }
+   ]
+  },
+  {
+   "repo": "JoeCao__qbike",
+   "source": "position",
+   "target": "eureka",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: position/src/main/resources/application-docker.yml",
+     "file": "position/src/main/resources/application-docker.yml",
+     "line": 50,
+     "kind": "spring-yaml",
+     "context": "   44: logging:\n   45:   level:\n   46:     root: INFO\n   47:     org.hibernate: INFO\n   48:     org.hibernate.type.descriptor.sql.BasicBinder: TRACE\n   49:     org.hibernate.type.descriptor.sql.BasicExtractor: TRACE\n>> 50: eureka:\n   51:   client:\n   52:     serviceUrl:\n   53:       defaultZone: http://${EUREKA_HOST}:8761/eureka/    # 指定注册中心的地址\n   54:   instance:\n   55:     preferIpAddress: true"
+    },
+    {
+     "ref": "code: position/src/main/resources/application.yml",
+     "file": "position/src/main/resources/application.yml",
+     "line": 50,
+     "kind": "spring-yaml",
+     "context": "   44: logging:\n   45:   level:\n   46:     root: INFO\n   47:     org.hibernate: INFO\n   48:     org.hibernate.type.descriptor.sql.BasicBinder: TRACE\n   49:     org.hibernate.type.descriptor.sql.BasicExtractor: TRACE\n>> 50: eureka:\n   51:   client:\n   52:     serviceUrl:\n   53:       defaultZone: http://127.0.0.1:8761/eureka/    # 指定注册中心的地址\n   54:   instance:\n   55:     preferIpAddress: true"
+    }
+   ]
+  },
+  {
+   "repo": "JoeCao__qbike",
+   "source": "api-gateway",
+   "target": "redis",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 102,
+     "kind": "compose",
+     "context": "   96:       - rabbit\n   97:   api-gateway:\n   98:     image: club.newtech/api-gateway\n   99:     ports:\n   100:       - \"8050:8050\"\n   101:     environment:\n>> 102:       - REDIS_HOST=redis\n   103:       - REDIS_DB=0\n   104:       - DB_HOST=mysql\n   105:       - DB_SCHEMA=qbike\n   106:       - EUREKA_HOST=eureka\n   107:       - RABBIT=rabbit\n   108:     links:"
+    }
+   ]
+  },
+  {
+   "repo": "Mikaelemmmm__go-zero-looklook",
+   "source": "filebeat",
+   "target": "kafka",
+   "type": "async",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose-env.yml#depends_on",
+     "file": "docker-compose-env.yml",
+     "line": 135,
+     "kind": "compose",
+     "context": "   129:       # 如snap安装的docker，则为/var/snap/docker/common/var-lib-docker/containers - Example if docker is installed by Snap /var/snap/docker/common/var-lib-docker/containers\n   130:       # - /var/snap/docker/common/var-lib-docker/containers:/var/lib/docker/containers\n   131:       - /var/lib/docker/containers:/var/lib/docker/containers\n   132:     networks:\n   133:       - looklook_net\n   134:     depends_on:\n>> 135:       - kafka\n   136: \n   137: \n   138:   #消息队列 - Message queue\n   139:   kafka:\n   140:     image: apache/kafka:3.9.0\n   141:     container_name: kafka"
+    }
+   ]
+  },
+  {
+   "repo": "Mikaelemmmm__go-zero-looklook",
+   "source": "go-stash",
+   "target": "elasticsearch",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose-env.yml#depends_on",
+     "file": "docker-compose-env.yml",
+     "line": 113,
+     "kind": "compose",
+     "context": "   107:     restart: always\n   108:     volumes:\n   109:       - ./deploy/go-stash/etc:/app/etc\n   110:     networks:\n   111:       - looklook_net\n   112:     depends_on:\n>> 113:       - elasticsearch\n   114:       - kafka\n   115: \n   116:   #收集业务数据 - Collect business data\n   117:   filebeat:\n   118:     image: elastic/filebeat:8.12.2\n   119:     container_name: filebeat"
+    }
+   ]
+  },
+  {
+   "repo": "Mikaelemmmm__go-zero-looklook",
+   "source": "deploy",
+   "target": "looklook",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deploy/nginx/conf.d/looklook-gateway.conf:12",
+     "file": "deploy/nginx/conf.d/looklook-gateway.conf",
+     "line": 12,
+     "kind": "nginx",
+     "context": "   6: \n   7:       location ~ /order/ {\n   8:            proxy_set_header Host $http_host;\n   9:            proxy_set_header X-Real-IP $remote_addr;\n   10:            proxy_set_header REMOTE-HOST $remote_addr;\n   11:            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n>> 12:            proxy_pass http://looklook:1001;\n   13:       }\n   14:       location ~ /payment/ {\n   15:           proxy_set_header Host $http_host;\n   16:           proxy_set_header X-Real-IP $remote_addr;\n   17:           proxy_set_header REMOTE-HOST $remote_addr;\n   18:           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;"
+    },
+    {
+     "ref": "code: deploy/nginx/conf.d/looklook-gateway.conf:19",
+     "file": "deploy/nginx/conf.d/looklook-gateway.conf",
+     "line": 19,
+     "kind": "nginx",
+     "context": "   13:       }\n   14:       location ~ /payment/ {\n   15:           proxy_set_header Host $http_host;\n   16:           proxy_set_header X-Real-IP $remote_addr;\n   17:           proxy_set_header REMOTE-HOST $remote_addr;\n   18:           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n>> 19:           proxy_pass http://looklook:1002;\n   20:       }\n   21:       location ~ /travel/ {\n   22:          proxy_set_header Host $http_host;\n   23:          proxy_set_header X-Real-IP $remote_addr;\n   24:          proxy_set_header REMOTE-HOST $remote_addr;\n   25:          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;"
+    }
+   ]
+  },
+  {
+   "repo": "NesoHQ__bgce-archive",
+   "source": "bgce_cortex",
+   "target": "postgres",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: cortex/docker-compose.yml#depends_on",
+     "file": "cortex/docker-compose.yml",
+     "line": 42,
+     "kind": "compose",
+     "context": "   36: \n   37:       # Postgres DB\n   38:       BGCE_DB_DSN: \"postgresql://postgres:root@postgres:5432/cortex_db?sslmode=disable\"\n   39:       BGCE_DB_DRIVER: \"postgres\"\n   40: \n   41:     depends_on:\n>> 42:       postgres:\n   43:         condition: service_healthy\n   44:       rabbitmq:\n   45:         condition: service_healthy\n   46:       redis:\n   47:         condition: service_healthy\n   48:     networks:"
+    },
+    {
+     "ref": "code: cortex/docker-compose.yml",
+     "file": "cortex/docker-compose.yml",
+     "line": 38,
+     "kind": "compose",
+     "context": "   32:       # Redis\n   33:       READ_REDIS_URL: \"redis://redis:6379\"\n   34:       WRITE_REDIS_URL: \"redis://redis:6379\"\n   35:       ENABLE_REDIS_TLS_MODE: \"false\"\n   36: \n   37:       # Postgres DB\n>> 38:       BGCE_DB_DSN: \"postgresql://postgres:root@postgres:5432/cortex_db?sslmode=disable\"\n   39:       BGCE_DB_DRIVER: \"postgres\"\n   40: \n   41:     depends_on:\n   42:       postgres:\n   43:         condition: service_healthy\n   44:       rabbitmq:"
+    }
+   ]
+  }
+ ]
+}

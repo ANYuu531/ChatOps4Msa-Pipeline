@@ -1,0 +1,227 @@
+{
+ "id": "edges-0021",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 2774,
+  "completion_tokens": 443,
+  "total_tokens": 3217,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"declared-only\", \"reason\": \"The depends_on entry shows start order dependency but no runtime call or connection to 'order' is shown; environment variables do not include 'order' URL.\"}, {\"i\": 1, \"verdict\": \"correct\", \"reason\": \"Environment variable PRODUCT_API with full URL to 'product' service shows documented runtime HTTP call from recommender-sync to product.\"}, {\"i\": 2, \"verdict\": \"correct\", \"reason\": \"depends_on plus environment variable KAFKA_BOOTSTRAP_SERVERS with kafka address documents runtime connection from recommender-sync to kafka.\"}, {\"i\": 3, \"verdict\": \"wrong\", \"reason\": \"No evidence shown that gateway-service calls or connects to discovery-service; only config for config-service URI is shown, not discovery-service.\"}, {\"i\": 4, \"verdict\": \"declared-only\", \"reason\": \"depends_on and environment variable ZIP_KIN_SERVER_HOST show declared dependency but no evidence of runtime call or connection to sc-zipkin.\"}, {\"i\": 5, \"verdict\": \"declared-only\", \"reason\": \"depends_on, links, and environment variables for sc-eureka show declared dependency but no direct evidence of runtime call or connection.\"}, {\"i\": 6, \"verdict\": \"correct\", \"reason\": \"Code explicitly creates axios client with baseURL pointing to ingress-nginx-controller, showing runtime HTTP calls.\"}, {\"i\": 7, \"verdict\": \"correct\", \"reason\": \"Environment variable NATS_URL with full URL to nats-service documents runtime connection from tickets-deployment to nats-service.\"}, {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"Environment variable MONGO_URI with full MongoDB URI to auth-mongo-service documents runtime DB connection from auth-deployment to auth-mongo-service.\"}, {\"i\": 9, \"verdict\": \"declared-only\", \"reason\": \"depends_on and links show declared dependency on redis but no runtime call or connection evidence is shown.\"}]}",
+ "payload": [
+  {
+   "repo": "rasadov__EcommerceAPI",
+   "source": "graphql",
+   "target": "order",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 214,
+     "kind": "compose",
+     "context": "   208:       dockerfile: docker/services/graphql.dockerfile\n   209:     ports:\n   210:       - \"8080:8080\"\n   211:     depends_on:\n   212:       - account\n   213:       - product\n>> 214:       - order\n   215:       - payment\n   216:       - recommender-server\n   217:       - recommender-sync\n   218:     environment:\n   219:       ACCOUNT_SERVICE_URL: account:8080\n   220:       PRODUCT_SERVICE_URL: product:8080"
+    },
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 214,
+     "kind": "compose",
+     "context": "   208:       dockerfile: docker/services/graphql.dockerfile\n   209:     ports:\n   210:       - \"8080:8080\"\n   211:     depends_on:\n   212:       - account\n   213:       - product\n>> 214:       - order\n   215:       - payment\n   216:       - recommender-server\n   217:       - recommender-sync\n   218:     environment:\n   219:       ACCOUNT_SERVICE_URL: account:8080\n   220:       PRODUCT_SERVICE_URL: product:8080"
+    }
+   ]
+  },
+  {
+   "repo": "rasadov__EcommerceAPI",
+   "source": "recommender-sync",
+   "target": "product",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 182,
+     "kind": "compose",
+     "context": "   176:     depends_on:\n   177:       - recommender_db\n   178:       - kafka\n   179:     environment:\n   180:       DATABASE_URL: postgresql://rasadov:123456@recommender_db/rasadov?sslmode=disable\n   181:       KAFKA_BOOTSTRAP_SERVERS: kafka:9092\n>> 182:       PRODUCT_API: http://product:8080/products\n   183:       PRODUCT_EVENTS_TOPIC: product_events\n   184:       INTERACTION_EVENTS_TOPIC: interaction_events\n   185:     restart: on-failure\n   186: \n   187:   recommender-train:\n   188:     container_name: \"recommender-train\""
+    }
+   ]
+  },
+  {
+   "repo": "rasadov__EcommerceAPI",
+   "source": "recommender-sync",
+   "target": "kafka",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 178,
+     "kind": "compose",
+     "context": "   172:     build:\n   173:       context: .\n   174:       dockerfile: docker/services/recommender.dockerfile\n   175:     command: python main.py consumer\n   176:     depends_on:\n   177:       - recommender_db\n>> 178:       - kafka\n   179:     environment:\n   180:       DATABASE_URL: postgresql://rasadov:123456@recommender_db/rasadov?sslmode=disable\n   181:       KAFKA_BOOTSTRAP_SERVERS: kafka:9092\n   182:       PRODUCT_API: http://product:8080/products\n   183:       PRODUCT_EVENTS_TOPIC: product_events\n   184:       INTERACTION_EVENTS_TOPIC: interaction_events"
+    },
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 178,
+     "kind": "compose",
+     "context": "   172:     build:\n   173:       context: .\n   174:       dockerfile: docker/services/recommender.dockerfile\n   175:     command: python main.py consumer\n   176:     depends_on:\n   177:       - recommender_db\n>> 178:       - kafka\n   179:     environment:\n   180:       DATABASE_URL: postgresql://rasadov:123456@recommender_db/rasadov?sslmode=disable\n   181:       KAFKA_BOOTSTRAP_SERVERS: kafka:9092\n   182:       PRODUCT_API: http://product:8080/products\n   183:       PRODUCT_EVENTS_TOPIC: product_events\n   184:       INTERACTION_EVENTS_TOPIC: interaction_events"
+    }
+   ]
+  },
+  {
+   "repo": "rcherara__microservice-architecture",
+   "source": "gateway-service",
+   "target": "discovery-service",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: config-service/src/main/resources/config/gateway-service-staging.yml",
+     "file": "config-service/src/main/resources/config/gateway-service-staging.yml",
+     "line": 0,
+     "kind": "yaml",
+     "context": "   server:\n     port: ${CONFIG_PORT:8080}\n   spring:\n     application: #app discovery  config\n       name: Gateway-Service\n     cloud:\n       config:\n         uri: http://${CONFIG_SERVICE:localhost}:${CONFIG_PORT:7761}\n         fail-fast: true\n         username: ${CONFIG_SERVICE_USER:admin}\n         password: ${CONFIG_SERVICE_PASSWORD:admin}\n     boot:\n       admin:"
+    },
+    {
+     "ref": "code: config-service/src/main/resources/config/gateway-service-production.yml",
+     "file": "config-service/src/main/resources/config/gateway-service-production.yml",
+     "line": 0,
+     "kind": "yaml",
+     "context": "   server:\n     port: ${CONFIG_PORT:8080}\n   spring:\n     application: #app discovery  config\n       name: Gateway-Service\n     cloud:\n       config:\n         uri: http://${CONFIG_SERVICE:localhost}:${CONFIG_PORT:7761}\n         fail-fast: true\n         username: ${CONFIG_SERVICE_USER:admin}\n         password: ${CONFIG_SERVICE_PASSWORD:admin}\n     boot:\n       admin:"
+    }
+   ]
+  },
+  {
+   "repo": "rcherara__microservice-architecture",
+   "source": "sc-gateway",
+   "target": "sc-zipkin",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 82,
+     "kind": "compose",
+     "context": "   76:       - ZIP_KIN_SERVER_PORT=9411\n   77:     links:\n   78:       - sc-eureka\n   79:       - sc-zipkin\n   80:     depends_on:\n   81:       - sc-eureka\n>> 82:       - sc-zipkin\n   83:     command: java -Djava.security.egd=file:/dev/./urandom -jar /app.jar"
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 75,
+     "kind": "compose",
+     "context": "   69:     image: 'zhixilang/spring-cloud-learn/sc-gateway:1.0.0-SNAPSHOT'\n   70:     ports:\n   71:       - 9527:9527\n   72:     environment:\n   73:       - EUREKA_HOST=sc-eureka\n   74:       - EUREKA_PORT=8761\n>> 75:       - ZIP_KIN_SERVER_HOST=sc-zipkin\n   76:       - ZIP_KIN_SERVER_PORT=9411\n   77:     links:\n   78:       - sc-eureka\n   79:       - sc-zipkin\n   80:     depends_on:\n   81:       - sc-eureka"
+    }
+   ]
+  },
+  {
+   "repo": "rcherara__microservice-architecture",
+   "source": "sc-user",
+   "target": "sc-eureka",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 47,
+     "kind": "compose",
+     "context": "   41:       - ZIP_KIN_SERVER_HOST=sc-zipkin\n   42:       - ZIP_KIN_SERVER_PORT=9411\n   43:     links:\n   44:       - sc-eureka\n   45:       - sc-zipkin\n   46:     depends_on:\n>> 47:       - sc-eureka\n   48:       - sc-zipkin\n   49:     command: java -Djava.security.egd=file:/dev/./urandom -jar /app.jar\n   50:   sc-bill:\n   51:     container_name: sc-bill\n   52:     image: 'zhixilang/spring-cloud-learn/sc-bill:1.0.0-SNAPSHOT'\n   53:     expose:"
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 39,
+     "kind": "compose",
+     "context": "   33:   sc-user:\n   34:     container_name: sc-user\n   35:     image: 'zhixilang/spring-cloud-learn/sc-user:1.0.0-SNAPSHOT'\n   36:     expose:\n   37:       - 8081\n   38:     environment:\n>> 39:       - EUREKA_HOST=sc-eureka\n   40:       - EUREKA_PORT=8761\n   41:       - ZIP_KIN_SERVER_HOST=sc-zipkin\n   42:       - ZIP_KIN_SERVER_PORT=9411\n   43:     links:\n   44:       - sc-eureka\n   45:       - sc-zipkin"
+    }
+   ]
+  },
+  {
+   "repo": "saalikmubeen__microservices-architectured-app",
+   "source": "client-deployment",
+   "target": "ingress-nginx-controller",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: client/buildClient.js:8",
+     "file": "client/buildClient.js",
+     "line": 8,
+     "kind": "src:javascript",
+     "context": "   2: \n   3: export default (req) => {\n   4:     if (typeof window === \"undefined\") {\n   5:         // We are on the server\n   6: \n   7:         return axios.create({\n>> 8:             baseURL:\n   9:                 \"http://ingress-nginx-controller.ingress-nginx.svc.cluster.local\",\n   10:             headers: req.headers,\n   11:         });\n   12:     } else {\n   13:         // We must be on the browser\n   14:         return axios.create({"
+    }
+   ]
+  },
+  {
+   "repo": "saalikmubeen__microservices-architectured-app",
+   "source": "tickets-deployment",
+   "target": "nats-service",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: infra/k8s/tickets-deployment.yaml",
+     "file": "infra/k8s/tickets-deployment.yaml",
+     "line": 32,
+     "kind": "yaml",
+     "context": "   26:                         value: \"mongodb://tickets-mongo-service:27017/tickets\"\n   27: \n   28:                       - name: NATS_CLUSTER_ID\n   29:                         value: \"ticketing\"\n   30: \n   31:                       - name: NATS_URL\n>> 32:                         value: \"http://nats-service:4222\"\n   33: \n   34:                       - name: NATS_CLIENT_ID\n   35:                         valueFrom:\n   36:                             fieldRef:\n   37:                                 fieldPath: metadata.name # name of the pod\n   38: "
+    }
+   ]
+  },
+  {
+   "repo": "saalikmubeen__microservices-architectured-app",
+   "source": "auth-deployment",
+   "target": "auth-mongo-service",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: infra/k8s/auth-deployment.yaml",
+     "file": "infra/k8s/auth-deployment.yaml",
+     "line": 26,
+     "kind": "yaml",
+     "context": "   20:                         valueFrom:\n   21:                             secretKeyRef:\n   22:                                 name: jwt-secret\n   23:                                 key: SECRET\n   24: \n   25:                       - name: MONGO_URI \n>> 26:                         value: \"mongodb://auth-mongo-service:27017/auth\"\n   27: ---\n   28: apiVersion: v1\n   29: kind: Service\n   30: metadata:\n   31:     name: auth-service\n   32: spec:"
+    }
+   ]
+  },
+  {
+   "repo": "sczyh30__vertx-blueprint-microservice",
+   "source": "inventory-microservice",
+   "target": "redis",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml",
+     "line": 68,
+     "kind": "compose",
+     "context": "   62:     links:\n   63:       - config-server\n   64:       - redis\n   65:       - logstash\n   66:     depends_on:\n   67:       - config-server\n>> 68:       - redis\n   69:       - logstash\n   70:     expose:\n   71:       - \"8086\"\n   72:   product-microservice:\n   73:     image: vertx-blueprint/product-microservice\n   74:     links:"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,181 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=getlarge__ticketing orders-service -> ticketing.dev (type external, grade inferred)
+  cited code: docker-compose.yaml
+   183:     hostname: orders-service
+   184:     environment:
+   185:       NODE_ENV: ${NODE_ENV:-development}
+   186:       LOG_LEVEL: ${LOG_LEVEL:-info}
+   187:       PORT: ${ORDERS_HTTP_PORT:-3020}
+   188:       SERVER_URL: http://localhost:${ORDERS_HTTP_PORT:-3020}
+>> 189:       PROXY_SERVER_URLS: ${PROXY_SERVER_URLS:-http://ticketing.dev}
+   190:       FRONTEND_URL: ${FRONTEND_URL:-http://ticketing.dev}
+   191:       JWT_ALGORITHM: ${JWT_ALGORITHM:-ES256}
+   192:       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-60m}
+   193:       JWT_ISSUER: ${JWT_ISSUER:-ticketing.dev}
+   194:       JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+   195:       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}
+
+[1] repo=getlarge__ticketing kratos-selfservice-ui-node -> hydra (type sync-http, grade inferred)
+  cited code: docker-compose.yaml
+   423: 
+   424:   kratos-selfservice-ui-node:
+   425:     image: oryd/kratos-selfservice-ui-node:v1.1.0
+   426:     environment:
+   427:       - KRATOS_PUBLIC_URL=http://kratos:4433
+   428:       - KRATOS_BROWSER_URL=http://127.0.0.1:4433
+>> 429:       - HYDRA_ADMIN_URL=http://hydra:4445
+   430:       - KRATOS_ADMIN_URL=http://kratos:4434
+   431:       - PORT=4455
+   432:       - COOKIE_SECRET=changeme
+   433:       - CSRF_COOKIE_NAME=cookie_name
+   434:       - CSRF_COOKIE_SECRET=changeme
+   435:       - DANGEROUSLY_DISABLE_SECURE_CSRF_COOKIES=true
+
+[2] repo=getlarge__ticketing payments-service -> mongo-primary (type db, grade inferred)
+  cited code: docker-compose.yaml
+   248:       test: node ./healthcheck.js http://0.0.0.0:${PAYMENTS_HTTP_PORT:-3040}/${GLOBAL_API_PREFIX:-api}/health
+   249:       interval: 60s
+   250:       timeout: 3s
+   251:       start_period: 10s
+   252:       retries: 2
+   253:     depends_on:
+>> 254:       - mongo-primary
+   255:       - rabbitmq
+   256:     ports:
+   257:       - '${PAYMENTS_HTTP_PORT:-3040}:${PAYMENTS_HTTP_PORT:-3040}'
+   258:     networks:
+   259:       - mongo
+   260:       - rabbitmq
+
+[3] repo=go-kratos__beer-shop user-service -> user-db (type db, grade inferred)
+  cited code: deploy/docker-compose/docker-compose.yaml#depends_on
+   9:     ports:
+   10:       - 81:81
+   11:   user-service:
+   12:     image: go-kratos/beer-user-service:0.1.0
+   13:     hostname: user-service
+   14:     depends_on:
+>> 15:       - user-db
+   16:   user-db:
+   17:     image: mysql:8
+   18:     hostname: user-db
+   19:     environment:
+   20:       MYSQL_ROOT_PASSWORD: dangerous
+   21:   catalog-service:
+
+[4] repo=go-kratos__beer-shop kafka -> zookeeper (type sync-http, grade documented)
+  cited code: deploy/docker-compose/docker-compose.yaml#depends_on
+   62:     ports:
+   63:       - "9092:9092"
+   64:     environment:
+   65:       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+   66:       - ALLOW_PLAINTEXT_LISTENER=yes
+   67:     depends_on:
+>> 68:       - zookeeper
+   69: 
+  cited code: deploy/docker-compose/docker-compose.yaml
+   59:       - ALLOW_ANONYMOUS_LOGIN=yes
+   60:   kafka:
+   61:     image: docker.io/bitnami/kafka:2
+   62:     ports:
+   63:       - "9092:9092"
+   64:     environment:
+>> 65:       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+   66:       - ALLOW_PLAINTEXT_LISTENER=yes
+   67:     depends_on:
+   68:       - zookeeper
+   69: 
+
+[5] repo=go-kratos__beer-shop catalog-service -> catalog-db (type db, grade inferred)
+  cited code: deploy/docker-compose/docker-compose.yaml#depends_on
+   19:     environment:
+   20:       MYSQL_ROOT_PASSWORD: dangerous
+   21:   catalog-service:
+   22:     image: go-kratos/beer-catalog-service:0.1.0
+   23:     hostname: catalog-service
+   24:     depends_on:
+>> 25:       - catalog-db
+   26:   catalog-db:
+   27:     image: mysql:8
+   28:     hostname: catalog-db
+   29:     environment:
+   30:       MYSQL_ROOT_PASSWORD: dangerous
+   31:   cart-service:
+
+[6] repo=go-saas__kit apisix -> user (type sync-http, grade inferred)
+  cited code: docker-compose.ms.yml#depends_on
+   4:   apisix:
+   5:     image: ${DOCKER_REGISTRY}go-saas-kit-apisix:${DOCKER_TAG:-latest}
+   6:     volumes:
+   7:       - ./quickstart/configs/apisix/apisix_conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+   8:       - ./quickstart/configs:/data/conf
+   9:     depends_on:
+>> 10:       - user
+   11:       - saas
+   12:     extra_hosts:
+   13:       - "host.docker.internal:host-gateway"
+   14: 
+   15:   user:
+   16:     image: ${DOCKER_REGISTRY}go-saas-kit-user:${DOCKER_TAG:-latest}
+
+[7] repo=go-saas__kit kafka-ui -> kafka (type async, grade documented)
+  cited code: docker-compose.kafka.yml
+   22:   kafka-ui:
+   23:     image: provectuslabs/kafka-ui:latest
+   24: #    ports:
+   25: #      - 8082:8080
+   26:     environment:
+   27:       KAFKA_CLUSTERS_0_NAME: local
+>> 28:       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+   29:       SERVER_SERVLET_CONTEXT_PATH: /kafka-ui
+   30:     restart: unless-stopped
+   31: 
+   32: volumes:
+   33:   kafka_data:
+
+[8] repo=go-saas__kit realtime -> user (type sync-http, grade inferred)
+  cited code: docker-compose.ms.yml#depends_on
+   41:     extra_hosts:
+   42:       - "host.docker.internal:host-gateway"
+   43: 
+   44:   realtime:
+   45:     image: ${DOCKER_REGISTRY}go-saas-kit-realtime:${DOCKER_TAG:-latest}
+   46:     depends_on:
+>> 47:       - user
+   48:     volumes:
+   49:       - ./quickstart/configs:/data/conf
+   50:       - ./quickstart/.assets:/app/.assets
+   51:     restart: unless-stopped
+   52:     build:
+   53:       context: .
+
+[9] repo=hamed-shirbandi__TaskoMask owners-read-api -> stageidentity.taskomask.ir (type external, grade documented)
+  cited code: src/2-Services/Owners/Api/Owners.Read.Api/appsettings.Staging.json
+   6:     "Host": "localhost"
+   7:   },
+   8:   "Caching": {
+   9:     "Enabled": false
+   10:   },
+   11:   "Jwt": {
+>> 12:     "Authority": "https://stageidentity.taskomask.ir"
+   13:   }
+   14: }
+   15: 

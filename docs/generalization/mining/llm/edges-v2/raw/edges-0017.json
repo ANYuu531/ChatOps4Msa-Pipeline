@@ -1,0 +1,220 @@
+{
+ "id": "edges-0017",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 3171,
+  "completion_tokens": 390,
+  "total_tokens": 3561,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [\n  {\"i\": 0, \"verdict\": \"declared-only\", \"reason\": \"The docker-compose depends_on shows start order dependency but does not prove runtime calls or connections.\"},\n  {\"i\": 1, \"verdict\": \"declared-only\", \"reason\": \"The gateway route configuration declares a route to flight service but does not show actual runtime calls.\"},\n  {\"i\": 2, \"verdict\": \"wrong\", \"reason\": \"The code only constructs URIs with 'https://problems/...' as type identifiers, not actual runtime calls or connections to a 'problems' service.\"},\n  {\"i\": 3, \"verdict\": \"declared-only\", \"reason\": \"The docker-compose depends_on shows start order dependency but no runtime call evidence.\"},\n  {\"i\": 4, \"verdict\": \"declared-only\", \"reason\": \"Environment variable setting an endpoint URL declares a dependency but does not prove runtime calls.\"},\n  {\"i\": 5, \"verdict\": \"declared-only\", \"reason\": \"Environment variable setting an endpoint URL declares a dependency but does not prove runtime calls.\"},\n  {\"i\": 6, \"verdict\": \"declared-only\", \"reason\": \"docker-compose depends_on shows start order dependency but no direct runtime call evidence.\"},\n  {\"i\": 7, \"verdict\": \"declared-only\", \"reason\": \"docker-compose depends_on and image naming declare dependency but no runtime call evidence shown.\"},\n  {\"i\": 8, \"verdict\": \"declared-only\", \"reason\": \"Environment variable REDIS_ADDRS declares addresses but does not prove runtime calls or connections.\"},\n  {\"i\": 9, \"verdict\": \"declared-only\", \"reason\": \"docker-compose depends_on shows start order dependency but no runtime call evidence.\"}\n]}",
+ "payload": [
+  {
+   "repo": "meysamhadeli__booking-microservices-expressjs",
+   "source": "identity",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 82,
+     "kind": "compose",
+     "context": "   76:       dockerfile: identity/Dockerfile\n   77:     network_mode: host\n   78:     restart: unless-stopped\n   79:     depends_on:\n   80:       postgres:\n   81:         condition: service_healthy\n>> 82:       rabbitmq:\n   83:         condition: service_healthy\n   84:     environment:\n   85:       <<: *common-env\n   86:       PORT: ${IDENTITY_PORT}\n   87:       SERVICE_NAME: ${IDENTITY_SERVICE_NAME}\n   88:       POSTGRES_Database: ${POSTGRES_DB}"
+    },
+    {
+     "ref": "code: deployments/kubernetes/identity-deployment.yaml",
+     "file": "deployments/kubernetes/identity-deployment.yaml",
+     "line": 0,
+     "kind": "yaml",
+     "context": "   apiVersion: apps/v1\n   kind: Deployment\n   metadata:\n     name: identity\n     namespace: booking\n   spec:\n     replicas: 1\n     selector:\n       matchLabels:\n         app: identity\n     template:\n       metadata:\n         labels:"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+   "source": "apigateway",
+   "target": "flight",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/apigateway/src/main/resources/application-dev.yml",
+     "file": "src/apigateway/src/main/resources/application-dev.yml",
+     "line": 17,
+     "kind": "spring-yaml",
+     "context": "   11:   cloud:\n   12:     gateway:\n   13:       routes:\n   14:         - id: flight-service\n   15:           uri: http://localhost:8082\n   16:           predicates:\n>> 17:             - Path=/api/{version}/flight/**\n   18:           filters:\n   19:             - TokenRelay\n   20:         - id: passenger-service\n   21:           uri: http://localhost:8083\n   22:           predicates:\n   23:             - Path=/api/{version}/passenger/**"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+   "source": "buildingblocks",
+   "target": "problems",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/buildingblocks/src/main/java/buildingblocks/keycloak/CustomAuthenticationEntryPoint.java:40",
+     "file": "src/buildingblocks/src/main/java/buildingblocks/keycloak/CustomAuthenticationEntryPoint.java",
+     "line": 40,
+     "kind": "src:java",
+     "context": "   34:       getStatus(authException),\n   35:       authException.getMessage()\n   36:     );\n   37: \n   38:     problemDetail.setTitle(authException.getClass().getSimpleName());\n   39:     problemDetail.setDetail(authException.getMessage());\n>> 40:     problemDetail.setType(URI.create(\"https://problems/\" + authException.getClass().getSimpleName().toLowerCase()));\n   41:     problemDetail.setProperty(\"timestamp\", Instant.now().toString());\n   42:     problemDetail.setInstance(URI.create(request.getRequestURI()));\n   43:     response.setStatus(getStatus(authException).value());\n   44:     response.setContentType(MediaType.APPLICATION_JSON_VALUE);\n   45:     response.getWriter().write(JsonConverterUtils.serializeObject(problemDetail));\n   46: "
+    },
+    {
+     "ref": "code: src/buildingblocks/src/main/java/buildingblocks/problemdetails/CustomProblemDetailsHandler.java:93",
+     "file": "src/buildingblocks/src/main/java/buildingblocks/problemdetails/CustomProblemDetailsHandler.java",
+     "line": 93,
+     "kind": "src:java",
+     "context": "   87: \n   88:     ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(\n   89:       details.status(),\n   90:       details.detail()\n   91:     );\n   92: \n>> 93:     problemDetail.setType(URI.create(\"https://problems/\" + details.title().toLowerCase()));\n   94:     problemDetail.setTitle(details.title());\n   95:     problemDetail.setProperty(\"timestamp\", Instant.now());\n   96: \n   97:     // Add stack trace in development environment\n   98:     if (isDevelopment()) {\n   99:       problemDetail.setProperty(\"exception\", ex.toString());"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-java-spring-boot",
+   "source": "grafana",
+   "target": "prometheus",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose/docker-compose.infrastructure.yaml#depends_on",
+     "file": "deployments/docker-compose/docker-compose.infrastructure.yaml",
+     "line": 229,
+     "kind": "compose",
+     "context": "   223:       - GF_SECURITY_ADMIN_PASSWORD=admin\n   224:       - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor\n   225:       #      - GF_AUTH_ANONYMOUS_ENABLED=true\n   226:       #      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin\n   227:       #      - GF_AUTH_DISABLE_LOGIN_FORM=true\n   228:     depends_on:\n>> 229:       - prometheus\n   230:     ports:\n   231:       - \"3000:3000\"\n   232:     volumes:\n   233:       - ./../configs/grafana/provisioning:/etc/grafana/provisioning\n   234:       - ./../configs/grafana/dashboards:/var/lib/grafana/dashboards\n   235:       ## https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-nestjs",
+   "source": "otel-collector",
+   "target": "aspire-dashboard",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose/docker-compose.yaml",
+     "file": "deployments/docker-compose/docker-compose.yaml",
+     "line": 143,
+     "kind": "compose",
+     "context": "   137:       - \"13133:13133\" # health_check extension\n   138:       - \"4317:4317\" # OTLP gRPC receiver\n   139:       - \"4318:4318\" # OTLP http receiver\n   140:       - \"55679:55679\" # zpages extension\n   141:     environment:\n   142:       # set enviroments for otel collector configs to set Exporter endpoints (with defaults matching your original config)\n>> 143:       - ASPIRE_OTLP_ENDPOINT=http://aspire-dashboard:18889 # Using Docker network DNS\n   144:       - ASPIRE_API_KEY=your_api_key\n   145:       - PROMETHEUS_ENDPOINT=0.0.0.0:8889\n   146:       - PROMETHEUS_REMOTE_WRITE_ENDPOINT=http://prometheus:9090/api/v1/write\n   147:       - LOKI_ENDPOINT=http://loki:3100/otlp\n   148:       - TEMPO_ENDPOINT=http://tempo:4317\n   149:     networks:"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-nestjs",
+   "source": "otel-collector",
+   "target": "loki",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose/docker-compose.yaml",
+     "file": "deployments/docker-compose/docker-compose.yaml",
+     "line": 147,
+     "kind": "compose",
+     "context": "   141:     environment:\n   142:       # set enviroments for otel collector configs to set Exporter endpoints (with defaults matching your original config)\n   143:       - ASPIRE_OTLP_ENDPOINT=http://aspire-dashboard:18889 # Using Docker network DNS\n   144:       - ASPIRE_API_KEY=your_api_key\n   145:       - PROMETHEUS_ENDPOINT=0.0.0.0:8889\n   146:       - PROMETHEUS_REMOTE_WRITE_ENDPOINT=http://prometheus:9090/api/v1/write\n>> 147:       - LOKI_ENDPOINT=http://loki:3100/otlp\n   148:       - TEMPO_ENDPOINT=http://tempo:4317\n   149:     networks:\n   150:       - booking\n   151: \n   152: \n   153:     #######################################################"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-nestjs",
+   "source": "booking",
+   "target": "postgres",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose/docker-compose.yaml#depends_on",
+     "file": "deployments/docker-compose/docker-compose.yaml",
+     "line": 219,
+     "kind": "compose",
+     "context": "   213:   booking:\n   214:     build:\n   215:       context: ../..\n   216:       dockerfile: ../../src/booking/Dockerfile\n   217:     container_name: booking\n   218:     depends_on:\n>> 219:       - postgres\n   220:       - rabbitmq\n   221:     env_file:\n   222:       - ../../src/booking/.env.docker\n   223:     ports:\n   224:       - \"3366:3366\"\n   225:     networks:"
+    },
+    {
+     "ref": "code: deployments/docker-compose/docker-compose.yaml",
+     "file": "deployments/docker-compose/docker-compose.yaml",
+     "line": 219,
+     "kind": "compose",
+     "context": "   213:   booking:\n   214:     build:\n   215:       context: ../..\n   216:       dockerfile: ../../src/booking/Dockerfile\n   217:     container_name: booking\n   218:     depends_on:\n>> 219:       - postgres\n   220:       - rabbitmq\n   221:     env_file:\n   222:       - ../../src/booking/.env.docker\n   223:     ports:\n   224:       - \"3366:3366\"\n   225:     networks:"
+    }
+   ]
+  },
+  {
+   "repo": "minghsu0107__go-random-chat",
+   "source": "random-chat",
+   "target": "kafka",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yaml#depends_on",
+     "file": "deployments/docker-compose.yaml",
+     "line": 81,
+     "kind": "compose",
+     "context": "   75:       - \"traefik.http.routers.random-chat-grpc.rule=Header(`content-type`,`application/grpc`) && Header(`service-id`, `chat`)\"\n   76:       - \"traefik.http.routers.random-chat-grpc.entrypoints=web\"\n   77:       - \"traefik.http.routers.random-chat-grpc.service=random-chat-grpc\"\n   78:       - \"traefik.http.services.random-chat-grpc.loadbalancer.server.port=4000\"\n   79:       - \"traefik.http.services.random-chat-grpc.loadbalancer.server.scheme=h2c\"\n   80:     depends_on:\n>> 81:       - kafka\n   82:   forwarder:\n   83:     image: minghsu0107/random-chat-api:kafka\n   84:     restart: always\n   85:     expose:\n   86:       - \"4000\"\n   87:     command:"
+    },
+    {
+     "ref": "code: deployments/docker-compose.yaml",
+     "file": "deployments/docker-compose.yaml",
+     "line": 38,
+     "kind": "compose",
+     "context": "   32:       - \"traefik.enable=true\"\n   33:       - \"traefik.http.routers.rcweb.rule=PathPrefix(`/`)\"\n   34:       - \"traefik.http.routers.rcweb.entrypoints=web\"\n   35:       - \"traefik.http.routers.rcweb.service=rcweb\"\n   36:       - \"traefik.http.services.rcweb.loadbalancer.server.port=80\"\n   37:   random-chat:\n>> 38:     image: minghsu0107/random-chat-api:kafka\n   39:     restart: always\n   40:     expose:\n   41:       - \"80\"\n   42:       - \"4000\"\n   43:     command:\n   44:       - chat"
+    }
+   ]
+  },
+  {
+   "repo": "minghsu0107__go-random-chat",
+   "source": "uploader",
+   "target": "redis-node-0",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yaml",
+     "file": "deployments/docker-compose.yaml",
+     "line": 153,
+     "kind": "compose",
+     "context": "   147:       UPLOADER_S3_ENDPOINT: http://minio:9000\n   148:       UPLOADER_S3_REGION: us-east-1\n   149:       UPLOADER_S3_BUCKET: myfilebucket\n   150:       UPLOADER_S3_ACCESSKEY: testaccesskey\n   151:       UPLOADER_S3_SECRETKEY: testsecret\n   152:       REDIS_PASSWORD: ${REDIS_PASSWORD}\n>> 153:       REDIS_ADDRS: redis-node-0:6379,redis-node-1:6379,redis-node-2:6379,redis-node-3:6379,redis-node-4:6379,redis-node-5:6379\n   154:       OBSERVABILITY_PROMETHEUS_PORT: \"8080\"\n   155:       OBSERVABILITY_TRACING_OTLPENDPOINT: jaeger:4318\n   156:     labels:\n   157:       - \"traefik.enable=true\"\n   158:       - \"traefik.http.routers.uploader.rule=PathPrefix(`/api/uploader`)\"\n   159:       - \"traefik.http.routers.uploader.entrypoints=web\""
+    }
+   ]
+  },
+  {
+   "repo": "minghsu0107__go-random-chat",
+   "source": "redis-node-5",
+   "target": "redis-node-4",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yaml#depends_on",
+     "file": "deployments/docker-compose.yaml",
+     "line": 296,
+     "kind": "compose",
+     "context": "   290:       - redis-cluster_data-5:/bitnami/redis/data\n   291:     depends_on:\n   292:       - redis-node-0\n   293:       - redis-node-1\n   294:       - redis-node-2\n   295:       - redis-node-3\n>> 296:       - redis-node-4\n   297:     environment:\n   298:       - 'REDIS_PASSWORD=${REDIS_PASSWORD}'\n   299:       - 'REDISCLI_AUTH=${REDIS_PASSWORD}'\n   300:       - 'REDIS_CLUSTER_REPLICAS=1'\n   301:       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'\n   302:       - 'REDIS_CLUSTER_CREATOR=yes'"
+    }
+   ]
+  }
+ ]
+}

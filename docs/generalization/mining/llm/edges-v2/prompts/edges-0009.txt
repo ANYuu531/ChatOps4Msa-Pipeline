@@ -1,0 +1,262 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=desenvolvedor-io__dev-store web-status -> database (type db, grade inferred)
+  cited code: docker/docker-compose-local.yml
+   180:         build:
+   181:             context: ../src
+   182:             dockerfile: ./web/DevStore.WebApp.Status/Dockerfile
+   183:         restart: always
+   184:         environment:
+   185:             <<: *common-variables
+>> 186:             CUSTOMCONNSTR_DefaultConnection: "Server=database;Database=LocalDSStatus;User Id=sa;Password=MyDB@123;MultipleActiveResultSets=true;TrustServerCertificate=True;"
+   187:         volumes:
+   188:             - ./certs:/https:ro
+   189:             - ./certs/devstore.crt:/usr/local/share/ca-certificates/devstore.crt
+   190:         depends_on:
+   191:             api-identity:
+   192:                 condition: service_started
+  cited code: docker/docker-compose.yml
+   141:     web-status:
+   142:         image: desenvolvedorio/devstore-web-status:latest
+   143:         container_name: devstore-web-status
+   144:         restart: always
+   145:         environment:
+   146:             <<: *common-variables
+>> 147:             CUSTOMCONNSTR_DefaultConnection: "Server=database;Database=DSStatus;MultipleActiveResultSets=true;User Id=sa;Password=MyDB@123;MultipleActiveResultSets=true;TrustServerCertificate=True;"
+   148:         volumes:
+   149:             - ./certs:/https:ro
+   150:             - ./certs/devstore.crt:/usr/local/share/ca-certificates/devstore.crt
+   151:         depends_on:
+   152:             - web-mvc   
+   153: 
+
+[1] repo=desenvolvedor-io__dev-store api-identity -> rabbitmq (type async, grade documented)
+  cited code: docker/docker-compose-local.yml#depends_on
+   33:             generate-pfx:
+   34:                 condition: service_completed_successfully
+   35:             database:
+   36:                 condition: service_started
+   37:             logging:
+   38:                 condition: service_started
+>> 39:             rabbitmq:
+   40:                 condition: service_started
+   41: 
+   42:     api-cart:
+   43:         image: desenvolvedorio/devstore-api-cart:${TAG}
+   44:         container_name: devstore-api-cart
+   45:         build:
+  cited code: docker/docker-compose.yml#depends_on
+   26:             generate-pfx:
+   27:                 condition: service_completed_successfully
+   28:             database:
+   29:                 condition: service_healthy
+   30:             logging:
+   31:                 condition: service_healthy
+>> 32:             rabbitmq:
+   33:                 condition: service_healthy
+   34: 
+   35:     api-cart:
+   36:         image: desenvolvedorio/devstore-api-cart:latest
+   37:         container_name: devstore-api-cart
+   38:         restart: always
+
+[2] repo=devdcores__BookStoreApp-Distributed-Application bookstore-order-service -> bookstore-zipkin (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   117:     ports:
+   118:       - "7001:7001"
+   119:     networks:
+   120:       - bookstore-app-network
+   121:     environment:
+   122:       - SERVER_PORT=7001
+>> 123:       - ZIPKIN_HOST=bookstore-zipkin:9411
+   124:       - SPRING_PROFILES_ACTIVE=docker
+   125: 
+   126:   bookstore-payment-service:
+   127:     build:
+   128:       context: ./bookstore-payment-service
+   129:       args:
+
+[3] repo=devdcores__BookStoreApp-Distributed-Application bookstore-zuul-api-gateway-server -> bookstore-payment-service (type sync-http, grade documented)
+  cited code: bookstore-api-gateway-service/src/main/resources/application.yml
+   36:       serviceId: bookstore-account-service
+   37:     order:
+   38:       path: /order/**
+   39:       serviceId: bookstore-order-service
+   40:     payment:
+   41:       path: /payment/**
+>> 42:       serviceId: bookstore-payment-service
+   43:   ribbon:
+   44:     eager-load:
+   45:       enabled: true
+   46:   ribbon-isolation-strategy: THREAD
+   47: 
+   48: ribbon:
+
+[4] repo=devdcores__BookStoreApp-Distributed-Application bookstore-chronograf -> bookstore-influxdb (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   208: 
+   209:   bookstore-chronograf:
+   210:     image: chronograf:1.7.3
+   211:     container_name: bookstore-chronograf
+   212:     hostname: bookstore-chronograf
+   213:     environment:
+>> 214:       INFLUXDB_URL: http://bookstore-influxdb:8086
+   215:       KAPACITOR_URL: http://bookstore-kapacitor:9092
+   216:     volumes:
+   217:       - booksture-chronograf-volume:/var/lib/chronograf
+   218:     ports:
+   219:       - "8888:8888"
+   220:     restart: always
+
+[5] repo=ebosas__microservices database -> rabbitmq (type async, grade documented)
+  cited code: docker-compose.yml#depends_on
+   61:         build:
+   62:             context: .
+   63:             dockerfile: database.Dockerfile
+   64:         env_file:
+   65:             - .env
+   66:         depends_on:
+>> 67:             rabbitmq:
+   68:                 condition: service_healthy
+   69:             postgres:
+   70:                 condition: service_healthy
+   71:     cache:
+   72:         build:
+   73:             context: .
+  cited code: docker-compose.yml
+   61:         build:
+   62:             context: .
+   63:             dockerfile: database.Dockerfile
+   64:         env_file:
+   65:             - .env
+   66:         depends_on:
+>> 67:             rabbitmq:
+   68:                 condition: service_healthy
+   69:             postgres:
+   70:                 condition: service_healthy
+   71:     cache:
+   72:         build:
+   73:             context: .
+
+[6] repo=ebosas__microservices backend -> rabbitmq (type async, grade documented)
+  cited code: docker-compose.yml#depends_on
+   52:             dockerfile: backend.Dockerfile
+   53:         env_file:
+   54:             - .env
+   55:         stdin_open: true
+   56:         tty: true
+   57:         depends_on:
+>> 58:             rabbitmq:
+   59:                 condition: service_healthy
+   60:     database:
+   61:         build:
+   62:             context: .
+   63:             dockerfile: database.Dockerfile
+   64:         env_file:
+  cited code: docker-compose.yml
+   52:             dockerfile: backend.Dockerfile
+   53:         env_file:
+   54:             - .env
+   55:         stdin_open: true
+   56:         tty: true
+   57:         depends_on:
+>> 58:             rabbitmq:
+   59:                 condition: service_healthy
+   60:     database:
+   61:         build:
+   62:             context: .
+   63:             dockerfile: database.Dockerfile
+   64:         env_file:
+
+[7] repo=ebosas__microservices database -> redis (type db, grade documented)
+  cited code: docker-compose.yml
+   54:             - .env
+   55:         stdin_open: true
+   56:         tty: true
+   57:         depends_on:
+   58:             rabbitmq:
+   59:                 condition: service_healthy
+>> 60:     database:
+   61:         build:
+   62:             context: .
+   63:             dockerfile: database.Dockerfile
+   64:         env_file:
+   65:             - .env
+   66:         depends_on:
+
+[8] repo=ebubekirdinc__SuuCat assessment.api -> identity.api (type sync-http, grade documented)
+  cited code: src/Services/Assessment/src/WebUI/Program.cs:20
+   14: builder.Services.AddApplicationServices();
+   15: builder.Services.AddInfrastructureServices(builder.Configuration);
+   16: builder.Services.AddWebUIServices();
+   17: builder.Services.AddAuthentication("Bearer")
+   18:     .AddJwtBearer("Bearer", options =>
+   19:     {
+>> 20:         options.Authority = builder.Configuration["IdentityServerURL"];
+   21:         options.Audience = "resource_assessment"; 
+   22:         options.RequireHttpsMetadata = false;
+   23:         // options.TokenValidationParameters = new TokenValidationParameters
+   24:         // {
+   25:         //     ValidateAudience = false
+   26:         // };
+  cited code: docker-compose.override.yml
+   161:   assessment.api:
+   162:     container_name: assessment.api
+   163:     environment:
+   164:       - ASPNETCORE_ENVIRONMENT=Development
+   165:       - "ConnectionStrings:DefaultConnection=Server=assessmentdb;Port=5432;Database=AssessmentDb;User Id=admin;Password=admin1234;"
+   166:       - RabbitMQUrl=rabbitmq
+>> 167:       - IdentityServerURL=http://identity.api
+   168:       - "ElasticConfiguration:Uri=http://elasticsearch:9200"
+   169:     depends_on:
+   170:       - assessmentdb
+   171:       - rabbitmq
+   172:     ports:
+   173:       - "5003:80"
+
+[9] repo=ebubekirdinc__SuuCat assessment.api -> tools.ietf.org (type external, grade documented)
+  cited code: src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs:52
+   46:     private void HandleValidationException(ExceptionContext context)
+   47:     {
+   48:         var exception = (ValidationException)context.Exception;
+   49: 
+   50:         var details = new ValidationProblemDetails(exception.Errors)
+   51:         {
+>> 52:             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+   53:         };
+   54: 
+   55:         context.Result = new BadRequestObjectResult(details);
+   56: 
+   57:         context.ExceptionHandled = true;
+   58:     }
+  cited code: src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs:64
+   58:     }
+   59: 
+   60:     private void HandleInvalidModelStateException(ExceptionContext context)
+   61:     {
+   62:         var details = new ValidationProblemDetails(context.ModelState)
+   63:         {
+>> 64:             Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1"
+   65:         };
+   66: 
+   67:         context.Result = new BadRequestObjectResult(details);
+   68: 
+   69:         context.ExceptionHandled = true;
+   70:     }

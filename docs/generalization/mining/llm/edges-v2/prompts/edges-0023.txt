@@ -1,0 +1,248 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes k8n-service-gateway -> containerized-accounts (type sync-http, grade documented)
+  cited code: containerized-gateway/src/main/resources/application.yml
+   server:
+     port: ${PORT:8762}
+   
+   spring:
+     application:
+       name: containerized-gateway
+     logstash:
+       server: logstash
+       port: 5000
+     sleuth:
+       traceId128: true
+       supportsJoin: false
+     cloud:
+
+[1] repo=thangchung__clean-architecture-dotnet settingapp-dapr -> placement (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   146:         "./daprd",
+   147:         "-app-id",
+   148:         "settingapp",
+   149:         "-app-port",
+   150:         "80",
+   151:         "-placement-host-address",
+>> 152:         "placement:50006",
+   153:         "-components-path",
+   154:         "/components",
+   155:       ]
+   156:     volumes:
+   157:       - "./samples/components/:/components"
+   158:     depends_on:
+
+[2] repo=thangchung__clean-architecture-dotnet webapigatewayapp -> placement (type sync-http, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   10:       context: .
+   11:       dockerfile: samples/AppGateway/Dockerfile
+   12:     ports:
+   13:       - "5000:80"
+   14:     depends_on:
+   15:       - redis
+>> 16:       - placement
+   17:       - productapp
+   18:       - customerapp
+   19:       - settingapp
+   20:     networks:
+   21:       - coolstore-network
+   22: 
+
+[3] repo=thangchung__clean-architecture-dotnet samples -> bob.com (type external, grade documented)
+  cited code: samples/IdentityServer/Quickstart/TestUsers.cs:58
+   52:                         {
+   53:                             new Claim(JwtClaimTypes.Name, "Bob Smith"),
+   54:                             new Claim(JwtClaimTypes.GivenName, "Bob"),
+   55:                             new Claim(JwtClaimTypes.FamilyName, "Smith"),
+   56:                             new Claim(JwtClaimTypes.Email, "BobSmith@email.com"),
+   57:                             new Claim(JwtClaimTypes.EmailVerified, "true", ClaimValueTypes.Boolean),
+>> 58:                             new Claim(JwtClaimTypes.WebSite, "http://bob.com"),
+   59:                             new Claim(JwtClaimTypes.Address, JsonSerializer.Serialize(address), IdentityServerConstants.ClaimValueTypes.Json)
+   60:                         }
+   61:                     }
+   62:                 };
+   63:             }
+   64:         }
+
+[4] repo=thangchung__coffeeshop-on-nomad otel-collector -> jaeger-all-in-one (type sync-http, grade inferred)
+  cited code: docker-compose-o11y.yaml#depends_on
+   177:       - "8888:8888"   # Prometheus metrics exposed by the collector
+   178:       - "8889:8889"   # Prometheus exporter metrics
+   179:       - "13133:13133" # health_check extension
+   180:       - "4317:4317"   # OTLP gRPC receiver
+   181:       - "55679:55679" # zpages extension
+   182:     depends_on:
+>> 183:       - jaeger-all-in-one
+   184:       - zipkin-all-in-one
+   185:     networks:
+   186:       - coffeeshop-network
+   187: 
+   188:   prometheus:
+   189:     container_name: prometheus
+
+[5] repo=thangchung__coffeeshop-on-nomad reverse-proxy -> counter-service (type sync-http, grade documented)
+  cited code: docker-compose.yaml#depends_on
+   107:       - ReverseProxy__Clusters__productApiCluster__Destinations__destination1__Address=http://product-service:5001
+   108:       - ReverseProxy__Clusters__counterApiCluster__Destinations__destination1__Address=http://counter-service:5002
+   109:     ports:
+   110:       - "8080:8080"
+   111:     depends_on:
+   112:       - postgresql
+>> 113:       - counter-service
+   114:       - barista-service
+   115:       - kitchen-service
+   116:     restart: always
+   117:     networks:
+   118:       - coffeeshop-network
+   119: 
+  cited code: docker-compose-o11y.yaml#depends_on
+   124:       - AspNetCoreInstrumentation__RecordException=true
+   125:       - Otlp__Endpoint=http://otel-collector:4317
+   126:     ports:
+   127:       - "8080:8080"
+   128:     depends_on:
+   129:       - postgresql
+>> 130:       - counter-service
+   131:       - barista-service
+   132:       - kitchen-service
+   133:     restart: always
+   134:     networks:
+   135:       - coffeeshop-network
+   136: 
+
+[6] repo=thangchung__coffeeshop-on-nomad barista-service -> postgresql (type db, grade documented)
+  cited code: src/BaristaService/Program.cs:31
+   25:     .AddHttpContextAccessor()
+   26:     .AddCustomMediatR(new[] {typeof(BaristaItem)})
+   27:     .AddCustomValidators(new[] {typeof(BaristaItem)});
+   28: 
+   29: builder.Services
+   30:     .AddPostgresDbContext<MainDbContext>(
+>> 31:         builder.Configuration.GetConnectionString("baristadb"),
+   32:         null,
+   33:         svc => svc.AddRepository(typeof(Repository<>)))
+   34:     .AddDatabaseDeveloperPageExceptionFilter();
+   35: 
+   36: builder.Services
+   37:     .AddOTelTracing(builder.Configuration)
+  cited code: docker-compose.yaml#depends_on
+   70:       - ConnectionStrings__baristadb=Server=postgresql;Port=5432;Database=postgres;User Id=postgres;Password=P@ssw0rd
+   71:       - RabbitMqUrl=rabbitmq
+   72:       - Otlp__Endpoint=http://otel-collector:4317
+   73:     ports:
+   74:       - "5003:5003"
+   75:     depends_on:
+>> 76:       - postgresql
+   77:       - rabbitmq
+   78:     restart: always
+   79:     networks:
+   80:       - coffeeshop-network
+   81: 
+   82:   kitchen-service:
+
+[7] repo=thangchung__magazine-website consul3 -> consul1 (type sync-http, grade inferred)
+  cited code: deploy/docker-compose-consul-only.yml#depends_on
+   27:     expose:
+   28:       - "8400"
+   29:       - "8500"
+   30:       - "8600"
+   31:     command: "-server -join consul1"
+   32:     depends_on:
+>> 33:       - consul1
+   34:   registrator:
+   35:     image: "gliderlabs/registrator"
+   36:     hostname: "registrator"
+   37:     volumes:
+   38:       - "/var/run/docker.sock:/tmp/docker.sock"
+   39:     depends_on:
+  cited code: deploy/docker-compose.yml#depends_on
+   27:     expose:
+   28:       - "8400"
+   29:       - "8500"
+   30:       - "8600"
+   31:     command: "-server -join consul1"
+   32:     depends_on:
+>> 33:       - consul1
+   34:   registrator:
+   35:     image: "gliderlabs/registrator"
+   36:     hostname: "registrator"
+   37:     volumes:
+   38:       - "/var/run/docker.sock:/tmp/docker.sock"
+   39:     depends_on:
+
+[8] repo=thangchung__magazine-website registrator -> consul1 (type sync-http, grade documented)
+  cited code: deploy/docker-compose-consul-only.yml#depends_on
+   34:   registrator:
+   35:     image: "gliderlabs/registrator"
+   36:     hostname: "registrator"
+   37:     volumes:
+   38:       - "/var/run/docker.sock:/tmp/docker.sock"
+   39:     depends_on:
+>> 40:       - consul1
+   41:     command: -internal consul://consul1:8500
+   42:   sample_service:
+   43:     image: "thangchung/sample_service"
+   44:     build:
+   45:       context: .
+   46:       dockerfile: build/Dockerfile.SampleService 
+  cited code: deploy/docker-compose.yml#depends_on
+   34:   registrator:
+   35:     image: "gliderlabs/registrator"
+   36:     hostname: "registrator"
+   37:     volumes:
+   38:       - "/var/run/docker.sock:/tmp/docker.sock"
+   39:     depends_on:
+>> 40:       - consul1
+   41:     command: -internal consul://consul1:8500
+   42:   rabbitmq:
+   43:     container_name: rabbitmq
+   44:     image: "rabbitmq:3.6.5-management"
+   45:     restart: always
+   46:     environment:
+
+[9] repo=thangchung__magazine-website consul2 -> consul1 (type sync-http, grade inferred)
+  cited code: deploy/docker-compose-consul-only.yml#depends_on
+   16:     expose:
+   17:       - "8400"
+   18:       - "8500"
+   19:       - "8600"
+   20:     command: "-server -join consul1"
+   21:     depends_on:
+>> 22:       - consul1
+   23:   consul3:
+   24:     image: "progrium/consul:latest"
+   25:     container_name: "consul3"
+   26:     hostname: "consul3"
+   27:     expose:
+   28:       - "8400"
+  cited code: deploy/docker-compose.yml#depends_on
+   16:     expose:
+   17:       - "8400"
+   18:       - "8500"
+   19:       - "8600"
+   20:     command: "-server -join consul1"
+   21:     depends_on:
+>> 22:       - consul1
+   23:   consul3:
+   24:     image: "progrium/consul:latest"
+   25:     container_name: "consul3"
+   26:     hostname: "consul3"
+   27:     expose:
+   28:       - "8400"

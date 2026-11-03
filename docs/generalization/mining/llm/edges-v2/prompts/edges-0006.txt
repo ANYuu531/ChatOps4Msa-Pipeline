@@ -1,0 +1,244 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=amasen02__freshcart-backend payment -> sqlserver (type db, grade documented)
+  cited code: deploy/docker/docker-compose.yaml#depends_on
+   392:       ConnectionStrings__paymentevents: 'mongodb://freshcart:freshcart_local_dev@mongodb:27017/freshcart_payment?authSource=admin'
+   393:       ConnectionStrings__paymentreaddb: 'Server=sqlserver;Database=FreshCart.PaymentRead;User Id=sa;Password=FreshCart!LocalDev1;Encrypt=True;TrustServerCertificate=True'
+   394:       Jwt__SigningKey: 'development-only-signing-key-please-replace-32+chars-min-XYZ'
+   395:     depends_on:
+   396:       mongodb:
+   397:         condition: service_started
+>> 398:       sqlserver:
+   399:         condition: service_healthy
+   400:     ports:
+   401:       - "5107:8080"
+   402:     restart: unless-stopped
+   403: 
+   404:   delivery:
+  cited code: deploy/docker/docker-compose.yaml
+   387:     environment:
+   388:       ASPNETCORE_ENVIRONMENT: Development
+   389:       ASPNETCORE_HTTP_PORTS: '8080'
+   390:       OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector:4317'
+   391:       OTEL_SERVICE_NAME: 'freshcart-payment'
+   392:       ConnectionStrings__paymentevents: 'mongodb://freshcart:freshcart_local_dev@mongodb:27017/freshcart_payment?authSource=admin'
+>> 393:       ConnectionStrings__paymentreaddb: 'Server=sqlserver;Database=FreshCart.PaymentRead;User Id=sa;Password=FreshCart!LocalDev1;Encrypt=True;TrustServerCertificate=True'
+   394:       Jwt__SigningKey: 'development-only-signing-key-please-replace-32+chars-min-XYZ'
+   395:     depends_on:
+   396:       mongodb:
+   397:         condition: service_started
+   398:       sqlserver:
+   399:         condition: service_healthy
+
+[1] repo=amasen02__freshcart-backend basket -> postgres (type db, grade documented)
+  cited code: deploy/docker/docker-compose.yaml#depends_on
+   313:       ConnectionStrings__basketdb: 'Host=postgres;Database=freshcart_basket;Username=freshcart;Password=freshcart_local_dev'
+   314:       ConnectionStrings__cache: 'redis:6379'
+   315:       Services__Catalog__BaseAddress: 'http://catalog:8080'
+   316:       Services__Pricing__Address: 'http://pricing:8080'
+   317:       Jwt__SigningKey: 'development-only-signing-key-please-replace-32+chars-min-XYZ'
+   318:     depends_on:
+>> 319:       postgres:
+   320:         condition: service_healthy
+   321:       redis:
+   322:         condition: service_started
+   323:       rabbitmq:
+   324:         condition: service_started
+   325:     ports:
+  cited code: deploy/docker/docker-compose.yaml
+   307:       ASPNETCORE_HTTP_PORTS: '8080'
+   308:       OTEL_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector:4317'
+   309:       OTEL_SERVICE_NAME: 'freshcart-basket'
+   310:       MessageBroker__Host: 'amqp://rabbitmq:5672'
+   311:       MessageBroker__UserName: 'freshcart'
+   312:       MessageBroker__Password: 'freshcart_local_dev'
+>> 313:       ConnectionStrings__basketdb: 'Host=postgres;Database=freshcart_basket;Username=freshcart;Password=freshcart_local_dev'
+   314:       ConnectionStrings__cache: 'redis:6379'
+   315:       Services__Catalog__BaseAddress: 'http://catalog:8080'
+   316:       Services__Pricing__Address: 'http://pricing:8080'
+   317:       Jwt__SigningKey: 'development-only-signing-key-please-replace-32+chars-min-XYZ'
+   318:     depends_on:
+   319:       postgres:
+
+[2] repo=antosubash__abp-microservice identity-server -> sqlserver (type db, grade documented)
+  cited code: src/services/projects/docker-compose.yml#depends_on
+   8:   
+   9:   identity-server:
+   10:     build:
+   11:       context: ../../
+   12:       dockerfile: templates/service/host/IdentityServerHost/Dockerfile
+   13:     depends_on:
+>> 14:       - sqlserver      
+   15:   
+   16:   projects:
+   17:     build:
+   18:       context: ../../
+   19:       dockerfile: templates/service/host/Tasky.Projects.Host/Dockerfile
+   20:     depends_on:
+  cited code: src/services/administration/docker-compose.yml#depends_on
+   8:   
+   9:   identity-server:
+   10:     build:
+   11:       context: ../../
+   12:       dockerfile: templates/service/host/IdentityServerHost/Dockerfile
+   13:     depends_on:
+>> 14:       - sqlserver      
+   15:   
+   16:   administration:
+   17:     build:
+   18:       context: ../../
+   19:       dockerfile: templates/service/host/Tasky.Administration.Host/Dockerfile
+   20:     depends_on:
+
+[3] repo=antosubash__abp-microservice saa-s -> identity-server (type sync-http, grade documented)
+  cited code: src/services/saas/docker-compose.yml#depends_on
+   16:   saa-s:
+   17:     build:
+   18:       context: ../../
+   19:       dockerfile: templates/service/host/Tasky.SaaS.Host/Dockerfile
+   20:     depends_on:
+   21:       - sqlserver
+>> 22:       - identity-server
+   23: 
+   24: volumes:
+   25:   dbdata:
+  cited code: src/services/saas/docker-compose.override.yml
+   21:       - ASPNETCORE_URLS=http://0.0.0.0:80
+   22:       - ConnectionStrings__Default=Server=sqlserver;Database=SaaS_ModuleDb;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false
+   23:       - ConnectionStrings__AbpSettingManagement=Server=sqlserver;Database=SaaS_Identity;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false
+   24:       - ConnectionStrings__AbpPermissionManagement=Server=sqlserver;Database=SaaS_Identity;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false
+   25:       - ConnectionStrings__AbpAuditLogging=Server=sqlserver;Database=SaaS_Identity;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false
+   26:       - ConnectionStrings__SqlServerCache=Server=sqlserver;Database=SaaS_Cache;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false
+>> 27:       - AuthServer__Authority=http://identity-server
+   28:     ports:
+   29:       - "51601:80"
+
+[4] repo=antosubash__abp-microservice projects -> identity-server (type sync-http, grade documented)
+  cited code: src/services/projects/docker-compose.yml#depends_on
+   16:   projects:
+   17:     build:
+   18:       context: ../../
+   19:       dockerfile: templates/service/host/Tasky.Projects.Host/Dockerfile
+   20:     depends_on:
+   21:       - sqlserver
+>> 22:       - identity-server
+   23: 
+   24: volumes:
+   25:   dbdata:
+  cited code: src/services/projects/docker-compose.override.yml
+   21:       - ASPNETCORE_URLS=http://0.0.0.0:80
+   22:       - ConnectionStrings__Default=Server=sqlserver;Database=Projects_ModuleDb;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false
+   23:       - ConnectionStrings__AbpSettingManagement=Server=sqlserver;Database=Projects_Identity;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false
+   24:       - ConnectionStrings__AbpPermissionManagement=Server=sqlserver;Database=Projects_Identity;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false
+   25:       - ConnectionStrings__AbpAuditLogging=Server=sqlserver;Database=Projects_Identity;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false
+   26:       - ConnectionStrings__SqlServerCache=Server=sqlserver;Database=Projects_Cache;Trusted_Connection=True;User=sa;Password=yourStrong(!)Password;Integrated Security=false
+>> 27:       - AuthServer__Authority=http://identity-server
+   28:     ports:
+   29:       - "51601:80"
+
+[5] repo=apssouza22__java-microservice config -> kafka (type async, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   8:     networks:
+   9:       - net
+   10:     hostname: config
+   11:     container_name: config 
+   12:     external_links:
+   13:       - elk
+>> 14:       - kafka
+   15: 
+   16:   eureka:
+   17:     image: todo/eureka-server
+   18:     ports:
+   19:       - 8010:8010
+   20:     networks:
+
+[6] repo=apssouza22__java-microservice user -> eureka (type sync-http, grade documented)
+  cited code: docker-compose.yml#depends_on
+   46:     image: todo/user-service
+   47:     ports:
+   48:       - 8016:8016
+   49:     networks:
+   50:       - net
+   51:     depends_on:
+>> 52:       - eureka
+   53:       - admin
+   54:     hostname: user
+   55:     container_name: user
+   56:     command: ["./wait-for-it.sh","eureka:8010","--timeout=150","--","/usr/local/bin/start.sh"]
+   57:     external_links:
+   58:       - elk
+  cited code: config-server/src/main/resources/offline-repository/user.properties
+   1: server.port = 8016
+   2: spring.application.name = user
+>> 3: eureka.client.serviceUrl.defaultZone = http://eureka:8010/eureka/,http://localhost:8011/eureka/
+   4: 
+   5: #database
+   6: spring.jpa.properties.hibernate.show_sql=true
+   7: spring.jpa.properties.hibernate.use_sql_comments=true
+   8: spring.jpa.properties.hibernate.format_sql=true
+   9: spring.jpa.properties.hibernate.type=trace 
+
+[7] repo=apssouza22__java-microservice oauth -> user (type sync-http, grade documented)
+  cited code: oauth-server/src/main/java/com/apssouza/clients/UserClient.java:15
+   9: import org.springframework.web.bind.annotation.RequestParam;
+   10: 
+   11: /**
+   12:  *
+   13:  * @author apssouza
+   14:  */
+>> 15: @FeignClient("user")
+   16: @Component
+   17: public interface UserClient {
+   18:     
+   19:     @RequestMapping(value = "/accounts/search", method = RequestMethod.GET)
+   20:     public User getUserByEmail(@RequestParam("email") String email);
+   21:     
+
+[8] repo=aws-containers__retail-store-sample-app cart -> otel-collector (type sync-http, grade inferred)
+  cited code: src/app/docker-compose.tracing.yml
+   54: 
+   55:   catalog:
+   56:     environment:
+   57:       <<: *otel-env
+   58:       OTEL_SERVICE_NAME: "catalog"
+   59: 
+>> 60:   cart:
+   61:     environment:
+   62:       <<: *otel-env
+   63:       OTEL_SERVICE_NAME: "cart"
+   64:       OTEL_JAVA_GLOBAL_AUTOCONFIGURE_ENABLED: "true"
+   65: 
+   66:   checkout:
+
+[9] repo=aws-containers__retail-store-sample-app otel-collector -> jaeger (type sync-http, grade inferred)
+  cited code: src/app/docker-compose.tracing.yml#depends_on
+   25:     volumes:
+   26:       - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+   27:     command: ["--config=/etc/otel-collector-config.yml"]
+   28:     ports:
+   29:       - "4318:4318"
+   30:     depends_on:
+>> 31:       jaeger:
+   32:         condition: service_healthy
+   33: 
+   34:   jaeger:
+   35:     image: jaegertracing/all-in-one:1.57
+   36:     hostname: jaeger
+   37:     restart: unless-stopped

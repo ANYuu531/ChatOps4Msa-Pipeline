@@ -1,0 +1,220 @@
+{
+ "id": "edges-0026",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 3331,
+  "completion_tokens": 410,
+  "total_tokens": 3741,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [\n  {\"i\": 0, \"verdict\": \"declared-only\", \"reason\": \"depends_on in docker-compose only declares start order, no runtime call or connection shown.\"},\n  {\"i\": 1, \"verdict\": \"declared-only\", \"reason\": \"Only environment variables with URLs are set, no code or runtime evidence of calls to duber.trip.notifications.\"},\n  {\"i\": 2, \"verdict\": \"correct\", \"reason\": \"Code creates a PaymentServiceAdapter with a base URL from configuration pointing to externalsystem.payment, showing runtime HTTP dependency.\"},\n  {\"i\": 3, \"verdict\": \"correct\", \"reason\": \"Code adds health checks that actively call duber.invoice.api endpoints, and docker-compose depends_on includes duber.invoice.api.\"},\n  {\"i\": 4, \"verdict\": \"declared-only\", \"reason\": \"Reverse proxy cluster address config declares routing to webapp but no direct call or runtime evidence shown.\"},\n  {\"i\": 5, \"verdict\": \"declared-only\", \"reason\": \"Dapr placement host address is configured, indicating declared dependency but no direct call shown.\"},\n  {\"i\": 6, \"verdict\": \"declared-only\", \"reason\": \"Environment variable INVENTORY_CLIENT_URI declares the dependency but no code or runtime evidence of calls shown.\"},\n  {\"i\": 7, \"verdict\": \"declared-only\", \"reason\": \"Environment variable GROUP_SERVICE_ADDRESS declares address but no code or runtime evidence of calls shown.\"},\n  {\"i\": 8, \"verdict\": \"declared-only\", \"reason\": \"Environment variable NATS_URL declares connection info but no code or runtime evidence of actual messaging shown.\"},\n  {\"i\": 9, \"verdict\": \"declared-only\", \"reason\": \"depends_on declares start order and environment variable REDIS_URL declares address, but no runtime call or connection shown.\"}\n]}",
+ "payload": [
+  {
+   "repo": "ujjavaldesai07__spring-boot-react-ecommerce-app",
+   "source": "authentication-service",
+   "target": "mysql-db",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 35,
+     "kind": "compose",
+     "context": "   29:     build:\n   30:       context: .\n   31:       dockerfile: ./server/authentication-service/Dockerfile-dev\n   32:     container_name: authentication-service-container\n   33:     restart: always\n   34:     depends_on:\n>> 35:       - mysql-db\n   36:       - redis-cache\n   37:       - react-ui\n   38:     environment:\n   39:       - DB_HOST=mysql-db\n   40:       - DB_PORT=${DB_PORT}\n   41:       - DB_USER=${DB_USER}"
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 35,
+     "kind": "compose",
+     "context": "   29:     build:\n   30:       context: .\n   31:       dockerfile: ./server/authentication-service/Dockerfile-dev\n   32:     container_name: authentication-service-container\n   33:     restart: always\n   34:     depends_on:\n>> 35:       - mysql-db\n   36:       - redis-cache\n   37:       - react-ui\n   38:     environment:\n   39:       - DB_HOST=mysql-db\n   40:       - DB_PORT=${DB_PORT}\n   41:       - DB_USER=${DB_USER}"
+    }
+   ]
+  },
+  {
+   "repo": "vany0114__microservices-dotnetcore-docker-sf-k8s",
+   "source": "duber.website",
+   "target": "duber.trip.notifications",
+   "type": "external",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.override.yml",
+     "file": "docker-compose.override.yml",
+     "line": 31,
+     "kind": "compose",
+     "context": "   25:   duber.website:\n   26:     environment:\n   27:       - ASPNETCORE_ENVIRONMENT=${APP_ENVIRONMENT:-Development}\n   28:       - ConnectionStrings__WebsiteDB=${AZURE_WEBSITE_DB:-Server=sql.data;Database=Duber.WebSiteDb;User Id=sa;Password=Pass@word}      \n   29:       - EventBusConnection=${AZURE_SERVICE_BUS:-rabbitmq}\n   30:       - EventBusConnectionHC=${AZURE_SERVICE_BUS:-rabbitmq}\n>> 31:       - InvoiceApiSettings__BaseUrl=${INVOICE_SERVICE_BASE_URL:-http://duber.invoice.api}\n   32:       - TripApiSettings__BaseUrl=${TRIP_SERVICE_BASE_URL:-http://duber.trip.api}\n   33:       - TripApiSettings__NotificationsServerUrl=${NOTIFICATIONS_SERVER_URL:-http://duber.trip.notifications}\n   34:       - TripApiSettings__NotificationsClientUrl=${NOTIFICATIONS_CLIENT_URL:-http://docker.for.win.localhost:32778} #docker.for.mac.localhost / docker.for.linux.localhost (you could use the .env file t\n   35:       - AzureServiceBusEnabled=${SERVICE_BUS_ENABLED:-False}\n   36:       - HealthChecksUI__HealthChecks__0__Name=Invoice HTTP Check\n   37:       - HealthChecksUI__HealthChecks__0__Uri=http://duber.invoice.api/readiness"
+    }
+   ]
+  },
+  {
+   "repo": "vany0114__microservices-dotnetcore-docker-sf-k8s",
+   "source": "duber.invoice.api",
+   "target": "externalsystem.payment",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Application/Duber.Invoice.API/Extensions/ServiceCollectionExtensions.cs:114",
+     "file": "src/Application/Duber.Invoice.API/Extensions/ServiceCollectionExtensions.cs",
+     "line": 114,
+     "kind": "src:csharp",
+     "context": "   108:         {\n   109:             // payment service configuration\n   110:             services.AddTransient<IPaymentService, PaymentService>();\n   111:             services.AddTransient<IPaymentServiceAdapter, PaymentServiceAdapter>(provider =>\n   112:             {\n   113:                 var httpInvoker = provider.GetRequiredService<ResilientHttpClient>();\n>> 114:                 var paymentServiceBaseUrl = configuration[\"PaymentServiceBaseUrl\"];\n   115:                 return new PaymentServiceAdapter(httpInvoker, paymentServiceBaseUrl);\n   116:             });\n   117: \n   118:             return services;\n   119:         }\n   120: "
+    },
+    {
+     "ref": "code: docker-compose.override.yml",
+     "file": "docker-compose.override.yml",
+     "line": 10,
+     "kind": "compose",
+     "context": "   4:   duber.invoice.api:\n   5:     environment:\n   6:       - ASPNETCORE_ENVIRONMENT=${APP_ENVIRONMENT:-Development}\n   7:       - ConnectionStrings__InvoiceDB=${AZURE_INVOICE_DB:-Server=sql.data;Database=Duber.InvoiceDb;User Id=sa;Password=Pass@word}      \n   8:       - EventBusConnection=${AZURE_SERVICE_BUS:-rabbitmq}\n   9:       - EventBusConnectionHC=${AZURE_SERVICE_BUS:-rabbitmq}\n>> 10:       - PaymentServiceBaseUrl=${PAYMENT_SERVICE_URL:-http://externalsystem.payment}\n   11:       - AzureServiceBusEnabled=${SERVICE_BUS_ENABLED:-False}\n   12:     ports:\n   13:       - \"32776:80\"\n   14: \n   15:   duber.trip.api:\n   16:     environment:"
+    }
+   ]
+  },
+  {
+   "repo": "vany0114__microservices-dotnetcore-docker-sf-k8s",
+   "source": "duber.website",
+   "target": "duber.invoice.api",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Web/Duber.WebSite/Extensions/ServiceCollectionExtensions.cs:155",
+     "file": "src/Web/Duber.WebSite/Extensions/ServiceCollectionExtensions.cs",
+     "line": 155,
+     "kind": "src:csharp",
+     "context": "   149:         public static IServiceCollection AddHealthChecks(this IServiceCollection services, IConfiguration configuration)\n   150:         {\n   151:             var hcBuilder = services.AddHealthChecks();\n   152: \n   153:             hcBuilder\n   154:                 .AddCheck(\"self\", () => HealthCheckResult.Healthy())\n>> 155:                 .AddUrlGroup(new Uri($\"{configuration[\"InvoiceApiSettings:BaseUrl\"]}/readiness\"), name: \"invoice-service-check\", tags: new string[] { \"invoice-service\" })\n   156:                 .AddUrlGroup(new Uri($\"{configuration[\"TripApiSettings:BaseUrl\"]}/readiness\"), name: \"trip-service-check\", tags: new string[] { \"trip-service\" })\n   157:                 .AddUrlGroup(new Uri($\"{configuration[\"TripApiSettings:NotificationsServerUrl\"]}/readiness\"), name: \"notifications-service-check\", tags: new string[] { \"notifications-service\" })\n   158:                 .AddSqlServer(\n   159:                     configuration[\"ConnectionStrings:WebsiteDB\"],\n   160:                     name: \"WebsiteDB-check\",\n   161:                     tags: new string[] { \"websitedb\" });"
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 28,
+     "kind": "compose",
+     "context": "   22:   duber.website:\n   23:     image: duber/website:${TAG:-latest}\n   24:     build:\n   25:       context: .\n   26:       dockerfile: src/Web/Duber.WebSite/Dockerfile\n   27:     depends_on:\n>> 28:       - duber.invoice.api\n   29:       - duber.trip.api\n   30:       - sql.data\n   31:       - rabbitmq\n   32: \n   33:   sql.data:\n   34:     image: microsoft/mssql-server-linux:2017-latest"
+    }
+   ]
+  },
+  {
+   "repo": "vietnam-devs__coolstore-microservices",
+   "source": "webapigatewayapp",
+   "target": "webapp",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.override.yml",
+     "file": "docker-compose.override.yml",
+     "line": 23,
+     "kind": "compose",
+     "context": "   17:       - Redis=host.docker.internal\n   18:       - OpenIdConnect__Authority=https://id.cs.local:5001\n   19:       - ReverseProxy__Clusters__inventoryApiCluster__Destinations__destination1__Address=http://inventoryapp:5002\n   20:       - ReverseProxy__Clusters__productCatalogApiCluster__Destinations__destination1__Address=http://productcatalogapp:5003\n   21:       - ReverseProxy__Clusters__shoppingCartApiCluster__Destinations__destination1__Address=http://shoppingcartapp:5004\n   22:       - ReverseProxy__Clusters__saleApiCluster__Destinations__destination1__Address=http://saleapp:5005\n>> 23:       - ReverseProxy__Clusters__appCluster__Destinations__destination1__Address=http://webapp:3000\n   24:       - ASPNETCORE_ENVIRONMENT=Development\n   25:       - ASPNETCORE_URLS=https://+:5000\n   26:       - ASPNETCORE_Kestrel__Certificates__Default__Password=localhost\n   27:       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/localhost.pfx\n   28:     volumes:\n   29:       - ~/.aspnet/https:/https:ro"
+    }
+   ]
+  },
+  {
+   "repo": "vietnam-devs__coolstore-microservices",
+   "source": "webapigatewayapp-dapr",
+   "target": "placement",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 39,
+     "kind": "compose",
+     "context": "   33: \n   34:   webapigatewayapp-dapr:\n   35:     image: \"daprio/daprd:edge\"\n   36:     command: [\"./daprd\",\n   37:      \"-app-id\", \"webapigatewayapp\",\n   38:      \"-app-port\", \"5000\",\n>> 39:      \"-placement-host-address\", \"placement:50006\",\n   40:      \"-components-path\", \"/components\", \"-app-ssl\"]\n   41:     volumes:\n   42:       - \"./components/:/components\"\n   43:     depends_on:\n   44:       - webapigatewayapp\n   45:     network_mode: \"service:webapigatewayapp\""
+    }
+   ]
+  },
+  {
+   "repo": "vietnam-devs__coolstore-microservices",
+   "source": "productcatalogapp",
+   "target": "inventoryapp",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.override.yml",
+     "file": "docker-compose.override.yml",
+     "line": 74,
+     "kind": "compose",
+     "context": "   68:       - PG_PASSWORD=P@ssw0rd\n   69:       - PG_PRODUCT_CATALOG_DATABASE=cat_db\n   70:       - PG_HOST=postgresql\n   71:       - PG_PORT=5432\n   72:       - RUST_LOG=\"sqlx::query=error,tower_http=debug,info\"\n   73:       - RUST_BACKTRACE=1\n>> 74:       - INVENTORY_CLIENT_URI=http://inventoryapp:5002\n   75:     ports:\n   76:       - \"5003:5003\"\n   77: \n   78:   shoppingcartapp:\n   79:     environment:\n   80:       - ASPNETCORE_ENVIRONMENT=Development"
+    }
+   ]
+  },
+  {
+   "repo": "walkline__ToCloud9",
+   "source": "gateway",
+   "target": "groupserver",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 70,
+     "kind": "compose",
+     "context": "   64:     environment:\n   65:       SERVERS_REGISTRY_SERVICE_ADDRESS: servers-registry:8999\n   66:       CHAR_SERVICE_ADDRESS: charserver:8087\n   67:       CHAT_SERVICE_ADDRESS: chatserver:8992\n   68:       GUILDS_SERVICE_ADDRESS: guildserver:8995\n   69:       MAIL_SERVICE_ADDRESS: mailserver:8997\n>> 70:       GROUP_SERVICE_ADDRESS: groupserver:8998\n   71:       MATCHMAKING_SERVICE_ADDRESS: matchmakingserver:8994\n   72:       AUCTION_HOUSE_SERVICE_ADDRESS: auctionhouse:8993\n   73:       AUTH_DB_CONNECTION: ${AUTH_DB_USER}:${AUTH_DB_PASS}@tcp(${AUTH_DB_HOST}:${AUTH_DB_PORT})/${AUTH_DB_NAME}\n   74:       DB_SCHEMA_TYPE: ${DATABASE_SCHEMA_TYPE}\n   75:       PREFERRED_HOSTNAME: ${EXTERNAL_ADDRESS}\n   76:       LOG_LEVEL: 0"
+    }
+   ]
+  },
+  {
+   "repo": "walkline__ToCloud9",
+   "source": "groupserver",
+   "target": "nats",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 268,
+     "kind": "compose",
+     "context": "   262:       dockerfile: apps/groupserver/Dockerfile\n   263:     depends_on:\n   264:       database-ac:\n   265:         condition: service_healthy\n   266:     environment:\n   267:       CHAR_DB_CONNECTION: 1:${CHAR_DB_USER}:${CHAR_DB_PASS}@tcp(${CHAR_DB_HOST}:${CHAR_DB_PORT})/${CHAR_DB_NAME}\n>> 268:       NATS_URL: nats://nats:4222\n   269:       PORT: 8998\n   270:     ports:\n   271:       - '8998:8998'\n   272:     profiles:\n   273:       - ac\n   274:       - tc"
+    }
+   ]
+  },
+  {
+   "repo": "walkline__ToCloud9",
+   "source": "guidserver",
+   "target": "redis",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 208,
+     "kind": "compose",
+     "context": "   202: \n   203:   guidserver:\n   204:     build:\n   205:       context: .\n   206:       dockerfile: apps/guidserver/Dockerfile\n   207:     depends_on:\n>> 208:       redis:\n   209:         condition: service_started\n   210:       database-ac:\n   211:         condition: service_healthy\n   212:     environment:\n   213:       CHAR_DB_CONNECTION: 1:${CHAR_DB_USER}:${CHAR_DB_PASS}@tcp(${CHAR_DB_HOST}:${CHAR_DB_PORT})/${CHAR_DB_NAME}\n   214:       REDIS_URL: redis://:@redis:6379/0"
+    },
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 208,
+     "kind": "compose",
+     "context": "   202: \n   203:   guidserver:\n   204:     build:\n   205:       context: .\n   206:       dockerfile: apps/guidserver/Dockerfile\n   207:     depends_on:\n>> 208:       redis:\n   209:         condition: service_started\n   210:       database-ac:\n   211:         condition: service_healthy\n   212:     environment:\n   213:       CHAR_DB_CONNECTION: 1:${CHAR_DB_USER}:${CHAR_DB_PASS}@tcp(${CHAR_DB_HOST}:${CHAR_DB_PORT})/${CHAR_DB_NAME}\n   214:       REDIS_URL: redis://:@redis:6379/0"
+    }
+   ]
+  }
+ ]
+}

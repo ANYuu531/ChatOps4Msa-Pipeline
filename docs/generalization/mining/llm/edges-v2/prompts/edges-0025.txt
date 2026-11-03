@@ -1,0 +1,220 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=tkssharma__nodejs-microservices-patterns ms_commerce_client -> ms_commerce_auth (type sync-http, grade inferred)
+  cited code: dockerized-containers/docker-compose.yml#depends_on
+   90:       - ./e-Commerce-Client/:/usr/src/app
+   91:       - /usr/src/app/node_modules
+   92:     ports:
+   93:       - 3003:3003
+   94:     depends_on:
+   95:       - ms_commerce_admin
+>> 96:       - ms_commerce_auth
+   97:     networks:
+   98:       - ms_network      
+   99: networks:
+   100:   ms_network:
+   101:     driver: bridge
+   102:     name: ms_network
+
+[1] repo=tkssharma__nodejs-microservices-patterns node2 -> redis (type db, grade inferred)
+  cited code: nodejs-microservice-using-docker-Part-2/docker-compose.yml#depends_on
+   6:         - node3:node3
+   7:     ports:
+   8:         - "80:80"
+   9: node1:
+   10:     build: ./node
+   11:     links:
+>> 12:         - redis
+   13:     ports:
+   14:         - "8080"
+   15: node2:
+   16:     build: ./node
+   17:     links:
+   18:         - redis
+
+[2] repo=uid4oe__grpc-web-demo alva-offer -> mongodb (type db, grade documented)
+  cited code: docker-compose.yml#depends_on
+   34:     networks:
+   35:       - grpc-web-demo-alva-net
+   36:     ports:
+   37:       - 55051:55051
+   38:     command: /main
+   39:     depends_on:
+>> 40:       - mongodb
+   41:     env_file:
+   42:       - .env
+   43:     restart: always
+   44:   alva-offer-envoy:
+   45:     container_name: "offer-envoy"
+   46:     image: uid4oe/alva-offer-envoy:latest
+  cited code: docker-compose.yml
+   34:     networks:
+   35:       - grpc-web-demo-alva-net
+   36:     ports:
+   37:       - 55051:55051
+   38:     command: /main
+   39:     depends_on:
+>> 40:       - mongodb
+   41:     env_file:
+   42:       - .env
+   43:     restart: always
+   44:   alva-offer-envoy:
+   45:     container_name: "offer-envoy"
+   46:     image: uid4oe/alva-offer-envoy:latest
+
+[3] repo=uid4oe__grpc-web-demo postgres -> mongodb (type db, grade inferred)
+  cited code: docker-compose.yml
+   80:     env_file:
+   81:       - .env
+   82:     networks:
+   83:       - grpc-web-demo-alva-net
+   84:     ports:
+   85:       - 27017:27017
+>> 86:   postgres:
+   87:     container_name: "postgres"
+   88:     image: postgres:latest
+   89:     hostname: postgres
+   90:     user: postgres
+   91:     restart: always
+   92:     volumes:
+
+[4] repo=uid4oe__grpc-web-demo alva-offer -> alva-order (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   25:     container_name: "catalog-envoy"
+   26:     image: uid4oe/alva-catalog-envoy:latest
+   27:     networks:
+   28:       - grpc-web-demo-alva-net
+   29:     ports:
+   30:       - "8000:8000"
+>> 31:   alva-offer:
+   32:     container_name: "offer"
+   33:     image: uid4oe/alva-offer:latest
+   34:     networks:
+   35:       - grpc-web-demo-alva-net
+   36:     ports:
+   37:       - 55051:55051
+
+[5] repo=uid4oe__microservices-go-grpc advice-service -> user-service (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   19:     ports:
+   20:       - 50051:50051
+   21:     command: /main
+   22:     restart: always
+   23:     env_file:
+   24:       - .env
+>> 25:   advice-service:
+   26:     container_name: "advice-service_go"
+   27:     image: uid4oe/go-ms-advice:latest
+   28:     networks:
+   29:       - uid4oe
+   30:     ports:
+   31:       - 50052:50052
+
+[6] repo=uid4oe__microservices-go-grpc postgres -> advice-service (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   52:     env_file:
+   53:       - .env
+   54:     networks:
+   55:       - uid4oe
+   56:     ports:
+   57:       - 27017:27017
+>> 58:   postgres:
+   59:     container_name: "postgres"
+   60:     image: postgres:latest
+   61:     hostname: postgres
+   62:     user: postgres
+   63:     restart: always
+   64:     volumes: 
+
+[7] repo=uid4oe__microservices-go-grpc postgres -> user-service (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   52:     env_file:
+   53:       - .env
+   54:     networks:
+   55:       - uid4oe
+   56:     ports:
+   57:       - 27017:27017
+>> 58:   postgres:
+   59:     container_name: "postgres"
+   60:     image: postgres:latest
+   61:     hostname: postgres
+   62:     user: postgres
+   63:     restart: always
+   64:     volumes: 
+
+[8] repo=ujjavaldesai07__spring-boot-react-ecommerce-app common-data-service -> mysql-db (type db, grade documented)
+  cited code: docker-compose.yml#depends_on
+   56:     build:
+   57:       context: .
+   58:       dockerfile: ./server/common-data-service/Dockerfile-dev
+   59:     container_name: common-data-service-container
+   60:     restart: always
+   61:     depends_on:
+>> 62:       - mysql-db
+   63:       - redis-cache
+   64:       - react-ui
+   65:     environment:
+   66:       - DB_HOST=mysql-db
+   67:       - DB_PORT=${DB_PORT}
+   68:       - DB_USER=${DB_USER}
+  cited code: docker-compose.yml
+   56:     build:
+   57:       context: .
+   58:       dockerfile: ./server/common-data-service/Dockerfile-dev
+   59:     container_name: common-data-service-container
+   60:     restart: always
+   61:     depends_on:
+>> 62:       - mysql-db
+   63:       - redis-cache
+   64:       - react-ui
+   65:     environment:
+   66:       - DB_HOST=mysql-db
+   67:       - DB_PORT=${DB_PORT}
+   68:       - DB_USER=${DB_USER}
+
+[9] repo=ujjavaldesai07__spring-boot-react-ecommerce-app common-data-service -> redis-cache (type db, grade documented)
+  cited code: docker-compose.yml#depends_on
+   57:       context: .
+   58:       dockerfile: ./server/common-data-service/Dockerfile-dev
+   59:     container_name: common-data-service-container
+   60:     restart: always
+   61:     depends_on:
+   62:       - mysql-db
+>> 63:       - redis-cache
+   64:       - react-ui
+   65:     environment:
+   66:       - DB_HOST=mysql-db
+   67:       - DB_PORT=${DB_PORT}
+   68:       - DB_USER=${DB_USER}
+   69:       - DB_PASS=${DB_PASS}
+  cited code: docker-compose.yml
+   57:       context: .
+   58:       dockerfile: ./server/common-data-service/Dockerfile-dev
+   59:     container_name: common-data-service-container
+   60:     restart: always
+   61:     depends_on:
+   62:       - mysql-db
+>> 63:       - redis-cache
+   64:       - react-ui
+   65:     environment:
+   66:       - DB_HOST=mysql-db
+   67:       - DB_PORT=${DB_PORT}
+   68:       - DB_USER=${DB_USER}
+   69:       - DB_PASS=${DB_PASS}

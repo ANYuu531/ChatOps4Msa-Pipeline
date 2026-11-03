@@ -1,0 +1,271 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=NesoHQ__bgce-archive archive-client -> roadmap.nesohq.org (type external, grade documented)
+  cited code: archive-client/app/(home)/roadmap/page.tsx:232
+   226: 
+   227:   const fetchPlannedRoadmap = async () => {
+   228:     try {
+   229:       setIsLoading(true);
+   230:       setError(null);
+   231: 
+>> 232:       const response = await fetch(`${URLS}planned`);
+   233:       const res = await response.json();
+   234: 
+   235:       setPlannedItems(transformRoadmapItems(res));
+   236:     } catch (err) {
+   237:       setError("Failed to load planned roadmap.");
+   238:     } finally {
+  cited code: archive-client/app/(home)/roadmap/page.tsx:246
+   240:     }
+   241:   };
+   242:   const fetchInProgressRoadmap = async () => {
+   243:     try {
+   244:       setIsLoading(true);
+   245:       setError(null);
+>> 246:       const response = await fetch(`${URLS}in-progress`);
+   247:       const res = await response.json();
+   248:       setInProgressItems(transformRoadmapItems(res));
+   249:     } catch (err) {
+   250:       setError("Failed to load in-progress roadmap. Please try again later.");
+   251:     } finally {
+   252:       setIsLoading(false);
+
+[1] repo=NesoHQ__bgce-archive bgce_cortex -> rabbitmq (type async, grade documented)
+  cited code: cortex/docker-compose.yml#depends_on
+   38:       BGCE_DB_DSN: "postgresql://postgres:root@postgres:5432/cortex_db?sslmode=disable"
+   39:       BGCE_DB_DRIVER: "postgres"
+   40: 
+   41:     depends_on:
+   42:       postgres:
+   43:         condition: service_healthy
+>> 44:       rabbitmq:
+   45:         condition: service_healthy
+   46:       redis:
+   47:         condition: service_healthy
+   48:     networks:
+   49:       - bgce-network
+   50: 
+  cited code: cortex/docker-compose.yml
+   21:       APM_SERVICE_NAME: ""
+   22:       APM_SERVER_URL: ""
+   23:       APM_SECRET_TOKEN: ""
+   24:       APM_ENVIRONMENT: "development"
+   25: 
+   26:       # RabbitMQ
+>> 27:       RABBITMQ_URL: "amqp://admin:admin@rabbitmq:5672"
+   28:       RMQ_RECONNECT_DELAY: 5
+   29:       RMQ_RETRY_INTERVAL: 600
+   30:       RMQ_QUEUE_PREFIX: "cortex-dev"
+   31: 
+   32:       # Redis
+   33:       READ_REDIS_URL: "redis://redis:6379"
+
+[2] repo=PacktPublishing__Hands-on-Microservices-with-Python frontend -> product (type sync-http, grade documented)
+  cited code: app/frontend/api/ProductClient.py:14
+   8:         response = requests.request(method="GET", url='http://product:5000/api/product/' + slug)
+   9:         product = response.json()
+   10:         return product
+   11: 
+   12:     @staticmethod
+   13:     def get_products():
+>> 14:         r = requests.get('http://product:5000/api/products')
+   15:         products = r.json()
+   16:         return products
+   17: 
+  cited code: app/frontend/api/ProductClient.py:8
+   2: 
+   3: 
+   4: class ProductClient:
+   5: 
+   6:     @staticmethod
+   7:     def get_product(slug):
+>> 8:         response = requests.request(method="GET", url='http://product:5000/api/product/' + slug)
+   9:         product = response.json()
+   10:         return product
+   11: 
+   12:     @staticmethod
+   13:     def get_products():
+   14:         r = requests.get('http://product:5000/api/products')
+
+[3] repo=PacktPublishing__Hands-on-Microservices-with-Python frontend -> user (type sync-http, grade documented)
+  cited code: app/frontend/api/UserClient.py:14
+   8:     def post_login(form):
+   9:         api_key = False
+   10:         payload = {
+   11:             'username': form.username.data,
+   12:             'password': form.password.data,
+   13:         }
+>> 14:         url = 'http://user:5000/api/user/login'
+   15:         response = requests.request("POST", url=url, data=payload)
+   16:         if response:
+   17:             d = response.json()
+   18:             if d['api_key'] is not None:
+   19:                 api_key = d['api_key']
+   20:         return api_key
+  cited code: app/frontend/api/UserClient.py:24
+   18:             if d['api_key'] is not None:
+   19:                 api_key = d['api_key']
+   20:         return api_key
+   21: 
+   22:     @staticmethod
+   23:     def does_exist(username):
+>> 24:         url = 'http://user:5000/api/user/'+username+'/exist'
+   25:         response = requests.request("GET", url=url)
+   26:         return response.status_code == 200
+   27: 
+   28:     @staticmethod
+   29:     def post_user_create(form):
+   30:         user = False
+
+[4] repo=PacktPublishing__Hands-on-Microservices-with-Python frontend -> order (type sync-http, grade documented)
+  cited code: app/frontend/api/OrderClient.py:13
+   7:     @staticmethod
+   8:     def get_order():
+   9:         headers = {
+   10:             'Authorization': 'Basic ' + session['user_api_key']
+   11:         }
+   12: 
+>> 13:         response = requests.request(method="GET", url='http://order:5000/api/order', headers=headers)
+   14:         order = response.json()
+   15:         return order
+   16: 
+   17:     @staticmethod
+   18:     def update_order(items):
+   19: 
+  cited code: app/frontend/api/OrderClient.py:20
+   14:         order = response.json()
+   15:         return order
+   16: 
+   17:     @staticmethod
+   18:     def update_order(items):
+   19: 
+>> 20:         url = 'http://order:5000/api/order/update'
+   21:         headers = {
+   22:             'Authorization': 'Basic ' + session['user_api_key']
+   23:         }
+   24:         response = requests.request("POST", url=url, data=items, headers=headers)
+   25:         if response:
+   26:             order = response.json()
+
+[5] repo=PramithaMJ__fully-completed-microservices-Java-Springboot order -> config-server (type sync-http, grade inferred)
+  cited code: services/order/src/main/java/com/alibou/ecommerce/payment/PaymentClient.java:9
+   3: import org.springframework.cloud.openfeign.FeignClient;
+   4: import org.springframework.web.bind.annotation.PostMapping;
+   5: import org.springframework.web.bind.annotation.RequestBody;
+   6: 
+   7: @FeignClient(
+   8:     name = "product-service",
+>> 9:     url = "${application.config.payment-url}"
+   10: )
+   11: public interface PaymentClient {
+   12: 
+   13:   @PostMapping
+   14:   Integer requestOrderPayment(@RequestBody PaymentRequest request);
+   15: }
+  cited code: services/order/src/main/java/com/alibou/ecommerce/customer/CustomerClient.java:11
+   5: import org.springframework.web.bind.annotation.PathVariable;
+   6: 
+   7: import java.util.Optional;
+   8: 
+   9: @FeignClient(
+   10:     name = "customer-service",
+>> 11:     url = "${application.config.customer-url}"
+   12: )
+   13: public interface CustomerClient {
+   14: 
+   15:   @GetMapping("/{customer-id}")
+   16:   Optional<CustomerResponse> findCustomerById(@PathVariable("customer-id") String customerId);
+   17: }
+
+[6] repo=PramithaMJ__fully-completed-microservices-Java-Springboot gateway -> lb (type sync-http, grade documented)
+  cited code: services/config-server/src/main/resources/configurations/gateway-service.yml
+   5:     gateway:
+   6:       discovery:
+   7:         locator:
+   8:           enabled: true
+   9:       routes:
+   10:         - id: customer-service
+>> 11:           uri: lb:http://CUSTOMER-SERVICE
+   12:           predicates:
+   13:             - Path=/api/v1/customers/**
+   14:         - id: order-service
+   15:           uri: lb:http://ORDER-SERVICE
+   16:           predicates:
+   17:             - Path=/api/v1/orders/**
+
+[7] repo=PramithaMJ__fully-completed-microservices-Java-Springboot payment -> config-server (type sync-http, grade inferred)
+  cited code: services/payment/src/main/resources/application.yml
+   spring:
+     config:
+       import: optional:configserver:http://localhost:8888
+     application:
+       name: payment-service
+   
+  cited code: services/config-server/src/main/resources/configurations/payment-service.yml
+   server:
+     port: 8060
+   spring:
+     datasource:
+       driver-class-name: org.postgresql.Driver
+       url: jdbc:postgresql://localhost:5432/payment
+       username: alibou
+       password: alibou
+     jpa:
+       hibernate:
+         ddl-auto: create
+       database: postgresql
+       database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+[8] repo=Rapter1990__SpringBootMicroservices management-service -> configserver (type sync-http, grade inferred)
+  cited code: management-service/src/main/resources/application.properties
+>> 1: spring.config.import=optional:configserver:http://localhost:9191/
+   2: #spring.config.import=optional:configserver:http://configserver:9191/
+   3: spring.application.name=management-service
+   4: 
+  cited code: configserver/src/main/resources/configurations/management-service.properties
+   server.port=9002
+   
+   spring.application.name=management-service
+   eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka
+   
+   keycloak.realm=master
+   keycloak.auth-server-url=http://localhost:8181
+   keycloak.ssl-required=external
+   keycloak.resource=spring-boot-microservice-keycloak
+   keycloak.bearer-only=true
+   keycloak.public-client=true
+   
+   resilience4j.circuitbreaker.instances.management.registerHealthIndicator=true
+
+[9] repo=Rapter1990__SpringBootMicroservices api-gateway -> advertisement-service (type sync-http, grade documented)
+  cited code: configserver/src/main/resources/configurations/api-gateway.properties
+   6: ## User Service Route
+   7: spring.cloud.gateway.routes[0].id=user-service
+   8: spring.cloud.gateway.routes[0].uri=lb://user-service
+   9: spring.cloud.gateway.routes[0].predicates[0]=Path=/api/v1/users/*
+   10: 
+   11: ## Advertisement Service Route
+>> 12: spring.cloud.gateway.routes[1].id=advertisement-service
+   13: spring.cloud.gateway.routes[1].uri=lb://advertisement-service
+   14: spring.cloud.gateway.routes[1].predicates[0]=Path=/api/**
+   15: 
+   16: ## Management Service Route
+   17: spring.cloud.gateway.routes[2].id=management-service
+   18: spring.cloud.gateway.routes[2].uri=lb://management-service

@@ -1,0 +1,227 @@
+{
+ "id": "edges-0023",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 2879,
+  "completion_tokens": 353,
+  "total_tokens": 3232,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\":[\n  {\"i\":0,\"verdict\":\"wrong\",\"reason\":\"application.yml snippet shows only the gateway's own config, no address or call to containerized-accounts is shown.\"},\n  {\"i\":1,\"verdict\":\"declared-only\",\"reason\":\"docker-compose.yml shows placement host address passed as argument, indicating declaration but no runtime call evidence.\"},\n  {\"i\":2,\"verdict\":\"declared-only\",\"reason\":\"docker-compose.yml depends_on declares start order dependency on placement but no runtime call shown.\"},\n  {\"i\":3,\"verdict\":\"wrong\",\"reason\":\"Claim is a static claim in a test user data (claim with URL), no runtime call or connection to bob.com.\"},\n  {\"i\":4,\"verdict\":\"declared-only\",\"reason\":\"docker-compose depends_on shows start order dependency on jaeger-all-in-one but no runtime call evidence.\"},\n  {\"i\":5,\"verdict\":\"declared-only\",\"reason\":\"docker-compose depends_on shows start order dependency on counter-service but no runtime call or connection shown.\"},\n  {\"i\":6,\"verdict\":\"correct\",\"reason\":\"Program.cs shows connection string to postgresql and docker-compose depends_on confirms runtime dependency.\"},\n  {\"i\":7,\"verdict\":\"declared-only\",\"reason\":\"depends_on in docker-compose shows start order dependency on consul1 but no runtime call evidence.\"},\n  {\"i\":8,\"verdict\":\"declared-only\",\"reason\":\"depends_on and command line show registrator depends on consul1 but no direct runtime call shown.\"},\n  {\"i\":9,\"verdict\":\"declared-only\",\"reason\":\"depends_on in docker-compose shows start order dependency on consul1 but no runtime call evidence.\"}\n]}",
+ "payload": [
+  {
+   "repo": "tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes",
+   "source": "k8n-service-gateway",
+   "target": "containerized-accounts",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: containerized-gateway/src/main/resources/application.yml",
+     "file": "containerized-gateway/src/main/resources/application.yml",
+     "line": 0,
+     "kind": "spring-yaml",
+     "context": "   server:\n     port: ${PORT:8762}\n   \n   spring:\n     application:\n       name: containerized-gateway\n     logstash:\n       server: logstash\n       port: 5000\n     sleuth:\n       traceId128: true\n       supportsJoin: false\n     cloud:"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__clean-architecture-dotnet",
+   "source": "settingapp-dapr",
+   "target": "placement",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 152,
+     "kind": "compose",
+     "context": "   146:         \"./daprd\",\n   147:         \"-app-id\",\n   148:         \"settingapp\",\n   149:         \"-app-port\",\n   150:         \"80\",\n   151:         \"-placement-host-address\",\n>> 152:         \"placement:50006\",\n   153:         \"-components-path\",\n   154:         \"/components\",\n   155:       ]\n   156:     volumes:\n   157:       - \"./samples/components/:/components\"\n   158:     depends_on:"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__clean-architecture-dotnet",
+   "source": "webapigatewayapp",
+   "target": "placement",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 16,
+     "kind": "compose",
+     "context": "   10:       context: .\n   11:       dockerfile: samples/AppGateway/Dockerfile\n   12:     ports:\n   13:       - \"5000:80\"\n   14:     depends_on:\n   15:       - redis\n>> 16:       - placement\n   17:       - productapp\n   18:       - customerapp\n   19:       - settingapp\n   20:     networks:\n   21:       - coolstore-network\n   22: "
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__clean-architecture-dotnet",
+   "source": "samples",
+   "target": "bob.com",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: samples/IdentityServer/Quickstart/TestUsers.cs:58",
+     "file": "samples/IdentityServer/Quickstart/TestUsers.cs",
+     "line": 58,
+     "kind": "src:csharp",
+     "context": "   52:                         {\n   53:                             new Claim(JwtClaimTypes.Name, \"Bob Smith\"),\n   54:                             new Claim(JwtClaimTypes.GivenName, \"Bob\"),\n   55:                             new Claim(JwtClaimTypes.FamilyName, \"Smith\"),\n   56:                             new Claim(JwtClaimTypes.Email, \"BobSmith@email.com\"),\n   57:                             new Claim(JwtClaimTypes.EmailVerified, \"true\", ClaimValueTypes.Boolean),\n>> 58:                             new Claim(JwtClaimTypes.WebSite, \"http://bob.com\"),\n   59:                             new Claim(JwtClaimTypes.Address, JsonSerializer.Serialize(address), IdentityServerConstants.ClaimValueTypes.Json)\n   60:                         }\n   61:                     }\n   62:                 };\n   63:             }\n   64:         }"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__coffeeshop-on-nomad",
+   "source": "otel-collector",
+   "target": "jaeger-all-in-one",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose-o11y.yaml#depends_on",
+     "file": "docker-compose-o11y.yaml",
+     "line": 183,
+     "kind": "compose",
+     "context": "   177:       - \"8888:8888\"   # Prometheus metrics exposed by the collector\n   178:       - \"8889:8889\"   # Prometheus exporter metrics\n   179:       - \"13133:13133\" # health_check extension\n   180:       - \"4317:4317\"   # OTLP gRPC receiver\n   181:       - \"55679:55679\" # zpages extension\n   182:     depends_on:\n>> 183:       - jaeger-all-in-one\n   184:       - zipkin-all-in-one\n   185:     networks:\n   186:       - coffeeshop-network\n   187: \n   188:   prometheus:\n   189:     container_name: prometheus"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__coffeeshop-on-nomad",
+   "source": "reverse-proxy",
+   "target": "counter-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 113,
+     "kind": "compose",
+     "context": "   107:       - ReverseProxy__Clusters__productApiCluster__Destinations__destination1__Address=http://product-service:5001\n   108:       - ReverseProxy__Clusters__counterApiCluster__Destinations__destination1__Address=http://counter-service:5002\n   109:     ports:\n   110:       - \"8080:8080\"\n   111:     depends_on:\n   112:       - postgresql\n>> 113:       - counter-service\n   114:       - barista-service\n   115:       - kitchen-service\n   116:     restart: always\n   117:     networks:\n   118:       - coffeeshop-network\n   119: "
+    },
+    {
+     "ref": "code: docker-compose-o11y.yaml#depends_on",
+     "file": "docker-compose-o11y.yaml",
+     "line": 130,
+     "kind": "compose",
+     "context": "   124:       - AspNetCoreInstrumentation__RecordException=true\n   125:       - Otlp__Endpoint=http://otel-collector:4317\n   126:     ports:\n   127:       - \"8080:8080\"\n   128:     depends_on:\n   129:       - postgresql\n>> 130:       - counter-service\n   131:       - barista-service\n   132:       - kitchen-service\n   133:     restart: always\n   134:     networks:\n   135:       - coffeeshop-network\n   136: "
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__coffeeshop-on-nomad",
+   "source": "barista-service",
+   "target": "postgresql",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/BaristaService/Program.cs:31",
+     "file": "src/BaristaService/Program.cs",
+     "line": 31,
+     "kind": "src:csharp",
+     "context": "   25:     .AddHttpContextAccessor()\n   26:     .AddCustomMediatR(new[] {typeof(BaristaItem)})\n   27:     .AddCustomValidators(new[] {typeof(BaristaItem)});\n   28: \n   29: builder.Services\n   30:     .AddPostgresDbContext<MainDbContext>(\n>> 31:         builder.Configuration.GetConnectionString(\"baristadb\"),\n   32:         null,\n   33:         svc => svc.AddRepository(typeof(Repository<>)))\n   34:     .AddDatabaseDeveloperPageExceptionFilter();\n   35: \n   36: builder.Services\n   37:     .AddOTelTracing(builder.Configuration)"
+    },
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 76,
+     "kind": "compose",
+     "context": "   70:       - ConnectionStrings__baristadb=Server=postgresql;Port=5432;Database=postgres;User Id=postgres;Password=P@ssw0rd\n   71:       - RabbitMqUrl=rabbitmq\n   72:       - Otlp__Endpoint=http://otel-collector:4317\n   73:     ports:\n   74:       - \"5003:5003\"\n   75:     depends_on:\n>> 76:       - postgresql\n   77:       - rabbitmq\n   78:     restart: always\n   79:     networks:\n   80:       - coffeeshop-network\n   81: \n   82:   kitchen-service:"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__magazine-website",
+   "source": "consul3",
+   "target": "consul1",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose-consul-only.yml#depends_on",
+     "file": "deploy/docker-compose-consul-only.yml",
+     "line": 33,
+     "kind": "compose",
+     "context": "   27:     expose:\n   28:       - \"8400\"\n   29:       - \"8500\"\n   30:       - \"8600\"\n   31:     command: \"-server -join consul1\"\n   32:     depends_on:\n>> 33:       - consul1\n   34:   registrator:\n   35:     image: \"gliderlabs/registrator\"\n   36:     hostname: \"registrator\"\n   37:     volumes:\n   38:       - \"/var/run/docker.sock:/tmp/docker.sock\"\n   39:     depends_on:"
+    },
+    {
+     "ref": "code: deploy/docker-compose.yml#depends_on",
+     "file": "deploy/docker-compose.yml",
+     "line": 33,
+     "kind": "compose",
+     "context": "   27:     expose:\n   28:       - \"8400\"\n   29:       - \"8500\"\n   30:       - \"8600\"\n   31:     command: \"-server -join consul1\"\n   32:     depends_on:\n>> 33:       - consul1\n   34:   registrator:\n   35:     image: \"gliderlabs/registrator\"\n   36:     hostname: \"registrator\"\n   37:     volumes:\n   38:       - \"/var/run/docker.sock:/tmp/docker.sock\"\n   39:     depends_on:"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__magazine-website",
+   "source": "registrator",
+   "target": "consul1",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose-consul-only.yml#depends_on",
+     "file": "deploy/docker-compose-consul-only.yml",
+     "line": 40,
+     "kind": "compose",
+     "context": "   34:   registrator:\n   35:     image: \"gliderlabs/registrator\"\n   36:     hostname: \"registrator\"\n   37:     volumes:\n   38:       - \"/var/run/docker.sock:/tmp/docker.sock\"\n   39:     depends_on:\n>> 40:       - consul1\n   41:     command: -internal consul://consul1:8500\n   42:   sample_service:\n   43:     image: \"thangchung/sample_service\"\n   44:     build:\n   45:       context: .\n   46:       dockerfile: build/Dockerfile.SampleService "
+    },
+    {
+     "ref": "code: deploy/docker-compose.yml#depends_on",
+     "file": "deploy/docker-compose.yml",
+     "line": 40,
+     "kind": "compose",
+     "context": "   34:   registrator:\n   35:     image: \"gliderlabs/registrator\"\n   36:     hostname: \"registrator\"\n   37:     volumes:\n   38:       - \"/var/run/docker.sock:/tmp/docker.sock\"\n   39:     depends_on:\n>> 40:       - consul1\n   41:     command: -internal consul://consul1:8500\n   42:   rabbitmq:\n   43:     container_name: rabbitmq\n   44:     image: \"rabbitmq:3.6.5-management\"\n   45:     restart: always\n   46:     environment:"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__magazine-website",
+   "source": "consul2",
+   "target": "consul1",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose-consul-only.yml#depends_on",
+     "file": "deploy/docker-compose-consul-only.yml",
+     "line": 22,
+     "kind": "compose",
+     "context": "   16:     expose:\n   17:       - \"8400\"\n   18:       - \"8500\"\n   19:       - \"8600\"\n   20:     command: \"-server -join consul1\"\n   21:     depends_on:\n>> 22:       - consul1\n   23:   consul3:\n   24:     image: \"progrium/consul:latest\"\n   25:     container_name: \"consul3\"\n   26:     hostname: \"consul3\"\n   27:     expose:\n   28:       - \"8400\""
+    },
+    {
+     "ref": "code: deploy/docker-compose.yml#depends_on",
+     "file": "deploy/docker-compose.yml",
+     "line": 22,
+     "kind": "compose",
+     "context": "   16:     expose:\n   17:       - \"8400\"\n   18:       - \"8500\"\n   19:       - \"8600\"\n   20:     command: \"-server -join consul1\"\n   21:     depends_on:\n>> 22:       - consul1\n   23:   consul3:\n   24:     image: \"progrium/consul:latest\"\n   25:     container_name: \"consul3\"\n   26:     hostname: \"consul3\"\n   27:     expose:\n   28:       - \"8400\""
+    }
+   ]
+  }
+ ]
+}

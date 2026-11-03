@@ -1,0 +1,229 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=Rapter1990__SpringBootMicroservices advertisement-service -> configserver (type sync-http, grade inferred)
+  cited code: advertisement-service/src/main/resources/application.properties
+>> 1: spring.config.import=optional:configserver:http://localhost:9191/
+   2: #spring.config.import=optional:configserver:http://configserver:9191/
+   3: spring.application.name=advertisement-service
+  cited code: configserver/src/main/resources/configurations/advertisement-service.properties
+   spring.datasource.url=jdbc:mysql://localhost:3306/springbootadvertisement?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Turkey
+   spring.datasource.username=springmicroserviceuser
+   spring.datasource.password=111111
+   
+   # Define hibernate settings (JPA / Hibernate properties)
+   spring.jpa.hibernate.ddl-auto=update
+   spring.jpa.show-sql=true
+   spring.jpa.properties.hibernate.format_sql=true
+   spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+   
+   server.port=9001
+   
+   spring.application.name=advertisement-service
+
+[1] repo=SaiUpadhyayula__spring-boot-3-microservices-course api-gateway -> order-service (type sync-http, grade inferred)
+  cited code: api-gateway/src/main/resources/application.properties
+   3: spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:8181/realms/spring-microservices-security-realm
+   4: springdoc.swagger-ui.path=/swagger-ui.html
+   5: springdoc.api-docs.path=/api-docs
+   6: springdoc.swagger-ui.urls[0].name=Product Service
+   7: springdoc.swagger-ui.urls[0].url=/aggregate/product-service/v3/api-docs
+   8: springdoc.swagger-ui.urls[1].name=Order Service
+>> 9: springdoc.swagger-ui.urls[1].url=/aggregate/order-service/v3/api-docs
+   10: springdoc.swagger-ui.urls[2].name=Inventory Service
+   11: springdoc.swagger-ui.urls[2].url=/aggregate/inventory-service/v3/api-docs
+   12: # Actuator Endpoints
+   13: management.health.circuitbreakers.enabled=true
+   14: management.endpoints.web.exposure.include=*
+   15: management.endpoint.health.show-details=always
+
+[2] repo=SaiUpadhyayula__spring-boot-3-microservices-course inventory-service -> mysql (type db, grade documented)
+  cited code: k8s/manifests/applications/inventory-service.yml
+   46: ---
+   47: apiVersion: v1
+   48: kind: ConfigMap
+   49: metadata:
+   50:   name: inventory-service-config
+   51: data:
+>> 52:   SPRING_DATASOURCE_URL: "jdbc:mysql://mysql.default.svc.cluster.local:3306/inventory_service"
+
+[3] repo=SaiUpadhyayula__spring-boot-3-microservices-course frontend -> api-gateway (type sync-http, grade inferred)
+  cited code: frontend/src/app/services/order/order.service.ts:22
+   16:     const httpOptions = {
+   17:       headers: new HttpHeaders({
+   18:         'Content-Type': 'application/json'
+   19:       }),
+   20:       responseType: 'text' as 'json'
+   21:     };
+>> 22:     return this.httpClient.post<string>('http://localhost:9000/api/order', order, httpOptions);
+   23:   }
+   24: }
+   25: 
+  cited code: frontend/src/app/services/product/product.service.ts:15
+   9: export class ProductService {
+   10: 
+   11:   constructor(private httpClient: HttpClient) {
+   12:   }
+   13: 
+   14:   getProducts(): Observable<Array<Product>> {
+>> 15:     return this.httpClient.get<Array<Product>>('http://localhost:9000/api/product');
+   16:   }
+   17: 
+   18:   createProduct(product: Product): Observable<Product> {
+   19:     return this.httpClient.post<Product>('http://localhost:9000/api/product', product);
+   20:   }
+   21: }
+
+[4] repo=ThoreauZZ__spring-cloud-example gateway -> eureka (type sync-http, grade documented)
+  cited code: docker-compose.yml#depends_on
+   140:       - rabbitmq:rabbitmq
+   141:     environment:
+   142:       JAVA_OPTS: -Xmx128m
+   143:       SERVICE_PORT: 9006
+   144:       REGISTRY_URL: http://discovery:9001/eureka
+   145:     depends_on:
+>> 146:       - eureka
+   147:       - config
+   148: 
+   149:   turbine:
+   150:     image: erdaoya/cloud-turbine-dashboard
+   151:     ports:
+   152:       - "9010:9010"
+  cited code: docker-compose-v3.yml
+   87:   gateway:
+   88:     image: erdaoya/cloud-api-gateway
+   89:     ports:
+   90:       - "9006:9006"
+   91:     environment:
+   92:       SERVICE_PORT: 9006
+>> 93:       REGISTRY_URL: http://discovery:9001/eureka
+   94: 
+   95:   turbine:
+   96:     image: erdaoya/cloud-turbine-dashboard
+   97:     ports:
+   98:       - "9010:9010"
+   99:     environment:
+
+[5] repo=ThoreauZZ__spring-cloud-example gateway -> discovery (type sync-http, grade inferred)
+  cited code: cloud-api-gateway/pom.xml
+   30:             <groupId>org.springframework.cloud</groupId>
+   31:             <artifactId>spring-cloud-starter-zuul</artifactId>
+   32:         </dependency>
+   33: 
+   34:         <dependency>
+   35:             <groupId>org.springframework.cloud</groupId>
+>> 36:             <artifactId>spring-cloud-starter-eureka</artifactId>
+   37:         </dependency>
+   38: 
+   39:         <dependency>
+   40:             <groupId>org.springframework.cloud</groupId>
+   41:             <artifactId>spring-cloud-sleuth-stream</artifactId>
+   42:         </dependency>
+
+[6] repo=ThoreauZZ__spring-cloud-example comx -> discovery (type sync-http, grade inferred)
+  cited code: cloud-service-comx/pom.xml
+   166:             <groupId>org.springframework.cloud</groupId>
+   167:             <artifactId>spring-cloud-starter-hystrix</artifactId>
+   168:         </dependency>
+   169: 
+   170:         <dependency>
+   171:             <groupId>org.springframework.cloud</groupId>
+>> 172:             <artifactId>spring-cloud-starter-eureka</artifactId>
+   173:         </dependency>
+   174: 
+   175:         <dependency>
+   176:             <groupId>org.jolokia</groupId>
+   177:             <artifactId>jolokia-core</artifactId>
+   178:         </dependency>
+
+[7] repo=ThreeDotsLabs__monolith-microservice-shop orders -> rabbitmq (type async, grade documented)
+  cited code: docker-compose.yml#depends_on
+   22:       - SHOP_RABBITMQ_ORDERS_TO_PAY_QUEUE=orders-to-pay
+   23:       - SHOP_SHOP_SERVICE_ADDR=http://shop:8080
+   24:     volumes:
+   25:       - ./cmd:$GO_PROJECT_DIR/cmd
+   26:       - ./pkg:$GO_PROJECT_DIR/pkg
+   27:     depends_on:
+>> 28:       - rabbitmq
+   29: 
+   30:   payments:
+   31:     build: .
+   32:     entrypoint: ["./docker/entrypoint.sh", "./cmd/microservices/payments/main.go"]
+   33:     volumes:
+   34:       - ./cmd:$GO_PROJECT_DIR/cmd
+  cited code: docker-compose.yml
+   15:     build: .
+   16:     entrypoint: ["./docker/entrypoint.sh", "./cmd/microservices/orders/main.go"]
+   17:     ports:
+   18:       - "8070:8080"
+   19:     environment:
+   20:       - SHOP_ORDERS_SERVICE_BIND_ADDR=:8080
+>> 21:       - SHOP_RABBITMQ_ADDR=rabbitmq:5672
+   22:       - SHOP_RABBITMQ_ORDERS_TO_PAY_QUEUE=orders-to-pay
+   23:       - SHOP_SHOP_SERVICE_ADDR=http://shop:8080
+   24:     volumes:
+   25:       - ./cmd:$GO_PROJECT_DIR/cmd
+   26:       - ./pkg:$GO_PROJECT_DIR/pkg
+   27:     depends_on:
+
+[8] repo=ThreeDotsLabs__monolith-microservice-shop payments -> rabbitmq (type async, grade documented)
+  cited code: docker-compose.yml#depends_on
+   35:       - ./pkg:$GO_PROJECT_DIR/pkg
+   36:     environment:
+   37:       - SHOP_RABBITMQ_ADDR=rabbitmq:5672
+   38:       - SHOP_RABBITMQ_ORDERS_TO_PAY_QUEUE=orders-to-pay
+   39:       - SHOP_ORDERS_SERVICE_ADDR=http://orders:8080
+   40:     depends_on:
+>> 41:       - rabbitmq
+   42: 
+   43:   shop:
+   44:     build: .
+   45:     entrypoint: ["./docker/entrypoint.sh", "./cmd/microservices/shop/main.go"]
+   46:     volumes:
+   47:       - ./cmd:$GO_PROJECT_DIR/cmd
+  cited code: docker-compose.yml
+   31:     build: .
+   32:     entrypoint: ["./docker/entrypoint.sh", "./cmd/microservices/payments/main.go"]
+   33:     volumes:
+   34:       - ./cmd:$GO_PROJECT_DIR/cmd
+   35:       - ./pkg:$GO_PROJECT_DIR/pkg
+   36:     environment:
+>> 37:       - SHOP_RABBITMQ_ADDR=rabbitmq:5672
+   38:       - SHOP_RABBITMQ_ORDERS_TO_PAY_QUEUE=orders-to-pay
+   39:       - SHOP_ORDERS_SERVICE_ADDR=http://orders:8080
+   40:     depends_on:
+   41:       - rabbitmq
+   42: 
+   43:   shop:
+
+[9] repo=ThreeDotsLabs__monolith-microservice-shop orders -> shop (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   17:     ports:
+   18:       - "8070:8080"
+   19:     environment:
+   20:       - SHOP_ORDERS_SERVICE_BIND_ADDR=:8080
+   21:       - SHOP_RABBITMQ_ADDR=rabbitmq:5672
+   22:       - SHOP_RABBITMQ_ORDERS_TO_PAY_QUEUE=orders-to-pay
+>> 23:       - SHOP_SHOP_SERVICE_ADDR=http://shop:8080
+   24:     volumes:
+   25:       - ./cmd:$GO_PROJECT_DIR/cmd
+   26:       - ./pkg:$GO_PROJECT_DIR/pkg
+   27:     depends_on:
+   28:       - rabbitmq
+   29: 

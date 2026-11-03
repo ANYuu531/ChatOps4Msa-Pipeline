@@ -1,0 +1,213 @@
+{
+ "id": "edges-0016",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 2382,
+  "completion_tokens": 435,
+  "total_tokens": 2817,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"declared-only\", \"reason\": \"The docker-compose environment variable MINIO_ENDPOINT declares the minio address but does not show an actual runtime call or connection from mate-system to minio.\"}, {\"i\": 1, \"verdict\": \"declared-only\", \"reason\": \"The gateway routing configuration declares mate-notice as a route target but does not itself prove mate-gateway makes runtime calls to mate-notice.\"}, {\"i\": 2, \"verdict\": \"declared-only\", \"reason\": \"The docker-compose depends_on and config with zipkin base-url declare a dependency but do not prove runtime calls from api-gateway to zipkin.\"}, {\"i\": 3, \"verdict\": \"declared-only\", \"reason\": \"The docker-compose depends_on and eureka client config declare a dependency but do not prove runtime calls from websocket-service to eureka-server.\"}, {\"i\": 4, \"verdict\": \"declared-only\", \"reason\": \"The config-server routing config declares scheduler-service as a route target but does not prove runtime calls from api-gateway to scheduler-service.\"}, {\"i\": 5, \"verdict\": \"correct\", \"reason\": \"The MongoOptions connection string in flight service config documents a runtime connection to mongo database.\"}, {\"i\": 6, \"verdict\": \"correct\", \"reason\": \"The Jwt Authority URL in passenger service config documents a runtime HTTP dependency on identity service.\"}, {\"i\": 7, \"verdict\": \"correct\", \"reason\": \"The Jwt Authority URL in flight service config documents a runtime HTTP dependency on identity service.\"}, {\"i\": 8, \"verdict\": \"declared-only\", \"reason\": \"The docker-compose depends_on declares start order dependency on identity but does not prove runtime calls from booking to identity.\"}, {\"i\": 9, \"verdict\": \"declared-only\", \"reason\": \"The docker-compose depends_on declares start order dependency on rabbitmq but does not prove runtime messaging from booking to rabbitmq.\"}]}",
+ "payload": [
+  {
+   "repo": "mateaix__matecloud",
+   "source": "mate-system",
+   "target": "minio",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 192,
+     "kind": "compose",
+     "context": "   186:       # NACOS_NAMESPACE 未设置 → 默认 public 命名空间(init-nacos.sh 将配置推送到 public)\n   187:       # Infra hosts = compose service names (the mate-infra-dev.yml placeholders\n   188:       # default to 127.0.0.1, which inside a container is the container itself).\n   189:       MYSQL_HOST: mysql\n   190:       REDIS_HOST: redis\n   191:       RABBITMQ_HOST: rabbitmq\n>> 192:       MINIO_ENDPOINT: http://minio:9000\n   193:     ports:\n   194:       - \"9030:9030\"\n   195:     networks:\n   196:       - mate-net\n   197: \n   198:   # mate-admin: merged into mate-system (RFC-049)"
+    }
+   ]
+  },
+  {
+   "repo": "mateaix__matecloud",
+   "source": "mate-gateway",
+   "target": "mate-notice",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: mate-gateway/src/main/resources/application.yml",
+     "file": "mate-gateway/src/main/resources/application.yml",
+     "line": 45,
+     "kind": "spring-yaml",
+     "context": "   39: \n   40:             - id: mate-system\n   41:               uri: lb://mate-system\n   42:               predicates:\n   43:                 - Path=/api/v1/users/**,/api/v1/departments/**,/api/v1/admin/**,/api/v1/sso/**\n   44: \n>> 45:             - id: mate-notice\n   46:               uri: lb://mate-notice\n   47:               predicates:\n   48:                 - Path=/api/v1/notices/**\n   49: \n   50:             - id: mate-ai\n   51:               uri: lb://mate-ai"
+    }
+   ]
+  },
+  {
+   "repo": "merikbest__twitter-spring-reactjs",
+   "source": "api-gateway",
+   "target": "zipkin",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 148,
+     "kind": "compose",
+     "context": "   142:             ZIPKIN_HOST: zipkin\n   143:         ports:\n   144:             - \"8000:8000\"\n   145:         networks:\n   146:             - spring\n   147:         depends_on:\n>> 148:             - zipkin\n   149:             - eureka-server\n   150:             - config-server\n   151: \n   152:     user-service:\n   153:         image: merikbest/twitter-spring-reactjs:user-service\n   154:         container_name: user-service"
+    },
+    {
+     "ref": "code: config-server/src/main/resources/config/api-gateway.yml",
+     "file": "config-server/src/main/resources/config/api-gateway.yml",
+     "line": 110,
+     "kind": "yaml",
+     "context": "   104:                 -   id: scheduler-service\n   105:                     uri: lb://scheduler-service\n   106:                     predicates:\n   107:                         - Path=/api/v1/scheduler/**\n   108:                     filters:\n   109:                         - AuthFilter\n>> 110:     zipkin:\n   111:         base-url: http://${ZIPKIN_HOST:localhost}:9411\n   112: \n   113: eureka:\n   114:     client:\n   115:         service-url:\n   116:             defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka"
+    }
+   ]
+  },
+  {
+   "repo": "merikbest__twitter-spring-reactjs",
+   "source": "websocket-service",
+   "target": "eureka-server",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 356,
+     "kind": "compose",
+     "context": "   350:         ports:\n   351:             - \"8022:8022\"\n   352:         networks:\n   353:             - spring\n   354:         depends_on:\n   355:             - zipkin\n>> 356:             - eureka-server\n   357:             - config-server\n   358: \n   359: networks:\n   360:     postgres:\n   361:         driver: bridge\n   362:     spring:"
+    },
+    {
+     "ref": "code: config-server/src/main/resources/config/websocket-service.yml",
+     "file": "config-server/src/main/resources/config/websocket-service.yml",
+     "line": 0,
+     "kind": "yaml",
+     "context": "   server:\n       port: 8022\n   \n   spring:\n       application:\n           name: websocket-service\n       zipkin:\n           base-url: http://${ZIPKIN_HOST:localhost}:9411\n   eureka:\n       client:\n           service-url:\n               defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka\n           fetch-registry: true"
+    }
+   ]
+  },
+  {
+   "repo": "merikbest__twitter-spring-reactjs",
+   "source": "api-gateway",
+   "target": "scheduler-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: config-server/src/main/resources/config/api-gateway.yml",
+     "file": "config-server/src/main/resources/config/api-gateway.yml",
+     "line": 104,
+     "kind": "yaml",
+     "context": "   98: \n   99:                 -   id: localization-service\n   100:                     uri: lb://localization-service\n   101:                     predicates:\n   102:                         - Path=/ui/v1/localization/**\n   103: \n>> 104:                 -   id: scheduler-service\n   105:                     uri: lb://scheduler-service\n   106:                     predicates:\n   107:                         - Path=/api/v1/scheduler/**\n   108:                     filters:\n   109:                         - AuthFilter\n   110:     zipkin:"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices",
+   "source": "flight",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Services/Flight/src/Flight.Api/appsettings.docker.json",
+     "file": "src/Services/Flight/src/Flight.Api/appsettings.docker.json",
+     "line": 23,
+     "kind": "appsettings",
+     "context": "   17:         \"ExchangeName\": \"flight\",\n   18:         \"UserName\": \"guest\",\n   19:         \"Password\": \"guest\",\n   20:         \"Port\": 5672\n   21:     },\n   22:     \"MongoOptions\": {\n>> 23:         \"ConnectionString\": \"mongodb://mongo:27017\",\n   24:         \"DatabaseName\": \"flight-db\"\n   25:     },\n   26:     \"AllowedHosts\": \"*\"\n   27: }\n   28: "
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices",
+   "source": "passenger",
+   "target": "identity",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Services/Passenger/src/Passenger.Api/appsettings.docker.json",
+     "file": "src/Services/Passenger/src/Passenger.Api/appsettings.docker.json",
+     "line": 12,
+     "kind": "appsettings",
+     "context": "   6:         }\n   7:     },\n   8:     \"PostgresOptions\": {\n   9:         \"ConnectionString\": \"Server=postgres;Port=5432;Database=passenger;User Id=postgres;Password=postgres;Include Error Detail=true\"\n   10:     },\n   11:     \"Jwt\": {\n>> 12:         \"Authority\": \"http://identity:80\",\n   13:         \"Audience\": \"passenger-api\"\n   14:     },\n   15:     \"MongoOptions\": {\n   16:         \"ConnectionString\": \"mongodb://mongo:27017\",\n   17:         \"DatabaseName\": \"passenger-db\"\n   18:     },"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices",
+   "source": "flight",
+   "target": "identity",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Services/Flight/src/Flight.Api/appsettings.docker.json",
+     "file": "src/Services/Flight/src/Flight.Api/appsettings.docker.json",
+     "line": 12,
+     "kind": "appsettings",
+     "context": "   6:         }\n   7:     },\n   8:     \"PostgresOptions\": {\n   9:         \"ConnectionString\": \"Server=postgres;Port=5432;Database=flight;User Id=postgres;Password=postgres;Include Error Detail=true\"\n   10:     },\n   11:     \"Jwt\": {\n>> 12:         \"Authority\": \"http://identity:80\",\n   13:         \"Audience\": \"flight-api\"\n   14:     },\n   15:     \"RabbitMqOptions\": {\n   16:         \"HostName\": \"rabbitmq\",\n   17:         \"ExchangeName\": \"flight\",\n   18:         \"UserName\": \"guest\","
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-expressjs",
+   "source": "booking",
+   "target": "identity",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 162,
+     "kind": "compose",
+     "context": "   156:     restart: unless-stopped\n   157:     depends_on:\n   158:       postgres:\n   159:         condition: service_healthy\n   160:       rabbitmq:\n   161:         condition: service_healthy\n>> 162:       identity:\n   163:         condition: service_healthy\n   164:       flight:\n   165:         condition: service_healthy\n   166:       passenger:\n   167:         condition: service_healthy\n   168:     environment:"
+    }
+   ]
+  },
+  {
+   "repo": "meysamhadeli__booking-microservices-expressjs",
+   "source": "booking",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 160,
+     "kind": "compose",
+     "context": "   154:       dockerfile: booking/Dockerfile\n   155:     network_mode: host\n   156:     restart: unless-stopped\n   157:     depends_on:\n   158:       postgres:\n   159:         condition: service_healthy\n>> 160:       rabbitmq:\n   161:         condition: service_healthy\n   162:       identity:\n   163:         condition: service_healthy\n   164:       flight:\n   165:         condition: service_healthy\n   166:       passenger:"
+    },
+    {
+     "ref": "code: deployments/kubernetes/booking-deployment.yaml",
+     "file": "deployments/kubernetes/booking-deployment.yaml",
+     "line": 0,
+     "kind": "yaml",
+     "context": "   apiVersion: apps/v1\n   kind: Deployment\n   metadata:\n     name: booking\n     namespace: booking\n   spec:\n     replicas: 1\n     selector:\n       matchLabels:\n         app: booking\n     template:\n       metadata:\n         labels:"
+    }
+   ]
+  }
+ ]
+}

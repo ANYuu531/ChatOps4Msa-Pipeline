@@ -1,0 +1,234 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=meysamhadeli__booking-microservices-expressjs identity -> rabbitmq (type async, grade documented)
+  cited code: docker-compose.yml#depends_on
+   76:       dockerfile: identity/Dockerfile
+   77:     network_mode: host
+   78:     restart: unless-stopped
+   79:     depends_on:
+   80:       postgres:
+   81:         condition: service_healthy
+>> 82:       rabbitmq:
+   83:         condition: service_healthy
+   84:     environment:
+   85:       <<: *common-env
+   86:       PORT: ${IDENTITY_PORT}
+   87:       SERVICE_NAME: ${IDENTITY_SERVICE_NAME}
+   88:       POSTGRES_Database: ${POSTGRES_DB}
+  cited code: deployments/kubernetes/identity-deployment.yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: identity
+     namespace: booking
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: identity
+     template:
+       metadata:
+         labels:
+
+[1] repo=meysamhadeli__booking-microservices-java-spring-boot apigateway -> flight (type sync-http, grade inferred)
+  cited code: src/apigateway/src/main/resources/application-dev.yml
+   11:   cloud:
+   12:     gateway:
+   13:       routes:
+   14:         - id: flight-service
+   15:           uri: http://localhost:8082
+   16:           predicates:
+>> 17:             - Path=/api/{version}/flight/**
+   18:           filters:
+   19:             - TokenRelay
+   20:         - id: passenger-service
+   21:           uri: http://localhost:8083
+   22:           predicates:
+   23:             - Path=/api/{version}/passenger/**
+
+[2] repo=meysamhadeli__booking-microservices-java-spring-boot buildingblocks -> problems (type sync-http, grade documented)
+  cited code: src/buildingblocks/src/main/java/buildingblocks/keycloak/CustomAuthenticationEntryPoint.java:40
+   34:       getStatus(authException),
+   35:       authException.getMessage()
+   36:     );
+   37: 
+   38:     problemDetail.setTitle(authException.getClass().getSimpleName());
+   39:     problemDetail.setDetail(authException.getMessage());
+>> 40:     problemDetail.setType(URI.create("https://problems/" + authException.getClass().getSimpleName().toLowerCase()));
+   41:     problemDetail.setProperty("timestamp", Instant.now().toString());
+   42:     problemDetail.setInstance(URI.create(request.getRequestURI()));
+   43:     response.setStatus(getStatus(authException).value());
+   44:     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+   45:     response.getWriter().write(JsonConverterUtils.serializeObject(problemDetail));
+   46: 
+  cited code: src/buildingblocks/src/main/java/buildingblocks/problemdetails/CustomProblemDetailsHandler.java:93
+   87: 
+   88:     ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+   89:       details.status(),
+   90:       details.detail()
+   91:     );
+   92: 
+>> 93:     problemDetail.setType(URI.create("https://problems/" + details.title().toLowerCase()));
+   94:     problemDetail.setTitle(details.title());
+   95:     problemDetail.setProperty("timestamp", Instant.now());
+   96: 
+   97:     // Add stack trace in development environment
+   98:     if (isDevelopment()) {
+   99:       problemDetail.setProperty("exception", ex.toString());
+
+[3] repo=meysamhadeli__booking-microservices-java-spring-boot grafana -> prometheus (type sync-http, grade inferred)
+  cited code: deployments/docker-compose/docker-compose.infrastructure.yaml#depends_on
+   223:       - GF_SECURITY_ADMIN_PASSWORD=admin
+   224:       - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+   225:       #      - GF_AUTH_ANONYMOUS_ENABLED=true
+   226:       #      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+   227:       #      - GF_AUTH_DISABLE_LOGIN_FORM=true
+   228:     depends_on:
+>> 229:       - prometheus
+   230:     ports:
+   231:       - "3000:3000"
+   232:     volumes:
+   233:       - ./../configs/grafana/provisioning:/etc/grafana/provisioning
+   234:       - ./../configs/grafana/dashboards:/var/lib/grafana/dashboards
+   235:       ## https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/
+
+[4] repo=meysamhadeli__booking-microservices-nestjs otel-collector -> aspire-dashboard (type sync-http, grade inferred)
+  cited code: deployments/docker-compose/docker-compose.yaml
+   137:       - "13133:13133" # health_check extension
+   138:       - "4317:4317" # OTLP gRPC receiver
+   139:       - "4318:4318" # OTLP http receiver
+   140:       - "55679:55679" # zpages extension
+   141:     environment:
+   142:       # set enviroments for otel collector configs to set Exporter endpoints (with defaults matching your original config)
+>> 143:       - ASPIRE_OTLP_ENDPOINT=http://aspire-dashboard:18889 # Using Docker network DNS
+   144:       - ASPIRE_API_KEY=your_api_key
+   145:       - PROMETHEUS_ENDPOINT=0.0.0.0:8889
+   146:       - PROMETHEUS_REMOTE_WRITE_ENDPOINT=http://prometheus:9090/api/v1/write
+   147:       - LOKI_ENDPOINT=http://loki:3100/otlp
+   148:       - TEMPO_ENDPOINT=http://tempo:4317
+   149:     networks:
+
+[5] repo=meysamhadeli__booking-microservices-nestjs otel-collector -> loki (type sync-http, grade inferred)
+  cited code: deployments/docker-compose/docker-compose.yaml
+   141:     environment:
+   142:       # set enviroments for otel collector configs to set Exporter endpoints (with defaults matching your original config)
+   143:       - ASPIRE_OTLP_ENDPOINT=http://aspire-dashboard:18889 # Using Docker network DNS
+   144:       - ASPIRE_API_KEY=your_api_key
+   145:       - PROMETHEUS_ENDPOINT=0.0.0.0:8889
+   146:       - PROMETHEUS_REMOTE_WRITE_ENDPOINT=http://prometheus:9090/api/v1/write
+>> 147:       - LOKI_ENDPOINT=http://loki:3100/otlp
+   148:       - TEMPO_ENDPOINT=http://tempo:4317
+   149:     networks:
+   150:       - booking
+   151: 
+   152: 
+   153:     #######################################################
+
+[6] repo=meysamhadeli__booking-microservices-nestjs booking -> postgres (type db, grade documented)
+  cited code: deployments/docker-compose/docker-compose.yaml#depends_on
+   213:   booking:
+   214:     build:
+   215:       context: ../..
+   216:       dockerfile: ../../src/booking/Dockerfile
+   217:     container_name: booking
+   218:     depends_on:
+>> 219:       - postgres
+   220:       - rabbitmq
+   221:     env_file:
+   222:       - ../../src/booking/.env.docker
+   223:     ports:
+   224:       - "3366:3366"
+   225:     networks:
+  cited code: deployments/docker-compose/docker-compose.yaml
+   213:   booking:
+   214:     build:
+   215:       context: ../..
+   216:       dockerfile: ../../src/booking/Dockerfile
+   217:     container_name: booking
+   218:     depends_on:
+>> 219:       - postgres
+   220:       - rabbitmq
+   221:     env_file:
+   222:       - ../../src/booking/.env.docker
+   223:     ports:
+   224:       - "3366:3366"
+   225:     networks:
+
+[7] repo=minghsu0107__go-random-chat random-chat -> kafka (type async, grade documented)
+  cited code: deployments/docker-compose.yaml#depends_on
+   75:       - "traefik.http.routers.random-chat-grpc.rule=Header(`content-type`,`application/grpc`) && Header(`service-id`, `chat`)"
+   76:       - "traefik.http.routers.random-chat-grpc.entrypoints=web"
+   77:       - "traefik.http.routers.random-chat-grpc.service=random-chat-grpc"
+   78:       - "traefik.http.services.random-chat-grpc.loadbalancer.server.port=4000"
+   79:       - "traefik.http.services.random-chat-grpc.loadbalancer.server.scheme=h2c"
+   80:     depends_on:
+>> 81:       - kafka
+   82:   forwarder:
+   83:     image: minghsu0107/random-chat-api:kafka
+   84:     restart: always
+   85:     expose:
+   86:       - "4000"
+   87:     command:
+  cited code: deployments/docker-compose.yaml
+   32:       - "traefik.enable=true"
+   33:       - "traefik.http.routers.rcweb.rule=PathPrefix(`/`)"
+   34:       - "traefik.http.routers.rcweb.entrypoints=web"
+   35:       - "traefik.http.routers.rcweb.service=rcweb"
+   36:       - "traefik.http.services.rcweb.loadbalancer.server.port=80"
+   37:   random-chat:
+>> 38:     image: minghsu0107/random-chat-api:kafka
+   39:     restart: always
+   40:     expose:
+   41:       - "80"
+   42:       - "4000"
+   43:     command:
+   44:       - chat
+
+[8] repo=minghsu0107__go-random-chat uploader -> redis-node-0 (type db, grade inferred)
+  cited code: deployments/docker-compose.yaml
+   147:       UPLOADER_S3_ENDPOINT: http://minio:9000
+   148:       UPLOADER_S3_REGION: us-east-1
+   149:       UPLOADER_S3_BUCKET: myfilebucket
+   150:       UPLOADER_S3_ACCESSKEY: testaccesskey
+   151:       UPLOADER_S3_SECRETKEY: testsecret
+   152:       REDIS_PASSWORD: ${REDIS_PASSWORD}
+>> 153:       REDIS_ADDRS: redis-node-0:6379,redis-node-1:6379,redis-node-2:6379,redis-node-3:6379,redis-node-4:6379,redis-node-5:6379
+   154:       OBSERVABILITY_PROMETHEUS_PORT: "8080"
+   155:       OBSERVABILITY_TRACING_OTLPENDPOINT: jaeger:4318
+   156:     labels:
+   157:       - "traefik.enable=true"
+   158:       - "traefik.http.routers.uploader.rule=PathPrefix(`/api/uploader`)"
+   159:       - "traefik.http.routers.uploader.entrypoints=web"
+
+[9] repo=minghsu0107__go-random-chat redis-node-5 -> redis-node-4 (type db, grade inferred)
+  cited code: deployments/docker-compose.yaml#depends_on
+   290:       - redis-cluster_data-5:/bitnami/redis/data
+   291:     depends_on:
+   292:       - redis-node-0
+   293:       - redis-node-1
+   294:       - redis-node-2
+   295:       - redis-node-3
+>> 296:       - redis-node-4
+   297:     environment:
+   298:       - 'REDIS_PASSWORD=${REDIS_PASSWORD}'
+   299:       - 'REDISCLI_AUTH=${REDIS_PASSWORD}'
+   300:       - 'REDIS_CLUSTER_REPLICAS=1'
+   301:       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+   302:       - 'REDIS_CLUSTER_CREATOR=yes'

@@ -1,0 +1,188 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=wsrh8888__beaver-server livekit -> redis (type db, grade inferred)
+  cited code: docker/docker-compose.yml#depends_on
+   49:       - ./livekit/livekit.yaml:/etc/livekit.yaml
+   50:     ports:
+   51:       - "7880:7880"   # 信令与 API
+   52:       - "7881:7881"   # RTC over TCP
+   53:       - "50000-50050:50000-50050/udp" # WebRTC 媒体流
+   54:     depends_on:
+>> 55:       - redis
+   56: 
+   57:   rocketmq-namesrv:
+   58:     image: apache/rocketmq:5.3.1
+   59:     container_name: rocketmq-namesrv
+   60:     restart: always
+   61:     ports:
+
+[1] repo=wsrh8888__beaver-server rocketmq-console -> rocketmq-namesrv (type sync-http, grade inferred)
+  cited code: docker/docker-compose.yml#depends_on
+   100:     restart: always
+   101:     ports:
+   102:       - "8080:8080"
+   103:     environment:
+   104:       - JAVA_OPTS=-Drocketmq.namesrv.addr=rocketmq-namesrv:9876 -Dcom.rocketmq.sendMessageWithVIPChannel=false
+   105:     depends_on:
+>> 106:       - rocketmq-namesrv
+   107: 
+
+[2] repo=wsrh8888__beaver-server rocketmq-broker -> rocketmq-namesrv (type sync-http, grade documented)
+  cited code: docker/docker-compose.yml#depends_on
+   80:     command: sh mqbroker -c /home/rocketmq/conf/broker.conf
+   81:     volumes:
+   82:       - ./rocketmq/broker/logs:/home/rocketmq/logs
+   83:       - ./rocketmq/broker/store:/home/rocketmq/store
+   84:       - ./rocketmq/broker/conf/broker-cluster.conf:/home/rocketmq/conf/broker.conf
+   85:     depends_on:
+>> 86:       - rocketmq-namesrv
+   87: 
+   88:   rocketmq-init:
+   89:     image: apache/rocketmq:5.3.1
+   90:     container_name: rocketmq-init
+   91:     depends_on:
+   92:       - rocketmq-broker
+  cited code: docker/docker-compose.yml
+   72:     restart: always
+   73:     ports:
+   74:       - "10909:10909"
+   75:       - "10911:10911"
+   76:       - "10912:10912"
+   77:     environment:
+>> 78:       - NAMESRV_ADDR=rocketmq-namesrv:9876
+   79:       - JAVA_OPT_EXT=-Xms512m -Xmx512m
+   80:     command: sh mqbroker -c /home/rocketmq/conf/broker.conf
+   81:     volumes:
+   82:       - ./rocketmq/broker/logs:/home/rocketmq/logs
+   83:       - ./rocketmq/broker/store:/home/rocketmq/store
+   84:       - ./rocketmq/broker/conf/broker-cluster.conf:/home/rocketmq/conf/broker.conf
+
+[3] repo=xiajingren__HelloAbp aspnet-core -> www.stats.gov.cn (type external, grade documented)
+  cited code: aspnet-core/src/Xhznl.HelloAbp.BackgroundJobs.Shared/HelloAbpBackgroundJobSharedModule.cs:17
+   11:     {
+   12:         public override void ConfigureServices(ServiceConfigurationContext context)
+   13:         {
+   14:             Configure<ChinaRegionOption>(options =>
+   15:             {
+   16:                 options.Year = 2019;
+>> 17:                 options.BaseGovUri=new Uri("http://www.stats.gov.cn/tjsj/tjbz/tjyqhdmhcxhfdm/2019/");
+   18:             });
+   19:         }
+   20:     }
+   21: }
+  cited code: aspnet-core/src/Xhznl.HelloAbp.BackgroundJobs.Shared/Jobs/ChinaRegion/ChinaRegionOption.cs:9
+   3: namespace Xhznl.HelloAbp.Jobs.ChinaRegion
+   4: {
+   5:     public class ChinaRegionOption
+   6:     {
+   7:         public int Year { get; set; } = 2019;
+   8: 
+>> 9:         public Uri BaseGovUri { get; set; } = new Uri("http://www.stats.gov.cn/tjsj/tjbz/tjyqhdmhcxhfdm/2019/");
+   10:     }
+   11: }
+
+[4] repo=xiajingren__HelloAbp xhznl-datadictionary-identityserver -> *.datadictionary.com,http (type external, grade documented)
+  cited code: aspnet-core/modules/data-dictionary/host/Xhznl.DataDictionary.IdentityServer/appsettings.json
+   1: ﻿{
+   2:   "App": {
+   3:     "SelfUrl": "https://localhost:44351/",
+>> 4:     "CorsOrigins": "https://*.DataDictionary.com,http://localhost:4200"
+   5:   },
+   6:   "AppSelfUrl": "https://localhost:44351/",
+   7:   "ConnectionStrings": {
+   8:     "Default": "Server=localhost;User Id=sa;Password=123456;Database=HelloAbp;MultipleActiveResultSets=true"
+   9:   },
+   10:   "Redis": {
+
+[5] repo=xiajingren__HelloAbp data-dictionary -> sqlserver (type db, grade documented)
+  cited code: aspnet-core/modules/data-dictionary/docker-compose.yml#depends_on
+   15:   
+   16:   data-dictionary:
+   17:     build:
+   18:       context: ../../
+   19:       dockerfile: templates/service/host/Xhznl.DataDictionary.Host/Dockerfile
+   20:     depends_on:
+>> 21:       - sqlserver
+   22:       - identity-server
+   23: 
+   24: volumes:
+   25:   dbdata:
+  cited code: aspnet-core/modules/data-dictionary/docker-compose.override.yml
+   16:     ports:
+   17:       - "51600:80"
+   18: 
+   19:   data-dictionary:
+   20:     environment:
+   21:       - ASPNETCORE_URLS=http://0.0.0.0:80
+>> 22:       - ConnectionStrings__Default=Server=sqlserver;Database=DataDictionary_ModuleDb;Trusted_Connection=True;MultipleActiveResultSets=true;User=sa;Password=yourStrong(!)Password;Integrated Security=fa
+   23:       - ConnectionStrings__AbpSettingManagement=Server=sqlserver;Database=DataDictionary_Identity;Trusted_Connection=True;MultipleActiveResultSets=true;User=sa;Password=yourStrong(!)Password;Integrate
+   24:       - ConnectionStrings__AbpPermissionManagement=Server=sqlserver;Database=DataDictionary_Identity;Trusted_Connection=True;MultipleActiveResultSets=true;User=sa;Password=yourStrong(!)Password;Integr
+   25:       - ConnectionStrings__AbpAuditLogging=Server=sqlserver;Database=DataDictionary_Identity;Trusted_Connection=True;MultipleActiveResultSets=true;User=sa;Password=yourStrong(!)Password;Integrated Sec
+   26:       - ConnectionStrings__SqlServerCache=Server=sqlserver;Database=DataDictionary_Cache;Trusted_Connection=True;MultipleActiveResultSets=true;User=sa;Password=yourStrong(!)Password;Integrated Securit
+   27:       - AuthServer__Authority=http://identity-server
+   28:     ports:
+
+[6] repo=yiv__yivnet usercenter -> etcd.yivgame.com (type external, grade documented)
+  cited code: usercenter/main.go:36
+   30: 	"github.com/yiv/yivgame/usercenter/service"
+   31: )
+   32: 
+   33: var (
+   34: 	grpcAddr    = flag.String("grpc.addr", ":10000", "gRPC listen address")
+   35: 	debugAddr   = flag.String("debug.addr", ":10001", "Debug and metrics listen address")
+>> 36: 	etcdAddr    = flag.String("etcd.addr", "http://etcd.yivgame.com:2379", "Consul agent address")
+   37: 	kafkaAddr   = flag.String("kafka.addr", "kafka.yivgame.com:9092", "kafka address")
+   38: 	zipkinAddr  = flag.String("zipkin.addr", "", "Enable Zipkin tracing via a Zipkin HTTP Collector endpoint")
+   39: 	serviceName = flag.String("service.name", "usercenter", "the name of this service in service discovery")
+   40: )
+   41: 
+   42: func main() {
+
+[7] repo=yiv__yivnet drone-agent -> drone-server (type sync-http, grade inferred)
+  cited code: docker/compose/infrastructure/docker-compose.yml#depends_on
+   53: 
+   54:   drone-agent:
+   55:     image: drone/drone:0.8.0
+   56:     command: agent
+   57:     restart: always
+   58:     depends_on:
+>> 59:       - drone-server
+   60:     volumes:
+   61:       - /var/run/docker.sock:/var/run/docker.sock
+   62:     environment:
+   63:       - DRONE_HOST=192.168.1.200
+   64:       - DRONE_GOGS=true
+   65:       - DRONE_GOGS_URL=http://192.168.1.200:10080
+
+[8] repo=yiv__yivnet game -> etcd.yivgame.com (type external, grade documented)
+  cited code: game/main.go:38
+   32: )
+   33: 
+   34: var (
+   35: 	grpcAddr     = flag.String("grpc.addr", ":10020", "gRPC (HTTP) listen address")
+   36: 	debugAddr    = flag.String("debug.addr", ":10021", "Debug and metrics listen address")
+   37: 	zipkinAddr   = flag.String("zipkin.addr", "", "Enable Zipkin tracing via a Zipkin HTTP Collector endpoint")
+>> 38: 	etcdAddr     = flag.String("etcd.addr", "http://etcd.yivgame.com:2379", "Consul agent address")
+   39: 	serviceName  = flag.String("service.name", "gameserver", "the name of this service in service discovery")
+   40: 	userCenter   = flag.String("userCenter.name", "usercenter", "the name of this service in service discovery")
+   41: 	retryMax     = flag.Int("retry.max", 3, "per-request retries to different instances")
+   42: 	retryTimeout = flag.Duration("retry.timeout", 500*time.Millisecond, "per-request timeout, including retries")
+   43: 	//first class room config
+   44: 	frBootbet = flag.Int64("fr.bb", 100, "boot bet coins of first class room")

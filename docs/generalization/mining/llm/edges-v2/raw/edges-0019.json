@@ -1,0 +1,220 @@
+{
+ "id": "edges-0019",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 2943,
+  "completion_tokens": 442,
+  "total_tokens": 3385,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"correct\", \"reason\": \"application.yml configures erp-customer-service to import config from nacos at runtime, showing a runtime dependency; docker-compose depends_on supports start order but the config confirms runtime use.\"}, {\"i\": 1, \"verdict\": \"declared-only\", \"reason\": \"docker-compose.yml shows warehouse-service depends_on but no evidence of runtime connection or messaging to rabbitmq is shown.\"}, {\"i\": 2, \"verdict\": \"correct\", \"reason\": \"envoy config routes /api/ prefix requests to cluster 'gateway', showing envoy depends on gateway at runtime.\"}, {\"i\": 3, \"verdict\": \"declared-only\", \"reason\": \"docker-compose depends_on lists auth-service dependencies but no runtime call or connection to minio is shown.\"}, {\"i\": 4, \"verdict\": \"declared-only\", \"reason\": \"docker-compose depends_on lists auth-service dependencies but no runtime call or connection to postgres is shown.\"}, {\"i\": 5, \"verdict\": \"correct\", \"reason\": \"environment variable CONSUL_HOST=consul in market service shows runtime connection to consul; depends_on only supports start order but env var confirms runtime dependency.\"}, {\"i\": 6, \"verdict\": \"declared-only\", \"reason\": \"docker-compose shows eventlog service declared but no evidence of runtime connection to vault is shown.\"}, {\"i\": 7, \"verdict\": \"declared-only\", \"reason\": \"docker-compose shows market service declared with SPRING_CLOUD_VAULT_ENABLED=true but no direct runtime call or connection to vault is shown.\"}, {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"environment variable ZIPKIN=http://zipkin:9411/api/v1/spans in payment service shows documented runtime HTTP calls to zipkin.\"}, {\"i\": 9, \"verdict\": \"declared-only\", \"reason\": \"Kubernetes manifest sets EVENTS_URL=http://mushop-events but no code or runtime call evidence is shown.\"}]}",
+ "payload": [
+  {
+   "repo": "nplszfl__OmniTradeERP",
+   "source": "erp-customer-service",
+   "target": "nacos",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 506,
+     "kind": "compose",
+     "context": "   500:       timeout: 10s\n   501:       retries: 5\n   502:       start_period: 60s\n   503: \n   504:   # 客户服务\n   505:   customer-service:\n>> 506:     build:\n   507:       context: .\n   508:       dockerfile: docker/Dockerfile.service\n   509:       args:\n   510:         MODULE: erp-customer-service\n   511:         PORT: \"8085\"\n   512:     container_name: erp-customer-service"
+    },
+    {
+     "ref": "code: erp-customer-service/src/main/resources/application.yml",
+     "file": "erp-customer-service/src/main/resources/application.yml",
+     "line": 11,
+     "kind": "spring-yaml",
+     "context": "   5:   config:\n   6:     # ⚠️ 必须有这行：classpath 上有 spring-cloud-starter-alibaba-nacos-config 时，\n   7:     #    Spring Cloud 的 ConfigDataMissingEnvironmentPostProcessor 会检查\n   8:     #    spring.config.import，没配就直接抛 \"No spring.config.import set\" → 服务起不来。\n   9:     #    optional: 前缀表示 Nacos 不可达时不阻塞启动（降级用本地配置）。\n   10:     import:\n>> 11:       - optional:nacos:${spring.application.name}.yml\n   12:   application:\n   13:     name: erp-customer-service\n   14:   cloud:\n   15:     nacos:\n   16:       discovery:\n   17:         server-addr: ${NACOS_HOST:mse-d5a70466-nacos-ans.mse.aliyuncs.com}:${NACOS_PORT:-8848}"
+    }
+   ]
+  },
+  {
+   "repo": "nplszfl__OmniTradeERP",
+   "source": "erp-warehouse-service",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 358,
+     "kind": "compose",
+     "context": "   352:       timeout: 10s\n   353:       retries: 5\n   354:       start_period: 60s\n   355: \n   356:   # 仓库服务\n   357:   warehouse-service:\n>> 358:     build:\n   359:       context: .\n   360:       dockerfile: docker/Dockerfile.service\n   361:       args:\n   362:         MODULE: erp-warehouse-service\n   363:         PORT: \"8092\"\n   364:     container_name: erp-warehouse-service"
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 358,
+     "kind": "compose",
+     "context": "   352:       timeout: 10s\n   353:       retries: 5\n   354:       start_period: 60s\n   355: \n   356:   # 仓库服务\n   357:   warehouse-service:\n>> 358:     build:\n   359:       context: .\n   360:       dockerfile: docker/Dockerfile.service\n   361:       args:\n   362:         MODULE: erp-warehouse-service\n   363:         PORT: \"8092\"\n   364:     container_name: erp-warehouse-service"
+    }
+   ]
+  },
+  {
+   "repo": "nvawntien__go-judge-system",
+   "source": "envoy",
+   "target": "gateway",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: envoy/envoy.prod.yaml",
+     "file": "envoy/envoy.prod.yaml",
+     "line": 80,
+     "kind": "yaml",
+     "context": "   74:                             cluster: submission_service\n   75:                             timeout: 0s\n   76:                             idle_timeout: 75s\n   77:                         - match:\n   78:                             prefix: /api/\n   79:                           route:\n>> 80:                             cluster: gateway\n   81:                             timeout: 45s\n   82:                         - match:\n   83:                             prefix: /avatars/\n   84:                           route:\n   85:                             cluster: minio\n   86:                             timeout: 30s"
+    },
+    {
+     "ref": "code: envoy/envoy.yaml",
+     "file": "envoy/envoy.yaml",
+     "line": 80,
+     "kind": "yaml",
+     "context": "   74:                             cluster: submission_service\n   75:                             timeout: 0s\n   76:                             idle_timeout: 75s\n   77:                         - match:\n   78:                             prefix: /api/\n   79:                           route:\n>> 80:                             cluster: gateway\n   81:                             timeout: 45s\n   82:                 http_filters:\n   83:                   - name: envoy.filters.http.router\n   84:                     typed_config:\n   85:                       \"@type\": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router\n   86: "
+    }
+   ]
+  },
+  {
+   "repo": "nvawntien__go-judge-system",
+   "source": "auth-service",
+   "target": "minio",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 57,
+     "kind": "compose",
+     "context": "   51:       - ./gateway/settings:/etc/krakend/settings:ro\n   52:       - ./gateway/templates:/etc/krakend/templates:ro\n   53:       - ${GATEWAY_JWK_FILE:-./gateway/symmetric.json}:/etc/krakend/symmetric.json:ro\n   54:     networks:\n   55:       - judge_internal\n   56:     depends_on:\n>> 57:       auth-service:\n   58:         condition: service_healthy\n   59:       problem-service:\n   60:         condition: service_healthy\n   61:       submission-service:\n   62:         condition: service_healthy\n   63:     restart: unless-stopped"
+    }
+   ]
+  },
+  {
+   "repo": "nvawntien__go-judge-system",
+   "source": "auth-service",
+   "target": "postgres",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 57,
+     "kind": "compose",
+     "context": "   51:       - ./gateway/settings:/etc/krakend/settings:ro\n   52:       - ./gateway/templates:/etc/krakend/templates:ro\n   53:       - ${GATEWAY_JWK_FILE:-./gateway/symmetric.json}:/etc/krakend/symmetric.json:ro\n   54:     networks:\n   55:       - judge_internal\n   56:     depends_on:\n>> 57:       auth-service:\n   58:         condition: service_healthy\n   59:       problem-service:\n   60:         condition: service_healthy\n   61:       submission-service:\n   62:         condition: service_healthy\n   63:     restart: unless-stopped"
+    }
+   ]
+  },
+  {
+   "repo": "opexdev__core",
+   "source": "market",
+   "target": "consul",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 509,
+     "kind": "compose",
+     "context": "   503:       - CUSTOM_MESSAGE_ENABLED=${CUSTOM_MESSAGE_ENABLED}\n   504:       - CUSTOM_USER_LANGUAGE_ENABLED=${CUSTOM_USER_LANGUAGE_ENABLED}\n   505:     depends_on:\n   506:       - kafka-1\n   507:       - kafka-2\n   508:       - kafka-3\n>> 509:       - consul\n   510:       - postgres-market\n   511:       - redis-cache\n   512:     networks:\n   513:       - default\n   514:     labels:\n   515:       collect_logs: \"true\""
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 496,
+     "kind": "compose",
+     "context": "   490:     image: ghcr.io/opexdev/market\n   491:     environment:\n   492:       - JAVA_OPTS=-Xmx512m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005\n   493:       - SPRING_PROFILES_ACTIVE=${MARKET_SPRING_PROFILES_ACTIVE:-}\n   494:       - SPRING_CLOUD_VAULT_ENABLED=${SPRING_CLOUD_VAULT_ENABLED:-true}\n   495:       - KAFKA_IP_PORT=kafka-1:29092,kafka-2:29092,kafka-3:29092\n>> 496:       - CONSUL_HOST=consul\n   497:       - DB_IP_PORT=postgres-market\n   498:       - BACKEND_USER=${BACKEND_USER}\n   499:       - VAULT_HOST=${VAULT_HOST:-vault}\n   500:       - SWAGGER_AUTH_URL=$KEYCLOAK_FRONTEND_URL\n   501:       - TOKEN_ISSUER_URL=${KC_ISSUER_URL}\n   502:       - CUSTOM_MESSAGE_URL=${CUSTOM_MESSAGE_URL}"
+    }
+   ]
+  },
+  {
+   "repo": "opexdev__core",
+   "source": "eventlog",
+   "target": "vault",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 290,
+     "kind": "compose",
+     "context": "   284:       - postgres-accountant\n   285:     labels:\n   286:       collect_logs: \"true\"\n   287:     deploy:\n   288:       restart_policy:\n   289:         condition: on-failure\n>> 290:   eventlog:\n   291:     image: ghcr.io/opexdev/eventlog\n   292:     environment:\n   293:       - JAVA_OPTS=-Xmx256m\n   294:       - SPRING_PROFILES_ACTIVE=${EVENTLOG_SPRING_PROFILES_ACTIVE:-}\n   295:       - SPRING_CLOUD_VAULT_ENABLED=${SPRING_CLOUD_VAULT_ENABLED:-true}\n   296:       - KAFKA_IP_PORT=kafka-1:29092,kafka-2:29092,kafka-3:29092"
+    }
+   ]
+  },
+  {
+   "repo": "opexdev__core",
+   "source": "market",
+   "target": "vault",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 489,
+     "kind": "compose",
+     "context": "   483:       - default\n   484:     labels:\n   485:       collect_logs: \"true\"\n   486:     deploy:\n   487:       restart_policy:\n   488:         condition: on-failure\n>> 489:   market:\n   490:     image: ghcr.io/opexdev/market\n   491:     environment:\n   492:       - JAVA_OPTS=-Xmx512m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005\n   493:       - SPRING_PROFILES_ACTIVE=${MARKET_SPRING_PROFILES_ACTIVE:-}\n   494:       - SPRING_CLOUD_VAULT_ENABLED=${SPRING_CLOUD_VAULT_ENABLED:-true}\n   495:       - KAFKA_IP_PORT=kafka-1:29092,kafka-2:29092,kafka-3:29092"
+    }
+   ]
+  },
+  {
+   "repo": "oracle-quickstart__oci-cloudnative",
+   "source": "payment",
+   "target": "zipkin",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/payment/docker/docker-compose-zipkin.yml",
+     "file": "src/payment/docker/docker-compose-zipkin.yml",
+     "line": 15,
+     "kind": "compose",
+     "context": "   9:       - all\n   10:     cap_add:\n   11:       - NET_BIND_SERVICE\n   12:     read_only: true\n   13:     environment:\n   14:       - reschedule=on-node-failure\n>> 15:       - ZIPKIN=http://zipkin:9411/api/v1/spans\n   16:     ports:\n   17:       - \"8082:80\"\n   18:   zipkin:\n   19:     image: openzipkin/zipkin \n   20:     hostname: zipkin\n   21:     restart: always"
+    }
+   ]
+  },
+  {
+   "repo": "oracle-quickstart__oci-cloudnative",
+   "source": "api",
+   "target": "mushop-events",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deploy/complete/kubernetes/manifests/api-dep.yaml",
+     "file": "deploy/complete/kubernetes/manifests/api-dep.yaml",
+     "line": 45,
+     "kind": "yaml",
+     "context": "   39:           value: http://orders\n   40:         - name: CARTS_URL\n   41:           value: http://carts\n   42:         - name: USERS_URL\n   43:           value: http://user\n   44:         - name: EVENTS_URL\n>> 45:           value: http://mushop-events\n   46:         - name: STATIC_MEDIA_URL\n   47:           value: /assets\n   48:         - name: NEWSLETTER_SUBSCRIBE_URL\n   49:           value: \"\"\n   50:         livenessProbe:\n   51:           httpGet:"
+    }
+   ]
+  }
+ ]
+}

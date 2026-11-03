@@ -1,0 +1,214 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=cuongnh28__spring-microservices-blueprint kafdrop -> kafka (type async, grade documented)
+  cited code: docker-compose.yml#depends_on
+   189: 
+   190:   kafdrop:
+   191:     image: obsidiandynamics/kafdrop
+   192:     container_name: kafdrop
+   193:     restart: unless-stopped
+   194:     depends_on:
+>> 195:       kafka:
+   196:         condition: service_healthy
+   197:     ports:
+   198:       - "8085:9000"
+   199:     environment:
+   200:       KAFKA_BROKERCONNECT: kafka:29092
+   201:     healthcheck:
+  cited code: docker-compose.yml
+   189: 
+   190:   kafdrop:
+   191:     image: obsidiandynamics/kafdrop
+   192:     container_name: kafdrop
+   193:     restart: unless-stopped
+   194:     depends_on:
+>> 195:       kafka:
+   196:         condition: service_healthy
+   197:     ports:
+   198:       - "8085:9000"
+   199:     environment:
+   200:       KAFKA_BROKERCONNECT: kafka:29092
+   201:     healthcheck:
+
+[1] repo=cuongnh28__spring-microservices-blueprint fluentd -> elasticsearch (type db, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   33:       - "5005:5005"
+   34:     depends_on:
+   35:       account-service-db:
+   36:         condition: service_healthy
+   37:       kafka:
+   38:         condition: service_healthy
+>> 39:       fluentd:
+   40:         condition: service_started
+   41:     logging:
+   42:       driver: "fluentd"
+   43:       options:
+   44:         fluentd-address: host.docker.internal:24224
+   45:         tag: '{{.Name}}'
+
+[2] repo=cuongnh28__spring-microservices-blueprint product-service-app -> account-service (type sync-http, grade documented)
+  cited code: product-service/src/main/java/com/demo/feign/UserFeignClient.java:14
+   8: 
+   9: /**
+   10:  * @author Vito Nguyen (<a href="https://github.com/cuongnh28">...</a>)
+   11:  */
+   12: 
+   13: @FeignClient(
+>> 14:     name = "account-service", 
+   15:     url = "http://account-service-app:8088", 
+   16:     configuration = {CommonOpenFeignConfig.class}
+   17: )
+   18: public interface UserFeignClient {
+   19: 
+   20:     @GetMapping("/api/user/{id}")
+
+[3] repo=danionescu0__docker-flask-mongodb-example background-mqtt -> mongo (type db, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   155:             - MQTT_PASSWORD=/run/secrets/mqtt_password
+   156:             - PYTHONUNBUFFERED=1
+   157:         secrets:
+   158:             - mqtt_user
+   159:             - mqtt_password
+   160:         depends_on:
+>> 161:             - mongo
+   162:             - mqtt
+   163:             - influxdb
+   164:         tty: true
+   165: 
+   166:     # Fulltext search engine backed by fulltext MongoDb index
+   167:     web-fulltext-search:
+
+[4] repo=danionescu0__docker-flask-mongodb-example web-book-collection -> mongo (type db, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   222:         environment:
+   223:              - PYTHONUNBUFFERED=1
+   224:         ports:
+   225:             - "86:5000"
+   226:         entrypoint: python /root/flask-mongodb-example/python/bookcollection/bookcollection.py
+   227:         depends_on:
+>> 228:             - mongo
+   229:             - web-users
+   230: 
+   231:     # Wame functionality as web-users but build with fastapi
+   232:     # runs with gunicorn on two processor cores [-w 2]
+   233:     web-users-fast-api:
+   234:         build:
+
+[5] repo=danionescu0__docker-flask-mongodb-example mongo-express -> mongo (type db, grade documented)
+  cited code: docker-compose.yml#depends_on
+   56:         container_name: mongo-express
+   57:         environment:
+   58:           ME_CONFIG_MONGODB_SERVER: mongo
+   59:         ports:
+   60:           - "8081:8081"
+   61:         depends_on:
+>> 62:           - mongo
+   63: 
+   64: 
+   65:     # Redis server, used here for caching
+   66:     # uses healthcheck with redis-cli ping
+   67:     redis:
+   68:         build:
+  cited code: docker-compose.yml
+   52: 
+   53:     # admin credentials are admin:pass, change them
+   54:     mongo-express:
+   55:         image: mongo-express:latest
+   56:         container_name: mongo-express
+   57:         environment:
+>> 58:           ME_CONFIG_MONGODB_SERVER: mongo
+   59:         ports:
+   60:           - "8081:8081"
+   61:         depends_on:
+   62:           - mongo
+   63: 
+   64: 
+
+[6] repo=dashersw__cote-workshop purchase-service -> db (type sync-http, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   60:       - db
+   61: 
+   62:   purchase-service:
+   63:     extends: base
+   64:     command: node services/purchase-service.js
+   65:     depends_on:
+>> 66:       - db
+   67: 
+   68:   user-service:
+   69:     extends: base
+   70:     command: node services/user-service.js
+   71:     depends_on:
+   72:       - db
+
+[7] repo=dashersw__cote-workshop lb -> admin (type sync-http, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   7:     environment:
+   8:       - PG=true
+   9: 
+   10:   lb:
+   11:     image: dockercloud/haproxy
+   12:     links:
+>> 13:       - admin
+   14:       - end-user
+   15:       - monitoring
+   16:     volumes:
+   17:       - /var/run/docker.sock:/var/run/docker.sock
+   18:     ports:
+   19:       - 80:80
+
+[8] repo=dashersw__cote-workshop lb -> monitoring (type sync-http, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   9: 
+   10:   lb:
+   11:     image: dockercloud/haproxy
+   12:     links:
+   13:       - admin
+   14:       - end-user
+>> 15:       - monitoring
+   16:     volumes:
+   17:       - /var/run/docker.sock:/var/run/docker.sock
+   18:     ports:
+   19:       - 80:80
+   20:       - 443:443
+   21:     restart: on-failure
+
+[9] repo=desenvolvedor-io__dev-store web-mvc -> devstore-api-catalog (type sync-http, grade documented)
+  cited code: src/web/DevStore.WebApp.MVC/appsettings.Docker.json
+   27:     ],
+   28:     "Properties": {
+   29:       "Application": "DevStoreWeb"
+   30:     }
+   31:   },
+   32:   "AuthUrl": "https://devstore-api-identity",
+>> 33:   "CatalogUrl": "https://devstore-api-catalog",
+   34:   "CustomerUrl": "https://devstore-api-customers",
+   35:   "CheckoutBffUrl": "https://devstore-api-bff-checkout"
+   36: }
+  cited code: src/web/DevStore.WebApp.MVC/appsettings.Production.json
+   27:     ],
+   28:     "Properties": {
+   29:       "Application": "DevStoreWeb"
+   30:     }
+   31:   },
+   32:   "AuthUrl": "https://devstore-api-identity",
+>> 33:   "CatalogUrl": "https://devstore-api-catalog",
+   34:   "CustomerUrl": "https://devstore-api-customers",
+   35:   "CheckoutBffUrl": "https://devstore-api-bff-checkout"
+   36: }

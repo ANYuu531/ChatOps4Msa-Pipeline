@@ -1,0 +1,248 @@
+{
+ "id": "edges-0002",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 3075,
+  "completion_tokens": 424,
+  "total_tokens": 3499,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\":[\n  {\"i\":0,\"verdict\":\"correct\",\"reason\":\"The code shows explicit fetch calls to URLs at roadmap.nesohq.org, demonstrating runtime HTTP calls from archive-client to roadmap.nesohq.org.\"},\n  {\"i\":1,\"verdict\":\"correct\",\"reason\":\"The docker-compose depends_on with condition service_healthy plus environment variable RABBITMQ_URL shows runtime connection from bgce_cortex to rabbitmq.\"},\n  {\"i\":2,\"verdict\":\"correct\",\"reason\":\"The code explicitly makes HTTP GET requests to 'http://product:5000/api/...' showing runtime calls from frontend to product.\"},\n  {\"i\":3,\"verdict\":\"correct\",\"reason\":\"The code explicitly makes HTTP POST and GET requests to 'http://user:5000/api/...' showing runtime calls from frontend to user.\"},\n  {\"i\":4,\"verdict\":\"correct\",\"reason\":\"The code explicitly makes HTTP GET and POST requests to 'http://order:5000/api/...' showing runtime calls from frontend to order.\"},\n  {\"i\":5,\"verdict\":\"declared-only\",\"reason\":\"The FeignClient interfaces declare URLs via configuration properties but no code shown that these URLs are resolved or called at runtime.\"},\n  {\"i\":6,\"verdict\":\"correct\",\"reason\":\"The gateway configuration explicitly routes requests via load balancer URIs to lb:http://CUSTOMER-SERVICE and lb:http://ORDER-SERVICE, showing runtime routing.\"},\n  {\"i\":7,\"verdict\":\"declared-only\",\"reason\":\"The payment service imports config from configserver via spring.config.import, which declares a dependency but does not itself show runtime calls.\"},\n  {\"i\":8,\"verdict\":\"declared-only\",\"reason\":\"The spring.config.import property declares configserver as a config source but does not show runtime calls or connections.\"},\n  {\"i\":9,\"verdict\":\"correct\",\"reason\":\"The api-gateway configuration explicitly defines routes with URIs lb://advertisement-service, showing runtime routing from api-gateway to advertisement-service.\"}\n]}",
+ "payload": [
+  {
+   "repo": "NesoHQ__bgce-archive",
+   "source": "archive-client",
+   "target": "roadmap.nesohq.org",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: archive-client/app/(home)/roadmap/page.tsx:232",
+     "file": "archive-client/app/(home)/roadmap/page.tsx",
+     "line": 232,
+     "kind": "src:typescript",
+     "context": "   226: \n   227:   const fetchPlannedRoadmap = async () => {\n   228:     try {\n   229:       setIsLoading(true);\n   230:       setError(null);\n   231: \n>> 232:       const response = await fetch(`${URLS}planned`);\n   233:       const res = await response.json();\n   234: \n   235:       setPlannedItems(transformRoadmapItems(res));\n   236:     } catch (err) {\n   237:       setError(\"Failed to load planned roadmap.\");\n   238:     } finally {"
+    },
+    {
+     "ref": "code: archive-client/app/(home)/roadmap/page.tsx:246",
+     "file": "archive-client/app/(home)/roadmap/page.tsx",
+     "line": 246,
+     "kind": "src:typescript",
+     "context": "   240:     }\n   241:   };\n   242:   const fetchInProgressRoadmap = async () => {\n   243:     try {\n   244:       setIsLoading(true);\n   245:       setError(null);\n>> 246:       const response = await fetch(`${URLS}in-progress`);\n   247:       const res = await response.json();\n   248:       setInProgressItems(transformRoadmapItems(res));\n   249:     } catch (err) {\n   250:       setError(\"Failed to load in-progress roadmap. Please try again later.\");\n   251:     } finally {\n   252:       setIsLoading(false);"
+    }
+   ]
+  },
+  {
+   "repo": "NesoHQ__bgce-archive",
+   "source": "bgce_cortex",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: cortex/docker-compose.yml#depends_on",
+     "file": "cortex/docker-compose.yml",
+     "line": 44,
+     "kind": "compose",
+     "context": "   38:       BGCE_DB_DSN: \"postgresql://postgres:root@postgres:5432/cortex_db?sslmode=disable\"\n   39:       BGCE_DB_DRIVER: \"postgres\"\n   40: \n   41:     depends_on:\n   42:       postgres:\n   43:         condition: service_healthy\n>> 44:       rabbitmq:\n   45:         condition: service_healthy\n   46:       redis:\n   47:         condition: service_healthy\n   48:     networks:\n   49:       - bgce-network\n   50: "
+    },
+    {
+     "ref": "code: cortex/docker-compose.yml",
+     "file": "cortex/docker-compose.yml",
+     "line": 27,
+     "kind": "compose",
+     "context": "   21:       APM_SERVICE_NAME: \"\"\n   22:       APM_SERVER_URL: \"\"\n   23:       APM_SECRET_TOKEN: \"\"\n   24:       APM_ENVIRONMENT: \"development\"\n   25: \n   26:       # RabbitMQ\n>> 27:       RABBITMQ_URL: \"amqp://admin:admin@rabbitmq:5672\"\n   28:       RMQ_RECONNECT_DELAY: 5\n   29:       RMQ_RETRY_INTERVAL: 600\n   30:       RMQ_QUEUE_PREFIX: \"cortex-dev\"\n   31: \n   32:       # Redis\n   33:       READ_REDIS_URL: \"redis://redis:6379\""
+    }
+   ]
+  },
+  {
+   "repo": "PacktPublishing__Hands-on-Microservices-with-Python",
+   "source": "frontend",
+   "target": "product",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: app/frontend/api/ProductClient.py:14",
+     "file": "app/frontend/api/ProductClient.py",
+     "line": 14,
+     "kind": "src:python",
+     "context": "   8:         response = requests.request(method=\"GET\", url='http://product:5000/api/product/' + slug)\n   9:         product = response.json()\n   10:         return product\n   11: \n   12:     @staticmethod\n   13:     def get_products():\n>> 14:         r = requests.get('http://product:5000/api/products')\n   15:         products = r.json()\n   16:         return products\n   17: "
+    },
+    {
+     "ref": "code: app/frontend/api/ProductClient.py:8",
+     "file": "app/frontend/api/ProductClient.py",
+     "line": 8,
+     "kind": "src:python",
+     "context": "   2: \n   3: \n   4: class ProductClient:\n   5: \n   6:     @staticmethod\n   7:     def get_product(slug):\n>> 8:         response = requests.request(method=\"GET\", url='http://product:5000/api/product/' + slug)\n   9:         product = response.json()\n   10:         return product\n   11: \n   12:     @staticmethod\n   13:     def get_products():\n   14:         r = requests.get('http://product:5000/api/products')"
+    }
+   ]
+  },
+  {
+   "repo": "PacktPublishing__Hands-on-Microservices-with-Python",
+   "source": "frontend",
+   "target": "user",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: app/frontend/api/UserClient.py:14",
+     "file": "app/frontend/api/UserClient.py",
+     "line": 14,
+     "kind": "src:python",
+     "context": "   8:     def post_login(form):\n   9:         api_key = False\n   10:         payload = {\n   11:             'username': form.username.data,\n   12:             'password': form.password.data,\n   13:         }\n>> 14:         url = 'http://user:5000/api/user/login'\n   15:         response = requests.request(\"POST\", url=url, data=payload)\n   16:         if response:\n   17:             d = response.json()\n   18:             if d['api_key'] is not None:\n   19:                 api_key = d['api_key']\n   20:         return api_key"
+    },
+    {
+     "ref": "code: app/frontend/api/UserClient.py:24",
+     "file": "app/frontend/api/UserClient.py",
+     "line": 24,
+     "kind": "src:python",
+     "context": "   18:             if d['api_key'] is not None:\n   19:                 api_key = d['api_key']\n   20:         return api_key\n   21: \n   22:     @staticmethod\n   23:     def does_exist(username):\n>> 24:         url = 'http://user:5000/api/user/'+username+'/exist'\n   25:         response = requests.request(\"GET\", url=url)\n   26:         return response.status_code == 200\n   27: \n   28:     @staticmethod\n   29:     def post_user_create(form):\n   30:         user = False"
+    }
+   ]
+  },
+  {
+   "repo": "PacktPublishing__Hands-on-Microservices-with-Python",
+   "source": "frontend",
+   "target": "order",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: app/frontend/api/OrderClient.py:13",
+     "file": "app/frontend/api/OrderClient.py",
+     "line": 13,
+     "kind": "src:python",
+     "context": "   7:     @staticmethod\n   8:     def get_order():\n   9:         headers = {\n   10:             'Authorization': 'Basic ' + session['user_api_key']\n   11:         }\n   12: \n>> 13:         response = requests.request(method=\"GET\", url='http://order:5000/api/order', headers=headers)\n   14:         order = response.json()\n   15:         return order\n   16: \n   17:     @staticmethod\n   18:     def update_order(items):\n   19: "
+    },
+    {
+     "ref": "code: app/frontend/api/OrderClient.py:20",
+     "file": "app/frontend/api/OrderClient.py",
+     "line": 20,
+     "kind": "src:python",
+     "context": "   14:         order = response.json()\n   15:         return order\n   16: \n   17:     @staticmethod\n   18:     def update_order(items):\n   19: \n>> 20:         url = 'http://order:5000/api/order/update'\n   21:         headers = {\n   22:             'Authorization': 'Basic ' + session['user_api_key']\n   23:         }\n   24:         response = requests.request(\"POST\", url=url, data=items, headers=headers)\n   25:         if response:\n   26:             order = response.json()"
+    }
+   ]
+  },
+  {
+   "repo": "PramithaMJ__fully-completed-microservices-Java-Springboot",
+   "source": "order",
+   "target": "config-server",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: services/order/src/main/java/com/alibou/ecommerce/payment/PaymentClient.java:9",
+     "file": "services/order/src/main/java/com/alibou/ecommerce/payment/PaymentClient.java",
+     "line": 9,
+     "kind": "src:java",
+     "context": "   3: import org.springframework.cloud.openfeign.FeignClient;\n   4: import org.springframework.web.bind.annotation.PostMapping;\n   5: import org.springframework.web.bind.annotation.RequestBody;\n   6: \n   7: @FeignClient(\n   8:     name = \"product-service\",\n>> 9:     url = \"${application.config.payment-url}\"\n   10: )\n   11: public interface PaymentClient {\n   12: \n   13:   @PostMapping\n   14:   Integer requestOrderPayment(@RequestBody PaymentRequest request);\n   15: }"
+    },
+    {
+     "ref": "code: services/order/src/main/java/com/alibou/ecommerce/customer/CustomerClient.java:11",
+     "file": "services/order/src/main/java/com/alibou/ecommerce/customer/CustomerClient.java",
+     "line": 11,
+     "kind": "src:java",
+     "context": "   5: import org.springframework.web.bind.annotation.PathVariable;\n   6: \n   7: import java.util.Optional;\n   8: \n   9: @FeignClient(\n   10:     name = \"customer-service\",\n>> 11:     url = \"${application.config.customer-url}\"\n   12: )\n   13: public interface CustomerClient {\n   14: \n   15:   @GetMapping(\"/{customer-id}\")\n   16:   Optional<CustomerResponse> findCustomerById(@PathVariable(\"customer-id\") String customerId);\n   17: }"
+    }
+   ]
+  },
+  {
+   "repo": "PramithaMJ__fully-completed-microservices-Java-Springboot",
+   "source": "gateway",
+   "target": "lb",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: services/config-server/src/main/resources/configurations/gateway-service.yml",
+     "file": "services/config-server/src/main/resources/configurations/gateway-service.yml",
+     "line": 11,
+     "kind": "yaml",
+     "context": "   5:     gateway:\n   6:       discovery:\n   7:         locator:\n   8:           enabled: true\n   9:       routes:\n   10:         - id: customer-service\n>> 11:           uri: lb:http://CUSTOMER-SERVICE\n   12:           predicates:\n   13:             - Path=/api/v1/customers/**\n   14:         - id: order-service\n   15:           uri: lb:http://ORDER-SERVICE\n   16:           predicates:\n   17:             - Path=/api/v1/orders/**"
+    }
+   ]
+  },
+  {
+   "repo": "PramithaMJ__fully-completed-microservices-Java-Springboot",
+   "source": "payment",
+   "target": "config-server",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: services/payment/src/main/resources/application.yml",
+     "file": "services/payment/src/main/resources/application.yml",
+     "line": 0,
+     "kind": "spring-yaml",
+     "context": "   spring:\n     config:\n       import: optional:configserver:http://localhost:8888\n     application:\n       name: payment-service\n   "
+    },
+    {
+     "ref": "code: services/config-server/src/main/resources/configurations/payment-service.yml",
+     "file": "services/config-server/src/main/resources/configurations/payment-service.yml",
+     "line": 0,
+     "kind": "yaml",
+     "context": "   server:\n     port: 8060\n   spring:\n     datasource:\n       driver-class-name: org.postgresql.Driver\n       url: jdbc:postgresql://localhost:5432/payment\n       username: alibou\n       password: alibou\n     jpa:\n       hibernate:\n         ddl-auto: create\n       database: postgresql\n       database-platform: org.hibernate.dialect.PostgreSQLDialect"
+    }
+   ]
+  },
+  {
+   "repo": "Rapter1990__SpringBootMicroservices",
+   "source": "management-service",
+   "target": "configserver",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: management-service/src/main/resources/application.properties",
+     "file": "management-service/src/main/resources/application.properties",
+     "line": 1,
+     "kind": "properties",
+     "context": ">> 1: spring.config.import=optional:configserver:http://localhost:9191/\n   2: #spring.config.import=optional:configserver:http://configserver:9191/\n   3: spring.application.name=management-service\n   4: "
+    },
+    {
+     "ref": "code: configserver/src/main/resources/configurations/management-service.properties",
+     "file": "configserver/src/main/resources/configurations/management-service.properties",
+     "line": 0,
+     "kind": "properties",
+     "context": "   server.port=9002\n   \n   spring.application.name=management-service\n   eureka.client.serviceUrl.defaultZone=http://localhost:8761/eureka\n   \n   keycloak.realm=master\n   keycloak.auth-server-url=http://localhost:8181\n   keycloak.ssl-required=external\n   keycloak.resource=spring-boot-microservice-keycloak\n   keycloak.bearer-only=true\n   keycloak.public-client=true\n   \n   resilience4j.circuitbreaker.instances.management.registerHealthIndicator=true"
+    }
+   ]
+  },
+  {
+   "repo": "Rapter1990__SpringBootMicroservices",
+   "source": "api-gateway",
+   "target": "advertisement-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: configserver/src/main/resources/configurations/api-gateway.properties",
+     "file": "configserver/src/main/resources/configurations/api-gateway.properties",
+     "line": 12,
+     "kind": "properties",
+     "context": "   6: ## User Service Route\n   7: spring.cloud.gateway.routes[0].id=user-service\n   8: spring.cloud.gateway.routes[0].uri=lb://user-service\n   9: spring.cloud.gateway.routes[0].predicates[0]=Path=/api/v1/users/*\n   10: \n   11: ## Advertisement Service Route\n>> 12: spring.cloud.gateway.routes[1].id=advertisement-service\n   13: spring.cloud.gateway.routes[1].uri=lb://advertisement-service\n   14: spring.cloud.gateway.routes[1].predicates[0]=Path=/api/**\n   15: \n   16: ## Management Service Route\n   17: spring.cloud.gateway.routes[2].id=management-service\n   18: spring.cloud.gateway.routes[2].uri=lb://management-service"
+    }
+   ]
+  }
+ ]
+}

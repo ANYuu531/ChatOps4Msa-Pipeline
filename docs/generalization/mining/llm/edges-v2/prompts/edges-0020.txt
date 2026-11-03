@@ -1,0 +1,240 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=oracle-quickstart__oci-cloudnative orders -> nats (type async, grade documented)
+  cited code: src/orders/src/main/resources/application.properties
+   spring.application.name=orders
+   server.port=${port:8082}
+   server.tomcat.max-threads=2
+   
+   spring.main.lazy-initialization=true
+   
+   management.endpoints.web.exposure.include=*
+   management.endpoint.health.show-details=always
+   management.endpoint.health.show-components=always
+   management.health.probes.enabled=true
+   
+   spring.zipkin.baseUrl=http://${zipkin_host:zipkin}:9411/
+   spring.zipkin.enabled=${zipkin_enabled:false}
+  cited code: deploy/complete/docker-compose/docker-compose.yml
+   142:     cap_add:
+   143:       - NET_BIND_SERVICE
+   144:     read_only: true
+   145:     tmpfs:
+   146:       - /tmp:rw,noexec,nosuid
+   147:     environment:
+>> 148:       - NATS_HOST=nats
+   149:       - NATS_PORT=4222
+   150:       - ORDERS_NEW=mushop-orders
+   151:       - ORDERS_SHIPPED=mushop-shipments
+   152:       - OADB_USER
+   153:       - OADB_PW
+   154:       - OADB_SERVICE=mock
+
+[1] repo=phongnguyend__Practical.CleanArchitecture webapi -> configuration-api (type sync-http, grade inferred)
+  cited code: src/Microservices/docker-compose.yml
+   215:         environment:
+   216:           ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+   217:           Yarp__Clusters__Products__Destinations__destination1__Address: "http://product-api:8080"
+   218:           Yarp__Clusters__Files__Destinations__destination1__Address: "http://storage-api:8080"
+   219:           Yarp__Clusters__AuditLogs__Destinations__destination1__Address: "http://auditlog-api:8080"
+   220:           Yarp__Clusters__Users__Destinations__destination1__Address: "http://identity-api:8080"
+>> 221:           Yarp__Clusters__Configurations__Destinations__destination1__Address: "http://configuration-api:8080"
+   222:           Yarp__Clusters__Hubs__Destinations__destination1__Address: "http://notification-api:8080"
+   223: 
+
+[2] repo=phongnguyend__Practical.CleanArchitecture background -> ddddotnet-webhook-server.azurewebsites.net (type external, grade documented)
+  cited code: src/Monolith/ClassifiedAds.Background/appsettings.json
+   185:       "AppId": "xxx",
+   186:       "ClientSecret": "xxx"
+   187:     }
+   188:   },
+   189:   "Webhooks": {
+   190:     "FileCreatedEvent": {
+>> 191:       "PayloadUrl": "https://ddddotnet-webhook-server.azurewebsites.net/test",
+   192:       "Secret": ""
+   193:     },
+   194:     "FileUpdatedEvent": {
+   195:       "PayloadUrl": "https://ddddotnet-webhook-server.azurewebsites.net/test",
+   196:       "Secret": ""
+   197:     },
+  cited code: src/ModularMonolith/ClassifiedAds.Background/appsettings.json
+   182:         "SecretAccessKey": "xxx",
+   183:         "BucketName": "classifiedadds",
+   184:         "RegionEndpoint": "ap-southeast-1"
+   185:       },
+   186:       "Webhooks": {
+   187:         "FileUploadedEvent": {
+>> 188:           "PayloadUrl": "https://ddddotnet-webhook-server.azurewebsites.net/test",
+   189:           "Secret": ""
+   190:         },
+   191:         "FileDeletedEvent": {
+   192:           "PayloadUrl": "https://ddddotnet-webhook-server.azurewebsites.net/test",
+   193:           "Secret": ""
+   194:         }
+
+[3] repo=phongnguyend__Practical.CleanArchitecture notification-background -> notification-grpc (type sync-http, grade inferred)
+  cited code: src/Microservices/docker-compose.yml
+   124:           Authentication__IdentityServer__RequireHttpsMetadata: "false"
+   125:           Messaging__Provider: "RabbitMQ"
+   126:           Messaging__RabbitMQ__HostName: "rabbitmq"
+   127:           Services__AuditLog__Grpc: ${Services__AuditLog__Grpc}
+   128:           Services__Identity__Grpc: ${Services__Identity__Grpc}
+   129:           Services__Notification__Grpc: ${Services__Notification__Grpc}
+>> 130:     notification-background:
+   131:         image: classifiedads.services.notification.background
+   132:         build:
+   133:           context: .
+   134:           dockerfile: ./Services.Notification/ClassifiedAds.Services.Notification.Background/Dockerfile
+   135:         depends_on:
+   136:           - db
+
+[4] repo=piomin__sample-spring-microservices-advanced gateway-service -> transfer-service (type sync-http, grade documented)
+  cited code: gateway-service/src/main/resources/application.yml
+   38:         - id: product-service
+   39:           uri: lb://product-service
+   40:           predicates:
+   41:             - Path=/product/**
+   42:           filters:
+   43:             - RewritePath=/product/(?<path>.*), /$\{path}
+>> 44:         - id: transfer-service
+   45:           uri: lb://transfer-service
+   46:           predicates:
+   47:             - Path=/transfer/**
+   48:           filters:
+   49:             - RewritePath=/transfer/(?<path>.*), /$\{path}
+   50:         - id: openapi
+
+[5] repo=piomin__sample-spring-microservices-advanced transfer-service -> account-service (type sync-http, grade documented)
+  cited code: transfer-service/src/main/java/pl/piomin/microservices/advanced/transfer/contract/AccountClient.java:8
+   2: 
+   3: import org.springframework.cloud.openfeign.FeignClient;
+   4: import org.springframework.web.bind.annotation.PathVariable;
+   5: import org.springframework.web.bind.annotation.RequestMapping;
+   6: import org.springframework.web.bind.annotation.RequestMethod;
+   7: 
+>> 8: @FeignClient("account-service")
+   9: public interface AccountClient {
+   10: 
+   11: 	@RequestMapping(method = RequestMethod.GET, value = "/accounts/{accountId}")
+   12: 	Account getAccount(@PathVariable("accountId") String accountId);
+   13: 
+   14: }
+
+[6] repo=piomin__sample-spring-microservices-advanced customer-service -> account-service (type sync-http, grade documented)
+  cited code: customer-service/src/main/java/pl/piomin/microservices/advanced/customer/contract/AccountClient.java:10
+   4: import org.springframework.web.bind.annotation.PathVariable;
+   5: import org.springframework.web.bind.annotation.RequestMapping;
+   6: import org.springframework.web.bind.annotation.RequestMethod;
+   7: 
+   8: import java.util.List;
+   9: 
+>> 10: @FeignClient("account-service")
+   11: public interface AccountClient {
+   12: 
+   13:     @RequestMapping(method = RequestMethod.GET, value = "/accounts/customer/{customerId}")
+   14:     List<Account> getAccounts(@PathVariable("customerId") String customerId);
+   15: 
+   16: }
+
+[7] repo=piomin__sample-spring-microservices-new gateway-service -> employee-service (type sync-http, grade documented)
+  cited code: config-service/src/main/resources/config/gateway-service-docker.yml
+   17:   cloud:
+   18:     gateway:
+   19:       discovery:
+   20:         locator:
+   21:           enabled: true
+   22:       routes:
+>> 23:       - id: employee-service
+   24:         uri: lb://employee-service
+   25:         predicates:
+   26:         - Path=/employee/**
+   27:         filters:
+   28:         - RewritePath=/employee/(?<path>.*), /$\{path}
+   29:       - id: department-service
+  cited code: config-service/src/main/resources/config/gateway-service.yml
+   18:   cloud:
+   19:     gateway:
+   20:       discovery:
+   21:         locator:
+   22:           enabled: true
+   23:       routes:
+>> 24:       - id: employee-service
+   25:         uri: lb://employee-service
+   26:         predicates:
+   27:         - Path=/employee/**
+   28:         filters:
+   29:         - RewritePath=/employee/(?<path>.*), /$\{path}
+   30:       - id: department-service
+
+[8] repo=piomin__sample-spring-microservices-new organization-service -> zipkin (type sync-http, grade documented)
+  cited code: config-service/src/main/resources/config/organization-service-docker.yml
+   19:       enabled: always
+   20: 
+   21: management:
+   22:   tracing:
+   23:     sampling:
+   24:       probability: 1.0
+>> 25:   zipkin:
+   26:     tracing:
+   27:       endpoint: http://zipkin:9411/api/v2/spans
+  cited code: docker-compose.yml#depends_on
+   67:         condition: service_healthy
+   68:     links:
+   69:       - config-service
+   70:       - discovery-service
+   71:       - employee-service
+   72:       - department-service
+>> 73:       - zipkin
+   74:     environment:
+   75:       SPRING_PROFILES_ACTIVE: docker
+   76:   gateway-service:
+   77:     image: piomin/gateway-service:1.1-SNAPSHOT
+   78:     ports:
+   79:       - "8060:8060"
+
+[9] repo=piomin__sample-spring-microservices-new gateway-service -> discovery-service (type sync-http, grade documented)
+  cited code: config-service/src/main/resources/config/gateway-service-docker.yml
+   1: server:
+   2:   port: 8060
+   3: 
+   4: eureka:
+   5:   client:
+   6:     serviceUrl:
+>> 7:       defaultZone: http://discovery-service:8061/eureka/
+   8: 
+   9: logging:
+   10:   pattern: 
+   11:     console: "%d{yyyy-MM-dd HH:mm:ss} [%X{traceId:-},%X{spanId:-}] ${LOG_LEVEL_PATTERN:-%5p} %m%n"
+   12:               
+   13: spring:
+  cited code: docker-compose.yml#depends_on
+   75:       SPRING_PROFILES_ACTIVE: docker
+   76:   gateway-service:
+   77:     image: piomin/gateway-service:1.1-SNAPSHOT
+   78:     ports:
+   79:       - "8060:8060"
+   80:     depends_on:
+>> 81:       discovery-service:
+   82:         condition: service_healthy
+   83:     environment:
+   84:       SPRING_PROFILES_ACTIVE: docker
+   85:     links:
+   86:       - config-service
+   87:       - discovery-service

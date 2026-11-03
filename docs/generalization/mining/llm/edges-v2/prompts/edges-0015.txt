@@ -1,0 +1,216 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=kalintsenkov__BettingSystem watchdog -> games (type sync-http, grade documented)
+  cited code: src/docker-compose.yml#depends_on
+   186:         networks: 
+   187:             - bettingsystem-network
+   188:         depends_on:
+   189:             - identity
+   190:             - betting
+   191:             - competitions
+>> 192:             - games
+   193:             - teams
+   194: 
+   195: networks:
+   196:     bettingsystem-network:
+   197: 
+   198: volumes:
+  cited code: src/docker-compose.yml
+   176:             - HealthChecks-UI__HealthChecks__0__Uri=http://identity/health
+   177:             - HealthChecks-UI__HealthChecks__1__Name=Betting
+   178:             - HealthChecks-UI__HealthChecks__1__Uri=http://betting/health
+   179:             - HealthChecks-UI__HealthChecks__2__Name=Competitions
+   180:             - HealthChecks-UI__HealthChecks__2__Uri=http://competitions/health
+   181:             - HealthChecks-UI__HealthChecks__3__Name=Games
+>> 182:             - HealthChecks-UI__HealthChecks__3__Uri=http://games/health
+   183:             - HealthChecks-UI__HealthChecks__4__Name=Teams
+   184:             - HealthChecks-UI__HealthChecks__4__Uri=http://teams/health
+   185:         restart: on-failure
+   186:         networks: 
+   187:             - bettingsystem-network
+   188:         depends_on:
+
+[1] repo=kalintsenkov__BettingSystem teams -> sqlserver (type db, grade inferred)
+  cited code: src/docker-compose.yml
+   130:             dockerfile: ./Teams/Teams.Startup/Dockerfile
+   131:         ports: 
+   132:             - "5005:80"
+   133:         env_file: 
+   134:             - Server/Common/Common.Application/Common.env
+   135:         environment:
+>> 136:             - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=BettingSystemTeamsDb;User Id=sa; Password=yourStrongPassword12!@;MultipleActiveResultSets=true
+   137:             - ConnectionStrings__CronJobsConnection=Server=sqlserver;Database=BettingSystemTeamsCronJobsDb;User Id=sa; Password=yourStrongPassword12!@;MultipleActiveResultSets=true
+   138:             - MessageQueueSettings__Host=rabbitmq
+   139:             - MessageQueueSettings__UserName=rabbitmquser
+   140:             - MessageQueueSettings__Password=rabbitmqPassword12!
+   141:         restart: on-failure
+   142:         volumes:
+
+[2] repo=kreta__Kreta nginx -> php (type sync-http, grade inferred)
+  cited code: etc/docker/docker-compose.yml#depends_on
+   85:             TASK_MANAGER_HOST: ${TASK_MANAGER_HOST}
+   86:             IDENTITY_ACCESS_HOST: ${IDENTITY_ACCESS_HOST}
+   87:             COMPOSITE_UI_HOST: ${COMPOSITE_UI_HOST}
+   88:             NOTIFIER_HOST: ${NOTIFIER_HOST}
+   89:             SYMFONY_ENV: ${SYMFONY_ENV}
+   90:         links:
+>> 91:             - php
+   92:             - node
+   93:         volumes_from:
+   94:             - php
+   95:         volumes:
+   96:             - ./data/logs/nginx/:/var/log/nginx
+   97:         networks:
+
+[3] repo=kreta__Kreta nginx -> node (type sync-http, grade inferred)
+  cited code: etc/docker/docker-compose.yml#depends_on
+   86:             IDENTITY_ACCESS_HOST: ${IDENTITY_ACCESS_HOST}
+   87:             COMPOSITE_UI_HOST: ${COMPOSITE_UI_HOST}
+   88:             NOTIFIER_HOST: ${NOTIFIER_HOST}
+   89:             SYMFONY_ENV: ${SYMFONY_ENV}
+   90:         links:
+   91:             - php
+>> 92:             - node
+   93:         volumes_from:
+   94:             - php
+   95:         volumes:
+   96:             - ./data/logs/nginx/:/var/log/nginx
+   97:         networks:
+   98:             default:
+
+[4] repo=kreta__Kreta php -> db (type sync-http, grade inferred)
+  cited code: etc/docker/docker-compose.yml#depends_on
+   38:             TASK_MANAGER_HOST: ${TASK_MANAGER_HOST}
+   39:             IDENTITY_ACCESS_HOST: ${IDENTITY_ACCESS_HOST}
+   40:             COMPOSITE_UI_HOST: ${COMPOSITE_UI_HOST}
+   41:             NOTIFIER_HOST: ${NOTIFIER_HOST}
+   42:             SYMFONY_ENV: ${SYMFONY_ENV}
+   43:         links:
+>> 44:             - db
+   45:         volumes:
+   46:             - ~/.composer:/root/.composer
+   47:             - ../../TaskManager:/var/www/taskmanager
+   48:             - ./data/logs/taskmanager:/var/www/taskmanager/var/logs
+   49:             - ../../IdentityAccess:/var/www/identityaccess
+   50:             - ./data/logs/identityaccess:/var/www/identityaccess/var/logs
+
+[5] repo=mabuonomo__example-nestjs-microservices-grpc prisma -> mysql (type db, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   55:             host: mysql
+   56:             port: 3306
+   57:             user: root
+   58:             password: prisma
+   59:             migrations: true
+   60:     depends_on: 
+>> 61:       - mysql
+   62: 
+   63:   mysql:
+   64:     image: mysql:5.7
+   65:     volumes:
+   66:       - ./data/mysql:/var/lib/mysql  
+   67:     restart: always
+
+[6] repo=madslundt__NetCoreMicroservicesSample users_service -> consul (type sync-http, grade documented)
+  cited code: Src/UsersService/appsettings.json
+   46:     "Uri": "http://elasticsearch:9200"
+   47:   },
+   48:   "ElasticApm": {
+   49:     "ServerUrls": "http://apm:8200"
+   50:   },
+   51:   "ConsulOptions": {
+>> 52:     "ConsulAddress": "http://consul:8500",
+   53:     "ServiceAddress": "http://users_service",
+   54:     "ServiceName": "UsersService",
+   55:     "DisableAgentCheck": false,
+   56:     "Tags": []
+   57:   },
+   58:   "Serilog": {
+  cited code: Compose/docker-compose.services.yml#depends_on
+   15:       - mongo
+   16:       - consul
+   17:     depends_on:
+   18:       - rabbitmq
+   19:       - db
+   20:       - mongo
+>> 21:       - consul
+   22: 
+   23:   movies_service:
+   24:     build:
+   25:       context: ../
+   26:       dockerfile: Src/MoviesService/Dockerfile
+   27:     container_name: movies_service
+
+[7] repo=madslundt__NetCoreMicroservicesSample api -> reviews_service (type sync-http, grade inferred)
+  cited code: Compose/docker-compose.ocelot.yml#depends_on
+   12:       - network-microservice
+   13:     links:
+   14:       - users_service
+   15:       - movies_service
+   16:       - reviews_service
+   17:       - consul
+>> 18:     depends_on:
+   19:       - consul
+   20: 
+
+[8] repo=madslundt__NetCoreMicroservicesSample users_service -> mongo (type db, grade documented)
+  cited code: Src/UsersService/appsettings.json
+   81:           "numberOfReplicas": 10
+   82:         }
+   83:       }
+   84:     ]
+   85:   },
+   86:   "OutboxOptions": {
+>> 87:     "OutboxType": "mongo",
+   88:     "DatabaseName": "OutboxDb",
+   89:     "CollectionName": "UserMessages",
+   90:     "ConnectionString": "mongodb://mongo:27017",
+   91:     "DeleteAfter": false
+   92:   }
+   93: }
+  cited code: Compose/docker-compose.services.yml#depends_on
+   14:       - db
+   15:       - mongo
+   16:       - consul
+   17:     depends_on:
+   18:       - rabbitmq
+   19:       - db
+>> 20:       - mongo
+   21:       - consul
+   22: 
+   23:   movies_service:
+   24:     build:
+   25:       context: ../
+   26:       dockerfile: Src/MoviesService/Dockerfile
+
+[9] repo=mateaix__matecloud mate-system -> api.openai.com (type external, grade documented)
+  cited code: mate-biz/mate-system/src/main/java/vip/mate/system/admin/application/model/ModelProviderDescriptors.java:48
+   42:     }
+   43: 
+   44:     static {
+   45:         register(ModelVendor.OPENAI, ProviderDescriptor.builder("OPENAI", "OpenAI")
+   46:                         .describe("OpenAI 兼容接口(GPT / text-embedding / TTS / Whisper)")
+   47:                         .secret("apiKey", "API Key", true)
+>> 48:                         .text("baseUrl", "Base URL", false, "https://api.openai.com")
+   49:                         .build(),
+   50:                 List.of(ModelType.LLM, ModelType.EMBEDDING, ModelType.TTS, ModelType.STT,
+   51:                         ModelType.IMAGE, ModelType.MODERATION));
+   52: 
+   53:         register(ModelVendor.AZURE, ProviderDescriptor.builder("AZURE", "Azure OpenAI")
+   54:                         .describe("Azure 托管的 OpenAI 模型")

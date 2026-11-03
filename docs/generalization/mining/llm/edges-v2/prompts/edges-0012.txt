@@ -1,0 +1,240 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=hamed-shirbandi__TaskoMask api-gateway -> tasks-write-api (type sync-http, grade inferred)
+  cited code: src/7-Docker/docker-compose.yml#depends_on
+   246:     depends_on:
+   247:       - owners-read-api
+   248:       - owners-write-api
+   249:       - boards-read-api
+   250:       - boards-write-api
+   251:       - tasks-read-api
+>> 252:       - tasks-write-api
+   253:       - identity-api
+   254:       - aggregator
+   255: 
+   256:   user-panel-client:
+   257:     container_name: user-panel-client
+   258:     image: ${DOCKER_REGISTRY-}user-panel-client
+
+[1] repo=hamed-shirbandi__TaskoMask aggregator -> boards-read-api (type sync-http, grade inferred)
+  cited code: src/7-Docker/docker-compose.yml#depends_on
+   224:       - 5002:80
+   225:       - 5003:443
+   226:     networks:
+   227:       - taskomask-network
+   228:     depends_on:
+   229:       - owners-read-api
+>> 230:       - boards-read-api
+   231:       - tasks-read-api
+   232:       - identity-api
+   233: 
+   234:   api-gateway:
+   235:     container_name: api-gateway
+   236:     image: ${DOCKER_REGISTRY-}api-gateway
+
+[2] repo=hantsy__spring-microservice-sample nginx-proxy -> post-service (type sync-http, grade documented)
+  cited code: docker-compose.local.yml#depends_on
+   3: services:
+   4:   nginx-proxy:
+   5:     image: hantsy/nginx-proxy
+   6:     depends_on:
+   7:       - auth-service
+   8:       - user-service
+>> 9:       - post-service
+   10:     ports:
+   11:       - "80:80"
+   12:       
+   13:   auth-service:
+   14:     image: hantsy/auth-service
+   15:     environment:
+  cited code: nginx/nginx.conf:22
+   16: 		location /users {
+   17: #			rewrite ^/api/user-service/(.*) /$1 break;
+   18: 			proxy_pass http://user-service:8001;
+   19: 		}
+   20: 		location /posts {
+   21: #			rewrite ^/api/post-service/(.*) /$1 break;
+>> 22: 			proxy_pass http://post-service:8002;
+   23: 		}
+   24: 		location / {
+   25: #		    rewrite ^/api/auth-service/(.*) /$1 break;
+   26: 			proxy_pass http://auth-service:8000;
+   27: 		}
+   28: 	}
+
+[3] repo=hantsy__spring-microservice-sample user-service -> userdb (type db, grade documented)
+  cited code: docker-compose.local.yml#depends_on
+   26:     environment:
+   27:       SPRING_DATASOURCE_URL: jdbc:mysql://userdb:3306/userdb
+   28:       SPRING_REDIS_HOST: redis
+   29:     ports:
+   30:       - "8001:8001" #specify ports forewarding
+   31:     depends_on:
+>> 32:       - userdb
+   33:       - redis
+   34:   
+   35:   post-service: 
+   36:     image: hantsy/post-service
+   37:     environment:
+   38:       SPRING_DATASOURCE_URL: jdbc:postgresql://postdb:5432/postdb
+  cited code: docker-compose.build.yml#depends_on
+   39:     environment:
+   40:       SPRING_DATASOURCE_URL: jdbc:mysql://userdb:3306/userdb
+   41:       SPRING_REDIS_HOST: redis
+   42:     ports:
+   43:       - "8001:8001" #specify ports forewarding
+   44:     depends_on:
+>> 45:       - userdb
+   46:       - redis
+   47:   
+   48:   post-service: 
+   49:     image: hantsy/post-service
+   50:     container_name: post-service
+   51:     build: 
+
+[4] repo=hantsy__spring-microservice-sample post-service -> redis (type db, grade documented)
+  cited code: docker-compose.local.yml#depends_on
+   38:       SPRING_DATASOURCE_URL: jdbc:postgresql://postdb:5432/postdb
+   39:       SPRING_REDIS_HOST: redis
+   40:     ports:
+   41:       - "8002:8002" #specify ports forewarding
+   42:     depends_on:
+   43:       - postdb
+>> 44:       - redis
+   45:  
+   46: 
+   47:   
+   48:      
+  cited code: docker-compose.build.yml#depends_on
+   55:       SPRING_DATASOURCE_URL: jdbc:postgresql://postdb:5432/postdb
+   56:       SPRING_REDIS_HOST: redis
+   57:     ports:
+   58:       - "8002:8002" #specify ports forewarding
+   59:     depends_on:
+   60:       - postdb
+>> 61:       - redis
+   62:  
+   63: 
+   64:   
+   65:      
+
+[5] repo=harlow__go-micro-services search -> geo (type sync-http, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   2:   frontend:
+   3:     build: .
+   4:     entrypoint: go-micro-services frontend
+   5:     ports:
+   6:       - "5001:8080"
+   7:     depends_on:
+>> 8:       search:
+   9:         condition: service_healthy
+   10:       profile:
+   11:         condition: service_healthy
+   12:     healthcheck:
+   13:       test: ["CMD-SHELL", "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /healthz HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; head -n 1 <&3 | grep -q \"200\"'"]
+   14:       interval: 10s
+
+[6] repo=harlow__go-micro-services frontend -> profile (type sync-http, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   4:     entrypoint: go-micro-services frontend
+   5:     ports:
+   6:       - "5001:8080"
+   7:     depends_on:
+   8:       search:
+   9:         condition: service_healthy
+>> 10:       profile:
+   11:         condition: service_healthy
+   12:     healthcheck:
+   13:       test: ["CMD-SHELL", "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /healthz HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; head -n 1 <&3 | grep -q \"200\"'"]
+   14:       interval: 10s
+   15:       timeout: 3s
+   16:       retries: 10
+
+[7] repo=harlow__go-micro-services search -> rate (type sync-http, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   2:   frontend:
+   3:     build: .
+   4:     entrypoint: go-micro-services frontend
+   5:     ports:
+   6:       - "5001:8080"
+   7:     depends_on:
+>> 8:       search:
+   9:         condition: service_healthy
+   10:       profile:
+   11:         condition: service_healthy
+   12:     healthcheck:
+   13:       test: ["CMD-SHELL", "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /healthz HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; head -n 1 <&3 | grep -q \"200\"'"]
+   14:       interval: 10s
+
+[8] repo=hemerajs__aither cache-service -> nats (type async, grade documented)
+  cited code: cache-service/index.js:5
+   1: const Hemera = require('nats-hemera')
+   2: const HemeraJoi = require('hemera-joi')
+   3: const HemeraRedisCache = require('hemera-redis-cache')
+   4: const nats = require('nats').connect({
+>> 5:   url: process.env.NATS_URL,
+   6:   user: process.env.NATS_USER,
+   7:   pass: process.env.NATS_PW
+   8: })
+   9: 
+   10: const hemera = new Hemera(nats, {
+   11:   logLevel: process.env.HEMERA_LOG_LEVEL,
+  cited code: docker-compose.yml#depends_on
+   54:     build:
+   55:       context: "./cache-service"
+   56:     links:
+   57:       - nats
+   58:       - redis
+   59:     depends_on:
+>> 60:       - nats
+   61:       - redis
+   62:     restart: always
+   63:     environment:
+   64:       REDIS_PORT: 6379
+   65:       REDIS_URL: redis
+   66:       NATS_URL: nats://nats:4222
+
+[9] repo=hemerajs__aither math-service -> nats (type async, grade documented)
+  cited code: math-service/index.js:5
+   1: const Hemera = require('nats-hemera')
+   2: const HemeraJoi = require('hemera-joi')
+   3: const HemeraJaeger = require('hemera-jaeger')
+   4: const nats = require('nats').connect({
+>> 5:   url: process.env.NATS_URL,
+   6:   user: process.env.NATS_USER,
+   7:   pass: process.env.NATS_PW
+   8: })
+   9: const hemera = new Hemera(nats, {
+   10:   logLevel: process.env.HEMERA_LOG_LEVEL,
+   11:   childLogger: true,
+  cited code: docker-compose.yml#depends_on
+   36:   math-service:
+   37:     build:
+   38:       context: "./math-service"
+   39:     links:
+   40:       - nats
+   41:     depends_on:
+>> 42:       - nats
+   43:       - redis
+   44:       - jaeger
+   45:     restart: always
+   46:     environment:
+   47:       NATS_URL: nats://nats:4222
+   48:       NATS_USER: ruser

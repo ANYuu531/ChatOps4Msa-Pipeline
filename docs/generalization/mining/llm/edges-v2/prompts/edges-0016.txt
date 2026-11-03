@@ -1,0 +1,219 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=mateaix__matecloud mate-system -> minio (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   186:       # NACOS_NAMESPACE 未设置 → 默认 public 命名空间(init-nacos.sh 将配置推送到 public)
+   187:       # Infra hosts = compose service names (the mate-infra-dev.yml placeholders
+   188:       # default to 127.0.0.1, which inside a container is the container itself).
+   189:       MYSQL_HOST: mysql
+   190:       REDIS_HOST: redis
+   191:       RABBITMQ_HOST: rabbitmq
+>> 192:       MINIO_ENDPOINT: http://minio:9000
+   193:     ports:
+   194:       - "9030:9030"
+   195:     networks:
+   196:       - mate-net
+   197: 
+   198:   # mate-admin: merged into mate-system (RFC-049)
+
+[1] repo=mateaix__matecloud mate-gateway -> mate-notice (type sync-http, grade documented)
+  cited code: mate-gateway/src/main/resources/application.yml
+   39: 
+   40:             - id: mate-system
+   41:               uri: lb://mate-system
+   42:               predicates:
+   43:                 - Path=/api/v1/users/**,/api/v1/departments/**,/api/v1/admin/**,/api/v1/sso/**
+   44: 
+>> 45:             - id: mate-notice
+   46:               uri: lb://mate-notice
+   47:               predicates:
+   48:                 - Path=/api/v1/notices/**
+   49: 
+   50:             - id: mate-ai
+   51:               uri: lb://mate-ai
+
+[2] repo=merikbest__twitter-spring-reactjs api-gateway -> zipkin (type sync-http, grade documented)
+  cited code: docker-compose.yml#depends_on
+   142:             ZIPKIN_HOST: zipkin
+   143:         ports:
+   144:             - "8000:8000"
+   145:         networks:
+   146:             - spring
+   147:         depends_on:
+>> 148:             - zipkin
+   149:             - eureka-server
+   150:             - config-server
+   151: 
+   152:     user-service:
+   153:         image: merikbest/twitter-spring-reactjs:user-service
+   154:         container_name: user-service
+  cited code: config-server/src/main/resources/config/api-gateway.yml
+   104:                 -   id: scheduler-service
+   105:                     uri: lb://scheduler-service
+   106:                     predicates:
+   107:                         - Path=/api/v1/scheduler/**
+   108:                     filters:
+   109:                         - AuthFilter
+>> 110:     zipkin:
+   111:         base-url: http://${ZIPKIN_HOST:localhost}:9411
+   112: 
+   113: eureka:
+   114:     client:
+   115:         service-url:
+   116:             defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka
+
+[3] repo=merikbest__twitter-spring-reactjs websocket-service -> eureka-server (type sync-http, grade documented)
+  cited code: docker-compose.yml#depends_on
+   350:         ports:
+   351:             - "8022:8022"
+   352:         networks:
+   353:             - spring
+   354:         depends_on:
+   355:             - zipkin
+>> 356:             - eureka-server
+   357:             - config-server
+   358: 
+   359: networks:
+   360:     postgres:
+   361:         driver: bridge
+   362:     spring:
+  cited code: config-server/src/main/resources/config/websocket-service.yml
+   server:
+       port: 8022
+   
+   spring:
+       application:
+           name: websocket-service
+       zipkin:
+           base-url: http://${ZIPKIN_HOST:localhost}:9411
+   eureka:
+       client:
+           service-url:
+               defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka
+           fetch-registry: true
+
+[4] repo=merikbest__twitter-spring-reactjs api-gateway -> scheduler-service (type sync-http, grade documented)
+  cited code: config-server/src/main/resources/config/api-gateway.yml
+   98: 
+   99:                 -   id: localization-service
+   100:                     uri: lb://localization-service
+   101:                     predicates:
+   102:                         - Path=/ui/v1/localization/**
+   103: 
+>> 104:                 -   id: scheduler-service
+   105:                     uri: lb://scheduler-service
+   106:                     predicates:
+   107:                         - Path=/api/v1/scheduler/**
+   108:                     filters:
+   109:                         - AuthFilter
+   110:     zipkin:
+
+[5] repo=meysamhadeli__booking-microservices flight -> mongo (type db, grade documented)
+  cited code: src/Services/Flight/src/Flight.Api/appsettings.docker.json
+   17:         "ExchangeName": "flight",
+   18:         "UserName": "guest",
+   19:         "Password": "guest",
+   20:         "Port": 5672
+   21:     },
+   22:     "MongoOptions": {
+>> 23:         "ConnectionString": "mongodb://mongo:27017",
+   24:         "DatabaseName": "flight-db"
+   25:     },
+   26:     "AllowedHosts": "*"
+   27: }
+   28: 
+
+[6] repo=meysamhadeli__booking-microservices passenger -> identity (type sync-http, grade documented)
+  cited code: src/Services/Passenger/src/Passenger.Api/appsettings.docker.json
+   6:         }
+   7:     },
+   8:     "PostgresOptions": {
+   9:         "ConnectionString": "Server=postgres;Port=5432;Database=passenger;User Id=postgres;Password=postgres;Include Error Detail=true"
+   10:     },
+   11:     "Jwt": {
+>> 12:         "Authority": "http://identity:80",
+   13:         "Audience": "passenger-api"
+   14:     },
+   15:     "MongoOptions": {
+   16:         "ConnectionString": "mongodb://mongo:27017",
+   17:         "DatabaseName": "passenger-db"
+   18:     },
+
+[7] repo=meysamhadeli__booking-microservices flight -> identity (type sync-http, grade documented)
+  cited code: src/Services/Flight/src/Flight.Api/appsettings.docker.json
+   6:         }
+   7:     },
+   8:     "PostgresOptions": {
+   9:         "ConnectionString": "Server=postgres;Port=5432;Database=flight;User Id=postgres;Password=postgres;Include Error Detail=true"
+   10:     },
+   11:     "Jwt": {
+>> 12:         "Authority": "http://identity:80",
+   13:         "Audience": "flight-api"
+   14:     },
+   15:     "RabbitMqOptions": {
+   16:         "HostName": "rabbitmq",
+   17:         "ExchangeName": "flight",
+   18:         "UserName": "guest",
+
+[8] repo=meysamhadeli__booking-microservices-expressjs booking -> identity (type sync-http, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   156:     restart: unless-stopped
+   157:     depends_on:
+   158:       postgres:
+   159:         condition: service_healthy
+   160:       rabbitmq:
+   161:         condition: service_healthy
+>> 162:       identity:
+   163:         condition: service_healthy
+   164:       flight:
+   165:         condition: service_healthy
+   166:       passenger:
+   167:         condition: service_healthy
+   168:     environment:
+
+[9] repo=meysamhadeli__booking-microservices-expressjs booking -> rabbitmq (type async, grade documented)
+  cited code: docker-compose.yml#depends_on
+   154:       dockerfile: booking/Dockerfile
+   155:     network_mode: host
+   156:     restart: unless-stopped
+   157:     depends_on:
+   158:       postgres:
+   159:         condition: service_healthy
+>> 160:       rabbitmq:
+   161:         condition: service_healthy
+   162:       identity:
+   163:         condition: service_healthy
+   164:       flight:
+   165:         condition: service_healthy
+   166:       passenger:
+  cited code: deployments/kubernetes/booking-deployment.yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: booking
+     namespace: booking
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: booking
+     template:
+       metadata:
+         labels:

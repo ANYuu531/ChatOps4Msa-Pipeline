@@ -1,0 +1,220 @@
+{
+ "id": "edges-0022",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 2745,
+  "completion_tokens": 408,
+  "total_tokens": 3153,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [\n  {\"i\": 0, \"verdict\": \"declared-only\", \"reason\": \"depends_on and links in docker-compose declare start order and network links but do not prove runtime calls or connections.\"},\n  {\"i\": 1, \"verdict\": \"declared-only\", \"reason\": \"depends_on and links declare start order and network links but do not show runtime calls or connections.\"},\n  {\"i\": 2, \"verdict\": \"correct\", \"reason\": \"The command line explicitly configures jaeger-query to connect to cassandra at runtime.\"},\n  {\"i\": 3, \"verdict\": \"correct\", \"reason\": \"The command uses wait-for db:3306 and runs the app, showing runtime dependency on db.\"},\n  {\"i\": 4, \"verdict\": \"correct\", \"reason\": \"The command uses wait-for db:3306 and runs the app, showing runtime dependency on db.\"},\n  {\"i\": 5, \"verdict\": \"declared-only\", \"reason\": \"depends_on declares start order but no evidence of runtime call or connection to setup-vault.\"},\n  {\"i\": 6, \"verdict\": \"correct\", \"reason\": \"depends_on plus config property spring.cloud.config.uri=http://config-server:8888 shows runtime HTTP dependency.\"},\n  {\"i\": 7, \"verdict\": \"correct\", \"reason\": \"depends_on plus environment variable VAULT_ADDR=http://vault:8200 and image setup show runtime HTTP dependency.\"},\n  {\"i\": 8, \"verdict\": \"declared-only\", \"reason\": \"Only depends_on and service definition of tempo shown, no evidence of runtime calls from k8n-service-products.\"},\n  {\"i\": 9, \"verdict\": \"declared-only\", \"reason\": \"Only depends_on and service definition of tempo shown, no evidence of runtime calls from k8n-service-orders.\"}\n]}",
+ "payload": [
+  {
+   "repo": "sczyh30__vertx-blueprint-microservice",
+   "source": "cache-infrastructure",
+   "target": "redis",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml",
+     "line": 108,
+     "kind": "compose",
+     "context": "   102:   cache-infrastructure:\n   103:     image: vertx-blueprint/cache-infrastructure\n   104:     links:\n   105:       - redis\n   106:       - logstash\n   107:     depends_on:\n>> 108:       - redis\n   109:       - logstash\n   110:   shopping-cart-microservice:\n   111:     image: vertx-blueprint/shopping-cart-microservice\n   112:     links:\n   113:       - mysql\n   114:       - logstash"
+    }
+   ]
+  },
+  {
+   "repo": "sczyh30__vertx-blueprint-microservice",
+   "source": "order-microservice",
+   "target": "logstash",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml",
+     "line": 130,
+     "kind": "compose",
+     "context": "   124:     image: vertx-blueprint/order-microservice\n   125:     links:\n   126:       - mysql\n   127:       - logstash\n   128:     depends_on:\n   129:       - mysql\n>> 130:       - logstash\n   131:       - shopping-cart-microservice\n   132:       - inventory-microservice\n   133:     expose:\n   134:       - \"8090\"\n   135:   monitor-dashboard:\n   136:     image: vertx-blueprint/monitor-dashboard"
+    }
+   ]
+  },
+  {
+   "repo": "sdgmf__go-project-sample",
+   "source": "jaeger-query",
+   "target": "cassandra",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yml",
+     "file": "deployments/docker-compose.yml",
+     "line": 84,
+     "kind": "compose",
+     "context": "   78:     restart: on-failure\n   79:     depends_on:\n   80:       - cassandra-schema\n   81: \n   82:   jaeger-query:\n   83:     image: jaegertracing/jaeger-query\n>> 84:     command: [\"--cassandra.keyspace=jaeger_v1_dc1\", \"--cassandra.servers=cassandra\"]\n   85:     ports:\n   86:       - \"16686:16686\"\n   87:       - \"16687\"\n   88:     restart: on-failure\n   89:     depends_on:\n   90:       - cassandra-schema"
+    }
+   ]
+  },
+  {
+   "repo": "sdgmf__go-project-sample",
+   "source": "products",
+   "target": "db",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yml#depends_on",
+     "file": "deployments/docker-compose.yml",
+     "line": 38,
+     "kind": "compose",
+     "context": "   32:   products:\n   33:     build:\n   34:       context: ..\n   35:       dockerfile: \"build/products/Dockerfile\"\n   36:     command: ./wait-for db:3306 -t 30 -- ./app\n   37:     depends_on:\n>> 38:       - db\n   39:       - consul\n   40:       - jaeger-agent\n   41:     ports:\n   42:       - \"8080:8080\"\n   43:   db:\n   44:     image: mariadb:latest"
+    },
+    {
+     "ref": "code: deployments/docker-compose.yml",
+     "file": "deployments/docker-compose.yml",
+     "line": 36,
+     "kind": "compose",
+     "context": "   30:       - consul\n   31:       - jaeger-agent\n   32:   products:\n   33:     build:\n   34:       context: ..\n   35:       dockerfile: \"build/products/Dockerfile\"\n>> 36:     command: ./wait-for db:3306 -t 30 -- ./app\n   37:     depends_on:\n   38:       - db\n   39:       - consul\n   40:       - jaeger-agent\n   41:     ports:\n   42:       - \"8080:8080\""
+    }
+   ]
+  },
+  {
+   "repo": "sdgmf__go-project-sample",
+   "source": "ratings",
+   "target": "db",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deployments/docker-compose.yml#depends_on",
+     "file": "deployments/docker-compose.yml",
+     "line": 20,
+     "kind": "compose",
+     "context": "   14:   ratings:\n   15:     build:\n   16:       context: ..\n   17:       dockerfile: \"build/ratings/Dockerfile\"\n   18:     command: ./wait-for db:3306 -t 30 -- ./app\n   19:     depends_on:\n>> 20:       - db\n   21:       - consul\n   22:       - jaeger-agent\n   23:   reviews:\n   24:     build:\n   25:       context: ..\n   26:       dockerfile: \"build/reviews/Dockerfile\""
+    },
+    {
+     "ref": "code: deployments/docker-compose.yml",
+     "file": "deployments/docker-compose.yml",
+     "line": 18,
+     "kind": "compose",
+     "context": "   12:     ports:\n   13:       - \"8081:8081\"\n   14:   ratings:\n   15:     build:\n   16:       context: ..\n   17:       dockerfile: \"build/ratings/Dockerfile\"\n>> 18:     command: ./wait-for db:3306 -t 30 -- ./app\n   19:     depends_on:\n   20:       - db\n   21:       - consul\n   22:       - jaeger-agent\n   23:   reviews:\n   24:     build:"
+    }
+   ]
+  },
+  {
+   "repo": "sivaprasadreddy__spring-boot-microservices-series",
+   "source": "catalog-service",
+   "target": "setup-vault",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 112,
+     "kind": "compose",
+     "context": "   106:     build: ./catalog-service\n   107:     ports:\n   108:       - \"18181:8181\"\n   109:       - \"19797:8787\"\n   110:     depends_on:\n   111:       - config-server\n>> 112:       - setup-vault\n   113:       - mysqldb\n   114:     entrypoint: /bin/sh\n   115:     command: >\n   116:       -c \"\n   117:       while ! (nc -z config-server 8888 && nc -z vault 8200); do sleep 5; echo 'Waiting for vault and config-server services to start-up...'; done;\n   118:       java -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=8787,suspend=n -jar -Dspring.profiles.active=docker /app.jar"
+    }
+   ]
+  },
+  {
+   "repo": "sivaprasadreddy__spring-boot-microservices-series",
+   "source": "inventory-service",
+   "target": "config-server",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 127,
+     "kind": "compose",
+     "context": "   121:     container_name: inventory-service\n   122:     build: ./inventory-service\n   123:     ports:\n   124:       - \"18282:8282\"\n   125:       - \"29797:8787\"\n   126:     depends_on:\n>> 127:       - config-server\n   128:       - setup-vault\n   129:       - mysqldb\n   130:     entrypoint: /bin/sh\n   131:     command: >\n   132:       -c \"\n   133:       while ! (nc -z config-server 8888 && nc -z vault 8200); do sleep 5; echo 'Waiting for vault and config-server services to start-up...'; done;"
+    },
+    {
+     "ref": "code: inventory-service/src/main/resources/bootstrap-docker.properties",
+     "file": "inventory-service/src/main/resources/bootstrap-docker.properties",
+     "line": 1,
+     "kind": "properties",
+     "context": ">> 1: spring.cloud.config.uri=http://config-server:8888\n   2: # Vault\n   3: spring.cloud.vault.host=vault\n   4: spring.rabbitmq.addresses=rabbitmq:5672"
+    }
+   ]
+  },
+  {
+   "repo": "sivaprasadreddy__spring-boot-microservices-series",
+   "source": "setup-vault",
+   "target": "vault",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 47,
+     "kind": "compose",
+     "context": "   41:     command: >\n   42:       -c \"\n   43:       sleep 2;\n   44:       /config/vault-init.sh;\n   45:       \"\n   46:     depends_on:\n>> 47:       - vault\n   48: \n   49:   zipkin-server:\n   50:     image: openzipkin/zipkin:2.21\n   51:     container_name: zipkin\n   52:     # Environment settings are defined here https://github.com/openzipkin/zipkin/tree/1.19.0/zipkin-server#environment-variables\n   53:     environment:"
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 33,
+     "kind": "compose",
+     "context": "   27:     environment:\n   28:       VAULT_DEV_ROOT_TOKEN_ID: 934f9eae-31ff-a8ef-e1ca-4bea9e07aa09\n   29:     ports:\n   30:       - 8200:8200\n   31: \n   32:   setup-vault:\n>> 33:     image: vault:1.4.0\n   34:     container_name: setup-vault\n   35:     entrypoint: /bin/sh\n   36:     volumes:\n   37:       - './config:/config'\n   38:     environment:\n   39:       VAULT_ADDR: 'http://vault:8200'"
+    }
+   ]
+  },
+  {
+   "repo": "tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes",
+   "source": "k8n-service-products",
+   "target": "tempo",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 118,
+     "kind": "compose",
+     "context": "   112:       - --config.file=/etc/prometheus/prometheus.yml\n   113:       - --enable-feature=exemplar-storage\n   114:     depends_on:\n   115:       - loki\n   116:     logging: *default-logging\n   117: \n>> 118:   tempo:\n   119:     image: grafana/tempo:2.1.1\n   120:     container_name: tempo\n   121:     command: [ \"--target=all\", \"--storage.trace.backend=local\", \"--storage.trace.local.path=/var/tempo\", \"--auth.enabled=false\" ]\n   122:     ports:\n   123:       - \"14250:14250\"\n   124:       - \"4317:4317\""
+    }
+   ]
+  },
+  {
+   "repo": "tanerdiler__spring-boot-microservice-eureka-zuul-docker-gateway-kubernetes",
+   "source": "k8n-service-orders",
+   "target": "tempo",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 118,
+     "kind": "compose",
+     "context": "   112:       - --config.file=/etc/prometheus/prometheus.yml\n   113:       - --enable-feature=exemplar-storage\n   114:     depends_on:\n   115:       - loki\n   116:     logging: *default-logging\n   117: \n>> 118:   tempo:\n   119:     image: grafana/tempo:2.1.1\n   120:     container_name: tempo\n   121:     command: [ \"--target=all\", \"--storage.trace.backend=local\", \"--storage.trace.local.path=/var/tempo\", \"--auth.enabled=false\" ]\n   122:     ports:\n   123:       - \"14250:14250\"\n   124:       - \"4317:4317\""
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,262 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=ivanpaulovich__clean-architecture-manga nginx -> identity-server (type sync-http, grade documented)
+  cited code: nginx/nginx.conf:36
+   30:         proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+   31:         proxy_set_header   X-Forwarded-Proto $scheme;
+   32:         proxy_set_header   X-Forwarded-Host $server_name;
+   33: 
+   34:         location /identity-server {
+   35:             rewrite /identity-server/?(.*) /$1 break;
+>> 36:             proxy_pass         https://identity-server;
+   37:         }
+   38: 
+   39:         location /accounts-api {
+   40:             rewrite /accounts-api/?(.*) /$1 break;
+   41:             proxy_pass         https://accounts-api;
+   42:         }
+  cited code: docker-compose/docker-compose.yml#depends_on
+   7:     container_name: wallet.local
+   8:     volumes:
+   9:       - ../docker-compose/https/localhost.crt:/etc/ssl/certs/localhost.crt:ro
+   10:       - ../docker-compose/https/localhost.key:/etc/ssl/private/localhost.key:ro
+   11:     links:
+   12:       - accounts-api
+>> 13:       - identity-server
+   14:       - wallet-spa
+   15:   accounts-api:
+   16:     image: ${DOCKER_REGISTRY-}accounts
+   17:     container_name: "accounts-api"
+   18:     build:
+   19:       context: ../accounts-api/
+
+[1] repo=ivanpaulovich__clean-architecture-manga nginx -> accounts-api (type sync-http, grade documented)
+  cited code: nginx/nginx.conf:41
+   35:             rewrite /identity-server/?(.*) /$1 break;
+   36:             proxy_pass         https://identity-server;
+   37:         }
+   38: 
+   39:         location /accounts-api {
+   40:             rewrite /accounts-api/?(.*) /$1 break;
+>> 41:             proxy_pass         https://accounts-api;
+   42:         }
+   43: 
+   44:         location / {
+   45:             proxy_pass         http://wallet-spa:3000;
+   46:         }
+   47:     }
+  cited code: docker-compose/docker-compose.yml#depends_on
+   6:       context: ../nginx/
+   7:     container_name: wallet.local
+   8:     volumes:
+   9:       - ../docker-compose/https/localhost.crt:/etc/ssl/certs/localhost.crt:ro
+   10:       - ../docker-compose/https/localhost.key:/etc/ssl/private/localhost.key:ro
+   11:     links:
+>> 12:       - accounts-api
+   13:       - identity-server
+   14:       - wallet-spa
+   15:   accounts-api:
+   16:     image: ${DOCKER_REGISTRY-}accounts
+   17:     container_name: "accounts-api"
+   18:     build:
+
+[2] repo=ivanpaulovich__clean-architecture-manga accounts-api -> raw.githubusercontent.com (type external, grade documented)
+  cited code: accounts-api/src/WebApi/Modules/Common/Swagger/ConfigureSwaggerOptions.cs:22
+   16: /// </remarks>
+   17: public sealed class ConfigureSwaggerOptions : IConfigureOptions<SwaggerGenOptions>
+   18: {
+   19:     private const string UriString = "http://paulovich.net";
+   20: 
+   21:     private const string UriString1 =
+>> 22:         "https://raw.githubusercontent.com/ivanpaulovich/clean-architecture-manga/master/README.md";
+   23: 
+   24:     private readonly IApiVersionDescriptionProvider _provider;
+   25: 
+   26:     /// <summary>
+   27:     ///     Initializes a new instance of the <see cref="ConfigureSwaggerOptions" /> class.
+   28:     /// </summary>
+
+[3] repo=jingsewu__open-wes station-server -> nacos (type sync-http, grade documented)
+  cited code: server/server/station-server/src/main/resources/bootstrap.yml
+   1: spring:
+   2:   application:
+   3:     name: station
+   4:   profiles:
+   5:     active: test
+   6:   cloud:
+>> 7:     nacos:
+   8:       config:
+   9:         server-addr: ${nacos.openwes.com:nacos.openwes.com}:${nacos.port:8848}
+   10:         prefix: ${spring.application.name}
+   11:         file-extension: yml
+   12:         namespace: ${spring.profiles.active}
+   13:         group: openwes
+  cited code: docker-compose.yml#depends_on
+   55:       - station-logs:/app/logs
+   56:     depends_on:
+   57:       mysql:
+   58:         condition: service_healthy
+   59:       redis:
+   60:         condition: service_healthy
+>> 61:       nacos:
+   62:         condition: service_healthy
+   63:     networks:
+   64:       - my-network
+   65: 
+   66:   # WES Server
+   67:   wes-server:
+
+[4] repo=jingsewu__open-wes gateway-server -> mysql (type db, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   31:       target: gateway
+   32:     ports:
+   33:       - "8090:8090"
+   34:     volumes:
+   35:       - gateway-logs:/app/logs
+   36:     depends_on:
+>> 37:       mysql:
+   38:         condition: service_healthy
+   39:       redis:
+   40:         condition: service_healthy
+   41:       nacos:
+   42:         condition: service_healthy
+   43:     networks:
+  cited code: docker-compose.prod.yml#depends_on
+   22:     image: ${IMAGE_BASE}/gateway:${IMAGE_TAG:-latest}
+   23:     ports:
+   24:       - "8090:8090"
+   25:     volumes:
+   26:       - gateway-logs:/app/logs
+   27:     depends_on:
+>> 28:       mysql:
+   29:         condition: service_healthy
+   30:       redis:
+   31:         condition: service_healthy
+   32:       nacos:
+   33:         condition: service_healthy
+   34:     networks:
+
+[5] repo=jingsewu__open-wes station-server -> redis (type db, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   53:       - "9040:9040"
+   54:     volumes:
+   55:       - station-logs:/app/logs
+   56:     depends_on:
+   57:       mysql:
+   58:         condition: service_healthy
+>> 59:       redis:
+   60:         condition: service_healthy
+   61:       nacos:
+   62:         condition: service_healthy
+   63:     networks:
+   64:       - my-network
+   65: 
+  cited code: docker-compose.prod.yml#depends_on
+   41:       - "9040:9040"
+   42:     volumes:
+   43:       - station-logs:/app/logs
+   44:     depends_on:
+   45:       mysql:
+   46:         condition: service_healthy
+>> 47:       redis:
+   48:         condition: service_healthy
+   49:       nacos:
+   50:         condition: service_healthy
+   51:     networks:
+   52:       - my-network
+   53: 
+
+[6] repo=juicycleff__ultimate-backend services-role -> nats-cluster (type async, grade documented)
+  cited code: docker-compose.yml
+   74:       context: ""
+   75:       dockerfile: apps/service-role/Dockerfile
+   76:     image: "${DOCKER_REGISTRY}/${DOCKER_REPO:?err}/service-role:${IMAGE_TAG:?err}"
+   77:     restart: always
+   78:     environment:
+   79:       - CONSUL_HOST=consul-cluster.default.svc.cluster.local
+>> 80:       - NATS_HOST=nats-cluster.default.svc.cluster.local
+   81:       - DISCOVERY_HOST=service-role.default.svc.cluster.local
+   82:     ports:
+   83:     - 50052:50052
+   84:     labels:
+   85:       kompose.service.type: clusterip
+   86:       kompose.image-pull-secret: "gitlabregcrednew"
+
+[7] repo=juicycleff__ultimate-backend service-tenant -> consul (type sync-http, grade documented)
+  cited code: docker-compose.dev.yml#depends_on
+   117:       dockerfile: apps/service-tenant/Dockerfile
+   118:       args:
+   119:         NODE_ENV: development
+   120:     image: "service-tenant:latest"
+   121:     restart: always
+   122:     depends_on:
+>> 123:       - consul
+   124:       - redis
+   125:     environment:
+   126:       - CONSUL_HOST=consul
+   127:       - NATS_HOST=nats
+   128:       - DISCOVERY_HOST=localhost
+   129:     ports:
+  cited code: docker-compose.dev.yml
+   117:       dockerfile: apps/service-tenant/Dockerfile
+   118:       args:
+   119:         NODE_ENV: development
+   120:     image: "service-tenant:latest"
+   121:     restart: always
+   122:     depends_on:
+>> 123:       - consul
+   124:       - redis
+   125:     environment:
+   126:       - CONSUL_HOST=consul
+   127:       - NATS_HOST=nats
+   128:       - DISCOVERY_HOST=localhost
+   129:     ports:
+
+[8] repo=juicycleff__ultimate-backend services-notification -> consul-cluster (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   56:     build:
+   57:       context: ""
+   58:       dockerfile: apps/service-notification/Dockerfile
+   59:     image: "${DOCKER_REGISTRY}/${DOCKER_REPO:?err}/service-notification:${IMAGE_TAG:?err}"
+   60:     restart: always
+   61:     environment:
+>> 62:       - CONSUL_HOST=consul-cluster.default.svc.cluster.local
+   63:       - NATS_HOST=nats-cluster.default.svc.cluster.local
+   64:       - DISCOVERY_HOST=service-notification.default.svc.cluster.local
+   65:     ports:
+   66:     - 50044:50044
+   67:     labels:
+   68:       kompose.service.type: clusterip
+
+[9] repo=kalintsenkov__BettingSystem betting -> sqlserver (type db, grade inferred)
+  cited code: src/docker-compose.yml
+   57:             dockerfile: ./Betting/Betting.Startup/Dockerfile
+   58:         ports: 
+   59:             - "5002:80"
+   60:         env_file: 
+   61:             - Server/Common/Common.Application/Common.env
+   62:         environment:
+>> 63:             - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=BettingSystemBettingDb;User Id=sa; Password=yourStrongPassword12!@;MultipleActiveResultSets=true
+   64:             - MessageQueueSettings__Host=rabbitmq
+   65:             - MessageQueueSettings__UserName=rabbitmquser
+   66:             - MessageQueueSettings__Password=rabbitmqPassword12!
+   67:         restart: on-failure
+   68:         volumes:
+   69:             - ./.aspnet/betting/DataProtection-Keys:/root/.aspnet/DataProtection-Keys

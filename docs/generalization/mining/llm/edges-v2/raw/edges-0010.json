@@ -1,0 +1,213 @@
+{
+ "id": "edges-0010",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 2986,
+  "completion_tokens": 416,
+  "total_tokens": 3402,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [\n  {\"i\": 0, \"verdict\": \"unsure\", \"reason\": \"The environment variable ElasticConfiguration:Uri documents the Elasticsearch URI, but no direct runtime call or connection evidence is shown.\"},\n  {\"i\": 1, \"verdict\": \"unsure\", \"reason\": \"The appsettings.json lists the CustomerManagement service URL, but no code or runtime usage is shown to confirm actual calls.\"},\n  {\"i\": 2, \"verdict\": \"unsure\", \"reason\": \"The appsettings.json lists the QuoteManagement service URL, but no direct evidence of runtime calls or connections is shown.\"},\n  {\"i\": 3, \"verdict\": \"unsure\", \"reason\": \"The Authority URL for identityserver is configured, but no direct runtime call or connection evidence is shown.\"},\n  {\"i\": 4, \"verdict\": \"unsure\", \"reason\": \"HttpClient BaseAddress is set from configuration, indicating a likely runtime call, but no actual call shown.\"},\n  {\"i\": 5, \"verdict\": \"unsure\", \"reason\": \"AuthServer URLs are configured as environment variables, indicating declared dependency but no direct runtime call evidence.\"},\n  {\"i\": 6, \"verdict\": \"correct\", \"reason\": \"The MessageBroker__Host environment variable with amqp URI shows documented configuration for connecting to ubik-rabbitmq at runtime.\"},\n  {\"i\": 7, \"verdict\": \"declared-only\", \"reason\": \"depends_on in docker-compose only declares start order dependencies, no runtime call or connection evidence.\"},\n  {\"i\": 8, \"verdict\": \"declared-only\", \"reason\": \"depends_on in docker-compose only declares start order dependencies, no runtime call or connection evidence.\"},\n  {\"i\": 9, \"verdict\": \"declared-only\", \"reason\": \"depends_on in docker-compose only declares start order dependencies, no runtime call or connection evidence.\"}\n]}",
+ "payload": [
+  {
+   "repo": "ebubekirdinc__SuuCat",
+   "source": "subscription.api",
+   "target": "elasticsearch",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.override.yml",
+     "file": "docker-compose.override.yml",
+     "line": 151,
+     "kind": "compose",
+     "context": "   145:     container_name: subscription.api\n   146:     environment:\n   147:       - ASPNETCORE_ENVIRONMENT=Development\n   148:       - \"ConnectionStrings:DefaultConnection=Server=subscriptiondb;Port=5432;Database=SubscriptionDb;User Id=admin;Password=admin1234;\"\n   149:       - RabbitMQUrl=rabbitmq\n   150:       - IdentityServerURL=http://identity.api\n>> 151:       - \"ElasticConfiguration:Uri=http://elasticsearch:9200\"\n   152:     depends_on:\n   153:       - subscriptiondb\n   154:       - rabbitmq\n   155:     ports:\n   156:       - \"5007:80\"\n   157:     volumes:"
+    }
+   ]
+  },
+  {
+   "repo": "falberthen__EcommerceDDD",
+   "source": "ecommerceddd-shipment-processing",
+   "target": "ecommerceddd-customer-management",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Services/EcommerceDDD.ShipmentProcessing/appsettings.json",
+     "file": "src/Services/EcommerceDDD.ShipmentProcessing/appsettings.json",
+     "line": 18,
+     "kind": "appsettings",
+     "context": "   12:     \"Description\": \"Ecommerce DDD - ShipmentProcessing API Swagger\"\n   13:   },\n   14:   \"ConnectionStrings\": {\n   15:     \"DefaultConnection\": \"host=postgresql;port=5432;timeout=15;pooling=True;minpoolsize=1;maxpoolsize=100;database='shipmentsdb';User Id='postgres';pwd='P@55w0rd'\"\n   16:   },\n   17:   \"Services\": {\n>> 18:     \"CustomerManagement\": \"http://ecommerceddd-customer-management\"\n   19:   },\n   20:   \"ShipmentFailureSimulation\": {\n   21:     \"UndeliverableAddressMarker\": \"308\"\n   22:   },\n   23:   \"EventStore\": {\n   24:     \"WriteSchema\": \"shipments_write\","
+    }
+   ]
+  },
+  {
+   "repo": "falberthen__EcommerceDDD",
+   "source": "ecommerceddd-order-processing",
+   "target": "ecommerceddd-quote-management",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Services/EcommerceDDD.OrderProcessing/appsettings.json",
+     "file": "src/Services/EcommerceDDD.OrderProcessing/appsettings.json",
+     "line": 19,
+     "kind": "appsettings",
+     "context": "   13:   },\n   14:   \"ConnectionStrings\": {\n   15:     \"DefaultConnection\": \"host=postgresql;port=5432;timeout=15;pooling=True;minpoolsize=1;maxpoolsize=100;database='ordersdb';User Id='postgres';pwd='P@55w0rd'\"\n   16:   },\n   17:   \"Services\": {\n   18:     \"InventoryManagement\": \"http://ecommerceddd-inventory-management\",\n>> 19:     \"QuoteManagement\": \"http://ecommerceddd-quote-management\",\n   20:     \"PaymentProcessing\": \"http://ecommerceddd-payment-processing\",\n   21:     \"ShipmentProcessing\": \"http://ecommerceddd-shipment-processing\",\n   22:     \"SignalRClient\": \"http://ecommerceddd-signalr\"\n   23:   },\n   24:   \"EventStore\": {\n   25:     \"WriteSchema\": \"orders_write\","
+    }
+   ]
+  },
+  {
+   "repo": "falberthen__EcommerceDDD",
+   "source": "ecommerceddd-payment-processing",
+   "target": "ecommerceddd-identityserver",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Services/EcommerceDDD.PaymentProcessing/appsettings.json",
+     "file": "src/Services/EcommerceDDD.PaymentProcessing/appsettings.json",
+     "line": 25,
+     "kind": "appsettings",
+     "context": "   19:   },\n   20:   \"EventStore\": {\n   21:     \"WriteSchema\": \"payments_write\",\n   22:     \"ReadSchema\": \"payments_read\"\n   23:   },\n   24:   \"TokenIssuerSettings\": {\n>> 25:     \"Authority\": \"http://ecommerceddd-identityserver\",\n   26:     \"ClientId\": \"ecommerceddd.application_client\",\n   27:     \"ClientSecret\": \"secret33587^&%&^%&^f3%%%\",\n   28:     \"Scope\": \"ecommerceddd-api.scope read write\"\n   29:   },\n   30:   \"Kafka\": {\n   31:     \"ConnectionString\": \"kafka:9092\""
+    }
+   ]
+  },
+  {
+   "repo": "fdonnet__ubik_accounting",
+   "source": "ubik-yarpproxy",
+   "target": "security-api",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Ubik.YarpProxy/Program.cs:63",
+     "file": "src/Ubik.YarpProxy/Program.cs",
+     "line": 63,
+     "kind": "src:csharp",
+     "context": "   57: \n   58: builder.Services.AddSwaggerGen();\n   59: \n   60: builder.Services.AddHttpClient<UserService>(client =>\n   61: {\n   62:     //TODO: change hardcoded\n>> 63:     client.BaseAddress = new Uri(builder.Configuration.GetSection(\"ApiSecurityForAdmin:HostAndPort\").Value!);\n   64: });\n   65: \n   66: //Authorization handlers\n   67: builder.Services.AddScoped<IAuthorizationHandler, UserInfoOkHandler>();\n   68: builder.Services.AddScoped<IAuthorizationHandler, UserWithAuthorizationsHandler>();\n   69: "
+    }
+   ]
+  },
+  {
+   "repo": "fdonnet__ubik_accounting",
+   "source": "accounting-structure-api",
+   "target": "keycloak-local",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deploy/accounting-structure-api/accounting-structure-api-deploy.yaml",
+     "file": "deploy/accounting-structure-api/accounting-structure-api-deploy.yaml",
+     "line": 29,
+     "kind": "yaml",
+     "context": "   23:           value: 'Host=ubik-postgres-postgresql;Port=5432;Database=ubik_accounting_struct;Username=postgres;Password=test01'\n   24:         - name: ASPNETCORE_ENVIRONMENT\n   25:           value: Development\n   26:         - name: MessageBroker__Host\n   27:           value: 'amqp://ubik-rabbitmq:5672'\n   28:         - name: AuthServer__MetadataAddress\n>> 29:           value: \"https://keycloak-local/realms/ubik/.well-known/openid-configuration\"\n   30:         - name: AuthServer__Authority\n   31:           value: \"https://keycloak-local/realms/ubik\"\n   32:         - name: AuthServer__AuthorizationUrl\n   33:           value: \"https://keycloak-local/realms/ubik/protocol/openid-connect/auth\"\n   34:         - name: AuthServer__TokenUrl\n   35:           value: \"https://keycloak-local/realms/ubik/protocol/openid-connect/token\""
+    }
+   ]
+  },
+  {
+   "repo": "fdonnet__ubik_accounting",
+   "source": "accounting-transaction-api",
+   "target": "ubik-rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deploy/accounting-transaction-api/accounting-transaction-api-deploy.yaml",
+     "file": "deploy/accounting-transaction-api/accounting-transaction-api-deploy.yaml",
+     "line": 27,
+     "kind": "yaml",
+     "context": "   21:         env:\n   22:         - name: ConnectionStrings__AccountingTxContext\n   23:           value: 'Host=ubik-postgres-postgresql;Port=5432;Database=ubik_accounting_tx;Username=postgres;Password=test01'\n   24:         - name: ASPNETCORE_ENVIRONMENT\n   25:           value: Development\n   26:         - name: MessageBroker__Host\n>> 27:           value: 'amqp://ubik-rabbitmq:5672'\n   28:         - name: AuthServer__MetadataAddress\n   29:           value: \"https://keycloak-local/realms/ubik/.well-known/openid-configuration\"\n   30:         - name: AuthServer__Authority\n   31:           value: \"https://keycloak-local/realms/ubik\"\n   32:         - name: AuthServer__AuthorizationUrl\n   33:           value: \"https://keycloak-local/realms/ubik/protocol/openid-connect/auth\""
+    }
+   ]
+  },
+  {
+   "repo": "geoserver__geoserver-cloud",
+   "source": "webui",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: compose/compose.yml#depends_on",
+     "file": "compose/compose.yml",
+     "line": 193,
+     "kind": "compose",
+     "context": "   187: \n   188:   webui:\n   189:     extends:\n   190:       file: templates.yml\n   191:       service: gstemplate\n   192:     image: ${REPOSITORY}/geoserver-cloud-webui:${TAG}\n>> 193:     depends_on: *gs-dependencies\n   194: \n   195: "
+    },
+    {
+     "ref": "code: docs/src/deploy/docker-compose/stable/datadir/compose.yml#depends_on",
+     "file": "docs/src/deploy/docker-compose/stable/datadir/compose.yml",
+     "line": 184,
+     "kind": "compose",
+     "context": "   178:       replicas: 1\n   179: \n   180:   webui:\n   181:     image: geoservercloud/geoserver-cloud-webui:3.0.2\n   182:     extends:\n   183:       service: geoserver_template\n>> 184:     depends_on: *gs-dependencies\n   185:     deploy:\n   186:       replicas: 1\n   187: \n   188:   gwc:\n   189:     image: geoservercloud/geoserver-cloud-gwc:3.0.2\n   190:     extends:"
+    }
+   ]
+  },
+  {
+   "repo": "geoserver__geoserver-cloud",
+   "source": "wfs",
+   "target": "acl",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: compose/compose.yml#depends_on",
+     "file": "compose/compose.yml",
+     "line": 141,
+     "kind": "compose",
+     "context": "   135: \n   136:   wfs:\n   137:     extends:\n   138:       file: templates.yml\n   139:       service: gstemplate\n   140:     image: ${REPOSITORY}/geoserver-cloud-wfs:${TAG}\n>> 141:     depends_on: *gs-dependencies\n   142: \n   143:   wms:\n   144:     image: ${REPOSITORY}/geoserver-cloud-wms:${TAG}\n   145:     extends:\n   146:       file: templates.yml\n   147:       service: gstemplate"
+    },
+    {
+     "ref": "code: docs/src/deploy/docker-compose/stable/pgconfig/compose.yml#depends_on",
+     "file": "docs/src/deploy/docker-compose/stable/pgconfig/compose.yml",
+     "line": 262,
+     "kind": "compose",
+     "context": "   256: \n   257:   # GeoServer microservices\n   258:   wfs:\n   259:     image: geoservercloud/geoserver-cloud-wfs:3.0.2\n   260:     extends:\n   261:       service: geoserver_template\n>> 262:     depends_on: *gs-dependencies\n   263:     deploy:\n   264:       replicas: 1\n   265: \n   266:   wms:\n   267:     image: geoservercloud/geoserver-cloud-wms:3.0.2\n   268:     extends:"
+    }
+   ]
+  },
+  {
+   "repo": "geoserver__geoserver-cloud",
+   "source": "wps",
+   "target": "discovery",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docs/src/deploy/docker-compose/maintenance/datadir/compose.yml#depends_on",
+     "file": "docs/src/deploy/docker-compose/maintenance/datadir/compose.yml",
+     "line": 158,
+     "kind": "compose",
+     "context": "   152:       replicas: 1\n   153: \n   154:   wps:\n   155:     image: geoservercloud/geoserver-cloud-wps:2.28.6\n   156:     extends:\n   157:       service: geoserver_template\n>> 158:     depends_on: *gs-dependencies\n   159:     deploy:\n   160:       replicas: 1\n   161: \n   162:   restconfig:\n   163:     image: geoservercloud/geoserver-cloud-rest:2.28.6\n   164:     extends:"
+    },
+    {
+     "ref": "code: docs/src/deploy/docker-compose/maintenance/pgconfig/compose.yml#depends_on",
+     "file": "docs/src/deploy/docker-compose/maintenance/pgconfig/compose.yml",
+     "line": 276,
+     "kind": "compose",
+     "context": "   270:       replicas: 1\n   271: \n   272:   wps:\n   273:     image: geoservercloud/geoserver-cloud-wps:2.28.6\n   274:     extends:\n   275:       service: geoserver_template\n>> 276:     depends_on: *gs-dependencies\n   277:     deploy:\n   278:       replicas: 1\n   279: \n   280:   restconfig:\n   281:     image: geoservercloud/geoserver-cloud-rest:2.28.6\n   282:     extends:"
+    }
+   ]
+  }
+ ]
+}

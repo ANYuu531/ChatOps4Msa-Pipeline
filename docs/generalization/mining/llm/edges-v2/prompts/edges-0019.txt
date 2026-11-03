@@ -1,0 +1,234 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=nplszfl__OmniTradeERP erp-customer-service -> nacos (type sync-http, grade documented)
+  cited code: docker-compose.yml#depends_on
+   500:       timeout: 10s
+   501:       retries: 5
+   502:       start_period: 60s
+   503: 
+   504:   # 客户服务
+   505:   customer-service:
+>> 506:     build:
+   507:       context: .
+   508:       dockerfile: docker/Dockerfile.service
+   509:       args:
+   510:         MODULE: erp-customer-service
+   511:         PORT: "8085"
+   512:     container_name: erp-customer-service
+  cited code: erp-customer-service/src/main/resources/application.yml
+   5:   config:
+   6:     # ⚠️ 必须有这行：classpath 上有 spring-cloud-starter-alibaba-nacos-config 时，
+   7:     #    Spring Cloud 的 ConfigDataMissingEnvironmentPostProcessor 会检查
+   8:     #    spring.config.import，没配就直接抛 "No spring.config.import set" → 服务起不来。
+   9:     #    optional: 前缀表示 Nacos 不可达时不阻塞启动（降级用本地配置）。
+   10:     import:
+>> 11:       - optional:nacos:${spring.application.name}.yml
+   12:   application:
+   13:     name: erp-customer-service
+   14:   cloud:
+   15:     nacos:
+   16:       discovery:
+   17:         server-addr: ${NACOS_HOST:mse-d5a70466-nacos-ans.mse.aliyuncs.com}:${NACOS_PORT:-8848}
+
+[1] repo=nplszfl__OmniTradeERP erp-warehouse-service -> rabbitmq (type async, grade documented)
+  cited code: docker-compose.yml#depends_on
+   352:       timeout: 10s
+   353:       retries: 5
+   354:       start_period: 60s
+   355: 
+   356:   # 仓库服务
+   357:   warehouse-service:
+>> 358:     build:
+   359:       context: .
+   360:       dockerfile: docker/Dockerfile.service
+   361:       args:
+   362:         MODULE: erp-warehouse-service
+   363:         PORT: "8092"
+   364:     container_name: erp-warehouse-service
+  cited code: docker-compose.yml
+   352:       timeout: 10s
+   353:       retries: 5
+   354:       start_period: 60s
+   355: 
+   356:   # 仓库服务
+   357:   warehouse-service:
+>> 358:     build:
+   359:       context: .
+   360:       dockerfile: docker/Dockerfile.service
+   361:       args:
+   362:         MODULE: erp-warehouse-service
+   363:         PORT: "8092"
+   364:     container_name: erp-warehouse-service
+
+[2] repo=nvawntien__go-judge-system envoy -> gateway (type sync-http, grade documented)
+  cited code: envoy/envoy.prod.yaml
+   74:                             cluster: submission_service
+   75:                             timeout: 0s
+   76:                             idle_timeout: 75s
+   77:                         - match:
+   78:                             prefix: /api/
+   79:                           route:
+>> 80:                             cluster: gateway
+   81:                             timeout: 45s
+   82:                         - match:
+   83:                             prefix: /avatars/
+   84:                           route:
+   85:                             cluster: minio
+   86:                             timeout: 30s
+  cited code: envoy/envoy.yaml
+   74:                             cluster: submission_service
+   75:                             timeout: 0s
+   76:                             idle_timeout: 75s
+   77:                         - match:
+   78:                             prefix: /api/
+   79:                           route:
+>> 80:                             cluster: gateway
+   81:                             timeout: 45s
+   82:                 http_filters:
+   83:                   - name: envoy.filters.http.router
+   84:                     typed_config:
+   85:                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+   86: 
+
+[3] repo=nvawntien__go-judge-system auth-service -> minio (type sync-http, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   51:       - ./gateway/settings:/etc/krakend/settings:ro
+   52:       - ./gateway/templates:/etc/krakend/templates:ro
+   53:       - ${GATEWAY_JWK_FILE:-./gateway/symmetric.json}:/etc/krakend/symmetric.json:ro
+   54:     networks:
+   55:       - judge_internal
+   56:     depends_on:
+>> 57:       auth-service:
+   58:         condition: service_healthy
+   59:       problem-service:
+   60:         condition: service_healthy
+   61:       submission-service:
+   62:         condition: service_healthy
+   63:     restart: unless-stopped
+
+[4] repo=nvawntien__go-judge-system auth-service -> postgres (type db, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   51:       - ./gateway/settings:/etc/krakend/settings:ro
+   52:       - ./gateway/templates:/etc/krakend/templates:ro
+   53:       - ${GATEWAY_JWK_FILE:-./gateway/symmetric.json}:/etc/krakend/symmetric.json:ro
+   54:     networks:
+   55:       - judge_internal
+   56:     depends_on:
+>> 57:       auth-service:
+   58:         condition: service_healthy
+   59:       problem-service:
+   60:         condition: service_healthy
+   61:       submission-service:
+   62:         condition: service_healthy
+   63:     restart: unless-stopped
+
+[5] repo=opexdev__core market -> consul (type sync-http, grade documented)
+  cited code: docker-compose.yml#depends_on
+   503:       - CUSTOM_MESSAGE_ENABLED=${CUSTOM_MESSAGE_ENABLED}
+   504:       - CUSTOM_USER_LANGUAGE_ENABLED=${CUSTOM_USER_LANGUAGE_ENABLED}
+   505:     depends_on:
+   506:       - kafka-1
+   507:       - kafka-2
+   508:       - kafka-3
+>> 509:       - consul
+   510:       - postgres-market
+   511:       - redis-cache
+   512:     networks:
+   513:       - default
+   514:     labels:
+   515:       collect_logs: "true"
+  cited code: docker-compose.yml
+   490:     image: ghcr.io/opexdev/market
+   491:     environment:
+   492:       - JAVA_OPTS=-Xmx512m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+   493:       - SPRING_PROFILES_ACTIVE=${MARKET_SPRING_PROFILES_ACTIVE:-}
+   494:       - SPRING_CLOUD_VAULT_ENABLED=${SPRING_CLOUD_VAULT_ENABLED:-true}
+   495:       - KAFKA_IP_PORT=kafka-1:29092,kafka-2:29092,kafka-3:29092
+>> 496:       - CONSUL_HOST=consul
+   497:       - DB_IP_PORT=postgres-market
+   498:       - BACKEND_USER=${BACKEND_USER}
+   499:       - VAULT_HOST=${VAULT_HOST:-vault}
+   500:       - SWAGGER_AUTH_URL=$KEYCLOAK_FRONTEND_URL
+   501:       - TOKEN_ISSUER_URL=${KC_ISSUER_URL}
+   502:       - CUSTOM_MESSAGE_URL=${CUSTOM_MESSAGE_URL}
+
+[6] repo=opexdev__core eventlog -> vault (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   284:       - postgres-accountant
+   285:     labels:
+   286:       collect_logs: "true"
+   287:     deploy:
+   288:       restart_policy:
+   289:         condition: on-failure
+>> 290:   eventlog:
+   291:     image: ghcr.io/opexdev/eventlog
+   292:     environment:
+   293:       - JAVA_OPTS=-Xmx256m
+   294:       - SPRING_PROFILES_ACTIVE=${EVENTLOG_SPRING_PROFILES_ACTIVE:-}
+   295:       - SPRING_CLOUD_VAULT_ENABLED=${SPRING_CLOUD_VAULT_ENABLED:-true}
+   296:       - KAFKA_IP_PORT=kafka-1:29092,kafka-2:29092,kafka-3:29092
+
+[7] repo=opexdev__core market -> vault (type sync-http, grade inferred)
+  cited code: docker-compose.yml
+   483:       - default
+   484:     labels:
+   485:       collect_logs: "true"
+   486:     deploy:
+   487:       restart_policy:
+   488:         condition: on-failure
+>> 489:   market:
+   490:     image: ghcr.io/opexdev/market
+   491:     environment:
+   492:       - JAVA_OPTS=-Xmx512m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+   493:       - SPRING_PROFILES_ACTIVE=${MARKET_SPRING_PROFILES_ACTIVE:-}
+   494:       - SPRING_CLOUD_VAULT_ENABLED=${SPRING_CLOUD_VAULT_ENABLED:-true}
+   495:       - KAFKA_IP_PORT=kafka-1:29092,kafka-2:29092,kafka-3:29092
+
+[8] repo=oracle-quickstart__oci-cloudnative payment -> zipkin (type sync-http, grade inferred)
+  cited code: src/payment/docker/docker-compose-zipkin.yml
+   9:       - all
+   10:     cap_add:
+   11:       - NET_BIND_SERVICE
+   12:     read_only: true
+   13:     environment:
+   14:       - reschedule=on-node-failure
+>> 15:       - ZIPKIN=http://zipkin:9411/api/v1/spans
+   16:     ports:
+   17:       - "8082:80"
+   18:   zipkin:
+   19:     image: openzipkin/zipkin 
+   20:     hostname: zipkin
+   21:     restart: always
+
+[9] repo=oracle-quickstart__oci-cloudnative api -> mushop-events (type sync-http, grade inferred)
+  cited code: deploy/complete/kubernetes/manifests/api-dep.yaml
+   39:           value: http://orders
+   40:         - name: CARTS_URL
+   41:           value: http://carts
+   42:         - name: USERS_URL
+   43:           value: http://user
+   44:         - name: EVENTS_URL
+>> 45:           value: http://mushop-events
+   46:         - name: STATIC_MEDIA_URL
+   47:           value: /assets
+   48:         - name: NEWSLETTER_SUBSCRIBE_URL
+   49:           value: ""
+   50:         livenessProbe:
+   51:           httpGet:

@@ -1,0 +1,234 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=hemerajs__aither api -> nats (type async, grade documented)
+  cited code: api/index.js:21
+   15:         name: 'test',
+   16:         logLevel: process.env.HEMERA_LOG_LEVEL,
+   17:         childLogger: true,
+   18:         tag: 'hemera-1'
+   19:       },
+   20:       nats: {
+>> 21:         url: process.env.NATS_URL,
+   22:         user: process.env.NATS_USER,
+   23:         pass: process.env.NATS_PW
+   24:       },
+   25:       plugins: [
+   26:         {
+   27:           register: require('hemera-jaeger'),
+  cited code: docker-compose.yml#depends_on
+   13:     restart: always
+   14: 
+   15:   api:
+   16:     build:
+   17:       context: "./api"
+   18:     depends_on:
+>> 19:       - nats
+   20:       - jaeger
+   21:     labels:
+   22:       - "traefik.backend=api"
+   23:       - "traefik.frontend.rule=PathPrefix: /api"
+   24:       - "traefik.port=8789"
+   25:       - "traefik.frontend.entryPoints=http"
+
+[1] repo=hoangtien2k3__ecommerce-microservices tax-service -> kafka (type async, grade documented)
+  cited code: k8s/backend/tax-service.yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: tax-service
+     namespace: ecommerce
+     labels:
+       app: tax-service
+   spec:
+     strategy:
+       type: RollingUpdate
+       rollingUpdate:
+         maxSurge: 1
+         maxUnavailable: 0
+
+[2] repo=hoangtien2k3__ecommerce-microservices order-service -> kafka (type async, grade documented)
+  cited code: docker-compose.yml#depends_on
+   210:       POSTGRES_USER: ${POSTGRES_USER}
+   211:       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+   212:       KAFKA_SERVERS: kafka:9092
+   213:     depends_on:
+   214:       postgres:
+   215:         condition: service_healthy
+>> 216:       kafka:
+   217:         condition: service_healthy
+   218:     networks:
+   219:       - ecommerce-network
+   220: 
+   221:   payment-service:
+   222:     image: ghcr.io/hoangtien2k3/payment-service:latest
+  cited code: k8s/backend/order-service.yaml
+   28:             runAsUser: 65534
+   29:             allowPrivilegeEscalation: false
+   30:             capabilities:
+   31:               drop: ["ALL"]
+   32:         - name: wait-for-kafka
+   33:           image: busybox
+>> 34:           command: ["sh", "-c", "until nc -z kafka 9092; do sleep 5; done"]
+   35:           securityContext:
+   36:             runAsUser: 65534
+   37:             allowPrivilegeEscalation: false
+   38:             capabilities:
+   39:               drop: ["ALL"]
+   40:       securityContext:
+
+[3] repo=hoangtien2k3__ecommerce-microservices payment-service -> order-service (type sync-http, grade documented)
+  cited code: payment-service/src/main/java/com/ecommerce/paymentservice/service/CallAPI.java:17
+   11: @RequiredArgsConstructor
+   12: public class CallAPI {
+   13: 
+   14:     private final RestClient.Builder restClientBuilder;
+   15: 
+   16:     public OrderDto receiverPaymentDto(Integer orderId, String token) {
+>> 17:         return restClientBuilder.baseUrl("http://ORDER-SERVICE").build()
+   18:                 .get()
+   19:                 .uri("/api/orders/{id}", orderId)
+   20:                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+   21:                 .retrieve()
+   22:                 .body(OrderDto.class);
+   23:     }
+
+[4] repo=idugalic__micro-company query-side-blog -> registry (type sync-http, grade inferred)
+  cited code: query-side-blog/pom.xml
+   <?xml version="1.0" encoding="UTF-8"?>
+   <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   
+   	<modelVersion>4.0.0</modelVersion>
+   	<artifactId>query-side-blog</artifactId>
+   	<packaging>jar</packaging>
+   	<name>query-side-blog</name>
+   	<description>Blog project - Query side</description>
+   
+   	<parent>
+   		<groupId>com.idugalic</groupId>
+   		<artifactId>microservices-company-parent</artifactId>
+
+[5] repo=idugalic__micro-company adminserver -> registry (type sync-http, grade inferred)
+  cited code: adminserver/pom.xml
+   73: 		<dependency>
+   74: 			<groupId>org.springframework.cloud</groupId>
+   75: 			<artifactId>spring-cloud-config-client</artifactId>
+   76: 		</dependency>
+   77: 		<dependency>
+   78: 			<groupId>org.springframework.cloud</groupId>
+>> 79: 			<artifactId>spring-cloud-starter-eureka</artifactId>
+   80: 		</dependency>
+   81: 	</dependencies>
+   82: 	
+   83: 
+   84: 	<build>
+   85: 		<plugins>
+
+[6] repo=idugalic__micro-company circuit-breaker -> configserver (type sync-http, grade inferred)
+  cited code: docker/docker-compose-v3.yml
+   27:     entrypoint: ./wait-for-it.sh configserver:8888 -t 60 --
+   28:     command: java -Dspring.profiles.active=docker -jar /app.jar
+   29:   circuit-breaker:
+   30:     image: idugalic/circuit-breaker 
+   31:     ports:
+   32:      - "6161:6161"
+>> 33:     entrypoint: ./wait-for-it.sh configserver:8888 -t 60 --
+   34:     command: java -Dspring.profiles.active=docker -jar /app.jar
+   35:   query-side-blog:
+   36:     image: idugalic/query-side-blog-service
+   37:     ports:
+   38:      - "8081:8081"
+   39:     entrypoint: ./wait-for-it.sh configserver:8888 -t 60 --
+  cited code: docker/docker-compose.yml
+   27:     entrypoint: ./wait-for-it.sh configserver:8888 -t 60 --
+   28:     command: java -Dspring.profiles.active=docker -jar /app.jar
+   29:   circuit-breaker:
+   30:     image: idugalic/circuit-breaker 
+   31:     ports:
+   32:      - "6161:6161"
+>> 33:     entrypoint: ./wait-for-it.sh configserver:8888 -t 60 --
+   34:     command: java -Dspring.profiles.active=docker -jar /app.jar
+   35:   query-side-blog:
+   36:     image: idugalic/query-side-blog-service
+   37:     ports:
+   38:      - "8081:8081"
+   39:     entrypoint: ./wait-for-it.sh configserver:8888 -t 60 --
+
+[7] repo=ionutbalosin__ecommerce-app account-service -> kafka (type async, grade inferred)
+  cited code: docker-compose-spring-boot.yml#depends_on
+   90:     container_name: account-service.local
+   91:     image: account-service:local
+   92:     ports:
+   93:       - 55080:8080
+   94:       - 55800:8000
+   95:     depends_on:
+>> 96:       - kafka
+   97:     networks:
+   98:       - ecommerce-network
+   99:     environment:
+   100:       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n
+   101:       - SPRING_PROFILES_ACTIVE=dockerlocal
+   102:     labels:
+
+[8] repo=ionutbalosin__ecommerce-app order-service -> order-service-database (type db, grade documented)
+  cited code: docker-compose-spring-boot.yml#depends_on
+   49:     container_name: order-service.local
+   50:     image: order-service:local
+   51:     ports:
+   52:       - 53080:8080
+   53:       - 53800:8000
+   54:     depends_on:
+>> 55:       - order-service-database
+   56:       - kafka
+   57:     networks:
+   58:       - ecommerce-network
+   59:     environment:
+   60:       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n
+   61:       - SPRING_PROFILES_ACTIVE=dockerlocal
+
+[9] repo=ionutbalosin__ecommerce-app kafka -> zookeeper (type sync-http, grade documented)
+  cited code: docker-compose-kafka.yml#depends_on
+   26:   # Confluent Kafka #
+   27:   #-----------------#
+   28:   kafka:
+   29:     container_name: kafka.local
+   30:     image: confluentinc/cp-kafka:7.5.0
+   31:     depends_on:
+>> 32:       - zookeeper
+   33:     ports:
+   34:       - 29092:29092
+   35:     networks:
+   36:       - ecommerce-network
+   37:     environment:
+   38:       - KAFKA_BROKER_ID=1
+  cited code: docker-compose-kafka.yml
+   26:   # Confluent Kafka #
+   27:   #-----------------#
+   28:   kafka:
+   29:     container_name: kafka.local
+   30:     image: confluentinc/cp-kafka:7.5.0
+   31:     depends_on:
+>> 32:       - zookeeper
+   33:     ports:
+   34:       - 29092:29092
+   35:     networks:
+   36:       - ecommerce-network
+   37:     environment:
+   38:       - KAFKA_BROKER_ID=1

@@ -1,0 +1,227 @@
+{
+ "id": "edges-0024",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 2803,
+  "completion_tokens": 387,
+  "total_tokens": 3190,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [\n  {\"i\": 0, \"verdict\": \"declared-only\", \"reason\": \"depends_on and environment variable Kafka__SchemaRegistryUrl declare the dependency but do not prove runtime calls or connections.\"},\n  {\"i\": 1, \"verdict\": \"correct\", \"reason\": \"Code configures a MongoDB connection string used at runtime, showing shippingapp connects to mongo.\"},\n  {\"i\": 2, \"verdict\": \"correct\", \"reason\": \"Environment variable Serilog__WriteTo__Args__serverUrl points to seq, indicating runtime logging calls.\"},\n  {\"i\": 3, \"verdict\": \"declared-only\", \"reason\": \"depends_on and environment variable NATS_ADDRESS declare dependency but no direct runtime call shown.\"},\n  {\"i\": 4, \"verdict\": \"declared-only\", \"reason\": \"depends_on declares start order but no evidence of runtime calls or connections from nginx to meow.\"},\n  {\"i\": 5, \"verdict\": \"declared-only\", \"reason\": \"depends_on declares start order but no evidence of runtime calls or connections from nginx to query.\"},\n  {\"i\": 6, \"verdict\": \"declared-only\", \"reason\": \"Environment variable ACCOUNT_SERVICE_URL declares address but no shown code proving runtime calls.\"},\n  {\"i\": 7, \"verdict\": \"declared-only\", \"reason\": \"depends_on and environment variable ACCOUNT_SERVICE_URL declare dependency but no direct runtime call shown.\"},\n  {\"i\": 8, \"verdict\": \"declared-only\", \"reason\": \"ORDER_SERVICE_URL environment variable declares address but no shown runtime call evidence.\"},\n  {\"i\": 9, \"verdict\": \"correct\", \"reason\": \"nginx.conf proxy_pass directive shows nginx routes requests to node-app at runtime.\"}\n]}",
+ "payload": [
+  {
+   "repo": "thangchung__northwind-dotnet",
+   "source": "productcatalogapp",
+   "target": "schema-registry",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 170,
+     "kind": "compose",
+     "context": "   164:     ports:\n   165:       - \"5002:80\"\n   166:     depends_on:\n   167:       - postgres\n   168:       - seq\n   169:       - kafka\n>> 170:       - schema-registry\n   171:     restart: always\n   172:     networks:\n   173:       - northwind-network\n   174: \n   175:   salepaymentapp:\n   176:     image: ${DOCKER_REGISTRY:-ghcr.io/thangchung/northwind-dotnet}/salepaymentapp:${IMAGE_TAG:-latest}"
+    },
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 160,
+     "kind": "compose",
+     "context": "   154:     build:\n   155:       context: .\n   156:       dockerfile: ProductCatalog/Dockerfile\n   157:     environment:\n   158:       - ConnectionStrings__northwind_db=Server=postgres;Port=5432;Database=${POSTGRES_DB:-postgres};User Id=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-123456};\n   159:       - Kafka__BootstrapServers=kafka:9092\n>> 160:       - Kafka__SchemaRegistryUrl=http://schema-registry:8081\n   161:       - Serilog__WriteTo__Args__Name=default\n   162:       - Serilog__WriteTo__Args__serverUrl=http://seq:5341\n   163:       - HealthChecks__ProductCdcUrl=http://connector:8083/connectors/product_outbox_source/config\n   164:     ports:\n   165:       - \"5002:80\"\n   166:     depends_on:"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__northwind-dotnet",
+   "source": "shippingapp",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: Shipping/Extensions.cs:124",
+     "file": "Shipping/Extensions.cs",
+     "line": 124,
+     "kind": "src:csharp",
+     "context": "   118:             mt.AddRider(rider =>\n   119:             {\n   120:                 rider.AddSagaStateMachine<ShipmentStateMachine, ShipmentState, ShipmentStateMachineDefinition>()\n   121:                     /*.InMemoryRepository();*/\n   122:                     .MongoDbRepository(r =>\n   123:                     {\n>> 124:                         r.Connection = config.GetValue(\"MassTransit:Sagas:MongoDbUrl\",\"mongodb://127.0.0.1\");\n   125:                         r.DatabaseName = \"shipments\";\n   126:                     });\n   127: \n   128:                 rider.AddProducer<ShipmentDispatched>(nameof(ShipmentDispatched));\n   129:                 rider.AddProducer<ShipmentDispatchedFailed>(nameof(ShipmentDispatchedFailed));\n   130:                 rider.AddProducer<ShipmentDelivered>(nameof(ShipmentDelivered));"
+    },
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 221,
+     "kind": "compose",
+     "context": "   215:       - \"5004:80\"\n   216:     depends_on:\n   217:       - postgres\n   218:       - seq\n   219:       - kafka\n   220:       - schema-registry\n>> 221:       - mongo\n   222:       - auditcenterapp\n   223:     restart: always\n   224:     networks:\n   225:       - northwind-network\n   226: \n   227:   auditcenterapp:"
+    }
+   ]
+  },
+  {
+   "repo": "thangchung__northwind-dotnet",
+   "source": "shippingapp",
+   "target": "seq",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 218,
+     "kind": "compose",
+     "context": "   212:       - AuditorGrpcUrl=https://auditcenterapp:5006\n   213:       - MassTransit__Sagas__MongoDbUrl=mongodb://mongo\n   214:     ports:\n   215:       - \"5004:80\"\n   216:     depends_on:\n   217:       - postgres\n>> 218:       - seq\n   219:       - kafka\n   220:       - schema-registry\n   221:       - mongo\n   222:       - auditcenterapp\n   223:     restart: always\n   224:     networks:"
+    },
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 211,
+     "kind": "compose",
+     "context": "   205:       dockerfile: Shipping/Dockerfile\n   206:     environment:\n   207:       - ConnectionStrings__northwind_db=Server=postgres;Port=5432;Database=${POSTGRES_DB:-postgres};User Id=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-123456};\n   208:       - Kafka__BootstrapServers=kafka:9092\n   209:       - Kafka__SchemaRegistryUrl=http://schema-registry:8081\n   210:       - Serilog__WriteTo__Args__Name=default\n>> 211:       - Serilog__WriteTo__Args__serverUrl=http://seq:5341\n   212:       - AuditorGrpcUrl=https://auditcenterapp:5006\n   213:       - MassTransit__Sagas__MongoDbUrl=mongodb://mongo\n   214:     ports:\n   215:       - \"5004:80\"\n   216:     depends_on:\n   217:       - postgres"
+    }
+   ]
+  },
+  {
+   "repo": "tinrab__meower",
+   "source": "pusher",
+   "target": "nats",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 35,
+     "kind": "compose",
+     "context": "   29:       NATS_ADDRESS: nats:4222\n   30:       ELASTICSEARCH_ADDRESS: elasticsearch:9200\n   31:   pusher:\n   32:     build: .\n   33:     command: pusher-service\n   34:     depends_on:\n>> 35:       - nats\n   36:     ports:\n   37:       - 8080\n   38:     environment:\n   39:       NATS_ADDRESS: nats:4222\n   40:   postgres:\n   41:     build: ./postgres"
+    },
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 35,
+     "kind": "compose",
+     "context": "   29:       NATS_ADDRESS: nats:4222\n   30:       ELASTICSEARCH_ADDRESS: elasticsearch:9200\n   31:   pusher:\n   32:     build: .\n   33:     command: pusher-service\n   34:     depends_on:\n>> 35:       - nats\n   36:     ports:\n   37:       - 8080\n   38:     environment:\n   39:       NATS_ADDRESS: nats:4222\n   40:   postgres:\n   41:     build: ./postgres"
+    }
+   ]
+  },
+  {
+   "repo": "tinrab__meower",
+   "source": "nginx",
+   "target": "meow",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 61,
+     "kind": "compose",
+     "context": "   55:       - discovery.type=single-node\n   56:   nginx:\n   57:     build: ./nginx\n   58:     ports:\n   59:       - \"8080:80\"\n   60:     depends_on:\n>> 61:       - meow\n   62:       - query\n   63:       - pusher\n   64: "
+    }
+   ]
+  },
+  {
+   "repo": "tinrab__meower",
+   "source": "nginx",
+   "target": "query",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 62,
+     "kind": "compose",
+     "context": "   56:   nginx:\n   57:     build: ./nginx\n   58:     ports:\n   59:       - \"8080:80\"\n   60:     depends_on:\n   61:       - meow\n>> 62:       - query\n   63:       - pusher\n   64: "
+    }
+   ]
+  },
+  {
+   "repo": "tinrab__spidey",
+   "source": "order",
+   "target": "account",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 32,
+     "kind": "compose",
+     "context": "   26:       context: .\n   27:       dockerfile: ./order/app.dockerfile\n   28:     depends_on:\n   29:       - order_db\n   30:     environment:\n   31:       DATABASE_URL: postgres://spidey:123456@order_db/spidey?sslmode=disable\n>> 32:       ACCOUNT_SERVICE_URL: account:8080\n   33:       CATALOG_SERVICE_URL: catalog:8080\n   34:     restart: on-failure\n   35: \n   36:   graphql:\n   37:     build:\n   38:       context: ."
+    }
+   ]
+  },
+  {
+   "repo": "tinrab__spidey",
+   "source": "graphql",
+   "target": "account",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml#depends_on",
+     "file": "docker-compose.yaml",
+     "line": 43,
+     "kind": "compose",
+     "context": "   37:     build:\n   38:       context: .\n   39:       dockerfile: ./graphql/app.dockerfile\n   40:     ports:\n   41:       - 8000:8080\n   42:     depends_on:\n>> 43:       - account\n   44:       - catalog\n   45:     environment:\n   46:       ACCOUNT_SERVICE_URL: account:8080\n   47:       CATALOG_SERVICE_URL: catalog:8080\n   48:       ORDER_SERVICE_URL: order:8080\n   49:     restart: on-failure"
+    },
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 43,
+     "kind": "compose",
+     "context": "   37:     build:\n   38:       context: .\n   39:       dockerfile: ./graphql/app.dockerfile\n   40:     ports:\n   41:       - 8000:8080\n   42:     depends_on:\n>> 43:       - account\n   44:       - catalog\n   45:     environment:\n   46:       ACCOUNT_SERVICE_URL: account:8080\n   47:       CATALOG_SERVICE_URL: catalog:8080\n   48:       ORDER_SERVICE_URL: order:8080\n   49:     restart: on-failure"
+    }
+   ]
+  },
+  {
+   "repo": "tinrab__spidey",
+   "source": "graphql",
+   "target": "order",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 48,
+     "kind": "compose",
+     "context": "   42:     depends_on:\n   43:       - account\n   44:       - catalog\n   45:     environment:\n   46:       ACCOUNT_SERVICE_URL: account:8080\n   47:       CATALOG_SERVICE_URL: catalog:8080\n>> 48:       ORDER_SERVICE_URL: order:8080\n   49:     restart: on-failure\n   50: \n   51:   account_db:\n   52:     build:\n   53:       context: ./account\n   54:       dockerfile: ./db.dockerfile"
+    }
+   ]
+  },
+  {
+   "repo": "tkssharma__nodejs-microservices-patterns",
+   "source": "nginx",
+   "target": "node-app",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: nodejs-microservice-using-docker-Part-2/nginx/nginx.conf:18",
+     "file": "nodejs-microservice-using-docker-Part-2/nginx/nginx.conf",
+     "line": 18,
+     "kind": "nginx",
+     "context": "   12: \t}\n   13: \t \n   14: \tserver {\n   15: \t      listen 80;\n   16: \t \n   17: \t      location / {\n>> 18: \t        proxy_pass http://node-app;\n   19: \t        proxy_http_version 1.1;\n   20: \t        proxy_set_header Upgrade $http_upgrade;\n   21: \t        proxy_set_header Connection 'upgrade';\n   22: \t        proxy_set_header Host $host;\n   23: \t        proxy_cache_bypass $http_upgrade;\n   24: \t      }"
+    }
+   ]
+  }
+ ]
+}

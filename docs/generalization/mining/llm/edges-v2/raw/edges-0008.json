@@ -1,0 +1,213 @@
+{
+ "id": "edges-0008",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 2375,
+  "completion_tokens": 389,
+  "total_tokens": 2764,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\":[\n  {\"i\":0,\"verdict\":\"correct\",\"reason\":\"The environment variable KAFKA_BROKERCONNECT in kafdrop explicitly configures connection to kafka, showing runtime dependency beyond start order.\"},\n  {\"i\":1,\"verdict\":\"declared-only\",\"reason\":\"The depends_on entry and fluentd logging driver configuration show start order and logging setup but no direct runtime call or connection from fluentd to elasticsearch.\"},\n  {\"i\":2,\"verdict\":\"correct\",\"reason\":\"The @FeignClient annotation with explicit URL shows documented runtime HTTP calls from product-service-app to account-service.\"},\n  {\"i\":3,\"verdict\":\"declared-only\",\"reason\":\"depends_on in docker-compose only declares start order; no code or config shows background-mqtt actually connects to mongo at runtime.\"},\n  {\"i\":4,\"verdict\":\"declared-only\",\"reason\":\"depends_on declares start order only; no evidence of runtime calls or connections from web-book-collection to mongo.\"},\n  {\"i\":5,\"verdict\":\"correct\",\"reason\":\"mongo-express environment variable ME_CONFIG_MONGODB_SERVER=mongo documents runtime connection to mongo beyond start order.\"},\n  {\"i\":6,\"verdict\":\"declared-only\",\"reason\":\"depends_on declares start order only; no code or config shows purchase-service making HTTP calls to db.\"},\n  {\"i\":7,\"verdict\":\"declared-only\",\"reason\":\"links in docker-compose declare network links/start order but do not prove runtime HTTP calls from lb to admin.\"},\n  {\"i\":8,\"verdict\":\"declared-only\",\"reason\":\"links declare network connectivity/start order but no evidence of runtime calls from lb to monitoring.\"},\n  {\"i\":9,\"verdict\":\"declared-only\",\"reason\":\"Configuration URLs in appsettings.json declare endpoints but do not prove runtime calls from web-mvc to devstore-api-catalog.\"}\n]}",
+ "payload": [
+  {
+   "repo": "cuongnh28__spring-microservices-blueprint",
+   "source": "kafdrop",
+   "target": "kafka",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 195,
+     "kind": "compose",
+     "context": "   189: \n   190:   kafdrop:\n   191:     image: obsidiandynamics/kafdrop\n   192:     container_name: kafdrop\n   193:     restart: unless-stopped\n   194:     depends_on:\n>> 195:       kafka:\n   196:         condition: service_healthy\n   197:     ports:\n   198:       - \"8085:9000\"\n   199:     environment:\n   200:       KAFKA_BROKERCONNECT: kafka:29092\n   201:     healthcheck:"
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 195,
+     "kind": "compose",
+     "context": "   189: \n   190:   kafdrop:\n   191:     image: obsidiandynamics/kafdrop\n   192:     container_name: kafdrop\n   193:     restart: unless-stopped\n   194:     depends_on:\n>> 195:       kafka:\n   196:         condition: service_healthy\n   197:     ports:\n   198:       - \"8085:9000\"\n   199:     environment:\n   200:       KAFKA_BROKERCONNECT: kafka:29092\n   201:     healthcheck:"
+    }
+   ]
+  },
+  {
+   "repo": "cuongnh28__spring-microservices-blueprint",
+   "source": "fluentd",
+   "target": "elasticsearch",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 39,
+     "kind": "compose",
+     "context": "   33:       - \"5005:5005\"\n   34:     depends_on:\n   35:       account-service-db:\n   36:         condition: service_healthy\n   37:       kafka:\n   38:         condition: service_healthy\n>> 39:       fluentd:\n   40:         condition: service_started\n   41:     logging:\n   42:       driver: \"fluentd\"\n   43:       options:\n   44:         fluentd-address: host.docker.internal:24224\n   45:         tag: '{{.Name}}'"
+    }
+   ]
+  },
+  {
+   "repo": "cuongnh28__spring-microservices-blueprint",
+   "source": "product-service-app",
+   "target": "account-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: product-service/src/main/java/com/demo/feign/UserFeignClient.java:14",
+     "file": "product-service/src/main/java/com/demo/feign/UserFeignClient.java",
+     "line": 14,
+     "kind": "src:java",
+     "context": "   8: \n   9: /**\n   10:  * @author Vito Nguyen (<a href=\"https://github.com/cuongnh28\">...</a>)\n   11:  */\n   12: \n   13: @FeignClient(\n>> 14:     name = \"account-service\", \n   15:     url = \"http://account-service-app:8088\", \n   16:     configuration = {CommonOpenFeignConfig.class}\n   17: )\n   18: public interface UserFeignClient {\n   19: \n   20:     @GetMapping(\"/api/user/{id}\")"
+    }
+   ]
+  },
+  {
+   "repo": "danionescu0__docker-flask-mongodb-example",
+   "source": "background-mqtt",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 161,
+     "kind": "compose",
+     "context": "   155:             - MQTT_PASSWORD=/run/secrets/mqtt_password\n   156:             - PYTHONUNBUFFERED=1\n   157:         secrets:\n   158:             - mqtt_user\n   159:             - mqtt_password\n   160:         depends_on:\n>> 161:             - mongo\n   162:             - mqtt\n   163:             - influxdb\n   164:         tty: true\n   165: \n   166:     # Fulltext search engine backed by fulltext MongoDb index\n   167:     web-fulltext-search:"
+    }
+   ]
+  },
+  {
+   "repo": "danionescu0__docker-flask-mongodb-example",
+   "source": "web-book-collection",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 228,
+     "kind": "compose",
+     "context": "   222:         environment:\n   223:              - PYTHONUNBUFFERED=1\n   224:         ports:\n   225:             - \"86:5000\"\n   226:         entrypoint: python /root/flask-mongodb-example/python/bookcollection/bookcollection.py\n   227:         depends_on:\n>> 228:             - mongo\n   229:             - web-users\n   230: \n   231:     # Wame functionality as web-users but build with fastapi\n   232:     # runs with gunicorn on two processor cores [-w 2]\n   233:     web-users-fast-api:\n   234:         build:"
+    }
+   ]
+  },
+  {
+   "repo": "danionescu0__docker-flask-mongodb-example",
+   "source": "mongo-express",
+   "target": "mongo",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 62,
+     "kind": "compose",
+     "context": "   56:         container_name: mongo-express\n   57:         environment:\n   58:           ME_CONFIG_MONGODB_SERVER: mongo\n   59:         ports:\n   60:           - \"8081:8081\"\n   61:         depends_on:\n>> 62:           - mongo\n   63: \n   64: \n   65:     # Redis server, used here for caching\n   66:     # uses healthcheck with redis-cli ping\n   67:     redis:\n   68:         build:"
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 58,
+     "kind": "compose",
+     "context": "   52: \n   53:     # admin credentials are admin:pass, change them\n   54:     mongo-express:\n   55:         image: mongo-express:latest\n   56:         container_name: mongo-express\n   57:         environment:\n>> 58:           ME_CONFIG_MONGODB_SERVER: mongo\n   59:         ports:\n   60:           - \"8081:8081\"\n   61:         depends_on:\n   62:           - mongo\n   63: \n   64: "
+    }
+   ]
+  },
+  {
+   "repo": "dashersw__cote-workshop",
+   "source": "purchase-service",
+   "target": "db",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 66,
+     "kind": "compose",
+     "context": "   60:       - db\n   61: \n   62:   purchase-service:\n   63:     extends: base\n   64:     command: node services/purchase-service.js\n   65:     depends_on:\n>> 66:       - db\n   67: \n   68:   user-service:\n   69:     extends: base\n   70:     command: node services/user-service.js\n   71:     depends_on:\n   72:       - db"
+    }
+   ]
+  },
+  {
+   "repo": "dashersw__cote-workshop",
+   "source": "lb",
+   "target": "admin",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 13,
+     "kind": "compose",
+     "context": "   7:     environment:\n   8:       - PG=true\n   9: \n   10:   lb:\n   11:     image: dockercloud/haproxy\n   12:     links:\n>> 13:       - admin\n   14:       - end-user\n   15:       - monitoring\n   16:     volumes:\n   17:       - /var/run/docker.sock:/var/run/docker.sock\n   18:     ports:\n   19:       - 80:80"
+    }
+   ]
+  },
+  {
+   "repo": "dashersw__cote-workshop",
+   "source": "lb",
+   "target": "monitoring",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 15,
+     "kind": "compose",
+     "context": "   9: \n   10:   lb:\n   11:     image: dockercloud/haproxy\n   12:     links:\n   13:       - admin\n   14:       - end-user\n>> 15:       - monitoring\n   16:     volumes:\n   17:       - /var/run/docker.sock:/var/run/docker.sock\n   18:     ports:\n   19:       - 80:80\n   20:       - 443:443\n   21:     restart: on-failure"
+    }
+   ]
+  },
+  {
+   "repo": "desenvolvedor-io__dev-store",
+   "source": "web-mvc",
+   "target": "devstore-api-catalog",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/web/DevStore.WebApp.MVC/appsettings.Docker.json",
+     "file": "src/web/DevStore.WebApp.MVC/appsettings.Docker.json",
+     "line": 33,
+     "kind": "appsettings",
+     "context": "   27:     ],\n   28:     \"Properties\": {\n   29:       \"Application\": \"DevStoreWeb\"\n   30:     }\n   31:   },\n   32:   \"AuthUrl\": \"https://devstore-api-identity\",\n>> 33:   \"CatalogUrl\": \"https://devstore-api-catalog\",\n   34:   \"CustomerUrl\": \"https://devstore-api-customers\",\n   35:   \"CheckoutBffUrl\": \"https://devstore-api-bff-checkout\"\n   36: }"
+    },
+    {
+     "ref": "code: src/web/DevStore.WebApp.MVC/appsettings.Production.json",
+     "file": "src/web/DevStore.WebApp.MVC/appsettings.Production.json",
+     "line": 33,
+     "kind": "appsettings",
+     "context": "   27:     ],\n   28:     \"Properties\": {\n   29:       \"Application\": \"DevStoreWeb\"\n   30:     }\n   31:   },\n   32:   \"AuthUrl\": \"https://devstore-api-identity\",\n>> 33:   \"CatalogUrl\": \"https://devstore-api-catalog\",\n   34:   \"CustomerUrl\": \"https://devstore-api-customers\",\n   35:   \"CheckoutBffUrl\": \"https://devstore-api-bff-checkout\"\n   36: }"
+    }
+   ]
+  }
+ ]
+}

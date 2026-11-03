@@ -1,0 +1,274 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=aws-containers__retail-store-sample-app orders -> orders-db (type db, grade documented)
+  cited code: src/orders/docker-compose.yml#depends_on
+   25:       - RETAIL_ORDERS_MESSAGING_RABBITMQ_ADDRESSES=rabbitmq:5672
+   26:       - RETAIL_ORDERS_MESSAGING_RABBITMQ_USERNAME=rabbitmq
+   27:       - RETAIL_ORDERS_MESSAGING_RABBITMQ_PASSWORD=${DB_PASSWORD}
+   28:     ports:
+   29:       - "8083:8080"
+   30:     depends_on:
+>> 31:       orders-db:
+   32:         condition: service_healthy
+   33:         restart: true
+   34:     healthcheck:
+   35:       test:
+   36:         ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+   37:       interval: 10s
+  cited code: src/orders/docker-compose.yml
+   14:     tmpfs:
+   15:       - /tmp:rw,noexec,nosuid
+   16:     environment:
+   17:       - reschedule=on-node-failure
+   18:       - SERVER_TOMCAT_ACCESSLOG_ENABLED=true
+   19:       - RETAIL_ORDERS_PERSISTENCE_PROVIDER=postgres
+>> 20:       - RETAIL_ORDERS_PERSISTENCE_ENDPOINT=orders-db:5432
+   21:       - RETAIL_ORDERS_PERSISTENCE_NAME=orders
+   22:       - RETAIL_ORDERS_PERSISTENCE_USERNAME=orders_user
+   23:       - RETAIL_ORDERS_PERSISTENCE_PASSWORD=${DB_PASSWORD}
+   24:       - RETAIL_ORDERS_MESSAGING_PROVIDER=rabbitmq
+   25:       - RETAIL_ORDERS_MESSAGING_RABBITMQ_ADDRESSES=rabbitmq:5672
+   26:       - RETAIL_ORDERS_MESSAGING_RABBITMQ_USERNAME=rabbitmq
+
+[1] repo=buptmiao__microservice-app apigateway -> zipkin (type sync-http, grade documented)
+  cited code: tracer/docker-compose.yml#depends_on
+   118:       - 8080
+   119:     ports:
+   120:       - 8080:8080
+   121:       - 6060:6060
+   122:     depends_on:
+   123:       - etcd
+>> 124:       - zipkin
+   125:     networks:
+   126:       - back-tier
+   127:       - front-tier
+   128: 
+  cited code: tracer/docker-compose.yml
+   110:   apigateway:
+   111:     image: buptmiao/apigateway:v1.0.1
+   112: 
+   113:     command:
+   114:       - '-http.addr=0.0.0.0:8080'
+   115:       - '-etcd.addr=http://etcd:2379'
+>> 116:       - '-zipkin.addr=http://zipkin:9411/api/v1/spans'
+   117:     expose:
+   118:       - 8080
+   119:     ports:
+   120:       - 8080:8080
+   121:       - 6060:6060
+   122:     depends_on:
+
+[2] repo=buptmiao__microservice-app topic -> etcd (type sync-http, grade documented)
+  cited code: tracer/docker-compose.yml#depends_on
+   95:       - '-zipkin.addr=http://zipkin:9411/api/v1/spans'
+   96:     networks:
+   97:       - back-tier
+   98:   topic:
+   99:     image: buptmiao/topic:v1.0.1
+   100:     depends_on:
+>> 101:       - etcd
+   102:       - zipkin
+   103:     command:
+   104:       - '-addr=topic:8084'
+   105:       - '-etcd.addr=http://etcd:2379'
+   106:       - '-zipkin.addr=http://zipkin:9411/api/v1/spans'
+   107:     networks:
+  cited code: docker/docker-compose.yml#depends_on
+   43:       - '-etcd.addr=http://etcd:2379'
+   44:     networks:
+   45:       - back-tier
+   46:   topic:
+   47:     image: buptmiao/topic:v1.0.1
+   48:     depends_on:
+>> 49:       - etcd
+   50:     command:
+   51:       - '-addr=topic:8084'
+   52:       - '-etcd.addr=http://etcd:2379'
+   53:     networks:
+   54:       - back-tier
+   55: 
+
+[3] repo=buptmiao__microservice-app grafana -> prometheus (type sync-http, grade inferred)
+  cited code: monitor/docker-compose.yml#depends_on
+   55:     networks:
+   56:       - back-tier
+   57: 
+   58:   grafana:
+   59:     image: grafana/grafana
+   60:     depends_on:
+>> 61:       - prometheus
+   62:     ports:
+   63:       - 3000:3000
+   64:     volumes:
+   65:       - ./grafana/:/var/lib/grafana
+   66:     environment:
+   67:       - GF_SECURITY_ADMIN_PASSWORD=admin
+
+[4] repo=charlessolar__eShopOnContainersDDD presentation -> seq (type sync-http, grade documented)
+  cited code: src/Contexts/Basket/Presentation/Program.cs:122
+   116:         .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+   117:         .Enrich.WithProperty("ApplicationContext", Program.AppName)
+   118:         .ReadFrom.Configuration(configuration)
+   119:         .ReadFrom.Services(services)
+   120:         .Enrich.FromLogContext()
+   121:         .WriteTo.Console()
+>> 122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? "http://seq" : seqServerUrl)
+   123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? "http://logstash:8080" : logstashUrl, queueLimitBytes: null);
+   124: 
+   125: }
+   126: 
+   127: IConfiguration GetConfiguration()
+   128: {
+  cited code: src/Contexts/Identity/Presentation/Program.cs:122
+   116:         .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+   117:         .Enrich.WithProperty("ApplicationContext", Program.AppName)
+   118:         .ReadFrom.Configuration(configuration)
+   119:         .ReadFrom.Services(services)
+   120:         .Enrich.FromLogContext()
+   121:         .WriteTo.Console()
+>> 122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? "http://seq" : seqServerUrl)
+   123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? "http://logstash:8080" : logstashUrl, queueLimitBytes: null);
+   124: 
+   125: }
+   126: 
+   127: IConfiguration GetConfiguration()
+   128: {
+
+[5] repo=charlessolar__eShopOnContainersDDD domain -> rabbitmq (type async, grade inferred)
+  cited code: docker-compose.yml#depends_on
+   4:   domain:
+   5:     image: eshop/domain:${TAG:-latest}
+   6:     build:
+   7:       context: .
+   8:       dockerfile: src/Endpoints/Domain/Dockerfile
+   9:     depends_on:
+>> 10:       - rabbitmq
+   11:       - eventstore
+   12:     restart: always
+   13:   mongo:
+   14:     image: eshop/mongodb:${TAG:-latest}
+   15:     build:
+   16:       context: .
+
+[6] repo=charlessolar__eShopOnContainersDDD presentation -> logstash (type sync-http, grade documented)
+  cited code: src/Contexts/Basket/Presentation/Program.cs:123
+   117:         .Enrich.WithProperty("ApplicationContext", Program.AppName)
+   118:         .ReadFrom.Configuration(configuration)
+   119:         .ReadFrom.Services(services)
+   120:         .Enrich.FromLogContext()
+   121:         .WriteTo.Console()
+   122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? "http://seq" : seqServerUrl)
+>> 123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? "http://logstash:8080" : logstashUrl, queueLimitBytes: null);
+   124: 
+   125: }
+   126: 
+   127: IConfiguration GetConfiguration()
+   128: {
+   129:     var builder = new ConfigurationBuilder()
+  cited code: src/Contexts/Identity/Presentation/Program.cs:123
+   117:         .Enrich.WithProperty("ApplicationContext", Program.AppName)
+   118:         .ReadFrom.Configuration(configuration)
+   119:         .ReadFrom.Services(services)
+   120:         .Enrich.FromLogContext()
+   121:         .WriteTo.Console()
+   122:         .WriteTo.Seq(string.IsNullOrWhiteSpace(seqServerUrl) ? "http://seq" : seqServerUrl)
+>> 123:         .WriteTo.Http(string.IsNullOrWhiteSpace(logstashUrl) ? "http://logstash:8080" : logstashUrl, queueLimitBytes: null);
+   124: 
+   125: }
+   126: 
+   127: IConfiguration GetConfiguration()
+   128: {
+   129:     var builder = new ConfigurationBuilder()
+
+[7] repo=codergogoi__nodejs_microservice products -> customer (type sync-http, grade documented)
+  cited code: products/src/utils/index.js:62
+   56:     throw new Error("Data Not found!");
+   57:   }
+   58: };
+   59: 
+   60: //Raise Events
+   61: module.exports.PublishCustomerEvent = async (payload) => {
+>> 62:   axios.post("http://customer:8001/app-events/", {
+   63:     payload,
+   64:   });
+   65: 
+   66:   //     axios.post(`${BASE_URL}/customer/app-events/`,{
+   67:   //         payload
+   68:   //     });
+
+[8] repo=codergogoi__nodejs_microservice customer -> nosql-db (type db, grade documented)
+  cited code: customer/src/config/index.js:12
+   6: } else {
+   7:   dotEnv.config();
+   8: }
+   9: 
+   10: module.exports = {
+   11:   PORT: process.env.PORT,
+>> 12:   DB_URL: process.env.MONGODB_URI,
+   13:   APP_SECRET: process.env.APP_SECRET,
+   14:   EXCHANGE_NAME: process.env.EXCHANGE_NAME,
+   15:   MSG_QUEUE_URL: process.env.MSG_QUEUE_URL,
+   16:   CUSTOMER_SERVICE: "customer_service",
+   17:   SHOPPING_SERVICE: "shopping_service",
+   18: };
+  cited code: docker-compose.yml#depends_on
+   53:       context: ./customer
+   54:     container_name: customer
+   55:     ports:
+   56:       - "8001:8001"
+   57:     restart: always
+   58:     depends_on:
+>> 59:       - "nosql-db"
+   60:       - "rabbitmq"
+   61:     volumes:
+   62:       - .:/app/
+   63:       - /app/customer/node_modules
+   64:     env_file:
+   65:       - ./customer/.env.dev
+
+[9] repo=codergogoi__nodejs_microservice shopping -> nosql-db (type db, grade documented)
+  cited code: shopping/src/config/index.js:12
+   6: } else {
+   7:   dotEnv.config();
+   8: }
+   9: 
+   10: module.exports = {
+   11:   PORT: process.env.PORT,
+>> 12:   DB_URL: process.env.MONGODB_URI,
+   13:   APP_SECRET: process.env.APP_SECRET,
+   14:   BASE_URL: process.env.BASE_URL,
+   15:   EXCHANGE_NAME: process.env.EXCHANGE_NAME,
+   16:   MSG_QUEUE_URL: process.env.MSG_QUEUE_URL,
+   17:   CUSTOMER_SERVICE: "customer_service",
+   18:   SHOPPING_SERVICE: "shopping_service",
+  cited code: docker-compose.yml#depends_on
+   37:       context: ./shopping
+   38:     container_name: shopping
+   39:     ports:
+   40:       - "8003:8003"
+   41:     restart: always
+   42:     depends_on:
+>> 43:       - "nosql-db"
+   44:       - "rabbitmq"
+   45:     volumes:
+   46:       - .:/app
+   47:       - /app/shopping/node_modules
+   48:     env_file:
+   49:       - ./shopping/.env.dev

@@ -1,0 +1,227 @@
+{
+ "id": "edges-0012",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 2952,
+  "completion_tokens": 499,
+  "total_tokens": 3451,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\n  \"edges\": [\n    {\n      \"i\": 0,\n      \"verdict\": \"declared-only\",\n      \"reason\": \"The cited evidence is a docker-compose 'depends_on' declaration which only specifies start order, not runtime calls or connections.\"\n    },\n    {\n      \"i\": 1,\n      \"verdict\": \"declared-only\",\n      \"reason\": \"The cited evidence is a docker-compose 'depends_on' declaration indicating start order, not runtime dependency or calls.\"\n    },\n    {\n      \"i\": 2,\n      \"verdict\": \"correct\",\n      \"reason\": \"The nginx proxy configuration explicitly routes HTTP requests to post-service, showing runtime dependency, supported by docker-compose depends_on.\"\n    },\n    {\n      \"i\": 3,\n      \"verdict\": \"correct\",\n      \"reason\": \"The environment variable SPRING_DATASOURCE_URL points to userdb, indicating runtime DB connection, supported by docker-compose depends_on.\"\n    },\n    {\n      \"i\": 4,\n      \"verdict\": \"correct\",\n      \"reason\": \"The environment variable SPRING_REDIS_HOST points to redis, indicating runtime connection, supported by docker-compose depends_on.\"\n    },\n    {\n      \"i\": 5,\n      \"verdict\": \"declared-only\",\n      \"reason\": \"The cited evidence is a docker-compose 'depends_on' entry indicating start order, not runtime calls or connections.\"\n    },\n    {\n      \"i\": 6,\n      \"verdict\": \"declared-only\",\n      \"reason\": \"The cited evidence is a docker-compose 'depends_on' entry indicating start order, not runtime calls or connections.\"\n    },\n    {\n      \"i\": 7,\n      \"verdict\": \"declared-only\",\n      \"reason\": \"The cited evidence is a docker-compose 'depends_on' entry indicating start order, not runtime calls or connections.\"\n    },\n    {\n      \"i\": 8,\n      \"verdict\": \"correct\",\n      \"reason\": \"The code shows the cache-service connects to NATS at runtime via the nats client, supported by docker-compose depends_on and environment variables.\"\n    },\n    {\n      \"i\": 9,\n      \"verdict\": \"correct\",\n      \"reason\": \"The code shows the math-service connects to NATS at runtime via the nats client, supported by docker-compose depends_on and environment variables.\"\n    }\n  ]\n}",
+ "payload": [
+  {
+   "repo": "hamed-shirbandi__TaskoMask",
+   "source": "api-gateway",
+   "target": "tasks-write-api",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/7-Docker/docker-compose.yml#depends_on",
+     "file": "src/7-Docker/docker-compose.yml",
+     "line": 252,
+     "kind": "compose",
+     "context": "   246:     depends_on:\n   247:       - owners-read-api\n   248:       - owners-write-api\n   249:       - boards-read-api\n   250:       - boards-write-api\n   251:       - tasks-read-api\n>> 252:       - tasks-write-api\n   253:       - identity-api\n   254:       - aggregator\n   255: \n   256:   user-panel-client:\n   257:     container_name: user-panel-client\n   258:     image: ${DOCKER_REGISTRY-}user-panel-client"
+    }
+   ]
+  },
+  {
+   "repo": "hamed-shirbandi__TaskoMask",
+   "source": "aggregator",
+   "target": "boards-read-api",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: src/7-Docker/docker-compose.yml#depends_on",
+     "file": "src/7-Docker/docker-compose.yml",
+     "line": 230,
+     "kind": "compose",
+     "context": "   224:       - 5002:80\n   225:       - 5003:443\n   226:     networks:\n   227:       - taskomask-network\n   228:     depends_on:\n   229:       - owners-read-api\n>> 230:       - boards-read-api\n   231:       - tasks-read-api\n   232:       - identity-api\n   233: \n   234:   api-gateway:\n   235:     container_name: api-gateway\n   236:     image: ${DOCKER_REGISTRY-}api-gateway"
+    }
+   ]
+  },
+  {
+   "repo": "hantsy__spring-microservice-sample",
+   "source": "nginx-proxy",
+   "target": "post-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.local.yml#depends_on",
+     "file": "docker-compose.local.yml",
+     "line": 9,
+     "kind": "compose",
+     "context": "   3: services:\n   4:   nginx-proxy:\n   5:     image: hantsy/nginx-proxy\n   6:     depends_on:\n   7:       - auth-service\n   8:       - user-service\n>> 9:       - post-service\n   10:     ports:\n   11:       - \"80:80\"\n   12:       \n   13:   auth-service:\n   14:     image: hantsy/auth-service\n   15:     environment:"
+    },
+    {
+     "ref": "code: nginx/nginx.conf:22",
+     "file": "nginx/nginx.conf",
+     "line": 22,
+     "kind": "nginx",
+     "context": "   16: \t\tlocation /users {\n   17: #\t\t\trewrite ^/api/user-service/(.*) /$1 break;\n   18: \t\t\tproxy_pass http://user-service:8001;\n   19: \t\t}\n   20: \t\tlocation /posts {\n   21: #\t\t\trewrite ^/api/post-service/(.*) /$1 break;\n>> 22: \t\t\tproxy_pass http://post-service:8002;\n   23: \t\t}\n   24: \t\tlocation / {\n   25: #\t\t    rewrite ^/api/auth-service/(.*) /$1 break;\n   26: \t\t\tproxy_pass http://auth-service:8000;\n   27: \t\t}\n   28: \t}"
+    }
+   ]
+  },
+  {
+   "repo": "hantsy__spring-microservice-sample",
+   "source": "user-service",
+   "target": "userdb",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.local.yml#depends_on",
+     "file": "docker-compose.local.yml",
+     "line": 32,
+     "kind": "compose",
+     "context": "   26:     environment:\n   27:       SPRING_DATASOURCE_URL: jdbc:mysql://userdb:3306/userdb\n   28:       SPRING_REDIS_HOST: redis\n   29:     ports:\n   30:       - \"8001:8001\" #specify ports forewarding\n   31:     depends_on:\n>> 32:       - userdb\n   33:       - redis\n   34:   \n   35:   post-service: \n   36:     image: hantsy/post-service\n   37:     environment:\n   38:       SPRING_DATASOURCE_URL: jdbc:postgresql://postdb:5432/postdb"
+    },
+    {
+     "ref": "code: docker-compose.build.yml#depends_on",
+     "file": "docker-compose.build.yml",
+     "line": 45,
+     "kind": "compose",
+     "context": "   39:     environment:\n   40:       SPRING_DATASOURCE_URL: jdbc:mysql://userdb:3306/userdb\n   41:       SPRING_REDIS_HOST: redis\n   42:     ports:\n   43:       - \"8001:8001\" #specify ports forewarding\n   44:     depends_on:\n>> 45:       - userdb\n   46:       - redis\n   47:   \n   48:   post-service: \n   49:     image: hantsy/post-service\n   50:     container_name: post-service\n   51:     build: "
+    }
+   ]
+  },
+  {
+   "repo": "hantsy__spring-microservice-sample",
+   "source": "post-service",
+   "target": "redis",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.local.yml#depends_on",
+     "file": "docker-compose.local.yml",
+     "line": 44,
+     "kind": "compose",
+     "context": "   38:       SPRING_DATASOURCE_URL: jdbc:postgresql://postdb:5432/postdb\n   39:       SPRING_REDIS_HOST: redis\n   40:     ports:\n   41:       - \"8002:8002\" #specify ports forewarding\n   42:     depends_on:\n   43:       - postdb\n>> 44:       - redis\n   45:  \n   46: \n   47:   \n   48:      "
+    },
+    {
+     "ref": "code: docker-compose.build.yml#depends_on",
+     "file": "docker-compose.build.yml",
+     "line": 61,
+     "kind": "compose",
+     "context": "   55:       SPRING_DATASOURCE_URL: jdbc:postgresql://postdb:5432/postdb\n   56:       SPRING_REDIS_HOST: redis\n   57:     ports:\n   58:       - \"8002:8002\" #specify ports forewarding\n   59:     depends_on:\n   60:       - postdb\n>> 61:       - redis\n   62:  \n   63: \n   64:   \n   65:      "
+    }
+   ]
+  },
+  {
+   "repo": "harlow__go-micro-services",
+   "source": "search",
+   "target": "geo",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 8,
+     "kind": "compose",
+     "context": "   2:   frontend:\n   3:     build: .\n   4:     entrypoint: go-micro-services frontend\n   5:     ports:\n   6:       - \"5001:8080\"\n   7:     depends_on:\n>> 8:       search:\n   9:         condition: service_healthy\n   10:       profile:\n   11:         condition: service_healthy\n   12:     healthcheck:\n   13:       test: [\"CMD-SHELL\", \"bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\\"GET /healthz HTTP/1.1\\\\r\\\\nHost: localhost\\\\r\\\\nConnection: close\\\\r\\\\n\\\\r\\\\n\\\" >&3; head -n 1 <&3 | grep -q \\\"200\\\"'\"]\n   14:       interval: 10s"
+    }
+   ]
+  },
+  {
+   "repo": "harlow__go-micro-services",
+   "source": "frontend",
+   "target": "profile",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 10,
+     "kind": "compose",
+     "context": "   4:     entrypoint: go-micro-services frontend\n   5:     ports:\n   6:       - \"5001:8080\"\n   7:     depends_on:\n   8:       search:\n   9:         condition: service_healthy\n>> 10:       profile:\n   11:         condition: service_healthy\n   12:     healthcheck:\n   13:       test: [\"CMD-SHELL\", \"bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\\"GET /healthz HTTP/1.1\\\\r\\\\nHost: localhost\\\\r\\\\nConnection: close\\\\r\\\\n\\\\r\\\\n\\\" >&3; head -n 1 <&3 | grep -q \\\"200\\\"'\"]\n   14:       interval: 10s\n   15:       timeout: 3s\n   16:       retries: 10"
+    }
+   ]
+  },
+  {
+   "repo": "harlow__go-micro-services",
+   "source": "search",
+   "target": "rate",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 8,
+     "kind": "compose",
+     "context": "   2:   frontend:\n   3:     build: .\n   4:     entrypoint: go-micro-services frontend\n   5:     ports:\n   6:       - \"5001:8080\"\n   7:     depends_on:\n>> 8:       search:\n   9:         condition: service_healthy\n   10:       profile:\n   11:         condition: service_healthy\n   12:     healthcheck:\n   13:       test: [\"CMD-SHELL\", \"bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \\\"GET /healthz HTTP/1.1\\\\r\\\\nHost: localhost\\\\r\\\\nConnection: close\\\\r\\\\n\\\\r\\\\n\\\" >&3; head -n 1 <&3 | grep -q \\\"200\\\"'\"]\n   14:       interval: 10s"
+    }
+   ]
+  },
+  {
+   "repo": "hemerajs__aither",
+   "source": "cache-service",
+   "target": "nats",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: cache-service/index.js:5",
+     "file": "cache-service/index.js",
+     "line": 5,
+     "kind": "src:javascript",
+     "context": "   1: const Hemera = require('nats-hemera')\n   2: const HemeraJoi = require('hemera-joi')\n   3: const HemeraRedisCache = require('hemera-redis-cache')\n   4: const nats = require('nats').connect({\n>> 5:   url: process.env.NATS_URL,\n   6:   user: process.env.NATS_USER,\n   7:   pass: process.env.NATS_PW\n   8: })\n   9: \n   10: const hemera = new Hemera(nats, {\n   11:   logLevel: process.env.HEMERA_LOG_LEVEL,"
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 60,
+     "kind": "compose",
+     "context": "   54:     build:\n   55:       context: \"./cache-service\"\n   56:     links:\n   57:       - nats\n   58:       - redis\n   59:     depends_on:\n>> 60:       - nats\n   61:       - redis\n   62:     restart: always\n   63:     environment:\n   64:       REDIS_PORT: 6379\n   65:       REDIS_URL: redis\n   66:       NATS_URL: nats://nats:4222"
+    }
+   ]
+  },
+  {
+   "repo": "hemerajs__aither",
+   "source": "math-service",
+   "target": "nats",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: math-service/index.js:5",
+     "file": "math-service/index.js",
+     "line": 5,
+     "kind": "src:javascript",
+     "context": "   1: const Hemera = require('nats-hemera')\n   2: const HemeraJoi = require('hemera-joi')\n   3: const HemeraJaeger = require('hemera-jaeger')\n   4: const nats = require('nats').connect({\n>> 5:   url: process.env.NATS_URL,\n   6:   user: process.env.NATS_USER,\n   7:   pass: process.env.NATS_PW\n   8: })\n   9: const hemera = new Hemera(nats, {\n   10:   logLevel: process.env.HEMERA_LOG_LEVEL,\n   11:   childLogger: true,"
+    },
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 42,
+     "kind": "compose",
+     "context": "   36:   math-service:\n   37:     build:\n   38:       context: \"./math-service\"\n   39:     links:\n   40:       - nats\n   41:     depends_on:\n>> 42:       - nats\n   43:       - redis\n   44:       - jaeger\n   45:     restart: always\n   46:     environment:\n   47:       NATS_URL: nats://nats:4222\n   48:       NATS_USER: ruser"
+    }
+   ]
+  }
+ ]
+}

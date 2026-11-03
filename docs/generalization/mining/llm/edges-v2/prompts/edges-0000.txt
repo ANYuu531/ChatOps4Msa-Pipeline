@@ -1,0 +1,244 @@
+You are auditing a static dependency extractor for microservice systems. For each edge
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
+Do not judge by plausibility of names; judge by the evidence shown.
+
+Answer as JSON: {"edges": [{"i": <index>, "verdict": "...", "reason": "<one sentence>"}]}
+
+Edges:
+[0] repo=AleksK1NG__Go-CQRS-Kafka-gRPC-Microservices kafka1 -> zoo1 (type sync-http, grade documented)
+  cited code: docker-compose.yaml#depends_on
+   179:       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+   180:       KAFKA_JMX_PORT: 9999
+   181:       KAFKA_JMX_HOSTNAME: ${DOCKER_HOST_IP:-host.docker.internal}
+   182:     volumes:
+   183:       - ./zk-single-kafka-single/kafka1/data:/var/lib/kafka/data
+   184:     depends_on:
+>> 185:       - zoo1
+   186:     networks: [ "microservices" ]
+   187: 
+   188:   mongodb:
+   189:     image: mongo:latest
+   190:     restart: always
+   191:     environment:
+  cited code: docker-compose.local.yaml#depends_on
+   88:       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+   89:       KAFKA_JMX_PORT: 9999
+   90:       KAFKA_JMX_HOSTNAME: ${DOCKER_HOST_IP:-127.0.0.1}
+   91:     volumes:
+   92:       - ./zk-single-kafka-single/kafka1/data:/var/lib/kafka/data
+   93:     depends_on:
+>> 94:       - zoo1
+   95:     networks: [ "microservices" ]
+   96: 
+   97:   mongodb:
+   98:     image: mongo:latest
+   99:     restart: always
+   100:     environment:
+
+[1] repo=AntonioFalcaoJr__EventualShop communication-command -> rabbitmq (type async, grade documented)
+  cited code: src/Services/Communication/Command/WorkerService/appsettings.Staging.json
+   1: {
+   2:   "ConnectionStrings": {
+   3:     "EventStore": "Server=mssql;Database=CommunicationEventStore;User=sa;Password=!MyStrongPassword;trustServerCertificate=true"
+   4:   },
+   5:   "MessageBusOptions": {
+>> 6:     "ConnectionString": "amqp://guest:guest@rabbitmq:5672/eventual-shop"
+   7:   },
+   8:   "QuartzOptions": {
+   9:     "quartz.dataSource.default.connectionString": "Server=mssql;Database=Quartz;User=sa;Password=!MyStrongPassword;trustServerCertificate=true"
+   10:   },
+   11:   "SmtpOptions": {
+   12:     "Username": "no.retry.fake.email@gmail.com",
+  cited code: src/Services/Communication/Command/WorkerService/appsettings.Production.json
+   1: {
+   2:   "ConnectionStrings": {
+   3:     "EventStore": "Server=mssql;Database=CommunicationEventStore;User=sa;Password=!MyStrongPassword;trustServerCertificate=true"
+   4:   },
+   5:   "MessageBusOptions": {
+>> 6:     "ConnectionString": "amqp://guest:guest@rabbitmq:5672/eventual-shop"
+   7:   },
+   8:   "QuartzOptions": {
+   9:     "quartz.dataSource.default.connectionString": "Server=mssql;Database=Quartz;User=sa;Password=!MyStrongPassword;trustServerCertificate=true"
+   10:   },
+   11:   "SmtpOptions": {
+   12:     "Username": "no.retry.fake.email@gmail.com",
+
+[2] repo=AntonioFalcaoJr__EventualShop communication-query -> mongodb (type db, grade inferred)
+  cited code: src/Services/Communication/Query/GrpcService/appsettings.Staging.json
+   1: {
+   2:   "ConnectionStrings": {
+>> 3:     "Projections": "mongodb://mongoadmin:secret@mongodb/CommunicationProjections/?authSource=admin"
+   4:   },
+   5:   "EventBusOptions": {
+   6:     "ConnectionString": "amqp://guest:guest@rabbitmq:5672/eventual-shop"
+   7:   }
+   8: }
+   9: 
+  cited code: src/Services/Communication/Query/GrpcService/appsettings.Production.json
+   1: {
+   2:   "ConnectionStrings": {
+>> 3:     "Projections": "mongodb://mongoadmin:secret@mongodb/CommunicationProjections/?authSource=admin"
+   4:   },
+   5:   "EventBusOptions": {
+   6:     "ConnectionString": "amqp://guest:guest@rabbitmq:5672/eventual-shop"
+   7:   }
+   8: }
+   9: 
+
+[3] repo=AntonioFalcaoJr__EventualShop identity-command -> mssql (type db, grade inferred)
+  cited code: src/Services/Identity/Command/WorkerService/appsettings.Staging.json
+   1: {
+   2:   "ConnectionStrings": {
+>> 3:     "EventStore": "Server=mssql;Database=IdentityEventStore;User=sa;Password=!MyStrongPassword;trustServerCertificate=true"
+   4:   },
+   5:   "MessageBusOptions": {
+   6:     "ConnectionString": "amqp://guest:guest@rabbitmq:5672/eventual-shop"
+   7:   },
+   8:   "QuartzOptions": {
+   9:     "quartz.dataSource.default.connectionString": "Server=mssql;Database=Quartz;User=sa;Password=!MyStrongPassword;trustServerCertificate=true"
+  cited code: src/Services/Identity/Command/WorkerService/appsettings.Production.json
+   1: {
+   2:   "ConnectionStrings": {
+>> 3:     "EventStore": "Server=mssql;Database=IdentityEventStore;User=sa;Password=!MyStrongPassword;trustServerCertificate=true"
+   4:   },
+   5:   "MessageBusOptions": {
+   6:     "ConnectionString": "amqp://guest:guest@rabbitmq:5672/eventual-shop"
+   7:   },
+   8:   "QuartzOptions": {
+   9:     "quartz.dataSource.default.connectionString": "Server=mssql;Database=Quartz;User=sa;Password=!MyStrongPassword;trustServerCertificate=true"
+
+[4] repo=EdwinVW__pitstop webapp -> logserver (type sync-http, grade documented)
+  cited code: src/WebApp/appsettings.Production.json
+   3:     "Using": [ "Serilog.Sinks.Console" ],
+   4:     "MinimumLevel": "Information",
+   5:     "WriteTo": [
+   6:       { "Name": "Console" },
+   7:       {
+   8:         "Name": "Seq",
+>> 9:         "Args": { "serverUrl": "http://logserver:5341" }
+   10:       }
+   11:     ],
+   12:     "Properties": {
+   13:       "Application": "WebApp"
+   14:     }
+   15:   },
+
+[5] repo=EdwinVW__pitstop workshopmanagementeventhandler -> rabbitmq (type async, grade inferred)
+  cited code: src/docker-compose.yml#depends_on
+   119: 
+   120:   workshopmanagementeventhandler:
+   121:     image: pitstop/workshopmanagementeventhandler:1.0
+   122:     build: WorkshopManagementEventHandler
+   123:     container_name: workshopmanagementeventhandler
+   124:     depends_on:
+>> 125:       - rabbitmq
+   126:       - sqlserver
+   127:     environment:
+   128:       - DOTNET_ENVIRONMENT=Production
+   129: 
+   130:   webapp:
+   131:     image: pitstop/webapp:1.0
+
+[6] repo=EdwinVW__pitstop customermanagementapi -> sqlserver (type db, grade documented)
+  cited code: src/CustomerManagementAPI/appsettings.Production.json
+   3:     "Host": "rabbitmq",
+   4:     "Username": "rabbitmquser",
+   5:     "Password": "DEBmbwkSrzy9D1T9cJfa",
+   6:     "Exchange": "Pitstop"
+   7:   },
+   8:   "ConnectionStrings": {
+>> 9:     "CustomerManagementCN": "server=sqlserver;user id=sa;password=8jkGh47hnDw89H@q8LN2;database=CustomerManagement;trustServerCertificate=true;"
+   10:   },
+   11:   "Serilog": {
+   12:     "Using": [ "Serilog.Sinks.Console" ],
+   13:     "MinimumLevel": "Information",
+   14:     "WriteTo": [
+   15:       { "Name": "Console" },
+  cited code: src/docker-compose.yml#depends_on
+   57: 
+   58:   customermanagementapi:
+   59:     image: pitstop/customermanagementapi:1.0
+   60:     build: CustomerManagementAPI
+   61:     depends_on:
+   62:       - rabbitmq
+>> 63:       - sqlserver
+   64:     ports:
+   65:       - "5100"
+   66:     environment:
+   67:       - ASPNETCORE_ENVIRONMENT=Production
+   68: 
+   69:   workshopmanagementapi:
+
+[7] repo=JarrodMalkovic__auction-website auth-depl -> nats-srv (type async, grade documented)
+  cited code: k8s/auth-depl.yaml
+   26:                 secretKeyRef:
+   27:                   name: mysql-root-password-secret
+   28:                   key: MYSQL_ROOT_PASSWORD
+   29:             - name: AUTH_MYSQL_URI
+   30:               value: 'mysql://auth-mysql-srv:8080/auth'
+   31:             - name: NATS_URL
+>> 32:               value: 'http://nats-srv:4222'
+   33:             - name: NATS_CLUSTER_ID
+   34:               value: auction
+   35:             - name: NATS_CLIENT_ID
+   36:               valueFrom:
+   37:                 fieldRef:
+   38:                   fieldPath: metadata.name
+
+[8] repo=JarrodMalkovic__auction-website listings-depl -> listings-mysql-srv (type db, grade documented)
+  cited code: services/listings/src/models/index.ts:10
+   4: import { UserFactory } from './user';
+   5: 
+   6: const db =
+   7:   process.env.NODE_ENV == 'test'
+   8:     ? new Sequelize('sqlite::memory:', { logging: false })
+   9:     : new Sequelize('mysql', 'root', process.env.MYSQL_ROOT_PASSWORD, {
+>> 10:         host: 'listings-mysql-srv',
+   11:         dialect: 'mysql',
+   12:       });
+   13: 
+   14: const Listing = ListingFactory(db);
+   15: const User = UserFactory(db);
+   16: 
+  cited code: k8s/listings-depl.yaml
+   24:             - name: MYSQL_ROOT_PASSWORD
+   25:               valueFrom:
+   26:                 secretKeyRef:
+   27:                   name: mysql-root-password-secret
+   28:                   key: MYSQL_ROOT_PASSWORD
+   29:             - name: LISTINGS_MYSQL_URI
+>> 30:               value: 'mysql://listings-mysql-srv:8080/listings'
+   31:             - name: NATS_URL
+   32:               value: 'http://nats-srv:4222'
+   33:             - name: NATS_CLUSTER_ID
+   34:               value: auction
+   35:             - name: NATS_CLIENT_ID
+   36:               valueFrom:
+
+[9] repo=JarrodMalkovic__auction-website email-depl -> nats-srv (type async, grade documented)
+  cited code: k8s/email-depl.yaml
+   24:             - name: EMAIL_PASSWORD
+   25:               valueFrom:
+   26:                 secretKeyRef:
+   27:                   name: email-password-secret
+   28:                   key: EMAIL_PASSWORD
+   29:             - name: NATS_URL
+>> 30:               value: 'http://nats-srv:4222'
+   31:             - name: NATS_CLUSTER_ID
+   32:               value: auction
+   33:             - name: NATS_CLIENT_ID
+   34:               valueFrom:
+   35:                 fieldRef:
+   36:                   fieldPath: metadata.name

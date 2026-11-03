@@ -1,0 +1,199 @@
+{
+ "id": "edges-0011",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 2265,
+  "completion_tokens": 470,
+  "total_tokens": 2735,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [{\"i\": 0, \"verdict\": \"declared-only\", \"reason\": \"The environment variable PROXY_SERVER_URLS documents the target URL but does not prove runtime calls or connections from orders-service to ticketing.dev.\"}, {\"i\": 1, \"verdict\": \"declared-only\", \"reason\": \"The environment variable HYDRA_ADMIN_URL declares the hydra address but does not show actual runtime calls from kratos-selfservice-ui-node to hydra.\"}, {\"i\": 2, \"verdict\": \"declared-only\", \"reason\": \"The depends_on entry mongo-primary declares a start order dependency but does not prove runtime calls or connections from payments-service to mongo-primary.\"}, {\"i\": 3, \"verdict\": \"declared-only\", \"reason\": \"The depends_on entry user-db declares start order but does not prove runtime calls or connections from user-service to user-db.\"}, {\"i\": 4, \"verdict\": \"declared-only\", \"reason\": \"The depends_on entry and environment variable KAFKA_CFG_ZOOKEEPER_CONNECT declare configuration and start order but do not prove runtime calls from kafka to zookeeper.\"}, {\"i\": 5, \"verdict\": \"declared-only\", \"reason\": \"The depends_on entry catalog-db declares start order but does not prove runtime calls or connections from catalog-service to catalog-db.\"}, {\"i\": 6, \"verdict\": \"declared-only\", \"reason\": \"The depends_on entry user declares start order but no runtime call or connection evidence from apisix to user.\"}, {\"i\": 7, \"verdict\": \"correct\", \"reason\": \"The environment variable KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS explicitly documents the kafka address used by kafka-ui, showing a runtime connection.\"}, {\"i\": 8, \"verdict\": \"declared-only\", \"reason\": \"The depends_on entry user declares start order but does not prove runtime calls or connections from realtime to user.\"}, {\"i\": 9, \"verdict\": \"declared-only\", \"reason\": \"The Authority URL in configuration declares the external identity provider but does not prove runtime calls from owners-read-api to stageidentity.taskomask.ir.\"}]}",
+ "payload": [
+  {
+   "repo": "getlarge__ticketing",
+   "source": "orders-service",
+   "target": "ticketing.dev",
+   "type": "external",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 189,
+     "kind": "compose",
+     "context": "   183:     hostname: orders-service\n   184:     environment:\n   185:       NODE_ENV: ${NODE_ENV:-development}\n   186:       LOG_LEVEL: ${LOG_LEVEL:-info}\n   187:       PORT: ${ORDERS_HTTP_PORT:-3020}\n   188:       SERVER_URL: http://localhost:${ORDERS_HTTP_PORT:-3020}\n>> 189:       PROXY_SERVER_URLS: ${PROXY_SERVER_URLS:-http://ticketing.dev}\n   190:       FRONTEND_URL: ${FRONTEND_URL:-http://ticketing.dev}\n   191:       JWT_ALGORITHM: ${JWT_ALGORITHM:-ES256}\n   192:       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-60m}\n   193:       JWT_ISSUER: ${JWT_ISSUER:-ticketing.dev}\n   194:       JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}\n   195:       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY}"
+    }
+   ]
+  },
+  {
+   "repo": "getlarge__ticketing",
+   "source": "kratos-selfservice-ui-node",
+   "target": "hydra",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 429,
+     "kind": "compose",
+     "context": "   423: \n   424:   kratos-selfservice-ui-node:\n   425:     image: oryd/kratos-selfservice-ui-node:v1.1.0\n   426:     environment:\n   427:       - KRATOS_PUBLIC_URL=http://kratos:4433\n   428:       - KRATOS_BROWSER_URL=http://127.0.0.1:4433\n>> 429:       - HYDRA_ADMIN_URL=http://hydra:4445\n   430:       - KRATOS_ADMIN_URL=http://kratos:4434\n   431:       - PORT=4455\n   432:       - COOKIE_SECRET=changeme\n   433:       - CSRF_COOKIE_NAME=cookie_name\n   434:       - CSRF_COOKIE_SECRET=changeme\n   435:       - DANGEROUSLY_DISABLE_SECURE_CSRF_COOKIES=true"
+    }
+   ]
+  },
+  {
+   "repo": "getlarge__ticketing",
+   "source": "payments-service",
+   "target": "mongo-primary",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yaml",
+     "file": "docker-compose.yaml",
+     "line": 254,
+     "kind": "compose",
+     "context": "   248:       test: node ./healthcheck.js http://0.0.0.0:${PAYMENTS_HTTP_PORT:-3040}/${GLOBAL_API_PREFIX:-api}/health\n   249:       interval: 60s\n   250:       timeout: 3s\n   251:       start_period: 10s\n   252:       retries: 2\n   253:     depends_on:\n>> 254:       - mongo-primary\n   255:       - rabbitmq\n   256:     ports:\n   257:       - '${PAYMENTS_HTTP_PORT:-3040}:${PAYMENTS_HTTP_PORT:-3040}'\n   258:     networks:\n   259:       - mongo\n   260:       - rabbitmq"
+    }
+   ]
+  },
+  {
+   "repo": "go-kratos__beer-shop",
+   "source": "user-service",
+   "target": "user-db",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose/docker-compose.yaml#depends_on",
+     "file": "deploy/docker-compose/docker-compose.yaml",
+     "line": 15,
+     "kind": "compose",
+     "context": "   9:     ports:\n   10:       - 81:81\n   11:   user-service:\n   12:     image: go-kratos/beer-user-service:0.1.0\n   13:     hostname: user-service\n   14:     depends_on:\n>> 15:       - user-db\n   16:   user-db:\n   17:     image: mysql:8\n   18:     hostname: user-db\n   19:     environment:\n   20:       MYSQL_ROOT_PASSWORD: dangerous\n   21:   catalog-service:"
+    }
+   ]
+  },
+  {
+   "repo": "go-kratos__beer-shop",
+   "source": "kafka",
+   "target": "zookeeper",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose/docker-compose.yaml#depends_on",
+     "file": "deploy/docker-compose/docker-compose.yaml",
+     "line": 68,
+     "kind": "compose",
+     "context": "   62:     ports:\n   63:       - \"9092:9092\"\n   64:     environment:\n   65:       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181\n   66:       - ALLOW_PLAINTEXT_LISTENER=yes\n   67:     depends_on:\n>> 68:       - zookeeper\n   69: "
+    },
+    {
+     "ref": "code: deploy/docker-compose/docker-compose.yaml",
+     "file": "deploy/docker-compose/docker-compose.yaml",
+     "line": 65,
+     "kind": "compose",
+     "context": "   59:       - ALLOW_ANONYMOUS_LOGIN=yes\n   60:   kafka:\n   61:     image: docker.io/bitnami/kafka:2\n   62:     ports:\n   63:       - \"9092:9092\"\n   64:     environment:\n>> 65:       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181\n   66:       - ALLOW_PLAINTEXT_LISTENER=yes\n   67:     depends_on:\n   68:       - zookeeper\n   69: "
+    }
+   ]
+  },
+  {
+   "repo": "go-kratos__beer-shop",
+   "source": "catalog-service",
+   "target": "catalog-db",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: deploy/docker-compose/docker-compose.yaml#depends_on",
+     "file": "deploy/docker-compose/docker-compose.yaml",
+     "line": 25,
+     "kind": "compose",
+     "context": "   19:     environment:\n   20:       MYSQL_ROOT_PASSWORD: dangerous\n   21:   catalog-service:\n   22:     image: go-kratos/beer-catalog-service:0.1.0\n   23:     hostname: catalog-service\n   24:     depends_on:\n>> 25:       - catalog-db\n   26:   catalog-db:\n   27:     image: mysql:8\n   28:     hostname: catalog-db\n   29:     environment:\n   30:       MYSQL_ROOT_PASSWORD: dangerous\n   31:   cart-service:"
+    }
+   ]
+  },
+  {
+   "repo": "go-saas__kit",
+   "source": "apisix",
+   "target": "user",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.ms.yml#depends_on",
+     "file": "docker-compose.ms.yml",
+     "line": 10,
+     "kind": "compose",
+     "context": "   4:   apisix:\n   5:     image: ${DOCKER_REGISTRY}go-saas-kit-apisix:${DOCKER_TAG:-latest}\n   6:     volumes:\n   7:       - ./quickstart/configs/apisix/apisix_conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro\n   8:       - ./quickstart/configs:/data/conf\n   9:     depends_on:\n>> 10:       - user\n   11:       - saas\n   12:     extra_hosts:\n   13:       - \"host.docker.internal:host-gateway\"\n   14: \n   15:   user:\n   16:     image: ${DOCKER_REGISTRY}go-saas-kit-user:${DOCKER_TAG:-latest}"
+    }
+   ]
+  },
+  {
+   "repo": "go-saas__kit",
+   "source": "kafka-ui",
+   "target": "kafka",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.kafka.yml",
+     "file": "docker-compose.kafka.yml",
+     "line": 28,
+     "kind": "compose",
+     "context": "   22:   kafka-ui:\n   23:     image: provectuslabs/kafka-ui:latest\n   24: #    ports:\n   25: #      - 8082:8080\n   26:     environment:\n   27:       KAFKA_CLUSTERS_0_NAME: local\n>> 28:       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092\n   29:       SERVER_SERVLET_CONTEXT_PATH: /kafka-ui\n   30:     restart: unless-stopped\n   31: \n   32: volumes:\n   33:   kafka_data:"
+    }
+   ]
+  },
+  {
+   "repo": "go-saas__kit",
+   "source": "realtime",
+   "target": "user",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.ms.yml#depends_on",
+     "file": "docker-compose.ms.yml",
+     "line": 47,
+     "kind": "compose",
+     "context": "   41:     extra_hosts:\n   42:       - \"host.docker.internal:host-gateway\"\n   43: \n   44:   realtime:\n   45:     image: ${DOCKER_REGISTRY}go-saas-kit-realtime:${DOCKER_TAG:-latest}\n   46:     depends_on:\n>> 47:       - user\n   48:     volumes:\n   49:       - ./quickstart/configs:/data/conf\n   50:       - ./quickstart/.assets:/app/.assets\n   51:     restart: unless-stopped\n   52:     build:\n   53:       context: ."
+    }
+   ]
+  },
+  {
+   "repo": "hamed-shirbandi__TaskoMask",
+   "source": "owners-read-api",
+   "target": "stageidentity.taskomask.ir",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/2-Services/Owners/Api/Owners.Read.Api/appsettings.Staging.json",
+     "file": "src/2-Services/Owners/Api/Owners.Read.Api/appsettings.Staging.json",
+     "line": 12,
+     "kind": "appsettings",
+     "context": "   6:     \"Host\": \"localhost\"\n   7:   },\n   8:   \"Caching\": {\n   9:     \"Enabled\": false\n   10:   },\n   11:   \"Jwt\": {\n>> 12:     \"Authority\": \"https://stageidentity.taskomask.ir\"\n   13:   }\n   14: }\n   15: "
+    }
+   ]
+  }
+ ]
+}

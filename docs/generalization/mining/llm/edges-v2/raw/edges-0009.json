@@ -1,0 +1,234 @@
+{
+ "id": "edges-0009",
+ "model": "gpt-4.1-mini",
+ "usage": {
+  "prompt_tokens": 2967,
+  "completion_tokens": 420,
+  "total_tokens": 3387,
+  "prompt_tokens_details": {
+   "cached_tokens": 0,
+   "audio_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 0,
+   "audio_tokens": 0,
+   "accepted_prediction_tokens": 0,
+   "rejected_prediction_tokens": 0
+  },
+  "response_model": "gpt-4.1-mini-2025-04-14",
+  "request_params": {
+   "model": "gpt-4.1-mini",
+   "temperature": 0,
+   "response_format": {
+    "type": "json_object"
+   },
+   "max_tokens": 4000
+  }
+ },
+ "finish_reason": "stop",
+ "response": "{\"edges\": [\n  {\"i\": 0, \"verdict\": \"correct\", \"reason\": \"The environment variable CUSTOMCONNSTR_DefaultConnection explicitly configures the web-status service to connect to the database at runtime.\"},\n  {\"i\": 1, \"verdict\": \"declared-only\", \"reason\": \"The depends_on condition on rabbitmq only declares start order and readiness, no runtime call or connection evidence.\"},\n  {\"i\": 2, \"verdict\": \"declared-only\", \"reason\": \"The environment variable ZIPKIN_HOST sets the host for Zipkin but does not prove runtime calls.\"},\n  {\"i\": 3, \"verdict\": \"correct\", \"reason\": \"The gateway's application.yml explicitly routes /payment/** requests to bookstore-payment-service, showing runtime dependency.\"},\n  {\"i\": 4, \"verdict\": \"declared-only\", \"reason\": \"The environment variable INFLUXDB_URL configures the chronograf service but does not prove runtime calls.\"},\n  {\"i\": 5, \"verdict\": \"declared-only\", \"reason\": \"The depends_on on rabbitmq only declares start order and readiness, no runtime call or connection evidence.\"},\n  {\"i\": 6, \"verdict\": \"declared-only\", \"reason\": \"The depends_on on rabbitmq only declares start order and readiness, no runtime call or connection evidence.\"},\n  {\"i\": 7, \"verdict\": \"unsure\", \"reason\": \"The cited lines show depends_on rabbitmq and database but no explicit evidence that database depends on redis at runtime.\"},\n  {\"i\": 8, \"verdict\": \"correct\", \"reason\": \"The environment variable IdentityServerURL configures the assessment.api to connect to identity.api at runtime for authentication.\"},\n  {\"i\": 9, \"verdict\": \"wrong\", \"reason\": \"The URL to tools.ietf.org is used only as a string literal in error details, not as a runtime call or connection.\"}\n]}",
+ "payload": [
+  {
+   "repo": "desenvolvedor-io__dev-store",
+   "source": "web-status",
+   "target": "database",
+   "type": "db",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose-local.yml",
+     "file": "docker/docker-compose-local.yml",
+     "line": 186,
+     "kind": "compose",
+     "context": "   180:         build:\n   181:             context: ../src\n   182:             dockerfile: ./web/DevStore.WebApp.Status/Dockerfile\n   183:         restart: always\n   184:         environment:\n   185:             <<: *common-variables\n>> 186:             CUSTOMCONNSTR_DefaultConnection: \"Server=database;Database=LocalDSStatus;User Id=sa;Password=MyDB@123;MultipleActiveResultSets=true;TrustServerCertificate=True;\"\n   187:         volumes:\n   188:             - ./certs:/https:ro\n   189:             - ./certs/devstore.crt:/usr/local/share/ca-certificates/devstore.crt\n   190:         depends_on:\n   191:             api-identity:\n   192:                 condition: service_started"
+    },
+    {
+     "ref": "code: docker/docker-compose.yml",
+     "file": "docker/docker-compose.yml",
+     "line": 147,
+     "kind": "compose",
+     "context": "   141:     web-status:\n   142:         image: desenvolvedorio/devstore-web-status:latest\n   143:         container_name: devstore-web-status\n   144:         restart: always\n   145:         environment:\n   146:             <<: *common-variables\n>> 147:             CUSTOMCONNSTR_DefaultConnection: \"Server=database;Database=DSStatus;MultipleActiveResultSets=true;User Id=sa;Password=MyDB@123;MultipleActiveResultSets=true;TrustServerCertificate=True;\"\n   148:         volumes:\n   149:             - ./certs:/https:ro\n   150:             - ./certs/devstore.crt:/usr/local/share/ca-certificates/devstore.crt\n   151:         depends_on:\n   152:             - web-mvc   \n   153: "
+    }
+   ]
+  },
+  {
+   "repo": "desenvolvedor-io__dev-store",
+   "source": "api-identity",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker/docker-compose-local.yml#depends_on",
+     "file": "docker/docker-compose-local.yml",
+     "line": 39,
+     "kind": "compose",
+     "context": "   33:             generate-pfx:\n   34:                 condition: service_completed_successfully\n   35:             database:\n   36:                 condition: service_started\n   37:             logging:\n   38:                 condition: service_started\n>> 39:             rabbitmq:\n   40:                 condition: service_started\n   41: \n   42:     api-cart:\n   43:         image: desenvolvedorio/devstore-api-cart:${TAG}\n   44:         container_name: devstore-api-cart\n   45:         build:"
+    },
+    {
+     "ref": "code: docker/docker-compose.yml#depends_on",
+     "file": "docker/docker-compose.yml",
+     "line": 32,
+     "kind": "compose",
+     "context": "   26:             generate-pfx:\n   27:                 condition: service_completed_successfully\n   28:             database:\n   29:                 condition: service_healthy\n   30:             logging:\n   31:                 condition: service_healthy\n>> 32:             rabbitmq:\n   33:                 condition: service_healthy\n   34: \n   35:     api-cart:\n   36:         image: desenvolvedorio/devstore-api-cart:latest\n   37:         container_name: devstore-api-cart\n   38:         restart: always"
+    }
+   ]
+  },
+  {
+   "repo": "devdcores__BookStoreApp-Distributed-Application",
+   "source": "bookstore-order-service",
+   "target": "bookstore-zipkin",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 123,
+     "kind": "compose",
+     "context": "   117:     ports:\n   118:       - \"7001:7001\"\n   119:     networks:\n   120:       - bookstore-app-network\n   121:     environment:\n   122:       - SERVER_PORT=7001\n>> 123:       - ZIPKIN_HOST=bookstore-zipkin:9411\n   124:       - SPRING_PROFILES_ACTIVE=docker\n   125: \n   126:   bookstore-payment-service:\n   127:     build:\n   128:       context: ./bookstore-payment-service\n   129:       args:"
+    }
+   ]
+  },
+  {
+   "repo": "devdcores__BookStoreApp-Distributed-Application",
+   "source": "bookstore-zuul-api-gateway-server",
+   "target": "bookstore-payment-service",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: bookstore-api-gateway-service/src/main/resources/application.yml",
+     "file": "bookstore-api-gateway-service/src/main/resources/application.yml",
+     "line": 42,
+     "kind": "spring-yaml",
+     "context": "   36:       serviceId: bookstore-account-service\n   37:     order:\n   38:       path: /order/**\n   39:       serviceId: bookstore-order-service\n   40:     payment:\n   41:       path: /payment/**\n>> 42:       serviceId: bookstore-payment-service\n   43:   ribbon:\n   44:     eager-load:\n   45:       enabled: true\n   46:   ribbon-isolation-strategy: THREAD\n   47: \n   48: ribbon:"
+    }
+   ]
+  },
+  {
+   "repo": "devdcores__BookStoreApp-Distributed-Application",
+   "source": "bookstore-chronograf",
+   "target": "bookstore-influxdb",
+   "type": "sync-http",
+   "confidence": "inferred",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 214,
+     "kind": "compose",
+     "context": "   208: \n   209:   bookstore-chronograf:\n   210:     image: chronograf:1.7.3\n   211:     container_name: bookstore-chronograf\n   212:     hostname: bookstore-chronograf\n   213:     environment:\n>> 214:       INFLUXDB_URL: http://bookstore-influxdb:8086\n   215:       KAPACITOR_URL: http://bookstore-kapacitor:9092\n   216:     volumes:\n   217:       - booksture-chronograf-volume:/var/lib/chronograf\n   218:     ports:\n   219:       - \"8888:8888\"\n   220:     restart: always"
+    }
+   ]
+  },
+  {
+   "repo": "ebosas__microservices",
+   "source": "database",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 67,
+     "kind": "compose",
+     "context": "   61:         build:\n   62:             context: .\n   63:             dockerfile: database.Dockerfile\n   64:         env_file:\n   65:             - .env\n   66:         depends_on:\n>> 67:             rabbitmq:\n   68:                 condition: service_healthy\n   69:             postgres:\n   70:                 condition: service_healthy\n   71:     cache:\n   72:         build:\n   73:             context: ."
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 67,
+     "kind": "compose",
+     "context": "   61:         build:\n   62:             context: .\n   63:             dockerfile: database.Dockerfile\n   64:         env_file:\n   65:             - .env\n   66:         depends_on:\n>> 67:             rabbitmq:\n   68:                 condition: service_healthy\n   69:             postgres:\n   70:                 condition: service_healthy\n   71:     cache:\n   72:         build:\n   73:             context: ."
+    }
+   ]
+  },
+  {
+   "repo": "ebosas__microservices",
+   "source": "backend",
+   "target": "rabbitmq",
+   "type": "async",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml#depends_on",
+     "file": "docker-compose.yml",
+     "line": 58,
+     "kind": "compose",
+     "context": "   52:             dockerfile: backend.Dockerfile\n   53:         env_file:\n   54:             - .env\n   55:         stdin_open: true\n   56:         tty: true\n   57:         depends_on:\n>> 58:             rabbitmq:\n   59:                 condition: service_healthy\n   60:     database:\n   61:         build:\n   62:             context: .\n   63:             dockerfile: database.Dockerfile\n   64:         env_file:"
+    },
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 58,
+     "kind": "compose",
+     "context": "   52:             dockerfile: backend.Dockerfile\n   53:         env_file:\n   54:             - .env\n   55:         stdin_open: true\n   56:         tty: true\n   57:         depends_on:\n>> 58:             rabbitmq:\n   59:                 condition: service_healthy\n   60:     database:\n   61:         build:\n   62:             context: .\n   63:             dockerfile: database.Dockerfile\n   64:         env_file:"
+    }
+   ]
+  },
+  {
+   "repo": "ebosas__microservices",
+   "source": "database",
+   "target": "redis",
+   "type": "db",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: docker-compose.yml",
+     "file": "docker-compose.yml",
+     "line": 60,
+     "kind": "compose",
+     "context": "   54:             - .env\n   55:         stdin_open: true\n   56:         tty: true\n   57:         depends_on:\n   58:             rabbitmq:\n   59:                 condition: service_healthy\n>> 60:     database:\n   61:         build:\n   62:             context: .\n   63:             dockerfile: database.Dockerfile\n   64:         env_file:\n   65:             - .env\n   66:         depends_on:"
+    }
+   ]
+  },
+  {
+   "repo": "ebubekirdinc__SuuCat",
+   "source": "assessment.api",
+   "target": "identity.api",
+   "type": "sync-http",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Services/Assessment/src/WebUI/Program.cs:20",
+     "file": "src/Services/Assessment/src/WebUI/Program.cs",
+     "line": 20,
+     "kind": "src:csharp",
+     "context": "   14: builder.Services.AddApplicationServices();\n   15: builder.Services.AddInfrastructureServices(builder.Configuration);\n   16: builder.Services.AddWebUIServices();\n   17: builder.Services.AddAuthentication(\"Bearer\")\n   18:     .AddJwtBearer(\"Bearer\", options =>\n   19:     {\n>> 20:         options.Authority = builder.Configuration[\"IdentityServerURL\"];\n   21:         options.Audience = \"resource_assessment\"; \n   22:         options.RequireHttpsMetadata = false;\n   23:         // options.TokenValidationParameters = new TokenValidationParameters\n   24:         // {\n   25:         //     ValidateAudience = false\n   26:         // };"
+    },
+    {
+     "ref": "code: docker-compose.override.yml",
+     "file": "docker-compose.override.yml",
+     "line": 167,
+     "kind": "compose",
+     "context": "   161:   assessment.api:\n   162:     container_name: assessment.api\n   163:     environment:\n   164:       - ASPNETCORE_ENVIRONMENT=Development\n   165:       - \"ConnectionStrings:DefaultConnection=Server=assessmentdb;Port=5432;Database=AssessmentDb;User Id=admin;Password=admin1234;\"\n   166:       - RabbitMQUrl=rabbitmq\n>> 167:       - IdentityServerURL=http://identity.api\n   168:       - \"ElasticConfiguration:Uri=http://elasticsearch:9200\"\n   169:     depends_on:\n   170:       - assessmentdb\n   171:       - rabbitmq\n   172:     ports:\n   173:       - \"5003:80\""
+    }
+   ]
+  },
+  {
+   "repo": "ebubekirdinc__SuuCat",
+   "source": "assessment.api",
+   "target": "tools.ietf.org",
+   "type": "external",
+   "confidence": "documented",
+   "evidence": [
+    {
+     "ref": "code: src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs:52",
+     "file": "src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs",
+     "line": 52,
+     "kind": "src:csharp",
+     "context": "   46:     private void HandleValidationException(ExceptionContext context)\n   47:     {\n   48:         var exception = (ValidationException)context.Exception;\n   49: \n   50:         var details = new ValidationProblemDetails(exception.Errors)\n   51:         {\n>> 52:             Type = \"https://tools.ietf.org/html/rfc7231#section-6.5.1\"\n   53:         };\n   54: \n   55:         context.Result = new BadRequestObjectResult(details);\n   56: \n   57:         context.ExceptionHandled = true;\n   58:     }"
+    },
+    {
+     "ref": "code: src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs:64",
+     "file": "src/Services/Assessment/src/WebUI/Filters/ApiExceptionFilterAttribute.cs",
+     "line": 64,
+     "kind": "src:csharp",
+     "context": "   58:     }\n   59: \n   60:     private void HandleInvalidModelStateException(ExceptionContext context)\n   61:     {\n   62:         var details = new ValidationProblemDetails(context.ModelState)\n   63:         {\n>> 64:             Type = \"https://tools.ietf.org/html/rfc7231#section-6.5.1\"\n   65:         };\n   66: \n   67:         context.Result = new BadRequestObjectResult(details);\n   68: \n   69:         context.ExceptionHandled = true;\n   70:     }"
+    }
+   ]
+  }
+ ]
+}
