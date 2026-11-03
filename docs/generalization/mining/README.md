@@ -58,4 +58,13 @@ git add docs/generalization/mining/llm && git commit -m "mining: LLM labels (mac
 
 中途斷掉直接重跑同一行即可：已存在 `raw/` 的呼叫會跳過。
 
+**邊審查第二版（2026-11-03）**：第一版（`llm/edges/`）給沒有行號的描述檔出處（Compose 的 depends_on、environment，pom.xml 的 discovery client）配錯了行——給的是目標自己的定義，不是證據——126 條 depends_on 邊裡 75 條因此被判 wrong。第二版定位到來源服務區塊裡的那一行、告訴模型每條邊的信心等級，並多一個判定 declared-only（只宣告了關係，正是「僅推測」所主張的）。同一組邊（同一個種子），輸出到 `llm/edges-v2/`；第一版保留。
+
+```bash
+cd ~/Desktop/ChatOps4Msa-Pipeline && git pull
+python3 -I docs/generalization/mining/label_clusters.py --task edges \
+  --in docs/generalization/mining/out/edge_samples.jsonl --out docs/generalization/mining/llm/edges-v2
+git add docs/generalization/mining/llm && git commit -m "mining: edge audit v2 (machine B)" && git push
+```
+
 回歸（23 個系統逐邊比對，30 秒）：`bash fetch_regression.sh ~/Documents/depweaver-eval/repos`，再跑 `regress.sh`。

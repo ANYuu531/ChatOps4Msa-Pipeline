@@ -72,14 +72,22 @@ Samples:
 {samples}
 """
 
+# v2 (2026-11-03): the first audit (llm/edges/) showed line-less descriptor refs with the wrong
+# line; v2 gets the located line, the edge's confidence grade, and a "declared-only" verdict.
 EDGE_PROMPT = """You are auditing a static dependency extractor for microservice systems. For each edge
-"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>). Judge
-whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to it,
-sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
-  "correct"  - the evidence supports the edge as drawn
-  "wrong"    - the evidence does not support it (say why: wrong direction, wrong source component,
-               declaration never used, documentation/metadata, test-only, ...)
-  "unsure"   - the shown context is not enough to decide
+"SOURCE -> TARGET" below, the extractor cites the line(s) it drew the edge from (marked >>) and gives
+the edge a confidence grade:
+  documented - the code or configuration states the address or the call;
+  inferred   - only a declaration suggests the dependency (for example Compose depends_on, which states
+               start order, or a discovery-client library on the classpath with an implicit default).
+Judge whether the cited evidence shows that SOURCE depends on TARGET at runtime (calls it, connects to
+it, sends messages to it, or is routed to it by a gateway/proxy that SOURCE is):
+  "correct"       - the evidence supports the edge as drawn
+  "declared-only" - the evidence declares a relationship (start order, a client library, a link) but does
+                    not itself show a call or connection; this is what the grade "inferred" claims
+  "wrong"         - the evidence does not support it (say why: wrong direction, wrong source component,
+                    declaration never used, documentation/metadata, test-only, ...)
+  "unsure"        - the shown context is not enough to decide
 Do not judge by plausibility of names; judge by the evidence shown.
 
 Answer as JSON: {{"edges": [{{"i": <index>, "verdict": "...", "reason": "<one sentence>"}}]}}
@@ -150,7 +158,8 @@ def edge_prompts(rows, batch=10):
         parts = []
         for i, e in enumerate(chunk):
             ev = "\n".join(f"  cited {x['ref']}\n{x.get('context', '')}" for x in e["evidence"])
-            parts.append(f"[{i}] repo={e['repo']} {e['source']} -> {e['target']} (type {e['type']})\n{ev}")
+            parts.append(f"[{i}] repo={e['repo']} {e['source']} -> {e['target']} "
+                         f"(type {e['type']}, grade {e['confidence']})\n{ev}")
         yield f"edges-{b // batch:04d}", EDGE_PROMPT.format(edges="\n\n".join(parts)), chunk
 
 

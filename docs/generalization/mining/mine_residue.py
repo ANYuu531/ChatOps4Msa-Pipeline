@@ -392,6 +392,62 @@ def first_mention(root, rel, target):
     return 0
 
 
+def locate_line(root, rel, anchor, source, target):
+    """The line a line-less descriptor ref stands for (2026-11-03: the first audit showed the
+    first mention of the target, usually the target's own definition, not the evidence).
+    Compose: inside the source service's block, the depends_on entry (anchor depends_on) or
+    the first line naming the target. Build manifests (implicit discovery / config client):
+    the client starter. Otherwise the first line naming the target."""
+    try:
+        with open(os.path.join(root, rel), encoding="utf-8", errors="replace") as fh:
+            lines = fh.read().split("\n")
+    except OSError:
+        return 0
+    t = target.split(".")[0]
+    tre = re.compile(r"(?<![A-Za-z0-9_\-])" + re.escape(t) + r"(?![A-Za-z0-9_\-])")
+    low = os.path.basename(rel).lower()
+    if file_kind(rel) == "compose" or low.endswith((".yml", ".yaml")):
+        want = {norm(source), norm(source.split(".")[0])}
+        start = indent = None
+        for j, l in enumerate(lines):
+            m = re.match(r"^(\s+)([A-Za-z0-9_.\-]+):\s*$", l)
+            if m and norm(m.group(2)) in want:
+                start, indent = j, len(m.group(1))
+                break
+            m2 = re.match(r"^\s+container_name:\s*[\"']?([^\"'\s]+)", l)
+            if m2 and norm(m2.group(1)) in want:
+                k = j
+                while k > 0 and not re.match(r"^\s{1,4}[A-Za-z0-9_.\-]+:\s*$", lines[k]):
+                    k -= 1
+                start, indent = k, len(lines[k]) - len(lines[k].lstrip())
+                break
+        if start is not None:
+            end = len(lines)
+            for j in range(start + 1, len(lines)):
+                l = lines[j]
+                if l.strip() and not l.lstrip().startswith("#") and len(l) - len(l.lstrip()) <= indent:
+                    end = j
+                    break
+            block = range(start + 1, end)
+            if anchor == "depends_on":
+                dep = next((j for j in block if re.match(r"^\s+depends_on\s*:", lines[j])), None)
+                if dep is not None:
+                    hit = next((j for j in range(dep, end) if tre.search(lines[j])), dep)
+                    return hit + 1
+            hit = next((j for j in block if tre.search(lines[j])), None)
+            if hit is not None:
+                return hit + 1
+            return start + 1
+    if low in ("pom.xml", "build.gradle", "build.gradle.kts"):
+        # the discovery client for a registry target, the config client for a config server
+        kinds = ["config"] if "config" in t.lower() else ["eureka|consul|nacos|zookeeper", "config"]
+        for kind in kinds:
+            for j, l in enumerate(lines, 1):
+                if re.search(r"starter-[\w-]*(" + kind + r")|(" + kind + r")[\w-]*-(client|discovery)", l, re.I):
+                    return j
+    return first_mention(root, rel, target)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--list", required=True)
@@ -471,10 +527,11 @@ def main():
                         ev.append({"ref": ref, "context": ""})
                         continue
                     file, line = m.group(2), int(m.group(3)) if m.group(3) else 0
+                    file, _, anchor = file.partition("#")
                     if not line:
-                        line = first_mention(paths[name], file, e["target"])
+                        line = locate_line(paths[name], file, anchor, e["source"], e["target"])
                     ev.append({"ref": ref, "file": file, "line": line,
-                               "kind": file_kind(file), "context": snippet(paths[name], file, line)})
+                               "kind": file_kind(file), "context": snippet(paths[name], file, line, k=6)})
                 f.write(json.dumps({"repo": name, "source": e["source"], "target": e["target"],
                                     "type": e["type"], "confidence": e["confidence"], "evidence": ev},
                                    ensure_ascii=False) + "\n")
