@@ -26,8 +26,13 @@ Service/DependencyAnalysis/
                                  以及它們都要問的形狀判斷（委給 AddressShape）
     HelmChartRenderer · ServiceRootScanner · StackDetector · BindingResolver · EdgeLedger
   Graph/
-    CodeGraphMerger              把 ledger 列合成圖（3,049 行，原 3,073：行數沒少多少，但結構換了）
-      indexMeta → 11 個有名字的索引步驟（名字表、歸屬、建置清單、別名、掛載…）
+    DeployedNames  ①  這個部署的名字表（狀態）：宣告了哪些名字、哪些拼法是同一個、namespace、
+                      目錄→模組；回答「這個位址落在哪」（resolveTarget）與「這個檔是誰的」（resolveSource）
+    Ownership      ③  誰的值（狀態）：env→host 表與範圍、workload 收到哪個 ConfigMap／env_file 又讀了哪些鍵、
+                      模組用什麼建、誰匯入函式庫、FROM 鏈、config repository 的版面、佔位符表；
+                      透過 DeployedNames 回答名字的問題，DeployedNames 不反過來依賴它
+    CodeGraphMerger   只剩流程與畫邊（1,410 行，原 3,073）：索引順序、每列的派工、收尾
+      indexMeta → 11 個有名字的索引步驟，各自寫進 names／owner
       mergeOne  → 派工 + 14 個處理器，依 ④→③→②→① 的順序問：
                    isNotAnEdge · mountedCandidateRejected · mergeComposeDependency · isFeignWiring ·
                    fanOutSharedConfig · isDeclaredNotUsed · fanOutBaseImage · fanOutLibrary ·
@@ -57,6 +62,6 @@ Service/DependencyAnalysis/
 
 ## 還沒做、刻意不做
 
-- `CodeGraphMerger` 仍然是一個 3,000 行的類別：名字表的**狀態**（knownNodes、serviceDirs、workloads、別名表）和歸屬的狀態（configMap、moduleFanout、FROM 鏈）都還在它身上，只有純函式搬出去。把狀態也拆成 `NameTable`／`Ownership` 兩個物件是下一步，要動幾百個引用，這次沒碰。
-- `syncTarget`（② 在 config 列上的判斷）、`resolveTarget`（① 的查表順序）留在 merger 裡，名字已經說明它們是哪個慣例。
+- `DeployedNames`／`Ownership` 放在 `Graph/` 而不是 `Conventions/`：它們是 merger 的協作物件，成員是套件內可見，放同一個套件省掉一百多個 `public`。純函式的 `NameTable`、`EnvScope`、`KeyReads`、`UseSite` 在 `Conventions/`。
+- `syncTarget`（② 在 config 列上的判斷）留在 merger 裡，名字已經說明它是哪個慣例。
 - 第二層的幾條「靠資料決定的子句」（depends_on 的自家容器條款、links 的 v1 語意、第 41 條 main 例外、FROM 鏈只給有部署的子映像、server.port 先於 Compose 發佈的 port）沒有改，它們在 `conventions.md` 和各自的 javadoc 裡有理由；論文要列成表的是這幾條。
