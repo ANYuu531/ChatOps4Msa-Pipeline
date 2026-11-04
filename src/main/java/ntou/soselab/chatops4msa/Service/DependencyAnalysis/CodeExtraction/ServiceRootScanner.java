@@ -1,5 +1,6 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction;
 
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace;
 import org.springframework.stereotype.Component;
 
@@ -33,11 +34,7 @@ import java.util.stream.Stream;
 public class ServiceRootScanner {
 
     /** Files whose presence marks a directory as a buildable/deployable service. */
-    private static final Set<String> MARKERS = Set.of(
-            "pom.xml", "build.gradle", "build.gradle.kts",
-            "requirements.txt", "pyproject.toml", "setup.py", "Pipfile",
-            "go.mod", "package.json", "Gemfile", "Cargo.toml", "composer.json",
-            "dockerfile");
+    private static final Set<String> MARKERS = Vocabulary.BUILD_MARKERS;
 
     /**
      * Directory names that hold a service's files without naming it. A marker found in
@@ -45,8 +42,7 @@ public class ServiceRootScanner {
      * service called "src" — Online Boutique put exactly that phantom on the graph
      * (2026-09-22).
      */
-    private static final Set<String> GENERIC_DIRS = Set.of(
-            "src", "app", "main", "docker", "build", "cmd", "server", "backend");
+    private static final Set<String> GENERIC_DIRS = Vocabulary.GENERIC_DIRS;
 
     /** A directory of tests is a build unit, never a workload (ui-tests, e2e-tests). */
     private static final java.util.regex.Pattern TEST_DIR = java.util.regex.Pattern.compile(
@@ -71,7 +67,7 @@ public class ServiceRootScanner {
      * service it drives, so its {@code application.properties} would otherwise be read as
      * that service's (yas, 2026-10-26). Applied to every segment of a module path.
      */
-    private static final Set<String> TEST_ROOT_DIRS = Set.of("automation-ui", "e2e", "__tests__");
+    private static final Set<String> TEST_ROOT_DIRS = Vocabulary.TEST_ROOT_DIRS;
 
     /** Whether any directory on the path says the module is a test suite. */
     static boolean underTestDir(String relDir) {
@@ -406,7 +402,7 @@ public class ServiceRootScanner {
     }
 
     /** Extensions are irrelevant here; kept only so callers can share one constant. */
-    static List<String> markerFiles() {
+    public static List<String> markerFiles() {
         return List.copyOf(MARKERS);
     }
 }

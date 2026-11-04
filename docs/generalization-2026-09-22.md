@@ -198,6 +198,22 @@ mvn -o test -Dtest=GreenfieldProbeTest -Dprobe.repo=/path/to/checkout -Dprobe.ou
 
 **回歸**（同一份 checkout 重跑，`scores.md`、`external-agreement.md` 由測試重算）：七個歸納系統 P 全部 1.00、R 由 0.99 變 1.00（robot-shop 補上 `cart → catalogue`、`ratings → catalogue`）；參考邊集慣例統一：AICS 一直把 Istio 入口路由列為 control，歸納組三份附有綁 Gateway 之 VirtualService 的專案（Online Boutique、Bank of Anthos、robot-shop）各補一列（`truth/README.md` 更正紀錄），工具也都畫到；Bank of Anthos 12 條不變＋1 條入口路由；train-ticket 120 → 158，多的 38 條全是 `k8s-with-istio/trainticket-gateway.yaml` 的入口路由（刻意的改變），其餘逐邊不變；MicroDepGraph 93／95 ＝ 0.98 不變（spring-cloud-microservice 工具多畫的 19 條降為 9 條：規則 44 的 image 名把 `cloud-config-server` 與 `configserver` 兩種拼法併成一個；tap-and-eat 的節點改用 compose 名）；第一組 hold-out 0.99／0.89、第二組 0.85／0.97 逐邊不變（六個新文法在 otel-demo、mall-swarm、yas、run-aspnetcore 上讀了數百個檔案，沒有新增任何一條錯邊）；AICS 0.89／0.63 → **0.90／0.76**（多的是 6 條入口路由；漏的 12 條仍多是叢集外元件與 SDK 預設主機）。參考邊集的出處逐條可開 117／117。**過程中差點退步、由回歸抓到的**：(1) 文法接上後 AICS 前端多了 3 條外部邊（瀏覽器腳本的 Google API、Playwright 範例）→ 規則 51 與規則 42 的檔名擴充；(2) Helm 第一版保留所有 if-body，Online Boutique 多 7 條 → opentelemetrycollector、train-ticket 多 11 條 → `release-name…` → release 名改成未知、渲染的 chart 不是詞彙表時只連已知節點；(3) k8s image 的字尾比對把 train-ticket 未部署的 `ts-train-food-service` 對到 `ts-food-service` 的映像 → 改為只認完全相等；(4) scheme 鏈的第一版把 `nacos-0:8848,nacos-1:8848` 切壞 → 要求主機段是 DNS 名、前面每段是 scheme 名。
 
+### 3f. 2026-11-03：先網羅 100 個系統、依殘餘的跨系統頻率找規則（規則 57–61）
+
+做法與數字在 `docs/generalization/mining/README.md`（語料、殘餘探勘、LLM 判讀、作者查證）。規則的觸發欄是「語料中觸發的系統數」，不是單一系統。
+
+| # | 規則 | 語料中觸發 | 位置 |
+|---|---|---|---|
+| 57 | **Spring 風格 YAML 的每一個文件都讀**：`---` 分隔的 profile（`spring.profiles`、`spring.config.activate.on-profile`）以前用單一文件載入，遇到第二個文件就丟例外、整份檔案被當成不可讀；profile 名是 test／it 的文件略過。另：檔名 `-template`／`-sample`／`-example` 的 YAML 與 properties 是範本，不讀 | 18 個系統（92 份多文件設定檔） | `ConfigExtractor.springDocuments` |
+| 58 | **.NET Options 綁定**：冒號串接的鍵（`RabbitMqOptions:HostName`）與 Spring 的點串接一樣比對鍵名結尾；鍵名結尾 `ConnectionString` 或值是含主機鍵的 `key=value;` 連線字串時，不論在哪個區段都讀出主機 | 16 | `ConfigExtractor.isRelevantDotnetKey`、`CodeGraphMerger`（config 分支） |
+| 59 | **Service 的 selector 恰選中一個 workload 時兩者是同一個服務**：有程式碼的那個名字是節點、另一個是別名；兩邊都有／都沒有程式碼、Helm 渲染的列、名稱也是 Compose 服務時不動 | 5 | `CodeGraphMerger.indexServiceSelectors` |
+| 60 | **掛載的設定檔是掛載它的容器的設定**：不屬已知種類的 YAML 中的 URL 與 host:port，恰有一個 Compose 服務掛載該檔、且主機是宣告過的名稱才成邊（來源＝掛載者，規則 56 的歸屬）；其餘丟棄、不列殘餘 | 15 | `ConfigExtractor.mountedConfigAddresses`、`CodeGraphMerger.mergeOne` |
+| 61 | **Ocelot 路由表**（`ocelot*.json` 的 `Routes[]`／`ReRoutes[]` → `DownstreamHostAndPorts[].Host`）是 gateway 的上游 | 4 | `ConfigExtractor.extractOcelotRoutes` |
+
+既有缺陷一併修正（不另編號）：`r2dbc:` 前綴像 `jdbc:` 一樣先剝掉再取主機（以前 `r2dbc:postgresql://…` 的主機被當成 `r2dbc`）。
+
+**結果**：語料 28 個系統的圖改變（邊 +207／−8）；殘餘 2,845 → 2,721、跨 repo 形狀 108 → 96；抽 40 條新邊人工查證 34 條對（6 條錯中 4 條由 r2dbc 與範本兩個修正消除）。23 個回歸系統只有 3 個 hold-out 多出遙測 variant 邊、spring-petclinic 多 `config-server → github.com`（第二個 YAML 文件裡的 git uri）；B／C／D、AICS 分數不變。**hold-out E（go-food-delivery-microservices）前後都是 0/8**：它的缺口是 `config.development.json` 的 localhost＋port，殘餘探勘只找宣告名，看不到。
+
 ## 4. 修改後：對照參考邊集（程式計分）
 
 > **2026-09-25 補**：這一節的參考邊集是**作者依專案文件與程式碼整理**的，所以「程式計分」只保證算得沒錯，**不保證答案是對的**（建構效度）。回應這個疑慮的三件事——對照**第三方發表**的邊集（7 個專案，一致度 0.96）、把每一條出處變成**打得開的檔案行**（92／92，順便抓到 2 條寫錯的出處）、**第二標註者**——在 `docs/generalization-external.md`。措辭也改了：以下的 P／R 應讀作「與**作者整理的**參考邊集的一致度」。

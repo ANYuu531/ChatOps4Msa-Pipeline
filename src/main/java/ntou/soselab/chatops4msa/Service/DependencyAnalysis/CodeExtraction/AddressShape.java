@@ -1,12 +1,29 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction;
 
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.ADDRESS_WORDS;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.CONNECTION_STRING_HOST_KEYS;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.CONNECTION_WORDS;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.DB_SCHEMES;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.HOST_WORDS;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.INBOUND_WORDS;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.LIST_WORDS;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.LOOPBACK;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.NON_NETWORK_SCHEMES;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.QUEUE_SCHEMES;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.RESERVED_DOMAINS;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.RESERVED_TLDS;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary.URL_SCHEMES;
 
 /**
  * Convention ② — what a value that is an address looks like — in one place (2026-11-03).
+ * The word lists it consults (schemes, key words, loopback and reserved names) live in
+ * {@link ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary}.
  *
  * <p>The extractor and the merger each had their own copy: two loopback sets, two reserved-
  * domain tests, two scheme → kind tables, three host parsers, and five vocabularies of "this
@@ -41,32 +58,11 @@ public final class AddressShape {
         NONE
     }
 
-    /** Connection schemes that say the target is a database, and the ones that say it is a broker. */
-    private static final Set<String> DB_SCHEMES = Set.of("jdbc", "r2dbc", "mysql", "postgres", "postgresql", "mongodb",
-            "mongodb+srv", "redis", "rediss", "cassandra", "mariadb", "sqlserver", "oracle", "couchdb", "neo4j", "bolt", "memcached");
-    private static final Set<String> QUEUE_SCHEMES = Set.of("amqp", "amqps", "kafka", "nats", "mqtt", "mqtts", "stomp");
-
     /** The host key of a {@code key=value;key=value} connection string (Npgsql, SqlClient, ODBC). */
     public static final java.util.regex.Pattern CONNECTION_STRING_HOST = java.util.regex.Pattern.compile(
-            "(?i)(?:^|;)\\s*(?:host|server|data source|hostname|address|addr|network address)\\s*=\\s*([^;,]+)");
+            "(?i)(?:^|;)\\s*(?:" + String.join("|", CONNECTION_STRING_HOST_KEYS) + ")\\s*=\\s*([^;,]+)");
 
     private static final java.util.regex.Pattern HOST_PORT = java.util.regex.Pattern.compile("[^\\s/=;]+:\\d{2,5}(/.*)?");
-
-    private static final Set<String> NON_NETWORK_SCHEMES = Set.of("vault", "file", "classpath", "configtree", "jar", "data",
-            "mailto", "urn", "about", "javascript", "blob", "chrome", "chrome-extension");
-
-    private static final Set<String> LOOPBACK = Set.of("localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]", "host.docker.internal");
-
-    /** RFC 2606 / 6761 / 6762 top-level domains, and RFC 2606's second-level example domains. */
-    private static final String[] RESERVED_TLDS = {".local", ".test", ".example", ".invalid", ".localhost"};
-    private static final String[] RESERVED_DOMAINS = {"example.com", "example.net", "example.org"};
-
-    /** The last word of a key that says it holds a host, one or several, a URL, or a connection string. */
-    private static final Set<String> HOST_WORDS = Set.of("host", "hostname", "addr", "address", "server", "serviceid", "serveraddr", "nameserver");
-    private static final Set<String> LIST_WORDS = Set.of("hosts", "addresses", "servers", "uris", "urls", "endpoints",
-            "brokers", "bootstrapservers", "clusternodes");
-    private static final Set<String> ADDRESS_WORDS = Set.of("url", "uri", "endpoint");
-    private static final Set<String> CONNECTION_WORDS = Set.of("connectionstring", "dsn");
 
     /**
      * What a key's name says its value is. The key is split into words the way every
@@ -90,16 +86,6 @@ public final class AddressShape {
         if (ADDRESS_WORDS.contains(last)) return KeyKind.ADDRESS;
         return KeyKind.NONE;
     }
-
-    /**
-     * The words of a key that declares who may reach this component, where to send a user's
-     * browser, or the component's own public address — not a dependency: CORS origins, OAuth
-     * redirect and logout URIs, callbacks, allow-lists (ASP.NET {@code AllowedHosts}); a site's own URL (mkdocs {@code site_url}, a
-     * {@code public_url}, a canonical or advertised address).
-     */
-    private static final Set<String> INBOUND_WORDS = Set.of("origin", "origins", "cors", "redirect", "redirects",
-            "callback", "callbacks", "logout", "postlogout", "site", "public", "canonical", "advertised", "self",
-            "allowed", "trusted", "allowlist", "whitelist");
 
     /** Whether a key declares an inbound party (CORS {@code AllowedOrigins}, {@code RedirectUris}) rather than a target. */
     public static boolean isInboundKey(String key) {
@@ -183,9 +169,6 @@ public final class AddressShape {
      * an address the tables may fill). A scheme chain ({@code zk:zookeeper:2181}) ends in
      * its address.
      */
-    /** Web schemes that never name a host: {@code http:x} is an opaque URI, not host http. */
-    private static final Set<String> URL_SCHEMES = Set.of("http", "https", "ws", "wss", "grpc", "grpcs", "ftp", "sftp", "ssh", "mailto");
-
     public static Address parse(String raw) {
         if (raw == null) return null;
         String v = raw.trim();
@@ -228,7 +211,7 @@ public final class AddressShape {
         if (slash >= 0) s = s.substring(0, slash);
         int at = s.indexOf('@');
         if (at >= 0) s = s.substring(at + 1);
-        s = ConfigExtractor.trailingHostPort(s);
+        s = trailingHostPort(s);
         String port = null;
         int colon = s.lastIndexOf(':');
         if (colon >= 0 && !s.startsWith("[")) {
@@ -287,5 +270,22 @@ public final class AddressShape {
         for (String tld : RESERVED_TLDS) if (h.endsWith(tld)) return true;
         for (String d : RESERVED_DOMAINS) if (h.equals(d) || h.endsWith("." + d)) return true;
         return false;
+    }
+
+    /**
+     * A URI scheme chain ends in the address: Pulsar's {@code metadata-store:zk:zookeeper:2181}
+     * and {@code zk:zookeeper:2181} name zookeeper, not the scheme in front. When a
+     * scheme-less authority has several colons and ends in a port, the host is the segment
+     * before the port (B7, 2026-10-27).
+     */
+    public static String trailingHostPort(String s) {
+        if (s == null || s.indexOf(':') == s.lastIndexOf(':') || s.contains("[")) return s;
+        String[] parts = s.split(":");
+        if (parts.length < 3 || !parts[parts.length - 1].matches("\\d{1,5}")
+                || !parts[parts.length - 2].matches("[A-Za-z0-9][A-Za-z0-9.-]*")) return s;
+        // Every segment in front of the host must be a scheme name (zk, metadata-store).
+        for (int i = 0; i < parts.length - 2; i++) if (!parts[i].matches("[A-Za-z][A-Za-z0-9+.-]*")) return s;
+        RuleTrace.hit(36, "scheme-chain " + s);
+        return parts[parts.length - 2] + ":" + parts[parts.length - 1];
     }
 }

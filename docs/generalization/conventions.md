@@ -160,3 +160,7 @@
 **還會掉的，寫成界線**：套件或 SDK 自己讀 env（locust 的 `LOCUST_HOST`、OpenFeature 的 `FLAGD_HOST`）——要補就得維護一份「套件→它讀哪個 env」的表，跟 db／broker 的框架綁定是同一類，但目前只有這兩個案例，不做。
 
 輸出：`holdout*/…r8.*`、`scores-r8.md`、歸納與 external 的 summary／mmd／rules 已覆蓋，`regress.sh` 基準改 r8；AICS 在 `~/Documents/aics-eval/out/2026-11-04-r8`。
+
+## 程式碼照慣例重整（2026-11-04）
+
+四個慣例從文件變成程式碼的切法：`Conventions/`（`Vocabulary`、`NameTable` ①、`EnvScope`／`KeyReads` ③、`UseSite` ④；② 仍是 `AddressShape`）、`CodeExtraction/` 只剩格式轉接器（`ConfigExtractor` 拆成五個讀取器＋`DescriptorRows`），`CodeGraphMerger` 的 `indexMeta`／`mergeOne` 各拆成有名字的步驟，`RuleTrace` 報表按慣例分組。29 份字詞表集中在 `Vocabulary`，`vocabulary.md` 由程式碼產生。每一步回歸 same 23 / different 0，一條邊都沒變。細節見 `architecture.md`。

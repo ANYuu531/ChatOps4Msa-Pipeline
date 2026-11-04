@@ -1,5 +1,7 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph;
 
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,16 +47,7 @@ public final class GraphNormalizer {
      * {@link K8sGraphBuilder} (it only reads Deployments), so the guard below would not
      * save it. Removing a node by engine name would delete real databases.
      */
-    private static final Set<String> LIBRARY_PHANTOMS = Set.of(
-            "spring-cloud-gateway", "spring-cloud-config", "spring-cloud-loadbalancer",
-            "netflix-eureka", "eureka-client", "resilience4j", "resilience4j-circuitbreaker",
-            "hystrix", "ribbon", "feign", "openfeign", "jolokia", "spring-boot-actuator",
-            "actuator", "micrometer", "lombok", "mapstruct", "spring-boot", "spring-framework",
-            // Datastore CLIENT libraries. Unambiguous: nobody names a workload after the
-            // driver. Bank of Anthos surfaced `lettuce` (the Redis client) as a phantom
-            // service node with no edges at all.
-            "lettuce", "jedis", "redisson", "hikari", "hikaricp", "psycopg2", "psycopg",
-            "pymongo", "mongoose", "sequelize", "sqlalchemy", "jdbc", "odbc");
+    private static final Set<String> LIBRARY_PHANTOMS = Vocabulary.LIBRARY_PHANTOMS;
 
     /** Suffixes a display name adds over the real workload id (stripped to find the alias target). */
     private static final String[] ALIAS_SUFFIXES = {

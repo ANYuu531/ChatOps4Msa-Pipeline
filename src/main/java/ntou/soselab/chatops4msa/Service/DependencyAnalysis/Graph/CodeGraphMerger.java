@@ -1,7 +1,27 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph;
 
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.AddressShape;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.EnvScope;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace;
+
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.BARE_FQDN;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.DEPLOY_NAME_SUFFIXES;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.cleanHost;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.commonPrefix;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.fileStem;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.firstPathSegment;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.hyphenated;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.isComposeFile;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.isConfigFile;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.isExternal;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.isPlausibleName;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.matchWorkloadForModule;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.parentDir;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.repoShortName;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.unversionedWorkload;
+import static ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable.workloadForDeploymentName;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -82,15 +102,8 @@ public class CodeGraphMerger {
             "k8s-workload", "compose-service", "k8s-service", "k8s-namespace", "module-deps", "name-constant", "import",
             "compose-alias", "url-metadata", "k8s-gateway", "compose-mount", "registry-name");
 
-    /** Hosts that name the caller itself, never another workload. */
-    /** A bare fully-qualified host ({@code oss-cn-shenzhen.aliyuncs.com}, optionally {@code :port}): no scheme, no path. */
-    private static final java.util.regex.Pattern BARE_FQDN = java.util.regex.Pattern.compile(
-            "(?i)[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+(:\\d{2,5})?");
-
     /** Feign attributes that are bean wiring, not a target: a contextId is not a host. */
-    private static final Set<String> FEIGN_NON_TARGET_ATTRS = Set.of(
-            "contextid", "qualifier", "qualifiers", "fallback", "fallbackfactory",
-            "configuration", "primary", "decode404", "path");
+    private static final Set<String> FEIGN_NON_TARGET_ATTRS = Vocabulary.FEIGN_NON_TARGET_ATTRS;
 
     private final DependencyGraph graph;
     private final Set<String> knownNodes = new LinkedHashSet<>();
@@ -152,11 +165,7 @@ public class CodeGraphMerger {
      * workload — four manifests each saying MONGO_CLIENT_HOST — so a read in module X is
      * resolved against X's own scope first (2026-10-23).
      */
-    private record EnvValue(String host, String scope, String kind, boolean listed) {
-        EnvValue(String host, String scope, String kind) {
-            this(host, scope, kind, false);
-        }
-    }
+    private final EnvScope envScope = new EnvScope(this::scopeIs, this::matchNode);
 
     /**
      * The namespaces the manifests declare (plus the runtime graph's own). A host written
@@ -186,6 +195,20 @@ public class CodeGraphMerger {
     /** Registry name ({@code srv-search}) -> the files whose service registers itself under it (rule 49). */
     private final Map<String, Set<String>> registryNameFiles = new LinkedHashMap<>();
 
+    // ---- declared names, collected by the index passes (convention ①) ----
+    /** The k8s Services the manifests declare (unversioning and selectors). */
+    private final Set<String> k8sServices = new LinkedHashSet<>();
+    /** Every k8s workload name as written, before unversioning. */
+    private final Set<String> rawWorkloadNames = new LinkedHashSet<>();
+    /** The workloads of the vocabulary tier that won (manifests, Compose, or a rendered chart). */
+    private final Set<String> allWorkloads = new LinkedHashSet<>();
+    /** Manifest directory → the workloads it declares (only a directory deploying this repo's modules counts). */
+    private final Map<String, Set<String>> workloadsByDir = new LinkedHashMap<>();
+    /** Trace only: whether the vocabulary came from manifests (rule 1) or Compose (rule 11). */
+    private boolean k8sVocabulary;
+    /** Module directory → its node, in inventory order. */
+    private final Map<String, String> moduleNodes = new LinkedHashMap<>();
+
     /**
      * The workloads that run the image a module is built into: an image stem (whole, or with
      * the project's registry prefix cut) equal to the module's directory, name or artifact.
@@ -214,25 +237,9 @@ public class CodeGraphMerger {
     /** Image registry path → the image stems under it. */
     private final Map<String, Set<String>> composeImageRegistries = new LinkedHashMap<>();
 
-    private static String commonPrefix(Set<String> names) {
-        String p = null;
-        for (String n : names) {
-            if (p == null) {
-                p = n;
-                continue;
-            }
-            int i = 0;
-            while (i < p.length() && i < n.length() && p.charAt(i) == n.charAt(i)) i++;
-            p = p.substring(0, i);
-        }
-        return p == null ? "" : p;
-    }
-
     /** Compose service names, as declared (dots included), for the artifactId equation. */
     private final Set<String> composeServiceNames = new LinkedHashSet<>();
 
-    /** env var name -> every declared value with its scope. */
-    private final Map<String, List<EnvValue>> envValues = new LinkedHashMap<>();
     /** Raw workload name (a versioned Deployment, a Compose service) -> the node it is. */
     private final Map<String, String> workloadAliases = new LinkedHashMap<>();
     /** Raw workload name -> the ConfigMaps injected into it (envFrom / configMapKeyRef). */
@@ -290,7 +297,33 @@ public class CodeGraphMerger {
      * (which, in greenfield, becomes the node vocabulary) and the env-var → host
      * table (which resolves indirected targets like {@code TRANSACTIONS_API_ADDR}).
      */
+    /**
+     * Reads the meta-sections before any edge is merged, one pass per table: the declared
+     * names (convention ①: namespaces, Services, workloads, Compose services, the module
+     * inventory aligned to them), the env-var → host table with its scopes (convention ③),
+     * the build manifests, the Compose aliases and mounts, and the config lookups.
+     */
     private void indexMeta(JSONArray edges) {
+        indexRegistryNames(edges);
+        indexNamespaces(edges);
+        indexDeclaredNames(edges);
+        chooseVocabulary(edges);
+        indexWorkloadEnv(edges);
+        indexInventory(edges);
+        indexEnvAddresses(edges);
+        indexBuildManifests(edges);
+        seedGreenfieldNodes();
+        indexComposeAliases(edges);
+        indexServiceSelectors(edges, rawWorkloadNames, k8sServices, new LinkedHashSet<>(moduleNodes.values()));
+        indexMountsAndGateways(edges);
+        indexImports(edges);
+        indexConfig(edges);
+    }
+
+    /**
+     * Rule 49: registry name → the files whose service registers itself under it.
+     */
+    private void indexRegistryNames(JSONArray edges) {
         for (int i = 0; i < edges.length(); i++) {
             JSONObject e = edges.optJSONObject(i);
             if (e == null || !"registry-name".equals(e.optString("section", ""))) continue;
@@ -298,29 +331,12 @@ public class CodeGraphMerger {
             String name = f == null ? "" : f.optString("name", "").trim();
             if (!name.isEmpty()) registryNameFiles.computeIfAbsent(name, k -> new LinkedHashSet<>()).add(e.optString("file", ""));
         }
-        // Pass 0 (greenfield only): the workloads the manifests declare. These are the
-        // names the cluster — and so the runtime graph — would use, so they outrank a
-        // module directory's spelling: "catalog", not microservice-kubernetes-demo-catalog.
-        // Grouped by manifest directory: only a directory that deploys this repo's own
-        // modules is the application's deployment. A repo also ships manifests for its
-        // monitoring stack (train-ticket: prometheus, grafana, jaeger, an EFK stack —
-        // 60 workloads) and for optional extras (Bank of Anthos: a pgpool operator, a
-        // Cloud SQL populate job); none of those is a node of the application's graph.
-        // A Compose file's services are the same kind of vocabulary, for the repos whose
-        // only deployment description it is (petclinic, ewolff's microservice-demo,
-        // Tap-And-Eat). The manifests win when there are any: a k8s workload name is what
-        // the cluster — and so the runtime graph — really uses, and mixing the two
-        // spellings would split one service in two, which is the very fault this fixes.
-        Map<String, Set<String>> workloadsByDir = new LinkedHashMap<>();
-        Set<String> allWorkloads = new LinkedHashSet<>();
-        // The k8s Services, read first: a Deployment named reviews-v1 beside a Service named
-        // reviews is one version of the service "reviews" (the Istio bookinfo convention),
-        // and the Service name is what every caller and the mesh use. So is a set of
-        // Deployments that differ only by a trailing -v<digits>. Only that suffix is
-        // stripped, and only on that evidence (2026-10-23).
-        Set<String> k8sServices = new LinkedHashSet<>();
-        Set<String> rawWorkloadNames = new LinkedHashSet<>();
-        boolean k8sVocabulary = false; // trace only: whether the vocabulary came from manifests (rule 1) or Compose (rule 11)
+    }
+
+    /**
+     * The namespaces the manifests declare, and the Service names declared in two of them (rule 54).
+     */
+    private void indexNamespaces(JSONArray edges) {
         if (graph.getNamespace() != null && !graph.getNamespace().isBlank()) {
             namespaces.add(graph.getNamespace().trim().toLowerCase(Locale.ROOT));
         }
@@ -358,6 +374,18 @@ public class CodeGraphMerger {
                 RuleTrace.hit(54, "qualify " + e.getKey() + " in " + e.getValue());
             }
         }
+    }
+
+    /**
+     * Every name a descriptor declares: k8s Services and workloads, Compose services with what
+     * they build and run, the parsed directories and the FROM chain.
+     */
+    private void indexDeclaredNames(JSONArray edges) {
+        // The k8s Services, read first: a Deployment named reviews-v1 beside a Service named
+        // reviews is one version of the service "reviews" (the Istio bookinfo convention),
+        // and the Service name is what every caller and the mesh use. So is a set of
+        // Deployments that differ only by a trailing -v<digits>. Only that suffix is
+        // stripped, and only on that evidence (2026-10-23).
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
             if (edge == null) continue;
@@ -410,6 +438,26 @@ public class CodeGraphMerger {
                 }
             }
         }
+    }
+
+    /**
+     * Greenfield: which declared names are the node vocabulary (rules 1, 11, 52), and the
+     * image → workloads table with the project's registry prefix cut (rule 44).
+     */
+    private void chooseVocabulary(JSONArray edges) {
+        // Pass 0 (greenfield only): the workloads the manifests declare. These are the
+        // names the cluster — and so the runtime graph — would use, so they outrank a
+        // module directory's spelling: "catalog", not microservice-kubernetes-demo-catalog.
+        // Grouped by manifest directory: only a directory that deploys this repo's own
+        // modules is the application's deployment. A repo also ships manifests for its
+        // monitoring stack (train-ticket: prometheus, grafana, jaeger, an EFK stack —
+        // 60 workloads) and for optional extras (Bank of Anthos: a pgpool operator, a
+        // Cloud SQL populate job); none of those is a node of the application's graph.
+        // A Compose file's services are the same kind of vocabulary, for the repos whose
+        // only deployment description it is (petclinic, ewolff's microservice-demo,
+        // Tap-And-Eat). The manifests win when there are any: a k8s workload name is what
+        // the cluster — and so the runtime graph — really uses, and mixing the two
+        // spellings would split one service in two, which is the very fault this fixes.
         if (greenfield) {
             // Rule 52's precedence: a rendered Helm chart is a template whose names hang on the
             // release and the values; it is the vocabulary only when the repo states its
@@ -472,7 +520,12 @@ public class CodeGraphMerger {
                 if (!stem.isEmpty()) k8sImages.computeIfAbsent(stem, k -> new LinkedHashSet<>()).addAll(k8sImages.getOrDefault(image, Set.of()));
             }
         }
+    }
 
+    /**
+     * Which ConfigMaps each workload receives and which hosts its own env block names (convention ③).
+     */
+    private void indexWorkloadEnv(JSONArray edges) {
         // Which ConfigMaps each workload receives, for scoping env lookups below.
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
@@ -492,7 +545,14 @@ public class CodeGraphMerger {
                 workloadHosts.computeIfAbsent(workload, k -> new LinkedHashSet<>()).add(host.trim());
             }
         }
+    }
 
+    /**
+     * The service inventory ({@code service-root}) aligned to the deployment's names: a module
+     * directory is the workload it deploys as (rule 44, then rules 1 / 11), a library is no node
+     * (rules 21, 41); the application's manifest directories decide the vocabulary (rule 10).
+     */
+    private void indexInventory(JSONArray edges) {
         // Pass 1: the service inventory, so knownNodes is complete before env-address
         // resolution below can prefer a host that is actually a known service. A module
         // directory aligns to the workload it deploys as (exact, or by -suffix) when the
@@ -515,7 +575,6 @@ public class CodeGraphMerger {
             String artifact = fields.optString("artifact", "").trim();
             if (!artifact.isEmpty()) moduleArtifactIds.put(dir, artifact);
         }
-        Map<String, String> moduleNodes = new LinkedHashMap<>(); // dir -> node, in inventory order
         Set<String> aligned = new LinkedHashSet<>();
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
@@ -653,7 +712,12 @@ public class CodeGraphMerger {
                 else RuleTrace.hit(k8sVocabulary ? 1 : 11, "not-preadded " + name);
             }
         }
+    }
 
+    /**
+     * The env → host table, every declared value kept with its scope (convention ③, rule 20).
+     */
+    private void indexEnvAddresses(JSONArray edges) {
         // Pass 2: the env -> host table, every declared value kept with its scope (a
         // workload's own env block, a ConfigMap, a Dockerfile's module, or global). A repo
         // may declare the same env var in more than one manifest — a monolith variant that
@@ -699,9 +763,14 @@ public class CodeGraphMerger {
                 scope = "workload:" + clean(workload);
             }
             String kind = kindField(fields);
-            envValues.computeIfAbsent(name, k -> new ArrayList<>()).add(new EnvValue(host, scope, kind, "true".equals(fields.optString("list", ""))));
+            envScope.declare(name, host, scope, kind, "true".equals(fields.optString("list", "")));
         }
+    }
 
+    /**
+     * What each module is built with, and the string constants that name modules (rule 17).
+     */
+    private void indexBuildManifests(JSONArray edges) {
         // The build manifests: what each module is built with, and who imports a library.
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
@@ -727,7 +796,12 @@ public class CodeGraphMerger {
                 }
             }
         }
+    }
 
+    /**
+     * Greenfield: the vocabulary becomes the node set; then the path → service keys.
+     */
+    private void seedGreenfieldNodes() {
         // In greenfield the inventory IS the graph's node set: add every service so
         // even a service nobody calls still appears (an accurate, if isolated, node).
         // The manifests' workloads are part of that inventory — a database StatefulSet
@@ -747,7 +821,12 @@ public class CodeGraphMerger {
         // Build the path -> service lookup from the final node vocabulary, so a
         // path-encoded callee (see serviceKeys) can be resolved later.
         for (String node : knownNodes) registerServiceKeys(node);
+    }
 
+    /**
+     * Compose link and network aliases, per declaring service (rules 25, 37).
+     */
+    private void indexComposeAliases(JSONArray edges) {
         // Compose link aliases, keyed by the node the declaring service is. A `hostname:`
         // alias is declared by the target itself and holds for every reader: keyed "*".
         for (int i = 0; i < edges.length(); i++) {
@@ -767,8 +846,12 @@ public class CodeGraphMerger {
             }
             composeAliases.computeIfAbsent(service, k -> new LinkedHashMap<>()).putIfAbsent(alias, target);
         }
-        indexServiceSelectors(edges, rawWorkloadNames, k8sServices, new LinkedHashSet<>(moduleNodes.values()));
+    }
 
+    /**
+     * Which Compose services mount a repo file, and which workload an Istio Gateway selects.
+     */
+    private void indexMountsAndGateways(JSONArray edges) {
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
             if (edge == null) continue;
@@ -781,10 +864,8 @@ public class CodeGraphMerger {
                 gatewayWorkloads.computeIfAbsent(fields.optString("name", ""), k -> new LinkedHashSet<>()).add(fields.optString("workload", ""));
             }
         }
-
-        indexImports(edges);
-        indexConfig(edges);
     }
+
 
     /**
      * Rule 59: a Kubernetes Service whose selector picks exactly one workload is that workload's
@@ -1013,27 +1094,6 @@ public class CodeGraphMerger {
         return "db".equals(k) ? DependencyGraph.KIND_DB : "queue".equals(k) ? DependencyGraph.KIND_QUEUE : null;
     }
 
-    private static final java.util.regex.Pattern VERSION_SUFFIX = java.util.regex.Pattern.compile("^(.+)-v\\d+$");
-
-    /**
-     * The service a versioned Deployment is a version of: {@code reviews-v1} → {@code reviews}
-     * when a k8s Service named {@code reviews} is declared, or when another workload differs
-     * from it only by the version. Any other name is returned as is — a trailing {@code -v2}
-     * alone is not evidence, and nothing else is ever stripped.
-     */
-    static String unversionedWorkload(String raw, Set<String> k8sServices, Set<String> allWorkloads) {
-        java.util.regex.Matcher m = VERSION_SUFFIX.matcher(raw);
-        if (!m.matches()) return raw;
-        String base = m.group(1);
-        if (k8sServices.contains(base)) return base;
-        for (String other : allWorkloads) {
-            if (other.equals(raw)) continue;
-            java.util.regex.Matcher o = VERSION_SUFFIX.matcher(other);
-            if (o.matches() && o.group(1).equals(base)) return base;
-        }
-        return raw;
-    }
-
     /**
      * Who imports a library's modules. A Python distribution with no image of its own
      * ({@code setup.py}, no Dockerfile) runs inside the services that import it, so a call
@@ -1135,68 +1195,19 @@ public class CodeGraphMerger {
         return out;
     }
 
-    /**
-     * The host an env var resolves to for a read in {@code source}: the value declared in
-     * that module's own scope — its workload's env block, a ConfigMap its workload receives,
-     * its Dockerfile — and only when no scoped value exists, the repo-wide table, which is
-     * trusted only when every declaration agrees (or exactly one names a known service: a
-     * monolith variant's collapsed addresses lose to the microservice wiring). Several
-     * different scoped values are ambiguous and resolve to nothing rather than to a guess.
-     */
+    /** The host an env var resolves to for a read in {@code source} (convention ③, {@link EnvScope}). */
     private String resolveEnv(String name, String source) {
-        EnvValue v = resolveEnvValue(name, source);
-        return v == null ? null : v.host();
+        return envScope.resolve(name, source);
     }
 
-    /**
-     * Rule 55: every host of a list-valued variable when the reader's own scope declares the
-     * variable as one list (travels' PORTAL_SERVICES); otherwise the single value of
-     * {@link #resolveEnvValue}, or nothing.
-     */
-    private List<EnvValue> resolveEnvValues(String name, String source) {
-        List<EnvValue> values = envValues.get(name);
-        if (values != null && source != null) {
-            List<EnvValue> scoped = new ArrayList<>();
-            for (EnvValue v : values) if (v.scope() != null && scopeIs(v.scope(), source)) scoped.add(v);
-            if (scoped.size() > 1 && scoped.stream().allMatch(EnvValue::listed)
-                    && scoped.stream().map(EnvValue::scope).distinct().count() == 1) {
-                RuleTrace.hit(55, "read-list " + name + " @" + source + " " + scoped.size());
-                return scoped;
-            }
-        }
-        EnvValue one = resolveEnvValue(name, source);
-        return one == null ? List.of() : List.of(one);
+    /** Rule 55: every host of a list-valued variable in the reader's scope, else the single value. */
+    private List<EnvScope.Value> resolveEnvValues(String name, String source) {
+        return envScope.resolveAll(name, source);
     }
 
     /** As {@link #resolveEnv}, with the kind the declaring value's shape stated (or null). */
-    private EnvValue resolveEnvValue(String name, String source) {
-        List<EnvValue> values = envValues.get(name);
-        if (values == null) {
-            for (Map.Entry<String, List<EnvValue>> e : envValues.entrySet()) {
-                if (e.getKey().equalsIgnoreCase(name)) {
-                    values = e.getValue();
-                    break;
-                }
-            }
-        }
-        if (values == null || values.isEmpty()) return null;
-
-        Set<String> scoped = new LinkedHashSet<>();
-        Set<String> all = new LinkedHashSet<>();
-        for (EnvValue v : values) {
-            all.add(v.host());
-            if (source != null && v.scope() != null && scopeIs(v.scope(), source)) scoped.add(v.host());
-        }
-        String pick = uniqueHost(scoped);
-        if (RuleTrace.hitIf(pick == null && !scoped.isEmpty(), 20, "ambiguous " + name + " @" + source)) return null;
-        RuleTrace.hitIf(pick != null, 20, "scoped " + name + "=" + pick + " @" + source);
-        if (pick == null) pick = uniqueHost(all);
-        RuleTrace.hitIf(scoped.isEmpty() && all.size() > 1, 20, (pick == null ? "global-ambiguous " : "global ") + name + " @" + source);
-        if (pick == null) return null;
-        for (EnvValue v : values) {
-            if (v.host().equals(pick) && v.kind() != null) return v;
-        }
-        return new EnvValue(pick, null, null);
+    private EnvScope.Value resolveEnvValue(String name, String source) {
+        return envScope.resolveValue(name, source);
     }
 
     /** The {@code kind} a ledger row states for its host ({@code db} / {@code queue}), as a graph kind, or null. */
@@ -1205,20 +1216,6 @@ public class CodeGraphMerger {
         if ("db".equals(kind)) return DependencyGraph.KIND_DB;
         if ("queue".equals(kind)) return DependencyGraph.KIND_QUEUE;
         return null;
-    }
-
-    /** One host, or the one host among several that is a known node; null when ambiguous. */
-    private String uniqueHost(Set<String> hosts) {
-        if (hosts.isEmpty()) return null;
-        if (hosts.size() == 1) return hosts.iterator().next();
-        String known = null;
-        for (String h : hosts) {
-            if (matchNode(h) != null) {
-                if (known != null) return null;
-                known = h;
-            }
-        }
-        return known;
     }
 
     /** Whether a declared env value's scope is the module {@code source}. */
@@ -1246,53 +1243,6 @@ public class CodeGraphMerger {
                 return false;
             }
         }
-    }
-
-    /**
-     * A module directory's workload: the same name, or a workload the directory's
-     * name ends with ({@code microservice-kubernetes-demo-catalog} → {@code catalog},
-     * {@code tools-descartes-teastore-webui} → {@code teastore-webui}). The longest
-     * workload wins so {@code ts-station-food-service} is not taken for {@code food-service}.
-     */
-    private static String matchWorkloadForModule(String module, Set<String> workloads) {
-        String best = null;
-        for (String w : workloads) {
-            if (w.equalsIgnoreCase(module) || hyphenated(w).equals(hyphenated(module))) return w;
-            if (w.length() >= 3 && (module.endsWith("-" + w) || module.endsWith("_" + w))
-                    && (best == null || w.length() > best.length())) {
-                best = w;
-            }
-        }
-        return best;
-    }
-
-    /**
-     * The workload a Compose service name stands for when manifests exist: the same name
-     * (or the same name in module spelling), else the one workload that ends with
-     * {@code -<name>}; null when none or several do.
-     */
-    private static String workloadForDeploymentName(String composeName, Set<String> workloads) {
-        for (String w : workloads) {
-            if (w.equalsIgnoreCase(composeName) || hyphenated(w).equals(hyphenated(composeName))) return w;
-        }
-        String unique = null;
-        for (String w : workloads) {
-            if (w.length() > composeName.length() + 1 && w.toLowerCase(Locale.ROOT).endsWith("-" + composeName.toLowerCase(Locale.ROOT))) {
-                if (unique != null) return null;
-                unique = w;
-            }
-        }
-        return unique;
-    }
-
-    /**
-     * A name with every run of non-alphanumerics as one hyphen: the module-directory
-     * spelling (rule 2: {@code Basket.API} → {@code basket-api}), so a Compose service
-     * {@code basket.api} and the directory it is built from compare equal — the same
-     * letters at the same word boundaries, not a similarity guess (2026-10-26).
-     */
-    private static String hyphenated(String name) {
-        return name == null ? "" : name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
     }
 
     /**
@@ -1387,25 +1337,6 @@ public class CodeGraphMerger {
                 sharedConfigFiles.add(file);
             }
         }
-    }
-
-    private static boolean isConfigFile(String file) {
-        String f = file == null ? "" : file.toLowerCase(Locale.ROOT);
-        return f.endsWith(".yml") || f.endsWith(".yaml") || f.endsWith(".properties");
-    }
-
-    /** {@code config/shared/account-service.yml} → {@code account-service}; null when no name. */
-    private static String fileStem(String file) {
-        if (file == null || file.isBlank()) return null;
-        String base = file.substring(file.lastIndexOf('/') + 1);
-        int dot = base.lastIndexOf('.');
-        String stem = (dot > 0 ? base.substring(0, dot) : base).toLowerCase(Locale.ROOT);
-        return stem.isEmpty() ? null : stem;
-    }
-
-    private static String parentDir(String file) {
-        int slash = file.lastIndexOf('/');
-        return slash < 0 ? "" : file.substring(0, slash);
     }
 
     /** Registers the letters-only key variants of a service node for path resolution. */
@@ -1913,6 +1844,15 @@ public class CodeGraphMerger {
      *                       shared config file fanned out to each config client); null
      *                       to attribute the edge from its file path.
      */
+    /**
+     * One ledger row → zero or more graph edges. The gates and handlers run in the order the
+     * conventions are asked: ④ is the row a use at all, ③ whose row it is, ② what its value
+     * is, ① where that lands in this deployment.
+     *
+     * @param sourceOverride the calling service when the caller already knows it (a
+     *                        shared config file fanned out to each config client); null
+     *                        to attribute the edge from its file path.
+     */
     private void mergeOne(JSONObject edge, List<Unresolved> unresolved, String sourceOverride) {
         readerNamespace = null;
         String section = edge.optString("section", "");
@@ -1921,144 +1861,20 @@ public class CodeGraphMerger {
         String file = edge.optString("file", "");
         int line = edge.optInt("line", 0);
 
-        // Inbound endpoints this service exposes are not an outgoing dependency;
-        // persistence markers (jpa/persistence) are a SIGNAL (handled in
-        // collectPersistenceServices), not an edge with a target of their own;
-        // the meta-sections (service-root / env-address) are lookup tables consumed
-        // in indexMeta, never edges.
-        if ("http-server".equals(section) || PERSISTENCE_SECTIONS.contains(section)
-                || META_SECTIONS.contains(section) || "url-constant".equals(section)) return;
-        // A URL in a constant nobody references is declared, not used (see
-        // TreeSitterExtractor.markUnreferencedUrlConstants): no edge, no residue.
-        if ("url".equals(section) && "true".equals(fields.optString("unreferenced", ""))) return;
-        // Rule 60: an address in a YAML file of no known kind counts only as the config of
-        // the one Compose service that mounts the file, and only toward a declared name.
-        // Convention ③ decides the owner — the one container that mounts the file, or the module
-        // the file sits in — and ① the target: a declared name, or localhost:PORT read back to
-        // the one service on PORT (the module's own config is read on the developer's machine).
-        // No new node and no external domain come from a file of no known kind.
-        if ("url".equals(section) && "candidate".equals(fields.optString("mounted", ""))) {
-            Set<String> by = mounts.get(file.replace('\\', '/'));
-            boolean inModule = serviceForFile(file) != null;
-            String value = fields.optString("value", "");
-            String host = mountedHost(value);
-            // The owner must itself be a component the deployment declares: a tool directory's
-            // JSON (train-ticket's json2shiviz/) names services, and runs nowhere.
-            String owner = inModule ? resolveSource(file) : by != null && by.size() == 1 ? resolveComposeService(by.iterator().next()) : null;
-            boolean owned = owner != null && (declaredWorkloads.contains(owner) || deployableModules.contains(owner)
-                    || declaredWorkloads.stream().anyMatch(w -> owner.equals(matchNodeLoose(w))));
-            boolean target = host != null && (declaredName(unalias(host, null))
-                    || (isLoopback(host) && portOwner(portOf(value)) != null));
-            if (!owned || !target) return;
-            RuleTrace.hit(60, (inModule ? "module-file " : "mounted ") + file + " " + host);
-        }
-
-        // docker-compose depends_on names BOTH endpoints explicitly (source_service ->
-        // target_service), so the source comes from the field, not the file's module.
-        // This is what draws service -> config-server / discovery-server even when the
-        // client-side URLs live in an externalised config repo the scan never sees.
+        // ④ Rows that are no edge, and a URL only the one container mounting its file may own (rule 60).
+        if (isNotAnEdge(section, fields)) return;
+        if (mountedCandidateRejected(section, fields, file)) return;
+        // ③ depends_on names both endpoints itself: startup order, or a call when an address backs it.
         if ("compose-dependency".equals(section)) {
-            String rawSource = clean(fields.optString("source_service", ""));
-            String src = resolveComposeService(fields.optString("source_service", ""));
-            String tgt = resolveComposeService(fields.optString("target_service", ""));
-            if (src != null && tgt != null && !src.equals(tgt)) {
-                // depends_on is startup order, not a call: "start that first" says nothing
-                // about who talks to whom. It is a call edge when the service's own addresses
-                // name the same target (two declarations agree: documented), or when a
-                // container running this repo's own code states no address anywhere — the
-                // author's one statement of what their code needs (hotelReservation's Go
-                // services, whose addresses sit in a config.json no module owns; the Compose
-                // v1 era): inferred, a declaration without a use site. From a third-party
-                // image it is only ordering: that container's wiring lives in the image,
-                // unreadable, so nothing lets the tool claim a call (skywalking-showcase's
-                // node-exporter waits for oap and never connects to it; a curl container
-                // waits for the exporter it never calls). Those, and a depends_on the
-                // service's own addresses contradict, are kept as a relation of their own
-                // (TYPE_STARTUP, drawn last so it never shadows a call the code states).
-                // links says more: in the version 1 file format a container reaches another
-                // by name only through a link, so a link from a service that states no
-                // address is its one wiring statement whatever runs in it (2026-11-03).
-                boolean link = !"depends_on".equals(fields.optString("via", "depends_on"));
-                Set<String> hosts = workloadHosts.getOrDefault(rawSource, Set.of());
-                boolean addressed = false;
-                for (String h : hosts) {
-                    String node = matchNodeLoose(unalias(h, src));
-                    if (node == null) node = cleanLabel(h);
-                    if (tgt.equals(node)) {
-                        addressed = true;
-                        break;
-                    }
-                }
-                String confidence = DependencyGraph.CONF_DOCUMENTED;
-                if (!addressed) {
-                    if (!link && (!hosts.isEmpty() || !ownContainer(rawSource))) {
-                        RuleTrace.hit(35, "startup " + src + "->" + tgt);
-                        // Both endpoints are declared services: nodes now, so a later row's
-                        // address (config.json's mongodb-geo:27017) finds the name, as it
-                        // did when depends_on drew the edge itself; the relation itself last.
-                        RuleTrace.hitIf(graph.findNode(tgt) == null, 7, "node " + tgt);
-                        graph.addNode(src, DependencyGraph.KIND_SERVICE);
-                        graph.addNode(tgt, DependencyGraph.classifyKind(tgt));
-                        startupOrder.add(new String[] {src, tgt, file, String.valueOf(line)});
-                        return;
-                    }
-                    if (RuleTrace.hitIf(!hosts.isEmpty(), 35, "drop " + src + "->" + tgt)) return;
-                    confidence = DependencyGraph.CONF_INFERRED;
-                }
-                RuleTrace.hit(35, (addressed ? "documented " : "inferred ") + src + "->" + tgt);
-                // The target is a node too: Robot Shop's cart -> redis edge pointed at a
-                // node that did not exist, because only the source was ever added.
-                RuleTrace.hitIf(graph.findNode(tgt) == null, 7, "node " + tgt);
-                graph.addNode(tgt, DependencyGraph.classifyKind(tgt));
-                // The provenance names the key, so a reader can tell a startup-order
-                // declaration from an address the same file hands the service.
-                addCodeEdge(src, tgt, edgeType("", DependencyGraph.classifyKind(tgt)), file + "#depends_on", line, confidence);
-            }
+            mergeComposeDependency(fields, file, line);
             return;
         }
+        if (isFeignWiring(section, fields, file, line)) return;
+        if (fanOutSharedConfig(edge, section, fields, file, unresolved, sourceOverride)) return;
+        if (isDeclaredNotUsed(section, fields)) return;
+        if (sourceOverride == null && fanOutBaseImage(edge, file, unresolved)) return;
 
-        // A Feign client's contextId / qualifier / path are bean wiring; and when it
-        // declares a url, its name is only a bean id (piggymetrics: name="rates-client",
-        // url="${rates.url}") — the url row carries the target.
-        if ("feign".equals(section)) {
-            String attr = fields.optString("attr", "").toLowerCase(Locale.ROOT);
-            if (RuleTrace.hitIf(FEIGN_NON_TARGET_ATTRS.contains(attr), 8, "feign-attr " + attr + " " + file + ":" + line)) return;
-            if (RuleTrace.hitIf((attr.equals("name") || attr.equals("value") || attr.isEmpty())
-                    && feignUrlSites.contains(file.replace('\\', '/') + ":" + line), 8, "feign-bean-id " + fields.optString("value", ""))) return;
-        }
-
-        // A shared config file of a config repository configures every client; the
-        // edges it states belong to each of them, not to the server that serves it.
-        if (sourceOverride == null && "config".equals(section) && sharedConfigFiles.contains(file.replace('\\', '/'))) {
-            String key = fields.optString("key", "");
-            for (String client : configClients) {
-                if (RuleTrace.hitIf(consumesKey(client, key), 3, "fanout " + client + " " + key)) mergeOne(edge, unresolved, client);
-            }
-            return;
-        }
-
-        // A declaration no live code uses draws no edge (the Python analogue of the
-        // unreferenced-constant rule): an env read whose variable nothing references, or a
-        // call inside a function nothing ever calls, is declared, not used.
-        if (("config".equals(section) || "http-client".equals(section))
-                && "true".equals(fields.optString("unreferenced", ""))) return;
-        // A getenv whose value a known call site consumes: the call-site row carries the
-        // edge (and the provenance the reference edge sets expect — where the call is made).
-        if ("config".equals(section) && "true".equals(fields.optString("superseded", ""))) return;
-
-        // A base image's directory (its command line, its start scripts) runs inside every
-        // image built FROM it: TeaStore's start.sh writes the registry URL from REGISTRY_HOST,
-        // and each of the five services inherits that line as its own (2026-11-04).
-        if (sourceOverride == null) {
-            Set<String> children = baseImageChildrenOf(file);
-            if (children != null) {
-                for (String child : children) {
-                    RuleTrace.hit(53, "base-image " + child + " <- " + file);
-                    mergeOne(edge, unresolved, child);
-                }
-                return;
-            }
-        }
+        // ③ Whose row this is: the file's module, a config file's client, every workload running the module.
         String source = sourceOverride != null ? sourceOverride : resolveSource(file);
         if ("config".equals(section) && sourceOverride == null) {
             String owner = configFileService.get(file.replace('\\', '/'));
@@ -2071,54 +1887,272 @@ public class CodeGraphMerger {
         }
         // A short host in this reader's code means its own namespace (rule 54).
         readerNamespace = source == null ? null : nodeNamespaces.get(source);
-
-        // Code in a library module runs inside the services that import it: the call is
-        // theirs, attributed by the import of this very file; with no importer it is
-        // nobody's, and the library is never a node.
         if (sourceOverride == null && source != null && libraryModules.contains(source)) {
-            Set<String> importers = importersOf(file);
-            RuleTrace.hitIf(importers.isEmpty(), jvmLibraryModules.contains(source) ? 41 : 21, (jvmLibraryModules.contains(source) ? "no-edge " : "no-importer ") + file);
-            for (String importer : importers) RuleTrace.hit(21, "attribute " + file + "=" + importer);
-            for (String importer : importers) mergeOne(edge, unresolved, importer);
+            fanOutLibrary(edge, file, source, unresolved);
             return;
         }
 
+        // ② what the row's value is, ① where it lands — one handler per row shape.
+        if ("name-ref".equals(section)) {
+            mergeNameRef(section, fields, source, file, line);
+            return;
+        }
+        if ("ingress-route".equals(section)) {
+            mergeIngressRoute(fields, file, line);
+            return;
+        }
+        if ("registry-ref".equals(section)) {
+            mergeRegistryRef(section, fields, source, file, line, unresolved);
+            return;
+        }
+        if ("config".equals(section) && fields.has("env")) {
+            mergeEnvRead(fields, source, file, line);
+            return;
+        }
+        if (("http-client".equals(section) || "grpc".equals(section)) && fields.has("env") && !fields.has("url")) {
+            mergeEnvCall(section, fields, source, file, line);
+            return;
+        }
+        if ("url".equals(section) && fields.has("env") && fields.optString("value", "").matches(".*%[sd].*")
+                && !fillFormatHost(fields, source)) return;
+        if ("config".equals(section) && fields.has("property")) {
+            mergeProperty(fields, source, file, line);
+            return;
+        }
+        if (section.startsWith("kafka") || section.startsWith("rabbit")) {
+            deferAsync(edge, section, fields, source, file, line, unresolved);
+            return;
+        }
+        mergeSync(section, fields, source, file, line, unresolved);
+    }
+
+    /**
+     * Convention ④: rows that are a signal or an inbound surface, never an outgoing edge.
+     */
+    private boolean isNotAnEdge(String section, JSONObject fields) {
+        // Inbound endpoints this service exposes are not an outgoing dependency;
+        // persistence markers (jpa/persistence) are a SIGNAL (handled in
+        // collectPersistenceServices), not an edge with a target of their own;
+        // the meta-sections (service-root / env-address) are lookup tables consumed
+        // in indexMeta, never edges.
+        if ("http-server".equals(section) || PERSISTENCE_SECTIONS.contains(section)
+                || META_SECTIONS.contains(section) || "url-constant".equals(section)) return true;
+        // A URL in a constant nobody references is declared, not used (see
+        // TreeSitterExtractor.markUnreferencedUrlConstants): no edge, no residue.
+        if ("url".equals(section) && "true".equals(fields.optString("unreferenced", ""))) return true;
+        return false;
+    }
+
+    /**
+     * Rule 60: true when a URL from a file of no known kind has no owner or no declared target.
+     */
+    private boolean mountedCandidateRejected(String section, JSONObject fields, String file) {
+        // Rule 60: an address in a YAML file of no known kind counts only as the config of
+        // the one Compose service that mounts the file, and only toward a declared name.
+        // Convention ③ decides the owner — the one container that mounts the file, or the module
+        // the file sits in — and ① the target: a declared name, or localhost:PORT read back to
+        // the one service on PORT (the module's own config is read on the developer's machine).
+        // No new node and no external domain come from a file of no known kind.
+        if (!"url".equals(section) || !"candidate".equals(fields.optString("mounted", ""))) return false;
+        Set<String> by = mounts.get(file.replace('\\', '/'));
+        boolean inModule = serviceForFile(file) != null;
+        String value = fields.optString("value", "");
+        String host = mountedHost(value);
+        // The owner must itself be a component the deployment declares: a tool directory's
+        // JSON (train-ticket's json2shiviz/) names services, and runs nowhere.
+        String owner = inModule ? resolveSource(file) : by != null && by.size() == 1 ? resolveComposeService(by.iterator().next()) : null;
+        boolean owned = owner != null && (declaredWorkloads.contains(owner) || deployableModules.contains(owner)
+                || declaredWorkloads.stream().anyMatch(w -> owner.equals(matchNodeLoose(w))));
+        boolean target = host != null && (declaredName(unalias(host, null))
+                || (isLoopback(host) && portOwner(portOf(value)) != null));
+        if (!owned || !target) return true;
+        RuleTrace.hit(60, (inModule ? "module-file " : "mounted ") + file + " " + host);
+        return false;
+    }
+
+    /**
+     * Rule 35: {@code depends_on} and {@code links} — a call edge, a startup-order edge, or nothing.
+     */
+    private void mergeComposeDependency(JSONObject fields, String file, int line) {
+        // docker-compose depends_on names BOTH endpoints explicitly (source_service ->
+        // target_service), so the source comes from the field, not the file's module.
+        // This is what draws service -> config-server / discovery-server even when the
+        // client-side URLs live in an externalised config repo the scan never sees.
+        String rawSource = clean(fields.optString("source_service", ""));
+        String src = resolveComposeService(fields.optString("source_service", ""));
+        String tgt = resolveComposeService(fields.optString("target_service", ""));
+        if (src != null && tgt != null && !src.equals(tgt)) {
+            // depends_on is startup order, not a call: "start that first" says nothing
+            // about who talks to whom. It is a call edge when the service's own addresses
+            // name the same target (two declarations agree: documented), or when a
+            // container running this repo's own code states no address anywhere — the
+            // author's one statement of what their code needs (hotelReservation's Go
+            // services, whose addresses sit in a config.json no module owns; the Compose
+            // v1 era): inferred, a declaration without a use site. From a third-party
+            // image it is only ordering: that container's wiring lives in the image,
+            // unreadable, so nothing lets the tool claim a call (skywalking-showcase's
+            // node-exporter waits for oap and never connects to it; a curl container
+            // waits for the exporter it never calls). Those, and a depends_on the
+            // service's own addresses contradict, are kept as a relation of their own
+            // (TYPE_STARTUP, drawn last so it never shadows a call the code states).
+            // links says more: in the version 1 file format a container reaches another
+            // by name only through a link, so a link from a service that states no
+            // address is its one wiring statement whatever runs in it (2026-11-03).
+            boolean link = !"depends_on".equals(fields.optString("via", "depends_on"));
+            Set<String> hosts = workloadHosts.getOrDefault(rawSource, Set.of());
+            boolean addressed = false;
+            for (String h : hosts) {
+                String node = matchNodeLoose(unalias(h, src));
+                if (node == null) node = cleanLabel(h);
+                if (tgt.equals(node)) {
+                    addressed = true;
+                    break;
+                }
+            }
+            String confidence = DependencyGraph.CONF_DOCUMENTED;
+            if (!addressed) {
+                if (!link && (!hosts.isEmpty() || !ownContainer(rawSource))) {
+                    RuleTrace.hit(35, "startup " + src + "->" + tgt);
+                    // Both endpoints are declared services: nodes now, so a later row's
+                    // address (config.json's mongodb-geo:27017) finds the name, as it
+                    // did when depends_on drew the edge itself; the relation itself last.
+                    RuleTrace.hitIf(graph.findNode(tgt) == null, 7, "node " + tgt);
+                    graph.addNode(src, DependencyGraph.KIND_SERVICE);
+                    graph.addNode(tgt, DependencyGraph.classifyKind(tgt));
+                    startupOrder.add(new String[] {src, tgt, file, String.valueOf(line)});
+                    return;
+                }
+                if (RuleTrace.hitIf(!hosts.isEmpty(), 35, "drop " + src + "->" + tgt)) return;
+                confidence = DependencyGraph.CONF_INFERRED;
+            }
+            RuleTrace.hit(35, (addressed ? "documented " : "inferred ") + src + "->" + tgt);
+            // The target is a node too: Robot Shop's cart -> redis edge pointed at a
+            // node that did not exist, because only the source was ever added.
+            RuleTrace.hitIf(graph.findNode(tgt) == null, 7, "node " + tgt);
+            graph.addNode(tgt, DependencyGraph.classifyKind(tgt));
+            // The provenance names the key, so a reader can tell a startup-order
+            // declaration from an address the same file hands the service.
+            addCodeEdge(src, tgt, edgeType("", DependencyGraph.classifyKind(tgt)), file + "#depends_on", line, confidence);
+        }
+    }
+
+    /**
+     * Rule 8: a Feign attribute that is bean wiring, or a name beside a url, is no target.
+     */
+    private boolean isFeignWiring(String section, JSONObject fields, String file, int line) {
+        // A Feign client's contextId / qualifier / path are bean wiring; and when it
+        // declares a url, its name is only a bean id (piggymetrics: name="rates-client",
+        // url="${rates.url}") — the url row carries the target.
+        if (!"feign".equals(section)) return false;
+        String attr = fields.optString("attr", "").toLowerCase(Locale.ROOT);
+        if (RuleTrace.hitIf(FEIGN_NON_TARGET_ATTRS.contains(attr), 8, "feign-attr " + attr + " " + file + ":" + line)) return true;
+        if (RuleTrace.hitIf((attr.equals("name") || attr.equals("value") || attr.isEmpty())
+                && feignUrlSites.contains(file.replace('\\', '/') + ":" + line), 8, "feign-bean-id " + fields.optString("value", ""))) return true;
+        return false;
+    }
+
+    /**
+     * Rule 3: a shared file of a config repository is merged once per config client that consumes the key.
+     */
+    private boolean fanOutSharedConfig(JSONObject edge, String section, JSONObject fields, String file,
+                                       List<Unresolved> unresolved, String sourceOverride) {
+        if (!(sourceOverride == null && "config".equals(section) && sharedConfigFiles.contains(file.replace('\\', '/')))) return false;
+        String key = fields.optString("key", "");
+        for (String client : configClients) {
+            if (RuleTrace.hitIf(consumesKey(client, key), 3, "fanout " + client + " " + key)) mergeOne(edge, unresolved, client);
+        }
+        return true;
+    }
+
+    /**
+     * Convention ④: a declaration no live code uses, or a read a call site already carries.
+     */
+    private boolean isDeclaredNotUsed(String section, JSONObject fields) {
+        // A declaration no live code uses draws no edge (the Python analogue of the
+        // unreferenced-constant rule): an env read whose variable nothing references, or a
+        // call inside a function nothing ever calls, is declared, not used.
+        if (("config".equals(section) || "http-client".equals(section))
+                && "true".equals(fields.optString("unreferenced", ""))) return true;
+        // A getenv whose value a known call site consumes: the call-site row carries the
+        // edge (and the provenance the reference edge sets expect — where the call is made).
+        if ("config".equals(section) && "true".equals(fields.optString("superseded", ""))) return true;
+        return false;
+    }
+
+    /**
+     * Rule 53: a base image's rows are merged once per deployed service built FROM it.
+     */
+    private boolean fanOutBaseImage(JSONObject edge, String file, List<Unresolved> unresolved) {
+        // A base image's directory (its command line, its start scripts) runs inside every
+        // image built FROM it: TeaStore's start.sh writes the registry URL from REGISTRY_HOST,
+        // and each of the five services inherits that line as its own (2026-11-04).
+        Set<String> children = baseImageChildrenOf(file);
+        if (children == null) return false;
+        for (String child : children) {
+            RuleTrace.hit(53, "base-image " + child + " <- " + file);
+            mergeOne(edge, unresolved, child);
+        }
+        return true;
+    }
+
+    /**
+     * Rules 21 / 41: a library's rows are merged once per service that imports the file.
+     */
+    private void fanOutLibrary(JSONObject edge, String file, String source, List<Unresolved> unresolved) {
+        // Code in a library module runs inside the services that import it: the call is
+        // theirs, attributed by the import of this very file; with no importer it is
+        // nobody's, and the library is never a node.
+        Set<String> importers = importersOf(file);
+        RuleTrace.hitIf(importers.isEmpty(), jvmLibraryModules.contains(source) ? 41 : 21, (jvmLibraryModules.contains(source) ? "no-edge " : "no-importer ") + file);
+        for (String importer : importers) RuleTrace.hit(21, "attribute " + file + "=" + importer);
+        for (String importer : importers) mergeOne(edge, unresolved, importer);
+    }
+
+    /**
+     * Rule 17: a constant whose value names a module, used at a call site.
+     */
+    private void mergeNameRef(String section, JSONObject fields, String source, String file, int line) {
         // An enum constant / static final String whose value names a module, used as an
         // argument at a call site: TeaStore's loadBalanceRESTOperation(Service.PERSISTENCE, …)
         // dispatches to the service named "tools.descartes.teastore.persistence" through its
         // own registry. The value equals the module directory, so the callee is knowable
         // statically; only a value that is a module or workload counts, and only from a
         // deployable module (a shared client library's references are not its own calls).
-        if ("name-ref".equals(section)) {
-            if (source == null || !deployableModules.contains(source)) return;
-            String type = fields.optString("type", "");
-            String value = nameConstants.get((type.isBlank() ? "" : type + ".") + fields.optString("name", ""));
-            if (value == null) return;
-            String node = resolveModuleName(value);
-            if (node != null && !node.equals(source)) {
-                RuleTrace.hit(17, "edge " + source + "->" + node);
-                addCodeEdge(source, node, edgeType(section, DependencyGraph.classifyKind(node)), file, line);
-            }
-            return;
+        if (source == null || !deployableModules.contains(source)) return;
+        String type = fields.optString("type", "");
+        String value = nameConstants.get((type.isBlank() ? "" : type + ".") + fields.optString("name", ""));
+        if (value == null) return;
+        String node = resolveModuleName(value);
+        if (node != null && !node.equals(source)) {
+            RuleTrace.hit(17, "edge " + source + "->" + node);
+            addCodeEdge(source, node, edgeType(section, DependencyGraph.classifyKind(node)), file, line);
         }
+    }
 
+    /**
+     * Rule 56: ingress routing, gateway workload → each destination.
+     */
+    private void mergeIngressRoute(JSONObject fields, String file, int line) {
         // Rule 56: ingress routing — the gateway workload to each destination it routes to.
-        if ("ingress-route".equals(section)) {
-            Set<String> gws = gatewayWorkloads.getOrDefault(fields.optString("gateway", ""), Set.of());
-            String rowNs = fields.optString("namespace", "").trim().toLowerCase(Locale.ROOT);
-            readerNamespace = rowNs.isEmpty() ? null : rowNs;
-            String node = matchNodeLoose(fields.optString("host", ""));
-            readerNamespace = null;
-            if (node == null) return;
-            for (String gw : gws) {
-                if (gw.isBlank() || gw.equals(node)) continue;
-                RuleTrace.hit(56, "edge " + gw + "->" + node);
-                graph.addNode(gw, DependencyGraph.KIND_GATEWAY);
-                addCodeEdge(gw, node, "sync-http", file, line);
-            }
-            return;
+        Set<String> gws = gatewayWorkloads.getOrDefault(fields.optString("gateway", ""), Set.of());
+        String rowNs = fields.optString("namespace", "").trim().toLowerCase(Locale.ROOT);
+        readerNamespace = rowNs.isEmpty() ? null : rowNs;
+        String node = matchNodeLoose(fields.optString("host", ""));
+        readerNamespace = null;
+        if (node == null) return;
+        for (String gw : gws) {
+            if (gw.isBlank() || gw.equals(node)) continue;
+            RuleTrace.hit(56, "edge " + gw + "->" + node);
+            graph.addNode(gw, DependencyGraph.KIND_GATEWAY);
+            addCodeEdge(gw, node, "sync-http", file, line);
         }
+    }
 
+    /**
+     * Rule 49: a registry name dialled at run time → the one service that registers it, else residue.
+     */
+    private void mergeRegistryRef(String section, JSONObject fields, String source, String file, int line,
+                                      List<Unresolved> unresolved) {
         // Rule 49: a registry name (dialer.Dial("srv-rate"), a literal reaching a dial through
         // a parameter) is resolved by Consul / etcd at run time — to whichever service
         // registered itself under that name. The registering side is code too
@@ -2126,181 +2160,199 @@ public class CodeGraphMerger {
         // service registers the name, the dial is a call to it. With no registrant, or
         // several, nothing in the repository settles it: listed as residue, where the
         // "Resolve names" question asks the operator (2026-10-27; 2026-10-28).
-        if ("registry-ref".equals(section)) {
-            String name = fields.optString("name", "").trim();
-            if (!name.isEmpty() && source != null) {
-                Set<String> owners = new LinkedHashSet<>();
-                for (String f : registryNameFiles.getOrDefault(name, Set.of())) {
-                    String owner = resolveSource(f);
-                    if (owner != null) owners.add(owner);
-                }
-            String owner = owners.size() == 1 ? owners.iterator().next() : null;
-                if (owner != null && !owner.equals(source) && (knownNodes.contains(owner) || declaredWorkloads.contains(owner))) {
-                    RuleTrace.hit(49, "registered " + source + " => " + name + " = " + owner);
-                    graph.addNode(owner, DependencyGraph.classifyKind(owner));
-                    addCodeEdge(source, owner, edgeType(section, DependencyGraph.classifyKind(owner)), file, line);
-                } else {
-                    RuleTrace.hit(49, "listed " + source + " => " + name);
-                    unresolved.add(new Unresolved(section, source, name, file, line));
-                }
+        String name = fields.optString("name", "").trim();
+        if (!name.isEmpty() && source != null) {
+            Set<String> owners = new LinkedHashSet<>();
+            for (String f : registryNameFiles.getOrDefault(name, Set.of())) {
+                String owner = resolveSource(f);
+                if (owner != null) owners.add(owner);
             }
-            return;
+        String owner = owners.size() == 1 ? owners.iterator().next() : null;
+            if (owner != null && !owner.equals(source) && (knownNodes.contains(owner) || declaredWorkloads.contains(owner))) {
+                RuleTrace.hit(49, "registered " + source + " => " + name + " = " + owner);
+                graph.addNode(owner, DependencyGraph.classifyKind(owner));
+                addCodeEdge(source, owner, edgeType(section, DependencyGraph.classifyKind(owner)), file, line);
+            } else {
+                RuleTrace.hit(49, "listed " + source + " => " + name);
+                unresolved.add(new Unresolved(section, source, name, file, line));
+            }
         }
+    }
 
+    /**
+     * An env read in code: the env table in this module's scope (③), an appsettings fallback
+     * (rule 40) or the read's own default (rule 48) names the host; a declared name only (①).
+     */
+    private void mergeEnvRead(JSONObject fields, String source, String file, int line) {
         // A code-side config edge is a service reading an env var. When that env var
         // resolves (via the k8s ConfigMap / .env table) to a host that is a known
         // service, the read IS the dependency — this is how an env-indirected target
         // (TRANSACTIONS_API_ADDR -> ledgerwriter) becomes a concrete edge with no
         // runtime data. A bare env read that names no host is a signal, not an edge.
-        if ("config".equals(section) && fields.has("env")) {
-            String env = fields.optString("env", "");
-            List<EnvValue> listed = env.isBlank() || source == null ? List.of() : resolveEnvValues(env, source);
-            if (listed.size() > 1) {
-                for (EnvValue v : listed) {
-                    Target t = resolveTarget(v.host(), source, false, false, false);
-                    if (t == null || t.dropped() || t.node().equals(source)) continue;
-                    String node = t.node();
-                    String kind = v.kind() != null ? v.kind() : DependencyGraph.classifyKind(node);
-                    graph.addNode(node, kind);
-                    addCodeEdge(source, node, edgeType("", kind), file, line);
-                }
-                return;
-            }
-            EnvValue value = env.isBlank() ? null : resolveEnvValue(env, source);
-            String host = value == null ? null : value.host();
-            String raw = host;          // the address as written, port and all
-            boolean devSide = false;    // read on the developer's machine, not in the container
-            String statedKind = value == null ? null : value.kind();
-            // A .NET IConfiguration read whose key the environment does not override falls
-            // back to appsettings.json: GrpcSettings:DiscountUrl → https://localhost:5052 in
-            // the checked-in file (loopback: nothing), or a real address in another repo.
-            if (host == null && fields.has("dotnetkey")) {
-                String prop = propertyLookup(fields.optString("dotnetkey", ""));
-                if (RuleTrace.hitIf(prop != null, 40, "appsettings " + fields.optString("dotnetkey", ""))) {
-                    host = stripToHost(prop);
-                    if (host.isEmpty()) host = null;
-                    raw = prop;
-                    devSide = true;
-                    statedKind = kindFromScheme(prop);
-                    if (statedKind == null && fields.optString("dotnetkey", "").toLowerCase(Locale.ROOT).startsWith("connectionstrings:")) {
-                        statedKind = DependencyGraph.KIND_DB;
-                    }
-                }
-            }
-            // The read's own default, when the environment does not set the variable: at a
-            // use site (a client option {host: redisHost}, rule 47) any host-shaped default;
-            // at a bare read only an absolute URL (getenv('CATALOGUE_URL') ?: 'http://catalogue:8080'),
-            // the code's own statement of the address, like a ${key:default} (rule 48).
-            String fallback = fields.optString("envdefault", "").trim();
-            if (host == null && !fallback.isEmpty()) {
-                boolean useSite = "true".equals(fields.optString("usesite", ""));
-                if (useSite || looksLikeUrl(fallback)) {
-                    String h = stripToHost(fallback);
-                    if (h != null && !h.isEmpty()) {
-                        RuleTrace.hit(48, (useSite ? "usesite " : "default ") + env + "=" + h);
-                        host = h;
-                        raw = fallback;
-                        devSide = true;
-                        if (statedKind == null) statedKind = kindFromScheme(fallback);
-                    }
-                }
-            }
-            if (host != null && source != null) {
-                // Only a declared name: a bare env read of a domain is not a call (AICS hands
-                // every service SYSTEM_ADDRESS, its own public address, for the links it puts
-                // in mail). An external host needs a call site with the URL.
-                Target t = resolveTarget(raw, source, devSide, false, false);
-                if (t != null && !t.dropped() && !t.node().equals(source)) {
-                    String node = t.node();
-                    String kind = statedKind != null ? statedKind : DependencyGraph.classifyKind(node);
-                    RuleTrace.hitIf(statedKind != null && !statedKind.equals(DependencyGraph.classifyKind(node)), 39, "kind " + node + "=" + statedKind);
-                    graph.addNode(node, kind);
-                    addCodeEdge(source, node, edgeType("", kind), file, line, t.byPort() ? DependencyGraph.CONF_INFERRED : DependencyGraph.CONF_DOCUMENTED);
-                }
+        String env = fields.optString("env", "");
+        List<EnvScope.Value> listed = env.isBlank() || source == null ? List.of() : resolveEnvValues(env, source);
+        if (listed.size() > 1) {
+            for (EnvScope.Value v : listed) {
+                Target t = resolveTarget(v.host(), source, false, false, false);
+                if (t == null || t.dropped() || t.node().equals(source)) continue;
+                String node = t.node();
+                String kind = v.kind() != null ? v.kind() : DependencyGraph.classifyKind(node);
+                graph.addNode(node, kind);
+                addCodeEdge(source, node, edgeType("", kind), file, line);
             }
             return;
         }
+        EnvScope.Value value = env.isBlank() ? null : resolveEnvValue(env, source);
+        String host = value == null ? null : value.host();
+        String raw = host;          // the address as written, port and all
+        boolean devSide = false;    // read on the developer's machine, not in the container
+        String statedKind = value == null ? null : value.kind();
+        // A .NET IConfiguration read whose key the environment does not override falls
+        // back to appsettings.json: GrpcSettings:DiscountUrl → https://localhost:5052 in
+        // the checked-in file (loopback: nothing), or a real address in another repo.
+        if (host == null && fields.has("dotnetkey")) {
+            String prop = propertyLookup(fields.optString("dotnetkey", ""));
+            if (RuleTrace.hitIf(prop != null, 40, "appsettings " + fields.optString("dotnetkey", ""))) {
+                host = stripToHost(prop);
+                if (host.isEmpty()) host = null;
+                raw = prop;
+                devSide = true;
+                statedKind = kindFromScheme(prop);
+                if (statedKind == null && fields.optString("dotnetkey", "").toLowerCase(Locale.ROOT).startsWith("connectionstrings:")) {
+                    statedKind = DependencyGraph.KIND_DB;
+                }
+            }
+        }
+        // The read's own default, when the environment does not set the variable: at a
+        // use site (a client option {host: redisHost}, rule 47) any host-shaped default;
+        // at a bare read only an absolute URL (getenv('CATALOGUE_URL') ?: 'http://catalogue:8080'),
+        // the code's own statement of the address, like a ${key:default} (rule 48).
+        String fallback = fields.optString("envdefault", "").trim();
+        if (host == null && !fallback.isEmpty()) {
+            boolean useSite = "true".equals(fields.optString("usesite", ""));
+            if (useSite || looksLikeUrl(fallback)) {
+                String h = stripToHost(fallback);
+                if (h != null && !h.isEmpty()) {
+                    RuleTrace.hit(48, (useSite ? "usesite " : "default ") + env + "=" + h);
+                    host = h;
+                    raw = fallback;
+                    devSide = true;
+                    if (statedKind == null) statedKind = kindFromScheme(fallback);
+                }
+            }
+        }
+        if (host != null && source != null) {
+            // Only a declared name: a bare env read of a domain is not a call (AICS hands
+            // every service SYSTEM_ADDRESS, its own public address, for the links it puts
+            // in mail). An external host needs a call site with the URL.
+            Target t = resolveTarget(raw, source, devSide, false, false);
+            if (t != null && !t.dropped() && !t.node().equals(source)) {
+                String node = t.node();
+                String kind = statedKind != null ? statedKind : DependencyGraph.classifyKind(node);
+                RuleTrace.hitIf(statedKind != null && !statedKind.equals(DependencyGraph.classifyKind(node)), 39, "kind " + node + "=" + statedKind);
+                graph.addNode(node, kind);
+                addCodeEdge(source, node, edgeType("", kind), file, line, t.byPort() ? DependencyGraph.CONF_INFERRED : DependencyGraph.CONF_DOCUMENTED);
+            }
+        }
+    }
 
+    /**
+     * A call whose URL came from an env var: the call site is the use (④), the table names the host.
+     */
+    private void mergeEnvCall(String section, JSONObject fields, String source, String file, int line) {
         // An HTTP call whose URL came from an env var (requests.get(f"{PREFIX}/x") with
         // PREFIX = os.getenv("X_API_PREFIX")): the call site is the use, the env table
         // (this module's scope first) or the getenv default names the host.
-        if (("http-client".equals(section) || "grpc".equals(section)) && fields.has("env") && !fields.has("url")) {
-            String env = fields.optString("env", "");
-            String host = env.isBlank() || source == null ? null : resolveEnv(env, source);
-            String raw = host;
-            boolean devSide = false;
-            if (host == null) {
-                String fallback = fields.optString("envdefault", "");
-                if (!fallback.isBlank()) {
-                    host = stripToHost(fallback);
-                    raw = fallback;
-                    devSide = true;
-                }
+        String env = fields.optString("env", "");
+        String host = env.isBlank() || source == null ? null : resolveEnv(env, source);
+        String raw = host;
+        boolean devSide = false;
+        if (host == null) {
+            String fallback = fields.optString("envdefault", "");
+            if (!fallback.isBlank()) {
+                host = stripToHost(fallback);
+                raw = fallback;
+                devSide = true;
             }
-            if (host == null || host.isEmpty() || source == null) return;
-            Target t = resolveTarget(raw, source, devSide, true, true);
-            if (t == null || t.dropped()) return;
-            if (t.external()) {
-                graph.addNode(t.node(), DependencyGraph.KIND_EXTERNAL);
-                addCodeEdge(source, t.node(), "external", file, line);
-                return;
-            }
-            String node = t.node();
-            if (node.equals(source)) return;
-            String kind = DependencyGraph.classifyKind(node);
-            graph.addNode(node, kind);
-            addCodeEdge(source, node, edgeType(section, kind), file, line, t.byPort() ? DependencyGraph.CONF_INFERRED : DependencyGraph.CONF_DOCUMENTED);
+        }
+        if (host == null || host.isEmpty() || source == null) return;
+        Target t = resolveTarget(raw, source, devSide, true, true);
+        if (t == null || t.dropped()) return;
+        if (t.external()) {
+            graph.addNode(t.node(), DependencyGraph.KIND_EXTERNAL);
+            addCodeEdge(source, t.node(), "external", file, line);
             return;
         }
+        String node = t.node();
+        if (node.equals(source)) return;
+        String kind = DependencyGraph.classifyKind(node);
+        graph.addNode(node, kind);
+        addCodeEdge(source, node, edgeType(section, kind), file, line, t.byPort() ? DependencyGraph.CONF_INFERRED : DependencyGraph.CONF_DOCUMENTED);
+    }
 
+    /**
+     * Rule 18: fills a format string's host placeholder from the env table; false when nothing fills it.
+     */
+    private boolean fillFormatHost(JSONObject fields, String source) {
         // A Java format string whose host placeholder is a getenv with a default:
         // String.format("http://%s/shipping/", getenv("CART_ENDPOINT", "cart")). The env
         // table (Dockerfile ENV, manifest env) fills %s, else the call's own default.
-        if ("url".equals(section) && fields.has("env") && fields.optString("value", "").matches(".*%[sd].*")) {
-            String env = fields.optString("env", "");
-            String host = env.isBlank() || source == null ? null : resolveEnv(env, source);
-            if (host == null) {
-                String fallback = fields.optString("envdefault", "");
-                if (!fallback.isBlank()) host = stripToHost(fallback);
-            }
-            if (host == null || host.isEmpty()) return;
-            RuleTrace.hit(18, "format " + env + "=" + host);
-            fields.put("value", fields.optString("value", "").replaceFirst("%[sd]", java.util.regex.Matcher.quoteReplacement(host)));
+        String env = fields.optString("env", "");
+        String host = env.isBlank() || source == null ? null : resolveEnv(env, source);
+        if (host == null) {
+            String fallback = fields.optString("envdefault", "");
+            if (!fallback.isBlank()) host = stripToHost(fallback);
         }
+        if (host == null || host.isEmpty()) return false;
+        RuleTrace.hit(18, "format " + env + "=" + host);
+        fields.put("value", fields.optString("value", "").replaceFirst("%[sd]", java.util.regex.Matcher.quoteReplacement(host)));
+        return true;
+    }
 
+    /**
+     * A {@code @Value} property: resolved through the config files, else its default (rule 4).
+     */
+    private void mergeProperty(JSONObject fields, String source, String file, int line) {
         // @Value("${catalog.service.host:catalog}"): the property may resolve through
         // the config files, and failing that its default names the host. Only a value
         // that is an address or a known node is taken — a port or a flag is not.
-        if ("config".equals(section) && fields.has("property")) {
-            currentSource = source;
-            String value = substitutePlaceholders(fields.optString("property", ""));
-            if (value == null || source == null) return;
-            // A URL may name an external host; a bare value only a declared name. The property is
-            // the module's own config, read where the module runs in development too.
-            Target t = resolveTarget(value, source, true, looksLikeUrl(value), false);
-            if (t == null || t.dropped()) return;
-            if (t.external()) {
-                graph.addNode(t.node(), DependencyGraph.KIND_EXTERNAL);
-                addCodeEdge(source, t.node(), "external", file, line);
-            } else if (!t.node().equals(source)) {
-                addCodeEdge(source, t.node(), edgeType("", DependencyGraph.classifyKind(t.node())), file, line,
-                        t.byPort() ? DependencyGraph.CONF_INFERRED : DependencyGraph.CONF_DOCUMENTED);
-            }
-            return;
+        currentSource = source;
+        String value = substitutePlaceholders(fields.optString("property", ""));
+        if (value == null || source == null) return;
+        // A URL may name an external host; a bare value only a declared name. The property is
+        // the module's own config, read where the module runs in development too.
+        Target t = resolveTarget(value, source, true, looksLikeUrl(value), false);
+        if (t == null || t.dropped()) return;
+        if (t.external()) {
+            graph.addNode(t.node(), DependencyGraph.KIND_EXTERNAL);
+            addCodeEdge(source, t.node(), "external", file, line);
+        } else if (!t.node().equals(source)) {
+            addCodeEdge(source, t.node(), edgeType("", DependencyGraph.classifyKind(t.node())), file, line,
+                    t.byPort() ? DependencyGraph.CONF_INFERRED : DependencyGraph.CONF_DOCUMENTED);
         }
+    }
 
+    /**
+     * Messaging rows wait for {@link #mergeAsync}: the broker is known only once every config row is in.
+     */
+    private void deferAsync(JSONObject edge, String section, JSONObject fields, String source, String file, int line,
+                                List<Unresolved> unresolved) {
         // --- asynchronous: the edge is service → broker, resolved last (see mergeAsync) ---
-        if (section.startsWith("kafka") || section.startsWith("rabbit")) {
-            if (source == null) {
-                unresolved.add(new Unresolved(section, null, brokerTarget(section, fields), file, line));
-                return;
-            }
-            JSONObject deferred = new JSONObject(edge.toString());
-            deferred.put("resolved_source", source);
-            asyncRows.add(deferred);
+        if (source == null) {
+            unresolved.add(new Unresolved(section, null, brokerTarget(section, fields), file, line));
             return;
         }
+        JSONObject deferred = new JSONObject(edge.toString());
+        deferred.put("resolved_source", source);
+        asyncRows.add(deferred);
+    }
 
+    /**
+     * A synchronous row: the callee token (②, {@link #syncTarget}), placeholders filled from the
+     * tables (③), then the name table (①, {@link #resolveTarget}); residue when nothing settles it.
+     */
+    private void mergeSync(String section, JSONObject fields, String source, String file, int line,
+                               List<Unresolved> unresolved) {
         // --- synchronous: resolve the callee onto the graph vocabulary ---
         // Fallback for a call whose host is a variable but whose URL path names the
         // service by convention (/api/v1/orderservice/... -> order-service). Used only
@@ -2415,6 +2467,7 @@ public class CodeGraphMerger {
                 : DependencyGraph.CONF_DOCUMENTED;
         addCodeEdge(source, node, edgeType(section, kind), file, line, confidence);
     }
+
 
     /** Maps a code section + resolved target kind to a graph edge type. */
     private static String edgeType(String section, String targetKind) {
@@ -2720,23 +2773,6 @@ public class CodeGraphMerger {
         return (label != null && isPlausibleName(label) && !SOURCE_STOP.contains(label)) ? label : null;
     }
 
-    /** Suffixes a Compose/Helm service name adds over the workload it runs (order-service-container). */
-    private static final String[] DEPLOY_NAME_SUFFIXES = {"-container", "-svc", "-pod", "-deployment"};
-
-    /**
-     * {@link #matchNode}, then the spellings a deployment file gives the same workload: a
-     * {@code -container} suffix stripped, or the bare last word of a prefixed workload
-     * name when it is unambiguous — TeaStore's compose file says {@code persistence} and
-     * {@code db} for the workloads its manifests call {@code teastore-persistence} and
-     * {@code teastore-db}. A short name that fits several nodes resolves to none.
-     */
-    /** Whether a file is a Compose document, by the spec's and the legacy names. */
-    private static boolean isComposeFile(String file) {
-        String base = file == null ? "" : file.replace('\\', '/');
-        base = base.substring(base.lastIndexOf('/') + 1).toLowerCase(Locale.ROOT);
-        return (base.startsWith("docker-compose") || base.startsWith("compose.")) && (base.endsWith(".yml") || base.endsWith(".yaml"));
-    }
-
     /**
      * Whether a bare word names something the deployment declares: a node of the graph
      * vocabulary, or a Compose service the manifests' vocabulary left out (rule 11 keeps
@@ -2773,6 +2809,13 @@ public class CodeGraphMerger {
         }
     }
 
+    /**
+     * {@link #matchNode}, then the spellings a deployment file gives the same workload: a
+     * {@code -container} suffix stripped, or the bare last word of a prefixed workload
+     * name when it is unambiguous — TeaStore's compose file says {@code persistence} and
+     * {@code db} for the workloads its manifests call {@code teastore-persistence} and
+     * {@code teastore-db}. A short name that fits several nodes resolves to none.
+     */
     private String matchNodeLoose(String candidate) {
         String node = matchNode(candidate);
         if (node != null) return node;
@@ -2839,22 +2882,15 @@ public class CodeGraphMerger {
         return null;
     }
 
-    /** The in-cluster DNS suffixes a Service name may carry; the label before them is the namespace. */
-    private static final String[] CLUSTER_SUFFIXES = {".svc.cluster.local", ".cluster.local", ".svc"};
-
     /**
-     * Lower-cased host name with scheme/port/path/userinfo stripped, and with exactly the
-     * DNS suffixes that are suffixes removed: a cluster suffix together with its namespace
-     * label ({@code <svc>.<ns>.svc.cluster.local} → {@code <svc>}), or a trailing label that
-     * is a namespace the manifests declare ({@code <svc>.<ns>} → {@code <svc>}). Any other
-     * dotted name is kept whole: a Compose service may be called {@code catalog.api}, and a
-     * domain cut to its first label reads as a service that does not exist (2026-10-26).
+     * {@link NameTable#cleanHost}, then rule 54: an ambiguous name (declared in two
+     * namespaces) is qualified by its own namespace label, else by the reader's.
      */
     private String clean(String raw) {
         String s = cleanHost(raw, namespaces);
         if (ambiguousNames.isEmpty() || !ambiguousNames.contains(s)) return s;
         // An ambiguous name (rule 54): its own namespace label says which, else the reader's.
-        String ns = ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ConfigExtractor.namespaceLabel(raw);
+        String ns = NameTable.namespaceLabel(raw);
         if (ns != null && namespaces.contains(ns)) return s + "." + ns;
         if (readerNamespace != null) return s + "." + readerNamespace;
         return s;
@@ -2866,24 +2902,6 @@ public class CodeGraphMerger {
     private final Set<String> ambiguousNames = new LinkedHashSet<>();
     /** Workload node → the namespace its manifest puts it in. */
     private final Map<String, String> nodeNamespaces = new LinkedHashMap<>();
-
-    static String cleanHost(String raw, Set<String> namespaces) {
-        // Scheme, userinfo, path, port, quotes off; a placeholder is no usable host (convention ②).
-        String s = AddressShape.host(raw);
-        if (s.isEmpty()) return "";
-        boolean cluster = false;
-        for (String suffix : CLUSTER_SUFFIXES) {
-            if (s.endsWith(suffix) && s.length() > suffix.length()) {
-                RuleTrace.hit(36, "cluster-suffix " + s);
-                s = s.substring(0, s.length() - suffix.length());
-                cluster = true;
-                break;
-            }
-        }
-        int dot = s.lastIndexOf('.');
-        if (RuleTrace.hitIf(dot > 0 && !cluster && namespaces.contains(s.substring(dot + 1)), 36, "ns-strip " + s) || (dot > 0 && cluster)) s = s.substring(0, dot);
-        return s;
-    }
 
     /**
      * Whether a dotted host is an external domain as seen from this graph: not a declared
@@ -2908,17 +2926,6 @@ public class CodeGraphMerger {
         return AddressShape.host(raw);
     }
 
-    /** A real external host: a dotted domain that is not an in-cluster k8s name or a raw IP. */
-    private static boolean isExternal(String host, String namespace) {
-        if (host == null || !host.contains(".")) return false;
-        if (host.endsWith(".svc.cluster.local") || host.endsWith(".cluster.local")
-                || host.endsWith(".svc") || host.endsWith(".local")) return false;
-        if (namespace != null && !namespace.isBlank()
-                && host.endsWith("." + namespace.toLowerCase(Locale.ROOT))) return false;
-        if (host.matches("[0-9.]+")) return false; // a bare IP, not a business name
-        return true;
-    }
-
     private static boolean looksLikeUrl(String v) {
         return AddressShape.hasScheme(v);
     }
@@ -2930,26 +2937,10 @@ public class CodeGraphMerger {
         return s.isEmpty() ? null : s;
     }
 
-    /**
-     * A name safe to introduce as a node id: DNS labels, optionally dotted (a Compose
-     * service may be called {@code catalog.api}), not a bare number.
-     */
-    private static boolean isPlausibleName(String s) {
-        if (s == null || s.length() < 2 || s.length() > 63) return false;
-        if (!s.matches("[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*")) return false;
-        return !s.matches("[0-9.]+");
-    }
-
     // ---------- source attribution ----------
 
     /** Directory names that are never a service (so their files don't invent a source). */
-    private static final Set<String> SOURCE_STOP = Set.of(
-            "src", "lib", "libs", "pkg", "internal", "cmd", "app", "apps", "main",
-            "test", "tests", "vendor", "target", "build", "dist", "node_modules",
-            "common", "shared", "util", "utils", "core", "api", "web",
-            // where resources and deployment descriptors live, never a component of their own
-            "resources", "manifests", "kubernetes-manifests", "k8s", "kubernetes", "deploy", "deployment",
-            "deployments", "charts", "helm", "scripts", "docs");
+    private static final Set<String> SOURCE_STOP = Vocabulary.SOURCE_STOP;
 
     /**
      * The calling service for a code edge. A dependency needs a real source: prefer
@@ -3033,13 +3024,6 @@ public class CodeGraphMerger {
         return named.size() == 1 ? named.iterator().next() : null;
     }
 
-    private static String firstPathSegment(String file) {
-        if (file == null || file.isBlank()) return null;
-        String path = file.replace('\\', '/');
-        int slash = path.indexOf('/');
-        return slash <= 0 ? null : path.substring(0, slash);
-    }
-
     /**
      * Like {@link #matchNode}, but also accepts a module directory whose name ends
      * with a known workload — e.g. {@code spring-petclinic-customers-service}
@@ -3053,14 +3037,6 @@ public class CodeGraphMerger {
             if (node.length() >= 3 && (c.endsWith("-" + node) || c.endsWith("_" + node))) return node;
         }
         return null;
-    }
-
-    private static String repoShortName(String repoName) {
-        if (repoName == null || repoName.isBlank()) return null;
-        String s = repoName.trim();
-        int slash = s.lastIndexOf('/');
-        if (slash >= 0 && slash < s.length() - 1) s = s.substring(slash + 1);
-        return s.replaceAll("\\.git$", "");
     }
 
     private static String firstNonBlank(JSONObject fields, String... keys) {
