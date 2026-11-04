@@ -33,12 +33,12 @@ flowchart TB
   teastore_recommender -.-> teastore_persistence
   teastore_image -.-> teastore_persistence
   teastore_auth -.-> teastore_persistence
-  teastore_persistence -. declared? .-> teastore_registry
+  teastore_webui -.-> teastore_registry
+  teastore_recommender -.-> teastore_registry
+  teastore_persistence -.-> teastore_registry
+  teastore_image -.-> teastore_registry
+  teastore_auth -.-> teastore_registry
   teastore_persistence -. db .-> teastore_db
-  teastore_auth -. declared? .-> teastore_registry
-  teastore_image -. declared? .-> teastore_registry
-  teastore_recommender -. declared? .-> teastore_registry
-  teastore_webui -. declared? .-> teastore_registry
   teastore_persistence -. async .-> teastore_kieker_rabbitmq
   teastore_auth -. async .-> teastore_kieker_rabbitmq
   teastore_image -. async .-> teastore_kieker_rabbitmq

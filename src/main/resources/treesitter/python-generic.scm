@@ -4,6 +4,15 @@
 ((string (string_content) @url.value)
  (#match? @url.value "^https?://"))
 
+; A bare host literal kept under a name: smtp_server = 'smtp.gmail.com'. The value alone
+; is only a dotted word; it is an address when the name says so (convention ②, judged by
+; AddressShape in the extractor, which turns the row into a url row) and only if that name
+; then reaches a client call (convention ④).
+((assignment
+   left: (identifier) @hostlit.key
+   right: (string (string_content) @hostlit.value))
+ (#match? @hostlit.value "^[a-z0-9][a-z0-9-]*[.][a-z0-9.-]*[a-z0-9]$"))
+
 ; os.getenv("DETAILS_HOSTNAME") / os.environ.get("REVIEWS_URL")
 ; Service targets are very commonly injected this way in Python microservices.
 ((call

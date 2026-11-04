@@ -590,17 +590,22 @@ public class GreenfieldGeneralizationTest {
             """;
 
     @Test
-    void dependsOnIsStartupOrderUnlessTheServiceStatesNoAddresses() {
+    void dependsOnIsStartupOrderUnlessTheServiceStatesTheAddress() {
         DependencyGraph g = merge(DEPENDS_ON_SHAPES);
-        // frontend's env names cart: depends_on cart agrees with it -> documented.
+        // frontend's env names cart: depends_on cart agrees with it -> a documented call.
         DependencyGraph.Edge cart = edge(g, "frontend", "cart");
         assertNotNull(cart);
         assertEquals(DependencyGraph.CONF_DOCUMENTED, cart.confidence);
-        // frontend's env names addresses but none for quote: depends_on quote is startup order only.
-        assertNull(edge(g, "frontend", "quote"));
-        // vets-service's env names nothing: depends_on is the deployment's only wiring statement -> drawn, inferred.
+        assertEquals("sync-http", cart.type);
+        // nothing of frontend's names quote: depends_on quote is startup order, kept as such, not a call.
+        DependencyGraph.Edge quote = edge(g, "frontend", "quote");
+        assertNotNull(quote);
+        assertEquals(DependencyGraph.TYPE_STARTUP, quote.type);
+        // vets-service runs this repo's code (a module aligns to it) and states no address at all:
+        // depends_on is the author's one statement of what it needs -> a call, inferred.
         DependencyGraph.Edge cfg = edge(g, "vets-service", "config-server");
         assertNotNull(cfg);
+        assertEquals("sync-http", cfg.type);
         assertEquals(DependencyGraph.CONF_INFERRED, cfg.confidence);
         assertTrue(cfg.provenanceRefs.get(0).endsWith("#depends_on"));
     }

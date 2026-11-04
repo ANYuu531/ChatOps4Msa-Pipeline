@@ -68,3 +68,35 @@ git add docs/generalization/mining/llm && git commit -m "mining: edge audit v2 (
 ```
 
 回歸（23 個系統逐邊比對，30 秒）：`bash fetch_regression.sh ~/Documents/depweaver-eval/repos`，再跑 `regress.sh`。
+
+## 結果（2026-11-03）
+
+| 步驟 | 數字 |
+|---|---|
+| 網羅 | 搜尋 1,492 個 repo，依星數評估 849 個：286 無部署描述檔、206 像框架、153 服務 < 6、27 太大、8 已用過、3 語言比例不符、**65 被作者篩掉**、101 合格 → 語料 100＋hold-out E 1 |
+| 殘餘 | 2,845 筆、803 種形狀，108 種出現在 ≥ 2 個 repo（`out/clusters.tsv`） |
+| LLM 判讀 | 108 次；312 個樣本：相依 108、來源不對 54、不是 130、不確定 20；46 群「有通用規則」（`llm/summary.md`） |
+| 作者查證後寫的規則 | 57 多文件 YAML、58 .NET Options 鍵、59 Service selector、60 掛載的設定檔、61 Ocelot（另修 r2dbc: 前綴、範本設定檔）；語料中各在 18／16／5／15／4 個系統觸發 |
+| 不寫的 | 只綁 mesh 的 Istio VirtualService（規則 56 刻意不算邊）、.NET Aspire AppHost、Ingress 對外主機名、裸字串字面值（LLM 也判斷不能以語法分開） |
+| 效果 | 28 個系統的圖改變（邊 +207／−8）；殘餘 2,845 → 2,721、跨 repo 形狀 108 → 96；新邊抽 40 條人工查證 34 條對 |
+| 轉移 | hold-out E 0/8 → 0/8；B／C／D、AICS 不變；23 個回歸系統只多遙測 variant 邊與 petclinic 一條正確的邊 |
+| 邊審查第二版 | 279 條（抽自規則 57 前的圖）：correct 101、declared-only 156、wrong 10、unsure 12。作者查 wrong＋unsure 22 條、declared-only 中不以 depends_on 為出處的 55 條理由：**確定錯 11 條（3.9%，下限）**，規則 57–61 後仍在。兩種形狀：共用環境變數來源（env_file／envFrom ConfigMap，4 系統 7 條）、程式碼中不是呼叫目標的 URL 字串（RFC 連結、ProblemDetails type、claim、Swagger 授權連結，4 系統 4 條）；另 2 條 wrong 是 LLM 誤判（片段沒截到路由表、第一個出處不是決定的檔案） |
+
+**邊審查和殘餘探勘是兩半**：探勘只找「宣告了卻沒畫」（漏畫），邊審查找到的兩種形狀都是「多畫」，探勘看不到。逐條查證的清單：
+
+| 形狀 | repo | 邊 |
+|---|---|---|
+| 共用 env_file | uid4oe/microservices-go-grpc | advice-service → user-service、postgres → advice-service、postgres → user-service |
+| 共用 env_file | uid4oe/grpc-web-demo | postgres → mongodb、alva-offer → alva-order（實際是 order 呼叫 offer） |
+| 共用 env_file | ebosas/microservices | database → redis（用 redis 的是 cache 與 server） |
+| 共用 envFrom ConfigMap | hoangtien2k3/ecommerce-microservices | tax-service → kafka（ConfigMap 給 14 個服務） |
+| URL 字串 | ebubekirdinc/SuuCat | assessment.api → tools.ietf.org |
+| URL 字串 | meysamhadeli/booking-microservices-java-spring-boot | buildingblocks → problems |
+| URL 字串 | thangchung/clean-architecture-dotnet | samples → bob.com |
+| URL 字串 | ivanpaulovich/clean-architecture-manga | accounts-api → raw.githubusercontent.com |
+| LLM 誤判（邊是對的） | tanerdiler/…-kubernetes | k8n-service-gateway → containerized-accounts（路由 `lb://CONTAINERIZED-ACCOUNTS`） |
+| LLM 誤判（邊是對的） | rcherara/microservice-architecture | gateway-service → discovery-service（pom 的 Eureka client，僅推測） |
+
+**hold-out E 沒有轉移的原因**是探勘方法的盲點：殘餘只找 repo 宣告過的名稱，E 的應用服務以 `config.development.json` 的 `localhost`＋port 連到 Compose 發佈的 port，這種間接指向在探勘中看不到。這是看到 E 之後才發現的；為了讓 E 保持乾淨，探勘程式沒有改。
+
+範圍普查（`scope_census.py` → `scope-census.md`）：語料中範圍外最常見的是 Ingress（18 個系統）、Secret 參照（16）、NATS／Redis pub/sub 等其他 broker（11）、Dapr 服務呼叫（7）、Compose profiles（7）。

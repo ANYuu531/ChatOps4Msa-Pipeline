@@ -23,6 +23,26 @@
     ],
     "count": 3
   },
+  "48": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "49": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "50": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "51": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "52": {
     "hits": 34,
     "examples": [
@@ -49,12 +69,27 @@
     ],
     "count": 21
   },
+  "53": {
+    "hits": 1,
+    "examples": ["dockerfile src/loadgenerator/Dockerfile http://${FRONTEND_ADDR}"],
+    "count": 1
+  },
   "10": {
     "hits": 1,
     "examples": ["drop opentelemetrycollector (kustomize/components/google-cloud-operations)"],
     "count": 1
   },
+  "54": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "11": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "55": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -78,32 +113,47 @@
     "examples": [],
     "count": 0
   },
+  "57": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "14": {
     "hits": 64,
     "examples": [
-      "edge checkoutservice->productcatalogservice",
-      "edge checkoutservice->shippingservice",
-      "edge checkoutservice->paymentservice",
-      "edge checkoutservice->emailservice",
-      "edge checkoutservice->currencyservice",
-      "edge checkoutservice->cartservice",
-      "edge frontend->productcatalogservice",
-      "edge frontend->currencyservice",
-      "edge frontend->cartservice",
-      "edge frontend->recommendationservice",
-      "edge frontend->shippingservice",
-      "edge frontend->checkoutservice",
-      "edge frontend->adservice",
-      "edge frontend->shoppingassistantservice",
-      "edge loadgenerator->frontend",
-      "edge recommendationservice->productcatalogservice"
+      "code-decides checkoutservice->productcatalogservice",
+      "code-decides checkoutservice->shippingservice",
+      "code-decides checkoutservice->paymentservice",
+      "code-decides checkoutservice->emailservice",
+      "code-decides checkoutservice->currencyservice",
+      "code-decides checkoutservice->cartservice",
+      "code-decides frontend->productcatalogservice",
+      "code-decides frontend->currencyservice",
+      "code-decides frontend->cartservice",
+      "code-decides frontend->recommendationservice",
+      "code-decides frontend->shippingservice",
+      "code-decides frontend->checkoutservice",
+      "code-decides frontend->adservice",
+      "code-decides frontend->shoppingassistantservice",
+      "code-decides loadgenerator->frontend",
+      "code-decides recommendationservice->productcatalogservice"
     ],
     "count": 16
+  },
+  "58": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
   },
   "15": {
     "hits": 0,
     "examples": [],
     "count": 0
+  },
+  "59": {
+    "hits": 2,
+    "examples": ["selector frontend-external=frontend"],
+    "count": 1
   },
   "16": {
     "hits": 0,
@@ -155,9 +205,9 @@
     "count": 0
   },
   "4": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 1,
+    "examples": ["table FRONTEND_ADDR=frontend"],
+    "count": 1
   },
   "5": {
     "hits": 0,
@@ -184,8 +234,18 @@
     "examples": [],
     "count": 0
   },
+  "60": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "61": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "20": {
-    "hits": 32,
+    "hits": 33,
     "examples": [
       "scoped PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice @frontend",
       "scoped CURRENCY_SERVICE_ADDR=currencyservice @frontend",
@@ -202,9 +262,10 @@
       "scoped EMAIL_SERVICE_ADDR=emailservice @checkoutservice",
       "scoped PAYMENT_SERVICE_ADDR=paymentservice @checkoutservice",
       "scoped PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice @recommendationservice",
-      "scoped REDIS_ADDR=redis-cart @cartservice"
+      "scoped REDIS_ADDR=redis-cart @cartservice",
+      "scoped FRONTEND_ADDR=frontend @loadgenerator"
     ],
-    "count": 16
+    "count": 17
   },
   "21": {
     "hits": 0,

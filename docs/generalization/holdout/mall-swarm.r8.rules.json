@@ -1,0 +1,511 @@
+{"rules": {
+  "44": {
+    "hits": 18,
+    "examples": [
+      "image mall-admin=mall-admin",
+      "compose-only mall-admin=mall-admin",
+      "image mall-portal=mall-portal",
+      "compose-only mall-portal=mall-portal",
+      "image mall-auth=mall-auth",
+      "compose-only mall-auth=mall-auth",
+      "image mall-monitor=mall-monitor",
+      "compose-only mall-monitor=mall-monitor",
+      "image mall-gateway=mall-gateway",
+      "compose-only mall-gateway=mall-gateway",
+      "image mall-search=mall-search",
+      "compose-only mall-search=mall-search"
+    ],
+    "count": 12
+  },
+  "45": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "47": {
+    "hits": 1,
+    "examples": ["not-use-site mall-admin/src/main/java/com/macro/mall/service/impl/OssServiceImpl.java:66 http://"],
+    "count": 1
+  },
+  "48": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "49": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "50": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "51": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "52": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "53": {
+    "hits": 2,
+    "examples": [
+      "compose mysql.command --character-set-server=utf8mb4",
+      "bare-undeclared mysql utf8mb4"
+    ],
+    "count": 2
+  },
+  "10": {
+    "hits": 6,
+    "examples": [
+      "drop mall-monitor-deployment (document/k8s)",
+      "drop mall-admin-deployment (document/k8s)",
+      "drop mall-gateway-deployment (document/k8s)",
+      "drop mall-search-deployment (document/k8s)",
+      "drop mall-auth-deployment (document/k8s)",
+      "drop mall-portal-deployment (document/k8s)"
+    ],
+    "count": 6
+  },
+  "54": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 1,
+    "examples": ["k8s-over-compose 15 compose names ignored"],
+    "count": 1
+  },
+  "55": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "hits": 16,
+    "examples": [
+      "links mall-admin->mysql",
+      "links mall-admin->nacos-registry",
+      "links mall-search->elasticsearch",
+      "links mall-search->mysql",
+      "links mall-search->nacos-registry",
+      "links mall-portal->redis",
+      "links mall-portal->mongo",
+      "links mall-portal->mysql",
+      "links mall-portal->rabbitmq",
+      "links mall-portal->nacos-registry",
+      "links mall-auth->nacos-registry",
+      "links mall-gateway->redis",
+      "links mall-gateway->nacos-registry",
+      "links mall-monitor->nacos-registry",
+      "links logstash->elasticsearch",
+      "links kibana->elasticsearch"
+    ],
+    "count": 16
+  },
+  "56": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "57": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "14": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "58": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 48,
+    "examples": [
+      "published 8848",
+      "edge mall-admin->nacos-registry :8848",
+      "published 3306",
+      "edge mall-admin->mysql :3306",
+      "edge mall-mbg->mysql :3306",
+      "edge mall-portal->nacos-registry :8848",
+      "edge mall-portal->mysql :3306",
+      "edge mall-auth->nacos-registry :8848",
+      "edge mall-demo->mysql :3306",
+      "edge mall-search->mysql :3306",
+      "published 9200",
+      "edge mall-search->elasticsearch :9200",
+      "edge mall-monitor->nacos-registry :8848",
+      "edge mall-demo->nacos-registry :8848",
+      "edge mall-gateway->nacos-registry :8848",
+      "edge mall-search->nacos-registry :8848"
+    ],
+    "count": 16
+  },
+  "59": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "hits": 172,
+    "examples": [
+      "spring-yml config/demo/mall-demo-dev.yaml",
+      "spring-yml config/demo/mall-demo-prod.yaml",
+      "spring-yml config/portal/mall-portal-prod.yaml",
+      "spring-yml config/portal/mall-portal-dev.yaml",
+      "spring-yml config/admin/mall-admin-dev.yaml",
+      "spring-yml config/admin/mall-admin-prod.yaml",
+      "spring-yml config/search/mall-search-dev.yaml",
+      "spring-yml config/search/mall-search-prod.yaml",
+      "spring-yml config/gateway/mall-gateway-prod.yaml",
+      "spring-yml config/gateway/mall-gateway-dev.yaml",
+      "config-file config/demo/mall-demo-dev.yaml=mall-demo",
+      "config-file config/demo/mall-demo-prod.yaml=mall-demo",
+      "config-file config/portal/mall-portal-prod.yaml=mall-portal",
+      "config-file config/portal/mall-portal-dev.yaml=mall-portal",
+      "config-file config/admin/mall-admin-dev.yaml=mall-admin",
+      "config-file config/admin/mall-admin-prod.yaml=mall-admin",
+      "config-file config/search/mall-search-dev.yaml=mall-search",
+      "config-file config/search/mall-search-prod.yaml=mall-search",
+      "config-file config/gateway/mall-gateway-prod.yaml=mall-gateway",
+      "config-file config/gateway/mall-gateway-dev.yaml=mall-gateway"
+    ],
+    "count": 20
+  },
+  "4": {
+    "hits": 3,
+    "examples": [
+      "table aliyun.oss.endpoint=oss-cn-shenzhen.aliyuncs.com",
+      "table minio.endpoint=http://localhost:9000"
+    ],
+    "count": 2
+  },
+  "5": {
+    "hits": 56,
+    "examples": [
+      "env _host=utf8mb4",
+      "not-a-host _host=utf8mb4_unicode_ci",
+      "key spring.cloud.nacos.discovery.server-addr=nacos-registry:8848",
+      "key spring.cloud.nacos.config.server-addr=nacos-registry:8848",
+      "key spring.cloud.nacos.discovery.server-addr=localhost:8848",
+      "key spring.cloud.nacos.config.server-addr=localhost:8848",
+      "key spring.data.redis.host=localhost",
+      "key logstash.host=localhost",
+      "key spring.data.mongodb.host=localhost",
+      "key spring.rabbitmq.host=localhost",
+      "not-a-host spring.rabbitmq.virtual-host=/mall",
+      "key logstash.host=logstash",
+      "key spring.data.mongodb.host=mongo",
+      "key spring.data.redis.host=redis",
+      "key spring.rabbitmq.host=rabbit",
+      "not-a-host spring.cloud.gateway.server.webflux.discovery.locator.lower-case-service-id=true"
+    ],
+    "count": 16
+  },
+  "6": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "hits": 1,
+    "examples": ["env kibana.elasticsearch.hosts=es"],
+    "count": 1
+  },
+  "8": {
+    "hits": 156,
+    "examples": [
+      "loopback localhost:9000",
+      "config-signal spring.cloud.nacos.config.file-extension",
+      "config-signal spring.config.import[0]",
+      "config-signal server.port",
+      "config-signal spring.datasource.username",
+      "config-signal spring.datasource.password",
+      "config-signal spring.datasource.druid.initial-size",
+      "config-signal spring.datasource.druid.min-idle",
+      "config-signal spring.datasource.druid.max-active",
+      "config-signal spring.datasource.druid.web-stat-filter.exclusions",
+      "config-signal spring.datasource.druid.stat-view-servlet.login-username",
+      "config-signal spring.datasource.druid.stat-view-servlet.login-password",
+      "loopback localhost",
+      "config-signal spring.data.redis.database",
+      "config-signal spring.data.redis.port",
+      "config-signal spring.data.redis.timeout",
+      "config-signal spring.data.mongodb.port",
+      "config-signal spring.data.mongodb.database",
+      "config-signal spring.rabbitmq.port",
+      "config-signal spring.rabbitmq.virtual-host"
+    ],
+    "count": 46
+  },
+  "9": {
+    "hits": 4,
+    "examples": [
+      "jpa mall-admin/src/main/java/com/macro/mall/config/MyBatisConfig.java",
+      "jpa mall-portal/src/main/java/com/macro/mall/portal/config/MyBatisConfig.java",
+      "jpa mall-demo/src/main/java/com/macro/mall/demo/config/MyBatisConfig.java",
+      "jpa mall-search/src/main/java/com/macro/mall/search/config/MyBatisConfig.java"
+    ],
+    "count": 4
+  },
+  "60": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "61": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 15,
+    "examples": [
+      "alias mall-admin:db=mysql",
+      "alias mall-search:es=elasticsearch",
+      "alias mall-search:db=mysql",
+      "alias mall-portal:db=mysql",
+      "alias mall-portal:rabbit=rabbitmq",
+      "alias logstash:es=elasticsearch",
+      "alias kibana:es=elasticsearch",
+      "resolve db=mysql",
+      "resolve mall-portal:db=mysql",
+      "resolve mall-portal:rabbit=rabbitmq",
+      "resolve mall-admin:db=mysql",
+      "resolve mall-search:db=mysql",
+      "resolve mall-search:es=elasticsearch",
+      "resolve kibana:es=elasticsearch"
+    ],
+    "count": 14
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 30,
+    "examples": [
+      "first-of-list spring.datasource.druid.web-stat-filter.exclusions",
+      "fqdn aliyun.oss.endpoint=oss-cn-shenzhen.aliyuncs.com",
+      "list spring.elasticsearch.uris=localhost:9200",
+      "list spring.elasticsearch.uris=es:9200",
+      "not-a-list secure.ignore.urls=/doc.html",
+      "not-a-list secure.ignore.urls=/v3/api-docs/swagger-config",
+      "not-a-list secure.ignore.urls=/*/v3/api-docs/default",
+      "not-a-list secure.ignore.urls=/*/v3/api-docs",
+      "not-a-list secure.ignore.urls=/*/swagger-ui/**",
+      "not-a-list secure.ignore.urls=/webjars/**",
+      "not-a-list secure.ignore.urls=/favicon.ico",
+      "not-a-list secure.ignore.urls=/actuator/**",
+      "not-a-list secure.ignore.urls=/mall-auth/**",
+      "not-a-list secure.ignore.urls=/mall-search/**",
+      "not-a-list secure.ignore.urls=/mall-portal/sso/login",
+      "not-a-list secure.ignore.urls=/mall-portal/sso/register",
+      "not-a-list secure.ignore.urls=/mall-portal/sso/getAuthCode",
+      "not-a-list secure.ignore.urls=/mall-portal/home/**",
+      "not-a-list secure.ignore.urls=/mall-portal/product/**",
+      "not-a-list secure.ignore.urls=/mall-portal/brand/**"
+    ],
+    "count": 24
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 10,
+    "examples": [
+      "drop https://github.com/macrozheng/mall-learning",
+      "drop http://www.macrozheng.com"
+    ],
+    "count": 2
+  },
+  "30": {
+    "hits": 1,
+    "examples": ["edge mall-portal->rabbitmq"],
+    "count": 1
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 16,
+    "examples": [
+      "inferred mall-admin->mysql",
+      "inferred mall-admin->nacos-registry",
+      "inferred mall-search->elasticsearch",
+      "inferred mall-search->mysql",
+      "inferred mall-search->nacos-registry",
+      "inferred mall-portal->redis",
+      "inferred mall-portal->mongo",
+      "inferred mall-portal->mysql",
+      "inferred mall-portal->rabbitmq",
+      "inferred mall-portal->nacos-registry",
+      "inferred mall-auth->nacos-registry",
+      "inferred mall-gateway->redis",
+      "inferred mall-gateway->nacos-registry",
+      "inferred mall-monitor->nacos-registry",
+      "inferred logstash->elasticsearch",
+      "drop kibana->elasticsearch"
+    ],
+    "count": 16
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 8,
+    "examples": [
+      "lib mall-common",
+      "no-edge mall-common/src/main/java/com/macro/mall/common/config/BaseRedisConfig.java",
+      "no-edge mall-common/src/main/java/com/macro/mall/common/api/CommonResult.java",
+      "no-edge mall-common/src/main/java/com/macro/mall/common/service/impl/RedisServiceImpl.java"
+    ],
+    "count": 4
+  },
+  "42": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "hits": 46,
+    "examples": [
+      "drop springdoc.swagger-ui.path",
+      "drop springdoc.swagger-ui.enabled",
+      "drop springdoc.swagger-ui.doc-expansion",
+      "drop springdoc.api-docs.path",
+      "drop springdoc.api-docs.enabled",
+      "drop springdoc.group-configs[0].group",
+      "drop springdoc.group-configs[0].packages-to-scan",
+      "drop springdoc.default-flat-param-object",
+      "drop springdoc.swagger-ui.tags-sorter",
+      "drop springdoc.swagger-ui.operations-sorter",
+      "drop springdoc.swagger-ui.show-extensions",
+      "drop knife4j.gateway.enabled",
+      "drop knife4j.gateway.strategy",
+      "drop knife4j.gateway.discover.version",
+      "drop knife4j.gateway.discover.enabled",
+      "drop knife4j.gateway.discover.excluded-services",
+      "drop knife4j.gateway.tags-sorter",
+      "drop knife4j.gateway.operations-sorter"
+    ],
+    "count": 18
+  }
+}}

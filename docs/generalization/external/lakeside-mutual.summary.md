@@ -4,26 +4,29 @@
 
 ## ledger sections
 - name-constant = 8
-- url = 8
+- url = 11
 - jpa = 51
 - name-ref = 35
 - http-server = 45
 - url-constant = 1
 - feign = 2
-- config = 68
+- config = 69
+- parsed-dir = 80
 - http-client = 10
+- dockerfile-from = 20
 - compose-service = 39
 - compose-dependency = 33
-- env-address = 38
-- workload-env = 38
+- compose-port = 35
+- env-address = 39
+- workload-env = 39
 - k8s-workload = 9
 - k8s-service = 10
 - service-root = 12
 - module-deps = 11
-- TOTAL = 418 | files with syntax errors = 75
+- TOTAL = 559 | files with syntax errors = 75
 
 ## graph
-- after merge: 11 nodes / 21 edges | after normalize: 11 nodes / 21 edges | unresolved code edges = 12
+- after merge: 10 nodes / 19 edges | after normalize: 10 nodes / 19 edges | unresolved code edges = 11
 - persistence services: [customer-core, customer-management-backend, policy-management-backend, customer-self-service-backend]
 
 ## nodes (kind, layer)
@@ -34,7 +37,6 @@
 - customer-self-service-frontend  [service, L0]
 - eureka-server  [service, L5]
 - policy-management-backend  [service, L2]
-- policy-management-backend-queue  [service, L1]
 - policy-management-frontend  [service, L0]
 - risk-management-server  [service, L0]
 - spring-boot-admin  [service, L4]
@@ -43,24 +45,25 @@
 - customer-core -> eureka-server  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
 - customer-core -> spring-boot-admin  (sync-http, inferred)  code: customer-core/src/main/resources/application-default.properties
 - customer-management-backend -> customer-core  (sync-http, documented)  code: customer-management-backend/src/main/java/com/lakesidemutual/customermanagement/infrastructure/CustomerCoreClient.java:20
-- customer-management-backend -> eureka-server  (sync-http, inferred)  code: docker-compose-eureka.yml
+- customer-management-backend -> eureka-server  (sync-http, inferred)  code: customer-management-backend/src/main/resources/application-eureka.properties
 - customer-management-backend -> spring-boot-admin  (sync-http, inferred)  code: customer-management-backend/src/main/resources/application-default.properties
 - customer-management-frontend -> customer-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
-- customer-management-frontend -> customer-self-service-backend  (sync-http, inferred)  code: customer-management-frontend/.env
 - customer-self-service-backend -> customer-core  (sync-http, documented)  code: customer-self-service-backend/src/main/java/com/lakesidemutual/customerselfservice/infrastructure/CustomerCoreRemoteProxy.java:33
-- customer-self-service-backend -> eureka-server  (sync-http, inferred)  code: docker-compose-eureka.yml
-- customer-self-service-backend -> policy-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
+- customer-self-service-backend -> eureka-server  (sync-http, inferred)  code: customer-self-service-backend/src/main/resources/application-eureka.properties
+- customer-self-service-backend -> policy-management-backend  (sync-http, documented)  code: customer-self-service-backend/src/main/java/com/lakesidemutual/customerselfservice/interfaces/configuration/MessagingConfiguration.java:22
 - customer-self-service-backend -> spring-boot-admin  (sync-http, inferred)  code: customer-self-service-backend/src/main/resources/application-default.properties
 - customer-self-service-frontend -> customer-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
 - customer-self-service-frontend -> customer-self-service-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
 - customer-self-service-frontend -> policy-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
 - policy-management-backend -> customer-core  (sync-http, documented)  code: policy-management-backend/src/main/java/com/lakesidemutual/policymanagement/infrastructure/CustomerCoreRemoteProxy.java:29
-- policy-management-backend -> eureka-server  (sync-http, inferred)  code: docker-compose-eureka.yml
+- policy-management-backend -> eureka-server  (sync-http, inferred)  code: policy-management-backend/src/main/resources/application-eureka.properties
 - policy-management-backend -> spring-boot-admin  (sync-http, inferred)  code: policy-management-backend/src/main/resources/application-default.properties
 - policy-management-frontend -> policy-management-backend  (sync-http, documented)  code: policy-management-frontend/src/api.js:3
-- risk-management-server -> policy-management-backend  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
-- risk-management-server -> policy-management-backend-queue  (sync-http, inferred)  code: kubernetes/manifests/risk-management-server.yaml
-- spring-boot-admin -> eureka-server  (sync-http, documented)  code: docker-compose-eureka.yml#depends_on
+- risk-management-server -> policy-management-backend  (sync-http, documented)  code: risk-management-server/config.json
+- spring-boot-admin -> eureka-server  (sync-http, documented)  code: spring-boot-admin/src/main/resources/application-eureka.properties
+
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
 
 ## unresolved (source hint / raw target / file:line), first 40
 - customer-self-service-frontend  =>  null   @ customer-self-service-frontend/src/api/customermanagement.js:17
@@ -70,14 +73,12 @@
 - customer-self-service-frontend  =>  null   @ customer-self-service-frontend/src/api/helpers.js:56
 - customer-self-service-frontend  =>  null   @ customer-self-service-frontend/src/api/helpers.js:79
 - customer-self-service-frontend  =>  null   @ customer-self-service-frontend/src/api/helpers.js:102
-- risk-management-server  =>  /   @ risk-management-server/index.js:68
 - policy-management-frontend  =>  null   @ policy-management-frontend/src/api.js:157
 - policy-management-frontend  =>  null   @ policy-management-frontend/src/api.js:171
 - policy-management-frontend  =>  null   @ policy-management-frontend/src/api.js:193
 - proxy  =>  http://app_servers   @ customer-core/nginx-loadbalancing/nginx/nginx.conf:19
 
 ## alias questions (name [origin] seen in | candidates)
-- policy-management-backend-queue  [graph]  looks like the same service as `policy-management-backend` (one name is the other with a prefix or suffix); both stay on the graph until you say   | candidates: policy-management-backend
 - proxy  [code]  the module directory of url at customer-core/nginx-loadbalancing/nginx/nginx.conf:19 — no service on the graph has this name   | candidates: -
 
 ## alias answers applied
@@ -100,7 +101,6 @@ flowchart TB
     direction LR
     customer_self_service_backend["customer-self-service-backend"]
     customer_management_backend["customer-management-backend"]
-    policy_management_backend_queue["policy-management-backend-queue"]
   end
   subgraph layer2 ["services · depth 2"]
     direction LR
@@ -121,24 +121,22 @@ flowchart TB
   customer_management_backend -.-> customer_core
   policy_management_backend -.-> customer_core
   customer_self_service_backend -.-> customer_core
+  customer_self_service_backend -.-> policy_management_backend
   policy_management_frontend -.-> policy_management_backend
+  risk_management_server -.-> policy_management_backend
+  spring_boot_admin -.-> eureka_server
   customer_core -.-> eureka_server
   customer_management_frontend -.-> customer_management_backend
-  customer_self_service_backend -.-> policy_management_backend
   customer_self_service_frontend -.-> customer_self_service_backend
   customer_self_service_frontend -.-> customer_management_backend
   customer_self_service_frontend -.-> policy_management_backend
-  spring_boot_admin -.-> eureka_server
-  risk_management_server -.-> policy_management_backend
   customer_core -. declared? .-> spring_boot_admin
-  customer_management_backend -. declared? .-> spring_boot_admin
-  policy_management_backend -. declared? .-> spring_boot_admin
-  customer_self_service_backend -. declared? .-> spring_boot_admin
-  customer_management_frontend -. declared? .-> customer_self_service_backend
   customer_management_backend -. declared? .-> eureka_server
-  customer_self_service_backend -. declared? .-> eureka_server
+  customer_management_backend -. declared? .-> spring_boot_admin
   policy_management_backend -. declared? .-> eureka_server
-  risk_management_server -. declared? .-> policy_management_backend_queue
+  policy_management_backend -. declared? .-> spring_boot_admin
+  customer_self_service_backend -. declared? .-> eureka_server
+  customer_self_service_backend -. declared? .-> spring_boot_admin
 
 ```
 
@@ -147,23 +145,23 @@ flowchart TB
 - rule 1: 12 (not-preadded eureka-server; not-preadded proxy; not-preadded risk-management-client; node customer-self-service-backend; node policy-management-backend)
 - rule 2: 0
 - rule 3: 0
-- rule 4: 1 (table customercore.baseURL=http://customer-core)
-- rule 5: 4 (env ACTIVEMQ_HOST=policy-management-backend; env ACTIVEMQ_HOST=policy-management-backend-queue; key host=/; key host=localhost)
+- rule 4: 3 (table customercore.baseURL=customer-core; table policymanagement.stompBrokerBindAddress=stomp://0.0.0.0:61613; table policymanagement.tcpBrokerBindAddress=policy-management-backend)
+- rule 5: 6 (env activeMQ.host=policy-management-backend; env ACTIVEMQ_HOST=policy-management-backend; env ACTIVEMQ_HOST=policy-management-backend-queue; not-a-host host=/; key host=localhost)
 - rule 6: 1 (url http://app_servers)
 - rule 7: 20 (env customer-core.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=eureka-server; env customer-management-backend.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=eureka-server; env customer-management-frontend.REACT_APP_CUSTOMER_MANAGEMENT_BACKEND=customer-management-backend; env customer-self-service-backend.EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=eureka-server; env customer-self-service-backend.POLICYMANAGEMENT_TCPBROKERBINDADDRESS=policy-management-backend)
-- rule 8: 12 (loopback localhost:8110; feign-bean-id customercore; config-signal url; loopback localhost; loopback localhost:8761)
+- rule 8: 14 (feign-bean-id customercore; loopback 0.0.0.0:61613; config-signal url; config-signal host; loopback localhost)
 - rule 9: 30 (jpa customer-core/src/main/java/com/lakesidemutual/customercore/domain/customer/CustomerProfileEntity.java; jpa customer-core/src/main/java/com/lakesidemutual/customercore/domain/customer/Address.java; jpa customer-core/src/main/java/com/lakesidemutual/customercore/domain/customer/CustomerId.java; jpa customer-core/src/main/java/com/lakesidemutual/customercore/domain/customer/CustomerAggregateRoot.java; jpa customer-management-backend/src/main/java/com/lakesidemutual/customermanagement/domain/interactionlog/InteractionLogAggregateRoot.java)
 - rule 10: 0
 - rule 11: 1 (k8s-over-compose 12 compose names ignored)
 - rule 12: 1 (links proxy->app)
 - rule 13: 3 (drop http://lm.com/ccore; drop http://lm.com/ccore/GetCustomerRequest; drop http://lakesdemutual.com/interfaces/xsd)
-- rule 14: 20 (edge customer-core->eureka-server; edge customer-management-backend->eureka-server; edge customer-management-frontend->customer-management-backend; edge customer-self-service-backend->eureka-server; edge customer-self-service-backend->policy-management-backend)
-- rule 15: 13 (edge customer-self-service-frontend->customer-self-service-backend :8080; edge customer-self-service-frontend->policy-management-backend :8090; edge customer-self-service-frontend->customer-management-backend :8100; edge policy-management-frontend->policy-management-backend :8090; edge customer-core->spring-boot-admin :9000)
+- rule 14: 20 (code-decides customer-core->eureka-server; code-decides customer-management-backend->eureka-server; code-decides customer-management-frontend->customer-management-backend; code-decides customer-self-service-backend->eureka-server; code-decides customer-self-service-backend->policy-management-backend)
+- rule 15: 22 (published 61613; edge risk-management-server->policy-management-backend :61613; published 50051; published 8761; edge spring-boot-admin->eureka-server :8761)
 - rule 16: 0
 - rule 17: 0
 - rule 18: 0
 - rule 19: 0
-- rule 20: 1 (scoped VUE_APP_POLICY_MANAGEMENT_BACKEND=policy-management-backend @policy-management-frontend)
+- rule 20: 5 (scoped CUSTOMERCORE_BASEURL=customer-core @customer-management-backend; scoped CUSTOMERCORE_BASEURL=customer-core @policy-management-backend; scoped CUSTOMERCORE_BASEURL=customer-core @customer-self-service-backend; scoped POLICYMANAGEMENT_TCPBROKERBINDADDRESS=policy-management-backend @customer-self-service-backend; scoped VUE_APP_POLICY_MANAGEMENT_BACKEND=policy-management-backend @policy-management-frontend)
 - rule 21: 0
 - rule 22: 0
 - rule 23: 0
@@ -190,3 +188,18 @@ flowchart TB
 - rule 44: 3 (compose-only eureka-server=eureka-server; compose-only nginx=proxy; map nginx=proxy)
 - rule 45: 0
 - rule 46: 0
+- rule 47: 2 (not-use-site customer-core/src/main/java/com/lakesidemutual/customercore/interfaces/configuration/CustomerCoreRemoteSOAPProxy.java:25 http://localhost:8110/ws/…; not-use-site customer-core/src/main/java/com/lakesidemutual/customercore/interfaces/configuration/CustomerCoreSOAPClientConfiguration.java:22 http://localhost:…)
+- rule 48: 0
+- rule 49: 0
+- rule 50: 0
+- rule 51: 0
+- rule 52: 0
+- rule 53: 0
+- rule 54: 0
+- rule 55: 0
+- rule 56: 0
+- rule 57: 0
+- rule 58: 0
+- rule 59: 0
+- rule 60: 2 (module-file risk-management-server/config.json localhost; module-file risk-management-server/config.json 0.0.0.0)
+- rule 61: 0

@@ -1,0 +1,635 @@
+{"rules": {
+  "44": {
+    "hits": 20,
+    "examples": [
+      "compose-only promotion=promotion",
+      "compose-only order=order",
+      "image storefront=storefront-nextjs",
+      "no-workload storefront=storefront-nextjs",
+      "compose-only rating=rating",
+      "compose-only sampledata=sampledata",
+      "compose-only location=location",
+      "compose-only payment=payment",
+      "map storefront-bff=storefront",
+      "compose-only tax=tax",
+      "image backoffice=backoffice-nextjs",
+      "no-workload backoffice=backoffice-nextjs",
+      "map backoffice-bff=backoffice",
+      "compose-only search=search",
+      "compose-only inventory=inventory",
+      "compose-only cart=cart",
+      "compose-only customer=customer",
+      "dir docker/prometheus/prometheus.yml=prometheus"
+    ],
+    "count": 18
+  },
+  "45": {
+    "hits": 1,
+    "examples": ["accept elasticsearch.url=elasticsearch"],
+    "count": 1
+  },
+  "46": {
+    "hits": 5,
+    "examples": [
+      "set-var http://search",
+      "set-var http://webhook",
+      "set-var http://recommendation",
+      "set-var http://grafana:3000",
+      "set-var http://elasticsearch:9200"
+    ],
+    "count": 5
+  },
+  "47": {
+    "hits": 151,
+    "examples": [
+      "urlref storefront/modules/order/services/OrderService.ts:10 baseUrl",
+      "urlref storefront/modules/order/services/OrderService.ts:21 baseUrl",
+      "urlref storefront/modules/order/services/OrderService.ts:29 baseUrl",
+      "urlref storefront/modules/order/services/OrderService.ts:37 baseUrl",
+      "urlref storefront/modules/rating/services/RatingService.ts:28 baseUrl",
+      "urlref storefront/modules/rating/services/RatingService.ts:38 url",
+      "urlref storefront/modules/catalog/services/ProductService.ts:16 baseUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:21 serverSideRenderUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:26 serverSideRenderUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:34 baseUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:41 serverSideRenderUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:47 baseUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:53 baseUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:67 baseUrl",
+      "urlref storefront/modules/catalog/services/ProductService.ts:81 url",
+      "urlref storefront/modules/catalog/services/CategoryService.ts:7 baseUrl",
+      "urlref storefront/modules/catalog/services/CategoryService.ts:12 baseUrl",
+      "urlref storefront/modules/catalog/services/CategoryService.ts:17 baseUrl",
+      "urlref storefront/modules/paymentPaypal/services/PaymentPaypalService.ts:12 baseUrl",
+      "urlref storefront/modules/paymentPaypal/services/PaymentPaypalService.ts:22 baseUrl"
+    ],
+    "count": 151
+  },
+  "48": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "49": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "50": {
+    "hits": 2,
+    "examples": [
+      "dotenv storefront/.env.production API_BASE_PATH=storefront",
+      "dotenv storefront/.env.development API_BASE_PATH=storefront"
+    ],
+    "count": 2
+  },
+  "51": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "52": {
+    "hits": 261,
+    "examples": [
+      "render k8s/deploy/observability/opentelemetry/templates/opentelemetry-collector.yaml",
+      "render k8s/deploy/observability/grafana/templates/dashboards.yaml",
+      "render k8s/deploy/observability/grafana/templates/grafana-credentials.secret.yaml",
+      "render k8s/deploy/observability/grafana/templates/grafana.yaml",
+      "render k8s/deploy/observability/grafana/templates/loki-datasource.yaml",
+      "render k8s/deploy/observability/grafana/templates/tempo-datasource.yaml",
+      "render k8s/deploy/zookeeper/templates/deployment.yaml",
+      "render k8s/deploy/zookeeper/templates/hpa.yaml",
+      "render k8s/deploy/zookeeper/templates/ingress.yaml",
+      "render k8s/deploy/zookeeper/templates/service.yaml",
+      "render k8s/deploy/zookeeper/templates/serviceaccount.yaml",
+      "render k8s/deploy/zookeeper/templates/tests/test-connection.yaml",
+      "render k8s/deploy/postgres/postgresql/templates/credentials.secret.yaml",
+      "render k8s/deploy/postgres/postgresql/templates/postgresql.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/deployment.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/hpa.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/ingress.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/pvc.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/secret.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/service.yaml"
+    ],
+    "count": 89
+  },
+  "53": {
+    "hits": 3,
+    "examples": [
+      "compose search.entrypoint elasticsearch:9200=elasticsearch",
+      "compose backoffice.entrypoint identity:80=identity",
+      "compose storefront.entrypoint identity:80=identity"
+    ],
+    "count": 3
+  },
+  "10": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "54": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "hits": 1,
+    "examples": ["k8s-over-compose 33 compose names ignored"],
+    "count": 1
+  },
+  "55": {
+    "hits": 32,
+    "examples": [
+      "list application.yaml opentelemetry-collector",
+      "list application.yaml identity.yas.local.com",
+      "list application.yaml kafka-cluster-kafka-brokers",
+      "list application.yaml cart",
+      "list application.yaml customer",
+      "list application.yaml inventory",
+      "list application.yaml location",
+      "list application.yaml media",
+      "list application.yaml order",
+      "list application.yaml payment",
+      "list application.yaml payment-paypal",
+      "list application.yaml product",
+      "list application.yaml promotion",
+      "list application.yaml rating",
+      "list application.yaml search",
+      "list application.yaml tax",
+      "list application.yaml sampledata",
+      "list application.yaml recommendation",
+      "list gateway-routes-config.yaml product",
+      "list gateway-routes-config.yaml location"
+    ],
+    "count": 32
+  },
+  "12": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "56": {
+    "hits": 4,
+    "examples": ["mount docker/otel-collector/otelcol-config.yml=collector"],
+    "count": 1
+  },
+  "13": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "57": {
+    "hits": 3,
+    "examples": [
+      "template k8s/charts/values.template.yaml",
+      "template k8s/charts/Chart.template.yaml",
+      "template .github/workflow-template.yaml"
+    ],
+    "count": 3
+  },
+  "14": {
+    "hits": 51,
+    "examples": [
+      "edge storefront->jaeger",
+      "edge backoffice->jaeger",
+      "edge media->jaeger",
+      "edge product->media",
+      "edge product->jaeger",
+      "edge search->product",
+      "edge search->collector",
+      "edge backoffice->collector",
+      "edge backoffice->identity",
+      "edge storefront->customer",
+      "edge storefront->cart",
+      "edge storefront->rating",
+      "edge storefront->order",
+      "edge storefront->location",
+      "edge storefront->inventory",
+      "edge storefront->tax",
+      "edge storefront->promotion",
+      "edge storefront->payment",
+      "edge storefront->sampledata",
+      "edge storefront->collector"
+    ],
+    "count": 50
+  },
+  "58": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "hits": 2,
+    "examples": [
+      "edge storefront->payment :8081",
+      "edge backoffice->order :8085"
+    ],
+    "count": 2
+  },
+  "59": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "hits": 4,
+    "examples": ["dockerfile-env API_BASE_PATH=storefront"],
+    "count": 1
+  },
+  "19": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "hits": 23,
+    "examples": [
+      "not-preadded promotion",
+      "not-preadded webhook",
+      "not-preadded recommendation",
+      "not-preadded order",
+      "not-preadded rating",
+      "not-preadded sampledata",
+      "not-preadded location",
+      "not-preadded payment",
+      "not-preadded tax",
+      "not-preadded search",
+      "not-preadded payment-paypal",
+      "not-preadded inventory",
+      "not-preadded cart",
+      "not-preadded delivery",
+      "not-preadded customer",
+      "node storefront",
+      "node backoffice",
+      "node swagger-ui",
+      "node media",
+      "node product"
+    ],
+    "count": 23
+  },
+  "2": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "hits": 5,
+    "examples": [
+      "table spring.datasource.product.url=jdbc:postgresql://localhost:5432/product",
+      "table spring.datasource.media.url=jdbc:postgresql://localhost:5432/media",
+      "table yas.public.url=http://storefront/complete-payment",
+      "table OTEL_COLLECTOR_HOST=collector"
+    ],
+    "count": 4
+  },
+  "5": {
+    "hits": 20,
+    "examples": [
+      "not-a-host BASE_URL=/swagger-ui",
+      "env DB_ADDR=postgres",
+      "env SPRING_DATA_REDIS_HOST=redis",
+      "key hostname=api.yas.local",
+      "key spring.data.redis.host=redis",
+      "key otel_collector_host=collector",
+      "key kafka_service_host=kafka",
+      "key postgres_host=postgres",
+      "key grafana_service_host=grafana",
+      "key jaeger_service_host=jaeger",
+      "key prometheus_service_host=prometheus",
+      "key spring_data_redis_host=redis"
+    ],
+    "count": 12
+  },
+  "6": {
+    "hits": 23,
+    "examples": [
+      "url http://media",
+      "url http://swagger-ui:8080",
+      "url http://product",
+      "url http://customer",
+      "url http://cart",
+      "url http://rating",
+      "url http://order",
+      "url http://location",
+      "url http://inventory",
+      "url http://tax",
+      "url http://promotion",
+      "url http://search",
+      "url http://payment",
+      "url http://webhook",
+      "url http://sampledata",
+      "url http://recommendation",
+      "url http://backoffice",
+      "url http://storefront",
+      "url http://pgadmin",
+      "url http://identity"
+    ],
+    "count": 23
+  },
+  "7": {
+    "hits": 18,
+    "examples": [
+      "env identity.KC_DB_URL=postgres",
+      "env media.SPRING_DATASOURCE_URL=postgres",
+      "env product.SPRING_DATASOURCE_URL=postgres",
+      "env customer.SPRING_DATASOURCE_URL=postgres",
+      "env cart.SPRING_DATASOURCE_URL=postgres",
+      "env rating.SPRING_DATASOURCE_URL=postgres",
+      "env payment.SPRING_DATASOURCE_URL=postgres",
+      "env location.SPRING_DATASOURCE_URL=postgres",
+      "env inventory.SPRING_DATASOURCE_URL=postgres",
+      "env promotion.SPRING_DATASOURCE_URL=postgres",
+      "env tax.SPRING_DATASOURCE_URL=postgres",
+      "env sampledata.SPRING_DATASOURCE_PRODUCT_URL=postgres",
+      "env sampledata.SPRING_DATASOURCE_MEDIA_URL=postgres",
+      "env kafka-connect.BOOTSTRAP_SERVERS=kafka",
+      "env kafka-ui.KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka",
+      "node tempo",
+      "node prometheus",
+      "node zookeeper"
+    ],
+    "count": 18
+  },
+  "8": {
+    "hits": 122,
+    "examples": [
+      "loopback localhost",
+      "config-signal url",
+      "config-signal server.port",
+      "config-signal spring.datasource.driver-class-name",
+      "loopback localhost:5432",
+      "config-signal spring.datasource.username",
+      "config-signal spring.datasource.password",
+      "config-signal spring.kafka.consumer.group-id",
+      "config-signal spring.kafka.consumer.key-deserializer",
+      "config-signal spring.kafka.consumer.value-deserializer",
+      "config-signal spring.kafka.consumer.properties.spring.json.use.type.headers",
+      "config-signal spring.ai.azure.openai.endpoint",
+      "config-signal spring.kafka.producer.key-serializer",
+      "config-signal spring.kafka.producer.value-serializer",
+      "loopback localhost:3000",
+      "config-signal spring.data.redis.port",
+      "config-signal KAFKA_SERVICE_ADDR",
+      "config-signal PROMETHEUS_ADDR",
+      "loopback localhost:8083"
+    ],
+    "count": 19
+  },
+  "9": {
+    "hits": 117,
+    "examples": [
+      "jpa promotion/src/main/java/com/yas/promotion/repository/PromotionRepository.java",
+      "jpa promotion/src/main/java/com/yas/promotion/model/PromotionUsage.java",
+      "jpa promotion/src/main/java/com/yas/promotion/model/Promotion.java",
+      "jpa promotion/src/main/java/com/yas/promotion/model/PromotionApply.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/WebhookRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/WebhookEventRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/EventRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/WebhookEventNotificationRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/Event.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/WebhookEventNotification.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/WebhookEvent.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/Webhook.java",
+      "jpa order/src/main/java/com/yas/order/repository/OrderRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/CheckoutItemRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/OrderAddressRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/CheckoutRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/OrderItemRepository.java",
+      "jpa order/src/main/java/com/yas/order/model/Order.java",
+      "jpa order/src/main/java/com/yas/order/model/OrderItem.java",
+      "jpa order/src/main/java/com/yas/order/model/OrderAddress.java"
+    ],
+    "count": 77
+  },
+  "60": {
+    "hits": 5,
+    "examples": [
+      "mounted docker/otel-collector/otelcol-config.yml prometheus",
+      "mounted docker/otel-collector/otelcol-config.yml tempo",
+      "mounted docker/otel-collector/otelcol-config.yml loki",
+      "mounted docker/otel-collector/otelcol-config.yml collector",
+      "mounted docker/prometheus/prometheus.yml collector"
+    ],
+    "count": 5
+  },
+  "61": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 3,
+    "examples": ["scoped API_BASE_PATH=storefront @storefront"],
+    "count": 1
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 59,
+    "examples": [
+      "interp search.YAS_PUBLIC_URL=api.yas.local",
+      "forward search.YAS_SERVICES_PRODUCT=product",
+      "forward search.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward backoffice.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward storefront.YAS_SERVICES_CUSTOMER=customer",
+      "forward storefront.YAS_SERVICES_CART=cart",
+      "forward storefront.YAS_SERVICES_RATING=rating",
+      "forward storefront.YAS_SERVICES_ORDER=order",
+      "forward storefront.YAS_SERVICES_LOCATION=location",
+      "forward storefront.YAS_SERVICES_INVENTORY=inventory",
+      "forward storefront.YAS_SERVICES_TAX=tax",
+      "forward storefront.YAS_SERVICES_PROMOTION=promotion",
+      "forward storefront.YAS_SERVICES_PAYMENT=payment",
+      "forward storefront.YAS_SERVICES_SAMPLE_DATA=sampledata",
+      "forward storefront.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "interp media.YAS_PUBLIC_URL=api.yas.local",
+      "forward media.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward product.YAS_SERVICES_MEDIA=media",
+      "forward product.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward customer.YAS_SERVICES_LOCATION=location"
+    ],
+    "count": 59
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 5,
+    "examples": [
+      "list spring.kafka.bootstrap-servers=kafka:9092",
+      "list spring.kafka.consumer.bootstrap-servers=kafka:9092",
+      "list spring.kafka.producer.bootstrap-servers=kafka:9092"
+    ],
+    "count": 3
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 4,
+    "examples": [
+      "edge webhook->kafka",
+      "edge recommendation->kafka",
+      "edge search->kafka"
+    ],
+    "count": 3
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 42,
+    "examples": ["drop api.yas.local"],
+    "count": 1
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 6,
+    "examples": [
+      "inferred collector->tempo",
+      "inferred collector->prometheus",
+      "documented kafka->zookeeper",
+      "documented kafka-connect->kafka",
+      "documented kafka-ui->kafka",
+      "drop kafka-ui->kafka-connect"
+    ],
+    "count": 6
+  },
+  "36": {
+    "hits": 143,
+    "examples": [
+      "ns-strip postgresql.postgres",
+      "keep-dotted storefront.yas.local.com",
+      "keep-dotted api.yas.local.com",
+      "ns-strip opentelemetry-collector.observability",
+      "keep-dotted identity.yas.local.com",
+      "ns-strip kafka-cluster-kafka-brokers.kafka",
+      "keep-dotted identity.yas.local.com realm",
+      "keep-dotted product-recommendation.openai.azure.com",
+      "keep-dotted product-recommendation.openai.azure.com embedding",
+      "keep-dotted api.yas.local"
+    ],
+    "count": 10
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "40": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "hits": 5,
+    "examples": [
+      "lib common-library",
+      "no-edge common-library/src/main/java/com/yas/commonlibrary/kafka/cdc/BaseCdcConsumer.java",
+      "no-edge common-library/src/main/resources/application.properties"
+    ],
+    "count": 3
+  },
+  "42": {
+    "hits": 325,
+    "examples": [
+      "ignore /promotion/src/it/resources/mockito-extensions/org.mockito.plugins.MockMaker/",
+      "ignore /promotion/src/it/resources/logback-spring.xml/",
+      "ignore /promotion/src/it/resources/application.properties/",
+      "ignore /promotion/src/it/java/com/yas/promotion/service/PromotionServiceIT.java/",
+      "ignore /webhook/src/it/resources/mockito-extensions/org.mockito.plugins.MockMaker/",
+      "ignore /webhook/src/it/resources/logback-spring.xml/",
+      "ignore /webhook/src/it/resources/application.properties/",
+      "ignore /webhook/src/it/java/com/yas/webhook/controller/WebhookControllerIT.java/",
+      "ignore /recommendation/src/it/resources/application.properties/",
+      "ignore /recommendation/src/it/java/com/yas/recommendation/configuration/KafkaConfiguration.java/",
+      "ignore /recommendation/src/it/java/com/yas/recommendation/kafka/ProductCdcConsumerTest.java/",
+      "ignore /order/src/it/resources/mockito-extensions/org.mockito.plugins.MockMaker/",
+      "ignore /order/src/it/resources/logback-spring.xml/",
+      "ignore /order/src/it/resources/application.properties/",
+      "ignore /order/src/it/java/com/yas/order/constant/TestConstants.java/",
+      "ignore /order/src/it/java/com/yas/order/service/CustomerServiceIT.java/",
+      "ignore /order/src/it/java/com/yas/order/service/TaxServiceIT.java/",
+      "ignore /order/src/it/java/com/yas/order/service/ProductServiceIT.java/",
+      "ignore /order/src/it/java/com/yas/order/service/OrderServiceIT.java/",
+      "ignore /automation-ui/storefront/pom.xml/"
+    ],
+    "count": 119
+  },
+  "43": {
+    "hits": 104,
+    "examples": [
+      "drop springdoc.swagger-ui.path",
+      "drop springdoc.packagestoscan",
+      "drop springdoc.swagger-ui.oauth.use-pkce-with-authorization-code-grant",
+      "drop springdoc.swagger-ui.oauth.client-id",
+      "drop springdoc.oauthflow.authorization-url",
+      "drop springdoc.oauthflow.token-url"
+    ],
+    "count": 6
+  }
+}}

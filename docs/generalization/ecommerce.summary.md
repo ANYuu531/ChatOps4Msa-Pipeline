@@ -9,21 +9,24 @@
 - http-server = 128
 - jpa = 28
 - feign = 33
+- parsed-dir = 137
+- dockerfile-from = 10
 - compose-service = 21
-- config = 82
+- compose-port = 21
+- config = 92
 - service-root = 10
 - module-deps = 10
-- TOTAL = 506 | files with syntax errors = 0
+- TOTAL = 684 | files with syntax errors = 0
 
 ## graph
-- after merge: 11 nodes / 37 edges | after normalize: 11 nodes / 37 edges | unresolved code edges = 0
+- after merge: 12 nodes / 47 edges | after normalize: 12 nodes / 47 edges | unresolved code edges = 0
 - persistence services: [product-service, shipping-service, payment-service, favourite-service, order-service, user-service]
 
 ## nodes (kind, layer)
 - api-gateway  [service, L0]
 - cloud-config  [service, L5]
 - favourite-service  [service, L2]
-- github.com  [external, L7]
+- github.com  [external, L8]
 - order-service  [service, L3]
 - payment-service  [service, L2]
 - product-service  [service, L3]
@@ -31,6 +34,7 @@
 - service-discovery  [service, L6]
 - shipping-service  [service, L2]
 - user-service  [service, L4]
+- zipkin-container  [service, L7]
 
 ## edges (type, confidence, provenance ref)
 - api-gateway -> cloud-config  (sync-http, inferred)  code: api-gateway/src/main/resources/application.yml
@@ -42,20 +46,26 @@
 - api-gateway -> service-discovery  (sync-http, inferred)  code: api-gateway/pom.xml
 - api-gateway -> shipping-service  (sync-http, documented)  code: api-gateway/src/main/resources/application.yml
 - api-gateway -> user-service  (sync-http, documented)  code: api-gateway/src/main/resources/application.yml
+- api-gateway -> zipkin-container  (sync-http, inferred)  code: api-gateway/src/main/resources/application.yml
 - cloud-config -> github.com  (external, documented)  code: cloud-config/src/main/resources/application.yml
 - cloud-config -> service-discovery  (sync-http, inferred)  code: cloud-config/pom.xml
+- cloud-config -> zipkin-container  (sync-http, inferred)  code: cloud-config/src/main/resources/application.yml
 - favourite-service -> cloud-config  (sync-http, inferred)  code: favourite-service/src/main/resources/application.yml
 - favourite-service -> product-service  (sync-http, documented)  code: favourite-service/src/main/java/com/selimhorri/app/constant/AppConstant.java:21
 - favourite-service -> service-discovery  (sync-http, inferred)  code: favourite-service/pom.xml
 - favourite-service -> user-service  (sync-http, documented)  code: favourite-service/src/main/java/com/selimhorri/app/constant/AppConstant.java:18
+- favourite-service -> zipkin-container  (sync-http, inferred)  code: favourite-service/src/main/resources/application.yml
 - order-service -> cloud-config  (sync-http, inferred)  code: order-service/src/main/resources/application.yml
 - order-service -> service-discovery  (sync-http, inferred)  code: order-service/pom.xml
 - order-service -> user-service  (sync-http, documented)  code: order-service/src/main/java/com/selimhorri/app/constant/AppConstant.java:18
+- order-service -> zipkin-container  (sync-http, inferred)  code: order-service/src/main/resources/application.yml
 - payment-service -> cloud-config  (sync-http, inferred)  code: payment-service/src/main/resources/application.yml
 - payment-service -> order-service  (sync-http, documented)  code: payment-service/src/main/java/com/selimhorri/app/constant/AppConstant.java:24
 - payment-service -> service-discovery  (sync-http, inferred)  code: payment-service/pom.xml
+- payment-service -> zipkin-container  (sync-http, inferred)  code: payment-service/src/main/resources/application.yml
 - product-service -> cloud-config  (sync-http, inferred)  code: product-service/src/main/resources/application.yml
 - product-service -> service-discovery  (sync-http, inferred)  code: product-service/pom.xml
+- product-service -> zipkin-container  (sync-http, inferred)  code: product-service/src/main/resources/application.yml
 - proxy-client -> cloud-config  (sync-http, inferred)  code: proxy-client/src/main/resources/application.yml
 - proxy-client -> favourite-service  (sync-http, documented)  code: proxy-client/src/main/java/com/selimhorri/app/business/favourite/service/FavouriteClientService.java:19
 - proxy-client -> order-service  (sync-http, documented)  code: proxy-client/src/main/java/com/selimhorri/app/business/order/service/OrderClientService.java:19
@@ -64,12 +74,19 @@
 - proxy-client -> service-discovery  (sync-http, inferred)  code: proxy-client/pom.xml
 - proxy-client -> shipping-service  (sync-http, documented)  code: proxy-client/src/main/java/com/selimhorri/app/business/orderItem/service/OrderItemClientService.java:19
 - proxy-client -> user-service  (sync-http, documented)  code: proxy-client/src/main/java/com/selimhorri/app/business/user/service/UserClientService.java:19
+- proxy-client -> zipkin-container  (sync-http, inferred)  code: proxy-client/src/main/resources/application.yml
+- service-discovery -> zipkin-container  (sync-http, inferred)  code: service-discovery/src/main/resources/application.yml
 - shipping-service -> cloud-config  (sync-http, inferred)  code: shipping-service/src/main/resources/application.yml
 - shipping-service -> order-service  (sync-http, documented)  code: shipping-service/src/main/java/com/selimhorri/app/constant/AppConstant.java:24
 - shipping-service -> product-service  (sync-http, documented)  code: shipping-service/src/main/java/com/selimhorri/app/constant/AppConstant.java:21
 - shipping-service -> service-discovery  (sync-http, inferred)  code: shipping-service/pom.xml
+- shipping-service -> zipkin-container  (sync-http, inferred)  code: shipping-service/src/main/resources/application.yml
 - user-service -> cloud-config  (sync-http, inferred)  code: user-service/src/main/resources/application.yml
 - user-service -> service-discovery  (sync-http, inferred)  code: user-service/pom.xml
+- user-service -> zipkin-container  (sync-http, inferred)  code: user-service/src/main/resources/application.yml
+
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
 
 ## unresolved (source hint / raw target / file:line), first 40
 
@@ -116,7 +133,11 @@ flowchart TB
     direction LR
     service_discovery["service-discovery"]
   end
-  subgraph layer7 ["external"]
+  subgraph layer7 ["services · depth 7"]
+    direction LR
+    zipkin_container["zipkin-container"]
+  end
+  subgraph layer8 ["external"]
     direction LR
     github_com[/"github.com"/]:::external
   end
@@ -132,8 +153,11 @@ flowchart TB
   proxy_client -.-> product_service
   proxy_client -.-> favourite_service
   proxy_client -.-> shipping_service
+  product_service -. declared? .-> zipkin_container
   product_service -. declared? .-> cloud_config
+  cloud_config -. declared? .-> zipkin_container
   cloud_config -. ext .-> github_com
+  api_gateway -. declared? .-> zipkin_container
   api_gateway -. declared? .-> cloud_config
   api_gateway -.-> order_service
   api_gateway -.-> payment_service
@@ -142,11 +166,18 @@ flowchart TB
   api_gateway -.-> user_service
   api_gateway -.-> favourite_service
   api_gateway -.-> proxy_client
+  shipping_service -. declared? .-> zipkin_container
   shipping_service -. declared? .-> cloud_config
+  payment_service -. declared? .-> zipkin_container
   payment_service -. declared? .-> cloud_config
+  favourite_service -. declared? .-> zipkin_container
   favourite_service -. declared? .-> cloud_config
+  order_service -. declared? .-> zipkin_container
   order_service -. declared? .-> cloud_config
+  service_discovery -. declared? .-> zipkin_container
+  user_service -. declared? .-> zipkin_container
   user_service -. declared? .-> cloud_config
+  proxy_client -. declared? .-> zipkin_container
   proxy_client -. declared? .-> cloud_config
   product_service -. declared? .-> service_discovery
   cloud_config -. declared? .-> service_discovery
@@ -166,10 +197,10 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 1: 0
 - rule 2: 0
 - rule 3: 8 (config-client product-service; config-client api-gateway; config-client shipping-service; config-client payment-service; config-client favourite-service)
-- rule 4: 1 (default SPRING_CONFIG_IMPORT=optional:configserver:http://localhost:9296)
+- rule 4: 2 (default SPRING_ZIPKIN_BASE_URL=http://localhost:9411/; default SPRING_CONFIG_IMPORT=optional:configserver:http://localhost:9296)
 - rule 5: 0
 - rule 6: 0
-- rule 7: 0
+- rule 7: 10 (strip-suffix product-service-container=product-service; strip-suffix cloud-config-container=cloud-config; strip-suffix api-gateway-container=api-gateway; strip-suffix shipping-service-container=shipping-service; strip-suffix payment-service-container=payment-service)
 - rule 8: 28 (feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/order/service/OrderClientService.java:19; feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/order/service/OrderClientService.java:19; feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/order/service/CartClientService.java:19; feign-attr path proxy-client/src/main/java/com/selimhorri/app/business/order/service/CartClientService.java:19; feign-attr contextid proxy-client/src/main/java/com/selimhorri/app/business/payment/service/PaymentClientService.java:19)
 - rule 9: 29 (jpa product-service/src/main/java/com/selimhorri/app/domain/Product.java; jpa product-service/src/main/java/com/selimhorri/app/domain/Category.java; jpa product-service/src/main/java/com/selimhorri/app/domain/AbstractMappedEntity.java; jpa shipping-service/src/main/java/com/selimhorri/app/domain/OrderItem.java; jpa shipping-service/src/main/java/com/selimhorri/app/domain/AbstractMappedEntity.java)
 - rule 10: 21 (drop product-service-container (product-service); drop cloud-config-container (cloud-config); drop api-gateway-container (api-gateway); drop shipping-service-container (shipping-service); drop payment-service-container (payment-service))
@@ -177,7 +208,7 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 12: 0
 - rule 13: 0
 - rule 14: 0
-- rule 15: 9 (configserver-prefix optional:configserver:http://localhost:9296; edge product-service->cloud-config :9296; edge api-gateway->cloud-config :9296; edge shipping-service->cloud-config :9296; edge payment-service->cloud-config :9296)
+- rule 15: 20 (published 9411; edge product-service->zipkin-container :9411; configserver-prefix optional:configserver:http://localhost:9296; edge product-service->cloud-config :9296; edge cloud-config->zipkin-container :9411)
 - rule 16: 9 (edge product-service->service-discovery; edge cloud-config->service-discovery; edge api-gateway->service-discovery; edge shipping-service->service-discovery; edge payment-service->service-discovery)
 - rule 17: 0
 - rule 18: 0
@@ -209,3 +240,18 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 44: 0
 - rule 45: 0
 - rule 46: 0
+- rule 47: 0
+- rule 48: 0
+- rule 49: 0
+- rule 50: 0
+- rule 51: 0
+- rule 52: 0
+- rule 53: 0
+- rule 54: 0
+- rule 55: 0
+- rule 56: 0
+- rule 57: 0
+- rule 58: 0
+- rule 59: 0
+- rule 60: 0
+- rule 61: 0

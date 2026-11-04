@@ -1,0 +1,36 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    otelcol["otelcol"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    prometheus["prometheus"]
+    tempo["tempo"]
+    grafana["grafana"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    jaeger["jaeger"]
+    cadvisor["cadvisor"]
+  end
+  subgraph layer3 ["no dependencies found"]
+    direction LR
+    catalogwriteservice["catalogwriteservice"]
+    catalogreadservice["catalogreadservice"]
+    orderservice["orderservice"]
+    pkg["pkg"]
+  end
+  otelcol -. declared? .-> prometheus
+  otelcol -. declared? .-> tempo
+  otelcol -. declared? .-> jaeger
+  grafana -.-> prometheus
+  grafana -.-> tempo
+  tempo -.-> prometheus
+  grafana -.-> jaeger
+  prometheus -.-> grafana
+  prometheus -.-> cadvisor
+  prometheus -.-> tempo

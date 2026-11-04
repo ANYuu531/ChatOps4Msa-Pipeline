@@ -222,12 +222,27 @@ public class TreeSitterExtractor {
         }
 
         ledger.addFilesParsed(parsed);
+        // The directories a grammar actually read: the merger's evidence that a module's
+        // code is readable at all (a Rust or Ruby module has none), 2026-11-04.
+        Set<String> parsedDirs = new java.util.LinkedHashSet<>();
+        for (String relative : sources.keySet()) {
+            int slash = relative.lastIndexOf('/');
+            parsedDirs.add(slash < 0 ? "" : relative.substring(0, slash));
+        }
+        for (String dir : parsedDirs) {
+            Map<String, String> fields = new LinkedHashMap<>();
+            fields.put("dir", dir);
+            fields.put("language", stack.language);
+            ledger.add("parsed-dir", fields, dir, -1, "High (files a grammar parsed)");
+        }
         if (csharp) normaliseDotnetConfigReads(ledger, sources.keySet());
         BindingResolver.resolve(ledger);
         dropNonAddressUrls(ledger, sources);
         dropMetadataUrls(ledger);
         markUnreferencedUrlConstants(root, ledger, sources);
         dropPlainTwinsOfFormatUrls(ledger);
+        if (ANYWHERE_URL_LANGUAGES.contains(stack.language)) keepUrlLiteralsAtUseSites(root, ledger, sources);
+        if ("java".equals(stack.language) || "kotlin".equals(stack.language)) bindConfigurationProperties(ledger, sources);
         if ("python".equals(stack.language)) markDeadPythonCode(root, ledger, sources);
         if ("go".equals(stack.language)) registryNamesThroughParameters(ledger, sources);
         if ("javascript".equals(stack.language) || "typescript".equals(stack.language)) markBrowserScripts(root, ledger, sources.keySet());
@@ -388,6 +403,19 @@ public class TreeSitterExtractor {
             // and a JAX-RS @Path is an inbound endpoint like a Spring mapping.
             if ("jpa".equals(section)) RuleTrace.hit(9, "jpa " + file);
             if ("http-server".equals(section) && "Path".equals(entry.getValue().get("verb"))) RuleTrace.hit(9, "jaxrs " + file + ":" + match.line);
+            // Convention ② in code: a bare host literal under a name is an address only when
+            // the name is host-shaped (smtp_server = 'smtp.gmail.com'; a version string under
+            // `release` is not). It becomes a url row, so convention ④ — reaching a client
+            // call — still decides whether it is drawn.
+            if ("hostlit".equals(section)) {
+                Map<String, String> f = entry.getValue();
+                if (AddressShape.keyKind(f.get("key")) == AddressShape.KeyKind.NONE) continue;
+                Map<String, String> url = new LinkedHashMap<>();
+                url.put("value", f.get("value"));
+                url.put("bare", "true");
+                ledger.add("url", url, file, match.line, confidenceOf("url", url));
+                continue;
+            }
             ledger.add(section, entry.getValue(), file, match.line,
                     confidenceOf(section, entry.getValue()));
         }
@@ -729,6 +757,260 @@ public class TreeSitterExtractor {
             ledger.addWarning(unreferenced + " URL constant(s) are declared but never referenced in their module; "
                     + "their url rows are marked unreferenced and drawn as no edge.");
         }
+    }
+
+    /** The packs that capture an absolute URL literal anywhere; the others capture it only at a use site. */
+    private static final Set<String> ANYWHERE_URL_LANGUAGES = Set.of("java", "csharp", "kotlin", "python");
+
+    /** A row that is a component using an address: a client call, a client option, a producer or consumer. */
+    private static final Set<String> USE_SITE_SECTIONS = Set.of("http-client", "feign", "grpc", "persistence",
+            "kafka-produce", "kafka-consume", "rabbit-produce", "rabbit-consume", "registry-ref", "name-ref");
+
+    /**
+     * The client calls of each ecosystem's documented HTTP / gRPC client APIs, for a call whose
+     * argument shape no query pattern captures ({@code getForObject(AppConstant.X.URL + "/" + id)}).
+     */
+    private static final java.util.regex.Pattern CLIENT_CALL = java.util.regex.Pattern.compile(
+            "(?:\\.(?:getForObject|getForEntity|postForObject|postForEntity|postForLocation|exchange|rootUri|baseUrl|uri|url|fromUriString|fromHttpUrl"
+            + "|newCall|openConnection|forTarget|forAddress|GetAsync|PostAsync|PutAsync|DeleteAsync|PatchAsync|SendAsync"
+            + "|GetFromJsonAsync|PostAsJsonAsync|PutAsJsonAsync|GetStringAsync|GetStreamAsync|GetByteArrayAsync|ForAddress"
+            + "|insecure_channel|secure_channel|urlopen|Request)\\s*\\("
+            + "|\\bBaseAddress\\s*=|\\b(?:requests|httpx|session|aiohttp|urllib3|feedparser)\\.\\w+\\s*\\(|\\burlopen\\s*\\(|\\bdriver\\.get\\s*\\(|\\.WriteTo\\.\\w+\\s*\\(|\\bHttp(?:Get|Post|Put|Patch|Delete|Head)\\s*\\("
+            + "|\\bsmtplib\\.SMTP(?:_SSL)?\\s*\\()");
+
+    /** The name a value is assigned to on its line: {@code NAME = …}, {@code String NAME = …}, {@code val NAME: T = …}. */
+    private static final java.util.regex.Pattern ASSIGNED_NAME = java.util.regex.Pattern.compile(
+            "([A-Za-z_][A-Za-z0-9_]*)\\s*(?::\\s*[A-Za-z_][\\w.<>?\\[\\], ]*)?=(?![=>])");
+
+    /**
+     * Convention ④ for every grammar (rule 47 widened, 2026-11-03): a URL literal is an
+     * address only at a use site. The JavaScript, Go and PHP packs never captured a bare
+     * literal; the Java, C#, Kotlin and Python packs captured every {@code http(s)://}
+     * string and then excused, case by case, the ones that are not called — an unused
+     * constant (rule 9), an XML namespace (13), OpenAPI metadata (29). The edge audit of
+     * the 100-system corpus found what the cases miss: an RFC link in an error response,
+     * a ProblemDetails type URI, a test user's claim, a Swagger license link — all C# or
+     * Java, all drawn as dependencies.
+     *
+     * <p>A use site is a line with a use-site row (a client call, a client option, a producer
+     * or consumer) or a call of a documented client API ({@link #CLIENT_CALL}). A literal is
+     * kept when a use site is on its line or the two lines around it (a call wrapped over
+     * lines), or when the name it is assigned to ({@code ORDER_API = "http://…"}, {@code
+     * builder = fromHttpUrl("http://…")}) — or a name assigned from that one, up to three
+     * steps, as rule 47 follows bindings — is mentioned at a use site of the same module.
+     * Every other {@code url} row is marked as no edge, with the reason, so the ledger still
+     * shows it.
+     */
+    private void keepUrlLiteralsAtUseSites(Path root, EdgeLedger ledger, Map<String, String> sources) {
+        Map<String, Set<Integer>> useLines = new LinkedHashMap<>();
+        for (EdgeLedger.Edge e : ledger.getEdges()) {
+            if (USE_SITE_SECTIONS.contains(e.section) && e.line > 0) useLines.computeIfAbsent(e.file, k -> new java.util.HashSet<>()).add(e.line);
+        }
+        for (Map.Entry<String, String> src : sources.entrySet()) {
+            String[] lines = src.getValue().split("\n", -1);
+            for (int i = 0; i < lines.length; i++) {
+                if (CLIENT_CALL.matcher(lines[i]).find()) useLines.computeIfAbsent(src.getKey(), k -> new java.util.HashSet<>()).add(i + 1);
+            }
+        }
+        Map<String, String> moduleCache = new LinkedHashMap<>();
+        int dropped = 0;
+        for (EdgeLedger.Edge e : ledger.getEdges()) {
+            if (!"url".equals(e.section) || e.line <= 0 || "true".equals(e.fields.get("unreferenced"))) continue;
+            if (e.fields.containsKey("env")) continue; // String.format(…, getenv(…)): rule 18 reads it as a use
+            String source = sources.get(e.file);
+            if (source == null) continue;
+            if (nearUseSite(useLines.get(e.file), e.line)) continue;
+            String[] lines = source.split("\n", -1);
+            String holder = null;
+            if (e.line <= lines.length) holder = assignedName(lines, e.line - 1, e.fields.getOrDefault("value", ""));
+            if (holder != null && mentionedAtUseSite(holder, moduleCache.computeIfAbsent(e.file, f -> moduleOf(root, f)),
+                    sources, useLines, moduleCache, root)) continue;
+            e.fields.put("unreferenced", "true");
+            e.fields.put("not-an-address", "not-at-use-site");
+            RuleTrace.hit(47, "not-use-site " + e.file + ":" + e.line + " " + e.fields.get("value"));
+            dropped++;
+        }
+        if (dropped > 0) {
+            ledger.addWarning(dropped + " URL literal(s) are not at a use site (no client call, client option, producer "
+                    + "or consumer uses them); they are drawn as no edge.");
+        }
+    }
+
+    /** {@code @ConfigurationProperties(prefix = "yas.services")} (or {@code ("p")} / {@code value = "p"}), then the record or class it annotates. */
+    private static final java.util.regex.Pattern CONFIGURATION_PROPERTIES = java.util.regex.Pattern.compile(
+            "@ConfigurationProperties\\s*\\(\\s*(?:(?:prefix|value)\\s*=\\s*)?\"([\\w.-]*)\"\\s*\\)[\\s\\S]{0,300}?\\b(record|class)\\s+(\\w+)\\b");
+
+    /** Every line of the sources that is a use site: a use-site row's line, or a line the client-call vocabulary matches. */
+    private static Map<String, Set<Integer>> useLines(EdgeLedger ledger, Map<String, String> sources) {
+        Map<String, Set<Integer>> useLines = new LinkedHashMap<>();
+        for (EdgeLedger.Edge e : ledger.getEdges()) {
+            if (USE_SITE_SECTIONS.contains(e.section) && e.line > 0) useLines.computeIfAbsent(e.file, k -> new java.util.HashSet<>()).add(e.line);
+        }
+        for (Map.Entry<String, String> src : sources.entrySet()) {
+            String[] lines = src.getValue().split("\n", -1);
+            for (int i = 0; i < lines.length; i++) {
+                if (CLIENT_CALL.matcher(lines[i]).find()) useLines.computeIfAbsent(src.getKey(), k -> new java.util.HashSet<>()).add(i + 1);
+            }
+        }
+        return useLines;
+    }
+
+    /**
+     * Spring's three-step binding, followed to the call (convention ④, 2026-11-04): an
+     * environment variable {@code YAS_SERVICES_PRODUCT} is the property
+     * {@code yas.services.product} by relaxed binding; {@code @ConfigurationProperties(prefix =
+     * "yas.services") record ServiceUrlConfig(String product)} binds it to a field; and the
+     * call site reads it through the accessor, {@code fromUriString(serviceUrlConfig.product())}.
+     * The tool knew the first step (the merger's env table) and nothing of the other two, so
+     * yas's cart → product was only ever the manifest's inferred edge, and storefront — which
+     * binds the whole {@code yas} map and calls nothing — looked the same as cart. Here every
+     * accessor of a bound field that sits at a use site becomes a config row carrying the
+     * property as a placeholder, which the merger resolves through the same table a
+     * {@code @Value("${…}")} uses. A {@code Map}-valued field read as {@code services().get("cart")}
+     * is the key {@code prefix.services.cart}. The binding class may live in a shared library
+     * module, so bindings are collected across the repo; the use sites are attributed to the
+     * file they are in.
+     */
+    private void bindConfigurationProperties(EdgeLedger ledger, Map<String, String> sources) {
+        // type -> prefix, type -> fields (name -> is a Map)
+        Map<String, String> prefixes = new LinkedHashMap<>();
+        Map<String, Map<String, Boolean>> fields = new LinkedHashMap<>();
+        for (String text : sources.values()) {
+            java.util.regex.Matcher m = CONFIGURATION_PROPERTIES.matcher(text);
+            while (m.find()) {
+                String prefix = m.group(1);
+                String type = m.group(3);
+                Map<String, Boolean> bound = new LinkedHashMap<>();
+                int from = m.end();
+                if ("record".equals(m.group(2))) {
+                    int open = text.indexOf('(', from), close = open < 0 ? -1 : text.indexOf(')', open);
+                    if (open < 0 || close < 0) continue;
+                    String params = text.substring(open + 1, close);
+                    while (params.matches(".*<[^<>]*>.*")) params = params.replaceAll("<[^<>]*>", "");
+                    for (String p : params.split(",")) {
+                        String[] words = p.trim().split("\\s+");
+                        if (words.length >= 2) bound.put(words[words.length - 1], words[words.length - 2].endsWith("Map"));
+                    }
+                } else {
+                    int open = text.indexOf('{', from);
+                    if (open < 0) continue;
+                    String body = text.substring(open + 1, Math.min(text.length(), open + 4000));
+                    java.util.regex.Matcher f = java.util.regex.Pattern.compile("(?m)^\\s*(?:private|protected|public)?\\s*(?:final\\s+)?([\\w.]+(?:<[^;=]*>)?)\\s+(\\w+)\\s*[;=]").matcher(body);
+                    while (f.find()) bound.put(f.group(2), f.group(1).contains("Map"));
+                }
+                if (bound.isEmpty()) continue;
+                // yas has a ServiceUrlConfig per module, all under yas.services with different
+                // fields: the same simple name under the same prefix is one binding, fields unioned.
+                if (prefixes.containsKey(type) && !prefixes.get(type).equals(prefix)) continue;
+                prefixes.put(type, prefix);
+                fields.computeIfAbsent(type, k -> new LinkedHashMap<>()).putAll(bound);
+            }
+        }
+        if (prefixes.isEmpty()) return;
+        Map<String, Set<Integer>> useLines = useLines(ledger, sources);
+        int emitted = 0;
+        for (Map.Entry<String, String> src : sources.entrySet()) {
+            String text = src.getValue();
+            boolean kotlin = src.getKey().endsWith(".kt");
+            // the variables of each bound type in this file: `ServiceUrlConfig serviceUrlConfig` / `val x: ServiceUrlConfig`
+            Map<String, String> varsToType = new LinkedHashMap<>();
+            for (String type : prefixes.keySet()) {
+                if (!text.contains(type)) continue;
+                java.util.regex.Matcher v = java.util.regex.Pattern.compile("\\b" + type + "\\s+(\\w+)\\b|\\b(\\w+)\\s*:\\s*" + type + "\\b").matcher(text);
+                while (v.find()) varsToType.put(v.group(1) != null ? v.group(1) : v.group(2), type);
+            }
+            if (varsToType.isEmpty()) continue;
+            String[] lines = text.split("\n", -1);
+            for (Map.Entry<String, String> var : varsToType.entrySet()) {
+                String type = var.getValue();
+                for (Map.Entry<String, Boolean> field : fields.get(type).entrySet()) {
+                    String f = field.getKey();
+                    String getter = "get" + Character.toUpperCase(f.charAt(0)) + f.substring(1);
+                    java.util.regex.Pattern access = java.util.regex.Pattern.compile("\\b" + java.util.regex.Pattern.quote(var.getKey())
+                            + "\\s*\\.\\s*(?:" + f + "|" + getter + ")\\s*" + (kotlin ? "(?:\\(\\s*\\))?" : "\\(\\s*\\)")
+                            + "(?:\\s*\\.\\s*get\\(\\s*\"([\\w.-]+)\"\\s*\\))?");
+                    for (int i = 0; i < lines.length; i++) {
+                        java.util.regex.Matcher a = access.matcher(lines[i]);
+                        if (!a.find() || !nearUseSite(useLines.get(src.getKey()), i + 1)) continue;
+                        String key = prefixes.get(type) + "." + f + (a.group(1) != null ? "." + a.group(1) : "");
+                        if (key.startsWith(".")) key = key.substring(1);
+                        Map<String, String> row = new LinkedHashMap<>();
+                        row.put("property", "${" + key + "}");
+                        row.put("binding", "configuration-properties");
+                        row.put("usesite", "true");
+                        ledger.add("config", row, src.getKey(), i + 1, "Medium (property indirection)");
+                        RuleTrace.hit(47, "configuration-properties " + src.getKey() + ":" + (i + 1) + " " + key);
+                        emitted++;
+                    }
+                }
+            }
+        }
+        if (emitted > 0) ledger.addWarning(emitted + " @ConfigurationProperties accessor(s) at use sites were followed to their property keys.");
+    }
+
+    private static boolean nearUseSite(Set<Integer> lines, int line) {
+        if (lines == null) return false;
+        for (int l = line - 2; l <= line + 2; l++) if (lines.contains(l)) return true;
+        return false;
+    }
+
+    /**
+     * The name the literal is kept in, or null: the last assignment before it on its line, or
+     * the parameter or field an annotation injects it into ({@code @Value("http://${X}/b")
+     * String balancesUri}, on the same or the next line).
+     */
+    private static String assignedName(String[] lines, int index, String value) {
+        String line = lines[index];
+        int at = value.isEmpty() ? -1 : line.indexOf(value.length() > 12 ? value.substring(0, 12) : value);
+        if (at < 0) return null;
+        java.util.regex.Matcher m = ASSIGNED_NAME.matcher(line.substring(0, at));
+        String name = null;
+        while (m.find()) name = m.group(1);
+        if (name != null || at == 0 || line.charAt(at - 1) != '"' || !line.substring(0, at).matches(".*@\\w+\\s*\\(\\s*(?:\\w+\\s*=\\s*)?\"$")) return name;
+        String rest = line.substring(at) + (index + 1 < lines.length ? " " + lines[index + 1] : "");
+        java.util.regex.Matcher injected = INJECTED_NAME.matcher(rest);
+        return injected.find() ? injected.group(1) : null;
+    }
+
+    /** After an annotation's string argument: {@code ") [final] Type name"}. */
+    private static final java.util.regex.Pattern INJECTED_NAME = java.util.regex.Pattern.compile(
+            "^[^\"]*\"\\s*\\)\\s*(?:(?:private|protected|public|final|static|val|var|lateinit)\\s+)*(?:[\\w.<>\\[\\]?]+\\s+)?([A-Za-z_]\\w*)\\s*[:;,)=]?");
+
+    /**
+     * Whether {@code name}, or a name assigned from it in the same file (up to three steps),
+     * occurs on or within two lines of a use site of {@code module}.
+     */
+    private static boolean mentionedAtUseSite(String name, String module, Map<String, String> sources,
+                                              Map<String, Set<Integer>> useLines, Map<String, String> moduleCache, Path root) {
+        for (Map.Entry<String, Set<Integer>> use : useLines.entrySet()) {
+            if (!use.getKey().startsWith(module)) continue;
+            if (!module.equals(moduleCache.computeIfAbsent(use.getKey(), f -> moduleOf(root, f)))) continue;
+            String source = sources.get(use.getKey());
+            if (source == null) continue;
+            String[] lines = source.split("\n", -1);
+            Set<String> names = new java.util.HashSet<>(Set.of(name));
+            // A bean property is read through its accessor (JavaBeans: baseUrl -> getBaseUrl()).
+            if (Character.isLowerCase(name.charAt(0))) names.add("get" + Character.toUpperCase(name.charAt(0)) + name.substring(1));
+            for (int step = 0; step < 3; step++) {
+                java.util.regex.Pattern ref = namesPattern(names);
+                for (String l : lines) {
+                    if (!ref.matcher(l).find()) continue;
+                    java.util.regex.Matcher m = ASSIGNED_NAME.matcher(l);
+                    if (m.find() && !names.contains(m.group(1)) && ref.matcher(l.substring(m.end())).find()) names.add(m.group(1));
+                }
+            }
+            java.util.regex.Pattern ref = namesPattern(names);
+            for (int line : use.getValue()) {
+                for (int l = Math.max(1, line - 2); l <= Math.min(lines.length, line + 2); l++) {
+                    if (ref.matcher(lines[l - 1]).find()) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static java.util.regex.Pattern namesPattern(Set<String> names) {
+        return java.util.regex.Pattern.compile("\\b(" + String.join("|", names.stream().map(java.util.regex.Pattern::quote).toList()) + ")\\b");
     }
 
     /**

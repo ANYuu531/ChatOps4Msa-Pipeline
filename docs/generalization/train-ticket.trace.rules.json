@@ -14,6 +14,47 @@
     "examples": [],
     "count": 0
   },
+  "47": {
+    "hits": 38,
+    "examples": [
+      "not-use-site ts-admin-user-service/src/main/java/adminuser/service/AdminUserServiceImpl.java:37 http://",
+      "not-use-site ts-cancel-service/src/main/java/cancel/service/CancelServiceImpl.java:42 http://",
+      "not-use-site ts-order-other-service/src/main/java/other/service/OrderOtherServiceImpl.java:42 http://",
+      "not-use-site ts-preserve-service/src/main/java/preserve/service/PreserveServiceImpl.java:45 http://",
+      "not-use-site ts-security-service/src/main/java/security/service/SecurityServiceImpl.java:47 http://",
+      "not-use-site ts-consign-service/src/main/java/consign/service/ConsignServiceImpl.java:42 http://",
+      "not-use-site ts-order-service/src/main/java/order/service/OrderServiceImpl.java:44 http://",
+      "not-use-site ts-food-service/src/main/java/foodsearch/service/FoodServiceImpl.java:50 http://",
+      "not-use-site ts-rebook-service/src/main/java/rebook/service/RebookServiceImpl.java:44 http://",
+      "not-use-site ts-admin-basic-info-service/src/main/java/adminbasic/service/AdminBasicInfoServiceImpl.java:36 http://",
+      "not-use-site ts-food-delivery-service/src/main/java/food_delivery/service/FoodDeliveryServiceImpl.java:40 http://",
+      "not-use-site ts-wait-order-service/src/main/java/waitorder/utils/PollThread.java:71 http://",
+      "not-use-site ts-basic-service/src/main/java/fdse/microservice/service/BasicServiceImpl.java:36 http://",
+      "not-use-site ts-preserve-other-service/src/main/java/preserveOther/service/PreserveOtherServiceImpl.java:42 http://",
+      "not-use-site ts-auth-service/src/main/java/auth/service/impl/TokenServiceImpl.java:55 http://",
+      "not-use-site ts-user-service/src/main/java/user/service/impl/UserServiceImpl.java:42 http://",
+      "not-use-site ts-route-plan-service/src/main/java/plan/service/RoutePlanServiceImpl.java:35 http://",
+      "not-use-site ts-inside-payment-service/src/main/java/inside_payment/service/InsidePaymentServiceImpl.java:42 http://",
+      "not-use-site ts-seat-service/src/main/java/seat/service/SeatServiceImpl.java:37 http://",
+      "not-use-site ts-execute-service/src/main/java/execute/serivce/ExecuteServiceImpl.java:36 http://"
+    ],
+    "count": 38
+  },
+  "48": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "49": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "50": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "51": {
     "hits": 75,
     "examples": [
@@ -60,6 +101,11 @@
     ],
     "count": 14
   },
+  "53": {
+    "hits": 1,
+    "examples": ["image-script ts-ticket-office-service/test.sh:3 http://127.0.0.1:16108/office/updateOffice"],
+    "count": 1
+  },
   "10": {
     "hits": 13,
     "examples": [
@@ -78,6 +124,11 @@
       "drop skywalking-ui (deployment/kubernetes-manifests/skywalking)"
     ],
     "count": 13
+  },
+  "54": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
   },
   "11": {
     "hits": 1,
@@ -128,12 +179,27 @@
     "examples": [],
     "count": 0
   },
+  "57": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "14": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
+  "58": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "15": {
+    "hits": 1,
+    "examples": ["published 16108"],
+    "count": 1
+  },
+  "59": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -224,14 +290,19 @@
     "count": 126
   },
   "5": {
-    "hits": 8,
+    "hits": 55,
     "examples": [
-      "not-a-host rabbitmq_host=${helm}",
+      "env NACOS_SERVERS=${helm}-0.nacos-headless.default.svc.cluster.local:8848 ${helm}-1.nacos-headless.default.svc.cluster.local:8848 ${helm}-2.nacos-headless.defa\u2026",
+      "env rabbitmq_host=${helm}",
+      "env HOST=$(POD_HOSTNAME).${helm}.default",
+      "not-a-host ALERTSNITCH_DSN=root:root@tcp(alertsnitch-mysql:3306)/alertsnitch",
       "not-a-host _host=/",
+      "key spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local",
       "key spring.mail.host=smtp.163.com",
-      "key spring.rabbitmq.host=${rabbitmq_host:localhost}"
+      "key spring.rabbitmq.host=${rabbitmq_host:localhost}",
+      "key spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:127.0.0.1:8848}"
     ],
-    "count": 4
+    "count": 9
   },
   "6": {
     "hits": 1,
@@ -244,9 +315,10 @@
     "count": 0
   },
   "8": {
-    "hits": 135,
+    "hits": 136,
     "examples": [
       "config-signal url",
+      "loopback 127.0.0.1:16108",
       "config-signal server.port",
       "config-signal spring.datasource.username",
       "config-signal spring.datasource.password",
@@ -255,7 +327,7 @@
       "config-signal spring.rabbitmq.port",
       "loopback 127.0.0.1:8848"
     ],
-    "count": 8
+    "count": 9
   },
   "9": {
     "hits": 59,
@@ -282,6 +354,16 @@
       "jpa ts-order-service/src/main/java/order/repository/OrderRepository.java"
     ],
     "count": 48
+  },
+  "60": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "61": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
   },
   "20": {
     "hits": 0,
@@ -326,13 +408,9 @@
     "count": 0
   },
   "27": {
-    "hits": 76,
-    "examples": [
-      "first-of-list spring.cloud.nacos.discovery.server-addr",
-      "list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local",
-      "list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:127.0.0.1:8848}"
-    ],
-    "count": 3
+    "hits": 35,
+    "examples": ["first-of-list spring.cloud.nacos.discovery.server-addr"],
+    "count": 1
   },
   "28": {
     "hits": 0,
@@ -375,9 +453,19 @@
     "count": 1
   },
   "36": {
-    "hits": 2,
-    "examples": ["ns-strip github.com"],
-    "count": 1
+    "hits": 71,
+    "examples": [
+      "scheme-chain d61b2ea39109:ts-order-service:12031",
+      "scheme-chain bc33d072c81a:ts-verification-code-service:15678",
+      "scheme-chain c75fc385d461:ts-contacts-service:12347",
+      "scheme-chain c6910f263b3c:ts-station-service:12345",
+      "scheme-chain c350faecb23c:ts-ticketinfo-service:15681",
+      "scheme-chain fd670275c924:ts-order-service:12031",
+      "scheme-chain a602558130ea:ts-train-service:14567",
+      "scheme-chain a4101878fe04:ts-route-service:11178",
+      "ns-strip github.com"
+    ],
+    "count": 9
   },
   "37": {
     "hits": 0,
@@ -400,7 +488,7 @@
     "count": 0
   },
   "41": {
-    "hits": 117,
+    "hits": 129,
     "examples": [
       "lib ts-common",
       "lib ms-monitoring-core",

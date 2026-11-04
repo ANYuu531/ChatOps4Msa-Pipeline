@@ -1,0 +1,69 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    catalogwriteservice["catalogwriteservice"]
+    catalogreadservice["catalogreadservice"]
+    orderservice["orderservice"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    zipkin["zipkin"]
+    otelcol["otelcol"]
+    eventstore["eventstore"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    tempo["tempo"]
+    prometheus["prometheus"]
+    grafana["grafana"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    jaeger["jaeger"]
+    cadvisor["cadvisor"]
+  end
+  subgraph layer4 ["data stores"]
+    direction LR
+    postgres[("postgres")]:::db
+    rabbitmq{{"rabbitmq"}}:::queue
+    redis[("redis")]:::db
+    mongo[("mongo")]:::db
+  end
+  subgraph layer5 ["no dependencies found"]
+    direction LR
+    pkg["pkg"]
+  end
+  catalogwriteservice -. db .-> postgres
+  catalogwriteservice -. async? .-> rabbitmq
+  catalogwriteservice -. declared? .-> jaeger
+  catalogwriteservice -. declared? .-> tempo
+  catalogwriteservice -. declared? .-> zipkin
+  catalogwriteservice -. declared? .-> otelcol
+  catalogreadservice -. async? .-> rabbitmq
+  catalogreadservice -. db? .-> redis
+  catalogreadservice -. db? .-> mongo
+  catalogreadservice -. declared? .-> jaeger
+  catalogreadservice -. declared? .-> tempo
+  catalogreadservice -. declared? .-> zipkin
+  catalogreadservice -. declared? .-> otelcol
+  orderservice -. db? .-> mongo
+  orderservice -. async? .-> rabbitmq
+  orderservice -. declared? .-> jaeger
+  orderservice -. declared? .-> zipkin
+  orderservice -. declared? .-> otelcol
+  orderservice -. declared? .-> eventstore
+  tempo -.-> prometheus
+  grafana -.-> prometheus
+  grafana -.-> jaeger
+  grafana -.-> tempo
+  prometheus -.-> grafana
+  prometheus -.-> cadvisor
+  prometheus -.-> tempo
+  otelcol -. startup .-> prometheus
+  otelcol -. startup .-> tempo
+  otelcol -. startup .-> jaeger
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;

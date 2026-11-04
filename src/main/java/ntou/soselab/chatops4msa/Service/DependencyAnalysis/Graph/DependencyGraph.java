@@ -61,6 +61,13 @@ public class DependencyGraph {
     public static final String CONF_DOCUMENTED = "documented";
     public static final String CONF_INFERRED = "inferred";
 
+    /**
+     * Edge type for a Compose {@code depends_on} that no address backs: the deployment says
+     * "start that first", not "I call that". Kept as its own relation so a deploy order can
+     * read it, never counted as a call (the scorers and the coverage analyser skip it).
+     */
+    public static final String TYPE_STARTUP = "startup";
+
     /** Substrings that identify a datastore workload by convention (visual hint only). */
     private static final String[] DB_HINTS = {
             "-db", "database", "mongo", "mysql", "postgres", "postgresql",

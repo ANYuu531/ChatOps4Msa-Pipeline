@@ -10,12 +10,14 @@
 - http-client = 4
 - grpc = 3
 - registry-ref = 1
-- url = 2
+- url = 7
 - registry-name = 1
+- parsed-dir = 22
 - import = 85
 - http-server = 1
 - persistence = 1
 - name-ref = 4
+- dockerfile-from = 26
 - k8s-namespace = 1
 - k8s-workload = 52
 - k8s-service = 52
@@ -25,7 +27,7 @@
 - k8s-gateway = 1
 - service-root = 12
 - module-deps = 11
-- TOTAL = 481 | files with syntax errors = 0
+- TOTAL = 534 | files with syntax errors = 0
 
 ## graph
 - after merge: 14 nodes / 18 edges | after normalize: 14 nodes / 18 edges | unresolved code edges = 8
@@ -64,8 +66,11 @@
 - frontend -> shippingservice  (sync-http, documented)  code: src/frontend/main.go:137
 - frontend -> shoppingassistantservice  (sync-http, documented)  code: src/frontend/main.go:139
 - istio-ingressgateway -> frontend  (sync-http, documented)  code: istio-manifests/frontend-gateway.yaml
-- loadgenerator -> frontend  (sync-http, inferred)  code: helm-chart/templates/loadgenerator.yaml
+- loadgenerator -> frontend  (sync-http, documented)  code: src/loadgenerator/Dockerfile
 - recommendationservice -> productcatalogservice  (sync-http, documented)  code: src/recommendationservice/recommendation_server.py:131
+
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
 
 ## unresolved (source hint / raw target / file:line), first 40
 - frontend  =>  null   @ src/frontend/packaging_info.go:54
@@ -134,8 +139,8 @@ flowchart TB
   checkoutservice -.-> paymentservice
   recommendationservice -.-> productcatalogservice
   cartservice -. db .-> redis_cart
+  loadgenerator -.-> frontend
   istio_ingressgateway -.-> frontend
-  loadgenerator -. declared? .-> frontend
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
 classDef gateway fill:#e9f9ec,stroke:#2e8b57,color:#14351f;
 
@@ -146,7 +151,7 @@ classDef gateway fill:#e9f9ec,stroke:#2e8b57,color:#14351f;
 - rule 1: 13 (node emailservice; node checkoutservice; node recommendationservice; node frontend; node paymentservice)
 - rule 2: 1 (climb src/cartservice/src)
 - rule 3: 0
-- rule 4: 0
+- rule 4: 1 (table FRONTEND_ADDR=frontend)
 - rule 5: 0
 - rule 6: 0
 - rule 7: 0
@@ -156,13 +161,13 @@ classDef gateway fill:#e9f9ec,stroke:#2e8b57,color:#14351f;
 - rule 11: 0
 - rule 12: 0
 - rule 13: 0
-- rule 14: 16 (edge checkoutservice->productcatalogservice; edge checkoutservice->shippingservice; edge checkoutservice->paymentservice; edge checkoutservice->emailservice; edge checkoutservice->currencyservice)
+- rule 14: 16 (code-decides checkoutservice->productcatalogservice; code-decides checkoutservice->shippingservice; code-decides checkoutservice->paymentservice; code-decides checkoutservice->emailservice; code-decides checkoutservice->currencyservice)
 - rule 15: 0
 - rule 16: 0
 - rule 17: 0
 - rule 18: 0
 - rule 19: 0
-- rule 20: 16 (scoped PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice @frontend; scoped CURRENCY_SERVICE_ADDR=currencyservice @frontend; scoped CART_SERVICE_ADDR=cartservice @frontend; scoped RECOMMENDATION_SERVICE_ADDR=recommendationservice @frontend; scoped CHECKOUT_SERVICE_ADDR=checkoutservice @frontend)
+- rule 20: 17 (scoped PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice @frontend; scoped CURRENCY_SERVICE_ADDR=currencyservice @frontend; scoped CART_SERVICE_ADDR=cartservice @frontend; scoped RECOMMENDATION_SERVICE_ADDR=recommendationservice @frontend; scoped CHECKOUT_SERVICE_ADDR=checkoutservice @frontend)
 - rule 21: 0
 - rule 22: 0
 - rule 23: 0
@@ -190,5 +195,17 @@ classDef gateway fill:#e9f9ec,stroke:#2e8b57,color:#14351f;
 - rule 45: 0
 - rule 46: 0
 - rule 47: 3 (urlref src/frontend/main.go:229 addr; valueref src/paymentservice/index.js:48 collectorUrl; valueref src/currencyservice/server.js:62 collectorUrl)
+- rule 48: 0
+- rule 49: 0
+- rule 50: 0
+- rule 51: 0
 - rule 52: 21 (render helm-chart/templates/adservice.yaml; render helm-chart/templates/cartservice.yaml; render helm-chart/templates/checkoutservice.yaml; render helm-chart/templates/common.yaml; render helm-chart/templates/currencyservice.yaml)
+- rule 53: 1 (dockerfile src/loadgenerator/Dockerfile http://${FRONTEND_ADDR})
+- rule 54: 0
+- rule 55: 0
 - rule 56: 3 (istio asm-ingress/asm-ingressgateway -> frontend; istio frontend-gateway -> frontend; edge istio-ingressgateway->frontend)
+- rule 57: 0
+- rule 58: 0
+- rule 59: 1 (selector frontend-external=frontend)
+- rule 60: 0
+- rule 61: 0

@@ -9,12 +9,15 @@
 - name-constant = 3
 - http-client = 2
 - url = 1
-- config = 46
+- parsed-dir = 34
+- dockerfile-from = 9
+- config = 62
 - compose-service = 10
 - compose-dependency = 26
+- compose-port = 10
 - service-root = 18
 - module-deps = 18
-- TOTAL = 137 | files with syntax errors = 0
+- TOTAL = 206 | files with syntax errors = 0
 
 ## graph
 - after merge: 17 nodes / 36 edges | after normalize: 16 nodes / 33 edges | unresolved code edges = 5
@@ -26,6 +29,7 @@
 - cloud-simple-service  [service, L3]
 - cloud-simple-serviceb  [service, L2]
 - cloud-simple-ui  [service, L2]
+- cloud-uaa-service  [service, L2]
 - configserver  [service, L4]
 - discovery  [service, L5]
 - gateway  [service, L1]
@@ -35,7 +39,6 @@
 - simple-serviceb  [service, L2]
 - simple-ui  [service, L2]
 - turbine  [service, L0]
-- uaa-service  [service, L2]
 - zipkin  [service, L3]
 
 ## edges (type, confidence, provenance ref)
@@ -46,13 +49,13 @@
 - gateway -> cloud-simple-service  (sync-http, documented)  code: cloud-api-gateway/src/main/resources/application.yaml
 - gateway -> cloud-simple-serviceb  (sync-http, documented)  code: cloud-api-gateway/src/main/resources/application.yaml
 - gateway -> cloud-simple-ui  (sync-http, documented)  code: cloud-api-gateway/src/main/resources/application.yaml
+- gateway -> cloud-uaa-service  (sync-http, documented)  code: cloud-api-gateway/src/main/resources/application.yaml
 - gateway -> configserver  (sync-http, inferred)  code: docker/docker-compose.yaml#depends_on
 - gateway -> discovery  (sync-http, inferred)  code: docker/docker-compose.yaml#depends_on
 - gateway -> simple-service  (sync-http, inferred)  code: docker/docker-compose.yaml#depends_on
 - gateway -> simple-service2  (sync-http, inferred)  code: docker/docker-compose.yaml#depends_on
 - gateway -> simple-serviceb  (sync-http, inferred)  code: docker/docker-compose.yaml#depends_on
 - gateway -> simple-ui  (sync-http, inferred)  code: docker/docker-compose.yaml#depends_on
-- gateway -> uaa-service  (sync-http, documented)  code: cloud-api-gateway/src/main/resources/application.yaml
 - gateway -> zipkin  (sync-http, inferred)  code: docker/docker-compose.yaml#depends_on
 - simple-service -> configserver  (sync-http, inferred)  code: docker/docker-compose.yaml#depends_on
 - simple-service -> discovery  (sync-http, inferred)  code: docker/docker-compose.yaml#depends_on
@@ -73,11 +76,14 @@
 - zipkin -> configserver  (sync-http, inferred)  code: docker/docker-compose.yaml#depends_on
 - zipkin -> discovery  (sync-http, inferred)  code: docker/docker-compose.yaml#depends_on
 
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
+
 ## unresolved (source hint / raw target / file:line), first 40
 - simple-ui  =>  null   @ cloud-simple-ui/src/main/java/cloud/simple/service/UserService.java:32
 - simple-ui  =>  http://   @ cloud-simple-ui/src/main/java/cloud/simple/service/UserService.java:32
 - hystrix  =>  http\://localhost\:8761/eureka/   @ cloud-hystrix-dashboard/src/main/resources/bootstrap.yaml:-1
-- discovery  =>  http://${eureka.instance.hostname}:${server.port}/eureka/   @ cloud-eureka-server/src/main/resources/application.yaml:-1
+- cloud-dummy-service  =>  ${PREFIX:}resource   @ cloud-dummy-service/src/main/resources/application.yml:-1
 - gateway  =>  ${PREFIX:}resource   @ cloud-api-gateway/src/main/resources/application.yaml:-1
 
 ## alias questions (name [origin] seen in | candidates)
@@ -85,6 +91,7 @@
 - cloud-simple-service  [graph]  looks like the same service as `simple-service` (one name is the other with a prefix or suffix); both stay on the graph until you say   | candidates: simple-service
 - cloud-simple-serviceb  [graph]  looks like the same service as `simple-serviceb` (one name is the other with a prefix or suffix); both stay on the graph until you say   | candidates: simple-serviceb
 - cloud-simple-ui  [graph]  looks like the same service as `simple-ui` (one name is the other with a prefix or suffix); both stay on the graph until you say   | candidates: simple-ui
+- cloud-dummy-service  [code]  the module directory of config at cloud-dummy-service/src/main/resources/application.yml — no service on the graph has this name   | candidates: cloud-uaa-service, cloud-simple-service, cloud-simple-ui
 
 ## alias answers applied
 - none
@@ -113,7 +120,7 @@ flowchart TB
     simple_ui["simple-ui"]
     cloud_simple_serviceb["cloud-simple-serviceb"]
     cloud_simple_ui["cloud-simple-ui"]
-    uaa_service["uaa-service"]
+    cloud_uaa_service["cloud-uaa-service"]
   end
   subgraph layer3 ["services · depth 3"]
     direction LR
@@ -164,7 +171,7 @@ flowchart TB
   gateway -.-> cloud_simple_service
   gateway -.-> cloud_simple_serviceb
   gateway -.-> cloud_simple_ui
-  gateway -.-> uaa_service
+  gateway -.-> cloud_uaa_service
 classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 
 ```
@@ -175,10 +182,10 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 2: 10 (climb cloud-hystrix-dashboard/src/main/docker; climb cloud-config-server/src/main/docker; climb cloud-hystrix-turbine/src/main/docker; climb cloud-zipkin/src/main/docker; climb cloud-eureka-server/src/main/docker)
 - rule 3: 9 (config-client hystrix; config-client turbine; config-client simple-service; config-client simple-ui; config-client simple-serviceb)
 - rule 4: 2 (default config.port=8888; table eureka.instance.hostname=localhost)
-- rule 5: 6 (key zipkin.http.host=localhost:9411; key eureka.instance.hostname=localhost; key zuul.routes.api-a.serviceid=cloud-simple-service; key zuul.routes.api-b.serviceid=cloud-simple-serviceB; key zuul.routes.api-ui.serviceid=cloud-simple-ui)
+- rule 5: 7 (key eureka.instance.hostname=localhost; not-a-host eureka.instance.prefer-ip-address=true; key zipkin.http.host=localhost:9411; key security.oauth2.resource.serviceId=${PREFIX:}resource; key zuul.routes.api-a.serviceId=cloud-simple-service)
 - rule 6: 0
-- rule 7: 0
-- rule 8: 7 (loopback localhost:9966; config-signal server.port; config-signal eureka.instance.leaseRenewalIntervalInSeconds; config-signal eureka.client.registerWithEureka; config-signal eureka.client.fetchRegistry)
+- rule 7: 1 (unique-suffix uaa-service=cloud-uaa-service)
+- rule 8: 11 (loopback localhost:9966; config-signal server.port; loopback localhost; config-signal eureka.instance.port; config-signal eureka.instance.prefer-ip-address)
 - rule 9: 1 (jpa cloud-simple-service/src/main/java/cloud/simple/service/storage/UserStorageImpl.java)
 - rule 10: 0
 - rule 11: 17 (align cloud-simple-service=simple-service; not-preadded cloud-thrift-client; not-preadded cloud-uaa-service; not-preadded cloud-finagle-thrift-client; not-preadded cloud-thrift-server)
@@ -218,3 +225,17 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 45: 0
 - rule 46: 0
 - rule 47: 1 (hostref cloud-simple-ui/src/main/java/cloud/simple/service/UserService.java:32 SERVICE_NAME)
+- rule 48: 0
+- rule 49: 0
+- rule 50: 0
+- rule 51: 0
+- rule 52: 0
+- rule 53: 0
+- rule 54: 0
+- rule 55: 0
+- rule 56: 0
+- rule 57: 2 (documents cloud-uaa-service/src/main/resources/application.yml 2; documents cloud-dummy-service/src/main/resources/application.yml 2)
+- rule 58: 0
+- rule 59: 0
+- rule 60: 0
+- rule 61: 0

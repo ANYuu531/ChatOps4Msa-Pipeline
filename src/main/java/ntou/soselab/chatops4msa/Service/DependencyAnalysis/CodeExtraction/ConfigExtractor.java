@@ -7,6 +7,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -38,9 +39,30 @@ public class ConfigExtractor {
         // overrides with `__` (ConnectionStrings__Database), and a YARP gateway's routing
         // table lives nowhere else (2026-10-26, run-aspnetcore-microservices).
         for (Path json : SourceScanner.filesWithExtensions(root, List.of(".json"))) {
-            if (!json.getFileName().toString().toLowerCase(Locale.ROOT).startsWith("appsettings")) continue;
+            String jsonName = json.getFileName().toString().toLowerCase(Locale.ROOT);
+            boolean ocelot = jsonName.startsWith("ocelot");
+            if (!jsonName.startsWith("appsettings") && !ocelot) {
+                // Convention ②: an address is an address whatever file it is in. A JSON file of
+                // no known kind (a Go service's config.development.json, a gateway's routes.json)
+                // gives candidate rows, kept by the merger only toward a declared name and only
+                // for the component that owns the file (its module, or the one container that
+                // mounts it), as a mounted YAML's are (rule 60).
+                if (!TOOLING_JSON.matcher(jsonName).find() && !TEST_CONFIG_NAME.matcher(jsonName).find()) {
+                    try {
+                        if (Files.size(json) <= 512_000) {
+                            String text = Files.readString(json, StandardCharsets.UTF_8);
+                            if (text.startsWith("\uFEFF")) text = text.substring(1);
+                            mountedConfigAddresses("", new Yaml().load(text), SourceScanner.relative(root, json), ledger);
+                        }
+                    } catch (Exception ignored) {
+                        // not JSON a YAML loader reads (comments, a JSON Lines file): no candidates
+                    }
+                }
+                continue;
+            }
             try {
-                extractDotnetAppSettings(json, SourceScanner.relative(root, json), ledger);
+                if (ocelot) extractOcelotRoutes(json, SourceScanner.relative(root, json), ledger);
+                else extractDotnetAppSettings(json, SourceScanner.relative(root, json), ledger);
             } catch (Exception e) {
                 // malformed JSON (comments, trailing commas): not worth failing the analysis over, but said
                 ledger.addWarning("unreadable descriptor " + SourceScanner.relative(root, json) + ": " + HelmChartRenderer.firstLine(e.getMessage()));
@@ -57,6 +79,8 @@ public class ConfigExtractor {
                 ledger.addWarning("unreadable descriptor " + SourceScanner.relative(root, dockerfile) + ": " + HelmChartRenderer.firstLine(e.getMessage()));
             }
         }
+        // The images those Dockerfiles are built into, when a build script names them.
+        extractImageBuilds(root, ledger);
 
         // Rule 50: a dotenv file inside a module (.env, .env.production) is that module's own
         // environment, the way a Dockerfile's ENV is — what dotenv, Next.js and Vite load at
@@ -70,7 +94,7 @@ public class ConfigExtractor {
                 String relative = SourceScanner.relative(root, dotenv);
                 for (Map.Entry<String, String> e : readEnvFile(dotenv).entrySet()) {
                     String host = addressHost(e.getKey(), e.getValue());
-                    if (host == null || LOOPBACK_HOSTS.contains(host)) continue;
+                    if (host == null || AddressShape.isLoopback(host)) continue;
                     RuleTrace.hit(50, "dotenv " + relative + " " + e.getKey() + "=" + host);
                     recordEnvAddress(e.getKey(), e.getValue(), null, "dockerfile", relative, ledger);
                 }
@@ -112,6 +136,15 @@ public class ConfigExtractor {
             boolean isYaml = name.endsWith(".yml") || name.endsWith(".yaml");
 
             String relative = SourceScanner.relative(root, file);
+            // A config file whose name says it is a template or a sample (mate-infra-prod-template.yml,
+            // application-example.properties) is a starting point for someone else's deployment,
+            // as .env.sample is (rule 50), not this repo's configuration (rule 57, 2026-11-03).
+            if (!isEnv && !isCompose && (isYaml || name.endsWith(".properties"))
+                    && RuleTrace.hitIf(TEMPLATE_CONFIG.matcher(name).find(), 57, "template " + relative)) continue;
+            // The build tool's own settings (gradle/wrapper/gradle-wrapper.properties,
+            // .mvn/wrapper/maven-wrapper.properties: where to download the build tool) are
+            // not the service's runtime configuration.
+            if (name.endsWith("-wrapper.properties")) continue;
             try {
                 if (name.endsWith(".properties") || isEnv) {
                     readKeyValueFile(file, relative, ledger);
@@ -134,8 +167,7 @@ public class ConfigExtractor {
                     extractComposeDependsOn(loaded, relative, ledger);
                     extractComposeEnvironment(loaded, root, file.getParent(), projectEnv, relative, ledger);
                 } else if (isSpringConfig) {
-                    Object loaded = new Yaml().load(Files.newBufferedReader(file, StandardCharsets.UTF_8));
-                    flatten("", loaded, relative, ledger);
+                    for (Object doc : springDocuments(file, relative)) flatten("", doc, relative, ledger);
                 } else if (isYaml) {
                     // Any other YAML is either a k8s manifest (the workload inventory and
                     // the env -> host table that resolve targets with no cluster — the
@@ -144,13 +176,20 @@ public class ConfigExtractor {
                     // client service (shared/account-service.yml). Piggymetrics's datasources
                     // all live in such files, and the analysis saw none of them (2026-09-22).
                     if (!extractK8sEnvAddresses(file, relative, ledger)) {
-                        Object loaded = new Yaml().load(Files.newBufferedReader(file, StandardCharsets.UTF_8));
+                        List<Object> docs = springDocuments(file, relative);
+                        Object loaded = docs.isEmpty() ? null : docs.get(0);
                         // An Envoy static config is a reverse proxy's routing table in YAML:
                         // its clusters are the upstreams, as nginx's proxy_pass are.
-                        if (!extractEnvoyClusters(loaded, relative, ledger) && !extractApisixRoutes(loaded, relative, ledger)
-                                && looksLikeSpringConfig(loaded)) {
-                            RuleTrace.hit(3, "spring-yml " + relative);
-                            flatten("", loaded, relative, ledger);
+                        if (docs.size() <= 1 && (extractEnvoyClusters(loaded, relative, ledger) || extractApisixRoutes(loaded, relative, ledger))) {
+                            continue;
+                        }
+                        for (Object doc : docs) {
+                            if (looksLikeSpringConfig(doc)) {
+                                RuleTrace.hit(3, "spring-yml " + relative);
+                                flatten("", doc, relative, ledger);
+                            } else {
+                                mountedConfigAddresses("", doc, relative, ledger);
+                            }
                         }
                     }
                 }
@@ -161,6 +200,190 @@ public class ConfigExtractor {
                 ledger.addWarning("unreadable descriptor " + relative + ": " + HelmChartRenderer.firstLine(e.getMessage()));
             }
         }
+        recordKeyReads(root, ledger);
+    }
+
+    /** Where a key of a shared source can be read: source code and the module's own config files. */
+    private static final List<String> KEY_READ_EXTENSIONS = List.of(".java", ".kt", ".cs", ".py", ".go", ".js", ".mjs", ".ts",
+            ".php", ".rb", ".rs", ".scala", ".yml", ".yaml", ".properties", ".json", ".toml", ".ini", ".conf", ".xml", ".sh",
+            ".gradle", ".kts", ".csproj");
+
+    /**
+     * Convention ③ (rule 14 widened, 2026-11-03): a value is a workload's own when someone
+     * chose it for that workload — its own env block, a {@code configMapKeyRef}, a key the
+     * Compose file forwards by name. A source injected wholesale — an {@code envFrom}
+     * ConfigMap, an env_file — chooses nothing; a key in it is the workload's only if the
+     * workload reads it. The edge audit of the 100-system corpus found seven edges drawn from
+     * shared env_files and ConfigMaps to workloads that never read them, a postgres container
+     * among them; rule 14 had said this for ConfigMaps of service addresses only.
+     *
+     * <p>Reading is shown three ways, all in the repository: the key's name in the module's
+     * code or own config ({@code os.Getenv("MONGO_CONN")}, {@code ${KAFKA_SERVERS}}), or the
+     * framework's documented binding of environment variables — Spring Boot's relaxed binding
+     * ({@code SPRING_DATASOURCE_URL} is {@code spring.datasource.url}) for a module that builds
+     * with Spring Boot, ASP.NET Core's {@code __} separator ({@code ConnectionStrings__Db}) for
+     * a .NET project. One {@code key-read} row per file and key; the merger joins the file to
+     * its service. Deployment descriptors and the sources themselves are not readers.
+     */
+    private void recordKeyReads(Path root, EdgeLedger ledger) {
+        Set<String> keys = new java.util.TreeSet<>();
+        for (EdgeLedger.Edge e : ledger.getEdges()) {
+            String key = e.fields.get("name");
+            if (key == null || key.isBlank()) continue;
+            if ("env-address".equals(e.section) && e.fields.containsKey("configmap")) keys.add(key);
+            if ("workload-env".equals(e.section) && e.fields.containsKey("shared")) keys.add(key);
+        }
+        if (keys.isEmpty()) return;
+        java.util.regex.Pattern any = java.util.regex.Pattern.compile("(?<![A-Za-z0-9_])("
+                + String.join("|", keys.stream().map(java.util.regex.Pattern::quote).toList()) + ")(?![A-Za-z0-9_])");
+        boolean spring = keys.stream().anyMatch(k -> k.startsWith("SPRING_"));
+        boolean dotnet = keys.stream().anyMatch(k -> k.contains("__"));
+        for (Path file : SourceScanner.filesWithExtensions(root, KEY_READ_EXTENSIONS)) {
+            String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
+            if (name.startsWith("docker-compose") || name.startsWith("compose.") || name.startsWith(".env") || name.endsWith(".env")) continue;
+            String text;
+            try {
+                if (Files.size(file) > 1_000_000) continue;
+                text = Files.readString(file, StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                continue;
+            }
+            if ((name.endsWith(".yml") || name.endsWith(".yaml")) && K8S_KIND.matcher(text).find()) continue;
+            String relative = SourceScanner.relative(root, file);
+            Set<String> seen = new java.util.HashSet<>();
+            String[] lines = text.split("\n", -1);
+            for (int i = 0; i < lines.length; i++) {
+                java.util.regex.Matcher m = any.matcher(lines[i]);
+                while (m.find()) {
+                    if (seen.add(m.group(1))) addKeyRead(m.group(1), null, relative, i + 1, ledger);
+                }
+            }
+            if (spring && (name.equals("pom.xml") || name.startsWith("build.gradle")) && text.contains("spring-boot")) {
+                for (String k : keys) if (k.startsWith("SPRING_") && seen.add(k)) addKeyRead(k, "spring", relative, -1, ledger);
+            }
+            if (dotnet && name.endsWith(".csproj")) {
+                for (String k : keys) if (k.contains("__") && seen.add(k)) addKeyRead(k, "dotnet", relative, -1, ledger);
+            }
+        }
+    }
+
+    private static final java.util.regex.Pattern K8S_KIND = java.util.regex.Pattern.compile("(?m)^\\s*kind:\\s*[A-Z]\\w+\\s*$");
+
+    private static void addKeyRead(String key, String binding, String relative, int line, EdgeLedger ledger) {
+        Map<String, String> fields = new LinkedHashMap<>();
+        fields.put("name", key);
+        if (binding != null) fields.put("binding", binding);
+        ledger.add("key-read", fields, relative, line, binding == null ? "High (key named in the reader)" : "Medium (framework binding)");
+    }
+
+    /**
+     * Every document of a Spring-style YAML file (rule 57). Spring Boot keeps one profile per
+     * {@code ---} document in one application.yml ({@code spring.profiles: docker} /
+     * {@code spring.config.activate.on-profile: docker}); a single-document load threw on the
+     * second {@code ---} and the whole file was dropped as unreadable, with its datasource
+     * and discovery addresses (12 of the 100 mining systems, 92 files; 2026-11-03). The
+     * active profile is not known statically, so every document is read; a document whose
+     * profile names a test run is skipped, as test directories are (rule 42).
+     */
+    private static List<Object> springDocuments(Path file, String relative) throws java.io.IOException {
+        List<Object> docs = new ArrayList<>();
+        for (Object doc : new Yaml().loadAll(Files.newBufferedReader(file, StandardCharsets.UTF_8))) {
+            if (doc == null) continue;
+            String profile = documentProfile(doc);
+            if (RuleTrace.hitIf(profile != null && TEST_PROFILE.matcher(profile).find(), 57, "test-profile " + relative + " " + profile)) continue;
+            docs.add(doc);
+        }
+        RuleTrace.hitIf(docs.size() > 1, 57, "documents " + relative + " " + docs.size());
+        return docs;
+    }
+
+    /** JSON a tool reads, not the component: package manifests, compiler and linter settings, launch profiles, API schemas. */
+    private static final java.util.regex.Pattern TOOLING_JSON = java.util.regex.Pattern.compile(
+            "(?i)^(package(-lock)?|composer|tsconfig.*|jsconfig.*|angular|nx|lerna|project|workspace|turbo|vercel|netlify|firebase"
+            + "|launchsettings|manifest|swagger|openapi|renovate|\\.?eslintrc.*|\\.?prettierrc.*|\\.?babelrc|babel\\.config|jest\\.config"
+            + "|global\\.json|nuget|libman|bundleconfig|app\\.json|cdk|tslint|typedoc)(\\.json)?$|\\.(schema|lock|map)\\.json$|-lock\\.json$");
+
+    /** A config file for a test run: config.test.json, settings.tests.json. */
+    private static final java.util.regex.Pattern TEST_CONFIG_NAME = java.util.regex.Pattern.compile("(?i)[._-](test|tests|spec|e2e|it)[._-]");
+
+    private static final java.util.regex.Pattern TEMPLATE_CONFIG = java.util.regex.Pattern.compile("(?i)[-_.](template|sample|example)s?\\.(ya?ml|properties)$");
+
+    private static final java.util.regex.Pattern TEST_PROFILE = java.util.regex.Pattern.compile("(?i)(^|[,\\s])(test|tests|it|integration-test)($|[,\\s])");
+
+    /**
+     * Rule 60: the addresses in a YAML file of no known kind — a Prometheus scrape config, a
+     * Grafana datasource, an OpenTelemetry Collector or Tempo config, an Alertmanager target —
+     * as candidate {@code url} rows. Such a file is the configuration of whichever container
+     * mounts it (prometheus.yml into prometheus), so the merger keeps a row only when exactly
+     * one Compose service mounts the file and the host is a name the deployment declares; any
+     * other row is dropped, not residue. The most frequent residue shape of the 100 mining
+     * systems (scrape targets in 14, datasources in 8, collector exporters in 5; 2026-11-03).
+     */
+    private static void mountedConfigAddresses(String key, Object node, String relative, EdgeLedger ledger) {
+        if (AddressShape.isInboundKey(key) || AddressShape.isCommentKey(key)) return;
+        if (node instanceof Map<?, ?> map) {
+            // Convention ②: a host and its port in sibling keys are one address ({"host": "localhost",
+            // "port": 5432}, {"hostName": "rabbitmq", "port": 5672}) — as DB_HOST beside DB_PORT is.
+            for (String[] hp : siblingHostPorts(map)) {
+                Map<String, String> fields = new LinkedHashMap<>();
+                fields.put("value", hp[1]);
+                fields.put("key", key.isEmpty() ? hp[0] : key + "." + hp[0]);
+                fields.put("mounted", "candidate");
+                ledger.add("url", fields, relative, -1, "Medium (host and port keys)");
+            }
+            for (Map.Entry<?, ?> e : map.entrySet()) {
+                mountedConfigAddresses(key.isEmpty() ? String.valueOf(e.getKey()) : key + "." + e.getKey(), e.getValue(), relative, ledger);
+            }
+        } else if (node instanceof List<?> list) {
+            for (Object item : list) mountedConfigAddresses(key, item, relative, ledger);
+        } else if (node instanceof String value) {
+            String v = value.trim();
+            if (v.length() > MAX_VALUE_LENGTH || !AddressShape.isAddressShaped(v) || AddressShape.host(v).isEmpty()) return;
+            Map<String, String> fields = new LinkedHashMap<>();
+            fields.put("value", v);
+            fields.put("key", key);
+            fields.put("mounted", "candidate");
+            ledger.add("url", fields, relative, -1, "Medium (mounted config)");
+        }
+    }
+
+
+    /**
+     * {key, "host:port"} for each port key beside a host key of one map: the host key is one
+     * whose name says host ({@link AddressShape.KeyKind#HOST}) with a bare host value, the port
+     * keys {@code port} or a name ending in port ({@code httpPort}, {@code tcpPort}) with a number.
+     */
+    private static List<String[]> siblingHostPorts(Map<?, ?> map) {
+        List<String[]> out = new ArrayList<>();
+        String hostKey = null, host = null;
+        for (Map.Entry<?, ?> e : map.entrySet()) {
+            String k = String.valueOf(e.getKey());
+            if (e.getValue() instanceof String v && AddressShape.keyKind(k) == AddressShape.KeyKind.HOST
+                    && AddressShape.isHostValue(v) && !v.contains(":") && !v.contains(",")) {
+                hostKey = k;
+                host = v.trim();
+                break;
+            }
+        }
+        if (host == null) return out;
+        for (Map.Entry<?, ?> e : map.entrySet()) {
+            String k = String.valueOf(e.getKey());
+            String v = e.getValue() == null ? "" : String.valueOf(e.getValue()).trim().replaceFirst("^:", "");
+            if (k.toLowerCase(Locale.ROOT).endsWith("port") && v.matches("\\d{2,5}")) out.add(new String[]{hostKey, host + ":" + v});
+        }
+        return out;
+    }
+
+    /** {@code spring.profiles} or {@code spring.config.activate.on-profile} of one document, or null. */
+    private static String documentProfile(Object doc) {
+        if (!(doc instanceof Map<?, ?> root) || !(root.get("spring") instanceof Map<?, ?> spring)) return null;
+        Object p = spring.get("profiles");
+        if (p instanceof String s) return s;
+        if (spring.get("config") instanceof Map<?, ?> config && config.get("activate") instanceof Map<?, ?> activate
+                && activate.get("on-profile") != null) {
+            return String.valueOf(activate.get("on-profile"));
+        }
+        return null;
     }
 
     private static boolean underAny(Path file, Set<Path> dirs) {
@@ -280,7 +503,11 @@ public class ConfigExtractor {
                             }
                         } else if (k != null && pair.get("valueFrom") instanceof Map<?, ?> from
                                 && from.get("configMapKeyRef") instanceof Map<?, ?> ref && ref.get("name") != null) {
-                            if (name != null) recordWorkloadEnv(name, String.valueOf(ref.get("name")), null, null, relative, ledger);
+                            if (name != null) {
+                                // configMapKeyRef picks one key: that value, and only it, is this workload's own (convention ③).
+                                recordWorkloadEnv(name, String.valueOf(ref.get("name")), null, String.valueOf(k), null, relative, ledger,
+                                        null, ref.get("key") == null ? null : String.valueOf(ref.get("key")));
+                            }
                         }
                     }
                     // Rule 53: the containers' command / args.
@@ -684,11 +911,22 @@ public class ConfigExtractor {
         if (via != null) fields.put("via", via);
         String kind = kindHint(key, value);
         if (kind != null) fields.put("kind", kind);
+        if (bareUnderAddressKey(key, value)) fields.put("bare", "true");
         if (renderingChart != null) fields.put("helm", renderingChart);
         if (currentNamespace != null) fields.put("namespace", currentNamespace);
         String hostNs = keepDomain ? null : namespaceLabel(value);
         if (hostNs != null) fields.put("host_ns", hostNs);
         ledger.add("env-address", fields, relative, -1, "High (k8s manifest)");
+    }
+
+    /**
+     * A single word under a URL / URI / endpoint key ({@code SEARCH_URL=elasticsearch}): a host
+     * only if the deployment declares that name (rule 45), which the merger checks. A host-named
+     * key ({@code DB_HOST}) takes a bare name as is (rule 5); a dotted name is a domain.
+     */
+    static boolean bareUnderAddressKey(String key, String value) {
+        return value != null && AddressShape.keyKind(key) == AddressShape.KeyKind.ADDRESS
+                && value.trim().matches("[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(:\\d{1,5})?");
     }
 
     /** {host, the token it came from} per address of a value: each of a list (rule 55), else the one address; empty if none. */
@@ -723,11 +961,6 @@ public class ConfigExtractor {
         return stems.size() == 1 ? List.of() : out;
     }
 
-    /** Connection schemes that say the target is a database, and the ones that say it is a broker. */
-    private static final Set<String> DB_SCHEMES = Set.of("jdbc", "r2dbc", "mysql", "postgres", "postgresql", "mongodb",
-            "mongodb+srv", "redis", "rediss", "cassandra", "mariadb", "sqlserver", "oracle", "couchdb", "neo4j", "bolt", "memcached");
-    private static final Set<String> QUEUE_SCHEMES = Set.of("amqp", "amqps", "kafka", "nats", "mqtt", "mqtts", "stomp");
-
     /**
      * What the VALUE (or the variable's own name) says the target is, when it says
      * anything: a {@code key=value;} connection string and a {@code ConnectionStrings__X}
@@ -737,19 +970,7 @@ public class ConfigExtractor {
      * before (2026-10-26, run-aspnetcore-microservices).
      */
     static String kindHint(String name, String value) {
-        String v = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
-        String n = name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
-        if (n.startsWith("connectionstrings__") || n.startsWith("connectionstrings:")) return "db";
-        if (v.startsWith("jdbc:") || v.startsWith("r2dbc:")) return "db";
-        int scheme = v.indexOf("://");
-        if (scheme > 0) {
-            String s = v.substring(0, scheme);
-            if (DB_SCHEMES.contains(s)) return "db";
-            if (QUEUE_SCHEMES.contains(s)) return "queue";
-            return null;
-        }
-        if (v.indexOf('=') > 0 && v.indexOf(';') > 0 && CONNECTION_STRING_HOST.matcher(v).find()) return "db";
-        return null;
+        return AddressShape.kind(name, value);
     }
 
     /** {@code ENV K=V}, {@code ENV K V} and the multi-pair / quoted forms Docker accepts. */
@@ -791,7 +1012,44 @@ public class ConfigExtractor {
             joined.setLength(0);
         }
         if (joined.length() > 0) logical.add(joined.toString());
+        String dir = relative.replace('\\', '/');
+        dir = dir.contains("/") ? dir.substring(0, dir.lastIndexOf('/')) : "";
         for (String line : logical) {
+            // FROM names the image this one is built on. When that image is built from a
+            // directory of this repo (a build script or Compose says so), that directory's
+            // command line and start scripts run inside every image built on it: TeaStore's
+            // base image writes the registry URL from REGISTRY_HOST into Tomcat's context.xml
+            // in its start.sh, and five services inherit it (2026-11-04).
+            if (line.regionMatches(true, 0, "FROM ", 0, 5)) {
+                String[] words = line.substring(5).trim().split("\\s+");
+                int i = 0;
+                while (i < words.length && words[i].startsWith("--")) i++;
+                String stem = i < words.length ? imageStem(words[i]) : null;
+                if (stem != null && !stem.isEmpty()) {
+                    Map<String, String> fields = new LinkedHashMap<>();
+                    fields.put("dir", dir);
+                    fields.put("image", stem);
+                    ledger.add("dockerfile-from", fields, relative, -1, "High (Dockerfile FROM)");
+                }
+                continue;
+            }
+            // The image's command line is a use site like a Compose command: (rule 53) —
+            // Online Boutique's load generator runs `locust --host="http://${FRONTEND_ADDR}"`
+            // and reads the address nowhere else. Emitted as a url row of the module that
+            // owns the Dockerfile; the merger fills the placeholder from that module's
+            // workload env, exactly as for a URL literal in its code (2026-11-04).
+            if (line.regionMatches(true, 0, "ENTRYPOINT ", 0, 11) || line.regionMatches(true, 0, "CMD ", 0, 4)) {
+                String body = line.substring(line.indexOf(' ') + 1).replaceAll("[\\[\\]\"',]", " ");
+                java.util.regex.Matcher url = DOCKER_COMMAND_URL.matcher(body);
+                while (url.find()) {
+                    Map<String, String> fields = new LinkedHashMap<>();
+                    fields.put("value", url.group(1));
+                    fields.put("via", "dockerfile-command");
+                    RuleTrace.hit(53, "dockerfile " + relative + " " + url.group(1));
+                    ledger.add("url", fields, relative, -1, "High (image command line)");
+                }
+                continue;
+            }
             if (!line.regionMatches(true, 0, "ENV ", 0, 4)) continue;
             String body = line.substring(4).trim();
             java.util.regex.Matcher m = DOCKER_ENV_PAIR.matcher(body);
@@ -807,7 +1065,86 @@ public class ConfigExtractor {
                         null, "dockerfile", relative, ledger);
             }
         }
+        // The shell scripts beside a Dockerfile are the image's start-up code (TeaStore's
+        // start.sh): a URL in them, placeholders and all, is a use site like the command line.
+        Path parent = file.getParent();
+        if (parent == null) return;
+        try (java.util.stream.Stream<Path> siblings = Files.list(parent)) {
+            for (Path script : siblings.filter(p -> p.getFileName().toString().endsWith(".sh")).sorted().toList()) {
+                String[] lines;
+                try {
+                    if (Files.size(script) > 200_000) continue;
+                    lines = Files.readString(script, StandardCharsets.UTF_8).split("\n", -1);
+                } catch (Exception e) {
+                    continue;
+                }
+                String scriptRel = dir.isEmpty() ? script.getFileName().toString() : dir + "/" + script.getFileName();
+                for (int i = 0; i < lines.length; i++) {
+                    if (lines[i].trim().startsWith("#")) continue;
+                    java.util.regex.Matcher url = DOCKER_COMMAND_URL.matcher(lines[i].replace("\\\"", " ").replace("\"", " ").replace("'", " ").replace("|", " "));
+                    while (url.find()) {
+                        Map<String, String> fields = new LinkedHashMap<>();
+                        fields.put("value", url.group(1));
+                        fields.put("via", "image-script");
+                        RuleTrace.hit(53, "image-script " + scriptRel + ":" + (i + 1) + " " + url.group(1));
+                        ledger.add("url", fields, scriptRel, i + 1, "High (image start script)");
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // an unreadable directory listing leaves the Dockerfile's own rows in place
+        }
     }
+
+    /** {@code docker build -t image path} in a shell script: the directory an image is built from. */
+    private static final java.util.regex.Pattern DOCKER_BUILD = java.util.regex.Pattern.compile(
+            "docker\\s+(?:buildx\\s+)?build\\b([^\\n;&|]*)");
+    private static final java.util.regex.Pattern DOCKER_BUILD_TAG = java.util.regex.Pattern.compile("(?:^|\\s)(?:-t|--tag)[=\\s]+\"?([^\\s\"]+)\"?");
+
+    /**
+     * The images this repo builds from its own directories, from build scripts: TeaStore's
+     * tools/build_docker.sh runs {@code docker buildx build -t "${registry}teastore-base"
+     * ../utilities/tools.descartes.teastore.dockerbase/}. Emitted as image-build rows
+     * (image stem → repo-relative directory) for the merger's FROM chain.
+     */
+    private void extractImageBuilds(Path root, EdgeLedger ledger) {
+        for (Path script : SourceScanner.filesWithExtensions(root, List.of(".sh"))) {
+            String text;
+            try {
+                if (Files.size(script) > 200_000) continue;
+                text = Files.readString(script, StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                continue;
+            }
+            if (!text.contains("docker")) continue;
+            String relative = SourceScanner.relative(root, script);
+            Path scriptDir = script.getParent() == null ? root : script.getParent();
+            java.util.regex.Matcher b = DOCKER_BUILD.matcher(text.replace("\\\n", " "));
+            while (b.find()) {
+                String args = b.group(1);
+                java.util.regex.Matcher t = DOCKER_BUILD_TAG.matcher(args);
+                if (!t.find()) continue;
+                String stem = imageStem(t.group(1));
+                if (stem == null || stem.isEmpty()) continue;
+                // the build context is the last argument that is a path
+                String context = null;
+                for (String w : args.trim().split("\\s+")) {
+                    if (w.startsWith("-") || w.startsWith("\"")) continue;
+                    if (w.equals(".") || w.contains("/")) context = w;
+                }
+                if (context == null) continue;
+                String dir = repoRelativeDir(root, scriptDir, context.replace("\"", ""), false);
+                if (dir == null) continue;
+                Map<String, String> fields = new LinkedHashMap<>();
+                fields.put("image", stem);
+                fields.put("dir", dir);
+                ledger.add("image-build", fields, relative, -1, "High (build script)");
+            }
+        }
+    }
+
+    /** A URL in an image's command line, its {@code ${ENV}} placeholders kept for the merger to fill. */
+    private static final java.util.regex.Pattern DOCKER_COMMAND_URL = java.util.regex.Pattern.compile("(https?://[^\\s]+)");
 
     private static String unquote(String v) {
         String s = v.trim();
@@ -817,13 +1154,7 @@ public class ConfigExtractor {
         return s;
     }
 
-    /** The host key of a {@code key=value;key=value} connection string (Npgsql, SqlClient, ODBC). */
-    private static final java.util.regex.Pattern CONNECTION_STRING_HOST = java.util.regex.Pattern.compile(
-            "(?i)(?:^|;)\\s*(?:host|server|data source|hostname|address|addr|network address)\\s*=\\s*([^;,]+)");
-
-    /** Env names whose bare value is a host even without a port: DB_HOST, REGISTRY_HOST, CART_ENDPOINT. */
-    private static final java.util.regex.Pattern HOST_ENV_NAME = java.util.regex.Pattern.compile(
-            "(?i)(_host|_hostname|_addr|_address|_url|_uri|_endpoint|_server)$");
+    private static final java.util.regex.Pattern CONNECTION_STRING_HOST = AddressShape.CONNECTION_STRING_HOST;
 
     /**
      * The host of a value that is an address (a URL or {@code host:port}), or null for
@@ -845,20 +1176,18 @@ public class ConfigExtractor {
             java.util.regex.Matcher m = CONNECTION_STRING_HOST.matcher(v);
             if (RuleTrace.hitIf(m.find(), 32, "connstr " + name)) return hostOf(m.group(1).replaceFirst("(?i)^tcp:", ""), keepDomain);
         }
-        boolean addressShaped = v.contains("://") || v.matches("[^\\s/]+:\\d{2,5}(/.*)?");
-        if (addressShaped) return hostOf(v, keepDomain);
+        if (AddressShape.isAddressShaped(v)) return hostOf(v, keepDomain);
         // The variable's name says it holds a host, so the value must look like one: a DNS
         // name, optionally with a port. SW_AGENT_NAME_SERVER: agent::app is a SkyWalking
         // service name, not an address, and its first segment is no host (2026-10-27).
-        if (name != null && HOST_ENV_NAME.matcher(name.trim()).find()) {
-            if (RuleTrace.hitIf(!v.matches("[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?(:\\d{1,5})?"), 5, "not-a-host " + name + "=" + v)) return null;
+        if (AddressShape.keyKind(name) != AddressShape.KeyKind.NONE) {
+            if (RuleTrace.hitIf(!AddressShape.isHostValue(v) || v.matches(".*[,;].*"), 5, "not-a-host " + name + "=" + v)) return null;
             RuleTrace.hit(5, "env " + name + "=" + v);
             return hostOf(v, keepDomain);
         }
         return null;
     }
 
-    private static final Set<String> LOOPBACK_HOSTS = Set.of("localhost", "127.0.0.1", "0.0.0.0", "host.docker.internal");
 
     /** {@code .env} and {@code .env.<mode>} files outside ignored trees, templates excluded. */
     private static List<Path> dotenvFiles(Path root) {
@@ -961,6 +1290,12 @@ public class ConfigExtractor {
             }
             String dockerfile = build instanceof Map<?, ?> b && b.get("dockerfile") != null ? String.valueOf(b.get("dockerfile")) : null;
             if (context != null) {
+                fields.put("built", "true"); // this repo's own code runs in it
+                // build: plus image: names the image this directory is built into (FROM chain).
+                if (config.get("image") != null) {
+                    String builtImage = imageStem(String.valueOf(config.get("image")));
+                    if (builtImage != null && !builtImage.isEmpty()) fields.put("image_built", builtImage);
+                }
                 String contextDir = repoRelativeDir(root, composeDir, interpolate(context.trim(), projectEnv, 0), false);
                 if (contextDir != null) fields.put("context", contextDir);
                 if (dockerfile != null) {
@@ -1145,16 +1480,13 @@ public class ConfigExtractor {
             // env_file: every key in the file is injected into this service.
             Map<String, String> env = new LinkedHashMap<>();
             Map<String, String> fileEnv = new LinkedHashMap<>();
-            Object envFile = config.get("env_file");
-            List<?> envFiles = envFile instanceof List<?> l ? l : (envFile == null ? List.of() : List.of(envFile));
-            for (Object f : envFiles) {
-                String p = f instanceof Map<?, ?> m ? String.valueOf(m.get("path")) : String.valueOf(f);
-                p = interpolate(p, projectEnv, 0);
-                if (p.isBlank() || p.contains("$")) continue;
-                Path resolved = composeDir.resolve(p).normalize();
-                if (!resolved.startsWith(root.normalize())) continue;
+            // Convention ③: an env_file is injected wholesale, like an envFrom ConfigMap; the
+            // service chose none of its keys, so a key is its own only if it reads it (rule 14).
+            Map<String, String> wholesale = new LinkedHashMap<>(); // key -> the env_file it came from
+            for (Path resolved : composeEnvFiles(config, root, composeDir, projectEnv)) {
                 for (Map.Entry<String, String> e : readEnvFile(resolved).entrySet()) {
                     fileEnv.put(e.getKey(), interpolate(e.getValue(), projectEnv, 0));
+                    wholesale.put(e.getKey(), SourceScanner.relative(root, resolved));
                 }
             }
             env.putAll(fileEnv);
@@ -1203,10 +1535,19 @@ public class ConfigExtractor {
                 // came through a forwarded key, an env_file, or a ${VAR} filled from .env.
                 String via = forwarded.contains(e.getKey()) ? "forward " : fileEnv.containsKey(e.getKey()) && !environmentDeclares(config, e.getKey()) ? "env_file "
                         : interpolated.contains(e.getKey()) ? "interp " : null;
+                String shared = "env_file ".equals(via) ? wholesale.get(e.getKey()) : null;
                 for (String[] hv : hostsOf(e.getKey(), e.getValue(), true)) {
                     RuleTrace.hit(via != null ? 24 : 7, (via != null ? via : "env ") + service + "." + e.getKey() + "=" + hv[0]);
-                    recordWorkloadEnv(service, null, hv[0], e.getKey(), hv[1], relative, ledger);
+                    recordWorkloadEnv(service, null, hv[0], e.getKey(), hv[1], relative, ledger, shared);
                 }
+            }
+            // Convention ①: the ports a service publishes on the host (ports: "5432:5432"). A
+            // process on the developer's machine reaching localhost:5432 reaches this service.
+            for (String port : publishedPorts(config.get("ports"), projectEnv)) {
+                Map<String, String> fields = new LinkedHashMap<>();
+                fields.put("workload", service);
+                fields.put("port", port);
+                ledger.add("compose-port", fields, relative, -1, "High (compose ports)");
             }
             // Rule 53: the command line is wiring too (mysql -h mysql, curl http://nginx:8080).
             for (String key : List.of("entrypoint", "command")) {
@@ -1216,6 +1557,45 @@ public class ConfigExtractor {
                 }
             }
         }
+    }
+
+    /**
+     * The host ports a Compose service publishes: {@code "8080:80"}, {@code "127.0.0.1:8080:80/tcp"},
+     * {@code "${PORT:-8080}:80"}, a range's first port, and the long form {@code {published: 8080}}.
+     * A bare container port ({@code "80"}) publishes on a random host port and is skipped.
+     */
+    static List<String> publishedPorts(Object ports, Map<String, String> projectEnv) {
+        List<String> out = new ArrayList<>();
+        if (!(ports instanceof List<?> list)) return out;
+        for (Object p : list) {
+            String published = null;
+            if (p instanceof Map<?, ?> m && m.get("published") != null) {
+                published = String.valueOf(m.get("published"));
+            } else if (p != null && !(p instanceof Map<?, ?>)) {
+                String s = interpolate(String.valueOf(p), projectEnv, 0).trim().replaceAll("/(tcp|udp)$", "");
+                String[] parts = s.split(":");
+                if (parts.length >= 2) published = parts[parts.length - 2];
+            }
+            if (published == null) continue;
+            published = published.trim().replaceAll("-\\d+$", "");
+            if (published.matches("\\d{2,5}")) out.add(published);
+        }
+        return out;
+    }
+
+    /** The env_files a Compose service names, resolved inside the repository. */
+    private List<Path> composeEnvFiles(Map<?, ?> config, Path root, Path composeDir, Map<String, String> projectEnv) {
+        Object envFile = config.get("env_file");
+        List<?> envFiles = envFile instanceof List<?> l ? l : (envFile == null ? List.of() : List.of(envFile));
+        List<Path> out = new ArrayList<>();
+        for (Object f : envFiles) {
+            String p = f instanceof Map<?, ?> m ? String.valueOf(m.get("path")) : String.valueOf(f);
+            p = interpolate(p, projectEnv, 0);
+            if (p.isBlank() || p.contains("$")) continue;
+            Path resolved = composeDir.resolve(p).normalize();
+            if (resolved.startsWith(root.normalize())) out.add(resolved);
+        }
+        return out;
     }
 
     private void recordCommandAddress(String workload, String[] hit, String key, String relative, EdgeLedger ledger) {
@@ -1230,10 +1610,6 @@ public class ConfigExtractor {
         if (renderingChart != null) fields.put("helm", renderingChart);
         ledger.add("workload-env", fields, relative, -1, "High (container command line)");
     }
-
-    /** A flag whose name says it holds a host, in either spelling ({@code --zk-host=x}, {@code --broker-addr x}). */
-    private static final java.util.regex.Pattern HOST_FLAG = java.util.regex.Pattern.compile(
-            "(?i)^--?[a-z0-9][a-z0-9_.-]*(host|hostname|addr|address|server|servers|url|uri|endpoint)$");
 
     /**
      * Rule 53: the addresses a container's command line names — a URL or {@code host:port}
@@ -1269,7 +1645,8 @@ public class ConfigExtractor {
             }
             String host = null;
             String raw = null;
-            if (flag != null && (flag.equals("-h") || HOST_FLAG.matcher(flag).matches())) {
+            // A flag whose name says it holds a host (--zk-host=x, --broker-addr x): the same key words as everywhere (②).
+            if (flag != null && (flag.equals("-h") || AddressShape.keyKind(flag) != AddressShape.KeyKind.NONE)) {
                 host = addressHost("_host", value);
                 raw = value;
             }
@@ -1277,14 +1654,14 @@ public class ConfigExtractor {
                 for (String part : splitAddresses(t)) {
                     if (part.contains("://") || part.matches("[A-Za-z0-9][A-Za-z0-9.-]*:\\d{2,5}(/.*)?")) {
                         String h = addressHost(null, part);
-                        if (h != null && !LOOPBACK_HOSTS.contains(h)) out.add(new String[]{t, h, part, ""});
+                        if (h != null && !AddressShape.isLoopback(h)) out.add(new String[]{t, h, part, ""});
                     }
                 }
                 continue;
             }
             // A bare word after a host-named flag is a host only if the deployment declares that
             // name (rule 45's test, applied by the merger): --character-set-server=utf8mb4 is not.
-            if (host != null && !LOOPBACK_HOSTS.contains(host) && !raw.contains("$")) {
+            if (host != null && !AddressShape.isLoopback(host) && !raw.contains("$")) {
                 boolean bare = !raw.contains("://") && !raw.contains(":");
                 out.add(new String[]{flag, host, raw, bare ? "bare" : ""});
             }
@@ -1431,19 +1808,53 @@ public class ConfigExtractor {
         }
     }
 
+    /**
+     * Rule 61: an Ocelot gateway's route table ({@code ocelot*.json}): every
+     * {@code Routes[]} (Ocelot 16+) or {@code ReRoutes[]} entry's
+     * {@code DownstreamHostAndPorts[].Host} is an upstream of the gateway that owns the file,
+     * as YARP's destinations and nginx's proxy_pass are (rules 6, 34, 38). The .NET gateways
+     * of 4 of the 100 mining systems state their routes nowhere else (2026-11-03).
+     */
+    private void extractOcelotRoutes(Path file, String relative, EdgeLedger ledger) throws Exception {
+        String text = Files.readString(file, StandardCharsets.UTF_8);
+        if (text.startsWith("\uFEFF")) text = text.substring(1);
+        org.json.JSONObject root = new org.json.JSONObject(text);
+        for (String key : List.of("Routes", "ReRoutes")) {
+            org.json.JSONArray routes = root.optJSONArray(key);
+            if (routes == null) continue;
+            for (int i = 0; i < routes.length(); i++) {
+                org.json.JSONObject route = routes.optJSONObject(i);
+                org.json.JSONArray hosts = route == null ? null : route.optJSONArray("DownstreamHostAndPorts");
+                if (hosts == null) continue;
+                String scheme = route.optString("DownstreamScheme", "http");
+                for (int j = 0; j < hosts.length(); j++) {
+                    org.json.JSONObject hp = hosts.optJSONObject(j);
+                    String host = hp == null ? "" : hp.optString("Host", "").trim();
+                    if (host.isEmpty()) continue;
+                    Map<String, String> fields = new LinkedHashMap<>();
+                    fields.put("value", scheme + "://" + host + (hp.has("Port") ? ":" + hp.opt("Port") : ""));
+                    fields.put("route", route.optString("UpstreamPathTemplate", ""));
+                    RuleTrace.hit(61, "ocelot " + relative + " " + host);
+                    ledger.add("url", fields, relative, -1, "High (ocelot gateway route)");
+                }
+            }
+        }
+    }
+
     /** {@code ReverseProxy:Clusters:<cluster>:Destinations:<name>:Address}. */
     private static final java.util.regex.Pattern YARP_DESTINATION = java.util.regex.Pattern.compile(
             "(?i)ReverseProxy:Clusters:([^:]+):Destinations:[^:]+:Address");
 
-    /** The last segment of a .NET key, camel-cased, ends with the word that says it holds an address. */
-    private static final java.util.regex.Pattern DOTNET_ADDRESS_KEY = java.util.regex.Pattern.compile(
-            "(?i)(url|uri|address|host|hostname|endpoint|server|bootstrapservers)$");
-
     private boolean isRelevantDotnetKey(String key, String value) {
+        // An inbound statement (CORS origins, redirect URIs) or a comment key is no target (convention ②).
+        if (AddressShape.isInboundKey(key) || AddressShape.isCommentKey(key)) return false;
         String k = key.toLowerCase(Locale.ROOT);
         if (k.startsWith("connectionstrings:")) return true;
         String last = k.substring(k.lastIndexOf(':') + 1);
-        if (DOTNET_ADDRESS_KEY.matcher(last).find()) return true;
+        if (AddressShape.keyKind(key) != AddressShape.KeyKind.NONE) return true;
+        // The Options pattern binds a section to a class (PostgresOptions:ConnectionString,
+        // MongoOptions:ConnectionString): a connection string is one wherever it sits (rule 58).
+        if (RuleTrace.hitIf(last.endsWith("connectionstring") || AddressShape.isConnectionString(value), 58, "options-key " + key)) return true;
         return value.startsWith("http://") || value.startsWith("https://") || value.contains("://");
     }
 
@@ -1560,12 +1971,31 @@ public class ConfigExtractor {
     /** @param value the raw env value, when known, so its shape can say what kind of target the host is */
     private void recordWorkloadEnv(String workload, String configMap, String host, String envName, String value,
                                    String relative, EdgeLedger ledger) {
+        recordWorkloadEnv(workload, configMap, host, envName, value, relative, ledger, null);
+    }
+
+    /**
+     * @param shared the env_file the value came from when it was injected wholesale rather than
+     *               chosen for this workload, else null: then the value is this workload's only
+     *               if it reads the key (convention ③, {@code key-read} rows)
+     */
+    private void recordWorkloadEnv(String workload, String configMap, String host, String envName, String value,
+                                   String relative, EdgeLedger ledger, String shared) {
+        recordWorkloadEnv(workload, configMap, host, envName, value, relative, ledger, shared, null);
+    }
+
+    /** @param configMapKey the one ConfigMap key a {@code configMapKeyRef} selects, else null */
+    private void recordWorkloadEnv(String workload, String configMap, String host, String envName, String value,
+                                   String relative, EdgeLedger ledger, String shared, String configMapKey) {
         Map<String, String> fields = new LinkedHashMap<>();
         fields.put("workload", workload);
         if (configMap != null && !configMap.isBlank()) fields.put("configmap", configMap.trim());
         if (host != null && !host.isBlank()) fields.put("host", host.trim());
         if (fields.size() < 2) return;
         if (envName != null && !envName.isBlank()) fields.put("name", envName.trim());
+        if (shared != null) fields.put("shared", shared);
+        if (configMapKey != null) fields.put("configmap_key", configMapKey);
+        if (bareUnderAddressKey(envName, value)) fields.put("bare", "true");
         String kind = kindHint(envName, value);
         if (kind != null) fields.put("kind", kind);
         if (renderingChart != null) fields.put("helm", renderingChart);
@@ -1582,9 +2012,6 @@ public class ConfigExtractor {
     /** The in-cluster DNS suffixes a Kubernetes Service name may carry; the label before them is the namespace. */
     static final String[] CLUSTER_SUFFIXES = {".svc.cluster.local", ".cluster.local", ".svc"};
 
-    /** RFC 2606 / 6761 / 6762 top-level domains: a host under them is a placeholder, never a deployment. */
-    private static final String[] RESERVED_TLDS = {".local", ".test", ".example", ".invalid", ".localhost"};
-
     /**
      * @param keepDomain true for a Compose environment, where there are no namespaces: a dotted
      *                   name is a domain (or a dotted Compose service name, {@code catalog.api})
@@ -1597,16 +2024,7 @@ public class ConfigExtractor {
      *                   more labels is never cut to its first label.
      */
     private static String hostOf(String raw, boolean keepDomain) {
-        String s = raw.trim().toLowerCase(Locale.ROOT);
-        int scheme = s.indexOf("://");
-        if (scheme >= 0) s = s.substring(scheme + 3);
-        int at = s.indexOf('@');
-        if (at >= 0) s = s.substring(at + 1);      // strip user:pass@
-        int slash = s.indexOf('/');
-        if (slash >= 0) s = s.substring(0, slash); // strip path
-        s = trailingHostPort(s);
-        int colon = s.indexOf(':');
-        if (colon >= 0) s = s.substring(0, colon); // strip port
+        String s = AddressShape.host(raw);         // scheme, userinfo, path, port off (convention ②)
         if (s.isEmpty() || s.contains("$") || s.contains("[") || s.contains("{")) return null;
         if (s.matches("[0-9.]+")) return null;     // an IP or a bare number is not a name
         boolean cluster = false;
@@ -1621,7 +2039,7 @@ public class ConfigExtractor {
         int lastDot = s.lastIndexOf('.');
         if (cluster) {
             if (lastDot > 0) s = s.substring(0, lastDot);            // <svc>.<ns>.svc.cluster.local -> <svc>
-        } else if (!keepDomain && lastDot > 0 && s.indexOf('.') == lastDot && !hasReservedTld(s)) {
+        } else if (!keepDomain && lastDot > 0 && s.indexOf('.') == lastDot && !AddressShape.isReservedHost(s)) {
             RuleTrace.hit(36, "ns-strip " + s);
             s = s.substring(0, lastDot);                              // k8s manifest: <svc>.<ns> -> <svc>
         } else if (lastDot > 0) {
@@ -1648,11 +2066,6 @@ public class ConfigExtractor {
         return parts[parts.length - 2] + ":" + parts[parts.length - 1];
     }
 
-    private static boolean hasReservedTld(String host) {
-        for (String tld : RESERVED_TLDS) if (host.endsWith(tld)) return true;
-        return false;
-    }
-
     /**
      * Emits a {@code compose-dependency} edge for every {@code services.<svc>.depends_on}
      * entry: {@code source_service -> target_service}. Both the list form
@@ -1671,21 +2084,22 @@ public class ConfigExtractor {
             if (service.isEmpty() || !(entry.getValue() instanceof Map<?, ?> config)) continue;
             if (ServiceRootScanner.isTestName(service)) continue;
 
-            java.util.List<String> targets = new java.util.ArrayList<>();
-            // links is the version 1 file format's way of saying the same thing, and says
-            // slightly more: a link exists so that this container can reach that one by
-            // name. "gateway" or "db:database" — the alias after the colon is local to
-            // this service, and is what its config then calls the target (mall-swarm's
-            // jdbc:mysql://db for `mysql:db`), so it is recorded as a compose-alias row.
-            // external_links is the same declaration for a container another Compose
-            // file runs (2026-10-26).
-            for (String key : List.of("depends_on", "links", "external_links")) {
+            // target -> the key that named it. links is the version 1 file format's way of
+            // saying the same thing, and says slightly more: a link exists so that this
+            // container can reach that one by name (without it a v1 file resolves no name),
+            // whereas depends_on only orders start-up. "gateway" or "db:database" — the alias
+            // after the colon is local to this service, and is what its config then calls
+            // the target (mall-swarm's jdbc:mysql://db for `mysql:db`), so it is recorded as
+            // a compose-alias row. external_links is the same declaration for a container
+            // another Compose file runs (2026-10-26).
+            Map<String, String> targets = new LinkedHashMap<>();
+            for (String key : List.of("links", "external_links", "depends_on")) {
                 Object declared = config.get(key);
                 if (declared instanceof List<?> list) {
                     for (Object t : list) {
                         String[] parts = String.valueOf(t).trim().split(":", 2);
                         String target = parts[0].trim();
-                        targets.add(target);
+                        targets.putIfAbsent(target, key);
                         String alias = parts.length > 1 ? parts[1].trim() : "";
                         if (!key.equals("depends_on") && !target.isEmpty()) RuleTrace.hit(12, "links " + service + "->" + target);
                         if (!alias.isEmpty() && !target.isEmpty() && !alias.equalsIgnoreCase(target)) {
@@ -1698,15 +2112,17 @@ public class ConfigExtractor {
                         }
                     }
                 } else if (declared instanceof Map<?, ?> map) {
-                    for (Object k : map.keySet()) targets.add(String.valueOf(k).trim());
+                    for (Object k : map.keySet()) targets.putIfAbsent(String.valueOf(k).trim(), key);
                 }
             }
 
-            for (String target : targets) {
+            for (Map.Entry<String, String> t : targets.entrySet()) {
+                String target = t.getKey();
                 if (target.isEmpty() || target.equals(service) || ServiceRootScanner.isTestName(target)) continue;
                 Map<String, String> fields = new LinkedHashMap<>();
                 fields.put("source_service", service);
                 fields.put("target_service", target);
+                fields.put("via", t.getValue());
                 ledger.add("compose-dependency", fields, relative, -1, "High (docker-compose depends_on/links)");
             }
         }
@@ -1762,6 +2178,8 @@ public class ConfigExtractor {
     /** Keys that name another service or a piece of infrastructure. */
     private boolean isRelevant(String key, String value) {
         String k = key.toLowerCase(Locale.ROOT);
+        // An inbound statement (CORS origins, redirect URIs) or a comment key is no target (convention ②).
+        if (AddressShape.isInboundKey(key) || AddressShape.isCommentKey(key)) return false;
 
         for (String prefix : OPENAPI_UI_PREFIXES) {
             if (RuleTrace.hitIf(k.startsWith(prefix), 43, "drop " + k)) return false;
@@ -1775,12 +2193,6 @@ public class ConfigExtractor {
                 || k.startsWith("spring.cloud.nacos") || k.startsWith("spring.cloud.zookeeper")) {
             return true;
         }
-        // Address lists: Spring's Elasticsearch `uris`, the older `cluster-nodes`, a
-        // registry's `server-addr` — the value is host:port, so the shape alone would not
-        // say it is a target (2026-10-26, mall-swarm).
-        if (k.matches(".*\\.(uris|cluster-nodes|server-addr|addresses|bootstrap-servers)(\\[\\d+])?$")) {
-            return true;
-        }
         // The port a service listens on, and the config-server import whose value is a
         // placeholder with a localhost default: together they let a loopback address in a
         // client declaration be read back to the one module that owns the port (2026-10-23).
@@ -1788,16 +2200,11 @@ public class ConfigExtractor {
                 || k.startsWith("spring.cloud.config.uri")) {
             return true;
         }
-        if (k.endsWith(".url") || k.endsWith(".uri") || k.endsWith(".host") || k.endsWith(".hostname")
-                || k.endsWith(".endpoint") || k.endsWith(".address")
-                || k.endsWith("_url") || k.endsWith("_uri") || k.endsWith("_host") || k.endsWith("_hostname")
-                || k.endsWith("_endpoint") || k.endsWith("_addr")
-                // A gateway route that names its backend by registry id (Zuul serviceId,
-                // Spring Cloud Gateway's lb://) is a dependency stated in config.
-                || k.endsWith(".serviceid") || k.endsWith(".service-id")) {
-            return true;
-        }
-        // A value that is plainly a URL is worth keeping whatever the key is called.
-        return value.startsWith("http://") || value.startsWith("https://");
+        // A key whose name says it holds an address — the same words as an environment
+        // variable's, a flag's or a .NET key's: host, address, url, endpoint, an address list
+        // (uris, bootstrap-servers, server-addr), a registry id (Zuul serviceId).
+        if (AddressShape.keyKind(key) != AddressShape.KeyKind.NONE) return true;
+        // A value that is plainly a URI is worth keeping whatever the key is called.
+        return AddressShape.hasScheme(value);
     }
 }

@@ -20,7 +20,7 @@ flowchart TB
     simple_ui["simple-ui"]
     cloud_simple_serviceb["cloud-simple-serviceb"]
     cloud_simple_ui["cloud-simple-ui"]
-    uaa_service["uaa-service"]
+    cloud_uaa_service["cloud-uaa-service"]
   end
   subgraph layer3 ["services · depth 3"]
     direction LR
@@ -71,5 +71,5 @@ flowchart TB
   gateway -.-> cloud_simple_service
   gateway -.-> cloud_simple_serviceb
   gateway -.-> cloud_simple_ui
-  gateway -.-> uaa_service
+  gateway -.-> cloud_uaa_service
 classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

@@ -35,3 +35,14 @@ order-service	cloud-config	control	同上
 payment-service	cloud-config	control	同上
 shipping-service	cloud-config	control	同上
 favourite-service	cloud-config	control	同上
+# 2026-11-03 補列：遙測管線依後來各組 hold-out 的慣例列 variant（9/22 寫成時還沒有這條慣例）；慣例②統一後工具才認得 spring.zipkin.base-url。
+api-gateway	zipkin-container	variant	api-gateway/src/main/resources/application.yml:8 spring.zipkin.base-url ${SPRING_ZIPKIN_BASE_URL:http://localhost:9411/}（compose.yml:7 zipkin-container 發佈 9411）；遙測
+cloud-config	zipkin-container	variant	cloud-config/src/main/resources/application.yml:7 spring.zipkin.base-url ${SPRING_ZIPKIN_BASE_URL:http://localhost:9411/}（compose.yml:7 zipkin-container 發佈 9411）；遙測
+favourite-service	zipkin-container	variant	favourite-service/src/main/resources/application.yml:8 spring.zipkin.base-url ${SPRING_ZIPKIN_BASE_URL:http://localhost:9411/}（compose.yml:7 zipkin-container 發佈 9411）；遙測
+order-service	zipkin-container	variant	order-service/src/main/resources/application.yml:8 spring.zipkin.base-url ${SPRING_ZIPKIN_BASE_URL:http://localhost:9411/}（compose.yml:7 zipkin-container 發佈 9411）；遙測
+payment-service	zipkin-container	variant	payment-service/src/main/resources/application.yml:8 spring.zipkin.base-url ${SPRING_ZIPKIN_BASE_URL:http://localhost:9411/}（compose.yml:7 zipkin-container 發佈 9411）；遙測
+product-service	zipkin-container	variant	product-service/src/main/resources/application.yml:8 spring.zipkin.base-url ${SPRING_ZIPKIN_BASE_URL:http://localhost:9411/}（compose.yml:7 zipkin-container 發佈 9411）；遙測
+proxy-client	zipkin-container	variant	proxy-client/src/main/resources/application.yml:8 spring.zipkin.base-url ${SPRING_ZIPKIN_BASE_URL:http://localhost:9411/}（compose.yml:7 zipkin-container 發佈 9411）；遙測
+service-discovery	zipkin-container	variant	service-discovery/src/main/resources/application.yml:4 spring.zipkin.base-url ${SPRING_ZIPKIN_BASE_URL:http://localhost:9411/}（compose.yml:7 zipkin-container 發佈 9411）；遙測
+shipping-service	zipkin-container	variant	shipping-service/src/main/resources/application.yml:8 spring.zipkin.base-url ${SPRING_ZIPKIN_BASE_URL:http://localhost:9411/}（compose.yml:7 zipkin-container 發佈 9411）；遙測
+user-service	zipkin-container	variant	user-service/src/main/resources/application.yml:8 spring.zipkin.base-url ${SPRING_ZIPKIN_BASE_URL:http://localhost:9411/}（compose.yml:7 zipkin-container 發佈 9411）；遙測

@@ -12,7 +12,7 @@
 
 ## go-food-delivery
 
-參考邊集：data 8（可計分 8）＋ variant 24。
+參考邊集：data 8（可計分 8）＋ variant 26。
 
 
 漏（truth 有、工具沒畫，8 條）：

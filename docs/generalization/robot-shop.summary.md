@@ -7,28 +7,32 @@
 
 ## ledger sections
 - http-server = 34
-- url = 12
+- url = 19
 - jpa = 4
 - config = 44
+- parsed-dir = 15
 - persistence = 6
 - http-client = 3
 - import = 28
 - registry-ref = 1
+- dockerfile-from = 14
 - env-address = 11
+- image-build = 1
 - k8s-workload = 15
 - k8s-service = 12
 - k8s-namespace = 2
 - compose-service = 18
 - compose-dependency = 16
 - workload-env = 2
+- compose-port = 5
 - k8s-gateway = 1
 - ingress-route = 1
 - service-root = 13
 - module-deps = 6
-- TOTAL = 229 | files with syntax errors = 0
+- TOTAL = 271 | files with syntax errors = 0
 
 ## graph
-- after merge: 16 nodes / 22 edges | after normalize: 16 nodes / 22 edges | unresolved code edges = 1
+- after merge: 16 nodes / 22 edges | after normalize: 16 nodes / 22 edges | unresolved code edges = 2
 - persistence services: [shipping, ratings, user, cart, catalogue, dispatch]
 
 ## nodes (kind, layer)
@@ -73,8 +77,12 @@
 - web -> shipping  (sync-http, documented)  code: docker-compose.yaml#depends_on
 - web -> user  (sync-http, documented)  code: docker-compose.yaml#depends_on
 
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
+
 ## unresolved (source hint / raw target / file:line), first 40
 - ratings  =>  null   @ ratings/html/src/Service/CatalogueService.php:32
+- load  =>  http://[a-z0-9]+   @ load-gen/load-gen.sh:79
 
 ## alias questions (name [origin] seen in | candidates)
 - none
@@ -166,13 +174,13 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 5: 7 (env CATALOGUE_HOST=catalogue; env USER_HOST=user; env CART_HOST=cart; env SHIPPING_HOST=shipping; env PAYMENT_HOST=payment)
 - rule 6: 6 (url http://${CATALOGUE_HOST}:8080/; url http://${USER_HOST}:8080/; url http://${CART_HOST}:8080/; url http://${SHIPPING_HOST}:8080/; url http://${PAYMENT_HOST}:8080/)
 - rule 7: 4 (env load.HOST=web; node web; node redis; node rabbitmq)
-- rule 8: 0
+- rule 8: 1 (loopback localhost:8080)
 - rule 9: 2 (jpa shipping/src/main/java/com/instana/robotshop/shipping/City.java; jpa shipping/src/main/java/com/instana/robotshop/shipping/Code.java)
 - rule 10: 1 (drop payment-fix (K8s/Istio))
 - rule 11: 1 (k8s-over-compose 13 compose names ignored)
 - rule 12: 0
 - rule 13: 0
-- rule 14: 1 (edge load->web)
+- rule 14: 1 (code-decides load->web)
 - rule 15: 0
 - rule 16: 0
 - rule 17: 0
@@ -207,6 +215,16 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 46: 0
 - rule 47: 5 (valueref user/server.js:273 mongoURL; hostref cart/server.js:362 catalogueHost; valueref cart/server.js:391 redisHost; valueref catalogue/server.js:158 mongoURL; urlref payment/payment.py:84 PAYMENT_GATEWAY)
 - rule 48: 3 (default CATALOGUE_URL=catalogue; usesite MONGO_URL=mongodb; usesite REDIS_HOST=redis)
+- rule 49: 0
+- rule 50: 0
 - rule 51: 8 (browser web/static/js/controller.js:103; browser web/static/js/controller.js:117; browser web/static/js/controller.js:204; browser web/static/js/controller.js:222; browser web/static/js/controller.js:288)
 - rule 52: 28 (render K8s/helm/templates/cart-deployment.yaml; render K8s/helm/templates/cart-service.yaml; render K8s/helm/templates/catalogue-deployment.yaml; render K8s/helm/templates/catalogue-service.yaml; render K8s/helm/templates/clusterrole.yaml)
+- rule 53: 2 (image-script load-gen/load-gen.sh:13 http://localhost:8080; image-script load-gen/load-gen.sh:79 http://[a-z0-9]+)
+- rule 54: 0
+- rule 55: 0
 - rule 56: 2 (istio robotshop-gateway -> web.robot-shop.svc.cluster.local; edge istio-ingressgateway->web)
+- rule 57: 0
+- rule 58: 0
+- rule 59: 0
+- rule 60: 0
+- rule 61: 0

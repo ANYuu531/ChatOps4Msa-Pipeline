@@ -9,15 +9,18 @@
 - name-ref = 433
 - http-server = 209
 - http-client = 65
-- url = 31
+- url = 154
 - name-constant = 115
-- config = 338
+- config = 350
 - url-metadata = 1
+- parsed-dir = 284
 - import = 29
+- dockerfile-from = 46
 - k8s-namespace = 2
 - k8s-service = 319
 - compose-service = 142
 - compose-dependency = 2
+- compose-port = 89
 - k8s-workload = 270
 - k8s-gateway = 1
 - ingress-route = 39
@@ -25,10 +28,10 @@
 - workload-env = 3
 - service-root = 50
 - module-deps = 48
-- TOTAL = 2162 | files with syntax errors = 0
+- TOTAL = 2716 | files with syntax errors = 0
 
 ## graph
-- after merge: 99 nodes / 158 edges | after normalize: 99 nodes / 158 edges | unresolved code edges = 66
+- after merge: 99 nodes / 158 edges | after normalize: 99 nodes / 158 edges | unresolved code edges = 40
 - persistence services: [ts-contacts-service, ts-notification-service, ts-config-service, ts-assurance-service, ts-order-other-service, ts-route-service, ts-price-service, ts-security-service, ts-consign-service, ts-train-service, ts-order-service, ts-food-service, ts-station-food-service, ts-train-food-service, ts-food-delivery-service, ts-consign-price-service, ts-wait-order-service, ts-common, ts-station-service, ts-auth-service, ts-user-service, ts-payment-service, ts-inside-payment-service, ts-delivery-service, ts-travel2-service, ts-travel-service]
 
 ## nodes (kind, layer)
@@ -292,33 +295,10 @@
 - ts-voucher-service -> ts-voucher-mysql  (db, inferred)  code: deployment/docker-compose-manifests/docker-compose-with-jaeger.yml#depends_on
 - ts-wait-order-service -> ts-preserve-service  (sync-http, documented)  code: ts-wait-order-service/src/main/java/waitorder/utils/PollThread.java:75
 
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
+
 ## unresolved (source hint / raw target / file:line), first 40
-- ts-admin-user-service  =>  http://   @ ts-admin-user-service/src/main/java/adminuser/service/AdminUserServiceImpl.java:37
-- ts-cancel-service  =>  http://   @ ts-cancel-service/src/main/java/cancel/service/CancelServiceImpl.java:42
-- ts-order-other-service  =>  http://   @ ts-order-other-service/src/main/java/other/service/OrderOtherServiceImpl.java:42
-- ts-preserve-service  =>  http://   @ ts-preserve-service/src/main/java/preserve/service/PreserveServiceImpl.java:45
-- ts-security-service  =>  http://   @ ts-security-service/src/main/java/security/service/SecurityServiceImpl.java:47
-- ts-consign-service  =>  http://   @ ts-consign-service/src/main/java/consign/service/ConsignServiceImpl.java:42
-- ts-order-service  =>  http://   @ ts-order-service/src/main/java/order/service/OrderServiceImpl.java:44
-- ts-food-service  =>  http://   @ ts-food-service/src/main/java/foodsearch/service/FoodServiceImpl.java:50
-- ts-rebook-service  =>  http://   @ ts-rebook-service/src/main/java/rebook/service/RebookServiceImpl.java:44
-- ts-admin-basic-info-service  =>  http://   @ ts-admin-basic-info-service/src/main/java/adminbasic/service/AdminBasicInfoServiceImpl.java:36
-- ts-food-delivery-service  =>  http://   @ ts-food-delivery-service/src/main/java/food_delivery/service/FoodDeliveryServiceImpl.java:40
-- ts-wait-order-service  =>  http://   @ ts-wait-order-service/src/main/java/waitorder/utils/PollThread.java:71
-- ts-basic-service  =>  http://   @ ts-basic-service/src/main/java/fdse/microservice/service/BasicServiceImpl.java:36
-- ts-preserve-other-service  =>  http://   @ ts-preserve-other-service/src/main/java/preserveOther/service/PreserveOtherServiceImpl.java:42
-- ts-auth-service  =>  http://   @ ts-auth-service/src/main/java/auth/service/impl/TokenServiceImpl.java:55
-- ts-user-service  =>  http://   @ ts-user-service/src/main/java/user/service/impl/UserServiceImpl.java:42
-- ts-route-plan-service  =>  http://   @ ts-route-plan-service/src/main/java/plan/service/RoutePlanServiceImpl.java:35
-- ts-inside-payment-service  =>  http://   @ ts-inside-payment-service/src/main/java/inside_payment/service/InsidePaymentServiceImpl.java:42
-- ts-seat-service  =>  http://   @ ts-seat-service/src/main/java/seat/service/SeatServiceImpl.java:37
-- ts-execute-service  =>  http://   @ ts-execute-service/src/main/java/execute/serivce/ExecuteServiceImpl.java:36
-- ts-travel-plan-service  =>  http://   @ ts-travel-plan-service/src/main/java/travelplan/service/TravelPlanServiceImpl.java:46
-- ts-travel2-service  =>  http://   @ ts-travel2-service/src/main/java/travel2/service/TravelServiceImpl.java:47
-- ts-travel-service  =>  http://   @ ts-travel-service/src/main/java/travel/service/TravelServiceImpl.java:52
-- ts-admin-order-service  =>  http://   @ ts-admin-order-service/src/main/java/adminorder/service/AdminOrderServiceImpl.java:35
-- ts-admin-travel-service  =>  http://   @ ts-admin-travel-service/src/main/java/admintravel/service/AdminTravelServiceImpl.java:38
-- ts-admin-route-service  =>  http://   @ ts-admin-route-service/src/main/java/adminroute/service/AdminRouteServiceImpl.java:32
 - ts-contacts-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-contacts-service/src/main/resources/application.yml:-1
 - ts-admin-user-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-admin-user-service/src/main/resources/application.yml:-1
 - ts-notification-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-notification-service/src/main/resources/application.yml:-1
@@ -333,6 +313,32 @@
 - ts-consign-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-consign-service/src/main/resources/application.yml:-1
 - ts-train-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-train-service/src/main/resources/application.yml:-1
 - ts-order-service  =>  jdbc:mysql://10.176.122.1:3306/ts?useSSL=false   @ ts-order-service/src/main/resources/application.yml:-1
+- ts-verification-code-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-verification-code-service/src/main/resources/application.yml:-1
+- ts-food-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-food-service/src/main/resources/application.yml:-1
+- ts-station-food-service  =>  jdbc:mysql://10.176.122.1:3306/ts?useSSL=false   @ ts-station-food-service/src/main/resources/application.yml:-1
+- ts-rebook-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-rebook-service/src/main/resources/application.yml:-1
+- ts-train-food-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-train-food-service/src/main/resources/application.yml:-1
+- ts-admin-basic-info-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-admin-basic-info-service/src/main/resources/application.yml:-1
+- ts-food-delivery-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-food-delivery-service/src/main/resources/application.yml:-1
+- ts-consign-price-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-consign-price-service/src/main/resources/application.yml:-1
+- ts-wait-order-service  =>  jdbc:mysql://10.176.122.1:3306/ts?useSSL=false   @ ts-wait-order-service/src/main/resources/application.yml:-1
+- ts-basic-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-basic-service/src/main/resources/application.yml:-1
+- ts-preserve-other-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-preserve-other-service/src/main/resources/application.yml:-1
+- ts-station-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-station-service/src/main/resources/application.yml:-1
+- ts-auth-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-auth-service/src/main/resources/application.yaml:-1
+- ts-user-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-user-service/src/main/resources/application.yaml:-1
+- ts-route-plan-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-route-plan-service/src/main/resources/application.yml:-1
+- ts-payment-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-payment-service/src/main/resources/application.yml:-1
+- ts-inside-payment-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-inside-payment-service/src/main/resources/application.yml:-1
+- ts-delivery-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-delivery-service/src/main/resources/application.yml:-1
+- ts-seat-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-seat-service/src/main/resources/application.yml:-1
+- ts-execute-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-execute-service/src/main/resources/application.yml:-1
+- ts-travel-plan-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-travel-plan-service/src/main/resources/application.yml:-1
+- ts-travel2-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-travel2-service/src/main/resources/application.yml:-1
+- ts-travel-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-travel-service/src/main/resources/application.yml:-1
+- ts-admin-order-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-admin-order-service/src/main/resources/application.yml:-1
+- ts-admin-travel-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-admin-travel-service/src/main/resources/application.yml:-1
+- ts-admin-route-service  =>  ${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local   @ ts-admin-route-service/src/main/resources/application.yml:-1
 
 ## alias questions (name [origin] seen in | candidates)
 - none
@@ -651,17 +657,17 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 2: 2 (test-dir old-docs/ts-ui-test; name Json2Shiviz=json2shiviz)
 - rule 3: 0
 - rule 4: 126 (default email_address=trainticket_notify@163.com; default CONTACTS_MYSQL_HOST=ts-contacts-mysql; default CONTACTS_MYSQL_PORT=3306; default CONTACTS_MYSQL_DATABASE=ts-contacts-mysql; default NOTIFICATION_MYSQL_HOST=ts-notification-mysql)
-- rule 5: 4 (not-a-host rabbitmq_host=${helm}; not-a-host _host=/; key spring.mail.host=smtp.163.com; key spring.rabbitmq.host=${rabbitmq_host:localhost})
+- rule 5: 9 (env NACOS_SERVERS=${helm}-0.nacos-headless.default.svc.cluster.local:8848 ${helm}-1.nacos-headless.default.svc.cluster.local:8848 ${helm}-2.nacos-headless.defa…; env rabbitmq_host=${helm}; env HOST=$(POD_HOSTNAME).${helm}.default; not-a-host ALERTSNITCH_DSN=root:root@tcp(alertsnitch-mysql:3306)/alertsnitch; not-a-host _host=/)
 - rule 6: 1 (url http://ts-gateway-service:18888)
 - rule 7: 0
-- rule 8: 8 (config-signal url; config-signal server.port; config-signal spring.datasource.username; config-signal spring.datasource.password; config-signal spring.datasource.driver-class-name)
+- rule 8: 9 (config-signal url; loopback 127.0.0.1:16108; config-signal server.port; config-signal spring.datasource.username; config-signal spring.datasource.password)
 - rule 9: 48 (jpa ts-contacts-service/src/main/java/contacts/repository/ContactsRepository.java; jpa ts-contacts-service/src/main/java/contacts/entity/Contacts.java; jpa ts-notification-service/src/main/java/notification/repository/NotifyRepository.java; jpa ts-notification-service/src/main/java/notification/entity/NotifyInfo.java; jpa ts-config-service/src/main/java/config/entity/Config.java)
 - rule 10: 13 (drop fluentd-es-v2.2.0 (deployment/kubernetes-manifests/efk-deployment); drop elasticsearch-logging (deployment/kubernetes-manifests/efk-deployment); drop kibana-logging (deployment/kubernetes-manifests/efk-deployment); drop node-exporter (deployment/kubernetes-manifests/prometheus); drop alertsnitch-mysql (deployment/kubernetes-manifests/prometheus))
 - rule 11: 1 (k8s-over-compose 101 compose names ignored)
 - rule 12: 0
 - rule 13: 0
 - rule 14: 0
-- rule 15: 0
+- rule 15: 1 (published 16108)
 - rule 16: 0
 - rule 17: 0
 - rule 18: 0
@@ -673,7 +679,7 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 24: 0
 - rule 25: 0
 - rule 26: 0
-- rule 27: 3 (first-of-list spring.cloud.nacos.discovery.server-addr; list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:nacos-0.nacos-headless.default.svc.cluster.local; list spring.cloud.nacos.discovery.server-addr=${NACOS_ADDRS:127.0.0.1:8848})
+- rule 27: 1 (first-of-list spring.cloud.nacos.discovery.server-addr)
 - rule 28: 0
 - rule 29: 1 (drop https://github.com/FudanSELab/train-ticket)
 - rule 30: 0
@@ -682,7 +688,7 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 33: 0
 - rule 34: 0
 - rule 35: 1 (inferred ts-voucher-service->ts-voucher-mysql)
-- rule 36: 1 (ns-strip github.com)
+- rule 36: 9 (scheme-chain d61b2ea39109:ts-order-service:12031; scheme-chain bc33d072c81a:ts-verification-code-service:15678; scheme-chain c75fc385d461:ts-contacts-service:12347; scheme-chain c6910f263b3c:ts-station-service:12345; scheme-chain c350faecb23c:ts-ticketinfo-service:15681)
 - rule 37: 0
 - rule 38: 0
 - rule 39: 0
@@ -693,7 +699,18 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 44: 1 (image ts-avatar-service=ts-avatar-service)
 - rule 45: 0
 - rule 46: 0
+- rule 47: 38 (not-use-site ts-admin-user-service/src/main/java/adminuser/service/AdminUserServiceImpl.java:37 http://; not-use-site ts-cancel-service/src/main/java/cancel/service/CancelServiceImpl.java:42 http://; not-use-site ts-order-other-service/src/main/java/other/service/OrderOtherServiceImpl.java:42 http://; not-use-site ts-preserve-service/src/main/java/preserve/service/PreserveServiceImpl.java:45 http://; not-use-site ts-security-service/src/main/java/security/service/SecurityServiceImpl.java:47 http://)
+- rule 48: 0
+- rule 49: 0
+- rule 50: 0
 - rule 51: 75 (browser ts-ui-dashboard/static/js/route.js:9; browser ts-ui-dashboard/static/js/route.js:67; browser ts-ui-dashboard/static/js/route.js:114; browser ts-ui-dashboard/static/js/order.js:27; browser ts-ui-dashboard/static/js/order.js:81)
 - rule 52: 14 (render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/configmap.yaml; render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/secrets.yaml; render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/service.yaml; render deployment/kubernetes-manifests/quickstart-k8s/charts/nacos/templates/statefulset.yaml; render deployment/kubernetes-manifests/quickstart-k8s/charts/rabbitmq/templates/configmap.yaml)
+- rule 53: 1 (image-script ts-ticket-office-service/test.sh:3 http://127.0.0.1:16108/office/updateOffice)
+- rule 54: 0
 - rule 55: 2 (list containers.input.conf github; list containers.input.conf elasticsearch-logging)
 - rule 56: 77 (istio trainticket-gateway -> ts-ui-dashboard; istio trainticket-gateway -> ts-auth-service; istio trainticket-gateway -> ts-verification-code-service; istio trainticket-gateway -> ts-station-service; istio trainticket-gateway -> ts-train-service)
+- rule 57: 0
+- rule 58: 0
+- rule 59: 0
+- rule 60: 0
+- rule 61: 0

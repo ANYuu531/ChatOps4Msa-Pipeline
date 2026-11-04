@@ -1,9 +1,4 @@
 {"rules": {
-  "22": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "44": {
     "hits": 15,
     "examples": [
@@ -20,17 +15,7 @@
     ],
     "count": 10
   },
-  "23": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "45": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "24": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -40,37 +25,37 @@
     "examples": [],
     "count": 0
   },
-  "25": {
+  "47": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "26": {
+  "48": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "27": {
+  "49": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "28": {
+  "50": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "29": {
+  "51": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "30": {
+  "52": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "31": {
+  "53": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -80,7 +65,7 @@
     "examples": [],
     "count": 0
   },
-  "32": {
+  "54": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -99,7 +84,7 @@
     ],
     "count": 8
   },
-  "33": {
+  "55": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -115,7 +100,7 @@
     ],
     "count": 5
   },
-  "34": {
+  "56": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -125,22 +110,17 @@
     "examples": [],
     "count": 0
   },
-  "35": {
-    "hits": 4,
-    "examples": [
-      "inferred accounts->configserver",
-      "inferred prices->configserver",
-      "inferred customers->configserver",
-      "inferred stores->configserver"
-    ],
-    "count": 4
+  "57": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
   },
   "14": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "36": {
+  "58": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -158,7 +138,7 @@
     ],
     "count": 7
   },
-  "37": {
+  "59": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -168,17 +148,7 @@
     "examples": [],
     "count": 0
   },
-  "38": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "17": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "39": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -272,6 +242,121 @@
     ],
     "count": 5
   },
+  "60": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "61": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 4,
+    "examples": [
+      "inferred accounts->configserver",
+      "inferred prices->configserver",
+      "inferred customers->configserver",
+      "inferred stores->configserver"
+    ],
+    "count": 4
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "40": {
     "hits": 0,
     "examples": [],
@@ -282,17 +367,7 @@
     "examples": [],
     "count": 0
   },
-  "20": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "42": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "21": {
     "hits": 0,
     "examples": [],
     "count": 0

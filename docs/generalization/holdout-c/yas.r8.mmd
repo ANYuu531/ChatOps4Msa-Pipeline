@@ -1,0 +1,165 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    storefront["storefront"]
+    backoffice["backoffice"]
+    keycloak["keycloak"]
+    collector["collector"]
+    prometheus["prometheus"]
+    nginx["nginx"]
+    payment_paypal["payment-paypal"]
+    zookeeper["zookeeper"]
+    kafka_ui["kafka-ui"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    swagger_ui["swagger-ui"]
+    sampledata["sampledata"]
+    rating["rating"]
+    payment["payment"]
+    search["search"]
+    inventory["inventory"]
+    webhook["webhook"]
+    recommendation["recommendation"]
+    tempo["tempo"]
+    loki["loki"]
+    storefront_nextjs["storefront-nextjs"]
+    backoffice_nextjs["backoffice-nextjs"]
+    pgadmin["pgadmin"]
+    grafana["grafana"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    order["order"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    promotion["promotion"]
+    tax["tax"]
+    cart["cart"]
+    customer["customer"]
+  end
+  subgraph layer4 ["services · depth 4"]
+    direction LR
+    product["product"]
+    location["location"]
+  end
+  subgraph layer5 ["services · depth 5"]
+    direction LR
+    media["media"]
+  end
+  subgraph layer6 ["services · depth 6"]
+    direction LR
+    identity["identity"]
+  end
+  subgraph layer7 ["data stores"]
+    direction LR
+    postgres[("postgres")]:::db
+    kafka{{"kafka"}}:::queue
+    redis[("redis")]:::db
+    elasticsearch[("elasticsearch")]:::db
+    kafka_connect{{"kafka-connect"}}:::queue
+  end
+  subgraph layer8 ["no dependencies found"]
+    direction LR
+    jaeger["jaeger"]
+  end
+  sampledata -. db .-> postgres
+  promotion -.-> product
+  order -.-> tax
+  order -.-> cart
+  order -.-> product
+  order -.-> customer
+  order -.-> promotion
+  rating -.-> order
+  rating -.-> customer
+  payment -.-> order
+  payment -.-> media
+  tax -.-> location
+  product -.-> media
+  search -.-> product
+  inventory -.-> product
+  inventory -.-> location
+  cart -.-> product
+  customer -.-> location
+  promotion -.-> identity
+  promotion -. db .-> postgres
+  webhook -.-> identity
+  webhook -. db .-> postgres
+  webhook -. async .-> kafka
+  recommendation -. db? .-> postgres
+  recommendation -.-> identity
+  recommendation -. async .-> kafka
+  order -.-> identity
+  order -. db .-> postgres
+  collector -.-> prometheus
+  collector -.-> tempo
+  collector -.-> loki
+  prometheus -.-> collector
+  rating -.-> identity
+  rating -. db .-> postgres
+  sampledata -.-> identity
+  location -.-> identity
+  location -. db .-> postgres
+  payment -.-> identity
+  payment -. db .-> postgres
+  storefront -.-> nginx
+  storefront -.-> storefront_nextjs
+  storefront -. declared? .-> payment
+  storefront -.-> identity
+  storefront -. db? .-> redis
+  tax -.-> identity
+  tax -. db .-> postgres
+  product -.-> identity
+  product -. db .-> postgres
+  backoffice -.-> nginx
+  backoffice -.-> backoffice_nextjs
+  backoffice -. declared? .-> order
+  backoffice -.-> identity
+  backoffice -. db? .-> redis
+  search -. db .-> elasticsearch
+  search -.-> identity
+  search -. async .-> kafka
+  payment_paypal -.-> identity
+  nginx -.-> media
+  nginx -.-> swagger_ui
+  nginx -.-> product
+  nginx -.-> customer
+  nginx -.-> cart
+  nginx -.-> rating
+  nginx -.-> order
+  nginx -.-> location
+  nginx -.-> inventory
+  nginx -.-> tax
+  nginx -.-> promotion
+  nginx -.-> search
+  nginx -.-> payment
+  nginx -.-> webhook
+  nginx -.-> sampledata
+  nginx -.-> recommendation
+  nginx -.-> backoffice
+  nginx -.-> storefront
+  nginx -.-> pgadmin
+  nginx -.-> identity
+  nginx -.-> grafana
+  nginx -. db? .-> elasticsearch
+  nginx -. async .-> kafka
+  inventory -.-> identity
+  inventory -. db .-> postgres
+  cart -.-> identity
+  cart -. db .-> postgres
+  kafka -.-> zookeeper
+  kafka_connect -. async .-> kafka
+  kafka_ui -. async .-> kafka
+  customer -.-> identity
+  customer -. db .-> postgres
+  media -. db .-> postgres
+  media -.-> identity
+  keycloak -. db? .-> postgres
+  identity -. db? .-> postgres
+  kafka_ui -. startup .-> kafka_connect
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;

@@ -240,7 +240,8 @@ class DeploymentDescriptorsTest {
                 """);
         DependencyGraph g = merge(config(dir));
         assertTrue(edge(g, "mysql-load", "mysql"));
-        assertFalse(edge(g, "mysql-load", "otel-collector"), "start-up order, not a call, once the command names the target");
+        assertTrue(g.getEdges().stream().noneMatch(e -> e.source.equals("mysql-load") && e.target.equals("otel-collector")
+                && !DependencyGraph.TYPE_STARTUP.equals(e.type)), "start-up order, not a call, once the command names the target");
         assertTrue(edge(g, "flink-job", "jobmanager"));
         assertFalse(g.getNodes().stream().anyMatch(n -> n.id.contains("utf8mb4")), "a bare word under a host-named flag must be a declared name");
     }

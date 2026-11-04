@@ -47,7 +47,7 @@ flowchart TB
   checkoutservice -.-> paymentservice
   recommendationservice -.-> productcatalogservice
   cartservice -. db .-> redis_cart
+  loadgenerator -.-> frontend
   istio_ingressgateway -.-> frontend
-  loadgenerator -. declared? .-> frontend
 classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
 classDef gateway fill:#e9f9ec,stroke:#2e8b57,color:#14351f;

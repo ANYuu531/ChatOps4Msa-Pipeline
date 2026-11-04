@@ -23,18 +23,19 @@ spring-cloud-netflix	$R/external/spring-cloud-netflix-example	$G/external/spring
 spring-cloud-microservice	$R/external/spring-cloud-microservice-examples	$G/external/spring-cloud-microservice.summary.md
 lakeside-mutual	$R/external/LakesideMutual	$G/external/lakeside-mutual.summary.md
 robot-shop-2019	$R/external/robot-shop	$G/external/robot-shop.summary.md
-opentelemetry-demo	$R/holdout/opentelemetry-demo	$G/holdout/opentelemetry-demo.r4.summary.md
-mall-swarm	$R/holdout/mall-swarm	$G/holdout/mall-swarm.r4.summary.md
-hotel-reservation	$R/holdout/DeathStarBench/hotelReservation	$G/holdout/hotel-reservation.r4.summary.md
-yas	$R/holdout-c/yas	$G/holdout-c/yas.r4.summary.md
-run-aspnetcore-microservices	$R/holdout-c/run-aspnetcore-microservices	$G/holdout-c/run-aspnetcore-microservices.r4.summary.md
-travels	$R/holdout-d/kiali-demos/travels	$G/holdout-d/travels.r4.summary.md
-skywalking-showcase	$R/holdout-d/skywalking-showcase	$G/holdout-d/skywalking-showcase.r4.summary.md
+opentelemetry-demo	$R/holdout/opentelemetry-demo	$G/holdout/opentelemetry-demo.r8.summary.md
+mall-swarm	$R/holdout/mall-swarm	$G/holdout/mall-swarm.r8.summary.md
+hotel-reservation	$R/holdout/DeathStarBench/hotelReservation	$G/holdout/hotel-reservation.r8.summary.md
+yas	$R/holdout-c/yas	$G/holdout-c/yas.r8.summary.md
+run-aspnetcore-microservices	$R/holdout-c/run-aspnetcore-microservices	$G/holdout-c/run-aspnetcore-microservices.r8.summary.md
+travels	$R/holdout-d/kiali-demos/travels	$G/holdout-d/travels.r8.summary.md
+skywalking-showcase	$R/holdout-d/skywalking-showcase	$G/holdout-d/skywalking-showcase.r8.summary.md
 TSV
-[ -d "$A/repos" ] && printf 'aics\t%s\t%s\n' "$A/repos" "$A/out/2026-10-27-r4/aics.summary.md" >> "$OUT/regress.tsv"
+[ -d "$A/repos" ] && printf 'aics\t%s\t%s\n' "$A/repos" "$A/out/2026-11-04-r8/aics.summary.md" >> "$OUT/regress.tsv"
 cut -f1,2 "$OUT/regress.tsv" > "$OUT/list.tsv"
 mvn -o -q test -Dtest=MiningProbeTest -Dsurefire.failIfNoSpecifiedTests=false \
   -Dprobe.list="$OUT/list.tsv" -Dprobe.outdir="$OUT/out" > "$OUT/mvn.log" 2>&1
+if [ "$(wc -l < "$OUT/out/failures.tsv")" -gt 1 ]; then echo "PROBE FAILURES:"; tail -n +2 "$OUT/out/failures.tsv" | cut -c1-200; fi
 edges() { awk '/^## edges/{f=1;next} /^## /{f=0} f&&/^- /{print $2,$3,$4}' "$1" | sort; }
 same=0; diffs=0
 while IFS=$'\t' read -r n p base; do

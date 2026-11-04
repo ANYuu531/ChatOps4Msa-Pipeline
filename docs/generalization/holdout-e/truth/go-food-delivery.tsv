@@ -38,3 +38,10 @@ prometheus	grafana	variant	deployments/docker-compose/monitoring/prometheus.yml:
 prometheus	catalogwriteservice	variant	deployments/docker-compose/monitoring/prometheus.yml:37 host.docker.internal:7000；遙測
 prometheus	catalogreadservice	variant	deployments/docker-compose/monitoring/prometheus.yml:45 host.docker.internal:7001；遙測
 prometheus	orderservice	variant	deployments/docker-compose/monitoring/prometheus.yml:53 host.docker.internal:8000；遙測
+# 2026-11-03 補列（第 57–61 條執行後才發現，寫參考邊集合時漏列）：下面兩條依檔頭的遙測慣例本來就是 variant，不影響 r4 的分數。
+prometheus	tempo	variant	deployments/docker-compose/monitoring/prometheus.yml:72 targets tempo:3200；遙測
+tempo	prometheus	variant	deployments/docker-compose/otelcollector/tempo.yaml:43 remote_write http://prometheus:9090；遙測
+# 2026-11-03 補列（慣例②統一後才畫到；依檔頭的遙測慣例本來就是 variant，寫參考邊集合時漏列）：
+catalogwriteservice	otelcol	variant	config/config.development.json:81 otlpEndpoint host.docker.internal:4317（:89 localhost:4317；compose otelcol 發佈 4317）；遙測
+catalogreadservice	otelcol	variant	config/config.development.json:88 otlpEndpoint host.docker.internal:4317；遙測
+orderservice	otelcol	variant	config/config.development.json:77 otlpEndpoint host.docker.internal:4317；遙測

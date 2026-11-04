@@ -1,5 +1,6 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph;
 
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.AddressShape;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.RuleTrace;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -76,25 +77,12 @@ public class CodeGraphMerger {
      * ({@code env-address}). They seed the greenfield vocabulary and resolve
      * indirected targets; they are never rendered as arrows.
      */
-    private static final Set<String> META_SECTIONS = Set.of("service-root", "env-address", "workload-env",
+    private static final Set<String> META_SECTIONS = Set.of("service-root", "env-address", "workload-env", "compose-port", "key-read", "parsed-dir",
+            "dockerfile-from", "image-build",
             "k8s-workload", "compose-service", "k8s-service", "k8s-namespace", "module-deps", "name-constant", "import",
             "compose-alias", "url-metadata", "k8s-gateway", "compose-mount", "registry-name");
 
     /** Hosts that name the caller itself, never another workload. */
-    private static final Set<String> LOOPBACK = Set.of(
-            "localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]", "host.docker.internal");
-
-    /**
-     * Config keys whose bare (non-URL) value is a host or a registry id, i.e. a target. The
-     * address-list keys ({@code spring.elasticsearch.uris: es:9200}, Nacos's {@code
-     * server-addr: nacos-registry:8848}, {@code spring.rabbitmq.addresses}) carry
-     * {@code host:port} with no scheme, so they are named here rather than left to the
-     * URL shape (2026-10-26, mall-swarm).
-     */
-    private static final String[] HOST_KEY_SUFFIXES = {
-            ".host", ".hostname", "_host", "_hostname", ".address", ".serviceid", ".service-id",
-            ".uris", ".cluster-nodes", ".server-addr", ".addresses", ".bootstrap-servers"};
-
     /** A bare fully-qualified host ({@code oss-cn-shenzhen.aliyuncs.com}, optionally {@code :port}): no scheme, no path. */
     private static final java.util.regex.Pattern BARE_FQDN = java.util.regex.Pattern.compile(
             "(?i)[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+(:\\d{2,5})?");
@@ -125,6 +113,11 @@ public class CodeGraphMerger {
     private final Map<String, String> envAddress = new LinkedHashMap<>();
     /** ConfigMap name -> the address-shaped hosts it carries, for joining a workload's envFrom. */
     private final Map<String, Set<String>> configMapHosts = new LinkedHashMap<>();
+    /** ConfigMap name -> key -> the host its value names (convention ③: a key is read, a ConfigMap is not). */
+    private final Map<String, Map<String, String>> configMapEntries = new LinkedHashMap<>();
+    /** Service node -> the keys of shared env sources its code or own config names ({@code key-read}). */
+    private Map<String, Set<String>> keysRead;
+    private JSONArray allEdges = new JSONArray();
     /**
      * Normalised service key -> node, for resolving a call whose host is a variable
      * but whose URL PATH names the callee by convention (Spring: {@code
@@ -177,6 +170,14 @@ public class CodeGraphMerger {
     private final Set<String> namespaces = new LinkedHashSet<>();
     /** Repo-relative module directory → the Compose service built from it ({@code build:` context / dockerfile dir). */
     private final Map<String, String> composeBuildDirs = new LinkedHashMap<>();
+    /** Compose services with a {@code build:} — this repo's own code runs in them. */
+    private final Set<String> composeBuilt = new LinkedHashSet<>();
+    /** FROM chain: image stem → the repo directory it is built from (build scripts, Compose build:+image:). */
+    private final Map<String, String> builtImages = new LinkedHashMap<>();
+    /** FROM chain: a Dockerfile's directory → the image stem it is built on. */
+    private final Map<String, String> dockerfileFrom = new LinkedHashMap<>();
+    /** FROM chain, resolved: a base image's directory → the services whose images are built on it. */
+    private final Map<String, Set<String>> baseImageChildren = new LinkedHashMap<>();
     /** k8s image stem (and the stem with the project's registry prefix cut) → the vocabulary workloads running it. */
     private final Map<String, Set<String>> k8sImages = new LinkedHashMap<>();
     private final Map<String, Set<String>> k8sImageRegistries = new LinkedHashMap<>();
@@ -238,14 +239,20 @@ public class CodeGraphMerger {
     private final Map<String, Set<String>> workloadConfigMaps = new LinkedHashMap<>();
     /** Raw workload name -> the literal hosts its own env block names (a service that states its targets by address). */
     private final Map<String, Set<String>> workloadHosts = new LinkedHashMap<>();
+    /** Compose depends_on entries no address backs: {source, target, file, line}, drawn last as startup order. */
+    private final List<String[]> startupOrder = new ArrayList<>();
     /** Listening port -> the modules whose config declares it (server.port); a target only when unique. */
     private final Map<String, Set<String>> portOwners = new LinkedHashMap<>();
+    /** Host port → the Compose services that publish it ({@code ports: "5432:5432"}). */
+    private final Map<String, Set<String>> publishedPorts = new LinkedHashMap<>();
     /** Module node -> the dependency artifacts its build manifest declares. */
     private final Map<String, Set<String>> moduleArtifacts = new LinkedHashMap<>();
     /** Module node -> the manifest file the artifacts came from (provenance). */
     private final Map<String, String> moduleManifests = new LinkedHashMap<>();
     /** Module names (service-root spelling) that are libraries, not services. */
     private final Set<String> libraryModules = new LinkedHashSet<>();
+    /** Directories a grammar parsed files in (parsed-dir rows): the only proof a module's code can be read. */
+    private final Set<String> parsedDirs = new LinkedHashSet<>();
     /** The library modules whose verdict came from a JVM build file (trace only: rule 41 rather than 21). */
     private final Set<String> jvmLibraryModules = new LinkedHashSet<>();
     /** Library module dir -> its importable top-level packages. */
@@ -360,8 +367,16 @@ public class CodeGraphMerger {
             String name = clean(fields.optString("name", ""));
             if ("k8s-service".equals(section)) k8sServices.add(name);
             if ("k8s-workload".equals(section)) rawWorkloadNames.add(name);
+            if ("parsed-dir".equals(section)) parsedDirs.add(fields.optString("dir", "").replace('\\', '/'));
+            if ("dockerfile-from".equals(section)) dockerfileFrom.put(fields.optString("dir", "").replace('\\', '/'), fields.optString("image", ""));
+            if ("image-build".equals(section)) builtImages.putIfAbsent(fields.optString("image", ""), fields.optString("dir", "").replace('\\', '/'));
+            if ("compose-service".equals(section) && fields.has("image_built")) {
+                String ctx = fields.optString("dockerfile_dir", fields.optString("context", "")).replace('\\', '/');
+                if (!ctx.isBlank()) builtImages.putIfAbsent(fields.optString("image_built", ""), ctx);
+            }
             if ("compose-service".equals(section) && !name.isEmpty()) {
                 composeServiceNames.add(name);
+                if ("true".equals(fields.optString("built", ""))) composeBuilt.add(name);
                 // The module a Compose service is built from: the Dockerfile's directory when
                 // one is named (a .NET solution builds every project from the repo root), else
                 // the build context itself. The repo root names no module.
@@ -653,6 +668,8 @@ public class CodeGraphMerger {
             String name = fields.optString("name", "");
             String host = clean(fields.optString("host", ""));
             if (name.isBlank() || host.isEmpty()) continue;
+            // A bare word under a URL-named key is a host only if the deployment declares it (rule 45).
+            if (RuleTrace.hitIf("true".equals(fields.optString("bare", "")) && !declaredName(host), 45, "drop-env " + name + "=" + host)) continue;
             String hostNs = fields.optString("host_ns", "").trim();
             if (!hostNs.isEmpty() && ambiguousNames.contains(host) && namespaces.contains(hostNs)) host = host + "." + hostNs;
 
@@ -666,7 +683,10 @@ public class CodeGraphMerger {
                 envAddress.put(name, host);
             }
             String configMap = fields.optString("configmap", "");
-            if (!configMap.isBlank()) configMapHosts.computeIfAbsent(configMap, k -> new LinkedHashSet<>()).add(host);
+            if (!configMap.isBlank()) {
+                configMapHosts.computeIfAbsent(configMap, k -> new LinkedHashSet<>()).add(host);
+                configMapEntries.computeIfAbsent(configMap, k -> new LinkedHashMap<>()).putIfAbsent(name, host);
+            }
 
             String scope = null;
             String workload = fields.optString("workload", "");
@@ -747,6 +767,7 @@ public class CodeGraphMerger {
             }
             composeAliases.computeIfAbsent(service, k -> new LinkedHashMap<>()).putIfAbsent(alias, target);
         }
+        indexServiceSelectors(edges, rawWorkloadNames, k8sServices, new LinkedHashSet<>(moduleNodes.values()));
 
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
@@ -763,6 +784,65 @@ public class CodeGraphMerger {
 
         indexImports(edges);
         indexConfig(edges);
+    }
+
+    /**
+     * Rule 59: a Kubernetes Service whose selector picks exactly one workload is that workload's
+     * address, so the two names are one service. Callers dial the Service, the pods belong to
+     * the workload; when the names differ (containerized-products / k8n-service-products,
+     * songs / songs-deployment) the calls and the code landed on two nodes (17 of the 100
+     * mining systems; 2026-11-03). The node keeps the name the code has: when exactly one of
+     * the two names is a module's node, the other becomes its alias (a Service name an alias
+     * every reader shares, as a Compose {@code hostname:} is, rule 37; a workload name an
+     * alias of the workload rows). Neither or both a module, or a selector that matches no
+     * workload or several: nothing changes. A versioned workload is first unversioned (rule 19).
+     */
+    private void indexServiceSelectors(JSONArray edges, Set<String> rawWorkloadNames, Set<String> k8sServices, Set<String> moduleNodeNames) {
+        Map<String, Set<String>> podsByLabel = new LinkedHashMap<>();
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null || !"k8s-workload".equals(edge.optString("section", ""))) continue;
+            JSONObject f = edge.optJSONObject("fields");
+            // A rendered Helm chart's labels hang on the release name, which is a placeholder
+            // (rule 52): two charts' selectors can collide on it (yas: pgadmin's on postgres).
+            if (f == null || f.has("helm")) continue;
+            String name = clean(f.optString("name", ""));
+            for (String label : f.optString("labels", "").split(",")) {
+                if (!label.isBlank() && !label.contains("${")) podsByLabel.computeIfAbsent(label.trim(), k -> new LinkedHashSet<>()).add(name);
+            }
+        }
+        for (int i = 0; i < edges.length(); i++) {
+            JSONObject edge = edges.optJSONObject(i);
+            if (edge == null || !"k8s-service".equals(edge.optString("section", ""))) continue;
+            JSONObject f = edge.optJSONObject("fields");
+            if (f == null || f.has("helm")) continue;
+            String service = clean(f.optString("name", ""));
+            String selector = f.optString("selector", "");
+            if (service.isEmpty() || selector.isBlank() || selector.contains("${")) continue;
+            Set<String> picked = null;
+            for (String label : selector.split(",")) {
+                Set<String> pods = podsByLabel.getOrDefault(label.trim(), Set.of());
+                if (picked == null) picked = new LinkedHashSet<>(pods);
+                else picked.retainAll(pods);
+            }
+            if (picked == null || picked.size() != 1) continue;
+            String raw = picked.iterator().next();
+            String workload = workloadAliases.getOrDefault(raw, unversionedWorkload(raw, k8sServices, rawWorkloadNames));
+            // A Compose service of the same name is a deployment unit of its own, not an alias.
+            if (workload.equals(service) || composeServiceNames.contains(service) || composeServiceNames.contains(workload)) continue;
+            boolean serviceHasCode = moduleNodeNames.contains(service);
+            boolean workloadHasCode = moduleNodeNames.contains(workload);
+            if (serviceHasCode == workloadHasCode) continue;
+            if (workloadHasCode) {
+                if (RuleTrace.hitIf(composeAliases.computeIfAbsent("*", k -> new LinkedHashMap<>()).putIfAbsent(service, workload) == null,
+                        59, "selector " + service + "=" + workload)) knownNodes.remove(service);
+            } else {
+                RuleTrace.hit(59, "selector " + workload + "=" + service);
+                workloadAliases.put(raw, service);
+                composeAliases.computeIfAbsent("*", k -> new LinkedHashMap<>()).putIfAbsent(workload, service);
+                knownNodes.remove(workload);
+            }
+        }
     }
 
     /** Repo file → the Compose services that mount it. */
@@ -811,6 +891,106 @@ public class CodeGraphMerger {
         return unanimous;
     }
 
+    /**
+     * Where a host lands in this deployment (convention ①). {@code node} is the graph node;
+     * {@code external} a domain outside the deployment; {@code byPort} a loopback address read
+     * back to whoever publishes or listens on its port; {@code fresh} a plausible name the
+     * deployment never declared, introduced as a new node; {@code dropped} a host that is
+     * nobody's (reserved, loopback with no owner, an external domain the reader may not reach).
+     */
+    private record Target(String node, boolean external, boolean byPort, boolean fresh, boolean dropped) {
+        static final Target DROPPED = new Target(null, false, false, false, true);
+    }
+
+    /**
+     * Convention ①, once for every reader: an address → the name table. In this order — a
+     * reserved domain is nobody's; an alias (a Compose link or network alias the reader
+     * declared, a hostname every reader agrees on) is the service it names; loopback is the
+     * caller itself, except where the value is read on the developer's machine ({@code
+     * devSide}: a module's own config, a code default), where {@code localhost:PORT} reaches
+     * the one service that publishes or listens on PORT; a domain outside the deployment is
+     * external; then the declared names, with the spellings deployment files give them; and
+     * last, if allowed, a plausible new name. Null when nothing settles it (residue).
+     */
+    private Target resolveTarget(String raw, String source, boolean devSide, boolean allowExternal, boolean allowNew) {
+        String host = stripToHost(raw);
+        if (host == null || host.isEmpty()) return null;
+        if (RuleTrace.hitIf(isReservedHost(host), 33, "drop " + host)) return Target.DROPPED;
+        host = unalias(host, source);
+        if (isLoopback(host)) {
+            String port = portOf(raw);
+            String owner = devSide ? portOwner(port) : null;
+            if (RuleTrace.hitIf(owner != null && !owner.equals(source), 15, "edge " + source + "->" + owner + " :" + port)) {
+                return new Target(owner, false, true, false, false);
+            }
+            RuleTrace.hit(8, "loopback " + host + (port == null ? "" : ":" + port));
+            return Target.DROPPED;
+        }
+        if (external(host)) return allowExternal ? new Target(host, true, false, false, false) : Target.DROPPED;
+        String node = matchNodeLoose(host);
+        if (node != null) return new Target(node, false, false, false, false);
+        if (!allowNew) return null;
+        String label = cleanLabel(host);
+        return label != null && isPlausibleName(label) ? new Target(label, false, false, true, false) : null;
+    }
+
+    /**
+     * Whether a Compose service runs this repo's own code: it has a {@code build:}, or a
+     * module directory aligns to it (by name, or by its image's name — rule 44).
+     */
+    private boolean ownContainer(String composeService) {
+        return composeBuilt.contains(composeService) || serviceDirs.containsValue(composeService);
+    }
+
+    private boolean baseImagesResolved = false;
+
+    /**
+     * The services whose images are built FROM the base image whose directory holds
+     * {@code file}, or null when the file is not in such a directory. A base image is a
+     * directory some build script or Compose service builds into an image that another
+     * Dockerfile of this repo names in FROM; the child is the service its own Dockerfile's
+     * directory aligns to. Resolved once, after the service inventory.
+     */
+    private Set<String> baseImageChildrenOf(String file) {
+        if (!baseImagesResolved) {
+            baseImagesResolved = true;
+            for (Map.Entry<String, String> from : dockerfileFrom.entrySet()) {
+                String baseDir = builtImages.get(from.getValue());
+                if (baseDir == null || baseDir.equals(from.getKey())) continue;
+                String child = serviceForFile(from.getKey() + "/Dockerfile");
+                if (child == null) child = innerServiceDir(from.getKey() + "/Dockerfile");
+                // Only a deployed child inherits: TeaStore's all-in-one image is built on the
+                // base too, but no manifest runs it, so it is no node (2026-11-04).
+                if (child == null || !(deployableModules.contains(child) || declaredWorkloads.contains(child))) continue;
+                baseImageChildren.computeIfAbsent(baseDir, k -> new LinkedHashSet<>()).add(child);
+            }
+        }
+        if (baseImageChildren.isEmpty() || file == null) return null;
+        String path = file.replace('\\', '/');
+        for (Map.Entry<String, Set<String>> e : baseImageChildren.entrySet()) {
+            String dir = e.getKey();
+            if (dir.isEmpty() ? !path.contains("/") : (path.startsWith(dir + "/"))) return e.getValue();
+        }
+        return null;
+    }
+
+    /**
+     * Whether the tool can read the code that runs in a service: a module directory aligns
+     * to it and its build marker names a language with a grammar. A Rust or Ruby module (the
+     * OpenTelemetry demo's shipping and email) is the repo's own code the tool still cannot
+     * read, so for it the manifest's word is all there is — like a third-party image.
+     */
+    private boolean codeReadable(String service) {
+        for (Map.Entry<String, String> e : serviceDirs.entrySet()) {
+            if (!e.getValue().equals(service)) continue;
+            String dir = e.getKey().replace('\\', '/');
+            for (String parsed : parsedDirs) {
+                if (parsed.equals(dir) || parsed.startsWith(dir + "/")) return true;
+            }
+        }
+        return false;
+    }
+
     /** {@code host} with a Compose link alias resolved to the service it names, else {@code host} itself. */
     private String unalias(String host, String source) {
         String target = composeAlias(host, source);
@@ -824,37 +1004,13 @@ public class CodeGraphMerger {
      * {@code api.example.com} a sample. Not a dependency, not residue (2026-10-26).
      */
     static boolean isReservedHost(String host) {
-        if (host == null) return false;
-        String h = host.toLowerCase(Locale.ROOT);
-        if (h.endsWith(".svc.cluster.local") || h.endsWith(".cluster.local")) return false; // in-cluster DNS, handled by clean()
-        for (String tld : new String[]{".local", ".test", ".example", ".invalid", ".localhost"}) {
-            if (h.endsWith(tld)) return true;
-        }
-        for (String domain : new String[]{"example.com", "example.net", "example.org"}) {
-            if (h.equals(domain) || h.endsWith("." + domain)) return true;
-        }
-        return false;
+        return AddressShape.isReservedHost(host);
     }
 
     /** The node kind a connection scheme states: {@code jdbc:} / {@code mongodb://} are a database whatever the host is called. */
     static String kindFromScheme(String rawTarget) {
-        if (rawTarget == null) return null;
-        String s = rawTarget.trim().toLowerCase(Locale.ROOT);
-        if (s.startsWith("jdbc:") || s.startsWith("r2dbc:")) return DependencyGraph.KIND_DB;
-        int i = s.indexOf("://");
-        if (i <= 0) return null;
-        switch (s.substring(0, i)) {
-            case "mysql", "postgres", "postgresql", "mongodb", "mongodb+srv", "redis", "rediss", "cassandra",
-                 "mariadb", "sqlserver", "oracle", "couchdb", "neo4j", "bolt", "memcached" -> {
-                return DependencyGraph.KIND_DB;
-            }
-            case "amqp", "amqps", "kafka", "nats", "mqtt", "mqtts", "stomp" -> {
-                return DependencyGraph.KIND_QUEUE;
-            }
-            default -> {
-                return null;
-            }
-        }
+        String k = AddressShape.kind(null, rawTarget);
+        return "db".equals(k) ? DependencyGraph.KIND_DB : "queue".equals(k) ? DependencyGraph.KIND_QUEUE : null;
     }
 
     private static final java.util.regex.Pattern VERSION_SUFFIX = java.util.regex.Pattern.compile("^(.+)-v\\d+$");
@@ -1170,6 +1326,13 @@ public class CodeGraphMerger {
                 }
                 continue;
             }
+            // A port a Compose service publishes on the host: who answers localhost:PORT on the
+            // developer's machine (convention ①, beside server.port below).
+            if ("compose-port".equals(section)) {
+                String owner = resolveComposeService(fields.optString("workload", ""));
+                if (owner != null) publishedPorts.computeIfAbsent(fields.optString("port", ""), k -> new LinkedHashSet<>()).add(owner);
+                continue;
+            }
             if (!"config".equals(section)) continue;
 
             String key = fields.optString("key", "").toLowerCase(Locale.ROOT);
@@ -1325,7 +1488,37 @@ public class CodeGraphMerger {
         merger.mergeImplicitRegistry(edges);
         merger.mergeAsync(unresolved);
         merger.retypeEdgesByTargetKind();
+        merger.drawStartupOrder();
         return unresolved;
+    }
+
+    /**
+     * The Compose depends_on entries nothing else backed, drawn after every call edge is in:
+     * where a call edge (or a runtime-observed one) already joins the pair, the declaration
+     * only adds its provenance to it — the order is implied by the call; otherwise the pair
+     * gets a {@link DependencyGraph#TYPE_STARTUP} edge, a relation of its own that a deploy
+     * order can read and no scorer counts as a call.
+     */
+    private void drawStartupOrder() {
+        for (String[] s : startupOrder) {
+            String src = s[0], tgt = s[1];
+            String ref = "code: " + s[2] + "#depends_on" + ("-1".equals(s[3]) ? "" : ":" + s[3]);
+            DependencyGraph.Edge existing = null;
+            for (DependencyGraph.Edge e : graph.getEdges()) {
+                if (e.source.equals(src) && e.target.equals(tgt)) {
+                    existing = e;
+                    break;
+                }
+            }
+            if (existing != null) {
+                graph.addEdge(src, tgt, existing.type, DependencyGraph.PROV_CODE, DependencyGraph.CONF_INFERRED, false, 0, ref);
+                continue;
+            }
+            RuleTrace.hitIf(graph.findNode(tgt) == null, 7, "node " + tgt);
+            graph.addNode(src, DependencyGraph.KIND_SERVICE);
+            graph.addNode(tgt, DependencyGraph.classifyKind(tgt));
+            graph.addEdge(src, tgt, DependencyGraph.TYPE_STARTUP, DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, ref);
+        }
     }
 
     /**
@@ -1506,7 +1699,24 @@ public class CodeGraphMerger {
      * persistence code the edge is {@code documented}; without it, {@code inferred} — a
      * datasource a service is handed but never touches is a declaration, not a use.
      */
+    /** Whether {@code source}'s code or own config names {@code key}, or its framework binds it ({@code key-read} rows). */
+    private boolean readsKey(String source, String key) {
+        if (keysRead == null) {
+            keysRead = new LinkedHashMap<>();
+            for (int i = 0; i < allEdges.length(); i++) {
+                JSONObject edge = allEdges.optJSONObject(i);
+                if (edge == null || !"key-read".equals(edge.optString("section", ""))) continue;
+                JSONObject fields = edge.optJSONObject("fields");
+                String reader = resolveSource(edge.optString("file", ""));
+                if (fields == null || reader == null) continue;
+                keysRead.computeIfAbsent(reader, k -> new java.util.HashSet<>()).add(fields.optString("name", ""));
+            }
+        }
+        return keysRead.getOrDefault(source, Set.of()).contains(key);
+    }
+
     private void mergeWorkloadWiring(JSONArray edges) {
+        allEdges = edges;
         for (int i = 0; i < edges.length(); i++) {
             JSONObject edge = edges.optJSONObject(i);
             if (edge == null || !"workload-env".equals(edge.optString("section", ""))) continue;
@@ -1529,9 +1739,33 @@ public class CodeGraphMerger {
 
             // Where the address came from decides what a service-kind target means, so the
             // two sources are kept apart rather than merged into one set.
-            Map<String, Boolean> hosts = new LinkedHashMap<>(); // host -> written on this workload
+            Map<String, Boolean> hosts = new LinkedHashMap<>(); // host -> this workload's own value
             String configMap = fields.optString("configmap", "");
-            for (String h : configMapHosts.getOrDefault(configMap, Set.of())) hosts.putIfAbsent(h, false);
+            if (!configMap.isBlank()) {
+                Map<String, String> entries = configMapEntries.getOrDefault(configMap, Map.of());
+                String selected = fields.optString("configmap_key", "");
+                if (!selected.isBlank()) {
+                    // configMapKeyRef: the workload picked this key.
+                    if (entries.containsKey(selected)) hosts.put(entries.get(selected), true);
+                } else {
+                    // envFrom: the whole ConfigMap, no key chosen. A key the workload never reads is
+                    // not its dependency; one it reads stays wholesale (false): only a data store or
+                    // broker is drawn from it, since a framework binds those without a line of code.
+                    for (Map.Entry<String, String> kv : entries.entrySet()) {
+                        boolean read = readsKey(source, kv.getKey());
+                        RuleTrace.hit(14, (read ? "configmap-read " : "configmap-unread ") + source + " " + kv.getKey() + "=" + kv.getValue());
+                        if (read) hosts.putIfAbsent(kv.getValue(), false);
+                    }
+                }
+            }
+            // An env_file is wholesale too (convention ③).
+            String shared = fields.optString("shared", "");
+            if (!shared.isBlank()) {
+                String key = fields.optString("name", "");
+                boolean read = readsKey(source, key);
+                RuleTrace.hit(14, (read ? "env_file-read " : "env_file-unread ") + source + " " + key + " (" + shared + ")");
+                if (!read) continue;
+            }
             String literal = fields.optString("host", "");
             String hostNs = fields.optString("host_ns", "").trim();
             if (!literal.isBlank() && !hostNs.isEmpty() && ambiguousNames.contains(literal.trim()) && namespaces.contains(hostNs)) {
@@ -1542,36 +1776,28 @@ public class CodeGraphMerger {
                 RuleTrace.hit(53, "bare-undeclared " + rawWorkload + " " + literal);
                 literal = "";
             }
-            if (!literal.isBlank()) hosts.put(literal, true);
+            if (!literal.isBlank()) hosts.put(literal, shared.isBlank());
 
             String file = edge.optString("file", "");
             // What the value's shape said the target is (a connection string, an amqp:// URL):
             // outranks the host's name, which in .NET carries no hint (catalogdb, messagebroker).
             String statedKind = kindField(fields);
             for (Map.Entry<String, Boolean> entry : hosts.entrySet()) {
-                String host = unalias(entry.getKey(), source);
-                if (RuleTrace.hitIf(isLoopback(host), 8, "loopback " + host) || RuleTrace.hitIf(isReservedHost(host), 33, "drop " + host)) continue;
-                // A domain in the workload's own env (LLM_BASE_URL=https://local-llm.com) is an
-                // external endpoint it is handed: drawn as such, dotted, never cut to a first
-                // label that would read as an in-cluster service (2026-10-26).
-                if (external(host)) {
-                    if (!entry.getValue()) continue;
-                    if (RuleTrace.hitIf(fields.has("helm") && !helmVocabulary, 52, "variant-host " + source + "->" + host)) continue;
-                    RuleTrace.hit(36, "external-env " + source + "->" + host);
-                    graph.addNode(host, DependencyGraph.KIND_EXTERNAL);
-                    addCodeEdge(source, host, "external", file, -1, DependencyGraph.CONF_INFERRED);
+                // Convention ①. The environment is read inside the container, where localhost is
+                // the workload itself (devSide false). A domain in the workload's own env
+                // (LLM_BASE_URL=https://local-llm.com) is an external endpoint it is handed:
+                // drawn as such, dotted, never cut to a first label (2026-10-26).
+                Target t = resolveTarget(entry.getKey(), source, false, entry.getValue(), true);
+                if (t == null || t.dropped()) continue;
+                if (t.external()) {
+                    if (RuleTrace.hitIf(fields.has("helm") && !helmVocabulary, 52, "variant-host " + source + "->" + t.node())) continue;
+                    RuleTrace.hit(36, "external-env " + source + "->" + t.node());
+                    graph.addNode(t.node(), DependencyGraph.KIND_EXTERNAL);
+                    addCodeEdge(source, t.node(), "external", file, -1, DependencyGraph.CONF_INFERRED);
                     continue;
                 }
-                // Loose: a manifest often injects the short service name (REGISTRY_HOST:
-                // registry) while the workload is deployed as teastore-registry. Matching
-                // strictly here invented a second node for the same component.
-                String node = matchNodeLoose(host);
-                if (node == null) {
-                    if (RuleTrace.hitIf(fields.has("helm") && !helmVocabulary, 52, "variant-host " + source + "->" + host)) continue;
-                    String label = cleanLabel(host);
-                    if (label == null || !isPlausibleName(label)) continue;
-                    node = label;
-                }
+                if (RuleTrace.hitIf(t.fresh() && fields.has("helm") && !helmVocabulary, 52, "variant-host " + source + "->" + t.node())) continue;
+                String node = t.node();
                 if (node.equals(source)) continue;
                 String kind = statedKind != null && entry.getValue() ? statedKind : DependencyGraph.classifyKind(node);
                 RuleTrace.hitIf(statedKind != null && entry.getValue() && !statedKind.equals(DependencyGraph.classifyKind(node)), 39, "kind " + node + "=" + statedKind);
@@ -1583,7 +1809,14 @@ public class CodeGraphMerger {
                     // avoid; drawing it dotted says "declared, no use observed".
                     // A shared ConfigMap is still excluded: it is handed to workloads that
                     // call none of it, and there the code layer is the only honest source.
+                    // Tried on 2026-11-03: leaving the own env block to the code layer too
+                    // (yas hands storefront ten addresses its code never uses). It cost 27
+                    // real edges — the code layer cannot yet follow a Spring
+                    // @ConfigurationProperties binding to its accessor, TeaStore's registry
+                    // reads, a load generator's env — so the manifest keeps drawing these,
+                    // inferred, until convention ④ follows those bindings.
                     if (RuleTrace.hitIf(!entry.getValue(), 14, "skip-configmap " + source + "->" + node)) continue;
+                    if (RuleTrace.hitIf(codeReadable(source), 14, "code-decides " + source + "->" + node)) continue;
                     RuleTrace.hit(14, "edge " + source + "->" + node);
                     graph.addNode(node, kind);
                     addCodeEdge(source, node, edgeType("", kind), file, -1, DependencyGraph.CONF_INFERRED);
@@ -1698,6 +1931,27 @@ public class CodeGraphMerger {
         // A URL in a constant nobody references is declared, not used (see
         // TreeSitterExtractor.markUnreferencedUrlConstants): no edge, no residue.
         if ("url".equals(section) && "true".equals(fields.optString("unreferenced", ""))) return;
+        // Rule 60: an address in a YAML file of no known kind counts only as the config of
+        // the one Compose service that mounts the file, and only toward a declared name.
+        // Convention ③ decides the owner — the one container that mounts the file, or the module
+        // the file sits in — and ① the target: a declared name, or localhost:PORT read back to
+        // the one service on PORT (the module's own config is read on the developer's machine).
+        // No new node and no external domain come from a file of no known kind.
+        if ("url".equals(section) && "candidate".equals(fields.optString("mounted", ""))) {
+            Set<String> by = mounts.get(file.replace('\\', '/'));
+            boolean inModule = serviceForFile(file) != null;
+            String value = fields.optString("value", "");
+            String host = mountedHost(value);
+            // The owner must itself be a component the deployment declares: a tool directory's
+            // JSON (train-ticket's json2shiviz/) names services, and runs nowhere.
+            String owner = inModule ? resolveSource(file) : by != null && by.size() == 1 ? resolveComposeService(by.iterator().next()) : null;
+            boolean owned = owner != null && (declaredWorkloads.contains(owner) || deployableModules.contains(owner)
+                    || declaredWorkloads.stream().anyMatch(w -> owner.equals(matchNodeLoose(w))));
+            boolean target = host != null && (declaredName(unalias(host, null))
+                    || (isLoopback(host) && portOwner(portOf(value)) != null));
+            if (!owned || !target) return;
+            RuleTrace.hit(60, (inModule ? "module-file " : "mounted ") + file + " " + host);
+        }
 
         // docker-compose depends_on names BOTH endpoints explicitly (source_service ->
         // target_service), so the source comes from the field, not the file's module.
@@ -1708,33 +1962,50 @@ public class CodeGraphMerger {
             String src = resolveComposeService(fields.optString("source_service", ""));
             String tgt = resolveComposeService(fields.optString("target_service", ""));
             if (src != null && tgt != null && !src.equals(tgt)) {
-                // depends_on is startup order, not a call. Across ten systems and the
-                // MicroDepGraph set, every depends_on edge from a service whose own
-                // environment names NO address was a real dependency (90 of 90: the
-                // Compose-v1 era states its wiring only this way), and every wrong one
-                // came from a service whose environment states its targets by address
-                // (the OpenTelemetry demo: 5 of 5, health-check ordering). So when the
-                // service names addresses, a depends_on entry not backed by one of them
-                // is not drawn; a backed one is documented (two declarations agree); and
-                // with no addresses at all the entry is the deployment's only wiring
-                // statement — drawn, graded inferred, as a declaration without a use
-                // site is everywhere else in this merger (2026-10-26).
+                // depends_on is startup order, not a call: "start that first" says nothing
+                // about who talks to whom. It is a call edge when the service's own addresses
+                // name the same target (two declarations agree: documented), or when a
+                // container running this repo's own code states no address anywhere — the
+                // author's one statement of what their code needs (hotelReservation's Go
+                // services, whose addresses sit in a config.json no module owns; the Compose
+                // v1 era): inferred, a declaration without a use site. From a third-party
+                // image it is only ordering: that container's wiring lives in the image,
+                // unreadable, so nothing lets the tool claim a call (skywalking-showcase's
+                // node-exporter waits for oap and never connects to it; a curl container
+                // waits for the exporter it never calls). Those, and a depends_on the
+                // service's own addresses contradict, are kept as a relation of their own
+                // (TYPE_STARTUP, drawn last so it never shadows a call the code states).
+                // links says more: in the version 1 file format a container reaches another
+                // by name only through a link, so a link from a service that states no
+                // address is its one wiring statement whatever runs in it (2026-11-03).
+                boolean link = !"depends_on".equals(fields.optString("via", "depends_on"));
                 Set<String> hosts = workloadHosts.getOrDefault(rawSource, Set.of());
-                String confidence = DependencyGraph.CONF_INFERRED;
-                if (!hosts.isEmpty()) {
-                    boolean addressed = false;
-                    for (String h : hosts) {
-                        String node = matchNodeLoose(unalias(h, src));
-                        if (node == null) node = cleanLabel(h);
-                        if (tgt.equals(node)) {
-                            addressed = true;
-                            break;
-                        }
+                boolean addressed = false;
+                for (String h : hosts) {
+                    String node = matchNodeLoose(unalias(h, src));
+                    if (node == null) node = cleanLabel(h);
+                    if (tgt.equals(node)) {
+                        addressed = true;
+                        break;
                     }
-                    if (RuleTrace.hitIf(!addressed, 35, "drop " + src + "->" + tgt)) return;
-                    confidence = DependencyGraph.CONF_DOCUMENTED;
                 }
-                RuleTrace.hit(35, (hosts.isEmpty() ? "inferred " : "documented ") + src + "->" + tgt);
+                String confidence = DependencyGraph.CONF_DOCUMENTED;
+                if (!addressed) {
+                    if (!link && (!hosts.isEmpty() || !ownContainer(rawSource))) {
+                        RuleTrace.hit(35, "startup " + src + "->" + tgt);
+                        // Both endpoints are declared services: nodes now, so a later row's
+                        // address (config.json's mongodb-geo:27017) finds the name, as it
+                        // did when depends_on drew the edge itself; the relation itself last.
+                        RuleTrace.hitIf(graph.findNode(tgt) == null, 7, "node " + tgt);
+                        graph.addNode(src, DependencyGraph.KIND_SERVICE);
+                        graph.addNode(tgt, DependencyGraph.classifyKind(tgt));
+                        startupOrder.add(new String[] {src, tgt, file, String.valueOf(line)});
+                        return;
+                    }
+                    if (RuleTrace.hitIf(!hosts.isEmpty(), 35, "drop " + src + "->" + tgt)) return;
+                    confidence = DependencyGraph.CONF_INFERRED;
+                }
+                RuleTrace.hit(35, (addressed ? "documented " : "inferred ") + src + "->" + tgt);
                 // The target is a node too: Robot Shop's cart -> redis edge pointed at a
                 // node that did not exist, because only the source was ever added.
                 RuleTrace.hitIf(graph.findNode(tgt) == null, 7, "node " + tgt);
@@ -1775,6 +2046,19 @@ public class CodeGraphMerger {
         // edge (and the provenance the reference edge sets expect — where the call is made).
         if ("config".equals(section) && "true".equals(fields.optString("superseded", ""))) return;
 
+        // A base image's directory (its command line, its start scripts) runs inside every
+        // image built FROM it: TeaStore's start.sh writes the registry URL from REGISTRY_HOST,
+        // and each of the five services inherits that line as its own (2026-11-04).
+        if (sourceOverride == null) {
+            Set<String> children = baseImageChildrenOf(file);
+            if (children != null) {
+                for (String child : children) {
+                    RuleTrace.hit(53, "base-image " + child + " <- " + file);
+                    mergeOne(edge, unresolved, child);
+                }
+                return;
+            }
+        }
         String source = sourceOverride != null ? sourceOverride : resolveSource(file);
         if ("config".equals(section) && sourceOverride == null) {
             String owner = configFileService.get(file.replace('\\', '/'));
@@ -1873,10 +2157,9 @@ public class CodeGraphMerger {
             List<EnvValue> listed = env.isBlank() || source == null ? List.of() : resolveEnvValues(env, source);
             if (listed.size() > 1) {
                 for (EnvValue v : listed) {
-                    String h = unalias(v.host(), source);
-                    if (isLoopback(h) || isReservedHost(h)) continue;
-                    String node = matchNode(h);
-                    if (node == null || node.equals(source)) continue;
+                    Target t = resolveTarget(v.host(), source, false, false, false);
+                    if (t == null || t.dropped() || t.node().equals(source)) continue;
+                    String node = t.node();
                     String kind = v.kind() != null ? v.kind() : DependencyGraph.classifyKind(node);
                     graph.addNode(node, kind);
                     addCodeEdge(source, node, edgeType("", kind), file, line);
@@ -1885,6 +2168,8 @@ public class CodeGraphMerger {
             }
             EnvValue value = env.isBlank() ? null : resolveEnvValue(env, source);
             String host = value == null ? null : value.host();
+            String raw = host;          // the address as written, port and all
+            boolean devSide = false;    // read on the developer's machine, not in the container
             String statedKind = value == null ? null : value.kind();
             // A .NET IConfiguration read whose key the environment does not override falls
             // back to appsettings.json: GrpcSettings:DiscountUrl → https://localhost:5052 in
@@ -1894,6 +2179,8 @@ public class CodeGraphMerger {
                 if (RuleTrace.hitIf(prop != null, 40, "appsettings " + fields.optString("dotnetkey", ""))) {
                     host = stripToHost(prop);
                     if (host.isEmpty()) host = null;
+                    raw = prop;
+                    devSide = true;
                     statedKind = kindFromScheme(prop);
                     if (statedKind == null && fields.optString("dotnetkey", "").toLowerCase(Locale.ROOT).startsWith("connectionstrings:")) {
                         statedKind = DependencyGraph.KIND_DB;
@@ -1912,22 +2199,23 @@ public class CodeGraphMerger {
                     if (h != null && !h.isEmpty()) {
                         RuleTrace.hit(48, (useSite ? "usesite " : "default ") + env + "=" + h);
                         host = h;
+                        raw = fallback;
+                        devSide = true;
                         if (statedKind == null) statedKind = kindFromScheme(fallback);
                     }
                 }
             }
             if (host != null && source != null) {
-                if (RuleTrace.hitIf(isLoopback(host), 8, "loopback " + host) || RuleTrace.hitIf(isReservedHost(host), 33, "drop " + host)) return;
-                host = unalias(host, source);
-                // Only a known in-cluster node: a bare env read of a domain is not a call
-                // (AICS hands every service SYSTEM_ADDRESS, its own public address, for the
-                // links it puts in mail). An external host needs a call site with the URL.
-                String node = matchNode(host);
-                if (node != null && !node.equals(source)) {
+                // Only a declared name: a bare env read of a domain is not a call (AICS hands
+                // every service SYSTEM_ADDRESS, its own public address, for the links it puts
+                // in mail). An external host needs a call site with the URL.
+                Target t = resolveTarget(raw, source, devSide, false, false);
+                if (t != null && !t.dropped() && !t.node().equals(source)) {
+                    String node = t.node();
                     String kind = statedKind != null ? statedKind : DependencyGraph.classifyKind(node);
                     RuleTrace.hitIf(statedKind != null && !statedKind.equals(DependencyGraph.classifyKind(node)), 39, "kind " + node + "=" + statedKind);
                     graph.addNode(node, kind);
-                    addCodeEdge(source, node, edgeType("", kind), file, line);
+                    addCodeEdge(source, node, edgeType("", kind), file, line, t.byPort() ? DependencyGraph.CONF_INFERRED : DependencyGraph.CONF_DOCUMENTED);
                 }
             }
             return;
@@ -1939,28 +2227,29 @@ public class CodeGraphMerger {
         if (("http-client".equals(section) || "grpc".equals(section)) && fields.has("env") && !fields.has("url")) {
             String env = fields.optString("env", "");
             String host = env.isBlank() || source == null ? null : resolveEnv(env, source);
+            String raw = host;
+            boolean devSide = false;
             if (host == null) {
                 String fallback = fields.optString("envdefault", "");
-                if (!fallback.isBlank()) host = stripToHost(fallback);
+                if (!fallback.isBlank()) {
+                    host = stripToHost(fallback);
+                    raw = fallback;
+                    devSide = true;
+                }
             }
             if (host == null || host.isEmpty() || source == null) return;
-            if (RuleTrace.hitIf(isLoopback(host), 8, "loopback " + host) || RuleTrace.hitIf(isReservedHost(host), 33, "drop " + host)) return;
-            host = unalias(host, source);
-            if (external(host)) {
-                graph.addNode(host, DependencyGraph.KIND_EXTERNAL);
-                addCodeEdge(source, host, "external", file, line);
+            Target t = resolveTarget(raw, source, devSide, true, true);
+            if (t == null || t.dropped()) return;
+            if (t.external()) {
+                graph.addNode(t.node(), DependencyGraph.KIND_EXTERNAL);
+                addCodeEdge(source, t.node(), "external", file, line);
                 return;
             }
-            String node = matchNode(host);
-            if (node == null) {
-                String label = cleanLabel(host);
-                if (label == null || !isPlausibleName(label)) return;
-                node = label;
-            }
+            String node = t.node();
             if (node.equals(source)) return;
             String kind = DependencyGraph.classifyKind(node);
             graph.addNode(node, kind);
-            addCodeEdge(source, node, edgeType(section, kind), file, line);
+            addCodeEdge(source, node, edgeType(section, kind), file, line, t.byPort() ? DependencyGraph.CONF_INFERRED : DependencyGraph.CONF_DOCUMENTED);
             return;
         }
 
@@ -1986,20 +2275,16 @@ public class CodeGraphMerger {
             currentSource = source;
             String value = substitutePlaceholders(fields.optString("property", ""));
             if (value == null || source == null) return;
-            String node = matchNode(value);
-            RuleTrace.hitIf(node == null && looksLikeUrl(value) && isLoopback(stripToHost(value)), 8, "loopback " + stripToHost(value));
-            if (node == null && looksLikeUrl(value) && !isLoopback(stripToHost(value))) {
-                String host = unalias(stripToHost(value), source);
-                if (RuleTrace.hitIf(isReservedHost(host), 33, "drop " + host)) return;
-                if (external(host)) {
-                    graph.addNode(host, DependencyGraph.KIND_EXTERNAL);
-                    addCodeEdge(source, host, "external", file, line);
-                    return;
-                }
-                node = matchNode(host);
-            }
-            if (node != null && !node.equals(source)) {
-                addCodeEdge(source, node, edgeType("", DependencyGraph.classifyKind(node)), file, line);
+            // A URL may name an external host; a bare value only a declared name. The property is
+            // the module's own config, read where the module runs in development too.
+            Target t = resolveTarget(value, source, true, looksLikeUrl(value), false);
+            if (t == null || t.dropped()) return;
+            if (t.external()) {
+                graph.addNode(t.node(), DependencyGraph.KIND_EXTERNAL);
+                addCodeEdge(source, t.node(), "external", file, line);
+            } else if (!t.node().equals(source)) {
+                addCodeEdge(source, t.node(), edgeType("", DependencyGraph.classifyKind(t.node())), file, line,
+                        t.byPort() ? DependencyGraph.CONF_INFERRED : DependencyGraph.CONF_DOCUMENTED);
             }
             return;
         }
@@ -2070,31 +2355,6 @@ public class CodeGraphMerger {
         if (isRelativeBrowserCall(section, rawTarget, file)) return;
 
         String fullHost = stripToHost(rawTarget);
-        // A documentation / test TLD is nobody's address: drawn as nothing, left as no residue.
-        if (RuleTrace.hitIf(isReservedHost(fullHost), 33, "drop " + fullHost)) return;
-        // A Compose link alias is what this service calls the target; the service is the node.
-        String aliasTarget = composeAlias(fullHost, source);
-        if (aliasTarget != null) {
-            fullHost = aliasTarget;
-            rawTarget = aliasTarget;
-        }
-        // localhost / 127.0.0.1 is the caller itself (a dev profile, a health check),
-        // never another workload — piggymetrics and TeaStore both grew a "localhost" node.
-        if (isLoopback(fullHost)) {
-            // …unless the port says which module it is: a dev default of
-            // http://localhost:9296 in every client, and one module whose server.port is
-            // 9296. Read back to that module, graded inferred (the host was never named);
-            // with no or several owners of the port, nothing is drawn (2026-10-23).
-            String owner = portOwner(portOf(rawTarget));
-            if (RuleTrace.hitIf(owner != null && !owner.equals(source), 15, "edge " + source + "->" + owner + " :" + portOf(rawTarget))) {
-                graph.addNode(owner, DependencyGraph.classifyKind(owner));
-                addCodeEdge(source, owner, edgeType(section, DependencyGraph.classifyKind(owner)), file, line,
-                        DependencyGraph.CONF_INFERRED);
-            } else {
-                RuleTrace.hit(8, "loopback " + fullHost + (portOf(rawTarget) == null ? "" : ":" + portOf(rawTarget)));
-            }
-            return;
-        }
         // A format-string host whose variable is itself named after the service:
         // http://{user}:8080/check/{id} with USER = os.getenv('USER_HOST', 'user').
         java.util.regex.Matcher formatted = FORMAT_HOST.matcher(fullHost);
@@ -2113,44 +2373,44 @@ public class CodeGraphMerger {
             unresolved.add(new Unresolved(section, source, rawTarget, file, line));
             return;
         }
-
-        // A real external host: keep the whole domain as the node.
-        if (external(fullHost)) {
-            graph.addNode(fullHost, DependencyGraph.KIND_EXTERNAL);
-            addCodeEdge(source, fullHost, "external", file, line);
-            return;
-        }
         // A .NET connection-string key says the target is a database whatever its name.
         if (schemeKind == null && fields.optString("key", "").toLowerCase(Locale.ROOT).startsWith("connectionstrings")) {
             RuleTrace.hit(39, "connectionstrings " + fields.optString("key", ""));
             schemeKind = DependencyGraph.KIND_DB;
         }
 
-        // In-cluster target. Prefer an existing workload; otherwise, since a
-        // dependency the mesh never observed (a DB, an un-exercised service) is
-        // still a real dependency, introduce the node from its own name.
-        String node = matchNode(rawTarget);
-        if (node == null) {
-            String label = cleanLabel(fullHost);
-            if (!isPlausibleName(label)) {
-                if (pathNode != null && !pathNode.equals(source)) {
-                    addCodeEdge(source, pathNode, "sync-http", file, line);
-                    return;
-                }
-                unresolved.add(new Unresolved(section, source, rawTarget, file, line));
+        // Convention ①: reserved → nobody; alias → its service; localhost:PORT → the one
+        // service on PORT (a module's code and config are read on the developer's machine too:
+        // a dev default of http://localhost:9296 in every client, rule 15); a domain → external;
+        // a declared name; else, since a dependency the mesh never observed (a DB, an
+        // un-exercised service) is still a real dependency, a new node from its own name.
+        Target t = resolveTarget(rawTarget, source, true, true, true);
+        if (t != null && t.dropped()) return;
+        if (t == null) {
+            if (pathNode != null && !pathNode.equals(source)) {
+                addCodeEdge(source, pathNode, "sync-http", file, line);
                 return;
             }
-            node = label;
+            unresolved.add(new Unresolved(section, source, rawTarget, file, line));
+            return;
         }
+        if (t.external()) {
+            graph.addNode(t.node(), DependencyGraph.KIND_EXTERNAL);
+            addCodeEdge(source, t.node(), "external", file, line);
+            return;
+        }
+        String node = t.node();
+        if (node.equals(source)) return;
         String kind = schemeKind != null ? schemeKind : DependencyGraph.classifyKind(node);
         RuleTrace.hitIf(schemeKind != null && !schemeKind.equals(DependencyGraph.classifyKind(node)), 26, "kind " + node + "=" + schemeKind);
         graph.addNode(node, kind);
         // A db the service really uses (has persistence code) is documented; a db known
         // only from a datasource URL, with no entity/repository code, is a bare
         // declaration — kept but marked weakest so the graph does not overstate it.
-        // A target found only through its variable's name is a guess of the same rank.
+        // A target found only through its variable's name, or only through its port, is a
+        // guess of the same rank.
         String confidence = (DependencyGraph.KIND_DB.equals(kind) && !persistenceServices.contains(source))
-                || inferredByName
+                || inferredByName || t.byPort()
                 ? DependencyGraph.CONF_INFERRED
                 : DependencyGraph.CONF_DOCUMENTED;
         addCodeEdge(source, node, edgeType(section, kind), file, line, confidence);
@@ -2178,9 +2438,6 @@ public class CodeGraphMerger {
     }
 
     // ---------- target extraction ----------
-
-    /** Keys whose bare single-word value is a host only when that word is a deployed node ({@code elasticsearch.url=elasticsearch}). */
-    private static final String[] ADDRESS_KEY_SUFFIXES = {".url", ".uri", "_url", "_uri", ".endpoint", "_endpoint"};
 
     /** The callee token for a synchronous section, or null if none is usable. */
     private String syncTarget(String section, JSONObject fields) {
@@ -2218,34 +2475,53 @@ public class CodeGraphMerger {
                     v = v.substring(0, v.indexOf(',')).trim();
                 }
                 if (looksLikeUrl(v)) return v;
-                // A YAML list flattens to key[0], key[1]: the suffix is the key's, not the index's.
-                String key = fields.optString("key", "").toLowerCase(Locale.ROOT).replaceAll("\\[\\d+]$", "");
-                if (RuleTrace.hitIf(key.equals("host") || key.equals("hostname"), 5, "key " + key + "=" + v)) return v; // a bare `host=` parameter
-                for (String suffix : HOST_KEY_SUFFIXES) {
-                    if (RuleTrace.hitIf(key.endsWith(suffix), LIST_KEY_SUFFIXES.contains(suffix) ? 27 : 5, (LIST_KEY_SUFFIXES.contains(suffix) ? "list " : "key ") + key + "=" + v)) return v;
-                }
-                // An endpoint key whose value is a bare fully-qualified host (aliyun.oss.endpoint:
-                // oss-cn-shenzhen.aliyuncs.com) names an external service without a scheme; a
-                // bare single word under such a key stays a signal, not a target (2026-10-26).
-                if (RuleTrace.hitIf((key.endsWith(".endpoint") || key.endsWith("_endpoint")) && BARE_FQDN.matcher(v.trim()).matches(), 27, "fqdn " + key + "=" + v)) return v;
-                // A .NET ConnectionStrings:X value: a key=value; string names its host, and a
-                // bare host:port (ConnectionStrings:Redis=distributedcache:6379) is one too.
-                if (key.startsWith("connectionstrings")) {
-                    java.util.regex.Matcher cs = CONNECTION_STRING_HOST.matcher(v);
-                    if (v.indexOf('=') > 0 && v.indexOf(';') > 0) return RuleTrace.hitIf(cs.find(), 32, "connstr " + key) ? cs.group(1).trim().replaceFirst("(?i)^tcp:", "") : null;
-                    return RuleTrace.hitIf(v.matches("[^\\s/=;]+(:\\d{2,5})?"), 38, "connectionstrings-host " + key + "=" + v) ? v : null;
-                }
-                // A bare single word under a *.url / *.uri / *.endpoint key is the target only
-                // when it is a node the deployment declares (elasticsearch.url=elasticsearch,
-                // the Compose service elasticsearch) — any other word is a signal, not a guess
-                // at a host (2026-10-26, yas).
-                for (String suffix : ADDRESS_KEY_SUFFIXES) {
-                    if (key.endsWith(suffix) && v.trim().matches("[a-z0-9]([a-z0-9-]*[a-z0-9])?(:\\d{2,5})?")) {
-                        if (RuleTrace.hitIf(declaredName(v.trim().replaceAll(":\\d+$", "")), 45, "accept " + key + "=" + v)) return v.trim();
-                        RuleTrace.hit(45, "drop " + key + "=" + v);
+                // What the key's name says the value is: the same words as an environment
+                // variable's, a flag's or a .NET key's (convention ②, AddressShape.keyKind).
+                String key = fields.optString("key", "").replaceAll("\\[\\d+]$", "");
+                AddressShape.KeyKind kk = AddressShape.keyKind(key);
+                // .NET joins configuration sections with ':' (RabbitMqOptions:HostName), Spring with '.' (rule 58).
+                RuleTrace.hitIf(key.indexOf(':') > 0 && kk != AddressShape.KeyKind.NONE && kk != AddressShape.KeyKind.CONNECTION, 58, "options-key " + key + "=" + v);
+                switch (kk) {
+                    case HOST -> {
+                        // The value must be a host too: prefer-ip-address: true is a flag.
+                        if (RuleTrace.hitIf(!AddressShape.isHostValue(v), 5, "not-a-host " + key + "=" + v)) return null;
+                        RuleTrace.hit(5, "key " + key + "=" + v);
+                        return v;
+                    }
+                    case LIST -> {
+                        if (RuleTrace.hitIf(!AddressShape.isHostValue(v), 27, "not-a-list " + key + "=" + v)) return null;
+                        RuleTrace.hit(27, "list " + key + "=" + v);
+                        return v;
+                    }
+                    case CONNECTION -> {
+                        // A connection string names its host; a bare host:port is one too
+                        // (ConnectionStrings:Redis=distributedcache:6379).
+                        if (AddressShape.isConnectionString(v)) {
+                            RuleTrace.hit(key.toLowerCase(Locale.ROOT).startsWith("connectionstrings") ? 32 : 58, "connstr " + key);
+                            return AddressShape.host(v);
+                        }
+                        return RuleTrace.hitIf(v.matches("[^\\s/=;]+(:\\d{2,5})?"), 38, "connectionstrings-host " + key + "=" + v) ? v : null;
+                    }
+                    case ADDRESS -> {
+                        // A bare fully-qualified host under an endpoint key (aliyun.oss.endpoint:
+                        // oss-cn-shenzhen.aliyuncs.com) names an external service; under a URL or
+                        // URI key a value with no scheme is a relative reference (RFC 3986 §4.2),
+                        // href: contact.php. A bare single word is the target only when the
+                        // deployment declares it (elasticsearch.url=elasticsearch).
+                        boolean endpointKey = key.toLowerCase(Locale.ROOT).matches(".*endpoints?$");
+                        if (RuleTrace.hitIf(endpointKey && BARE_FQDN.matcher(v.trim()).matches(), 27, "fqdn " + key + "=" + v)) return v;
+                        if (v.trim().matches("[a-z0-9]([a-z0-9-]*[a-z0-9])?(:\\d{2,5})?")) {
+                            if (RuleTrace.hitIf(declaredName(v.trim().replaceAll(":\\d+$", "")), 45, "accept " + key + "=" + v)) return v.trim();
+                            RuleTrace.hit(45, "drop " + key + "=" + v);
+                        }
+                        return null;
+                    }
+                    default -> {
+                        // The Options pattern: a connection string is one wherever it sits (rule 58).
+                        if (RuleTrace.hitIf(AddressShape.isConnectionString(v), 58, "options-connstr " + key)) return AddressShape.host(v);
+                        return null;
                     }
                 }
-                return null;
             }
             default -> {
                 return null;
@@ -2253,12 +2529,9 @@ public class CodeGraphMerger {
         }
     }
 
-    /** The address-list keys among {@link #HOST_KEY_SUFFIXES} (rule 27); the others are rule 5's bare-host keys. */
-    private static final Set<String> LIST_KEY_SUFFIXES = Set.of(".uris", ".cluster-nodes", ".server-addr", ".addresses", ".bootstrap-servers");
-
-    /** The host key of a {@code key=value;} connection string (Npgsql, SqlClient, ODBC), as the extractor reads it. */
-    private static final java.util.regex.Pattern CONNECTION_STRING_HOST = java.util.regex.Pattern.compile(
-            "(?i)(?:^|;)\\s*(?:host|server|data source|hostname|address|addr|network address)\\s*=\\s*([^;,]+)");
+    private static boolean endsWithHostKey(String key) {
+        return AddressShape.keyKind(key) != AddressShape.KeyKind.NONE;
+    }
 
     /** A Python/Java format placeholder standing in for the whole host: {user}, {cart_host}. */
     private static final java.util.regex.Pattern FORMAT_HOST =
@@ -2276,8 +2549,19 @@ public class CodeGraphMerger {
      * dotted segment, so {@code ${env.BALANCES_API_ADDR}} still hits. The whole string
      * is returned, so {@code http://${X}/path} keeps its path for the rules that follow.
      */
+    /** {@code :${X}} — a port placeholder after a host. */
+    private static final java.util.regex.Pattern PORT_PLACEHOLDER = java.util.regex.Pattern.compile(":\\$\\{([A-Za-z0-9_.\\-]+)\\}");
+
     private String substitutePlaceholders(String rawTarget) {
         if (rawTarget == null) return null;
+        // A port placeholder the table does not hold (http://${REGISTRY_HOST}:${REGISTRY_PORT}/…)
+        // does not hide the host: the env table keeps addresses, not numbers, so the port
+        // part is dropped and the host still resolves (TeaStore's start.sh, 2026-11-04).
+        rawTarget = PORT_PLACEHOLDER.matcher(rawTarget).replaceAll(r -> {
+            List<String> words = AddressShape.words(r.group(1));
+            return !words.isEmpty() && "port".equals(words.get(words.size() - 1)) && lookupPlaceholder(r.group(1)) == null
+                    ? "" : java.util.regex.Matcher.quoteReplacement(r.group(0));
+        });
         java.util.regex.Matcher m = PLACEHOLDER.matcher(rawTarget);
         StringBuilder out = new StringBuilder();
         boolean any = false;
@@ -2304,6 +2588,10 @@ public class CodeGraphMerger {
 
     private String lookupPlaceholder(String name) {
         String value = envLookup(name);
+        // Spring's relaxed binding: the property yas.services.product is set by the
+        // environment variable YAS_SERVICES_PRODUCT, and the environment outranks the
+        // module's own file (2026-11-04).
+        if (value == null && name.contains(".")) value = envLookup(name.toUpperCase(Locale.ROOT).replaceAll("[.\\-]", "_"));
         if (value == null) value = propertyLookup(name);
         if (value == null && name.contains(".")) {
             String last = name.substring(name.lastIndexOf('.') + 1);
@@ -2321,13 +2609,16 @@ public class CodeGraphMerger {
      */
     private boolean nameInferred;
 
-    private static final java.util.regex.Pattern VARIABLE_HOST_SUFFIX = java.util.regex.Pattern.compile(
-            "(?i)(_service)?(_host|_hostname|_addr|_address|_url|_uri|_endpoint|_server)$");
-
     private String nodeNamedByVariable(String name) {
-        String base = VARIABLE_HOST_SUFFIX.matcher(name.trim()).replaceFirst("");
-        if (base.isEmpty() || base.equals(name.trim())) return null; // no host-shaped suffix: not a host variable
-        String label = base.toLowerCase(Locale.ROOT).replace('_', '-').replace('.', '-');
+        // A variable named for a host (CATALOGUE_HOST, ORDER_SERVICE_URL, catalogueHost): the
+        // words in front of the host word(s), and of a "service" before them, name the service.
+        int drop = AddressShape.hostWords(name);
+        if (drop == 0) return null; // no host-shaped name: not a host variable
+        List<String> words = new ArrayList<>(AddressShape.words(name.trim()));
+        for (int i = 0; i < drop && !words.isEmpty(); i++) words.remove(words.size() - 1);
+        if (!words.isEmpty() && words.get(words.size() - 1).equals("service")) words.remove(words.size() - 1);
+        if (words.isEmpty()) return null;
+        String label = String.join("-", words);
         String node = matchNode(label);
         if (node == null) node = serviceKeys.get(label.replaceAll("[^a-z0-9]", ""));
         return node;
@@ -2342,25 +2633,21 @@ public class CodeGraphMerger {
 
     /** The explicit port of a URL-ish target ({@code http://localhost:9296/x} → {@code 9296}), or null. */
     private static String portOf(String rawTarget) {
-        if (rawTarget == null) return null;
-        String s = rawTarget.trim().toLowerCase(Locale.ROOT);
-        if (s.startsWith("jdbc:")) s = s.substring(5);
-        s = s.replaceFirst("^[a-z][a-z0-9+.-]*://", "");
-        int slash = s.indexOf('/');
-        if (slash >= 0) s = s.substring(0, slash);
-        int at = s.indexOf('@');
-        if (at >= 0) s = s.substring(at + 1);
-        int colon = s.lastIndexOf(':');
-        if (colon < 0) return null;
-        String port = s.substring(colon + 1).trim();
-        return port.matches("\\d{2,5}") ? port : null;
+        return AddressShape.port(rawTarget);
     }
 
-    /** The one module that listens on the port, or null when none or several do. */
+    /**
+     * The one service on the port, or null when none or several are. The modules' own
+     * statements of where they listen ({@code server.port}, the same layer as the dev default
+     * that names the port) come first; only a port no module claims falls to the Compose
+     * services that publish it on the host.
+     */
     private String portOwner(String port) {
         if (port == null) return null;
         Set<String> owners = portOwners.get(port);
-        return owners != null && owners.size() == 1 ? owners.iterator().next() : null;
+        if (owners != null && !owners.isEmpty()) return owners.size() == 1 ? owners.iterator().next() : null;
+        owners = publishedPorts.get(port);
+        return RuleTrace.hitIf(owners != null && owners.size() == 1, 15, "published " + port) ? owners.iterator().next() : null;
     }
 
     /**
@@ -2402,11 +2689,10 @@ public class CodeGraphMerger {
 
     private static boolean isLoopback(String host) {
         if (host == null) return false;
-        String h = host.toLowerCase(Locale.ROOT);
         // The platform's own addresses are no more a dependency than loopback is: the
         // cloud metadata server (metadata.google.internal, 169.254.169.254) and anything
         // under the reserved .internal domain (2026-10-26).
-        return LOOPBACK.contains(h) || h.endsWith(".internal") || h.startsWith("169.254.");
+        return AddressShape.isLoopback(host);
     }
 
     /** The broker destination (topic / exchange / queue) for an async section. */
@@ -2457,6 +2743,12 @@ public class CodeGraphMerger {
      * the k8s spelling when both exist; the Compose name is still a declaration, not a
      * guess). Used only to accept a bare word under an address key as a target.
      */
+    /** The host of a mounted config value: {@code http://prometheus:9090} or {@code app:8080}. */
+    private static String mountedHost(String v) {
+        String h = AddressShape.host(v);
+        return h.matches("[a-z0-9][a-z0-9.-]*") ? h : null;
+    }
+
     private boolean declaredName(String word) {
         if (word == null || word.isBlank()) return false;
         if (matchNodeLoose(word) != null) return true;
@@ -2576,19 +2868,9 @@ public class CodeGraphMerger {
     private final Map<String, String> nodeNamespaces = new LinkedHashMap<>();
 
     static String cleanHost(String raw, Set<String> namespaces) {
-        String s = raw.trim().toLowerCase(Locale.ROOT);
-        if (s.startsWith("jdbc:")) s = s.substring(5);   // jdbc:mysql://host -> mysql://host
-        s = s.replaceFirst("^[a-z][a-z0-9+.-]*://", ""); // scheme
-        int slash = s.indexOf('/');
-        if (slash >= 0) s = s.substring(0, slash);       // path
-        int at = s.indexOf('@');
-        if (at >= 0) s = s.substring(at + 1);            // userinfo
-        s = ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ConfigExtractor.trailingHostPort(s);
-        int colon = s.indexOf(':');
-        if (colon >= 0) s = s.substring(0, colon);       // port
-        // ${...} placeholders and quotes are not a usable host.
-        s = s.replace("\"", "").replace("'", "").trim();
-        if (s.contains("${") || s.contains("{{")) return "";
+        // Scheme, userinfo, path, port, quotes off; a placeholder is no usable host (convention ②).
+        String s = AddressShape.host(raw);
+        if (s.isEmpty()) return "";
         boolean cluster = false;
         for (String suffix : CLUSTER_SUFFIXES) {
             if (s.endsWith(suffix) && s.length() > suffix.length()) {
@@ -2623,19 +2905,7 @@ public class CodeGraphMerger {
      * placeholder is not a usable host and yields "".
      */
     private static String stripToHost(String raw) {
-        String s = raw.trim().toLowerCase(Locale.ROOT);
-        if (s.startsWith("jdbc:")) s = s.substring(5);
-        s = s.replaceFirst("^[a-z][a-z0-9+.-]*://", "");
-        int slash = s.indexOf('/');
-        if (slash >= 0) s = s.substring(0, slash);
-        int at = s.indexOf('@');
-        if (at >= 0) s = s.substring(at + 1);
-        s = ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.ConfigExtractor.trailingHostPort(s);
-        int colon = s.indexOf(':');
-        if (colon >= 0) s = s.substring(0, colon);
-        s = s.replace("\"", "").replace("'", "").trim();
-        if (s.contains("${") || s.contains("{{")) return "";
-        return s;
+        return AddressShape.host(raw);
     }
 
     /** A real external host: a dotted domain that is not an in-cluster k8s name or a raw IP. */
@@ -2650,8 +2920,7 @@ public class CodeGraphMerger {
     }
 
     private static boolean looksLikeUrl(String v) {
-        String s = v.trim().toLowerCase(Locale.ROOT);
-        return s.startsWith("http://") || s.startsWith("https://") || s.contains("://");
+        return AddressShape.hasScheme(v);
     }
 
     /** A host reduced to its DNS name (cluster suffixes off), or null when nothing usable remains. */
@@ -2677,7 +2946,10 @@ public class CodeGraphMerger {
     private static final Set<String> SOURCE_STOP = Set.of(
             "src", "lib", "libs", "pkg", "internal", "cmd", "app", "apps", "main",
             "test", "tests", "vendor", "target", "build", "dist", "node_modules",
-            "common", "shared", "util", "utils", "core", "api", "web");
+            "common", "shared", "util", "utils", "core", "api", "web",
+            // where resources and deployment descriptors live, never a component of their own
+            "resources", "manifests", "kubernetes-manifests", "k8s", "kubernetes", "deploy", "deployment",
+            "deployments", "charts", "helm", "scripts", "docs");
 
     /**
      * The calling service for a code edge. A dependency needs a real source: prefer

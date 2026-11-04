@@ -33,7 +33,11 @@ flowchart TB
     direction LR
     service_discovery["service-discovery"]
   end
-  subgraph layer7 ["external"]
+  subgraph layer7 ["services · depth 7"]
+    direction LR
+    zipkin_container["zipkin-container"]
+  end
+  subgraph layer8 ["external"]
     direction LR
     github_com[/"github.com"/]:::external
   end
@@ -49,8 +53,11 @@ flowchart TB
   proxy_client -.-> product_service
   proxy_client -.-> favourite_service
   proxy_client -.-> shipping_service
+  product_service -. declared? .-> zipkin_container
   product_service -. declared? .-> cloud_config
+  cloud_config -. declared? .-> zipkin_container
   cloud_config -. ext .-> github_com
+  api_gateway -. declared? .-> zipkin_container
   api_gateway -. declared? .-> cloud_config
   api_gateway -.-> order_service
   api_gateway -.-> payment_service
@@ -59,11 +66,18 @@ flowchart TB
   api_gateway -.-> user_service
   api_gateway -.-> favourite_service
   api_gateway -.-> proxy_client
+  shipping_service -. declared? .-> zipkin_container
   shipping_service -. declared? .-> cloud_config
+  payment_service -. declared? .-> zipkin_container
   payment_service -. declared? .-> cloud_config
+  favourite_service -. declared? .-> zipkin_container
   favourite_service -. declared? .-> cloud_config
+  order_service -. declared? .-> zipkin_container
   order_service -. declared? .-> cloud_config
+  service_discovery -. declared? .-> zipkin_container
+  user_service -. declared? .-> zipkin_container
   user_service -. declared? .-> cloud_config
+  proxy_client -. declared? .-> zipkin_container
   proxy_client -. declared? .-> cloud_config
   product_service -. declared? .-> service_discovery
   cloud_config -. declared? .-> service_discovery

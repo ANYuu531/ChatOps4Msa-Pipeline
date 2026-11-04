@@ -4,23 +4,26 @@
 ## ledger sections
 - feign = 1
 - http-server = 3
-- url = 4
+- url = 6
 - url-metadata = 2
+- parsed-dir = 10
+- dockerfile-from = 7
+- config = 70
 - compose-service = 11
 - compose-dependency = 26
+- compose-port = 16
 - service-root = 7
 - module-deps = 7
-- TOTAL = 61 | files with syntax errors = 0
+- TOTAL = 166 | files with syntax errors = 0
 
 ## graph
-- after merge: 10 nodes / 28 edges | after normalize: 10 nodes / 28 edges | unresolved code edges = 0
+- after merge: 9 nodes / 26 edges | after normalize: 9 nodes / 26 edges | unresolved code edges = 0
 - persistence services: []
 
 ## nodes (kind, layer)
 - admin-dashboard  [service, L0]
 - config-server  [service, L4]
 - eureka-server  [service, L5]
-- github.com  [external, L7]
 - hystrix-dashboard  [service, L4]
 - rabbitmq  [queue, L6]
 - service-a  [service, L2]
@@ -30,33 +33,34 @@
 
 ## edges (type, confidence, provenance ref)
 - admin-dashboard -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- admin-dashboard -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- admin-dashboard -> eureka-server  (sync-http, documented)  code: admin-dashboard/src/main/resources/bootstrap.yml
 - admin-dashboard -> hystrix-dashboard  (sync-http, inferred)  code: docker-compose.yml#depends_on
 - admin-dashboard -> rabbitmq  (async, inferred)  code: docker-compose.yml#depends_on
 - admin-dashboard -> service-a  (sync-http, inferred)  code: docker-compose.yml#depends_on
 - admin-dashboard -> service-b  (sync-http, inferred)  code: docker-compose.yml#depends_on
 - admin-dashboard -> zuul  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- config-server -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- config-server -> rabbitmq  (async, inferred)  code: docker-compose.yml#depends_on
-- hystrix-dashboard -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- service-a -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- service-a -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- service-a -> github.com  (external, documented)  code: service-a/src/main/java/net/devh/A1ServiceApplication.java:44
+- config-server -> eureka-server  (sync-http, documented)  code: docker-compose.yml#depends_on
+- config-server -> rabbitmq  (async, documented)  code: docker-compose.yml#depends_on
+- hystrix-dashboard -> eureka-server  (sync-http, documented)  code: hystrix-dashboard/src/main/resources/bootstrap.yml
+- service-a -> config-server  (sync-http, documented)  code: service-a/Dockerfile
+- service-a -> eureka-server  (sync-http, documented)  code: service-a/src/main/resources/bootstrap.yml
 - service-a -> hystrix-dashboard  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- service-a -> rabbitmq  (async, inferred)  code: docker-compose.yml#depends_on
+- service-a -> rabbitmq  (async, documented)  code: service-a/src/main/resources/bootstrap.yml
 - service-a -> service-b  (sync-http, documented)  code: service-a/src/main/java/net/devh/feign/ServiceBClient.java:12
-- service-a -> zipkin  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- service-b -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- service-b -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- service-b -> github.com  (external, documented)  code: service-b/src/main/java/net/devh/B1ServiceApplication.java:41
+- service-a -> zipkin  (sync-http, documented)  code: service-a/src/main/resources/bootstrap.yml
+- service-b -> config-server  (sync-http, documented)  code: service-b/Dockerfile
+- service-b -> eureka-server  (sync-http, documented)  code: service-b/src/main/resources/bootstrap.yml
 - service-b -> hystrix-dashboard  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- service-b -> rabbitmq  (async, inferred)  code: docker-compose.yml#depends_on
-- service-b -> zipkin  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- service-b -> rabbitmq  (async, documented)  code: service-b/src/main/resources/bootstrap.yml
+- service-b -> zipkin  (sync-http, documented)  code: service-b/src/main/resources/bootstrap.yml
 - zuul -> config-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- zuul -> eureka-server  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- zuul -> eureka-server  (sync-http, documented)  code: docker-compose.yml#depends_on
 - zuul -> rabbitmq  (async, inferred)  code: docker-compose.yml#depends_on
-- zuul -> service-a  (sync-http, inferred)  code: docker-compose.yml#depends_on
-- zuul -> zipkin  (sync-http, inferred)  code: docker-compose.yml#depends_on
+- zuul -> service-a  (sync-http, documented)  code: docker-compose.yml#depends_on
+- zuul -> zipkin  (sync-http, documented)  code: docker-compose.yml#depends_on
+
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
 
 ## unresolved (source hint / raw target / file:line), first 40
 
@@ -102,40 +106,33 @@ flowchart TB
     direction LR
     rabbitmq{{"rabbitmq"}}:::queue
   end
-  subgraph layer7 ["external"]
-    direction LR
-    github_com[/"github.com"/]:::external
-  end
   service_a -.-> service_b
-  service_a -. ext .-> github_com
-  service_b -. ext .-> github_com
-  config_server -. declared? .-> eureka_server
-  config_server -. async? .-> rabbitmq
-  service_b -. declared? .-> eureka_server
-  service_b -. declared? .-> config_server
+  service_a -.-> config_server
+  service_b -.-> config_server
+  service_a -.-> eureka_server
+  service_a -. async .-> rabbitmq
+  service_a -.-> zipkin
+  admin_dashboard -.-> eureka_server
+  hystrix_dashboard -.-> eureka_server
+  service_b -.-> eureka_server
+  service_b -.-> zipkin
+  service_b -. async .-> rabbitmq
+  config_server -.-> eureka_server
+  config_server -. async .-> rabbitmq
   service_b -. declared? .-> hystrix_dashboard
-  service_b -. async? .-> rabbitmq
-  service_b -. declared? .-> zipkin
-  service_a -. declared? .-> eureka_server
-  service_a -. declared? .-> config_server
   service_a -. declared? .-> hystrix_dashboard
-  service_a -. async? .-> rabbitmq
-  service_a -. declared? .-> zipkin
-  admin_dashboard -. declared? .-> eureka_server
   admin_dashboard -. async? .-> rabbitmq
   admin_dashboard -. declared? .-> config_server
   admin_dashboard -. declared? .-> service_a
   admin_dashboard -. declared? .-> service_b
   admin_dashboard -. declared? .-> zuul
   admin_dashboard -. declared? .-> hystrix_dashboard
-  zuul -. declared? .-> eureka_server
+  zuul -.-> eureka_server
   zuul -. declared? .-> config_server
-  zuul -. declared? .-> service_a
+  zuul -.-> service_a
   zuul -. async? .-> rabbitmq
-  zuul -. declared? .-> zipkin
-  hystrix_dashboard -. declared? .-> eureka_server
+  zuul -.-> zipkin
 classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;
-classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 
 ```
 
@@ -145,18 +142,18 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 2: 0
 - rule 3: 0
 - rule 4: 0
-- rule 5: 0
+- rule 5: 13 (key spring.cloud.config.discovery.service-id=config-server; key spring.rabbitmq.host=localhost; key eureka.instance.hostname=localhost; key spring.rabbitmq.host=rabbitmq; key eureka.instance.hostname=service-a)
 - rule 6: 0
 - rule 7: 0
-- rule 8: 0
+- rule 8: 8 (config-signal server.port; loopback localhost; config-signal eureka.client.registerWithEureka; config-signal eureka.client.fetchRegistry; config-signal eureka.instance.prefer-ip-address)
 - rule 9: 0
 - rule 10: 0
 - rule 11: 9 (node rabbitmq; node zipkin; node eureka-server; node config-server; node service-b)
 - rule 12: 28 (v1 docker-compose.yml; links config-server->eureka-server; links config-server->rabbitmq; links service-b->eureka-server; links service-b->config-server)
 - rule 13: 0
 - rule 14: 0
-- rule 15: 0
-- rule 16: 6 (edge service-a->eureka-server; edge admin-dashboard->eureka-server; edge hystrix-dashboard->eureka-server; edge service-b->eureka-server; edge zuul->eureka-server)
+- rule 15: 6 (edge service-a->eureka-server :8761; edge admin-dashboard->eureka-server :8761; edge hystrix-dashboard->eureka-server :8761; edge service-b->eureka-server :8761; edge zuul->eureka-server :8761)
+- rule 16: 0
 - rule 17: 0
 - rule 18: 0
 - rule 19: 0
@@ -187,3 +184,18 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 44: 7 (image service-a=service-a; image eureka-server=eureka-server; image admin-dashboard=admin-dashboard; image hystrix-dashboard=hystrix-dashboard; image service-b=service-b)
 - rule 45: 0
 - rule 46: 0
+- rule 47: 2 (not-use-site service-a/src/main/java/net/devh/A1ServiceApplication.java:44 https://github.com/yidongnan/spring-cloud-netflix-example; not-use-site service-b/src/main/java/net/devh/B1ServiceApplication.java:41 https://github.com/yidongnan/spring-cloud-netflix-example)
+- rule 48: 0
+- rule 49: 0
+- rule 50: 0
+- rule 51: 0
+- rule 52: 0
+- rule 53: 2 (dockerfile service-a/Dockerfile http://config-server:8100/health; dockerfile service-b/Dockerfile http://config-server:8100/health)
+- rule 54: 0
+- rule 55: 0
+- rule 56: 0
+- rule 57: 7 (documents service-a/src/main/resources/bootstrap.yml 2; documents eureka-server/src/main/resources/bootstrap.yml 2; documents admin-dashboard/src/main/resources/bootstrap.yml 2; documents hystrix-dashboard/src/main/resources/bootstrap.yml 2; documents service-b/src/main/resources/bootstrap.yml 2)
+- rule 58: 0
+- rule 59: 0
+- rule 60: 0
+- rule 61: 0

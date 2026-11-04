@@ -203,7 +203,7 @@ public class ExtractionGeneralizationTest {
                 import javax.persistence.Entity;
                 @Entity
                 public class Client {
-                    String fetch() { return AppConstant.PRODUCT_URL + "/1"; }
+                    String fetch(RestTemplate restTemplate) { return restTemplate.getForObject(AppConstant.PRODUCT_URL + "/1", String.class); }
                 }
                 """);
         write(dir, "user/pom.xml", "<project/>");

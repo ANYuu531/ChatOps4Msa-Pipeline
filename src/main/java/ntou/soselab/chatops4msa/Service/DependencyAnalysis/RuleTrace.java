@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class RuleTrace {
 
     /** The number of rules in the appendix table; the trace reports every one, fired or not. */
-    public static final int RULE_COUNT = 46;
+    public static final int RULE_COUNT = 61;
 
     /** Distinct tokens kept per rule; beyond this only the counters grow. */
     private static final int MAX_TOKENS = 20000;

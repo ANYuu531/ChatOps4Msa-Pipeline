@@ -7,11 +7,14 @@
 - url = 4
 - jpa = 5
 - http-server = 20
+- parsed-dir = 10
+- dockerfile-from = 13
 - compose-service = 6
 - compose-dependency = 5
+- compose-port = 3
 - service-root = 13
 - module-deps = 6
-- TOTAL = 94 | files with syntax errors = 0
+- TOTAL = 120 | files with syntax errors = 0
 
 ## graph
 - after merge: 6 nodes / 7 edges | after normalize: 6 nodes / 7 edges | unresolved code edges = 0
@@ -33,6 +36,9 @@
 - order -> eureka  (sync-http, documented)  code: docker/docker-compose.yml#depends_on
 - turbine -> eureka  (sync-http, documented)  code: docker/docker-compose.yml#depends_on
 - zuul -> eureka  (sync-http, documented)  code: docker/docker-compose.yml#depends_on
+
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
 
 ## unresolved (source hint / raw target / file:line), first 40
 
@@ -79,7 +85,7 @@ flowchart TB
 - rule 2: 1 (aggregator microservice-demo)
 - rule 3: 0
 - rule 4: 2 (default catalog.service.host=catalog; default customer.service.host=customer)
-- rule 5: 0
+- rule 5: 1 (not-a-host eureka.instance.preferIpAddress=true)
 - rule 6: 0
 - rule 7: 0
 - rule 8: 9 (config-signal server.port; config-signal eureka.instance.leaseRenewalIntervalInSeconds; config-signal eureka.instance.metadataMap.instanceId; config-signal eureka.instance.preferIpAddress; config-signal eureka.client.registerWithEureka)
@@ -121,3 +127,18 @@ flowchart TB
 - rule 44: 6 (map microservice-demo-order=order; map microservice-demo-eureka-server=eureka; map microservice-demo-turbine-server=turbine; map microservice-demo-catalog=catalog; map microservice-demo-zuul-server=zuul)
 - rule 45: 0
 - rule 46: 0
+- rule 47: 4 (not-use-site microservice-demo/microservice-demo-order/src/main/java/com/ewolff/microservice/order/clients/CatalogClient.java:101 http://%s:%s/catalog/; not-use-site microservice-demo/microservice-demo-order/src/main/java/com/ewolff/microservice/order/clients/CatalogClient.java:103 http://%s:%s/catalog/; not-use-site microservice-demo/microservice-demo-order/src/main/java/com/ewolff/microservice/order/clients/CustomerClient.java:96 http://%s:%s/customer/; not-use-site microservice-demo/microservice-demo-order/src/main/java/com/ewolff/microservice/order/clients/CustomerClient.java:98 http://%s:%s/customer/)
+- rule 48: 0
+- rule 49: 0
+- rule 50: 0
+- rule 51: 0
+- rule 52: 0
+- rule 53: 0
+- rule 54: 0
+- rule 55: 0
+- rule 56: 0
+- rule 57: 0
+- rule 58: 0
+- rule 59: 0
+- rule 60: 0
+- rule 61: 0

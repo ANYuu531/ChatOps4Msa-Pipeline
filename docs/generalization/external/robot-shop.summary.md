@@ -10,12 +10,16 @@
 - http-server = 25
 - persistence = 6
 - http-client = 3
-- url = 11
+- parsed-dir = 10
+- url = 16
 - import = 27
 - registry-ref = 1
+- dockerfile-from = 12
 - env-address = 10
+- image-build = 1
 - compose-service = 17
 - compose-dependency = 15
+- compose-port = 5
 - k8s-gateway = 1
 - ingress-route = 1
 - k8s-workload = 13
@@ -23,10 +27,10 @@
 - k8s-service = 12
 - service-root = 11
 - module-deps = 6
-- TOTAL = 210 | files with syntax errors = 0
+- TOTAL = 243 | files with syntax errors = 0
 
 ## graph
-- after merge: 14 nodes / 21 edges | after normalize: 14 nodes / 21 edges | unresolved code edges = 1
+- after merge: 14 nodes / 21 edges | after normalize: 14 nodes / 21 edges | unresolved code edges = 2
 - persistence services: [user, cart, catalogue, ratings, dispatch]
 
 ## nodes (kind, layer)
@@ -68,11 +72,15 @@
 - web -> shipping  (sync-http, documented)  code: docker-compose.yaml#depends_on
 - web -> user  (sync-http, documented)  code: docker-compose.yaml#depends_on
 
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
+
 ## unresolved (source hint / raw target / file:line), first 40
 - shipping  =>  http://%s/shipping/   @ shipping/src/main/java/org/steveww/spark/Main.java:40
+- load-gen  =>  http://[a-z0-9]+   @ load-gen/load-gen.sh:79
 
 ## alias questions (name [origin] seen in | candidates)
-- none
+- load-gen  [code]  the module directory of url at load-gen/load-gen.sh:79 — no service on the graph has this name   | candidates: -
 
 ## alias answers applied
 - none
@@ -155,7 +163,7 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 5: 7 (env CATALOGUE_HOST=catalogue; env USER_HOST=user; env CART_HOST=cart; env SHIPPING_HOST=shipping; env PAYMENT_HOST=payment)
 - rule 6: 6 (url http://${CATALOGUE_HOST}:8080/; url http://${USER_HOST}:8080/; url http://${CART_HOST}:8080/; url http://${SHIPPING_HOST}:8080/; url http://${PAYMENT_HOST}:8080/)
 - rule 7: 0
-- rule 8: 0
+- rule 8: 1 (loopback localhost:8080)
 - rule 9: 0
 - rule 10: 1 (drop load (K8s))
 - rule 11: 1 (k8s-over-compose 12 compose names ignored)
@@ -196,5 +204,16 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 46: 0
 - rule 47: 6 (valueref user/server.js:260 mongoURL; hostref cart/server.js:348 catalogueHost; valueref cart/server.js:377 redisHost; valueref catalogue/server.js:140 mongoURL; urlref payment/payment.py:88 PAYMENT_GATEWAY)
 - rule 48: 2 (usesite MONGO_URL=mongodb; usesite REDIS_HOST=redis)
+- rule 49: 0
+- rule 50: 0
 - rule 51: 8 (browser web/static/js/controller.js:101; browser web/static/js/controller.js:115; browser web/static/js/controller.js:189; browser web/static/js/controller.js:207; browser web/static/js/controller.js:273)
+- rule 52: 0
+- rule 53: 2 (image-script load-gen/load-gen.sh:13 http://localhost:8080; image-script load-gen/load-gen.sh:79 http://[a-z0-9]+)
+- rule 54: 0
+- rule 55: 0
 - rule 56: 2 (istio robotshop-gateway -> web.robot-shop.svc.cluster.local; edge istio-ingressgateway->web)
+- rule 57: 0
+- rule 58: 0
+- rule 59: 0
+- rule 60: 0
+- rule 61: 0

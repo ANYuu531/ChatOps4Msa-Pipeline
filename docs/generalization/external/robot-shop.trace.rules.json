@@ -34,6 +34,16 @@
     ],
     "count": 2
   },
+  "49": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "50": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "51": {
     "hits": 8,
     "examples": [
@@ -48,15 +58,38 @@
     ],
     "count": 8
   },
+  "52": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "53": {
+    "hits": 2,
+    "examples": [
+      "image-script load-gen/load-gen.sh:13 http://localhost:8080",
+      "image-script load-gen/load-gen.sh:79 http://[a-z0-9]+"
+    ],
+    "count": 2
+  },
   "10": {
     "hits": 1,
     "examples": ["drop load (K8s)"],
     "count": 1
   },
+  "54": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "11": {
     "hits": 1,
     "examples": ["k8s-over-compose 12 compose names ignored"],
     "count": 1
+  },
+  "55": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
   },
   "12": {
     "hits": 0,
@@ -76,12 +109,27 @@
     "examples": [],
     "count": 0
   },
+  "57": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "14": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
+  "58": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "15": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "59": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -188,11 +236,21 @@
     "count": 0
   },
   "8": {
+    "hits": 1,
+    "examples": ["loopback localhost:8080"],
+    "count": 1
+  },
+  "9": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "9": {
+  "60": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "61": {
     "hits": 0,
     "examples": [],
     "count": 0

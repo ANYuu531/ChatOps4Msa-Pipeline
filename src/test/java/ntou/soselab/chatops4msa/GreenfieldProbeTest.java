@@ -142,12 +142,23 @@ public class GreenfieldProbeTest {
 
         out.append("\n## edges (type, confidence, provenance ref)\n");
         Map<String, String> edgeLines = new TreeMap<>();
+        Map<String, String> startupLines = new TreeMap<>();
         for (DependencyGraph.Edge e : graph.getEdges()) {
             String ev = e.provenanceRefs.isEmpty() ? "" : "  " + e.provenanceRefs.get(0);
+            // A startup-order relation is not a call: listed apart, in a shape no scorer's
+            // edge pattern matches (no " -> "), so it is never counted as one.
+            if (DependencyGraph.TYPE_STARTUP.equals(e.type)) {
+                startupLines.put(e.source + "->" + e.target, "- " + e.source + " ~> " + e.target + ev);
+                continue;
+            }
             edgeLines.put(e.source + "->" + e.target,
                     "- " + e.source + " -> " + e.target + "  (" + e.type + ", " + e.confidence + ")" + ev);
         }
         edgeLines.values().forEach(l -> out.append(l).append('\n'));
+
+        out.append("\n## startup order (Compose depends_on that no address backs; not a call, not scored)\n");
+        if (startupLines.isEmpty()) out.append("- none\n");
+        startupLines.values().forEach(l -> out.append(l).append('\n'));
 
         out.append("\n## unresolved (source hint / raw target / file:line), first 40\n");
         unresolved.stream().limit(40).forEach(u -> out.append("- ").append(u.rawSource)

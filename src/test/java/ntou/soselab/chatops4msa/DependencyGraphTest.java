@@ -240,9 +240,23 @@ public class DependencyGraphTest {
               {"section":"workload-env","fields":{"workload":"transactionhistory","configmap":"ledger-db-config"},"file":"kubernetes-manifests/transaction-history.yaml","line":-1,"confidence":"High (k8s manifest)"},
               {"section":"workload-env","fields":{"workload":"balancereader","configmap":"ledger-db-config"},"file":"kubernetes-manifests/balance-reader.yaml","line":-1,"confidence":"High (k8s manifest)"},
               {"section":"workload-env","fields":{"workload":"frontend","configmap":"service-api-config"},"file":"kubernetes-manifests/frontend.yaml","line":-1,"confidence":"High (k8s manifest)"},
-              {"section":"jpa","fields":{"marker":"Repository"},"file":"src/ledger/transactionhistory/src/main/java/x/TransactionRepository.java","line":28,"confidence":"High"}
+              {"section":"jpa","fields":{"marker":"Repository"},"file":"src/ledger/transactionhistory/src/main/java/x/TransactionRepository.java","line":28,"confidence":"High"},
+              {"section":"key-read","fields":{"name":"SPRING_DATASOURCE_URL","binding":"spring"},"file":"src/ledger/transactionhistory/pom.xml","line":-1,"confidence":"Medium (framework binding)"},
+              {"section":"key-read","fields":{"name":"SPRING_DATASOURCE_URL","binding":"spring"},"file":"src/ledger/balancereader/pom.xml","line":-1,"confidence":"Medium (framework binding)"}
             ]}
             """;
+
+    @Test
+    void aWholesaleConfigMapKeyTheWorkloadNeverReadsDrawsNothing() {
+        // Convention ③: envFrom hands frontend the datasource too, but frontend's code and
+        // build name nothing of it — not its dependency, whatever the target's kind.
+        String json = BOA_WIRING.replace("\"configmap\":\"service-api-config\"},\"file\":\"kubernetes-manifests/frontend.yaml\"",
+                "\"configmap\":\"ledger-db-config\"},\"file\":\"kubernetes-manifests/frontend.yaml\"");
+        DependencyGraph g = new DependencyGraph("");
+        CodeGraphMerger.merge(g, json, "GoogleCloudPlatform/bank-of-anthos");
+        assertNull(edge(g, "frontend", "ledger-db"));
+        assertNotNull(edge(g, "transactionhistory", "ledger-db"));
+    }
 
     @Test
     void injectedDatasourceDrawsTheDbEdgeSpringBootReadsImplicitly() {

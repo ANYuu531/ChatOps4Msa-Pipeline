@@ -4,42 +4,60 @@ flowchart TB
 %% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
   subgraph layer0 ["entry services"]
     direction LR
+    hystrix_dashboard["hystrix-dashboard"]
+    grafana_server["grafana-server"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    prometheus_server["prometheus-server"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
     vets_service["vets-service"]
     api_gateway["api-gateway"]
     admin_server["admin-server"]
-    hystrix_dashboard["hystrix-dashboard"]
   end
-  subgraph layer1 ["services · depth 1"]
+  subgraph layer3 ["services · depth 3"]
     direction LR
     customers_service["customers-service"]
     visits_service["visits-service"]
   end
-  subgraph layer2 ["services · depth 2"]
+  subgraph layer4 ["services · depth 4"]
     direction LR
     discovery_server["discovery-server"]
   end
-  subgraph layer3 ["services · depth 3"]
+  subgraph layer5 ["services · depth 5"]
     direction LR
     config_server["config-server"]
   end
-  subgraph layer4 ["no dependencies found"]
+  subgraph layer6 ["external"]
+    direction LR
+    github_com[/"github.com"/]:::external
+  end
+  subgraph layer7 ["no dependencies found"]
     direction LR
     tracing_server["tracing-server"]
-    grafana_server["grafana-server"]
-    prometheus_server["prometheus-server"]
   end
   api_gateway -.-> customers_service
   api_gateway -.-> visits_service
-  discovery_server -. declared? .-> config_server
-  customers_service -. declared? .-> config_server
+  grafana_server -.-> prometheus_server
+  prometheus_server -. declared? .-> admin_server
+  prometheus_server -.-> api_gateway
+  prometheus_server -.-> customers_service
+  prometheus_server -.-> visits_service
+  prometheus_server -.-> vets_service
+  config_server -. ext .-> github_com
+  discovery_server -.-> config_server
+  hystrix_dashboard -.-> config_server
+  admin_server -.-> config_server
+  vets_service -.-> config_server
+  api_gateway -.-> config_server
+  customers_service -.-> config_server
   customers_service -. declared? .-> discovery_server
-  visits_service -. declared? .-> config_server
+  visits_service -.-> config_server
   visits_service -. declared? .-> discovery_server
-  vets_service -. declared? .-> config_server
   vets_service -. declared? .-> discovery_server
-  api_gateway -. declared? .-> config_server
   api_gateway -. declared? .-> discovery_server
-  admin_server -. declared? .-> config_server
   admin_server -. declared? .-> discovery_server
-  hystrix_dashboard -. declared? .-> config_server
   hystrix_dashboard -. declared? .-> discovery_server
+classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;

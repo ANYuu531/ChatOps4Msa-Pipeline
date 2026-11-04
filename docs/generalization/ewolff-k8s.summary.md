@@ -7,11 +7,13 @@
 - config = 5
 - name-ref = 4
 - url = 8
+- parsed-dir = 7
+- dockerfile-from = 4
 - k8s-workload = 4
 - k8s-service = 4
 - service-root = 4
 - module-deps = 3
-- TOTAL = 57 | files with syntax errors = 0
+- TOTAL = 68 | files with syntax errors = 0
 
 ## graph
 - after merge: 4 nodes / 5 edges | after normalize: 4 nodes / 5 edges | unresolved code edges = 0
@@ -29,6 +31,9 @@
 - apache -> order  (sync-http, documented)  code: microservice-kubernetes-demo/apache/000-default.conf:14
 - order -> catalog  (sync-http, documented)  code: microservice-kubernetes-demo/microservice-kubernetes-demo-order/src/main/java/com/ewolff/microservice/order/clients/CatalogClient.java:36
 - order -> customer  (sync-http, documented)  code: microservice-kubernetes-demo/microservice-kubernetes-demo-order/src/main/java/com/ewolff/microservice/order/clients/CustomerClient.java:38
+
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
 
 ## unresolved (source hint / raw target / file:line), first 40
 
@@ -113,3 +118,18 @@ flowchart TB
 - rule 44: 0
 - rule 45: 0
 - rule 46: 0
+- rule 47: 2 (not-use-site microservice-kubernetes-demo/microservice-kubernetes-demo-order/src/main/java/com/ewolff/microservice/order/clients/CatalogClient.java:66 http://%…; not-use-site microservice-kubernetes-demo/microservice-kubernetes-demo-order/src/main/java/com/ewolff/microservice/order/clients/CustomerClient.java:78 http://…)
+- rule 48: 0
+- rule 49: 0
+- rule 50: 0
+- rule 51: 0
+- rule 52: 0
+- rule 53: 0
+- rule 54: 0
+- rule 55: 0
+- rule 56: 0
+- rule 57: 0
+- rule 58: 0
+- rule 59: 0
+- rule 60: 0
+- rule 61: 0

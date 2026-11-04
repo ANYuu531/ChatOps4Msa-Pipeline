@@ -1,15 +1,5 @@
 {"rules": {
-  "22": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "44": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "23": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -19,47 +9,42 @@
     "examples": [],
     "count": 0
   },
-  "24": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "46": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "25": {
+  "47": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "26": {
+  "48": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "27": {
+  "49": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "28": {
+  "50": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "29": {
+  "51": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "30": {
+  "52": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "31": {
+  "53": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -90,7 +75,7 @@
     ],
     "count": 21
   },
-  "32": {
+  "54": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -100,7 +85,7 @@
     "examples": [],
     "count": 0
   },
-  "33": {
+  "55": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -110,7 +95,7 @@
     "examples": [],
     "count": 0
   },
-  "34": {
+  "56": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -120,7 +105,7 @@
     "examples": [],
     "count": 0
   },
-  "35": {
+  "57": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -130,27 +115,38 @@
     "examples": [],
     "count": 0
   },
-  "36": {
+  "58": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
   "15": {
-    "hits": 16,
+    "hits": 36,
     "examples": [
+      "published 9411",
+      "edge product-service->zipkin-container :9411",
       "configserver-prefix optional:configserver:http://localhost:9296",
       "edge product-service->cloud-config :9296",
+      "edge cloud-config->zipkin-container :9411",
+      "edge api-gateway->zipkin-container :9411",
       "edge api-gateway->cloud-config :9296",
+      "edge shipping-service->zipkin-container :9411",
       "edge shipping-service->cloud-config :9296",
+      "edge payment-service->zipkin-container :9411",
       "edge payment-service->cloud-config :9296",
+      "edge favourite-service->zipkin-container :9411",
       "edge favourite-service->cloud-config :9296",
+      "edge order-service->zipkin-container :9411",
       "edge order-service->cloud-config :9296",
+      "edge service-discovery->zipkin-container :9411",
+      "edge user-service->zipkin-container :9411",
       "edge user-service->cloud-config :9296",
+      "edge proxy-client->zipkin-container :9411",
       "edge proxy-client->cloud-config :9296"
     ],
-    "count": 9
+    "count": 20
   },
-  "37": {
+  "59": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -170,17 +166,7 @@
     ],
     "count": 9
   },
-  "38": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "17": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "39": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -220,9 +206,12 @@
     "count": 8
   },
   "4": {
-    "hits": 8,
-    "examples": ["default SPRING_CONFIG_IMPORT=optional:configserver:http://localhost:9296"],
-    "count": 1
+    "hits": 18,
+    "examples": [
+      "default SPRING_ZIPKIN_BASE_URL=http://localhost:9411/",
+      "default SPRING_CONFIG_IMPORT=optional:configserver:http://localhost:9296"
+    ],
+    "count": 2
   },
   "5": {
     "hits": 0,
@@ -235,9 +224,20 @@
     "count": 0
   },
   "7": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 38,
+    "examples": [
+      "strip-suffix product-service-container=product-service",
+      "strip-suffix cloud-config-container=cloud-config",
+      "strip-suffix api-gateway-container=api-gateway",
+      "strip-suffix shipping-service-container=shipping-service",
+      "strip-suffix payment-service-container=payment-service",
+      "strip-suffix favourite-service-container=favourite-service",
+      "strip-suffix order-service-container=order-service",
+      "strip-suffix service-discovery-container=service-discovery",
+      "strip-suffix user-service-container=user-service",
+      "strip-suffix proxy-client-container=proxy-client"
+    ],
+    "count": 10
   },
   "8": {
     "hits": 88,
@@ -291,6 +291,116 @@
     ],
     "count": 29
   },
+  "60": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "61": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "40": {
     "hits": 0,
     "examples": [],
@@ -301,17 +411,7 @@
     "examples": [],
     "count": 0
   },
-  "20": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "42": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "21": {
     "hits": 0,
     "examples": [],
     "count": 0

@@ -5,12 +5,15 @@
 - jpa = 10
 - feign = 2
 - http-server = 6
+- parsed-dir = 16
+- dockerfile-from = 8
 - config = 22
 - compose-service = 5
 - compose-dependency = 4
+- compose-port = 1
 - service-root = 8
 - module-deps = 8
-- TOTAL = 65 | files with syntax errors = 0
+- TOTAL = 90 | files with syntax errors = 0
 
 ## graph
 - after merge: 11 nodes / 14 edges | after normalize: 11 nodes / 14 edges | unresolved code edges = 0
@@ -44,6 +47,9 @@
 - prices -> discoveryservice  (sync-http, inferred)  code: PriceService/src/main/resources/bootstrap.yml
 - stores -> configserver  (sync-http, inferred)  code: Docker/docker-compose.yml#depends_on
 - stores -> discoveryservice  (sync-http, inferred)  code: StoreService/src/main/resources/bootstrap.yml
+
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
 
 ## unresolved (source hint / raw target / file:line), first 40
 
@@ -148,3 +154,18 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 44: 10 (image accountservice=accounts; map accountservice=accounts; image configservice=configserver; map configservice=configserver; image priceservice=prices)
 - rule 45: 0
 - rule 46: 0
+- rule 47: 0
+- rule 48: 0
+- rule 49: 0
+- rule 50: 0
+- rule 51: 0
+- rule 52: 0
+- rule 53: 0
+- rule 54: 0
+- rule 55: 0
+- rule 56: 0
+- rule 57: 0
+- rule 58: 0
+- rule 59: 0
+- rule 60: 0
+- rule 61: 0

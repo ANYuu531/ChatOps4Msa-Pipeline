@@ -1,9 +1,4 @@
 {"rules": {
-  "22": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "44": {
     "hits": 18,
     "examples": [
@@ -22,17 +17,7 @@
     ],
     "count": 12
   },
-  "23": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "45": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "24": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -42,32 +27,30 @@
     "examples": [],
     "count": 0
   },
-  "25": {
+  "47": {
+    "hits": 2,
+    "examples": [
+      "not-use-site utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/util/RESTClient.java:86 https://",
+      "not-use-site utilities/tools.descartes.teastore.registryclient/src/main/java/tools/descartes/teastore/registryclient/util/RESTClient.java:88 http://"
+    ],
+    "count": 2
+  },
+  "48": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "26": {
+  "49": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "27": {
+  "50": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "28": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "29": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "30": {
+  "51": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -92,17 +75,32 @@
     ],
     "count": 14
   },
-  "31": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+  "53": {
+    "hits": 20,
+    "examples": [
+      "image-script utilities/tools.descartes.teastore.dockerbase/start.sh:6 https://${REGISTRY_HOST}:${REGISTRY_PORT}/tools.descartes.teastore.registry/rest/services/",
+      "image-script utilities/tools.descartes.teastore.dockerbase/start.sh:9 http://${REGISTRY_HOST}:${REGISTRY_PORT}/tools.descartes.teastore.registry/rest/services/",
+      "base-image teastore-webui <- utilities/tools.descartes.teastore.dockerbase/start.sh",
+      "base-image teastore-recommender <- utilities/tools.descartes.teastore.dockerbase/start.sh",
+      "base-image teastore-persistence <- utilities/tools.descartes.teastore.dockerbase/start.sh",
+      "base-image teastore-registry <- utilities/tools.descartes.teastore.dockerbase/start.sh",
+      "base-image teastore-image <- utilities/tools.descartes.teastore.dockerbase/start.sh",
+      "base-image teastore-auth <- utilities/tools.descartes.teastore.dockerbase/start.sh",
+      "base-image teastore-webui <- utilities/tools.descartes.teastore.dockerbase/kieker.monitoring.properties",
+      "base-image teastore-recommender <- utilities/tools.descartes.teastore.dockerbase/kieker.monitoring.properties",
+      "base-image teastore-persistence <- utilities/tools.descartes.teastore.dockerbase/kieker.monitoring.properties",
+      "base-image teastore-registry <- utilities/tools.descartes.teastore.dockerbase/kieker.monitoring.properties",
+      "base-image teastore-image <- utilities/tools.descartes.teastore.dockerbase/kieker.monitoring.properties",
+      "base-image teastore-auth <- utilities/tools.descartes.teastore.dockerbase/kieker.monitoring.properties"
+    ],
+    "count": 14
   },
   "10": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "32": {
+  "54": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -112,7 +110,7 @@
     "examples": ["k8s-over-compose 8 compose names ignored"],
     "count": 1
   },
-  "33": {
+  "55": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -122,7 +120,7 @@
     "examples": [],
     "count": 0
   },
-  "34": {
+  "56": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -132,7 +130,7 @@
     "examples": [],
     "count": 0
   },
-  "35": {
+  "57": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -140,35 +138,30 @@
   "14": {
     "hits": 45,
     "examples": [
-      "edge teastore-persistence->teastore-registry",
-      "edge teastore-auth->teastore-registry",
-      "edge teastore-image->teastore-registry",
-      "edge teastore-recommender->teastore-registry",
-      "edge teastore-webui->teastore-registry"
+      "code-decides teastore-persistence->teastore-registry",
+      "code-decides teastore-auth->teastore-registry",
+      "code-decides teastore-image->teastore-registry",
+      "code-decides teastore-recommender->teastore-registry",
+      "code-decides teastore-webui->teastore-registry"
     ],
     "count": 5
   },
-  "36": {
+  "58": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
   "15": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 3,
+    "examples": ["published 8080"],
+    "count": 1
   },
-  "37": {
+  "59": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
   "16": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "38": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -186,15 +179,13 @@
     ],
     "count": 7
   },
-  "39": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "18": {
-    "hits": 2,
-    "examples": ["dockerfile-env RABBITMQ_HOST=unset"],
-    "count": 1
+    "hits": 4,
+    "examples": [
+      "dockerfile-env HOST_NAME=unset",
+      "dockerfile-env RABBITMQ_HOST=unset"
+    ],
+    "count": 2
   },
   "19": {
     "hits": 0,
@@ -248,24 +239,35 @@
     "count": 0
   },
   "4": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 12,
+    "examples": ["table REGISTRY_HOST=teastore-registry"],
+    "count": 1
   },
   "5": {
-    "hits": 155,
+    "hits": 218,
     "examples": [
+      "env HOST_NAME=unset",
       "env REGISTRY_HOST=127.0.0.1",
       "env DB_HOST=127.0.0.1",
       "env RABBITMQ_HOST=unset",
+      "env HOST_NAME=teastore-auth",
       "env REGISTRY_HOST=teastore-registry",
+      "env HOST_NAME=teastore-image",
+      "env HOST_NAME=teastore-persistence",
       "env DB_HOST=teastore-db",
+      "env HOST_NAME=teastore-recommender",
+      "env HOST_NAME=teastore-webui",
+      "env HOST_NAME=teastore-registry",
+      "env HOST_NAME=persistence",
       "env REGISTRY_HOST=registry",
       "env DB_HOST=db",
-      "env RABBITMQ_HOST=rabbitmq",
-      "env RABBITMQ_HOST=teastore-kieker-rabbitmq"
+      "env HOST_NAME=auth",
+      "env HOST_NAME=image",
+      "env HOST_NAME=recommender",
+      "env HOST_NAME=webui",
+      "env RABBITMQ_HOST=rabbitmq"
     ],
-    "count": 9
+    "count": 21
   },
   "6": {
     "hits": 0,
@@ -273,30 +275,30 @@
     "count": 0
   },
   "7": {
-    "hits": 63,
+    "hits": 313,
     "examples": [
+      "env registry.HOST_NAME=teastore-registry",
+      "env persistence.HOST_NAME=teastore-persistence",
       "env persistence.REGISTRY_HOST=teastore-registry",
       "env persistence.DB_HOST=teastore-db",
+      "env auth.HOST_NAME=teastore-auth",
       "env auth.REGISTRY_HOST=teastore-registry",
+      "env image.HOST_NAME=teastore-image",
       "env image.REGISTRY_HOST=teastore-registry",
+      "env recommender.HOST_NAME=teastore-recommender",
       "env recommender.REGISTRY_HOST=teastore-registry",
+      "env webui.HOST_NAME=teastore-webui",
       "env webui.REGISTRY_HOST=teastore-registry",
+      "env persistence.HOST_NAME=persistence",
       "env persistence.REGISTRY_HOST=registry",
       "env persistence.DB_HOST=db",
+      "env auth.HOST_NAME=auth",
       "env auth.REGISTRY_HOST=registry",
+      "env image.HOST_NAME=image",
       "env image.REGISTRY_HOST=registry",
-      "env recommender.REGISTRY_HOST=registry",
-      "env webui.REGISTRY_HOST=registry",
-      "env persistence.RABBITMQ_HOST=rabbitmq",
-      "env auth.RABBITMQ_HOST=rabbitmq",
-      "env image.RABBITMQ_HOST=rabbitmq",
-      "env recommender.RABBITMQ_HOST=rabbitmq",
-      "env webui.RABBITMQ_HOST=rabbitmq",
-      "unique-suffix persistence=teastore-persistence",
-      "unique-suffix auth=teastore-auth",
-      "unique-suffix image=teastore-image"
+      "env recommender.HOST_NAME=recommender"
     ],
-    "count": 25
+    "count": 36
   },
   "8": {
     "hits": 1,
@@ -329,13 +331,130 @@
     ],
     "count": 58
   },
+  "60": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "61": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 12,
+    "examples": [
+      "scoped REGISTRY_HOST=teastore-registry @teastore-webui",
+      "scoped REGISTRY_HOST=teastore-registry @teastore-recommender",
+      "scoped REGISTRY_HOST=teastore-registry @teastore-persistence",
+      "global REGISTRY_HOST @teastore-registry",
+      "scoped REGISTRY_HOST=teastore-registry @teastore-image",
+      "scoped REGISTRY_HOST=teastore-registry @teastore-auth"
+    ],
+    "count": 6
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
   "40": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
   "41": {
-    "hits": 56,
+    "hits": 54,
     "examples": [
       "lib tools-descartes-teastore-kieker-probes",
       "lib tools-descartes-teastore-registryclient",
@@ -354,17 +473,7 @@
     ],
     "count": 14
   },
-  "20": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "42": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "21": {
     "hits": 0,
     "examples": [],
     "count": 0

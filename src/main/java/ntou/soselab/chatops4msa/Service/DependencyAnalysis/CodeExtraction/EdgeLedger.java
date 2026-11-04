@@ -43,6 +43,10 @@ public class EdgeLedger {
         SECTION_TITLES.put("service-root", "Inventory - service directories (dir -> name: greenfield node vocabulary)");
         SECTION_TITLES.put("env-address", "Resolution - env var -> host (from k8s ConfigMap / .env: resolves indirected targets)");
         SECTION_TITLES.put("workload-env", "Wiring - workload -> injected ConfigMap / host (k8s envFrom / configMapKeyRef: who receives which env)");
+        SECTION_TITLES.put("key-read", "Wiring - a key of a shared env source named by a reader (code / own config / framework binding)");
+        SECTION_TITLES.put("parsed-dir", "Meta - a directory a grammar parsed files in (the module's code is readable)");
+        SECTION_TITLES.put("dockerfile-from", "Meta - the image a Dockerfile is built on (FROM chain)");
+        SECTION_TITLES.put("image-build", "Meta - the directory an image is built from (build script / Compose build:+image:)");
     }
 
     public static class Edge {

@@ -37,10 +37,10 @@ flowchart TB
   frontend -.-> balancereader
   frontend -.-> transactionhistory
   frontend -.-> contacts
+  loadgenerator -.-> frontend
   istio_ingressgateway -.-> frontend
   ledgerwriter -. db .-> ledger_db
   transactionhistory -. db .-> ledger_db
-  loadgenerator -. declared? .-> frontend
   balancereader -. db .-> ledger_db
   contacts -. db .-> accounts_db
   userservice -. db .-> accounts_db

@@ -8,12 +8,16 @@
 - name-ref = 11
 - feign = 5
 - name-constant = 2
+- parsed-dir = 41
 - config = 60
+- dockerfile-from = 10
 - compose-service = 28
+- compose-port = 15
 - compose-dependency = 8
+- url = 1
 - service-root = 10
 - module-deps = 9
-- TOTAL = 153 | files with syntax errors = 0
+- TOTAL = 220 | files with syntax errors = 0
 
 ## graph
 - after merge: 16 nodes / 33 edges | after normalize: 16 nodes / 33 edges | unresolved code edges = 0
@@ -71,6 +75,9 @@
 - turbine-stream-service -> config  (sync-http, documented)  code: turbine-stream-service/src/main/resources/bootstrap.yml
 - turbine-stream-service -> rabbitmq  (async, documented)  code: config/src/main/resources/shared/application.yml
 - turbine-stream-service -> registry  (sync-http, documented)  code: config/src/main/resources/shared/application.yml
+
+## startup order (Compose depends_on that no address backs; not a call, not scored)
+- none
 
 ## unresolved (source hint / raw target / file:line), first 40
 
@@ -174,7 +181,7 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 2: 0
 - rule 3: 42 (spring-yml config/src/main/resources/shared/gateway.yml; spring-yml config/src/main/resources/shared/auth-service.yml; spring-yml config/src/main/resources/shared/notification-service.yml; spring-yml config/src/main/resources/shared/statistics-service.yml; spring-yml config/src/main/resources/shared/account-service.yml)
 - rule 4: 1 (table rates.url=https://api.exchangeratesapi.io)
-- rule 5: 9 (key zuul.routes.account-service.serviceid=account-service; key zuul.routes.statistics-service.serviceid=statistics-service; key zuul.routes.notification-service.serviceid=notification-service; key spring.data.mongodb.host=auth-mongodb; key spring.data.mongodb.host=notification-mongodb)
+- rule 5: 10 (key zuul.routes.account-service.serviceId=account-service; key zuul.routes.statistics-service.serviceId=statistics-service; key zuul.routes.notification-service.serviceId=notification-service; key spring.data.mongodb.host=auth-mongodb; key spring.data.mongodb.host=notification-mongodb)
 - rule 6: 0
 - rule 7: 0
 - rule 8: 10 (feign-bean-id rates-client; config-signal server.port; config-signal spring.data.mongodb.username; config-signal spring.data.mongodb.password; config-signal spring.data.mongodb.database)
@@ -216,4 +223,18 @@ classDef external fill:#f3e8ff,stroke:#7a3fb0,color:#2e1440;
 - rule 44: 1 (map mongodb=auth-mongodb)
 - rule 45: 0
 - rule 46: 0
+- rule 47: 0
+- rule 48: 0
+- rule 49: 0
+- rule 50: 0
 - rule 51: 6 (browser gateway/src/main/resources/static/js/main.js:871; browser gateway/src/main/resources/static/js/login.js:1; browser gateway/src/main/resources/static/js/lib/jquery.min.js:2; browser gateway/src/main/resources/static/js/lib/extrascripts.js:97; browser gateway/src/main/resources/static/js/launch.js:17)
+- rule 52: 0
+- rule 53: 0
+- rule 54: 0
+- rule 55: 0
+- rule 56: 0
+- rule 57: 0
+- rule 58: 0
+- rule 59: 0
+- rule 60: 0
+- rule 61: 0

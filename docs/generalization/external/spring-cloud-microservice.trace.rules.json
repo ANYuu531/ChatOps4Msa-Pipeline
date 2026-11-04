@@ -1,9 +1,4 @@
 {"rules": {
-  "22": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "44": {
     "hits": 24,
     "examples": [
@@ -26,17 +21,7 @@
     ],
     "count": 16
   },
-  "23": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "45": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "24": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -46,42 +31,37 @@
     "examples": [],
     "count": 0
   },
-  "25": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "47": {
     "hits": 1,
     "examples": ["hostref cloud-simple-ui/src/main/java/cloud/simple/service/UserService.java:32 SERVICE_NAME"],
     "count": 1
   },
-  "26": {
+  "48": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "27": {
+  "49": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "28": {
+  "50": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "29": {
+  "51": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "30": {
+  "52": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "31": {
+  "53": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -91,7 +71,7 @@
     "examples": [],
     "count": 0
   },
-  "32": {
+  "54": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -119,7 +99,7 @@
     ],
     "count": 17
   },
-  "33": {
+  "55": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -150,7 +130,7 @@
     ],
     "count": 27
   },
-  "34": {
+  "56": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -160,38 +140,20 @@
     "examples": [],
     "count": 0
   },
-  "35": {
-    "hits": 26,
+  "57": {
+    "hits": 2,
     "examples": [
-      "inferred hystrix->gateway",
-      "inferred hystrix->discovery",
-      "inferred turbine->gateway",
-      "inferred turbine->discovery",
-      "inferred configserver->discovery",
-      "inferred gateway->discovery",
-      "inferred gateway->configserver",
-      "inferred gateway->simple-service",
-      "inferred gateway->simple-service2",
-      "inferred gateway->simple-serviceb",
-      "inferred gateway->simple-ui",
-      "inferred gateway->zipkin",
-      "inferred simple-service->discovery",
-      "inferred simple-service->configserver",
-      "inferred simple-service->zipkin",
-      "inferred simple-service2->discovery",
-      "inferred simple-service2->configserver",
-      "inferred simple-service2->zipkin",
-      "inferred simple-serviceb->discovery",
-      "inferred simple-serviceb->configserver"
+      "documents cloud-uaa-service/src/main/resources/application.yml 2",
+      "documents cloud-dummy-service/src/main/resources/application.yml 2"
     ],
-    "count": 26
+    "count": 2
   },
   "14": {
     "hits": 0,
     "examples": [],
     "count": 0
   },
-  "36": {
+  "58": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -219,7 +181,7 @@
     ],
     "count": 17
   },
-  "37": {
+  "59": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -229,17 +191,7 @@
     "examples": [],
     "count": 0
   },
-  "38": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "17": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "39": {
     "hits": 0,
     "examples": [],
     "count": 0
@@ -291,7 +243,7 @@
     "count": 9
   },
   "4": {
-    "hits": 5,
+    "hits": 7,
     "examples": [
       "default config.port=8888",
       "table eureka.instance.hostname=localhost"
@@ -299,16 +251,17 @@
     "count": 2
   },
   "5": {
-    "hits": 7,
+    "hits": 12,
     "examples": [
-      "key zipkin.http.host=localhost:9411",
       "key eureka.instance.hostname=localhost",
-      "key zuul.routes.api-a.serviceid=cloud-simple-service",
-      "key zuul.routes.api-b.serviceid=cloud-simple-serviceB",
-      "key zuul.routes.api-ui.serviceid=cloud-simple-ui",
-      "key security.oauth2.resource.serviceid=${PREFIX:}resource"
+      "not-a-host eureka.instance.prefer-ip-address=true",
+      "key zipkin.http.host=localhost:9411",
+      "key security.oauth2.resource.serviceId=${PREFIX:}resource",
+      "key zuul.routes.api-a.serviceId=cloud-simple-service",
+      "key zuul.routes.api-b.serviceId=cloud-simple-serviceB",
+      "key zuul.routes.api-ui.serviceId=cloud-simple-ui"
     ],
-    "count": 6
+    "count": 7
   },
   "6": {
     "hits": 0,
@@ -316,27 +269,162 @@
     "count": 0
   },
   "7": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
+    "hits": 1,
+    "examples": ["unique-suffix uaa-service=cloud-uaa-service"],
+    "count": 1
   },
   "8": {
-    "hits": 21,
+    "hits": 37,
     "examples": [
       "loopback localhost:9966",
       "config-signal server.port",
+      "loopback localhost",
+      "config-signal eureka.instance.port",
+      "config-signal eureka.instance.prefer-ip-address",
+      "config-signal eureka.client.service-url.defaultZone",
       "config-signal eureka.instance.leaseRenewalIntervalInSeconds",
       "config-signal eureka.client.registerWithEureka",
       "config-signal eureka.client.fetchRegistry",
-      "loopback localhost",
-      "config-signal eureka.server.waitTimeInMsWhenSyncEmpty"
+      "config-signal eureka.server.waitTimeInMsWhenSyncEmpty",
+      "config-signal security.oauth2.client.userAuthorizationUri"
     ],
-    "count": 7
+    "count": 11
   },
   "9": {
     "hits": 1,
     "examples": ["jpa cloud-simple-service/src/main/java/cloud/simple/service/storage/UserStorageImpl.java"],
     "count": 1
+  },
+  "60": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "61": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "21": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "hits": 26,
+    "examples": [
+      "inferred hystrix->gateway",
+      "inferred hystrix->discovery",
+      "inferred turbine->gateway",
+      "inferred turbine->discovery",
+      "inferred configserver->discovery",
+      "inferred gateway->discovery",
+      "inferred gateway->configserver",
+      "inferred gateway->simple-service",
+      "inferred gateway->simple-service2",
+      "inferred gateway->simple-serviceb",
+      "inferred gateway->simple-ui",
+      "inferred gateway->zipkin",
+      "inferred simple-service->discovery",
+      "inferred simple-service->configserver",
+      "inferred simple-service->zipkin",
+      "inferred simple-service2->discovery",
+      "inferred simple-service2->configserver",
+      "inferred simple-service2->zipkin",
+      "inferred simple-serviceb->discovery",
+      "inferred simple-serviceb->configserver"
+    ],
+    "count": 26
+  },
+  "36": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "37": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "hits": 0,
+    "examples": [],
+    "count": 0
   },
   "40": {
     "hits": 0,
@@ -355,17 +443,7 @@
     ],
     "count": 6
   },
-  "20": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
   "42": {
-    "hits": 0,
-    "examples": [],
-    "count": 0
-  },
-  "21": {
     "hits": 0,
     "examples": [],
     "count": 0

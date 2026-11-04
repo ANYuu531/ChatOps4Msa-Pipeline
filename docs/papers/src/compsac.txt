@@ -1,6 +1,6 @@
 !title DepWeaver：以多來源融合、信心分級與對話式缺口補齊建構微服務相依圖
 !subtitle DepWeaver: Multi-Source Fusion with Confidence Grading and Conversational Gap-Filling for Microservice Dependency Graph Construction
-!abstract 微服務系統的相依圖是部署排序、變更影響分析與測試規劃的基礎，但單一來源難以完整重建它：執行期觀測只看得到被觸發的呼叫，靜態分析處理不了動態分派，也處理不了尚未支援文法的語言，專案文件則可能過時或錯誤。把多個來源合在一起可以提高完整度，卻帶來新的問題：讀者分不出圖上哪一條關係是量測到的、哪一條只是有人提過，覆蓋率數字與 LLM 撰寫的報告也可能和圖互相矛盾。本文提出 DepWeaver，一個整合在 ChatOps 環境中的相依圖建構方法。它從服務網格的執行期觀測、tree-sitter 靜態分析與專案文件三個來源抽取關係，再融合成統一模型；模型中每條邊帶有逐條出處與三級信心等級（僅推測 < 有使用證據 < 量測到）。圖、覆蓋率與報告都由這個模型產生：相依關係清單由程式撰寫，不交給 LLM 重述；覆蓋率只計算量測機制能夠量測的關係；沒有量測的值明示為「未量測」。自動手段用盡時，才在對話中請操作者提供缺少的值，並確認對不上的服務名稱指的是哪個服務。在 21 個開源系統與 1 個私有系統上評估：靜態層對第三方 MicroDepGraph 參考邊集合的吻合率為 0.98（93/95）；作為假想敵，不給檔案的 LLM 直接畫圖 F1 為 0.70，給了檔案後為 0.90，但沒有出處、執行結果不穩定、名稱常對不上，而它贏過靜態層的地方正好指出規則的缺口。補上規則後，歸納用的 7 個系統 precision 全為 1.00、recall 0.99，但這些規則對 3 個未見過的 hold-out 系統一條邊都沒有改變；改從 hold-out 歸納、再以另外未見過的系統量測，才有部分轉移（其中一個系統的業務呼叫邊 recall 由 0.11 提高到 0.89；第四組的純 Kubernetes 系統 P 1.00、R 0.84 直接轉移）。靜態層的 recall 因此是寫法涵蓋率，不是靜態分析的極限。在真實部署的 Bank of Anthos 上，融合執行期觀測後業務呼叫覆蓋率 7/7、資料層 5/5；關閉 repo 範例來源再執行一次時，最後兩條業務邊由對話補齊；操作者回答 3 個名稱問題後，一個系統的吻合率由 24/26 提高到 26/26。
+!abstract 微服務系統的相依圖是部署排序、變更影響分析與測試規劃的基礎，但單一來源難以完整重建它：執行期觀測只看得到被觸發的呼叫，靜態分析處理不了動態分派，也處理不了尚未支援文法的語言，專案文件則可能過時或錯誤。把多個來源合在一起可以提高完整度，卻帶來新的問題：讀者分不出圖上哪一條關係是量測到的、哪一條只是有人提過，覆蓋率數字與 LLM 撰寫的報告也可能和圖互相矛盾。本文提出 DepWeaver，一個整合在 ChatOps 環境中的相依圖建構方法。它從服務網格的執行期觀測、tree-sitter 靜態分析與專案文件三個來源抽取關係，再融合成統一模型；模型中每條邊帶有逐條出處與三級信心等級（僅推測 < 有使用證據 < 量測到）。圖、覆蓋率與報告都由這個模型產生：相依關係清單由程式撰寫，不交給 LLM 重述；覆蓋率只計算量測機制能夠量測的關係；沒有量測的值明示為「未量測」。自動手段用盡時，才在對話中請操作者提供缺少的值，並確認對不上的服務名稱指的是哪個服務。在 22 個開源系統、1 個私有系統與 100 個系統的探勘語料上評估：靜態層對第三方 MicroDepGraph 參考邊集合的吻合率為 0.98（93/95）；作為假想敵，不給檔案的 LLM 直接畫圖 F1 為 0.70，給了檔案後為 0.90，但沒有出處、執行結果不穩定、名稱常對不上，而它贏過靜態層的地方正好指出規則的缺口。補上規則後，歸納用的 7 個系統 precision 全為 1.00、recall 0.99，但這些規則對 3 個未見過的 hold-out 系統一條邊都沒有改變；改從 hold-out 歸納、再以另外未見過的系統量測，才有部分轉移（其中一個系統的業務呼叫邊 recall 由 0.11 提高到 0.89；第四組的純 Kubernetes 系統 P 1.00、R 0.84 直接轉移）。靜態層的 recall 因此是寫法涵蓋率，不是靜態分析的極限。改以程式網羅 100 個系統、依殘餘出現在幾個系統來找規則時，5 條新規則各在 4 至 18 個系統觸發，但對隨機抽出的 hold-out E 沒有轉移：它的缺口（經 localhost 與 port 間接指向）正好是殘餘探勘看不到的寫法。在真實部署的 Bank of Anthos 上，融合執行期觀測後業務呼叫覆蓋率 7/7、資料層 5/5；關閉 repo 範例來源再執行一次時，最後兩條業務邊由對話補齊；操作者回答 3 個名稱問題後，一個系統的吻合率由 24/26 提高到 26/26。
 !keywords 微服務、架構重建、相依圖、靜態與動態分析、服務網格、出處追溯（provenance）、ChatOps、大型語言模型、human-in-the-loop
 
 # 緒論
@@ -24,7 +24,7 @@ DepWeaver 把相依圖的建構拆成「收集、融合、產出、補齊」四�
 1. **三個來源、三級信心等級的融合模型**（第 III-B、III-C 節）：執行期觀測、靜態分析與文件以（來源，目標）為鍵合併；每條邊帶一個有序的信心等級與完整的出處（provenance）清單，合併時等級取最高、出處取聯集。
 2. **由同一模型產生、彼此一致的產出物**（第 III-E 節）：列出相依關係的事實段落由程式產生後插入 LLM 撰寫的報告；覆蓋率的分母只計算量測機制能夠量測、且信心等級高於「僅推測」的關係，僅推測的邊的數量寫在分數旁邊；未量測的狀態以三值表示。
 3. **對話式缺口補齊：自動手段用盡後才詢問操作者**（第 III-F 節）：流量參數依序從 repo 範例、錯誤回饋、詢問操作者取得；對不上的名稱不丟棄、不模糊比對，而是附排序過的候選請操作者確認，答案以 repo 為單位保存。
-4. **在 21 個開源系統與 1 個私有系統上的評估**（第 IV 節）：包含一個純 LLM 直接畫圖的假想敵對照、一份非作者標註的第三方參考邊集合、逐條可複驗的作者參考邊集合、四輪「在一組系統上歸納規則、在下一組未見過的系統上量測轉移」的 hold-out 評估、每條規則在全部系統上的觸發次數、一個真實部署的執行期驗證，以及詢問操作者前後的對照。
+4. **在 22 個開源系統、1 個私有系統與 100 個系統的探勘語料上的評估**（第 IV 節）：包含一個純 LLM 直接畫圖的假想敵對照、一份非作者標註的第三方參考邊集合、逐條可複驗的作者參考邊集合、四輪「在一組系統上歸納規則、在下一組未見過的系統上量測轉移」的 hold-out 評估、一次「先網羅 100 個系統、依殘餘的跨系統頻率找規則」的語料探勘與其轉移量測、每條規則在全部系統上的觸發次數、一個真實部署的執行期驗證，以及詢問操作者前後的對照。
 
 ## 研究問題
 
@@ -112,7 +112,7 @@ Guo 等人以受控實驗比較在圖的邊上同時呈現主屬性與不確定�
 
 ## 正規化、未對應的邊與分層
 
-合併後的圖帶有三類雜訊：框架函式庫被當成服務、同一服務的多種拼法（模組目錄名、部署名、文件中的名稱），以及控制平面元件。DepWeaver 以 56 條不含任何專案名稱的抽取與合併規則，加上框架函式庫與控制平面的名單處理；表 II 列出其中幾條代表性的規則；每條規則都是在第 IV-B 節的某個系統上逐條比對差異後歸納出來的，並有對應的單元測試（46 條全表見附錄；它們分四輪歸納，每一輪對未見過的系統轉移了多少，見第 IV-C 節）。
+合併後的圖帶有三類雜訊：框架函式庫被當成服務、同一服務的多種拼法（模組目錄名、部署名、文件中的名稱），以及控制平面元件。DepWeaver 以 61 條不含任何專案名稱的抽取與合併規則，加上框架函式庫與控制平面的名單處理；表 II 列出其中幾條代表性的規則；每條規則都是在第 IV-B 節的某個系統上逐條比對差異後歸納出來的，並有對應的單元測試（46 條全表見附錄；它們分四輪歸納，每一輪對未見過的系統轉移了多少，見第 IV-C 節）。
 
 !table 抽取與合併規則（節錄）
 !widths 2700,2340
@@ -185,7 +185,7 @@ DepWeaver 是 ChatOps4Msa [@wang2024] 的一個 capability（Spring Boot 3.0、J
 
 ## 受測系統
 
-表 IV 列出受測系統。RQ0 與 RQ1 刻意挑選結構特性不同的新系統：非 Spring 的 Jakarta EE、以 enum 常數指定呼叫目標、再經自行實作的 registry 取得實例位址，五種語言混合、Helm 範本、以反向代理為入口。另有三組在規則歸納前就選定、只用來量測規則轉移的 hold-out 系統（B、C、D），以及一個私有系統（AICS，13 個 repo 的 polyrepo，不可能在 LLM 的訓練資料裡）。
+表 IV 列出受測系統。RQ0 與 RQ1 刻意挑選結構特性不同的新系統：非 Spring 的 Jakarta EE、以 enum 常數指定呼叫目標、再經自行實作的 registry 取得實例位址，五種語言混合、Helm 範本、以反向代理為入口。另有三組在規則歸納前就選定、只用來量測規則轉移的 hold-out 系統（B、C、D），一個私有系統（AICS，13 個 repo 的 polyrepo，不可能在 LLM 的訓練資料裡），一個由程式網羅、作者篩選的 100 個系統的探勘語料，以及從同一批合格候選中以固定種子抽出、從未被探勘的 hold-out E。B、C、D 是作者挑的，有選樣偏差；E 是隨機抽的。
 
 !table 受測系統
 !widths 1700,1300,1000,1040
@@ -207,6 +207,8 @@ DepWeaver 是 ChatOps4Msa [@wang2024] 的一個 capability（Spring Boot 3.0、J
 | run-aspnetcore-microservices | C#（.NET 8） | Compose | RQ1 hold-out C |
 | kiali travels | Go | Kubernetes（3 個 namespace）、Istio | RQ1 hold-out D |
 | skywalking-showcase | Java、Python、Go、Node | Helm、Compose（20 份） | RQ1 hold-out D |
+| go-food-delivery-microservices | Go | Compose（只有基礎設施） | RQ1 hold-out E（從語料候選中以固定種子抽出） |
+| 探勘語料 100 個系統 | Java、C#、Go、TypeScript、JavaScript、Python、PHP、Kotlin | Compose、Kubernetes、Helm | RQ1（第 57 至 61 條的來源；不寫參考邊集合） |
 | AICS（私有） | Python（FastAPI） | Kubernetes、Istio | RQ1（第 19 至 22 條規則的歸納來源） |
 !end
 
@@ -285,30 +287,38 @@ DepWeaver 是 ChatOps4Msa [@wang2024] 的一個 capability（Spring Boot 3.0、J
 
 **第四輪：以 hold-out D 量測第三輪，再以機制而非規則補缺口。**第三輪規則以另外選定的 2 個系統量測（hold-out D）：kiali 的 travels（純 Kubernetes、三個 namespace、Istio、Go）P 1.00、R 0.84，第三輪完全轉移；Apache skywalking-showcase P 0.08、R 0.25，暴露四個前面各組沒有的部署形狀：只有 Helm template 的 Kubernetes 描述（整份被 YAML 解析例外吞掉）、Compose 用 image: 而非 build: 指名模組、Compose 的 network aliases，以及真正的目標寫在 command: 裡的 depends_on。這一輪我們刻意不再以「多一種寫法、多一條規則」補缺口，而是補通用機制：以 tree-sitter 文法取代 JavaScript、TypeScript、Go、PHP 的缺口與 Kotlin、C# 的正規表示式（6 個文法在 Linux x86-64 上實測可載入）；把「變數追到字面值」由 Python 專用的實作改為跨語言的單一解析器；以 values.yaml 的預設值渲染 Helm template；把 image 名稱、network aliases 併入既有的別名機制；把 command: 與容器 args 當成位址來源；同名而分屬不同 namespace 的資源保持為不同節點；一個值列出多個位址時逐一建邊；以 Istio VirtualService 與 APISIX 路由檔作為入口來源（共 10 條，第 47 至 56 條；另擴充第 2、5、25、36、42、44 條）。結果：歸納用的 7 個系統 recall 由 0.99 提高到 1.00（robot-shop 的 Node 與 PHP 兩條由文法補上）、precision 維持 1.00；hold-out D 由 0.44／0.67 提高到 0.71／1.00；hold-out B 由 0.99／0.89 提高到 0.99／0.99；AICS 由 0.89／0.63 提高到 0.90／0.76；hold-out C 逐邊不變；第三方吻合率維持 93/95。為了統一入口邊的標註方式，Online Boutique、Bank of Anthos 與 robot-shop 的參考邊集合各補上一條 istio-ingressgateway 的邊（repo 中都有綁定 Gateway 的 VirtualService），train-ticket 的固定邊數因 gateway 的 38 條入口路由由 120 變為 158，其餘逐邊不變。hotelReservation 的 9 條 Consul srv-* 呼叫現在由 Go 文法讀到，並與被呼叫端在程式碼中登記的名稱對上：search 服務以 const name = "srv-search" 與 Registry.Register(name, …) 向 Consul 登記，frontend 以同一個名稱呼叫，因此畫成有使用證據的邊；一個名稱在 repo 中沒有登記者或有多個登記者時，才列為待確認的名稱交給操作者（第 III-F 節），永遠不憑名稱相似來猜。這需要先知道每段程式碼屬於哪個服務：hotelReservation 的所有服務共用一份程式碼與一個映像、只差 entrypoint，不屬於任何模組的檔案若位於名稱恰等於一個部署宣告之服務的目錄（services/search/），就歸該服務。
 
-!table 規則對未見過系統的轉移。每一欄是一輪規則加入後的分數；粗體格是真正的 hold-out 量測（規則在上一組系統上歸納，這一組在歸納前就選定、沒有看過）
-!widths 1500,400,628,628,628,628,628
-| 系統 | 指標 | 14 條 | 15–23 後 | 24–35 後 | 36–46 後 | 47–56 後 |
-| opentelemetry-demo（B） | P | 0.79 | **0.79** | 0.97 | 0.97 | 0.97 |
-| | R | 0.82 | **0.82** | 1.00 | 1.00 | 1.00 |
-| mall-swarm（B） | P | 0.43 | **0.43** | 1.00 | 1.00 | 1.00 |
-| | R | 0.50 | **0.50** | 0.96 | 0.96 | 0.96 |
-| hotelReservation（B） | P | 1.00 | **1.00** | 1.00 | 1.00 | 1.00 |
-| | R | 0.71 | **0.71** | 0.71 | 0.71 | 1.00 |
-| yas（C） | P | — | 0.58 | **0.68** | 0.83 | 0.83 |
-| | R | — | 0.58 | **0.81** | 0.96 | 0.96 |
-| run-aspnetcore-microservices（C） | P | — | 0.00 | **0.00** | 1.00 | 1.00 |
-| | R | — | 0.00 | **0.00** | 1.00 | 1.00 |
-| travels（D） | P | — | — | — | **1.00** | 0.95 |
-| | R | — | — | — | **0.84** | 1.00 |
-| skywalking-showcase（D） | P | — | — | — | **0.08** | 0.44 |
-| | R | — | — | — | **0.25** | 1.00 |
-| AICS（私有） | P | **0.42** | 0.89 | 0.89 | 0.89 | 0.90 |
-| | R | **0.10** | 0.63 | 0.63 | 0.63 | 0.76 |
+**以語料探勘取代逐系統修正（第 57 至 61 條）。**前面的做法是「挑一組系統、寫參考邊集合、看錯與漏、補規則」，每次只看 2 到 3 個系統，規則的來源是那幾個系統的寫法。這一批改成先網羅案例、再找規則，分四步。第一步，以寫下來的條件網羅語料：GitHub 上 topic 為 microservices（含 microservice、microservices-architecture）、主要語言是有文法的 8 種之一、公開、非 fork、未封存、至少 30 顆星的 repo，依星數逐一檢查是否有部署描述檔、至少 6 個可部署的服務、原始碼至少 80% 是支援的語言；機械條件擋不掉框架、中介軟體產品與範例合集（temporal、tyk 都有 6 個以上的 Dockerfile），所以另由作者依「由 6 個以上會互相溝通的元件組成的應用系統」的條件篩選，每個 repo 記一行理由。依星數檢查 849 個候選後湊滿 101 個合格者（作者篩掉 65 個），以固定種子從中抽出 1 個作為 hold-out E，其餘 100 個為探勘語料（主要語言 Java 30、C# 24、Go 20、TypeScript 11、JavaScript 8、Python 4、PHP 2、Kotlin 1）。第二步，以程式找殘餘，不用 LLM，也不需要參考邊集合：對每個系統執行靜態層，找出「repo 自己宣告的服務名出現在位址形狀的位置（URL 的主機、host:port、位址類鍵的值、整個字串字面值），但圖上沒有從該行所屬元件到它的邊」的地方，依「檔案種類 × 語法位置 × 鍵名慣例」分群，依出現在幾個 repo 排序。100 個系統共 2,845 筆殘餘、803 種形狀，其中 108 種出現在 2 個以上的 repo；只出現在一個 repo 的形狀不做規則。第三步，請 LLM 判讀：每群給 6 個不同 repo 的樣本與前後文，判斷每個樣本是不是相依、能不能以一條只講語法與檔案種類的規則分開（108 次呼叫）。LLM 認為 46 群有通用規則；312 個樣本中判為相依 108 個、相依但來源元件不對 54 個、不是相依 130 個、不確定 20 個——例如裸字串字面值的群幾乎全是標籤與設定鍵，LLM 也判斷無法以語法分開。第四步，作者逐群查證後才寫規則，只收語意明確、不需要名稱表的機制：多文件 YAML（Spring 的 profile 以 --- 分隔，單一文件的載入整份丟棄，語料中 12 個系統、92 份設定檔）、.NET Options 綁定的冒號鍵與任意位置的連線字串、Kubernetes Service 以 selector 選中的 workload 是同一個服務、掛載的設定檔是掛載它的容器的設定（Prometheus、Grafana、OpenTelemetry Collector 的設定，最常見的殘餘形狀），以及 Ocelot gateway 的路由表。不收的有：只綁 mesh 的 Istio VirtualService（第 56 條刻意不算邊）、.NET Aspire AppHost 的資源宣告（呼叫端以 WithReference 間接取得）、Ingress 的對外主機名、裸字串字面值。查證的過程也找到既有的缺陷：r2dbc: 前綴沒有像 jdbc: 一樣剝掉，以及範本設定檔被當成設定；兩者一併修正。
+
+結果：在語料上，5 條規則分別在 18、16、5、15、4 個系統觸發；28 個系統的圖改變，邊增加 207 條、減少 8 條（減少的 7 條是同一服務的兩個名稱合併後改名，1 條是原本由 Eureka 隱含預設推測的邊，被讀到的明寫設定取代）；殘餘由 2,845 筆降到 2,721 筆，出現在 2 個以上 repo 的形狀由 108 種降到 96 種。作者以固定種子從新增的邊抽 40 條逐條查證，34 條正確；錯的 6 條中 4 條由上述兩個缺陷修正消除。另外從工具在語料上畫出的全部邊每個 repo 抽至多 3 條（279 條），請 LLM 判斷出處是否支持該邊（這些邊抽自第 57 條加入前的圖）。第一版審查時，沒有行號的描述檔出處（Compose 的 depends_on 與 environment）被配上錯誤的行，126 條 depends_on 邊中 75 條因此被判錯；修正證據定位、並把每條邊的信心等級告訴模型後，以同一組邊重做。第二版判定 correct 101 條、declared-only 156 條、wrong 10 條、unsure 12 條。declared-only 指出處證明了關係有宣告、沒有證明執行期真的使用；靜態層的邊本來就只主張「有宣告」，這與信心等級的定義一致，不算錯。作者逐條查證 wrong 與 unsure 的 22 條，並讀過 declared-only 中 55 條不以 depends_on 為出處的判定理由，確定錯的有 11 條（3.9%），套用第 57 至 61 條後仍全部在圖上，分成兩種形狀：（1）多個服務共用同一份環境變數來源（Compose 的 env_file 或 Kubernetes 的 envFrom ConfigMap），工具把其中每個位址都算成每個服務的相依，連 postgres 容器都畫出連向業務服務的邊（4 個系統、7 條）；（2）程式碼中不作為呼叫目標的 URL 字串，例如錯誤回應引用的 RFC 連結、ProblemDetails 的 type URI、測試帳號的 claim、Swagger 的授權條款連結（4 個系統、4 條）。另外 2 條 wrong 是 LLM 誤判：一條的證據片段沒截到 gateway 的路由表，另一條列在第一個的出處不是決定這條邊的檔案。殘餘探勘只找「宣告了卻沒畫」的名稱，這種多畫的邊在探勘中看不到；探勘找漏畫，邊審查找多畫，兩者缺一不可。另有 101 條以 depends_on 為出處的 declared-only 未逐條查證。回歸：23 個系統只有 3 個 hold-out 多出遙測管線的邊（參考邊集合中均為 variant，不計分）、spring-petclinic 多出 config-server → github.com（設定在第二個 YAML 文件中，2026-07-29 的真實部署也觀測到這條連線），其餘逐邊不變；各組 hold-out 與 AICS 的分數不變。
+
+轉移以 hold-out E 量測：mehdihadeli/go-food-delivery-microservices（Go）的參考邊集合在工具執行前寫好，Compose 只部署基礎設施，3 個應用服務以 config.development.json 的 localhost 加 port 連到 Compose 發佈的 port，8 條資料邊在第 57 至 61 條加入前後都是 0/8（表 VIII）。原因不在規則，而在探勘方法的盲點：殘餘探勘只找 repo 宣告過的名稱，經 localhost 與 port 間接指向的相依，在探勘中看不到。所以語料探勘能找出語料裡最常見的寫法，並在寫規則之前就知道它出現在幾個系統，但它不能取代以未見過的系統量測；兩者是互補的。（hold-out E 的參考邊集合在執行新規則後補列了 2 條遙測邊為 variant，依檔頭既定的慣例，不影響分數。）
+
+!table 規則對未見過系統的轉移。每一欄是一批規則加入後的分數；粗體格是真正的 hold-out 量測（規則在別的系統上歸納，這一組在歸納前就選定、沒有看過）
+!widths 1300,380,560,560,560,560,560,560
+| 系統 | 指標 | 14 條 | 15–23 後 | 24–35 後 | 36–46 後 | 47–56 後 | 57–61 後 |
+| opentelemetry-demo（B） | P | 0.79 | **0.79** | 0.97 | 0.97 | 0.97 | 0.97 |
+| | R | 0.82 | **0.82** | 1.00 | 1.00 | 1.00 | 1.00 |
+| mall-swarm（B） | P | 0.43 | **0.43** | 1.00 | 1.00 | 1.00 | 1.00 |
+| | R | 0.50 | **0.50** | 0.96 | 0.96 | 0.96 | 0.96 |
+| hotelReservation（B） | P | 1.00 | **1.00** | 1.00 | 1.00 | 1.00 | 1.00 |
+| | R | 0.71 | **0.71** | 0.71 | 0.71 | 1.00 | 1.00 |
+| yas（C） | P | — | 0.58 | **0.68** | 0.83 | 0.83 | 0.83 |
+| | R | — | 0.58 | **0.81** | 0.96 | 0.96 | 0.96 |
+| run-aspnetcore-microservices（C） | P | — | 0.00 | **0.00** | 1.00 | 1.00 | 1.00 |
+| | R | — | 0.00 | **0.00** | 1.00 | 1.00 | 1.00 |
+| travels（D） | P | — | — | — | **1.00** | 0.95 | 0.95 |
+| | R | — | — | — | **0.84** | 1.00 | 1.00 |
+| skywalking-showcase（D） | P | — | — | — | **0.08** | 0.44 | 0.44 |
+| | R | — | — | — | **0.25** | 1.00 | 1.00 |
+| go-food-delivery（E） | P | — | — | — | — | **無** | **無** |
+| | R | — | — | — | — | **0.00** | **0.00** |
+| AICS（私有） | P | **0.42** | 0.89 | 0.89 | 0.89 | 0.90 | 0.90 |
+| | R | **0.10** | 0.63 | 0.63 | 0.63 | 0.76 | 0.76 |
 !end
 
-AICS 在第二輪開始前第一次量測：前 14 條規則都不是從它歸納的，所以 P 0.42、R 0.10 是它在沒看過時的分數（12 條畫出的邊中 7 條錯，49 條參考邊只畫中 5 條，而且全是外部主機）；第 19 至 22 條規則由它歸納，之後的數字不是 hold-out。
+表中 P 欄的「無」表示工具沒有畫出任何可計分的邊（只畫了 variant 類的遙測邊），precision 沒有定義。AICS 在第二輪開始前第一次量測：前 14 條規則都不是從它歸納的，所以 P 0.42、R 0.10 是它在沒看過時的分數（12 條畫出的邊中 7 條錯，49 條參考邊只畫中 5 條，而且全是外部主機）；第 19 至 22 條規則由它歸納，之後的數字不是 hold-out。
 
-四輪的觀察一致：每一組未見過的系統都可能暴露工具沒學過的寫法，但轉移隨輪次增加（第一輪零轉移、第二輪部分轉移、第三輪在 travels 上完全轉移）；修正後，先前各組的分數都不退步。所以靜態層的 recall 不是靜態分析的極限，而是寫法涵蓋率；對一個未見過的系統，應預期 recall 落在各組 hold-out 修正前的水準（0.25 至 0.84），precision 的損失則集中在少數可以通用修正的錯誤類型（中繼資料 URL、別名、測試 fixture、名稱截斷、不可讀的描述檔）。這些規則是不是只是在窮舉寫法？我們以觸發追蹤量測每條規則在全部系統上實際改變結果的次數（附錄表 XII 的「系統數」欄）：56 條中 23 條在 5 個以上的系統觸發、21 條在 2 至 4 個系統觸發（每條都包含至少一個非歸納系統）、11 條只在歸納它的系統觸發（其中多數綁定在語料中只出現一次的技術，如 Envoy、YARP、nginx 變數），1 條從未觸發。也就是說，多數規則描述的是跨系統的慣例，而不是單一系統的特例。
+四輪的觀察一致：每一組未見過的系統都可能暴露工具沒學過的寫法，但轉移隨輪次增加（第一輪零轉移、第二輪部分轉移、第三輪在 travels 上完全轉移）；修正後，先前各組的分數都不退步。所以靜態層的 recall 不是靜態分析的極限，而是寫法涵蓋率；對一個未見過的系統，應預期 recall 落在各組 hold-out 修正前的水準（0.25 至 0.84），precision 的損失則集中在少數可以通用修正的錯誤類型（中繼資料 URL、別名、測試 fixture、名稱截斷、不可讀的描述檔）。這些規則是不是只是在窮舉寫法？我們以觸發追蹤量測每條規則在全部系統上實際改變結果的次數（附錄表 XII 的「系統數」欄）：前 56 條中 23 條在 5 個以上的系統觸發、21 條在 2 至 4 個系統觸發（每條都包含至少一個非歸納系統）、11 條只在歸納它的系統觸發（其中多數綁定在語料中只出現一次的技術，如 Envoy、YARP、nginx 變數），1 條從未觸發。也就是說，多數規則描述的是跨系統的慣例，而不是單一系統的特例。
 
 **RQ1 小結。**靜態層的 precision 高：歸納用的 7 個系統修正後 P、R 全為 1.00，第三方吻合率 0.98，hold-out B 修正後 0.99。recall 取決於寫法涵蓋率；四輪 hold-out 顯示新系統會暴露新寫法，但轉移隨輪次增加，而且 56 條規則中多數在多個系統觸發。真正需要執行期觀測或操作者補足的邊界剩下兩類：沒有文法的語言（本文語料中只剩 Rust 與 Ruby），以及只以 registry 名稱呼叫、而 repo 中找不到登記者的服務（例如名稱由別的系統登記），靜態層讀得到名稱但不猜對應。
 
@@ -377,11 +387,13 @@ DepWeaver 的設計假設三件事：證據來自可靠度不同的多個來源�
 | gRPC | Go：grpc.Dial、NewClient；C#：Address = new Uri | — | Java、Kotlin、Python、JS 的 gRPC stub |
 | 訊息 | Kafka、RabbitMQ 的生產與消費（Java、Kotlin、Python；JS 只有消費端），畫成服務 → broker | repo 中恰有一個 broker 時才畫 | topic 與 queue 不成為節點；其他 broker 只能從連線字串的 scheme（amqp、kafka、nats、mqtt）判斷 |
 | 資料庫 | ORM 標記（JPA、SQLAlchemy、Django、Mongoose、EF Core 等）證明真的使用；連線字串的 scheme 決定種類 | 只有連線設定、沒有使用標記時，維持僅推測 | — |
-| 部署描述檔 | Compose v1／v2：environment、env_file、.env、depends_on、links、network aliases、hostname、command、build、image；Kubernetes：Deployment、StatefulSet、DaemonSet、Job、CronJob、Pod、Service、ConfigMap、Namespace | Helm template 以 values.yaml 的預設值渲染（Go template 的子集，查不到的值留為佔位符）；只有 depends_on 背書的邊為僅推測 | Secret（secretKeyRef）、Ingress、Kustomize、Compose 的 extends、include、profiles |
-| 入口與代理 | Istio Gateway 與綁定它的 VirtualService、Spring Cloud Gateway 的 lb:// 路由、APISIX、Envoy static clusters、nginx proxy_pass（含一層 set $var）、Apache ProxyPass、YARP | — | 其他 gateway 的路由格式（Traefik、Kong、Kubernetes Gateway API 等） |
-| 設定與服務發現 | Spring 的 application／bootstrap（含 Config repo）、.NET appsettings 與連線字串、.env；Eureka（含隱含預設）；Nacos、Consul、Zookeeper 的位址鍵 | 以登記名稱呼叫（Consul、etcd，Go）：repo 中恰有一個登記者時才畫 | 名稱由 repo 外的系統登記或注入 |
+| 部署描述檔 | Compose v1／v2：environment、env_file、.env、depends_on、links、network aliases、hostname、command、build、image；Kubernetes：Deployment、StatefulSet、DaemonSet、Job、CronJob、Pod、Service（selector 恰選中一個 workload 時視為同一服務）、ConfigMap、Namespace；被一個 Compose 服務掛載的設定檔（Prometheus、Grafana、OpenTelemetry Collector 等），其中的位址算該服務的 | Helm template 以 values.yaml 的預設值渲染（Go template 的子集，查不到的值留為佔位符）；只有 depends_on 背書的邊為僅推測 | Secret（secretKeyRef）、Ingress、Kustomize、Compose 的 extends、include、profiles |
+| 入口與代理 | Istio Gateway 與綁定它的 VirtualService、Spring Cloud Gateway 的 lb:// 路由、APISIX、Envoy static clusters、nginx proxy_pass（含一層 set $var）、Apache ProxyPass、YARP、Ocelot | — | 其他 gateway 的路由格式（Traefik、Kong、Kubernetes Gateway API 等） |
+| 設定與服務發現 | Spring 的 application／bootstrap（含 Config repo，以 --- 分隔的每個 profile 都讀）、.NET appsettings（Options 綁定的冒號鍵、任何區段的連線字串）、.env；Eureka（含隱含預設）；Nacos、Consul、Zookeeper 的位址鍵 | 以登記名稱呼叫（Consul、etcd，Go）：repo 中恰有一個登記者時才畫 | 名稱由 repo 外的系統登記或注入 |
 | 名稱對應 | Compose 別名、-v<數字> 版本字尾（要有同名 Service 或兄弟 workload 為證）、Kubernetes DNS 後綴與宣告過的 namespace、跨 namespace 的同名服務、模組與 build／image 名稱的對應 | URL 路徑中的服務名，只在主機無法解析時採用 | 名稱相似不猜，交給操作者確認；SDK 內建的外部主機 |
 !end
+
+這張表也可以反過來量：在第 IV-C 節的 100 個語料系統中（以下是「出現過」的系統數，出現不代表帶有相依關係），94 個的原始碼全部是有文法的語言（選樣條件要求至少 80%，所以這個比例偏高），2 個含 Ruby 或 Rust、4 個含其他不讀的語言；範圍外最常見的是 Kubernetes Ingress（18 個）、Secret 參照（16 個）、NATS 或 Redis pub/sub 等其他 broker（11 個）、Dapr 服務呼叫（7 個）與 Compose profiles（7 個），Compose include（4 個）、extends（2 個）、Traefik 或 Kong 路由（2 個）、Kustomize（1 個）、Java 的 gRPC stub（1 個）較少。普查程式與每個系統的結果隨 artifact 提供。
 
 ## 靜態與執行期的分工
 
@@ -393,17 +405,17 @@ RQ1 與 RQ2 顯示兩層互補而非互相替代：靜態層 precision 高，但
 
 ## 效度威脅
 
-**建構效度：**作者參考邊集合由作者整理；我們以第三方資料集、逐條可複驗的出處與第二位標註者降低這個風險；不過第二位標註者是 LLM 而非人類，無法完全取代獨立的人工標註。此外，第三方資料集對「相依關係」的定義與本工具不同，所以只報告吻合率。**內部效度：**RQ3 的流量參數實驗只有當時的對話紀錄，沒有可重讀的分析存檔，5/7、6/7、7/7 三個數字無法在事後由第三方重算；56 條抽取與合併規則都是在受測系統上歸納出來的；表 VII「修正後」與各組 hold-out 修正後的數字都不是 hold-out 結果，只有表 VIII 中粗體的格子是。每輪新增規則後，先前所有系統的節點與邊都逐項重算，沒有退步（邊的變動只有三處，都是刻意的：train-ticket 少了一條 Swagger 中繼資料造成的假邊、第四輪加入入口路由後多出的 38 條 gateway 邊，以及 hotelReservation 以註冊名稱呼叫的 9 條邊）。第四輪為統一入口邊的標註方式，修改了 3 份歸納用參考邊集合，各補一條入口邊。hold-out 的參考邊集合是在工具執行前寫好的，但同樣由作者整理。另外，RQ3 的操作者是作者本人且熟悉受測系統，可能高估名稱問題的回答正確率。**外部效度：**歸納用的系統以 Java 與 Spring 為主；hold-out 加入了 Go、.NET、Kotlin、Rust 等語言，但這些語言只有薄表面抽取。含缺口補齊的完整執行期驗證只有 Bank of Anthos 一個案例。RQ0 的假想敵在 7 個歸納用系統、5 個 hold-out 系統與 1 個私有系統上各執行一次，但後兩組比較的是第三輪規則後的靜態層；私有系統的結果只報告總分。**RQ0 的對照：**只用一個模型（gpt-4.1-mini）、每格 3 次；元件清單取自參考邊集合，偏袒 LLM；檔案預算由我們決定（但 6 個系統的原始碼全部給完，有截斷的 TeaStore 與 Bank of Anthos 的 recall 已達 0.82 與 1.00，預算不是瓶頸）。**LLM 輸出的變異：**報告與文件整理倚賴 LLM，DeepWiki 的用詞每次不同；事實段落由程式產生而不受影響，LLM 撰寫的章節與文件來源的邊則會受影響。
+**建構效度：**作者參考邊集合由作者整理；我們以第三方資料集、逐條可複驗的出處與第二位標註者降低這個風險；不過第二位標註者是 LLM 而非人類，無法完全取代獨立的人工標註。此外，第三方資料集對「相依關係」的定義與本工具不同，所以只報告吻合率。**內部效度：**RQ3 的流量參數實驗只有當時的對話紀錄，沒有可重讀的分析存檔，5/7、6/7、7/7 三個數字無法在事後由第三方重算；61 條抽取與合併規則都是在受測系統或探勘語料上歸納出來的；表 VII「修正後」與各組 hold-out 修正後的數字都不是 hold-out 結果，只有表 VIII 中粗體的格子是。每輪新增規則後，先前所有系統的節點與邊都逐項重算，沒有退步（邊的變動只有三處，都是刻意的：train-ticket 少了一條 Swagger 中繼資料造成的假邊、第四輪加入入口路由後多出的 38 條 gateway 邊，以及 hotelReservation 以註冊名稱呼叫的 9 條邊）。第四輪為統一入口邊的標註方式，修改了 3 份歸納用參考邊集合，各補一條入口邊。hold-out 的參考邊集合是在工具執行前寫好的，但同樣由作者整理。另外，RQ3 的操作者是作者本人且熟悉受測系統，可能高估名稱問題的回答正確率。**語料探勘：**語料的應用系統篩選由作者判讀（849 個候選中篩掉 65 個，理由逐筆公開）；殘餘只找 repo 宣告過的名稱，經 localhost 與 port 間接指向的相依看不到（hold-out E 正是這一類）；LLM 判讀只用來排序與提示，規則都由作者查證後才寫；邊審查的 279 條中，作者只逐條查證了非 correct 且不以 depends_on 為出處的部分，3.9% 的錯誤率是下限；hold-out E 的參考邊集合在執行新規則後依既定慣例補列 2 條 variant。**外部效度：**歸納用的系統以 Java 與 Spring 為主；hold-out 加入了 Go、.NET、Kotlin、Rust 等語言，但這些語言只有薄表面抽取。含缺口補齊的完整執行期驗證只有 Bank of Anthos 一個案例。RQ0 的假想敵在 7 個歸納用系統、5 個 hold-out 系統與 1 個私有系統上各執行一次，但後兩組比較的是第三輪規則後的靜態層；私有系統的結果只報告總分。**RQ0 的對照：**只用一個模型（gpt-4.1-mini）、每格 3 次；元件清單取自參考邊集合，偏袒 LLM；檔案預算由我們決定（但 6 個系統的原始碼全部給完，有截斷的 TeaStore 與 Bank of Anthos 的 recall 已達 0.82 與 1.00，預算不是瓶頸）。**LLM 輸出的變異：**報告與文件整理倚賴 LLM，DeepWiki 的用詞每次不同；事實段落由程式產生而不受影響，LLM 撰寫的章節與文件來源的邊則會受影響。
 
 # 結論與未來工作
 
-本文提出 DepWeaver，以三來源融合、三級信心等級與逐條出處建構微服務相依圖，讓圖、覆蓋率與報告由同一個模型產生而彼此一致，並在自動手段用盡時才於 ChatOps 對話中詢問操作者。在 21 個開源系統與 1 個私有系統上，靜態層對第三方參考邊集合的吻合率為 0.98；四輪「歸納、hold-out」的評估顯示規則的轉移隨輪次增加、多數規則在多個系統觸發，靜態層的 recall 是寫法涵蓋率而非分析的極限；作為假想敵，不給任何檔案的 LLM 直接畫圖 F1 為 0.70，給了 repo 檔案後為 0.90，但沒有出處、三次執行結果不同、自行決定的名稱有 85 個對不上；在一個真實部署（Bank of Anthos）上，融合執行期觀測後業務呼叫與資料層覆蓋率都達到 100%；關閉 repo 範例來源時，最後兩條業務邊由對話補齊。未來工作包括：請不熟悉受測系統的操作者回答名稱問題，量測詢問操作者的實際正確率；在 TeaStore 上完成執行期驗證，量化靜態與執行期的互補；以小型使用者研究檢驗信心分級是否改善讀者的決策；以及以相依圖產生部署順序，並以執行期證據驗證。
+本文提出 DepWeaver，以三來源融合、三級信心等級與逐條出處建構微服務相依圖，讓圖、覆蓋率與報告由同一個模型產生而彼此一致，並在自動手段用盡時才於 ChatOps 對話中詢問操作者。在 22 個開源系統、1 個私有系統與 100 個系統的探勘語料上，靜態層對第三方參考邊集合的吻合率為 0.98；四輪「歸納、hold-out」的評估顯示規則的轉移隨輪次增加、多數規則在多個系統觸發，靜態層的 recall 是寫法涵蓋率而非分析的極限；先網羅 100 個系統再依殘餘的跨系統頻率找規則，能在寫規則前就知道一個寫法有多常見，但仍要以未見過的系統量測，因為探勘只看得到宣告過的名稱；作為假想敵，不給任何檔案的 LLM 直接畫圖 F1 為 0.70，給了 repo 檔案後為 0.90，但沒有出處、三次執行結果不同、自行決定的名稱有 85 個對不上；在一個真實部署（Bank of Anthos）上，融合執行期觀測後業務呼叫與資料層覆蓋率都達到 100%；關閉 repo 範例來源時，最後兩條業務邊由對話補齊。未來工作包括：讓殘餘探勘也追蹤經 localhost 與 port、環境變數等間接指向的位址；請不熟悉受測系統的操作者回答名稱問題，量測詢問操作者的實際正確率；在 TeaStore 上完成執行期驗證，量化靜態與執行期的互補；以小型使用者研究檢驗信心分級是否改善讀者的決策；以及以相依圖產生部署順序，並以執行期證據驗證。
 
-# 附錄：56 條抽取與合併規則
+# 附錄：61 條抽取與合併規則
 
-表 XII 是第 III-D 節所述規則的全表（第 1 至 14 條為初稿時的規則，第 15 至 23 條為第二輪新增，第 24 至 35 條為三個 hold-out 系統逼出的第三輪，第 36 至 46 條為第二組 hold-out 兩個系統逼出的第四輪，第 47 至 56 條為第三組 hold-out 與六個新文法逼出的第五輪）。每一條都是在某個受測系統上追查差異時歸納出來的，沒有一條寫死專案名；「觸發」欄是第一次逼出這條規則的系統，「位置」欄是實作它的元件。最後兩欄回答「這是不是把例子列舉一遍」：靜態層在每條規則改變結果的地方（畫出、不畫或改等級一條邊，建立、合併或壓掉一個節點，解開一個名稱；純解析的規則數它解析的檔案）留下記錄，把規則 1 至 46 原封不動地跑在全部 20 個系統上，「系統數」是這條規則至少改變一次結果的系統數（robot-shop 的兩個 checkout 算一個），「命中」是它在 20 個系統上改變的不同事物的總數。46 條中有 20 條在 5 個以上的系統上觸發、15 條在 2 至 4 個、10 條只在歸納它的那個系統上觸發（其中 7 條綁在只出現一次的技術上：Kotlin、Envoy、YARP、.NET 連線字串、nginx 變數、SOAP 命名空間、Python 套件庫）、1 條（第 26 條）從未觸發——它說的連線 scheme 在 20 個系統上都與主機名稱的判定一致，在歸納它的 mall-swarm 上第 25 條先解開了別名，它成了從未用到的保險。
+表 XII 是第 III-D 節所述規則的全表（第 1 至 14 條為初稿時的規則，第 15 至 23 條為第二輪新增，第 24 至 35 條為三個 hold-out 系統逼出的第三輪，第 36 至 46 條為第二組 hold-out 兩個系統逼出的第四輪，第 47 至 56 條為第三組 hold-out 與六個新文法逼出的第五輪，第 57 至 61 條由 100 個系統的語料探勘找出，見第 IV-C 節）。每一條都是在某個受測系統上追查差異時歸納出來的，沒有一條寫死專案名；「觸發」欄是第一次逼出這條規則的系統，「位置」欄是實作它的元件。最後兩欄回答「這是不是把例子列舉一遍」：靜態層在每條規則改變結果的地方（畫出、不畫或改等級一條邊，建立、合併或壓掉一個節點，解開一個名稱；純解析的規則數它解析的檔案）留下記錄，把規則 1 至 46 原封不動地跑在全部 20 個系統上，「系統數」是這條規則至少改變一次結果的系統數（robot-shop 的兩個 checkout 算一個），「命中」是它在 20 個系統上改變的不同事物的總數。46 條中有 20 條在 5 個以上的系統上觸發、15 條在 2 至 4 個、10 條只在歸納它的那個系統上觸發（其中 7 條綁在只出現一次的技術上：Kotlin、Envoy、YARP、.NET 連線字串、nginx 變數、SOAP 命名空間、Python 套件庫）、1 條（第 26 條）從未觸發——它說的連線 scheme 在 20 個系統上都與主機名稱的判定一致，在歸納它的 mall-swarm 上第 25 條先解開了別名，它成了從未用到的保險。
 
-!table 56 條抽取與合併規則（全表）
+!table 61 條抽取與合併規則（全表）
 !widths 300,2300,1000,640,400,400
 | # | 規則 | 觸發 | 位置 | 系統數 | 命中 |
 | 1 | manifest 的 workload 名稱（Deployment、StatefulSet、DaemonSet、Job）是無叢集模式的服務名稱清單；模組目錄以完全相同或「-部署名」結尾對上 workload；對不上的模組（函式庫、基底映像）不預先當節點，有邊碰到才出現 | ewolff、TeaStore、Online Boutique | ConfigExtractor、CodeGraphMerger | 10 | 221 |
@@ -462,6 +474,11 @@ RQ1 與 RQ2 顯示兩層互補而非互相替代：靜態層 precision 高，但
 | 54 | namespace 決定身分：沒有 metadata.namespace 的 manifest 進 repo 自己的部署腳本 kubectl apply -f <檔> -n <ns> 指定的 namespace；同一個 Service 名出現在兩個 namespace 時（且只在這時）寫成 name.namespace，短名在讀取者自己的 namespace 解析（k8s DNS 的語意），放不進任何 namespace 的同名 workload 不成節點 | travels | ConfigExtractor、CodeGraphMerger | 2 | 13 |
 | 55 | 一個值列出多個位址：以 ,、;、空白分開的 URL／host:port 各是一個目標，夾在中間的標籤不算；名字只差在數字的副本（nacos-0、nacos-1）仍是一個叢集（規則 27）；程式讀這個變數時每個位址各一條邊 | travels | ConfigExtractor、CodeGraphMerger | 4 | 41 |
 | 56 | 入口路由：Istio Gateway 的 selector 指出入口 workload（istio: ingressgateway → istio-ingressgateway），綁到 Gateway 的 VirtualService 的每個 destination 是一條邊；只綁 mesh 的 VirtualService 是網格內的流量調整，不是邊。APISIX standalone 設定（routes／upstreams 的 nodes）是反向代理的上游表；repo 裡不屬於任何模組、只被一個 Compose 服務以 volumes 掛載的檔案，歸那個服務 | AICS、skywalking-showcase、Online Boutique | ConfigExtractor、CodeGraphMerger | 6 | 101 |
+| 57 | Spring 風格 YAML 的每一個文件都讀：application.yml 以 --- 分隔的 profile 各是一個文件（spring.profiles、spring.config.activate.on-profile），單一文件的載入遇到第二個 --- 就丟例外、整份檔案被當成不可讀；執行時的 profile 靜態不可知，所以全部讀，profile 名稱是 test／it 的文件略過（同第 42 條）。另：檔名是 -template／-sample／-example 的 YAML 與 properties 是範本，不是這個 repo 的設定（同第 50 條的 .sample） | 語料 18 個系統（92 份多文件設定檔） | ConfigExtractor | 4 | 20 |
+| 58 | .NET 的 Options 綁定：以冒號串接的設定鍵（RabbitMqOptions:HostName）與 Spring 以點串接的鍵一樣比對鍵名結尾；鍵名結尾是 ConnectionString、或值本身是含主機鍵的 key=value; 連線字串時，不論在哪一個區段都讀出主機（第 32、38 條只認 ConnectionStrings 區段） | 語料 16 個系統 | ConfigExtractor、CodeGraphMerger | 0 | 0 |
+| 59 | Kubernetes Service 的 selector 恰選中一個 workload 時，兩個名稱是同一個服務：名稱不同時（containerized-products 與 k8n-service-products），有程式碼的那一個是節點、另一個是它的別名；兩個都有或都沒有程式碼、選中零個或多個 workload、Helm 渲染的列（release 名是佔位符）、或名稱也是 Compose 服務時不動 | 語料 5 個系統 | CodeGraphMerger | 2 | 2 |
+| 60 | 掛載的設定檔是掛載它的容器的設定：不屬於已知種類的 YAML（Prometheus scrape、Grafana datasource、OpenTelemetry Collector、Tempo、Alertmanager）中的 URL 與 host:port，只有在恰有一個 Compose 服務掛載該檔、而且主機是部署宣告過的名稱時才成邊，來源是掛載它的服務（第 56 條的歸屬）；其餘丟棄、不列為殘餘 | 語料 15 個系統 | ConfigExtractor、CodeGraphMerger | 3 | 40 |
+| 61 | Ocelot gateway 的路由表（ocelot*.json）：Routes[]（舊版 ReRoutes[]）的每個 DownstreamHostAndPorts[].Host 是擁有該檔的 gateway 的上游，與 YARP、nginx、APISIX 同類（第 6、34、38、56 條） | 語料 4 個系統 | ConfigExtractor | 0 | 0 |
 !end
 
 第 1 至 9 條來自六個新系統的第一輪差異（第 IV-C 節「規則的來源」），第 10 條來自 Bank of Anthos 與 train-ticket 的回歸測試，第 11 至 13 條來自第三方參考邊集合的對照，第 14 條來自追查 Online Boutique 的 recall。第 15 至 23 條來自第二輪：先對七個系統剩下的漏邊與錯邊逐條追到形狀（第 15 至 18、23 條），再以一個未曾見過的私有 Istio 多 repo 系統（13 個 repo，Python）當對照（第 19 至 22 條）。每一條新增後，既有系統的節點與邊都逐項重算，確認沒有退步：Bank of Anthos 與 train-ticket 逐邊不變，第三方參考邊集合的吻合率維持 93/95。第 24 至 35 條來自第三輪：先把規則 1 至 23 原封不動地跑在三個未曾見過的開源系統上（opentelemetry-demo、mall-swarm、DeathStarBench hotelReservation；作者另行整理參考邊集合），得到 P 0.73、R 0.70——前兩輪的規則沒有一條轉移過去；再對 24 條錯邊與 28 條漏邊逐條追到形狀。新增後三系統合計 P 0.99、R 0.89（hotelReservation 剩下的 9 條漏邊是 Go 經 Consul 註冊名解析的呼叫，程式碼與部署檔都沒有主機名），但這個數字已不是 hold-out 結果：規則是在這三個系統上歸納的。既有系統的回歸同前：Bank of Anthos 逐邊不變、train-ticket 少一條 Swagger 中繼資料造成的假外部邊、第三方吻合率維持 93/95、七個歸納系統的 precision 全部維持 1.00。第 36 至 46 條來自第四輪：規則 1 至 35 原封不動地跑在第二組未曾見過的系統上（nashtech-garage/yas，Spring Boot 3 ＋ BFF ＋ Keycloak ＋ Kafka；aspnetrun/run-aspnetcore-microservices，.NET 8 全 C#），得到 yas P 0.68、R 0.81，.NET 系統 P 0.00、R 0.00——後者 13 條畫出的邊有 11 條只差在名字：compose 服務叫 catalog.api，工具把含點的名字都在第一個點截斷。逐條追到形狀後新增 11 條，之後 .NET 系統 P 1.00、R 1.00，yas P 0.83、R 0.96（剩下的錯邊是 compose 把位址交給了不呼叫它的服務，與瀏覽器導回網址；剩下的漏邊是 Debezium connector 設定、Next.js SSR 與 nginx 的 server_name，均記為邊界）。回歸：七個歸納系統邊逐條相同、Bank of Anthos 與 train-ticket 逐邊不變、第三方吻合率 93/95 不變（ewolff/microservice 工具多畫的兩種拼法併成一種）、第一組 hold-out 與私有系統的分數逐邊不變。過程中兩次差點退步（TeaStore 的 artifactId 撞上 compose 服務名、私有系統的「系統對外位址」被當成外部呼叫）都由回歸抓到並改掉。第 47 至 56 條來自第五輪：規則 1 至 46 原封不動地跑在第三組未曾見過的系統上（kiali/demos 的 travels，Go；apache/skywalking-showcase，多語言＋整套 Helm chart），得到 travels P 1.00、R 0.84，skywalking-showcase P 0.08、R 0.25；同時把原本由 LLM 讀或以正規表示式薄表面讀的六種語言換成 tree-sitter 文法（JavaScript、TypeScript、Go、PHP、Kotlin、C#，六個文法的 linux x86_64 原生函式庫都在 jar 裡，並在 linux/amd64 容器裡實際載入過）。新增的 10 條都是機制（綁定解析、預設值、註冊名稱、dotenv、瀏覽器腳本、Helm 渲染、命令列位址、namespace 身分、多位址值、入口路由），沒有新增任何名稱、主機或套件的對照表；規則 2、5、25、36、42、44 各擴充一句，規則 28、40 改為「有文法、正規表示式只當備援」。之後 travels P 0.95、R 1.00（剩下 1 條錯邊是同一個入口網站映像由三個 Deployment 以三個名字執行，模組名對不上），skywalking-showcase P 0.44、R 1.00（剩下的錯邊是只表示啟動順序的 depends_on 與一個沒人注入的 RestTemplate bean）。統一參考邊集合的慣例：AICS 一直把 Istio 入口路由列為 control，歸納組三個附有綁 Gateway 之 VirtualService 的系統各補一列；travels 的兩個同名 travels 依第 54 條寫成 name.namespace。回歸：七個歸納系統 P、R 全部 1.00（robot-shop 的 cart → catalogue（Node）與 ratings → catalogue（PHP）補上）、Bank of Anthos 12 條不變另加 1 條入口路由、train-ticket 120 → 158（多的 38 條全是 trainticket-gateway 的入口路由）、第三方吻合率 93/95 不變、第一組 hold-out 0.99/0.89 → 0.99/0.99（hotelReservation 以註冊名稱呼叫的 9 條：呼叫端的名稱對上被呼叫端在程式碼中登記的名稱）、第二組逐邊不變（0.85/0.97）、私有系統 0.89/0.63 → 0.90/0.76（多的是入口路由；瀏覽器腳本的 Google API 呼叫由第 51 條擋下，沒有新增錯邊）。

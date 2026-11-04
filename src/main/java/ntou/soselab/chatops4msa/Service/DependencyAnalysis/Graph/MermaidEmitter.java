@@ -243,6 +243,7 @@ public class MermaidEmitter {
             case "async" -> "async";
             case "external" -> "ext";
             case "grpc" -> "grpc";
+            case DependencyGraph.TYPE_STARTUP -> "startup";
             default -> "";
         };
     }

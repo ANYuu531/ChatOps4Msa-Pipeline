@@ -14,8 +14,6 @@
 
 ## bank-of-anthos
 
-對的裡面有 1 條標 inferred（名字推的，不是表查到的）。
-
 全對。
 
 ## ecommerce
@@ -30,8 +28,6 @@
 
 ## online-boutique
 
-對的裡面有 1 條標 inferred（名字推的，不是表查到的）。
-
 全對。
 
 ## piggymetrics
@@ -45,7 +41,5 @@
 全對。
 
 ## teastore
-
-對的裡面有 5 條標 inferred（名字推的，不是表查到的）。
 
 全對。
