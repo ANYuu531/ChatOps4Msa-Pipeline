@@ -71,6 +71,8 @@ public class MermaidEmitter {
             boolean declaredOnly = !edge.runtimeObserved
                     && DependencyGraph.CONF_INFERRED.equals(edge.confidence);
             if (declaredOnly) tag = tag.isEmpty() ? "declared?" : tag + "?";
+            // An operator's addition says so on the arrow: a human's word never reads as a layer's finding.
+            if (edge.provenance.contains(DependencyGraph.PROV_HUMAN)) tag = tag.isEmpty() ? "human" : tag + " · human";
             String src = ids.get(edge.source);
             String tgt = ids.get(edge.target);
             sb.append("  ").append(src).append(' ');

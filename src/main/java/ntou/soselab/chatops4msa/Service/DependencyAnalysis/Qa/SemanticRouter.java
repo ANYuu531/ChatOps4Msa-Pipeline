@@ -28,6 +28,12 @@ import java.util.regex.Pattern;
  *
  * When the router is not confident, the caller falls back to the model planner, which
  * sees the node ids and handles what neither examples nor rules anticipated.
+ *
+ * A request to change the graph ("add an edge from X to Y") is not an intent here: the
+ * intents and their thresholds were calibrated on questions, and an edit request reads
+ * like the path question "does X call Y?". So edit phrasings ({@link #EDIT_EXAMPLES}) are
+ * scored apart, and only veto: a message nearer to them than to every question intent
+ * is never answered by the router, and goes to the planner, which can open the edit.
  */
 public final class SemanticRouter {
 
@@ -63,9 +69,17 @@ public final class SemanticRouter {
         public final boolean confident;
         public final List<GraphQuery> queries;
         public final boolean skipLlm;
+        /** The message reads as a request to change the graph more than as any question (score of the nearest edit phrasing). */
+        public final boolean editLike;
+        public final double editScore;
 
         Decision(String intent, double score, String runnerUp, double runnerUpScore,
                  boolean confident, List<GraphQuery> queries, boolean skipLlm) {
+            this(intent, score, runnerUp, runnerUpScore, confident, queries, skipLlm, false, Double.NEGATIVE_INFINITY);
+        }
+
+        Decision(String intent, double score, String runnerUp, double runnerUpScore,
+                 boolean confident, List<GraphQuery> queries, boolean skipLlm, boolean editLike, double editScore) {
             this.intent = intent;
             this.score = score;
             this.runnerUp = runnerUp;
@@ -73,12 +87,20 @@ public final class SemanticRouter {
             this.confident = confident;
             this.queries = queries;
             this.skipLlm = skipLlm;
+            this.editLike = editLike;
+            this.editScore = editScore;
+        }
+
+        /** The same decision, vetoed: not confident, no queries, the planner decides. */
+        Decision asEdit(double edit) {
+            return new Decision(intent, score, runnerUp, runnerUpScore, false, List.of(), false, true, edit);
         }
 
         @Override
         public String toString() {
             return String.format(Locale.ROOT, "%s %.2f (next %s %.2f)%s", intent, score, runnerUp, runnerUpScore,
-                    confident ? "" : " unsure");
+                    confident ? "" : " unsure")
+                    + (editLike ? String.format(Locale.ROOT, " edit-like %.2f", editScore) : "");
         }
     }
 
@@ -132,6 +154,16 @@ public final class SemanticRouter {
                     "what are the limitations of this report?", "was the cluster queried?", "what is the collection status?", "how was this report produced?", "are there conflicts in the report?")
     );
 
+    /**
+     * Phrasings of a request to change the graph. Not an intent (see the class comment):
+     * they only keep the router from answering such a message as a question.
+     */
+    public static final List<String> EDIT_EXAMPLES = List.of(
+            "幫我新增一條 X 到 Y 的線", "圖上少了 X 連到 Y 的邊，請加上", "X 其實有呼叫 Y，把這條線補上去", "在圖上加一條 X → Y",
+            "請新增一個節點 X", "圖上缺了 X 這個服務，幫我加進去", "把 X 加到圖上", "X 也會連 Y 的資料庫，幫我畫上去", "新增依賴：X 依賴 Y",
+            "add an edge from X to Y", "the graph is missing X -> Y, please add it", "X also calls Y, add that edge",
+            "add a node X to the graph", "add X as a new service", "draw a line from X to Y in the graph", "X depends on Y too, add the dependency");
+
     /** "沒觀測到" sits next to "觀測到"; the one word decides which intent is meant. */
     private static final Pattern NEGATION = Pattern.compile(
             "沒|未|不曾|從未|never|not\\b|n't|without|no traffic|no runtime", Pattern.CASE_INSENSITIVE);
@@ -162,6 +194,7 @@ public final class SemanticRouter {
     private final List<Intent> exampleOwner = new ArrayList<>();
     private final List<String> exampleText = new ArrayList<>();
     private volatile List<double[]> exampleVectors;
+    private volatile List<double[]> editVectors;
 
     public SemanticRouter(Embedder embedder) {
         this(embedder, DEFAULT_THRESHOLD, DEFAULT_MARGIN, DEFAULT_HIGH);
@@ -183,9 +216,12 @@ public final class SemanticRouter {
     /** Embeds the examples once; false when the embedder is unavailable (routing then never happens). */
     public synchronized boolean ensureIndexed() {
         if (exampleVectors != null) return true;
-        List<double[]> vectors = embedder == null ? null : embedder.embed(exampleText);
-        if (vectors == null || vectors.size() != exampleText.size()) return false;
-        exampleVectors = vectors;
+        List<String> texts = new ArrayList<>(exampleText);
+        texts.addAll(EDIT_EXAMPLES);
+        List<double[]> vectors = embedder == null ? null : embedder.embed(texts);
+        if (vectors == null || vectors.size() != texts.size()) return false;
+        editVectors = new ArrayList<>(vectors.subList(exampleText.size(), texts.size()));
+        exampleVectors = new ArrayList<>(vectors.subList(0, exampleText.size()));
         return true;
     }
 
@@ -227,7 +263,17 @@ public final class SemanticRouter {
      * @param mentioned      the nodes the question names, for the arguments
      */
     public Decision route(double[] questionVector, String question, List<DependencyGraph.Node> mentioned) {
-        return decide(scores(questionVector), question, mentioned, threshold, margin, high);
+        Decision d = decide(scores(questionVector), question, mentioned, threshold, margin, high);
+        double edit = editScore(questionVector);
+        return edit > d.score ? d.asEdit(edit) : d;
+    }
+
+    /** The best cosine to an edit phrasing; negative infinity when nothing is indexed. */
+    double editScore(double[] questionVector) {
+        if (questionVector == null || !ensureIndexed()) return Double.NEGATIVE_INFINITY;
+        double best = Double.NEGATIVE_INFINITY;
+        for (double[] v : editVectors) best = Math.max(best, ChunkRetriever.cosine(questionVector, v));
+        return best;
     }
 
     /**

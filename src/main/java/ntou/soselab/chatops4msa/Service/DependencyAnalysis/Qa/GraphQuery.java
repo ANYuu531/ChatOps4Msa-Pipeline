@@ -46,7 +46,17 @@ public final class GraphQuery {
         OPS.put("externals", 0);         // external hosts and who calls them
         OPS.put("async", 0);             // broker relationships
         OPS.put("subgraph", VARIADIC);   // the part of the graph around 1..MAX_SEEDS nodes, drawn as a picture
+        OPS.put("add-edge", 2);          // a request to ADD the edge source -> target (opens the edit dialogue)
+        OPS.put("add-node", 1);          // a request to ADD a node (opens the edit dialogue)
     }
+
+    /**
+     * The operators that change the graph rather than read it. They are not run by
+     * {@link GraphQueryEngine}; they open {@link GraphEditDialogue}. Their arguments are
+     * the operator's own spellings — a node being added is not on the graph yet, and a
+     * name that is close to one is resolved by asking, not here.
+     */
+    public static final java.util.Set<String> EDIT_OPS = java.util.Set.of("add-edge", "add-node");
 
     static final List<String> EDGE_TYPES = List.of("sync-http", "db", "async", "external");
 
@@ -56,6 +66,10 @@ public final class GraphQuery {
     GraphQuery(String op, List<String> args) {
         this.op = op;
         this.args = List.copyOf(args);
+    }
+
+    public boolean isEdit() {
+        return EDIT_OPS.contains(op);
     }
 
     @Override
@@ -97,6 +111,7 @@ public final class GraphQuery {
         if (arity == null) return null;
         List<String> args = new ArrayList<>();
         if (rawArgs != null) for (int i = 0; i < rawArgs.length(); i++) args.add(rawArgs.optString(i, "").trim());
+        if (EDIT_OPS.contains(op)) return editRequest(op, args);
         args.removeIf(String::isBlank);
         if (arity == VARIADIC) return seeds(op, args, graph);
         if (args.size() != arity) return null;
@@ -124,6 +139,26 @@ public final class GraphQuery {
             if (resolved.size() == MAX_SEEDS) break;
         }
         return resolved.isEmpty() ? null : new GraphQuery(op, resolved);
+    }
+
+    /**
+     * An edit request keeps the names as written, cleaned of quoting. {@code add-edge} may
+     * leave the source blank ("add a line to postgres"): the dialogue asks for it.
+     */
+    private static GraphQuery editRequest(String op, List<String> raw) {
+        List<String> args = new ArrayList<>();
+        for (String a : raw) {
+            String name = a.replaceAll("^[`'\"]+|[`'\"]+$", "").trim();
+            if (name.length() > 80) return null;
+            args.add(name);
+        }
+        if ("add-node".equals(op)) {
+            args.removeIf(String::isBlank);
+            return args.size() == 1 ? new GraphQuery(op, args) : null;
+        }
+        if (args.size() == 1) args.add(0, "");
+        if (args.size() != 2 || args.get(1).isBlank()) return null;
+        return new GraphQuery(op, args);
     }
 
     private static String edgeType(String arg) {

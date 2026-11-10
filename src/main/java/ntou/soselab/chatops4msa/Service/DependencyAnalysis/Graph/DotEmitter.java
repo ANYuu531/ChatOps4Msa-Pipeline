@@ -170,6 +170,8 @@ public class DotEmitter {
         // A declared-only edge is flagged with "?" so its uncertainty is legible.
         String tag = typeTag(edge);
         if (declaredOnly) tag = tag.isEmpty() ? "declared?" : tag + "?";
+        // An operator's addition says so on the arrow: a human's word never reads as a layer's finding.
+        if (edge.provenance.contains(DependencyGraph.PROV_HUMAN)) tag = tag.isEmpty() ? "human" : tag + " · human";
         if (!tag.isEmpty()) append(attrs, "label=\"" + tag + "\"");
 
         // Colour by dependency type, so type is legible independent of provenance;

@@ -20,6 +20,7 @@ Rules:
 - At most <MAX> queries. Choose the fewest that answer the question; prefer one.
 - Node arguments must be ids copied EXACTLY from the list above. If the question names
   a service that is not in the list, do not guess a similar id — omit that query.
+  (The one exception is add-edge / add-node below.)
 - "edges-of-type" takes one of: sync-http, db, async, external.
 - Questions like "what happens if X goes down / who is affected by X" → impact-of.
   "What must be up before X / what does X need" → startup-needs.
@@ -40,6 +41,13 @@ Rules:
   "remove Y", "拿掉 Y", "only keep …") → subgraph with EXACTLY the previous subgraph's
   seeds, plus the nodes it names to add, minus the nodes it names to remove. Do not add
   or drop anything else. A new, unrelated request replaces the previous seeds.
+- A request to CHANGE the graph — add an edge / line / dependency that is missing
+  ("新增一條 X 到 Y 的線", "圖上少了 X → Y", "X 其實有呼叫 Y，補上去", "add an edge from X to Y")
+  → add-edge with [caller, callee]; add a node / service ("新增節點 Z", "add Z to the
+  graph") → add-node with [Z]. Output only that one query. These two may name services
+  that are NOT in the list: copy the user's spelling exactly, do not map it to an id.
+  "Y 被 X 呼叫" is still [X, Y]. A request naming only the callee ("加一條連到 Y 的線")
+  → add-edge with ["", Y]. A QUESTION about an edge ("does X call Y?") is path, not add-edge.
 - If the question is about the report's text, limitations, collection status, or
   anything not answerable from the graph structure, output [].
 - The question may be in any language; the operators and ids stay as written.

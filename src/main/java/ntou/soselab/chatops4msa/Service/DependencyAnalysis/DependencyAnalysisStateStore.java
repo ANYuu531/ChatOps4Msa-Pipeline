@@ -110,6 +110,12 @@ public class DependencyAnalysisStateStore {
     public static final String STAGE_ALIAS_ANSWERS = "alias_answers";
     /** The service ids an alias answer may name (JSON array), written when the questions are posted. */
     public static final String STAGE_ALIAS_VOCABULARY = "alias_vocabulary";
+    /**
+     * The edges and nodes the operator added in a report's thread ({@code GraphEdit} JSON
+     * list), loaded from the repository's file at the start of a run and re-applied after
+     * the merge, the way the alias answers are.
+     */
+    public static final String STAGE_GRAPH_EDITS = "graph_edits";
 
     public static class State {
         public String repoName = "";
@@ -175,6 +181,8 @@ public class DependencyAnalysisStateStore {
         // answers already; the new run applies them and only asks about new names.
         String remembered = loadProjectAliases(state.repoName);
         if (!remembered.isBlank()) state.stages.put(STAGE_ALIAS_ANSWERS, remembered);
+        String edits = loadProjectEdits(state.repoName);
+        if (!edits.isBlank()) state.stages.put(STAGE_GRAPH_EDITS, edits);
         save(userId, state);
         return state;
     }
@@ -223,9 +231,36 @@ public class DependencyAnalysisStateStore {
     }
 
     private Path aliasFileOf(String repoName) {
+        return projectFileOf("aliases", repoName);
+    }
+
+    /** The graph edits made in this repository's report threads (JSON list of {@code GraphEdit}), or "". */
+    public String loadProjectEdits(String repoName) {
+        try {
+            Path file = projectFileOf("edits", repoName);
+            if (file == null || !Files.exists(file)) return "";
+            return Files.readString(file, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** Remembers the graph edits for a repository; a failure only means the next run does not re-apply them. */
+    public void saveProjectEdits(String repoName, String editsJson) {
+        try {
+            Path file = projectFileOf("edits", repoName);
+            if (file == null) return;
+            Files.createDirectories(file.getParent());
+            Files.writeString(file, editsJson == null ? "" : editsJson, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            System.out.println("[WARNING] cannot persist graph edits for " + repoName + ": " + e.getMessage());
+        }
+    }
+
+    private Path projectFileOf(String kind, String repoName) {
         if (repoName == null || repoName.isBlank()) return null;
         String safe = repoName.trim().toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9._-]+", "_");
-        return directory.resolve("aliases").resolve(safe + ".json");
+        return directory.resolve(kind).resolve(safe + ".json");
     }
 
     /** Null when there is no checkpoint, or it has expired. */

@@ -98,7 +98,7 @@ public class SemanticRouterCalibrationTest {
         List<double[]> vectors = client.embed(questions);
         assertTrue(vectors != null && vectors.size() == questions.size(), "could not embed the hold-out set");
 
-        int correct = 0, confidentCorrect = 0, confidentWrong = 0;
+        int correct = 0, confidentCorrect = 0, confidentWrong = 0, editVetoed = 0;
         double minCorrect = 1, maxWrong = 0;
         StringBuilder table = new StringBuilder();
         table.append(String.format(Locale.ROOT, "%-52s %-16s %-16s %6s %6s %s%n", "question", "expected", "best", "score", "next", "verdict"));
@@ -107,6 +107,9 @@ public class SemanticRouterCalibrationTest {
             String expected = HOLDOUT.get(q);
             SemanticRouter.Decision d = router.routeQuestion(q, vectors.get(i), GraphGrounding.mentionedNodes(q, graph));
             boolean ok = List.of(expected.split("\\|")).contains(d.intent);
+            // Every hold-out line is a question; one that sits closer to the edit examples
+            // is handed to the planner instead of answered here.
+            if (d.editLike) editVetoed++;
             if (ok) {
                 correct++;
                 minCorrect = Math.min(minCorrect, d.score);
@@ -116,9 +119,11 @@ public class SemanticRouterCalibrationTest {
                 if (d.confident) confidentWrong++;
             }
             table.append(String.format(Locale.ROOT, "%-52s %-16s %-16s %6.3f %6.3f %s%s%n",
-                    q, expected, d.intent, d.score, d.runnerUpScore, ok ? "ok" : "WRONG", d.confident ? "" : " (unsure)"));
+                    q, expected, d.intent, d.score, d.runnerUpScore, ok ? "ok" : "WRONG",
+                    d.editLike ? " (edit veto)" : d.confident ? "" : " (unsure)"));
         }
         System.out.println(table);
+        System.out.printf(Locale.ROOT, "edit veto %d/%d%n", editVetoed, questions.size());
         System.out.printf(Locale.ROOT, "accuracy %d/%d; confident+correct %d; confident+WRONG %d; "
                         + "lowest correct score %.3f; highest wrong score %.3f; thresholds T=%.2f M=%.2f H=%.2f%n",
                 correct, questions.size(), confidentCorrect, confidentWrong, minCorrect, maxWrong,

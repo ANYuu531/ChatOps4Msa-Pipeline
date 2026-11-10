@@ -9,6 +9,7 @@ import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DocGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DotEmitter;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphLayerAssigner;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphEdit;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphNormalizer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphvizRenderer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.K8sGraphBuilder;
@@ -614,6 +615,9 @@ public class DependencyReportService {
             // deployment layer drew edges on (Compose's "hystrix" dashboard) is a question
             // for the operator, not a silent drop.
             GraphNormalizer.normalize(graph, answers, questions);
+            // The operator's own additions from earlier report threads: after the clean-up,
+            // so a human-added node is never taken for a library name and dropped.
+            GraphEdit.applyAll(graph, state.stage(DependencyAnalysisStateStore.STAGE_GRAPH_EDITS));
             if (questions != null) {
                 List<String> services = new ArrayList<>();
                 for (DependencyGraph.Node n : graph.getNodes()) {

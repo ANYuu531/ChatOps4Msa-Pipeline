@@ -226,6 +226,30 @@ public class CodeGraphMerger {
     }
 
     /**
+     * Who owns a repository file, as the merge attributes it (convention ③): the same
+     * tables, read from the same rows, without merging an edge. For the graph-edit
+     * evidence search, which reads files the merge never turned into edges and must
+     * still say whose they are the way the merge would have.
+     *
+     * @param graph the graph the merge started from (empty for a greenfield run); copied, never touched
+     */
+    public static java.util.function.Function<String, String> fileOwners(DependencyGraph graph, String codeEdgesJson, String repoName) {
+        DependencyGraph copy = graph == null ? new DependencyGraph("") : DependencyGraph.fromJson(graph.toJson());
+        CodeGraphMerger merger = new CodeGraphMerger(copy, repoName);
+        try {
+            JSONObject root = new JSONObject(codeEdgesJson == null || codeEdgesJson.isBlank() ? "{}" : codeEdgesJson);
+            JSONArray edges = root.optJSONArray("edges");
+            if (edges != null) {
+                merger.indexMeta(edges);
+                merger.names.learnModulePrefix(edges);
+            }
+        } catch (Exception ignored) {
+            // no rows: ownership falls back to the path rules alone
+        }
+        return file -> file == null ? null : merger.names.resolveSource(file);
+    }
+
+    /**
      * The Compose depends_on entries nothing else backed, drawn after every call edge is in:
      * where a call edge (or a runtime-observed one) already joins the pair, the declaration
      * only adds its provenance to it — the order is implied by the call; otherwise the pair

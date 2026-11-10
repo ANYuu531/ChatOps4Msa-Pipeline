@@ -67,17 +67,17 @@ public class GreenfieldProbeTest {
     }
 
     /** What one offline run produced; {@link MiningProbeTest} reads the parts the summary truncates. */
-    static final class Probe {
-        String repoName;
-        String summary;
+    public static final class Probe {
+        public String repoName;
+        public String summary;
         String mermaid;
-        EdgeLedger ledger;
-        DependencyGraph graph;
+        public EdgeLedger ledger;
+        public DependencyGraph graph;
         List<CodeGraphMerger.Unresolved> unresolved;
         AliasResolution.Questions questions;
     }
 
-    static Probe run(Path root, AliasResolution.Answers answers) throws IOException {
+    public static Probe run(Path root, AliasResolution.Answers answers) throws IOException {
         String repoPath = root.toString();
         String repoName = root.getFileName().toString();
         RuleTrace.clear();

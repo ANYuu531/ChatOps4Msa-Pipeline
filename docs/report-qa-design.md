@@ -227,8 +227,9 @@ runtime 模式下更準的做法是用 Postman collection 裡「checkout」那�
    ```
    docker run --rm -v "$PWD":/build -w /build maven:3.9-eclipse-temurin-17 \
      mvn -q -Dqa.calibrate=true -Dtest=SemanticRouterCalibrationTest -Dsurefire.failIfNoSpecifiedTests=false test 2>&1 \
-     | grep -E "^question|ok$|WRONG|unsure|^accuracy"
+     | grep -E "^question|ok$|WRONG|unsure|veto|^accuracy"
    ```
+   `edit veto N/總數` 是被改圖例句否決、交給 planner 的問句數（hold-out 全是問句，應為 0；見 `graph-edit-design-2026-11-06.md`）。
    看最後一行 `accuracy … lowest correct score … highest wrong score`：threshold 要落在「最低的正確分數」與「最高的錯誤分數」之間；
    改 `dependency.qa.router.threshold/margin/high`；`application.properties` 打包在 jar 裡、compose 沒掛出來，**改完要重編**
    （`docker compose build chatops4msa && docker compose up -d --no-deps chatops4msa`）。

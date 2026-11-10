@@ -1,8 +1,12 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Qa;
 
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.RepoWorkspace;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.DependencyAnalysisStateStore;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CodeGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DotEmitter;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphEdit;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphLayerAssigner;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphvizRenderer;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.MermaidEmitter;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.SubgraphExtractor;
@@ -52,6 +56,11 @@ import java.util.concurrent.Executors;
  * in a Perform button per capability, which is right for an action and wrong for a
  * question. A thread needs no mention, keeps every question next to the report it is
  * about, and gives the conversation history a natural boundary.
+ *
+ * <p>The thread also takes changes: "add an edge from X to Y" opens a
+ * {@link GraphEditDialogue}, which asks for what the request left open, searches the
+ * repository for the pair ({@link EvidenceFinder}), and on confirmation adds the edge to
+ * this report's graph and to the repository's remembered edits.
  */
 @Service
 public class ReportQaService {
@@ -82,6 +91,7 @@ public class ReportQaService {
     }
 
     private final ReportArchiveStore store;
+    private final DependencyAnalysisStateStore stateStore;
     private final LLMService llmService;
     private final JDAService jdaService;
     private final GraphQueryPlanner planner;
@@ -101,6 +111,7 @@ public class ReportQaService {
 
     @Autowired
     public ReportQaService(ReportArchiveStore store,
+                           DependencyAnalysisStateStore stateStore,
                            LLMService llmService,
                            @Lazy JDAService jdaService,
                            GraphQueryPlanner planner,
@@ -112,6 +123,7 @@ public class ReportQaService {
                            @Value("${dependency.qa.router.margin:0.10}") double routerMargin,
                            @Value("${dependency.qa.router.high:0.80}") double routerHigh) {
         this.store = store;
+        this.stateStore = stateStore;
         this.llmService = llmService;
         this.jdaService = jdaService;
         this.planner = planner;
@@ -173,6 +185,8 @@ public class ReportQaService {
                 String text = state.stage(e.getValue());
                 if (text != null && !text.isBlank()) archive.provenance.put(e.getKey(), text);
             }
+            String rows = state.stage(DependencyAnalysisStateStore.STAGE_CODE_EDGES);
+            archive.codeEdges = rows == null ? "" : rows;
         }
         archive.chunks.addAll(chunk(archive));
         if (embeddingsEnabled) embed(archive.chunks);
@@ -301,6 +315,16 @@ public class ReportQaService {
     Answer respond(ReportArchive archive, String question) {
         DependencyGraph graph = DependencyGraph.fromJson(archive.graphJson);
 
+        // An edit in progress takes the message as its answer — unless it is not one and
+        // reads as a question, which is then answered with the edit kept open.
+        String editReminder = "";
+        if (archive.pendingEdit != null) {
+            GraphEditDialogue.Pending pending = GraphEditDialogue.Pending.fromJson(archive.pendingEdit);
+            GraphEditDialogue.Turn turn = GraphEditDialogue.answer(pending, question, editEnv(archive, graph));
+            if (turn.understood || !looksLikeQuestion(question)) return editTurn(archive, graph, question, turn);
+            editReminder = "\n\n_(" + pending.summary() + " is still open — answer its question, or reply \"cancel\".)_";
+        }
+
         // One vector serves both the passage retriever and the semantic router.
         double[] questionVector = null;
         if (embeddingsEnabled) {
@@ -332,6 +356,12 @@ public class ReportQaService {
             planSource = "none" + (routed == null ? "" : ", router " + routed);
         }
         System.out.println("[DEBUG] graph query plan (" + planSource + "): " + queries);
+        for (GraphQuery q : queries) {
+            if (q.isEdit() && archive.pendingEdit == null) {
+                return editTurn(archive, graph, question, GraphEditDialogue.start(q.op, q.args, question, editEnv(archive, graph)));
+            }
+        }
+        queries = queries.stream().filter(q -> !q.isEdit()).toList();
         String queryResults = GraphQueryEngine.execute(graph, queries);
 
         // Nodes the plan named that the question did not spell (the model mapped
@@ -350,12 +380,129 @@ public class ReportQaService {
 
         String reply = llmService.callAPIFromOutside(messages);
         if (reply == null || reply.isBlank()) reply = "(the model returned an empty answer)";
+        reply += editReminder;
 
         archive.history.add(new JSONObject().put("role", "user").put("content", question));
         archive.history.add(new JSONObject().put("role", "assistant").put("content", reply));
         while (archive.history.size() > HISTORY_KEEP) archive.history.remove(0);
         archive.lastPlan = queries.toString();
         return new Answer(reply, graph, queries);
+    }
+
+    // ---------- graph edits ----------
+
+    /** One dialogue turn: records it, applies a confirmed edit, and asks for its picture. */
+    private Answer editTurn(ReportArchive archive, DependencyGraph graph, String question, GraphEditDialogue.Turn turn) {
+        archive.pendingEdit = turn.next == null ? null : turn.next.toJson();
+        List<GraphQuery> picture = List.of();
+        if (turn.applied != null) {
+            turn.applied.apply(graph);
+            GraphLayerAssigner.assign(graph);
+            archive.graphJson = graph.toJson();
+            List<GraphEdit> remembered = GraphEdit.listFromJson(stateStore.loadProjectEdits(archive.repoName));
+            remembered.add(turn.applied);
+            stateStore.saveProjectEdits(archive.repoName, GraphEdit.listToJson(remembered));
+            System.out.println("[DEBUG] graph edit applied on " + archive.repoName + ": " + turn.applied.describe());
+            picture = GraphEdit.ADD_NODE.equals(turn.applied.action)
+                    ? List.of(new GraphQuery("subgraph", List.of(turn.applied.target)))
+                    : List.of(new GraphQuery("subgraph", List.of(turn.applied.source, turn.applied.target)));
+        }
+        if (turn.next == null) closeCheckout(archive.id);
+        archive.history.add(new JSONObject().put("role", "user").put("content", question));
+        archive.history.add(new JSONObject().put("role", "assistant").put("content", turn.reply));
+        while (archive.history.size() > HISTORY_KEEP) archive.history.remove(0);
+        archive.lastPlan = "";
+        return new Answer(turn.reply, graph, picture);
+    }
+
+    /** A message that asks rather than answers: it ends in a question mark. */
+    static boolean looksLikeQuestion(String text) {
+        String t = text == null ? "" : text.trim();
+        return t.endsWith("?") || t.endsWith("？");
+    }
+
+    /** The repository checkout an edit dialogue searches, cloned on its first search and kept until it ends. */
+    private static final class Checkout {
+        final RepoWorkspace workspace;
+        final EvidenceFinder.Context context;
+        final java.time.Instant at = java.time.Instant.now();
+
+        Checkout(RepoWorkspace workspace, EvidenceFinder.Context context) {
+            this.workspace = workspace;
+            this.context = context;
+        }
+    }
+
+    /** Long enough for a dialogue; an abandoned one does not keep a clone on disk for longer. */
+    private static final java.time.Duration CHECKOUT_TTL = java.time.Duration.ofMinutes(30);
+    private final Map<String, Checkout> checkouts = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private GraphEditDialogue.Env editEnv(ReportArchive archive, DependencyGraph graph) {
+        return new GraphEditDialogue.Env() {
+            @Override
+            public DependencyGraph graph() {
+                return graph;
+            }
+
+            @Override
+            public List<EvidenceFinder.Evidence> search(String source, String target) {
+                Checkout c = checkout(archive, graph);
+                return c == null ? null : EvidenceFinder.find(c.workspace.getRoot(), c.context, source, target);
+            }
+
+            @Override
+            public String readLine(String file, int line) {
+                Checkout c = checkout(archive, graph);
+                if (c == null) return null;
+                java.nio.file.Path root = c.workspace.getRoot().normalize();
+                java.nio.file.Path path = root.resolve(file).normalize();
+                return path.startsWith(root) ? EvidenceFinder.lineOf(path, line) : null;
+            }
+
+            @Override
+            public String user() {
+                return archive.userId;
+            }
+
+            @Override
+            public String now() {
+                return java.time.LocalDate.now().toString();
+            }
+        };
+    }
+
+    private Checkout checkout(ReportArchive archive, DependencyGraph graph) {
+        java.time.Instant now = java.time.Instant.now();
+        checkouts.entrySet().removeIf(e -> {
+            boolean old = java.time.Duration.between(e.getValue().at, now).compareTo(CHECKOUT_TTL) > 0;
+            if (old) e.getValue().workspace.close();
+            return old;
+        });
+        Checkout existing = checkouts.get(archive.id);
+        if (existing != null) return existing;
+        if (archive.repoName == null || archive.repoName.isBlank()) return null;
+        RepoWorkspace workspace = RepoWorkspace.clone(archive.repoName);
+        if (!workspace.isCloned()) {
+            System.out.println("[WARNING] graph edit: cannot clone " + archive.repoName + ": " + workspace.getFailure());
+            workspace.close();
+            return null;
+        }
+        // Ownership is asked of the graph the merge started from: none, for a static run.
+        DependencyGraph start = "greenfield".equals(archive.mode) || archive.namespace.isBlank() ? new DependencyGraph("") : graph;
+        List<CodeGraphMerger.Unresolved> residue = CodeGraphMerger.merge(
+                start.getNodes().isEmpty() ? new DependencyGraph("") : DependencyGraph.fromJson(start.toJson()),
+                archive.codeEdges, archive.repoName);
+        EvidenceFinder.Context context = new EvidenceFinder.Context(graph,
+                CodeGraphMerger.fileOwners(start, archive.codeEdges, archive.repoName),
+                EvidenceFinder.filesWithRows(archive.codeEdges), residue);
+        Checkout c = new Checkout(workspace, context);
+        checkouts.put(archive.id, c);
+        return c;
+    }
+
+    private void closeCheckout(String archiveId) {
+        Checkout c = checkouts.remove(archiveId);
+        if (c != null) c.workspace.close();
     }
 
     /** The previous question and the queries it ran, for the planner; empty on the first question. */

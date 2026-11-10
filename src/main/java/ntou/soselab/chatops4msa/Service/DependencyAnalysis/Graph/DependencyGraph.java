@@ -55,6 +55,8 @@ public class DependencyGraph {
     public static final String PROV_RUNTIME = "runtime";
     public static final String PROV_CODE = "code";
     public static final String PROV_DOC = "doc";
+    /** Added by the operator in the report's thread ({@link GraphEdit}); never by a rule. */
+    public static final String PROV_HUMAN = "human";
 
     /** How strongly the edge is believed. observed (seen on the wire) > documented > inferred. */
     public static final String CONF_OBSERVED = "observed";

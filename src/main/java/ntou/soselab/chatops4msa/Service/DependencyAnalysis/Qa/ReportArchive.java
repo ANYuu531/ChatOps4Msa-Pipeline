@@ -51,6 +51,15 @@ public final class ReportArchive {
      * plan, and the planner — which does not see the conversation — needs it verbatim.
      */
     public String lastPlan = "";
+    /**
+     * The extraction's rows ({@code STAGE_CODE_EDGES}): which files the static layer read,
+     * who owns each, and the rows it could not align. Kept for the graph-edit evidence
+     * search, which must say why a trace it finds was not drawn. Empty for an archive
+     * written before graph edits existed.
+     */
+    public String codeEdges = "";
+    /** An edit dialogue waiting for the operator's next answer ({@code GraphEditDialogue.Pending}), or null. */
+    public JSONObject pendingEdit;
 
     public boolean hasEmbeddings() {
         for (TextChunk c : chunks) if (c.embedding != null) return true;
@@ -76,7 +85,9 @@ public final class ReportArchive {
                 .put("provenance", ev)
                 .put("chunks", chunkArray)
                 .put("history", new JSONArray(history))
-                .put("lastPlan", lastPlan);
+                .put("lastPlan", lastPlan)
+                .put("codeEdges", codeEdges)
+                .put("pendingEdit", pendingEdit == null ? JSONObject.NULL : pendingEdit);
     }
 
     public static ReportArchive fromJson(JSONObject json) {
@@ -114,6 +125,8 @@ public final class ReportArchive {
             }
         }
         a.lastPlan = json.optString("lastPlan", "");
+        a.codeEdges = json.optString("codeEdges", "");
+        a.pendingEdit = json.optJSONObject("pendingEdit");
         return a;
     }
 }
