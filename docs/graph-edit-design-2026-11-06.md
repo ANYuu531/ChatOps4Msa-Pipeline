@@ -95,7 +95,7 @@ repo 是在第一次找證據時重新 clone（淺 clone），對話結束或 30
 
 **不經 Discord 的實測（2026-11-10）**：`GraphEditLiveProbeTest` 把下面 6 句走 thread 真正的回答路徑（`ReportQaService.respond`：embedding → 語意路由 → planner → 對話狀態機 → 重新 clone 找證據），只是不經 Discord，每句照預期自動判 PASS／FAIL。機器 B 上一行跑完（含路由校準）：`bash docs/experiments/2026-11-06-graph-edit/run-on-machine-b.sh`。本機先用替身模型（`-Dprobe.live.stand-in=true`，planner 回它該回的，不呼叫 OpenAI）驗過流程，抓到一個 bug：在證據那一步，中途插問的「postgres 被誰用？」被收成使用者的說明；已修（問號結尾的句子不當說明，交給 thread 當問題回答），`GraphEditDialogueTest` 加一個測試。替身模型 6/6。
 
-**機器 B 真模型結果（2026-11-10）：6/6 通過；路由校準 33/33 正確，改圖例句否決 0/33。**
+**機器 B 真模型結果（2026-11-10，兩次）：第一次 6 情境 6/6；加了刪線、撤銷後第二次 8 情境 8/8；兩次路由校準都是 33/33 正確、改圖例句否決 0/33（第二次已含 6 句刪線例句）。**
 
 | 測試句 | 工具回應 | 結果 |
 |---|---|---|
@@ -105,6 +105,8 @@ repo 是在第一次找證據時重新 clone（淺 clone），對話結束或 30
 | 4 · 沒講來源：→ tax | 反問哪個服務呼叫 tax；取消後圖不變 | PASS |
 | 5 · 是問題、不是改圖 | 照常回答，不開新增、圖不變 | PASS |
 | 6 · 新增進行中途插問題 | 第二句當問題回答，並提醒新增還開著；取消後圖不變 | PASS |
+| 7 · 刪線再撤銷：cart → product | 確認時列出這條線的出處（ProductService.java）；確定後少一條；撤銷後回到原樣 | PASS |
+| 8 · 加線再撤銷：kafka-connect → postgres | 寫入後多一條；undo 後回到原樣 | PASS |
 
 路由校準（hold-out 33 句）：accuracy 33/33；confident 且正確 24、confident 但錯 0；正確的最低分 0.541、錯的最高分 0.000；門檻 T=0.51 M=0.10 H=0.80 沒動。改圖例句一句正常問句都沒擋掉。完整對話與校準表在機器 B 的 `experiments/2026-11-06-graph-edit/live-yas.md`、`router-calibration.txt`（尚未傳回）。
 

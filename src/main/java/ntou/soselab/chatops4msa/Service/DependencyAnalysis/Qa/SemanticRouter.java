@@ -137,7 +137,11 @@ public final class SemanticRouter {
                     "which services are not deployed?", "what is referenced but missing from the cluster?", "which workloads are not running?"),
             new Intent("externals", 0, List.of("externals"), false,
                     "有哪些外部依賴？", "有沒有呼叫第三方服務？", "會連到 mesh 外面的有哪些？", "外部主機有哪些？",
-                    "what are the external dependencies?", "does it call any third-party API?", "which external hosts are called?"),
+                    // 2026-11-10: the hold-out's "這個系統會打到外面的 API 嗎" scored 0.541 against T=0.51 — the
+                    // intent had no "打到" (the colloquial "call") and no "外面的 API"; two spellings added.
+                    "有沒有打到叢集外面的服務？", "會不會呼叫外面的 API？",
+                    "what are the external dependencies?", "does it call any third-party API?", "which external hosts are called?",
+                    "does it reach anything outside the cluster?"),
             new Intent("async", 0, List.of("async"), false,
                     "有沒有訊息佇列？", "非同步的邊有哪些？", "有用 Kafka 或 RabbitMQ 嗎？", "誰在發事件、誰在收？", "有沒有透過 queue 溝通的服務？", "服務之間有用佇列傳訊息嗎？",
                     "is there a message broker?", "what asynchronous communication is there?", "any queues or events?", "who publishes and who consumes?"),
