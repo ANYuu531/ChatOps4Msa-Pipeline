@@ -55,6 +55,20 @@ public final class SourceScanner {
     /** Files larger than this are skipped (minified bundles, generated sources). */
     public static final long MAX_FILE_BYTES = 512 * 1024;
 
+    /**
+     * Whether a repository-relative path lies in a test tree or is a test file by name —
+     * the same segments and names {@link #isIgnored} skips, for callers that rank rather
+     * than skip (the graph-edit evidence search puts yas's {@code automation-ui/} e2e
+     * configuration after the service's own files).
+     */
+    public static boolean isTestPath(String relative) {
+        String path = relative.replace('\\', '/');
+        String lower = ("/" + path + "/").toLowerCase(Locale.ROOT);
+        for (String segment : TEST_SEGMENTS) if (lower.contains(segment)) return true;
+        String name = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
+        return TEST_FILE_NAME.matcher(name).matches();
+    }
+
     public static boolean isIgnored(Path root, Path file) {
         String relative = "/" + root.relativize(file).toString().replace('\\', '/') + "/";
         String lower = relative.toLowerCase(Locale.ROOT);

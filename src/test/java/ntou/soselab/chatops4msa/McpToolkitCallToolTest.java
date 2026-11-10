@@ -1,14 +1,21 @@
 package ntou.soselab.chatops4msa;
 
 import ntou.soselab.chatops4msa.Entity.ToolkitFunction.McpToolkit;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Talks to the k8s-mcp-server container and a cluster, so it runs only when asked:
+ * {@code mvn test -Dtest=McpToolkitCallToolTest -Dmcp.live=true}. Without the flag it is
+ * skipped rather than failing every full run on a machine without the container.
+ */
 class McpToolkitCallToolTest {
 
     @Test
     void connect_then_call_execute_kubectl() {
+        Assumptions.assumeTrue(Boolean.getBoolean("mcp.live"), "needs the k8s-mcp-server container: run with -Dmcp.live=true");
         McpToolkit tk = new McpToolkit();
 
         String r1 = tk.toolkitMcpConnect("k8s");

@@ -29,6 +29,20 @@ GraphEditDialogue（確定性狀態機；每個回答都由程式解析）
 寫入：這份報告的圖＋這個 repo 的人工修改檔（dep-state/edits/<repo>.json）
      下次分析同一個 repo，合併完會自動帶入（GraphEdit.applyAll）
      thread 裡貼出新邊附近的部分圖
+
+使用者：「把 X 到 Y 的線拿掉」（2026-11-10 加）
+   │  planner：remove-edge(X, Y)
+   ▼
+   兩端都要在圖上（名字對不上 → 列最像的節點；沒有像的 → 結束）
+   圖上沒這條線但有反方向 → 問要不要「反過來」
+   確認：列出這條線在圖上的紀錄（類別、信心、來源層、出處；執行期有觀測到會特別標出）
+   ▼
+寫入：圖上拿掉；記成 remove-edge，下次分析若再抽到也會再拿掉
+
+使用者：「撤銷」／「undo」（不經 LLM，程式直接認）
+   ▼
+   這個 thread 最後一筆修改：圖回到那筆之前的樣子（每筆修改都存了修改前的圖），
+   repo 的人工修改檔也拿掉那一筆；可以連續撤銷
 ```
 
 設計上的幾個決定：
@@ -69,17 +83,30 @@ repo 是在第一次找證據時重新 clone（淺 clone），對話結束或 30
 | （沒講來源）→ tax | 反問「哪個服務呼叫或連到 `tax`？」 | — |
 | 新增節點 kafka | 「已經在圖上了」 | — |
 
-觀察到的界線：storefront 那題第 1 筆是 `automation-ui/storefront/...` 的 e2e 測試設定（`app.url=http://storefront/`），排在真正的出處前面；要靠使用者選。
+觀察到的界線：storefront 那題第 1 筆是 `automation-ui/storefront/...` 的 e2e 測試設定（`app.url=http://storefront/`），排在真正的出處前面；要靠使用者選。**11/10 已改**：找證據時沿用靜態層對測試目錄的定義（`SourceScanner.isTestPath`，含 `e2e/`、`automation-ui/`）降分，這類檔案排到服務自己的檔案後面（分數不夠的就不列）。
 
 ## 5. 還沒驗證的、界線
 
-- **偵測那一段沒跑過**：改圖例句的分數、planner 會不會正確輸出 `add-edge`，都要在機器 B 用 Discord 跑。路由的校準測試也要重跑一次，確認改圖例句沒有否決掉 hold-out 裡的正常問句（預期 0 句）。
+- **偵測那一段已在機器 B 用真模型跑過（2026-11-10，見本節最後）**，但還沒經過 Discord 本身的收發，也還沒測 `ask()` 的 prompt injection 檢查。
 - 找證據是文字層級的：不追資料流（URL 經過自訂函式參數才到 client 的找不到，同 11/5 界線第四項）、不讀映像裡的程式、不看叢集外的 SDK 端點。
-- 沒有「撤銷」：寫錯的話，目前要刪 `dep-state/edits/<repo>.json` 裡那一筆。
+- 「撤銷」只能撤銷**這個 thread** 裡做的修改（修改前的圖存在這份報告的紀錄裡）；別的 thread 加的，要去那個 thread 撤，或刪 `dep-state/edits/<repo>.json` 裡那一筆。
 - 操作者記的是 Discord user id。
-- 刪線、改類別沒做（老師只提到新增）；資料結構已經是「一筆一筆的人工修改」，要加 `remove-edge` 是同一條路。
+- 刪線是人的判斷蓋過工具：之後執行期那一層就算觀測到這個呼叫，重放時還是會拿掉（確認時有警告）。改類別沒做。
 
-**不經 Discord 的實測（2026-11-10）**：`GraphEditLiveProbeTest` 把下面 6 句走 thread 真正的回答路徑（`ReportQaService.respond`：embedding → 語意路由 → planner → 對話狀態機 → 重新 clone 找證據），只是不經 Discord，每句照預期自動判 PASS／FAIL。機器 B 上一行跑完（含路由校準）：`bash docs/experiments/2026-11-06-graph-edit/run-on-machine-b.sh`。本機先用替身模型（`-Dprobe.live.stand-in=true`，planner 回它該回的，不呼叫 OpenAI）驗過流程，抓到一個 bug：在證據那一步，中途插問的「postgres 被誰用？」被收成使用者的說明；已修（問號結尾的句子不當說明，交給 thread 當問題回答），`GraphEditDialogueTest` 加一個測試。替身模型 6/6；真模型的結果等機器 B。
+**不經 Discord 的實測（2026-11-10）**：`GraphEditLiveProbeTest` 把下面 6 句走 thread 真正的回答路徑（`ReportQaService.respond`：embedding → 語意路由 → planner → 對話狀態機 → 重新 clone 找證據），只是不經 Discord，每句照預期自動判 PASS／FAIL。機器 B 上一行跑完（含路由校準）：`bash docs/experiments/2026-11-06-graph-edit/run-on-machine-b.sh`。本機先用替身模型（`-Dprobe.live.stand-in=true`，planner 回它該回的，不呼叫 OpenAI）驗過流程，抓到一個 bug：在證據那一步，中途插問的「postgres 被誰用？」被收成使用者的說明；已修（問號結尾的句子不當說明，交給 thread 當問題回答），`GraphEditDialogueTest` 加一個測試。替身模型 6/6。
+
+**機器 B 真模型結果（2026-11-10）：6/6 通過；路由校準 33/33 正確，改圖例句否決 0/33。**
+
+| 測試句 | 工具回應 | 結果 |
+|---|---|---|
+| 1 · 漏邊：kafka-connect → postgres | 開啟新增、證據列出 Debezium JSON；選 1 → 建議 db → 寫入 | PASS |
+| 2 · 漏邊：storefront-nextjs → storefront（換一種說法、貼自己的出處） | 開啟新增；貼 `storefront/.env.production:1` → 讀到那一行、documented → 寫入 | PASS |
+| 3 · 英文、名字對不上：cart → Stripe API | 問「你指的是…或新增」；新增 → 外部主機 → 沒有出處 → inferred 寫入 | PASS |
+| 4 · 沒講來源：→ tax | 反問哪個服務呼叫 tax；取消後圖不變 | PASS |
+| 5 · 是問題、不是改圖 | 照常回答，不開新增、圖不變 | PASS |
+| 6 · 新增進行中途插問題 | 第二句當問題回答，並提醒新增還開著；取消後圖不變 | PASS |
+
+路由校準（hold-out 33 句）：accuracy 33/33；confident 且正確 24、confident 但錯 0；正確的最低分 0.541、錯的最高分 0.000；門檻 T=0.51 M=0.10 H=0.80 沒動。改圖例句一句正常問句都沒擋掉。完整對話與校準表在機器 B 的 `experiments/2026-11-06-graph-edit/live-yas.md`、`router-calibration.txt`（尚未傳回）。
 
 機器 B 上的測試句（報告 thread 裡直接打，不用 @bot）：
 
@@ -89,6 +116,10 @@ repo 是在第一次找證據時重新 clone（淺 clone），對話結束或 30
 4. `幫我加一條連到 tax 的線` → 應反問來源
 5. `cart 會不會呼叫 product？` → 應照常回答（不能被當成改圖）
 6. 進行中途問 `postgres 被誰用？` → 應回答問題、並提醒新增還開著
+7. `把 cart 到 product 那條線拿掉` → 確認時列出 `ProductService.java` 的出處；`確定` 後少一條；`撤銷` 後回到原樣（11/10 加）
+8. 第 1 句加完 kafka-connect → postgres 之後 `undo` → 回到原樣（11/10 加）
+
+11/10 在路由的改圖例句裡加了 6 句刪線的說法，**路由校準要在機器 B 重跑一次**（腳本已包含），確認 edit veto 仍是 0。
 
 ## 6. 程式
 
@@ -96,12 +127,12 @@ repo 是在第一次找證據時重新 clone（淺 clone），對話結束或 30
 |---|---|
 | `Qa/GraphEditDialogue.java` | 對話狀態機（每步的問題與回答解析、中英文） |
 | `Qa/EvidenceFinder.java` | 依要求找證據（三種痕跡、歸屬、「為什麼沒畫」） |
-| `Graph/GraphEdit.java` | 一筆人工修改：套用、JSON、依序重放 |
+| `Graph/GraphEdit.java` | 一筆人工修改（add-edge／add-node／remove-edge）：套用、JSON、依序重放 |
 | `Graph/CodeGraphMerger.fileOwners` | 合併器的歸屬判斷，給找證據用 |
 | `Qa/SemanticRouter.java` | `EDIT_EXAMPLES` 與否決（不動 `INTENTS`） |
-| `Qa/GraphQuery.java`、`graph_query_plan.txt` | `add-edge`、`add-node` 兩個運算子 |
-| `Qa/ReportQaService.java` | 接進 thread；clone 快取；寫入與貼圖 |
+| `Qa/GraphQuery.java`、`graph_query_plan.txt` | `add-edge`、`add-node`、`remove-edge` 三個運算子 |
+| `Qa/ReportQaService.java` | 接進 thread；clone 快取；寫入與貼圖；「撤銷」（每筆修改存修改前的圖在 `ReportArchive.editHistory`） |
 | `DependencyAnalysisStateStore`、`DependencyReportService` | 每個 repo 的人工修改檔；下次分析重放 |
 | `MermaidEmitter`、`DotEmitter` | 人工新增的箭頭標「human」 |
 
-測試：`GraphEditDialogueTest` 15 個（假 repo）；`GraphEditProbeTest`（`-Dprobe.edit.repo=`，真 checkout）。全套 377 個只有既有的 `McpToolkitCallToolTest` 失敗；23 系統回歸 same 23／different 0。
+測試：`GraphEditDialogueTest` 20 個（假 repo；含刪線、反方向、e2e 目錄降分）；`GraphEditUndoTest` 3 個（走 `respond()`：刪線記進 repo、撤銷拿掉、進行中撤銷＝取消）；`GraphEditProbeTest`（`-Dprobe.edit.repo=`，真 checkout）；`GraphEditLiveProbeTest` 8 個情境（機器 B）。23 系統回歸 same 23／different 0。

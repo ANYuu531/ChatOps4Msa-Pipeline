@@ -162,7 +162,9 @@ public final class SemanticRouter {
             "幫我新增一條 X 到 Y 的線", "圖上少了 X 連到 Y 的邊，請加上", "X 其實有呼叫 Y，把這條線補上去", "在圖上加一條 X → Y",
             "請新增一個節點 X", "圖上缺了 X 這個服務，幫我加進去", "把 X 加到圖上", "X 也會連 Y 的資料庫，幫我畫上去", "新增依賴：X 依賴 Y",
             "add an edge from X to Y", "the graph is missing X -> Y, please add it", "X also calls Y, add that edge",
-            "add a node X to the graph", "add X as a new service", "draw a line from X to Y in the graph", "X depends on Y too, add the dependency");
+            "add a node X to the graph", "add X as a new service", "draw a line from X to Y in the graph", "X depends on Y too, add the dependency",
+            "把 X 到 Y 的線拿掉", "圖上 X → Y 那條線是錯的，刪掉", "X 其實沒有呼叫 Y，把那條線刪掉",
+            "remove the edge from X to Y", "X does not call Y, delete that edge", "the line X -> Y is wrong, take it off the graph");
 
     /** "沒觀測到" sits next to "觀測到"; the one word decides which intent is meant. */
     private static final Pattern NEGATION = Pattern.compile(

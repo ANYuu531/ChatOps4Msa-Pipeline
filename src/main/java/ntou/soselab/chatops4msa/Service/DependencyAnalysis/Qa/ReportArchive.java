@@ -60,6 +60,12 @@ public final class ReportArchive {
     public String codeEdges = "";
     /** An edit dialogue waiting for the operator's next answer ({@code GraphEditDialogue.Pending}), or null. */
     public JSONObject pendingEdit;
+    /**
+     * The edits confirmed in this thread, oldest first, each as {@code {edit, graphBefore}}:
+     * the {@code GraphEdit} and the graph as it was. "Undo" pops the last one and puts that
+     * graph back, whatever the edit was.
+     */
+    public final List<JSONObject> editHistory = new ArrayList<>();
 
     public boolean hasEmbeddings() {
         for (TextChunk c : chunks) if (c.embedding != null) return true;
@@ -87,7 +93,8 @@ public final class ReportArchive {
                 .put("history", new JSONArray(history))
                 .put("lastPlan", lastPlan)
                 .put("codeEdges", codeEdges)
-                .put("pendingEdit", pendingEdit == null ? JSONObject.NULL : pendingEdit);
+                .put("pendingEdit", pendingEdit == null ? JSONObject.NULL : pendingEdit)
+                .put("editHistory", new JSONArray(editHistory));
     }
 
     public static ReportArchive fromJson(JSONObject json) {
@@ -127,6 +134,13 @@ public final class ReportArchive {
         a.lastPlan = json.optString("lastPlan", "");
         a.codeEdges = json.optString("codeEdges", "");
         a.pendingEdit = json.optJSONObject("pendingEdit");
+        JSONArray edits = json.optJSONArray("editHistory");
+        if (edits != null) {
+            for (int i = 0; i < edits.length(); i++) {
+                JSONObject e = edits.optJSONObject(i);
+                if (e != null) a.editHistory.add(e);
+            }
+        }
         return a;
     }
 }

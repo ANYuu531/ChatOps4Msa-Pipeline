@@ -97,8 +97,9 @@ public final class GraphEditDialogue {
         boolean evidenceAnswered;
 
         public String summary() {
-            return GraphEdit.ADD_NODE.equals(action) ? "add node " + label(targetRaw, target)
-                    : "add edge " + label(sourceRaw, source) + " -> " + label(targetRaw, target);
+            if (GraphEdit.ADD_NODE.equals(action)) return "add node " + label(targetRaw, target);
+            return (GraphEdit.REMOVE_EDGE.equals(action) ? "remove edge " : "add edge ")
+                    + label(sourceRaw, source) + " -> " + label(targetRaw, target);
         }
 
         private static String label(String raw, String id) {
@@ -152,6 +153,8 @@ public final class GraphEditDialogue {
     private static final String TYPE = "type";
     private static final String CONFIRM = "confirm";
     private static final String UPGRADE = "upgrade";
+    /** A removal whose edge is not on the graph, but its reverse is: only "reverse" or "cancel" go on. */
+    private static final String MISSING = "missing";
 
     public static final List<String> TYPES = List.of("sync-http", "grpc", "async", "db", "external", DependencyGraph.TYPE_STARTUP);
     public static final List<String> KINDS = List.of(DependencyGraph.KIND_SERVICE, DependencyGraph.KIND_DB,
@@ -165,13 +168,14 @@ public final class GraphEditDialogue {
     /**
      * Opens a dialogue for a request the planner recognised.
      *
-     * @param action {@link GraphEdit#ADD_EDGE} with [source, target] (source may be blank),
-     *               or {@link GraphEdit#ADD_NODE} with [name]
+     * @param action {@link GraphEdit#ADD_EDGE} or {@link GraphEdit#REMOVE_EDGE} with
+     *               [source, target] (source may be blank), or {@link GraphEdit#ADD_NODE} with [name]
      * @param question the operator's message, for the reply language
      */
     public static Turn start(String action, List<String> args, String question, Env env) {
         Pending p = new Pending();
-        p.action = GraphEdit.ADD_NODE.equals(action) ? GraphEdit.ADD_NODE : GraphEdit.ADD_EDGE;
+        p.action = GraphEdit.ADD_NODE.equals(action) ? GraphEdit.ADD_NODE
+                : GraphEdit.REMOVE_EDGE.equals(action) ? GraphEdit.REMOVE_EDGE : GraphEdit.ADD_EDGE;
         p.lang = hasCjk(question) ? "zh" : "en";
         if (GraphEdit.ADD_NODE.equals(p.action)) {
             p.targetRaw = args.isEmpty() ? "" : args.get(0);
@@ -193,6 +197,9 @@ public final class GraphEditDialogue {
                         null, null, true);
             }
             head.append(t(p, "好，要在圖上新增節點 `" + name(p.targetRaw) + "`。", "OK — adding the node `" + name(p.targetRaw) + "` to the graph."));
+        } else if (GraphEdit.REMOVE_EDGE.equals(p.action)) {
+            head.append(t(p, "好，要把 " + endpoint(p, true) + " → " + endpoint(p, false) + " 這條線從圖上拿掉（方向反了請回「反過來」）。",
+                    "OK — removing the edge " + endpoint(p, true) + " → " + endpoint(p, false) + " from the graph (reply \"reverse\" if that is backwards)."));
         } else {
             DependencyGraph.Edge existing = existingEdge(graph, p.source, p.target);
             if (existing != null) {
@@ -221,7 +228,7 @@ public final class GraphEditDialogue {
         if (CANCEL.contains(lower) || lower.startsWith("取消") || lower.startsWith("cancel")) {
             return new Turn(t(p, "好，取消了，圖沒有改。", "Cancelled; the graph is unchanged."), null, null, true);
         }
-        if (GraphEdit.ADD_EDGE.equals(p.action) && REVERSE.contains(lower) && !p.source.isBlank() && !p.target.isBlank()) {
+        if (isEdge(p) && REVERSE.contains(lower) && !p.source.isBlank() && !p.target.isBlank()) {
             swap(p);
             return next(p, env, t(p, "好，方向改成 `" + p.source + "` → `" + p.target + "`。", "Reversed: `" + p.source + "` → `" + p.target + "`."));
         }
@@ -230,6 +237,8 @@ public final class GraphEditDialogue {
                 if (NO.contains(lower)) return new Turn(t(p, "好，維持原樣。", "OK, left as it is."), null, null, true);
                 if (!YES.contains(lower)) return notUnderstood(p, env);
                 return next(p, env, "");
+            case MISSING:
+                return notUnderstood(p, env);
             case RESOLVE_SOURCE:
             case RESOLVE_TARGET: {
                 boolean isSource = RESOLVE_SOURCE.equals(p.step);
@@ -248,6 +257,7 @@ public final class GraphEditDialogue {
                 }
                 if (AliasResolution.IGNORE.equals(decided)) return notUnderstood(p, env);
                 boolean isNew = AliasResolution.NEW.equals(decided);
+                if (isNew && GraphEdit.REMOVE_EDGE.equals(p.action)) return notOnGraph(p, isSource ? p.sourceRaw : p.targetRaw);
                 String id = isNew ? AliasResolution.nodeId(isSource ? p.sourceRaw : p.targetRaw) : decided;
                 if (id.isBlank()) return notUnderstood(p, env);
                 if (isSource) {
@@ -361,7 +371,14 @@ public final class GraphEditDialogue {
     private static Turn next(Pending p, Env env, String preface) {
         DependencyGraph graph = env.graph();
         StringBuilder sb = new StringBuilder(preface == null ? "" : preface);
-        boolean edge = GraphEdit.ADD_EDGE.equals(p.action);
+        boolean remove = GraphEdit.REMOVE_EDGE.equals(p.action);
+        boolean edge = isEdge(p);
+
+        // A removal names nodes that must be on the graph: a name nothing resembles ends it.
+        if (remove && p.source.isBlank() && !p.sourceRaw.isBlank()
+                && AliasResolution.rankCandidates(p.sourceRaw, nodeIds(graph), AliasResolution.MAX_CANDIDATES).isEmpty()) return notOnGraph(p, p.sourceRaw);
+        if (remove && p.target.isBlank() && !p.targetRaw.isBlank()
+                && AliasResolution.rankCandidates(p.targetRaw, nodeIds(graph), AliasResolution.MAX_CANDIDATES).isEmpty()) return notOnGraph(p, p.targetRaw);
 
         if (edge && p.source.isBlank()) return ask(p, sb, resolveQuestion(p, true, graph), RESOLVE_SOURCE);
         if (p.target.isBlank()) {
@@ -383,6 +400,17 @@ public final class GraphEditDialogue {
         }
         if (edge && p.source.equals(p.target)) {
             return new Turn(sb + (sb.length() > 0 ? "\n" : "") + t(p, "兩端是同一個節點，不畫自己連自己的線。已取消。", "Both ends are the same node; a self-edge is not drawn. Cancelled."), null, null, true);
+        }
+        if (remove) {
+            // Nothing to ask but the confirmation: the edge's own record is shown there.
+            if (existingEdge(graph, p.source, p.target) == null) {
+                if (existingEdge(graph, p.target, p.source) == null) {
+                    return new Turn(sb + (sb.length() > 0 ? "\n" : "") + t(p, "圖上沒有 `" + p.source + "` → `" + p.target + "` 這條線，不用拿掉。",
+                            "The graph has no edge `" + p.source + "` → `" + p.target + "`; there is nothing to remove."), null, null, true);
+                }
+                return ask(p, sb, missingQuestion(p), MISSING);
+            }
+            return ask(p, sb, confirmQuestion(p, env), CONFIRM);
         }
         if (edge && p.sourceNew && p.sourceKind.isBlank()) return ask(p, sb, kindQuestion(p, p.source), KIND_SOURCE);
         if (p.targetNew && p.targetKind.isBlank()) return ask(p, sb, kindQuestion(p, p.target), KIND_TARGET);
@@ -423,10 +451,22 @@ public final class GraphEditDialogue {
             case TYPE -> typeQuestion(p);
             case CONFIRM -> confirmQuestion(p, env);
             case UPGRADE -> t(p, "要我回 repo 找證據嗎？回「好」或「取消」。", "Shall I search the repository? Reply \"yes\" or \"cancel\".");
+            case MISSING -> missingQuestion(p);
             default -> "";
         };
-        return new Turn(t(p, "我沒看懂這個回答（新增還在進行中，回「取消」可以放棄）。\n", "I could not read that as an answer (the edit is still open; reply \"cancel\" to drop it).\n") + again,
+        String open = GraphEdit.REMOVE_EDGE.equals(p.action) ? t(p, "刪除", "removal") : t(p, "新增", "edit");
+        return new Turn(t(p, "我沒看懂這個回答（" + open + "還在進行中，回「取消」可以放棄）。\n", "I could not read that as an answer (the " + open + " is still open; reply \"cancel\" to drop it).\n") + again,
                 p, null, false);
+    }
+
+    private static Turn notOnGraph(Pending p, String raw) {
+        return new Turn(t(p, "`" + name(raw) + "` 不在圖上，就沒有它的線可以拿掉。已取消。",
+                "`" + name(raw) + "` is not on the graph, so it has no edge to remove. Cancelled."), null, null, true);
+    }
+
+    private static String missingQuestion(Pending p) {
+        return t(p, "圖上沒有 `" + p.source + "` → `" + p.target + "`，但有反方向的 `" + p.target + "` → `" + p.source + "`。要拿掉那條的話回「反過來」，否則回「取消」。",
+                "The graph has no `" + p.source + "` → `" + p.target + "`, but it has the reverse, `" + p.target + "` → `" + p.source + "`. Reply \"reverse\" to remove that one, or \"cancel\".");
     }
 
     // ---------- the questions ----------
@@ -449,8 +489,12 @@ public final class GraphEditDialogue {
             sb.append(t(p, "`" + name(raw) + "` 不在圖上。你指的是：", "`" + name(raw) + "` is not on the graph. Did you mean:"));
         }
         for (int i = 0; i < p.candidates.size(); i++) sb.append("\n").append(i + 1).append(") `").append(p.candidates.get(i)).append('`');
-        sb.append("\n").append(t(p, "回編號或節點名稱；或回「新增」把 `" + AliasResolution.nodeId(raw) + "` 當成新的節點。",
-                "Reply with a number or a node id, or \"new\" to add `" + AliasResolution.nodeId(raw) + "` as a node of its own."));
+        if (GraphEdit.REMOVE_EDGE.equals(p.action)) {
+            sb.append("\n").append(t(p, "回編號或節點名稱；或回「取消」。", "Reply with a number or a node id, or \"cancel\"."));
+        } else {
+            sb.append("\n").append(t(p, "回編號或節點名稱；或回「新增」把 `" + AliasResolution.nodeId(raw) + "` 當成新的節點。",
+                    "Reply with a number or a node id, or \"new\" to add `" + AliasResolution.nodeId(raw) + "` as a node of its own."));
+        }
         return sb.toString();
     }
 
@@ -525,6 +569,7 @@ public final class GraphEditDialogue {
     }
 
     private static String confirmQuestion(Pending p, Env env) {
+        if (GraphEdit.REMOVE_EDGE.equals(p.action)) return removeConfirmQuestion(p, env);
         GraphEdit edit = toEdit(p, env);
         StringBuilder sb = new StringBuilder(t(p, "確認一下要寫進圖的內容：", "Please confirm the change:"));
         if (GraphEdit.ADD_NODE.equals(p.action)) {
@@ -545,8 +590,37 @@ public final class GraphEditDialogue {
         return sb.toString();
     }
 
+    /** What the removal takes off the graph, as the graph records it, and what the removal means afterwards. */
+    private static String removeConfirmQuestion(Pending p, Env env) {
+        DependencyGraph.Edge e = existingEdge(env.graph(), p.source, p.target);
+        StringBuilder sb = new StringBuilder(t(p, "確認要從圖上拿掉這條線：", "Please confirm the removal:"));
+        sb.append("\n• `").append(p.source).append("` → `").append(p.target).append("`");
+        if (e != null) {
+            sb.append(" · ").append(e.type).append(" · ").append(t(p, "信心 ", "confidence ")).append(e.confidence)
+                    .append(" · ").append(t(p, "來源 ", "from ")).append(e.provenance.isEmpty() ? "?" : String.join(", ", e.provenance));
+            List<String> refs = e.provenanceRefs.subList(0, Math.min(3, e.provenanceRefs.size()));
+            sb.append("\n• ").append(t(p, "出處：", "references: ")).append(refs.isEmpty() ? t(p, "（無）", "(none)") : String.join(", ", refs))
+                    .append(e.provenanceRefs.size() > refs.size() ? t(p, "（還有 " + (e.provenanceRefs.size() - refs.size()) + " 筆）", " (+" + (e.provenanceRefs.size() - refs.size()) + ")") : "");
+            if (e.runtimeObserved) {
+                sb.append("\n• ⚠️ ").append(t(p, "這條線在執行期有觀測到" + (e.count > 0 ? "（" + e.count + " 次請求）" : "") + "，拿掉等於說觀測到的不算。",
+                        "This edge was observed at runtime" + (e.count > 0 ? " (" + e.count + " requests)" : "") + "; removing it overrides that observation."));
+            }
+        }
+        sb.append("\n• ").append(t(p, "拿掉後，這個 repo 下次分析若再抽到這條線，也會自動拿掉（記成人工修改，by " + (env.user() == null ? "" : env.user()) + "）；回「撤銷」可以復原。",
+                "Afterwards, the next analysis of this repository drops the edge again if it finds it (a human edit, by " + (env.user() == null ? "" : env.user()) + "); \"undo\" puts it back."));
+        sb.append("\n").append(t(p, "回「確定」拿掉，回「取消」放棄，回「反過來」改方向。",
+                "Reply \"yes\" to remove it, \"cancel\" to drop it, \"reverse\" to flip the direction."));
+        return sb.toString();
+    }
+
     private static String appliedMessage(Pending p, GraphEdit edit) {
         StringBuilder sb = new StringBuilder();
+        if (GraphEdit.REMOVE_EDGE.equals(p.action)) {
+            sb.append(t(p, "✅ 已從圖上拿掉：`" + edit.source + "` → `" + edit.target + "`。\n", "✅ Removed: `" + edit.source + "` → `" + edit.target + "`.\n"));
+            sb.append(t(p, "這次分析的圖已更新；這個 repo 下次分析若再抽到這條線，也會自動拿掉（記在 repo 的人工修改裡）。想復原就回「撤銷」。",
+                    "This report's graph is updated, and the next analysis of this repository drops the edge again if it finds it (kept with the repository's human edits). Reply \"undo\" to put it back."));
+            return sb.toString();
+        }
         sb.append(t(p, "✅ 已加進圖：", "✅ Added: ")).append(edit.describe()).append('\n');
         sb.append(t(p, "這次分析的圖已更新；這個 repo 下次分析時也會自動帶入（記在 repo 的人工修改裡）。",
                 "This report's graph is updated, and the next analysis of this repository applies it again (kept with the repository's human edits)."));
@@ -574,6 +648,18 @@ public final class GraphEditDialogue {
         GraphEdit e = new GraphEdit();
         e.action = p.action;
         e.target = p.target;
+        e.by = env.user() == null ? "" : env.user();
+        e.at = env.now() == null ? "" : env.now();
+        if (GraphEdit.REMOVE_EDGE.equals(p.action)) {
+            // The record of what was taken off, as the graph had it.
+            e.source = p.source;
+            DependencyGraph.Edge was = existingEdge(env.graph(), p.source, p.target);
+            if (was != null) {
+                if (was.type != null) e.type = was.type;
+                if (was.confidence != null) e.confidence = was.confidence;
+            }
+            return e;
+        }
         if (GraphEdit.ADD_NODE.equals(p.action)) {
             e.kind = p.targetKind.isBlank() ? DependencyGraph.classifyKind(p.target) : p.targetKind;
         } else {
@@ -584,9 +670,12 @@ public final class GraphEditDialogue {
         }
         e.confidence = p.confidence.isBlank() ? DependencyGraph.CONF_INFERRED : p.confidence;
         e.refs.addAll(p.refs);
-        e.by = env.user() == null ? "" : env.user();
-        e.at = env.now() == null ? "" : env.now();
         return e;
+    }
+
+    /** An edge is being added or removed (as opposed to a node). */
+    private static boolean isEdge(Pending p) {
+        return !GraphEdit.ADD_NODE.equals(p.action);
     }
 
     // ---------- reading names and words ----------
@@ -724,7 +813,8 @@ public final class GraphEditDialogue {
     }
 
     private static final Pattern FILE_LINE = Pattern.compile("([A-Za-z0-9_./\\-]+\\.[A-Za-z0-9]+|[A-Za-z0-9_./\\-]*Dockerfile):(\\d{1,6})");
-    private static final Set<String> CANCEL = Set.of("取消", "算了", "不要了", "放棄", "cancel", "stop", "abort", "never mind", "nevermind");
+    /** "undo" while an edit is open means this one: nothing has been written yet. */
+    private static final Set<String> CANCEL = Set.of("取消", "算了", "不要了", "放棄", "撤銷", "cancel", "stop", "abort", "never mind", "nevermind", "undo");
     private static final Set<String> REVERSE = Set.of("反過來", "反了", "相反", "方向反了", "reverse", "flip", "other way", "the other way");
     private static final Set<String> YES = Set.of("確定", "好", "好的", "對", "是", "是的", "沒錯", "可以", "ok", "okay", "yes", "y", "yep", "sure", "confirm", "對的", "要");
     private static final Set<String> NO = Set.of("不", "不要", "否", "no", "n", "nope");

@@ -293,7 +293,76 @@ public class GraphEditDialogueTest {
         assertNull(ReportArchive.fromJson(new JSONObject(new ReportArchive().toJson().toString())).pendingEdit);
     }
 
+    // ---------- removing ----------
+
+    @Test
+    void removingAnEdgeShowsItsRecordAndIsReplayedAfterTheNextMerge() {
+        GraphEditDialogue.Turn t = GraphEditDialogue.start(GraphEdit.REMOVE_EDGE, List.of("orders", "ordersdb"), "把 orders 到 ordersdb 的線拿掉", env());
+        assertNotNull(t.next);
+        assertTrue(t.reply.contains("確認要從圖上拿掉"), t.reply);
+        assertTrue(t.reply.contains("code: docker-compose.yml:5"), "the edge's own references are shown: " + t.reply);
+        assertTrue(t.reply.contains("撤銷"), t.reply);
+
+        t = GraphEditDialogue.answer(t.next, "確定", env());
+        assertNull(t.next);
+        assertEquals(GraphEdit.REMOVE_EDGE, t.applied.action);
+        assertEquals("db", t.applied.type, "the record keeps what the graph had");
+        assertTrue(t.reply.contains("已從圖上拿掉"), t.reply);
+        t.applied.apply(graph);
+        assertNull(edgeOf(graph, "orders", "ordersdb"));
+
+        // After the next merge the edge is found again; the remembered removal drops it again.
+        GraphEdit add = new GraphEdit();
+        add.source = "connector";
+        add.target = "ordersdb";
+        add.type = "db";
+        DependencyGraph merged = new DependencyGraph("");
+        merged.addEdge("orders", "ordersdb", "db", DependencyGraph.PROV_CODE, DependencyGraph.CONF_DOCUMENTED, false, 0, "code: docker-compose.yml:5");
+        assertEquals(2, GraphEdit.applyAll(merged, GraphEdit.listToJson(List.of(add, t.applied))));
+        assertNull(edgeOf(merged, "orders", "ordersdb"));
+        assertNotNull(edgeOf(merged, "connector", "ordersdb"));
+    }
+
+    @Test
+    void removingAnEdgeThatIsNotThereOffersTheReverseOrEnds() {
+        GraphEditDialogue.Turn t = GraphEditDialogue.start(GraphEdit.REMOVE_EDGE, List.of("ordersdb", "orders"), "remove the edge from ordersdb to orders", env());
+        assertNotNull(t.next);
+        assertTrue(t.reply.contains("but it has the reverse"), t.reply);
+        assertFalse(GraphEditDialogue.answer(t.next, "yes", env()).understood, "only reverse or cancel go on");
+        t = GraphEditDialogue.answer(t.next, "reverse", env());
+        assertTrue(t.reply.contains("Please confirm the removal"), t.reply);
+        assertTrue(t.reply.contains("`orders` → `ordersdb`"), t.reply);
+        assertNull(GraphEditDialogue.answer(t.next, "cancel", env()).next);
+
+        GraphEditDialogue.Turn none = GraphEditDialogue.start(GraphEdit.REMOVE_EDGE, List.of("connector", "payment"), "remove connector -> payment", env());
+        assertNull(none.next);
+        assertTrue(none.reply.contains("nothing to remove"), none.reply);
+
+        GraphEditDialogue.Turn unknown = GraphEditDialogue.start(GraphEdit.REMOVE_EDGE, List.of("Stripe API", "orders"), "remove Stripe API -> orders", env());
+        if (unknown.next != null) unknown = GraphEditDialogue.answer(unknown.next, "new", env());
+        assertNull(unknown.next);
+        assertTrue(unknown.reply.contains("has no edge to remove"), "a name not on the graph cannot be a new node here: " + unknown.reply);
+    }
+
+    @Test
+    void anE2eSuitesConfigurationRanksAfterTheServicesOwnFile() throws Exception {
+        // yas: automation-ui/storefront/…/application.properties (app.url=http://storefront/) came
+        // before storefront/.env.production. The static layer treats automation-ui/ as tests.
+        write("automation-ui/connector/src/main/resources/application.properties", "db.url=http://ordersdb:5432/\n");
+        List<EvidenceFinder.Evidence> found = EvidenceFinder.find(repo, context(), "connector", "ordersdb");
+        assertEquals("connector/config/orders-source.json:3", found.get(0).ref(), found.toString());
+        for (int i = 1; i < found.size(); i++) assertFalse(found.get(i).file.startsWith("connector/config"), found.toString());
+    }
+
     // ---------- the request, from the planner ----------
+
+    @Test
+    void plannerRemoveEdgeKeepsTheOperatorsSpelling() {
+        List<GraphQuery> q = GraphQuery.parse("[{\"op\":\"remove-edge\",\"args\":[\"Orders\",\"ordersdb\"]}]", graph);
+        assertEquals(1, q.size());
+        assertTrue(q.get(0).isEdit());
+        assertEquals(List.of("Orders", "ordersdb"), q.get(0).args);
+    }
 
     @Test
     void plannerEditOpsKeepTheOperatorsSpelling() {

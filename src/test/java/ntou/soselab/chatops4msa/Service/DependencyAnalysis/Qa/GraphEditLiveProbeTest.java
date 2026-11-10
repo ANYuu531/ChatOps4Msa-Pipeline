@@ -55,6 +55,8 @@ public class GraphEditLiveProbeTest {
         final List<String> replies = new ArrayList<>();
         final List<String> plans = new ArrayList<>();
         final List<Boolean> openAfter = new ArrayList<>();
+        /** Edge count after each turn. */
+        final List<Integer> edgesAfter = new ArrayList<>();
         DependencyGraph before;
         DependencyGraph after;
 
@@ -99,7 +101,16 @@ public class GraphEditLiveProbeTest {
             new Scenario("6 · 新增進行中途插問題",
                     "第二句當問題回答，並提醒新增還開著；取消後圖不變",
                     List.of("圖上少了 kafka-connect 連到 postgres 的線，幫我加上", "postgres 被誰用？", "取消"),
-                    r -> r.openAfter.get(1) && r.reply(1).contains("still open") && !r.openAfter.get(2) && r.unchanged()));
+                    r -> r.openAfter.get(1) && r.reply(1).contains("still open") && !r.openAfter.get(2) && r.unchanged()),
+            new Scenario("7 · 刪線再撤銷：cart → product",
+                    "確認時列出這條線的出處（ProductService.java）；確定後少一條；撤銷後回到原樣",
+                    List.of("把 cart 到 product 那條線拿掉", "確定", "撤銷"),
+                    r -> r.openAfter.get(0) && r.reply(0).contains("productservice.java")
+                            && r.edgesAfter.get(1) == r.before.getEdges().size() - 1 && r.reply(2).contains("已撤銷") && r.unchanged()),
+            new Scenario("8 · 加線再撤銷：kafka-connect → postgres",
+                    "寫入後多一條；undo 後回到原樣",
+                    List.of("圖上少了 kafka-connect 連到 postgres 的線，幫我加上", "1", "好", "確定", "undo"),
+                    r -> r.edgesAfter.get(3) == r.before.getEdges().size() + 1 && r.reply(4).contains("undone") && r.unchanged()));
 
     @Test
     void playTheTestSentences() throws Exception {
@@ -164,6 +175,7 @@ public class GraphEditLiveProbeTest {
                 run.replies.add(reply);
                 run.plans.add(plan);
                 run.openAfter.add(archive.pendingEdit != null);
+                run.edgesAfter.add(DependencyGraph.fromJson(archive.graphJson).getEdges().size());
                 out.append("**user:** ").append(turn).append("\n\n`").append(plan.replace('`', '\'')).append("`\n\n**bot:**\n```\n")
                         .append(reply).append("\n```\n");
             }
@@ -218,6 +230,7 @@ public class GraphEditLiveProbeTest {
             String system = messages.getJSONObject(0).getString("content");
             String question = messages.getJSONObject(messages.length() - 1).getString("content");
             if (system.contains("# CONTEXT")) return "(stand-in answer to: " + question + ")";
+            if (question.contains("拿掉")) return "[{\"op\":\"remove-edge\",\"args\":[\"cart\",\"product\"]}]";
             if (question.contains("kafka-connect")) return "[{\"op\":\"add-edge\",\"args\":[\"kafka-connect\",\"postgres\"]}]";
             if (question.contains("storefront-nextjs")) return "[{\"op\":\"add-edge\",\"args\":[\"storefront-nextjs\",\"storefront\"]}]";
             if (question.contains("Stripe")) return "[{\"op\":\"add-edge\",\"args\":[\"cart\",\"Stripe API\"]}]";

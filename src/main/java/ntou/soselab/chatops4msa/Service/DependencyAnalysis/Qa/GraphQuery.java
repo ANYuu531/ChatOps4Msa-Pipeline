@@ -48,6 +48,7 @@ public final class GraphQuery {
         OPS.put("subgraph", VARIADIC);   // the part of the graph around 1..MAX_SEEDS nodes, drawn as a picture
         OPS.put("add-edge", 2);          // a request to ADD the edge source -> target (opens the edit dialogue)
         OPS.put("add-node", 1);          // a request to ADD a node (opens the edit dialogue)
+        OPS.put("remove-edge", 2);       // a request to REMOVE the edge source -> target (opens the edit dialogue)
     }
 
     /**
@@ -56,7 +57,7 @@ public final class GraphQuery {
      * the operator's own spellings — a node being added is not on the graph yet, and a
      * name that is close to one is resolved by asking, not here.
      */
-    public static final java.util.Set<String> EDIT_OPS = java.util.Set.of("add-edge", "add-node");
+    public static final java.util.Set<String> EDIT_OPS = java.util.Set.of("add-edge", "add-node", "remove-edge");
 
     static final List<String> EDGE_TYPES = List.of("sync-http", "db", "async", "external");
 
@@ -142,8 +143,9 @@ public final class GraphQuery {
     }
 
     /**
-     * An edit request keeps the names as written, cleaned of quoting. {@code add-edge} may
-     * leave the source blank ("add a line to postgres"): the dialogue asks for it.
+     * An edit request keeps the names as written, cleaned of quoting. {@code add-edge} and
+     * {@code remove-edge} may leave the source blank ("add a line to postgres"): the
+     * dialogue asks for it.
      */
     private static GraphQuery editRequest(String op, List<String> raw) {
         List<String> args = new ArrayList<>();

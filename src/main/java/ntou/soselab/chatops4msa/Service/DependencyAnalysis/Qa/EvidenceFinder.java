@@ -1,6 +1,7 @@
 package ntou.soselab.chatops4msa.Service.DependencyAnalysis.Qa;
 
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.AddressShape;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.CodeExtraction.SourceScanner;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.NameTable;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Conventions.Vocabulary;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.AliasResolution;
@@ -396,8 +397,10 @@ public final class EvidenceFinder {
         // target's directory (storefront/ holds the Next.js app) addresses its back end.
         if (byTarget && !bySource) score -= hit.shape == Shape.NAME ? 2 : 1;
         String lower = file.toLowerCase(Locale.ROOT);
-        if (lower.contains("/test/") || lower.contains("/it/") || lower.contains("__tests__") || lower.contains("/spec/")
-                || lower.startsWith("test/") || lower.startsWith("tests/")) score -= 2;
+        // A test tree, by the static layer's own definition: an e2e suite's config names the
+        // service it drives (automation-ui/storefront/… → http://storefront/), which is not
+        // the service's own address of it.
+        if (SourceScanner.isTestPath(lower)) score -= 2;
         if (DOC_EXTENSIONS.contains(extension(lower))) score -= 1;
         return score;
     }

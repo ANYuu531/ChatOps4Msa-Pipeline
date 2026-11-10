@@ -324,6 +324,8 @@ public class ReportQaService {
             if (turn.understood || !looksLikeQuestion(question)) return editTurn(archive, graph, question, turn);
             editReminder = "\n\n_(" + pending.summary() + " is still open — answer its question, or reply \"cancel\".)_";
         }
+        // "Undo" is a word, not a plan: no model decides whether the graph goes back.
+        if (archive.pendingEdit == null && UNDO.matcher(question).matches()) return undoTurn(archive, question);
 
         // One vector serves both the passage retriever and the semantic router.
         double[] questionVector = null;
@@ -396,6 +398,9 @@ public class ReportQaService {
         archive.pendingEdit = turn.next == null ? null : turn.next.toJson();
         List<GraphQuery> picture = List.of();
         if (turn.applied != null) {
+            // The graph as it was, so "undo" can put it back without inverting the edit.
+            archive.editHistory.add(new JSONObject().put("edit", turn.applied.toJson()).put("graphBefore", archive.graphJson));
+            while (archive.editHistory.size() > EDIT_HISTORY_KEEP) archive.editHistory.remove(0);
             turn.applied.apply(graph);
             GraphLayerAssigner.assign(graph);
             archive.graphJson = graph.toJson();
@@ -403,17 +408,61 @@ public class ReportQaService {
             remembered.add(turn.applied);
             stateStore.saveProjectEdits(archive.repoName, GraphEdit.listToJson(remembered));
             System.out.println("[DEBUG] graph edit applied on " + archive.repoName + ": " + turn.applied.describe());
-            picture = GraphEdit.ADD_NODE.equals(turn.applied.action)
-                    ? List.of(new GraphQuery("subgraph", List.of(turn.applied.target)))
-                    : List.of(new GraphQuery("subgraph", List.of(turn.applied.source, turn.applied.target)));
+            picture = pictureOf(graph, turn.applied);
         }
         if (turn.next == null) closeCheckout(archive.id);
+        return record(archive, question, turn.reply, graph, picture);
+    }
+
+    /** "撤銷" / "undo": the last edit of this thread is taken back, in the graph and in the repository's remembered edits. */
+    private Answer undoTurn(ReportArchive archive, String question) {
+        boolean zh = GraphEditDialogue.hasCjk(question);
+        if (archive.editHistory.isEmpty()) {
+            return record(archive, question, zh ? "這個 thread 裡沒有可以撤銷的修改。" : "There is no edit in this thread to undo.",
+                    DependencyGraph.fromJson(archive.graphJson), List.of());
+        }
+        JSONObject last = archive.editHistory.remove(archive.editHistory.size() - 1);
+        GraphEdit edit = GraphEdit.fromJson(last.optJSONObject("edit") == null ? new JSONObject() : last.optJSONObject("edit"));
+        JSONObject before = last.optJSONObject("graphBefore");
+        if (before != null) archive.graphJson = before;
+        DependencyGraph graph = DependencyGraph.fromJson(archive.graphJson);
+        // The repository forgets it too: the last remembered edit equal to this one.
+        List<GraphEdit> remembered = GraphEdit.listFromJson(stateStore.loadProjectEdits(archive.repoName));
+        for (int i = remembered.size() - 1; i >= 0; i--) {
+            if (remembered.get(i).toJson().similar(edit.toJson())) {
+                remembered.remove(i);
+                break;
+            }
+        }
+        stateStore.saveProjectEdits(archive.repoName, GraphEdit.listToJson(remembered));
+        System.out.println("[DEBUG] graph edit undone on " + archive.repoName + ": " + edit.describe());
+        String reply = zh ? "↩️ 已撤銷：" + edit.describe() + "。圖回到這筆修改之前；這個 repo 記住的人工修改也拿掉了這一筆。"
+                + (archive.editHistory.isEmpty() ? "" : "（再回「撤銷」可以撤銷更前一筆。）")
+                : "↩️ Undone: " + edit.describe() + ". The graph is back to before this edit, and the repository's remembered edits no longer carry it."
+                + (archive.editHistory.isEmpty() ? "" : " (Reply \"undo\" again for the one before.)");
+        return record(archive, question, reply, graph, pictureOf(graph, edit));
+    }
+
+    /** The part of the graph an edit touched, for the picture that follows it; nodes no longer on the graph are left out. */
+    private static List<GraphQuery> pictureOf(DependencyGraph graph, GraphEdit edit) {
+        List<String> seeds = new ArrayList<>();
+        for (String id : List.of(edit.source, edit.target)) if (!id.isBlank() && graph.findNode(id) != null && !seeds.contains(id)) seeds.add(id);
+        return seeds.isEmpty() ? List.of() : List.of(new GraphQuery("subgraph", seeds));
+    }
+
+    private static Answer record(ReportArchive archive, String question, String reply, DependencyGraph graph, List<GraphQuery> picture) {
         archive.history.add(new JSONObject().put("role", "user").put("content", question));
-        archive.history.add(new JSONObject().put("role", "assistant").put("content", turn.reply));
+        archive.history.add(new JSONObject().put("role", "assistant").put("content", reply));
         while (archive.history.size() > HISTORY_KEEP) archive.history.remove(0);
         archive.lastPlan = "";
-        return new Answer(turn.reply, graph, picture);
+        return new Answer(reply, graph, picture);
     }
+
+    /** Edits this thread can still take back; each keeps a copy of the graph. */
+    private static final int EDIT_HISTORY_KEEP = 20;
+    private static final java.util.regex.Pattern UNDO = java.util.regex.Pattern.compile(
+            "(?i)^\\s*(撤銷|復原|還原|undo|revert)\\s*(上一筆|上一個|上一步|剛剛|剛才|那一?筆|那條|那個|the last|last|previous|that)?\\s*的?\\s*"
+                    + "(修改|新增|刪除|編輯|edit|change|one|edge|removal|addition)?\\s*[。.!！]?\\s*$");
 
     /** A message that asks rather than answers: it ends in a question mark. */
     static boolean looksLikeQuestion(String text) {

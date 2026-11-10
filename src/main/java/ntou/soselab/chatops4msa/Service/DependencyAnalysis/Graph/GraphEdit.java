@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * One change the operator made to the graph in the report's thread: an edge or a node
- * the analysis did not produce.
+ * the analysis did not produce, or an edge it produced that the operator says is wrong.
  *
  * <p>The change is recorded, not merged into a rule: it carries the operator's name,
  * the time, and the references they accepted, under its own provenance
@@ -19,13 +19,19 @@ import java.util.List;
  * operator's word alone, which draws it dotted. A later runtime run that observes the
  * call upgrades it to solid like any other declared edge.
  *
+ * <p>A removal ({@link #REMOVE_EDGE}) is the operator's judgement over the tool's: the
+ * edge is dropped whatever its provenance, and dropped again after every later merge,
+ * even one where the runtime layer observes the call — the thread says so before it is
+ * confirmed, and "undo" in the thread takes the removal back.
+ *
  * <p>Kept per repository like the alias answers ({@code dep-state/edits/<repo>.json}), and
- * re-applied after every merge of that repository, so the next report carries it.
+ * re-applied in order after every merge of that repository, so the next report carries it.
  */
 public final class GraphEdit {
 
     public static final String ADD_EDGE = "add-edge";
     public static final String ADD_NODE = "add-node";
+    public static final String REMOVE_EDGE = "remove-edge";
 
     public String action = ADD_EDGE;
     public String source = "";
@@ -42,11 +48,15 @@ public final class GraphEdit {
     public String by = "";
     public String at = "";
 
-    /** Adds this change to the graph. An edge that is already there gains the human provenance and references. */
+    /** Applies this change to the graph. An added edge that is already there gains the human provenance and references. */
     public void apply(DependencyGraph graph) {
         if (graph == null) return;
         if (ADD_NODE.equals(action)) {
             if (!target.isBlank()) graph.addNode(target, kind.isBlank() ? DependencyGraph.classifyKind(target) : kind);
+            return;
+        }
+        if (REMOVE_EDGE.equals(action)) {
+            graph.removeEdge(source, target);
             return;
         }
         if (source.isBlank() || target.isBlank() || source.equals(target)) return;
@@ -59,6 +69,7 @@ public final class GraphEdit {
 
     public String describe() {
         if (ADD_NODE.equals(action)) return "node `" + target + "` (" + (kind.isBlank() ? DependencyGraph.classifyKind(target) : kind) + ")";
+        if (REMOVE_EDGE.equals(action)) return "removed `" + source + "` → `" + target + "`";
         return "`" + source + "` → `" + target + "` (" + type + ", " + confidence + ")";
     }
 

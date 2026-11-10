@@ -48,6 +48,11 @@ Rules:
   that are NOT in the list: copy the user's spelling exactly, do not map it to an id.
   "Y 被 X 呼叫" is still [X, Y]. A request naming only the callee ("加一條連到 Y 的線")
   → add-edge with ["", Y]. A QUESTION about an edge ("does X call Y?") is path, not add-edge.
+- A request to REMOVE an edge / line / dependency that is on the graph and wrong
+  ("把 X 到 Y 的線拿掉", "X → Y 那條線是錯的，刪掉", "X 其實沒有呼叫 Y", "remove the edge from
+  X to Y", "X does not call Y, delete that edge") → remove-edge with [caller, callee],
+  the user's spelling. Output only that one query. This is about the GRAPH; "remove Y" /
+  "拿掉 Y" naming only nodes right after a partial graph is the subgraph edit above.
 - If the question is about the report's text, limitations, collection status, or
   anything not answerable from the graph structure, output [].
 - The question may be in any language; the operators and ids stay as written.

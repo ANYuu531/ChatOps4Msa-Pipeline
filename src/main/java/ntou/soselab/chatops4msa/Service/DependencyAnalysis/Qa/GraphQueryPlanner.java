@@ -134,6 +134,7 @@ public class GraphQueryPlanner {
             case "subgraph": return "draw the part of the graph around the given nodes (a flow, a feature, a named group); code adds the paths between them and their one-hop neighbours";
             case "add-edge": return "the user asks to ADD an edge to the graph: [caller, callee] in call direction, names as the user wrote them (\"\" for a caller the user did not name)";
             case "add-node": return "the user asks to ADD a node to the graph: [name as the user wrote it]";
+            case "remove-edge": return "the user asks to REMOVE an edge that is on the graph and wrong: [caller, callee] in call direction, names as the user wrote them";
             default: return "";
         }
     }
