@@ -1,0 +1,36 @@
+question                                             expected         best              score   next verdict
+frontend 依賴誰                                         dependencies-of  dependencies-of   0.977  0.846 ok
+userservice 會去打哪些服務                                  dependencies-of  dependencies-of   0.701  0.696 ok (unsure)
+what services does ledgerwriter talk to              dependencies-of  dependencies-of   0.979  0.779 ok
+誰在用 balancereader                                    dependents-of    dependents-of     0.959  0.704 ok
+which components call userservice                    dependents-of    dependents-of     0.968  0.685 ok
+userservice 壞掉的話哪些服務會跟著出事                            impact-of        impact-of         0.634  0.588 ok (unsure)
+if accounts-db is unavailable, what stops working    impact-of        impact-of         0.979  0.595 ok
+要讓 ledgerwriter 跑起來得先準備好什麼                           startup-needs    startup-needs     0.647  0.552 ok (unsure)
+what has to be running for frontend to work          startup-needs    startup-needs     0.830  0.588 ok
+frontend 到 ledger-db 中間經過哪些服務                        path             path              0.652  0.651 ok (unsure)
+can requests from frontend reach balancereader       path             path              0.969  0.595 ok
+哪幾條邊還沒有被流量驗證                                         uncovered        uncovered         0.686  0.604 ok (unsure)
+流量還沒跑過哪些呼叫                                           uncovered        uncovered         0.710  0.591 ok
+which calls did the traffic miss                     uncovered        uncovered         0.678  0.502 ok
+how much of the graph was covered at runtime         uncovered        uncovered         0.613  0.567 ok (unsure)
+哪幾條是 runtime 觀測到的                                    observed-edges   observed-edges    0.985  0.598 ok
+which dependencies were confirmed by real traffic    observed-edges   observed-edges    0.980  0.506 ok
+哪些服務會存取 PostgreSQL                                   db-users         db-users          0.665  0.532 ok
+who connects to the databases                        db-users         db-users          0.589  0.425 ok
+部署的時候應該先起誰                                           deploy-order     deploy-order      0.636  0.502 ok
+in what sequence should the services come up         deploy-order     deploy-order      0.580  0.477 ok
+有哪些服務在叢集裡找不到                                         undeployed       undeployed        0.801  0.543 ok
+which referenced services are not actually running   undeployed       undeployed        0.640  0.431 ok
+這個系統會打到外面的 API 嗎                                     externals        externals         0.541  0.439 ok
+what outside services does it depend on              externals        externals         0.595  0.500 ok (unsure)
+有沒有透過 queue 溝通的服務                                    async            async             0.967  0.584 ok
+is any communication event-driven                    async            async             0.562  0.355 ok
+哪些依賴只是文件寫的、程式裡沒有                                     mentioned-only   mentioned-only    0.700  0.638 ok (unsure)
+which edges lack evidence beyond the docs            mentioned-only   mentioned-only    0.805  0.635 ok
+這份報告有查過叢集嗎                                           about-report     about-report      0.985  0.538 ok
+這份報告可信嗎，主要限制在哪                                       about-report     about-report      0.825  0.451 ok
+how confident is this report                         about-report     about-report      0.578  0.458 ok
+frontend 有部署嗎                                        dependencies-of|dependents-of|undeployed|none undeployed        0.666  0.663 ok (unsure)
+edit veto 0/33
+accuracy 33/33; confident+correct 24; confident+WRONG 0; lowest correct score 0.541; highest wrong score 0.000; thresholds T=0.51 M=0.10 H=0.80
