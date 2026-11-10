@@ -153,8 +153,8 @@ public class ConfigExtractor {
             if (name.endsWith("-wrapper.properties")) continue;
             // A profile's file (application-dev.yaml) is loaded only when the deployment runs
             // that profile; yas's dev file is a developer's local route template (2026-11-06).
-            if (isSpringConfig && RuleTrace.hitIf(profiles.inactive(ActiveProfiles.profileOfFile(name)), 57,
-                    "inactive-profile " + relative + " " + profiles.active())) continue;
+            if (isSpringConfig && RuleTrace.hitIf(profiles.inactive(ActiveProfiles.profileOfFile(name), file), 57,
+                    "inactive-profile " + relative + " " + profiles.activeFor(file))) continue;
             try {
                 if (name.endsWith(".properties") || isEnv) {
                     appConfig.readKeyValueFile(file, relative, ledger);

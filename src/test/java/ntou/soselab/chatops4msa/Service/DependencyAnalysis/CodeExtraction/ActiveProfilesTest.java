@@ -98,6 +98,78 @@ class ActiveProfilesTest {
         assertNull(ActiveProfiles.profileOfFile("account-service.yml"));
     }
 
+    // ---------- which module a block deploys (2026-11-10) ----------
+
+    @Test
+    void aComposeServiceNamesItsModuleByKeyAndBuildContext() {
+        // yas: the service is "backoffice", the module directory backoffice-bff.
+        List<String> compose = List.of(
+                "services:",
+                "  backoffice:",
+                "    build: ./backoffice-bff",
+                "    environment:",
+                "    - SPRING_PROFILES_ACTIVE=prod",
+                "  storefront:",
+                "    build: ./storefront-bff",
+                "    environment:",
+                "      SPRING_PROFILES_ACTIVE: dev");
+        Set<String> names = ActiveProfiles.namesAround(compose, 4);
+        assertTrue(names.contains("backoffice") && names.contains("backofficebff"), names.toString());
+        assertFalse(names.contains("storefrontbff"), "the services: block spans every service: " + names);
+        assertTrue(ActiveProfiles.namesAround(compose, 8).contains("storefrontbff"));
+    }
+
+    @Test
+    void aWorkloadNamesItsModuleByContainerAndMetadata() {
+        List<String> manifest = List.of(
+                "apiVersion: apps/v1",
+                "kind: Deployment",
+                "metadata:",
+                "  name: storefront",
+                "spec:",
+                "  template:",
+                "    spec:",
+                "      containers:",
+                "      - name: storefront-bff",
+                "        env:",
+                "        - name: SERVER_PORT",
+                "          value: \"80\"",
+                "        - name: SPRING_PROFILES_ACTIVE",
+                "          value: prod",
+                "      - name: sidecar",
+                "---",
+                "metadata:",
+                "  name: other");
+        Set<String> names = ActiveProfiles.namesAround(manifest, 12);
+        assertTrue(names.contains("storefrontbff") && names.contains("storefront"), names.toString());
+        assertFalse(names.contains("sidecar") || names.contains("other") || names.contains("serverport"), names.toString());
+        // A chart's values: the top-level key is the module.
+        List<String> values = List.of("backoffice-bff:", "  env:", "    - name: SPRING_PROFILES_ACTIVE", "      value: prod", "storefront-bff:", "  env: []");
+        assertEquals(Set.of("backofficebff"), ActiveProfiles.namesAround(values, 2));
+    }
+
+    @Test
+    void aModuleIsJudgedByItsOwnDeploymentThenItsOwnFileThenTheRepository(@TempDir Path root) throws Exception {
+        // a: Compose runs it with prod. b: no deployment statement; its own application.yml says dev.
+        // c: nothing at all — the repository's pooled statement (prod) decides, as before.
+        for (String m : List.of("a", "b", "c")) Files.createDirectories(root.resolve(m + "/src/main/resources"));
+        Files.writeString(root.resolve("b/src/main/resources/application.yml"), "spring:\n  profiles:\n    active: dev\n");
+        Files.writeString(root.resolve("docker-compose.yml"),
+                "services:\n  a:\n    build: ./a\n    environment:\n      - SPRING_PROFILES_ACTIVE=prod\n  b:\n    build: ./b\n");
+        ActiveProfiles p = ActiveProfiles.scan(root, List.of(root.resolve("docker-compose.yml"), root.resolve("b/src/main/resources/application.yml")));
+        assertEquals(Set.of("prod"), p.activeFor(root.resolve("a/src/main/resources/application-dev.yml")));
+        assertEquals(Set.of("dev"), p.activeFor(root.resolve("b/src/main/resources/application-dev.yml")));
+        assertEquals(Set.of("prod"), p.activeFor(root.resolve("c/src/main/resources/application-dev.yml")));
+        assertTrue(p.inactive("dev", root.resolve("a/src/main/resources/application-dev.yml")));
+        assertFalse(p.inactive("dev", root.resolve("b/src/main/resources/application-dev.yml")));
+        assertEquals(Set.of("prod"), p.active(), "the repository-wide reading is the deployment's");
+        // A module's own Dockerfile counts for it alone.
+        Files.writeString(root.resolve("c/Dockerfile"), "FROM eclipse-temurin:21\nENV SPRING_PROFILES_ACTIVE docker\n");
+        p = ActiveProfiles.scan(root, List.of(root.resolve("docker-compose.yml")));
+        assertEquals(Set.of("docker"), p.activeFor(root.resolve("c/src/main/resources/application-docker.yml")));
+        assertEquals(Set.of("prod"), p.activeFor(root.resolve("a/src/main/resources/application-dev.yml")));
+    }
+
     @Test
     void devFileOfAProdDeploymentIsNotRead(@TempDir Path root) throws Exception {
         Path res = Files.createDirectories(root.resolve("bff/src/main/resources"));

@@ -43,7 +43,7 @@ final class AppConfigReader {
             if (doc == null) continue;
             String profile = documentProfile(doc);
             if (RuleTrace.hitIf(profile != null && TEST_PROFILE.matcher(profile).find(), 57, "test-profile " + relative + " " + profile)) continue;
-            if (RuleTrace.hitIf(profiles.inactive(profile), 57, "inactive-profile " + relative + " " + profile)) continue;
+            if (RuleTrace.hitIf(profiles.inactive(profile, file), 57, "inactive-profile " + relative + " " + profile)) continue;
             docs.add(doc);
         }
         RuleTrace.hitIf(docs.size() > 1, 57, "documents " + relative + " " + docs.size());

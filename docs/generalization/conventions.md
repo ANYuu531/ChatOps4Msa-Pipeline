@@ -172,7 +172,8 @@
 - **profile 檔與 profile 文件**：`application-<p>.yml`／`bootstrap-<p>.properties`，以及同檔 `---` 分隔、`spring.config.activate.on-profile: <p>` 的文件，只有 `<p>` 被啟用時才讀（`CodeExtraction/ActiveProfiles`）。
 - **誰說了算**：部署檔（Compose 的 `SPRING_PROFILES_ACTIVE`、manifest／Helm values 的 `- name: SPRING_PROFILES_ACTIVE` + `value:`、Dockerfile 的 `ENV`、建置檔進入點的 `-Dspring.profiles.active=`、`.env`）有寫，就以部署為準；部署都沒寫，才用服務自己 `application.yml` 的 `spring.profiles.active`。Spring Boot 的外部設定順序本來就是環境變數與命令列蓋過設定檔——yas 的 BFF 自己寫 `active: dev`，Compose 和 Helm 蓋成 prod。
 - **保守的地方**：整個 repo 沒有任何字面的啟用 → 全讀（同以前）；有 profile group（`spring.profiles.group.*`）→ 全讀；`default` 一律算；否定式（`!prod`）算；佔位符取預設值（`${P:dev}` → dev），沒預設值的不算一次啟用。所有部署變體的啟用合起來算（Compose 跑 eureka、另一份跑預設，兩個都算）。
-- **界線**：合併是整個 repo 一份，不是每個模組一份——某個模組沒有任何部署檔提到它時，用其他模組的部署值判斷。
+- **每個模組自己判（2026-11-10 下午改）**：原本整個 repo 合成一份，A 服務的 Compose 寫 prod、B 服務沒有部署檔只在自己 `application.yml` 寫 dev 時，B 的 dev 檔會被 A 的 prod 蓋掉而漏讀。現在設定檔所屬的模組（`src/` 上一層目錄）依序看：①**這個模組的部署敘述**——模組目錄底下的檔（它的 Dockerfile、它的 pom 進入點），或 repo 層級檔案裡「名字說是這個模組」的區塊（Compose 服務的鍵或 `build:` 的目錄、workload 的容器 `name:`／`metadata.name`、Helm values 的頂層鍵；yas 的 Compose 服務叫 `backoffice`、`build: ./backoffice-bff`，用 build 目錄對上）——這是歸屬慣例③用在區塊上；②沒有，才看模組自己 `application.yml` 的值；③再沒有，才用整個 repo 合起來的部署值（對不到模組的敘述：根目錄共用的 Dockerfile、根目錄 `.env`），再沒有用各服務自己的值合起來。
+- **界線**：區塊對模組靠名字（鍵、build 目錄、容器名、metadata.name）；用別的名字部署的模組對不到，就落到第③步整個 repo 的值，等於以前的行為。
 
 ### 量測
 
@@ -181,6 +182,7 @@
 | hold-out C | 0.98／0.98 | **1.00／0.98**（yas 錯 2 → 0：backoffice → order、storefront → payment 消失；漏的 2 條不變） |
 | 其他 22 系統（含 AICS） | — | 一條邊都沒變 |
 | 第 57 條新觸發 | — | 4 個系統：ecommerce（Compose 跑 dev，跳過 stage／prod 共 18 檔）、mall-swarm（進入點與 manifest 跑 prod，跳過 dev 7 檔）、spring-petclinic（Dockerfile 跑 docker，跳過 config-server 的 local 文件）、yas（跳過兩個 BFF 的 dev 檔）；只有 yas 的邊因此改變 |
-| 測試 | — | `ActiveProfilesTest` 10 個 |
+| 測試 | — | `ActiveProfilesTest` 13 個（含每模組判定 3 個） |
+| 每模組判定後（同日下午） | — | 23 系統逐邊回歸 same 23／different 0：沒有系統踩到「別的模組蓋掉自己」的情況，改法只是把界線關掉 |
 
 輸出：`holdout-c/*.r9.*`、`holdout-c/scores-r9.md`，`regress.sh` 的 hold-out C 基準改 r9。
