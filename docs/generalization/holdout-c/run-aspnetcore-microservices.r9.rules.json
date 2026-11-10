@@ -1,0 +1,491 @@
+{"rules": {
+  "44": {
+    "convention": "① 名字表",
+    "hits": 5,
+    "examples": [
+      "map shopping-web=shopping.web",
+      "map basket-api=basket.api",
+      "map catalog-api=catalog.api",
+      "map discount-grpc=discount.grpc",
+      "map ordering-api=ordering.api"
+    ],
+    "count": 5
+  },
+  "45": {
+    "convention": "② 位址形狀",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "46": {
+    "convention": "格式 格式轉接器",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "47": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "48": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "49": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "50": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "51": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "52": {
+    "convention": "格式 格式轉接器",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "53": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "10": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "54": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "convention": "① 名字表",
+    "hits": 11,
+    "examples": [
+      "node catalogdb",
+      "node basketdb",
+      "node distributedcache",
+      "node orderdb",
+      "node messagebroker",
+      "node catalog.api",
+      "node basket.api",
+      "node discount.grpc",
+      "node ordering.api",
+      "node yarpapigateway",
+      "node shopping.web"
+    ],
+    "count": 11
+  },
+  "55": {
+    "convention": "② 位址形狀",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "12": {
+    "convention": "格式 格式轉接器",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "56": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "13": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "57": {
+    "convention": "格式 格式轉接器",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "14": {
+    "convention": "③ 歸屬",
+    "hits": 2,
+    "examples": [
+      "code-decides basket.api->discount.grpc",
+      "code-decides shopping.web->yarpapigateway"
+    ],
+    "count": 2
+  },
+  "58": {
+    "convention": "② 位址形狀",
+    "hits": 3,
+    "examples": ["options-connstr ConnectionStrings:Database"],
+    "count": 1
+  },
+  "15": {
+    "convention": "① 名字表",
+    "hits": 12,
+    "examples": [
+      "published 6064",
+      "edge shopping.web->yarpapigateway :6064",
+      "published 6000",
+      "edge yarpapigateway->catalog.api :6000",
+      "published 6003",
+      "edge yarpapigateway->ordering.api :6003",
+      "published 6001",
+      "edge yarpapigateway->basket.api :6001",
+      "published 5672",
+      "edge basket.api->messagebroker :5672",
+      "edge ordering.api->messagebroker :5672"
+    ],
+    "count": 11
+  },
+  "59": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "19": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "2": {
+    "convention": "① 名字表",
+    "hits": 6,
+    "examples": [
+      "name Shopping.Web=shopping-web",
+      "name YarpApiGateway=yarpapigateway",
+      "name Basket.API=basket-api",
+      "name Catalog.API=catalog-api",
+      "name Discount.Grpc=discount-grpc",
+      "name Ordering.API=ordering-api"
+    ],
+    "count": 6
+  },
+  "3": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "convention": "② 位址形狀",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "5": {
+    "convention": "② 位址形狀",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "6": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "7": {
+    "convention": "③ 歸屬",
+    "hits": 8,
+    "examples": [
+      "env catalog.api.ConnectionStrings__Database=catalogdb",
+      "env basket.api.ConnectionStrings__Database=basketdb",
+      "env basket.api.ConnectionStrings__Redis=distributedcache",
+      "env basket.api.GrpcSettings__DiscountUrl=discount.grpc",
+      "env basket.api.MessageBroker__Host=ecommerce-mq",
+      "env ordering.api.ConnectionStrings__Database=orderdb",
+      "env ordering.api.MessageBroker__Host=ecommerce-mq",
+      "env shopping.web.ApiSettings__GatewayAddress=yarpapigateway"
+    ],
+    "count": 8
+  },
+  "8": {
+    "convention": "① 名字表",
+    "hits": 7,
+    "examples": [
+      "loopback localhost",
+      "loopback localhost:5052",
+      "config-signal ConnectionStrings:Redis",
+      "config-signal ConnectionStrings:Database"
+    ],
+    "count": 4
+  },
+  "9": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "60": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "61": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "convention": "③ 歸屬",
+    "hits": 25,
+    "examples": [
+      "scoped ApiSettings__GatewayAddress=yarpapigateway @shopping.web",
+      "scoped ConnectionStrings__Database=basketdb @basket.api",
+      "scoped ConnectionStrings__Redis=distributedcache @basket.api",
+      "scoped GrpcSettings__DiscountUrl=discount.grpc @basket.api",
+      "scoped ConnectionStrings__Database=catalogdb @catalog.api",
+      "global-ambiguous ConnectionStrings__Database @discount.grpc",
+      "scoped ConnectionStrings__Database=orderdb @ordering.api",
+      "global-ambiguous ConnectionStrings__Database @null"
+    ],
+    "count": 8
+  },
+  "21": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "25": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "convention": "② 位址形狀",
+    "hits": 2,
+    "examples": ["kind messagebroker=queue"],
+    "count": 1
+  },
+  "27": {
+    "convention": "② 位址形狀",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "28": {
+    "convention": "格式 格式轉接器",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "31": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "convention": "② 位址形狀",
+    "hits": 6,
+    "examples": ["connstr ConnectionStrings__Database"],
+    "count": 1
+  },
+  "33": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "34": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "convention": "④ 使用",
+    "hits": 11,
+    "examples": [
+      "documented catalog.api->catalogdb",
+      "documented basket.api->basketdb",
+      "documented basket.api->distributedcache",
+      "documented basket.api->discount.grpc",
+      "documented basket.api->messagebroker",
+      "documented ordering.api->orderdb",
+      "documented ordering.api->messagebroker",
+      "inferred yarpapigateway->catalog.api",
+      "inferred yarpapigateway->basket.api",
+      "inferred yarpapigateway->ordering.api",
+      "documented shopping.web->yarpapigateway"
+    ],
+    "count": 11
+  },
+  "36": {
+    "convention": "① 名字表",
+    "hits": 8,
+    "examples": [
+      "keep-dotted discount.grpc",
+      "dotted-name basket-api=basket.api",
+      "dotted-name catalog-api=catalog.api",
+      "dotted-name discount-grpc=discount.grpc"
+    ],
+    "count": 4
+  },
+  "37": {
+    "convention": "① 名字表",
+    "hits": 5,
+    "examples": [
+      "hostname ecommerce-mq=messagebroker",
+      "resolve ecommerce-mq=messagebroker"
+    ],
+    "count": 2
+  },
+  "38": {
+    "convention": "③ 歸屬",
+    "hits": 15,
+    "examples": [
+      "key ApiSettings:GatewayAddress",
+      "yarp http://catalog.api:8080",
+      "yarp http://ordering.api:8080",
+      "yarp http://basket.api:8080",
+      "yarp http://localhost:6000/",
+      "yarp http://localhost:6003/",
+      "yarp http://localhost:6001/",
+      "key MessageBroker:Host",
+      "key GrpcSettings:DiscountUrl",
+      "key ConnectionStrings:Database",
+      "key ConnectionStrings:Redis"
+    ],
+    "count": 11
+  },
+  "39": {
+    "convention": "② 位址形狀",
+    "hits": 16,
+    "examples": [
+      "kind basketdb=db",
+      "kind distributedcache=db",
+      "kind catalogdb=db",
+      "kind orderdb=db",
+      "connectionstrings ConnectionStrings:Database",
+      "kind messagebroker=queue"
+    ],
+    "count": 6
+  },
+  "40": {
+    "convention": "格式 格式轉接器",
+    "hits": 148,
+    "examples": [
+      "cs-file src/WebApps/Shopping.Web/GlobalUsing.cs",
+      "cs-file src/WebApps/Shopping.Web/Models/Basket/ShoppingCartModel.cs",
+      "cs-file src/WebApps/Shopping.Web/Models/Basket/BasketCheckoutModel.cs",
+      "cs-file src/WebApps/Shopping.Web/Models/Catalog/ProductModel.cs",
+      "cs-file src/WebApps/Shopping.Web/Models/Ordering/OrderModel.cs",
+      "cs-file src/WebApps/Shopping.Web/Models/Ordering/PaginatedResult.cs",
+      "cs-file src/WebApps/Shopping.Web/Pages/Contact.cshtml.cs",
+      "cs-file src/WebApps/Shopping.Web/Pages/OrderList.cshtml.cs",
+      "cs-file src/WebApps/Shopping.Web/Pages/Privacy.cshtml.cs",
+      "cs-file src/WebApps/Shopping.Web/Pages/Checkout.cshtml.cs",
+      "cs-file src/WebApps/Shopping.Web/Pages/ProductList.cshtml.cs",
+      "cs-file src/WebApps/Shopping.Web/Pages/Confirmation.cshtml.cs",
+      "cs-file src/WebApps/Shopping.Web/Pages/Error.cshtml.cs",
+      "cs-file src/WebApps/Shopping.Web/Pages/Cart.cshtml.cs",
+      "cs-file src/WebApps/Shopping.Web/Pages/Index.cshtml.cs",
+      "cs-file src/WebApps/Shopping.Web/Pages/ProductDetail.cshtml.cs",
+      "cs-file src/WebApps/Shopping.Web/Services/IOrderingService.cs",
+      "cs-file src/WebApps/Shopping.Web/Services/ICatalogService.cs",
+      "cs-file src/WebApps/Shopping.Web/Services/IBasketService.cs",
+      "cs-file src/WebApps/Shopping.Web/Program.cs"
+    ],
+    "count": 147
+  },
+  "41": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "42": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "43": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  }
+}}

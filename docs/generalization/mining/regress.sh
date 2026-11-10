@@ -26,8 +26,8 @@ robot-shop-2019	$R/external/robot-shop	$G/external/robot-shop.summary.md
 opentelemetry-demo	$R/holdout/opentelemetry-demo	$G/holdout/opentelemetry-demo.r8.summary.md
 mall-swarm	$R/holdout/mall-swarm	$G/holdout/mall-swarm.r8.summary.md
 hotel-reservation	$R/holdout/DeathStarBench/hotelReservation	$G/holdout/hotel-reservation.r8.summary.md
-yas	$R/holdout-c/yas	$G/holdout-c/yas.r8.summary.md
-run-aspnetcore-microservices	$R/holdout-c/run-aspnetcore-microservices	$G/holdout-c/run-aspnetcore-microservices.r8.summary.md
+yas	$R/holdout-c/yas	$G/holdout-c/yas.r9.summary.md
+run-aspnetcore-microservices	$R/holdout-c/run-aspnetcore-microservices	$G/holdout-c/run-aspnetcore-microservices.r9.summary.md
 travels	$R/holdout-d/kiali-demos/travels	$G/holdout-d/travels.r8.summary.md
 skywalking-showcase	$R/holdout-d/skywalking-showcase	$G/holdout-d/skywalking-showcase.r8.summary.md
 TSV

@@ -1,0 +1,43 @@
+flowchart TB
+%% DepWeaver — microservice dependency graph
+%% solid arrow = observed at runtime (Istio) · dashed = declared in code/doc only
+%% node shape: [service] ([gateway]) [(db)] {{queue}} [/external/]
+  subgraph layer0 ["entry services"]
+    direction LR
+    shopping_web["shopping.web"]
+  end
+  subgraph layer1 ["services · depth 1"]
+    direction LR
+    yarpapigateway["yarpapigateway"]
+  end
+  subgraph layer2 ["services · depth 2"]
+    direction LR
+    catalog_api["catalog.api"]
+    basket_api["basket.api"]
+    ordering_api["ordering.api"]
+  end
+  subgraph layer3 ["services · depth 3"]
+    direction LR
+    discount_grpc["discount.grpc"]
+  end
+  subgraph layer4 ["data stores"]
+    direction LR
+    catalogdb[("catalogdb")]:::db
+    basketdb[("basketdb")]:::db
+    distributedcache[("distributedcache")]:::db
+    orderdb[("orderdb")]:::db
+    messagebroker{{"messagebroker"}}:::queue
+  end
+  shopping_web -.-> yarpapigateway
+  basket_api -. db .-> basketdb
+  basket_api -. db .-> distributedcache
+  basket_api -.-> discount_grpc
+  catalog_api -. db .-> catalogdb
+  ordering_api -. db .-> orderdb
+  yarpapigateway -.-> catalog_api
+  yarpapigateway -.-> ordering_api
+  yarpapigateway -.-> basket_api
+  basket_api -. async .-> messagebroker
+  ordering_api -. async .-> messagebroker
+classDef db fill:#e8f0ff,stroke:#3a6ea5,color:#13294b;
+classDef queue fill:#fff5e0,stroke:#c08a1e,color:#4a370a;

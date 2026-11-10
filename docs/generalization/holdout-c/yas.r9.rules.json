@@ -1,0 +1,747 @@
+{"rules": {
+  "44": {
+    "convention": "① 名字表",
+    "hits": 21,
+    "examples": [
+      "compose-only promotion=promotion",
+      "compose-only order=order",
+      "image storefront=storefront-nextjs",
+      "no-workload storefront=storefront-nextjs",
+      "compose-only rating=rating",
+      "compose-only sampledata=sampledata",
+      "compose-only location=location",
+      "compose-only payment=payment",
+      "map storefront-bff=storefront",
+      "compose-only tax=tax",
+      "image backoffice=backoffice-nextjs",
+      "no-workload backoffice=backoffice-nextjs",
+      "map backoffice-bff=backoffice",
+      "compose-only search=search",
+      "compose-only inventory=inventory",
+      "compose-only cart=cart",
+      "compose-only customer=customer",
+      "dir docker/prometheus/prometheus.yml=prometheus"
+    ],
+    "count": 18
+  },
+  "45": {
+    "convention": "② 位址形狀",
+    "hits": 1,
+    "examples": ["accept elasticsearch.url=elasticsearch"],
+    "count": 1
+  },
+  "46": {
+    "convention": "格式 格式轉接器",
+    "hits": 5,
+    "examples": [
+      "set-var http://search",
+      "set-var http://webhook",
+      "set-var http://recommendation",
+      "set-var http://grafana:3000",
+      "set-var http://elasticsearch:9200"
+    ],
+    "count": 5
+  },
+  "47": {
+    "convention": "④ 使用",
+    "hits": 187,
+    "examples": [
+      "configuration-properties promotion/src/main/java/com/yas/promotion/service/ProductService.java:34 yas.services.product",
+      "configuration-properties promotion/src/main/java/com/yas/promotion/service/ProductService.java:54 yas.services.product",
+      "configuration-properties promotion/src/main/java/com/yas/promotion/service/ProductService.java:73 yas.services.product",
+      "configuration-properties promotion/src/main/java/com/yas/promotion/service/ProductService.java:92 yas.services.product",
+      "configuration-properties promotion/src/main/java/com/yas/promotion/service/ProductService.java:111 yas.services.product",
+      "configuration-properties recommendation/src/main/java/com/yas/recommendation/vector/common/query/JdbcVectorService.java:66 yas.recommendation.embedding-based.s\u2026",
+      "configuration-properties recommendation/src/main/java/com/yas/recommendation/vector/common/query/JdbcVectorService.java:68 yas.recommendation.embedding-based.s\u2026",
+      "configuration-properties order/src/main/java/com/yas/order/service/TaxService.java:23 yas.services.tax",
+      "configuration-properties order/src/main/java/com/yas/order/service/CartService.java:36 yas.services.cart",
+      "configuration-properties order/src/main/java/com/yas/order/service/ProductService.java:39 yas.services.product",
+      "configuration-properties order/src/main/java/com/yas/order/service/ProductService.java:59 yas.services.product",
+      "configuration-properties order/src/main/java/com/yas/order/service/ProductService.java:77 yas.services.product",
+      "configuration-properties order/src/main/java/com/yas/order/service/CustomerService.java:27 yas.services.customer",
+      "configuration-properties order/src/main/java/com/yas/order/service/PromotionService.java:29 yas.services.promotion",
+      "configuration-properties rating/src/main/java/com/yas/rating/service/OrderService.java:28 yas.services.order",
+      "configuration-properties rating/src/main/java/com/yas/rating/service/CustomerService.java:28 yas.services.customer",
+      "configuration-properties payment/src/main/java/com/yas/payment/service/OrderService.java:32 yas.services.order",
+      "configuration-properties payment/src/main/java/com/yas/payment/service/OrderService.java:53 yas.services.order",
+      "configuration-properties payment/src/main/java/com/yas/payment/service/MediaService.java:67 yas.services.media",
+      "configuration-properties tax/src/main/java/com/yas/tax/service/LocationService.java:26 yas.services.location"
+    ],
+    "count": 187
+  },
+  "48": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "49": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "50": {
+    "convention": "③ 歸屬",
+    "hits": 2,
+    "examples": [
+      "dotenv storefront/.env.production API_BASE_PATH=storefront",
+      "dotenv storefront/.env.development API_BASE_PATH=storefront"
+    ],
+    "count": 2
+  },
+  "51": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "52": {
+    "convention": "格式 格式轉接器",
+    "hits": 261,
+    "examples": [
+      "render k8s/deploy/observability/opentelemetry/templates/opentelemetry-collector.yaml",
+      "render k8s/deploy/observability/grafana/templates/dashboards.yaml",
+      "render k8s/deploy/observability/grafana/templates/grafana-credentials.secret.yaml",
+      "render k8s/deploy/observability/grafana/templates/grafana.yaml",
+      "render k8s/deploy/observability/grafana/templates/loki-datasource.yaml",
+      "render k8s/deploy/observability/grafana/templates/tempo-datasource.yaml",
+      "render k8s/deploy/zookeeper/templates/deployment.yaml",
+      "render k8s/deploy/zookeeper/templates/hpa.yaml",
+      "render k8s/deploy/zookeeper/templates/ingress.yaml",
+      "render k8s/deploy/zookeeper/templates/service.yaml",
+      "render k8s/deploy/zookeeper/templates/serviceaccount.yaml",
+      "render k8s/deploy/zookeeper/templates/tests/test-connection.yaml",
+      "render k8s/deploy/postgres/postgresql/templates/credentials.secret.yaml",
+      "render k8s/deploy/postgres/postgresql/templates/postgresql.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/deployment.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/hpa.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/ingress.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/pvc.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/secret.yaml",
+      "render k8s/deploy/postgres/pgadmin/templates/service.yaml"
+    ],
+    "count": 89
+  },
+  "53": {
+    "convention": "③ 歸屬",
+    "hits": 3,
+    "examples": [
+      "compose search.entrypoint elasticsearch:9200=elasticsearch",
+      "compose backoffice.entrypoint identity:80=identity",
+      "compose storefront.entrypoint identity:80=identity"
+    ],
+    "count": 3
+  },
+  "10": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "54": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "11": {
+    "convention": "① 名字表",
+    "hits": 1,
+    "examples": ["k8s-over-compose 33 compose names ignored"],
+    "count": 1
+  },
+  "55": {
+    "convention": "② 位址形狀",
+    "hits": 32,
+    "examples": [
+      "list application.yaml opentelemetry-collector",
+      "list application.yaml identity.yas.local.com",
+      "list application.yaml kafka-cluster-kafka-brokers",
+      "list application.yaml cart",
+      "list application.yaml customer",
+      "list application.yaml inventory",
+      "list application.yaml location",
+      "list application.yaml media",
+      "list application.yaml order",
+      "list application.yaml payment",
+      "list application.yaml payment-paypal",
+      "list application.yaml product",
+      "list application.yaml promotion",
+      "list application.yaml rating",
+      "list application.yaml search",
+      "list application.yaml tax",
+      "list application.yaml sampledata",
+      "list application.yaml recommendation",
+      "list gateway-routes-config.yaml product",
+      "list gateway-routes-config.yaml location"
+    ],
+    "count": 32
+  },
+  "12": {
+    "convention": "格式 格式轉接器",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "56": {
+    "convention": "③ 歸屬",
+    "hits": 6,
+    "examples": ["mount docker/otel-collector/otelcol-config.yml=collector"],
+    "count": 1
+  },
+  "13": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "57": {
+    "convention": "格式 格式轉接器",
+    "hits": 5,
+    "examples": [
+      "template k8s/charts/values.template.yaml",
+      "template k8s/charts/Chart.template.yaml",
+      "inactive-profile storefront-bff/src/main/resources/application-dev.yaml [prod]",
+      "inactive-profile backoffice-bff/src/main/resources/application-dev.yaml [prod]",
+      "template .github/workflow-template.yaml"
+    ],
+    "count": 5
+  },
+  "14": {
+    "convention": "③ 歸屬",
+    "hits": 51,
+    "examples": [
+      "code-decides storefront->jaeger",
+      "code-decides backoffice->jaeger",
+      "code-decides media->jaeger",
+      "code-decides product->media",
+      "code-decides product->jaeger",
+      "code-decides search->product",
+      "code-decides search->collector",
+      "code-decides backoffice->collector",
+      "code-decides backoffice->identity",
+      "code-decides storefront->customer",
+      "code-decides storefront->cart",
+      "code-decides storefront->rating",
+      "code-decides storefront->order",
+      "code-decides storefront->location",
+      "code-decides storefront->inventory",
+      "code-decides storefront->tax",
+      "code-decides storefront->promotion",
+      "code-decides storefront->payment",
+      "code-decides storefront->sampledata",
+      "code-decides storefront->collector"
+    ],
+    "count": 50
+  },
+  "58": {
+    "convention": "② 位址形狀",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "15": {
+    "convention": "① 名字表",
+    "hits": 37,
+    "examples": [
+      "published 5432",
+      "edge promotion->postgres :5432",
+      "edge webhook->postgres :5432",
+      "edge recommendation->postgres :5432",
+      "edge order->postgres :5432",
+      "published 5555",
+      "published 6666",
+      "published 9090",
+      "edge rating->postgres :5432",
+      "edge sampledata->postgres :5432",
+      "edge location->postgres :5432",
+      "published 4317",
+      "edge payment->postgres :5432",
+      "edge tax->postgres :5432",
+      "edge product->postgres :5432",
+      "edge inventory->postgres :5432",
+      "edge cart->postgres :5432",
+      "edge customer->postgres :5432",
+      "edge media->postgres :5432"
+    ],
+    "count": 19
+  },
+  "59": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "16": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "17": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "18": {
+    "convention": "③ 歸屬",
+    "hits": 4,
+    "examples": ["dockerfile-env API_BASE_PATH=storefront"],
+    "count": 1
+  },
+  "19": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "1": {
+    "convention": "① 名字表",
+    "hits": 23,
+    "examples": [
+      "not-preadded promotion",
+      "not-preadded webhook",
+      "not-preadded recommendation",
+      "not-preadded order",
+      "not-preadded rating",
+      "not-preadded sampledata",
+      "not-preadded location",
+      "not-preadded payment",
+      "not-preadded tax",
+      "not-preadded search",
+      "not-preadded payment-paypal",
+      "not-preadded inventory",
+      "not-preadded cart",
+      "not-preadded delivery",
+      "not-preadded customer",
+      "node storefront",
+      "node backoffice",
+      "node swagger-ui",
+      "node media",
+      "node product"
+    ],
+    "count": 23
+  },
+  "2": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "3": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "4": {
+    "convention": "② 位址形狀",
+    "hits": 40,
+    "examples": [
+      "table spring.datasource.product.url=postgres",
+      "table spring.datasource.media.url=postgres",
+      "table yas.public.url=api.yas.local",
+      "table yas.services.product=product",
+      "table yas.services.tax=tax",
+      "table yas.services.cart=cart",
+      "table yas.services.customer=customer",
+      "table yas.services.promotion=promotion",
+      "table yas.services.order=order",
+      "table yas.services.media=media",
+      "table yas.services.location=location",
+      "table yas.publicUrl=api.yas.local",
+      "table OTEL_COLLECTOR_HOST=collector",
+      "table PROMETHEUS_SERVICE_HOST=prometheus"
+    ],
+    "count": 14
+  },
+  "5": {
+    "convention": "② 位址形狀",
+    "hits": 22,
+    "examples": [
+      "not-a-host BASE_URL=/swagger-ui",
+      "env DB_ADDR=postgres",
+      "env SPRING_DATA_REDIS_HOST=redis",
+      "key hostname=api.yas.local",
+      "key spring.data.redis.host=redis",
+      "key OTEL_COLLECTOR_HOST=collector",
+      "key KAFKA_SERVICE_HOST=kafka",
+      "key KAFKA_SERVICE_ADDR=kafka:${KAFKA_SERVICE_PORT}",
+      "key POSTGRES_HOST=postgres",
+      "key GRAFANA_SERVICE_HOST=grafana",
+      "key JAEGER_SERVICE_HOST=jaeger",
+      "key PROMETHEUS_SERVICE_HOST=prometheus",
+      "key PROMETHEUS_ADDR=${PROMETHEUS_SERVICE_HOST}:${PROMETHEUS_SERVICE_PORT}",
+      "key SPRING_DATA_REDIS_HOST=redis"
+    ],
+    "count": 14
+  },
+  "6": {
+    "convention": "③ 歸屬",
+    "hits": 23,
+    "examples": [
+      "url http://media",
+      "url http://swagger-ui:8080",
+      "url http://product",
+      "url http://customer",
+      "url http://cart",
+      "url http://rating",
+      "url http://order",
+      "url http://location",
+      "url http://inventory",
+      "url http://tax",
+      "url http://promotion",
+      "url http://search",
+      "url http://payment",
+      "url http://webhook",
+      "url http://sampledata",
+      "url http://recommendation",
+      "url http://backoffice",
+      "url http://storefront",
+      "url http://pgadmin",
+      "url http://identity"
+    ],
+    "count": 23
+  },
+  "7": {
+    "convention": "③ 歸屬",
+    "hits": 18,
+    "examples": [
+      "env identity.KC_DB_URL=postgres",
+      "env media.SPRING_DATASOURCE_URL=postgres",
+      "env product.SPRING_DATASOURCE_URL=postgres",
+      "env customer.SPRING_DATASOURCE_URL=postgres",
+      "env cart.SPRING_DATASOURCE_URL=postgres",
+      "env rating.SPRING_DATASOURCE_URL=postgres",
+      "env payment.SPRING_DATASOURCE_URL=postgres",
+      "env location.SPRING_DATASOURCE_URL=postgres",
+      "env inventory.SPRING_DATASOURCE_URL=postgres",
+      "env promotion.SPRING_DATASOURCE_URL=postgres",
+      "env tax.SPRING_DATASOURCE_URL=postgres",
+      "env sampledata.SPRING_DATASOURCE_PRODUCT_URL=postgres",
+      "env sampledata.SPRING_DATASOURCE_MEDIA_URL=postgres",
+      "env kafka-connect.BOOTSTRAP_SERVERS=kafka",
+      "env kafka-ui.KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka",
+      "node tempo",
+      "node prometheus",
+      "node zookeeper"
+    ],
+    "count": 18
+  },
+  "8": {
+    "convention": "① 名字表",
+    "hits": 103,
+    "examples": [
+      "config-signal url",
+      "config-signal server.port",
+      "config-signal spring.datasource.driver-class-name",
+      "config-signal spring.datasource.username",
+      "config-signal spring.datasource.password",
+      "config-signal spring.kafka.consumer.group-id",
+      "config-signal spring.kafka.consumer.key-deserializer",
+      "config-signal spring.kafka.consumer.value-deserializer",
+      "config-signal spring.kafka.consumer.properties.spring.json.use.type.headers",
+      "config-signal spring.ai.azure.openai.endpoint",
+      "config-signal spring.kafka.producer.key-serializer",
+      "config-signal spring.kafka.producer.value-serializer",
+      "loopback 0.0.0.0:5555",
+      "loopback 0.0.0.0:6666",
+      "loopback localhost:9090",
+      "config-signal spring.data.redis.port"
+    ],
+    "count": 16
+  },
+  "9": {
+    "convention": "④ 使用",
+    "hits": 117,
+    "examples": [
+      "jpa promotion/src/main/java/com/yas/promotion/repository/PromotionRepository.java",
+      "jpa promotion/src/main/java/com/yas/promotion/model/PromotionUsage.java",
+      "jpa promotion/src/main/java/com/yas/promotion/model/Promotion.java",
+      "jpa promotion/src/main/java/com/yas/promotion/model/PromotionApply.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/WebhookRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/WebhookEventRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/EventRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/repository/WebhookEventNotificationRepository.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/Event.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/WebhookEventNotification.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/WebhookEvent.java",
+      "jpa webhook/src/main/java/com/yas/webhook/model/Webhook.java",
+      "jpa order/src/main/java/com/yas/order/repository/OrderRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/CheckoutItemRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/OrderAddressRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/CheckoutRepository.java",
+      "jpa order/src/main/java/com/yas/order/repository/OrderItemRepository.java",
+      "jpa order/src/main/java/com/yas/order/model/Order.java",
+      "jpa order/src/main/java/com/yas/order/model/OrderItem.java",
+      "jpa order/src/main/java/com/yas/order/model/OrderAddress.java"
+    ],
+    "count": 77
+  },
+  "60": {
+    "convention": "③ 歸屬",
+    "hits": 8,
+    "examples": [
+      "mounted docker/otel-collector/otelcol-config.yml 0.0.0.0",
+      "mounted docker/otel-collector/otelcol-config.yml prometheus",
+      "mounted docker/otel-collector/otelcol-config.yml tempo",
+      "mounted docker/otel-collector/otelcol-config.yml loki",
+      "mounted docker/otel-collector/otelcol-config.yml collector",
+      "mounted docker/prometheus/prometheus.yml collector",
+      "mounted docker/prometheus/prometheus.yml localhost"
+    ],
+    "count": 7
+  },
+  "61": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "20": {
+    "convention": "③ 歸屬",
+    "hits": 38,
+    "examples": [
+      "scoped SPRING_DATASOURCE_PRODUCT_URL=postgres @sampledata",
+      "scoped SPRING_DATASOURCE_MEDIA_URL=postgres @sampledata",
+      "scoped YAS_SERVICES_PRODUCT=product @promotion",
+      "scoped YAS_SERVICES_TAX=tax @order",
+      "scoped YAS_SERVICES_CART=cart @order",
+      "scoped YAS_SERVICES_PRODUCT=product @order",
+      "scoped YAS_SERVICES_CUSTOMER=customer @order",
+      "scoped YAS_SERVICES_ORDER=order @rating",
+      "scoped YAS_SERVICES_CUSTOMER=customer @rating",
+      "scoped YAS_SERVICES_ORDER=order @payment",
+      "scoped YAS_SERVICES_MEDIA=media @payment",
+      "scoped YAS_SERVICES_LOCATION=location @tax",
+      "scoped YAS_SERVICES_MEDIA=media @product",
+      "scoped YAS_SERVICES_PRODUCT=product @search",
+      "scoped YAS_SERVICES_PRODUCT=product @inventory",
+      "scoped YAS_SERVICES_LOCATION=location @inventory",
+      "scoped YAS_SERVICES_PRODUCT=product @cart",
+      "scoped YAS_SERVICES_LOCATION=location @customer",
+      "scoped YAS_PUBLICURL=api.yas.local @media",
+      "scoped API_BASE_PATH=storefront @storefront"
+    ],
+    "count": 20
+  },
+  "21": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "22": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "23": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "24": {
+    "convention": "③ 歸屬",
+    "hits": 59,
+    "examples": [
+      "interp search.YAS_PUBLIC_URL=api.yas.local",
+      "forward search.YAS_SERVICES_PRODUCT=product",
+      "forward search.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward backoffice.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward storefront.YAS_SERVICES_CUSTOMER=customer",
+      "forward storefront.YAS_SERVICES_CART=cart",
+      "forward storefront.YAS_SERVICES_RATING=rating",
+      "forward storefront.YAS_SERVICES_ORDER=order",
+      "forward storefront.YAS_SERVICES_LOCATION=location",
+      "forward storefront.YAS_SERVICES_INVENTORY=inventory",
+      "forward storefront.YAS_SERVICES_TAX=tax",
+      "forward storefront.YAS_SERVICES_PROMOTION=promotion",
+      "forward storefront.YAS_SERVICES_PAYMENT=payment",
+      "forward storefront.YAS_SERVICES_SAMPLE_DATA=sampledata",
+      "forward storefront.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "interp media.YAS_PUBLIC_URL=api.yas.local",
+      "forward media.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward product.YAS_SERVICES_MEDIA=media",
+      "forward product.OTEL_EXPORTER_OTLP_ENDPOINT=collector",
+      "forward customer.YAS_SERVICES_LOCATION=location"
+    ],
+    "count": 59
+  },
+  "25": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "26": {
+    "convention": "② 位址形狀",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "27": {
+    "convention": "② 位址形狀",
+    "hits": 5,
+    "examples": [
+      "list spring.kafka.bootstrap-servers=kafka:9092",
+      "list spring.kafka.consumer.bootstrap-servers=kafka:9092",
+      "list spring.kafka.producer.bootstrap-servers=kafka:9092"
+    ],
+    "count": 3
+  },
+  "28": {
+    "convention": "格式 格式轉接器",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "29": {
+    "convention": "④ 使用",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "30": {
+    "convention": "④ 使用",
+    "hits": 4,
+    "examples": [
+      "edge webhook->kafka",
+      "edge recommendation->kafka",
+      "edge search->kafka"
+    ],
+    "count": 3
+  },
+  "31": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "32": {
+    "convention": "② 位址形狀",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "33": {
+    "convention": "① 名字表",
+    "hits": 43,
+    "examples": ["drop api.yas.local"],
+    "count": 1
+  },
+  "34": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "35": {
+    "convention": "④ 使用",
+    "hits": 6,
+    "examples": [
+      "startup collector->tempo",
+      "startup collector->prometheus",
+      "documented kafka->zookeeper",
+      "documented kafka-connect->kafka",
+      "documented kafka-ui->kafka",
+      "startup kafka-ui->kafka-connect"
+    ],
+    "count": 6
+  },
+  "36": {
+    "convention": "① 名字表",
+    "hits": 143,
+    "examples": [
+      "ns-strip postgresql.postgres",
+      "keep-dotted storefront.yas.local.com",
+      "keep-dotted api.yas.local.com",
+      "ns-strip opentelemetry-collector.observability",
+      "keep-dotted identity.yas.local.com",
+      "ns-strip kafka-cluster-kafka-brokers.kafka",
+      "keep-dotted identity.yas.local.com realm",
+      "keep-dotted product-recommendation.openai.azure.com",
+      "keep-dotted product-recommendation.openai.azure.com embedding",
+      "keep-dotted api.yas.local"
+    ],
+    "count": 10
+  },
+  "37": {
+    "convention": "① 名字表",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "38": {
+    "convention": "③ 歸屬",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "39": {
+    "convention": "② 位址形狀",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "40": {
+    "convention": "格式 格式轉接器",
+    "hits": 0,
+    "examples": [],
+    "count": 0
+  },
+  "41": {
+    "convention": "① 名字表",
+    "hits": 5,
+    "examples": [
+      "lib common-library",
+      "no-edge common-library/src/main/java/com/yas/commonlibrary/kafka/cdc/BaseCdcConsumer.java",
+      "no-edge common-library/src/main/resources/application.properties"
+    ],
+    "count": 3
+  },
+  "42": {
+    "convention": "① 名字表",
+    "hits": 432,
+    "examples": [
+      "ignore /promotion/src/it/resources/mockito-extensions/org.mockito.plugins.MockMaker/",
+      "ignore /promotion/src/it/resources/logback-spring.xml/",
+      "ignore /promotion/src/it/resources/application.properties/",
+      "ignore /promotion/src/it/java/com/yas/promotion/service/PromotionServiceIT.java/",
+      "ignore /webhook/src/it/resources/mockito-extensions/org.mockito.plugins.MockMaker/",
+      "ignore /webhook/src/it/resources/logback-spring.xml/",
+      "ignore /webhook/src/it/resources/application.properties/",
+      "ignore /webhook/src/it/java/com/yas/webhook/controller/WebhookControllerIT.java/",
+      "ignore /recommendation/src/it/resources/application.properties/",
+      "ignore /recommendation/src/it/java/com/yas/recommendation/configuration/KafkaConfiguration.java/",
+      "ignore /recommendation/src/it/java/com/yas/recommendation/kafka/ProductCdcConsumerTest.java/",
+      "ignore /order/src/it/resources/mockito-extensions/org.mockito.plugins.MockMaker/",
+      "ignore /order/src/it/resources/logback-spring.xml/",
+      "ignore /order/src/it/resources/application.properties/",
+      "ignore /order/src/it/java/com/yas/order/constant/TestConstants.java/",
+      "ignore /order/src/it/java/com/yas/order/service/CustomerServiceIT.java/",
+      "ignore /order/src/it/java/com/yas/order/service/TaxServiceIT.java/",
+      "ignore /order/src/it/java/com/yas/order/service/ProductServiceIT.java/",
+      "ignore /order/src/it/java/com/yas/order/service/OrderServiceIT.java/",
+      "ignore /automation-ui/storefront/pom.xml/"
+    ],
+    "count": 119
+  },
+  "43": {
+    "convention": "④ 使用",
+    "hits": 104,
+    "examples": [
+      "drop springdoc.swagger-ui.path",
+      "drop springdoc.packagestoscan",
+      "drop springdoc.swagger-ui.oauth.use-pkce-with-authorization-code-grant",
+      "drop springdoc.swagger-ui.oauth.client-id",
+      "drop springdoc.oauthflow.authorization-url",
+      "drop springdoc.oauthflow.token-url"
+    ],
+    "count": 6
+  }
+}}

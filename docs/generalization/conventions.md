@@ -21,7 +21,7 @@
 | ② 位址形狀 | 9 | 4 佔位符與預設值、5 裸主機名、26 scheme 決定種類、27 位址清單鍵、32 key=value 連線字串、39 形狀決定種類、45 *.url 下的裸單字、55 一個值多個位址、58 .NET Options 鍵與任意區段的連線字串 |
 | ③ 歸屬 | 15 | 3 Config Server 倉庫、6 反向代理上游、7 Compose environment、14 workload 自己的 env 與共用來源、18 Dockerfile ENV、20 讀取者自己的範圍、23 共用設定鍵要有對應函式庫、24 鍵名轉發與 .env 內插、34 Envoy、38 YARP、50 模組裡的 dotenv、53 命令列、56 入口路由與掛載歸屬、60 掛載的設定檔、61 Ocelot |
 | ④ 使用 | 13 | 9 沒人引用的 URL 常數、13 XML namespace、16 隱含註冊中心、17 等於模組名的常數、22 Python 死碼、29 OpenAPI 中繼資料、30 訊息程式碼的邊是服務 → broker、35 depends_on 分級、43 OpenAPI UI 設定鍵、47 呼叫點的變數綁定、48 環境變數讀取的預設值、49 註冊中心名稱、51 瀏覽器端腳本 |
-| 格式轉接器 | 6 | 12 Compose v1 格式、28 Kotlin、40 C#、46 nginx 變數、52 Helm 渲染、57 多文件 YAML |
+| 格式轉接器 | 6 | 12 Compose v1 格式、28 Kotlin、40 C#、46 nginx 變數、52 Helm 渲染、57 Spring 設定檔（多文件 YAML、只讀部署啟用的 profile） |
 
 ## 同一個慣例被逐格式各寫一次的地方
 
@@ -149,7 +149,7 @@
 |---|---|---|
 | 7 個歸納系統 | 1.00／1.00 | 1.00／1.00（TeaStore 5 條 → registry 改由 start.sh 出處、documented） |
 | hold-out B | 0.98／0.99 | 0.98／0.97（otel-demo 漏 load-generator → frontend-proxy：`LOCUST_HOST` 是 locust 框架自己讀；fraud-detection → flagd：flagd SDK 自己讀） |
-| hold-out C | 0.87／0.97 | **0.98／0.98**（yas 錯 13 → 2、漏 3 → 2；多對 order → promotion；剩的錯邊是 `application-dev.yaml` 的 payment／order，模組設定檔那一路這次沒動） |
+| hold-out C | 0.87／0.97 | **0.98／0.98**（yas 錯 13 → 2、漏 3 → 2；多對 order → promotion；剩的錯邊是 `application-dev.yaml` 的 payment／order——**2026-11-06 更正**：不是「`yas.services.order` 這個鍵沒人讀」，repo 裡沒有這個鍵。兩個 BFF 的 `application-dev.yaml:11` 各有一條本機開發用的範本路由 `id: api_servicename_local`、`uri: http://localhost:8085`（storefront-bff 是 `8081`）、`Path=/api/servicename/**`，照 yas 的 `docs/developer-guidelines.md`「How to run a backend service locally」，開發者在 IDE 跑某個服務時，把它改成自己那個服務、加在第一條；註解寫「Changes for your local development should not be committed」。工具照①的 loopback 規則（模組設定檔的 `localhost:PORT` 找 `server.port` 擁有者，第 15 條）把 8085 → order、8081 → payment。這條路由在部署裡根本不會載入：Compose 與 Helm 都設 `SPRING_PROFILES_ACTIVE=prod`；就算在開發機載入，`/api/servicename/**` 也對不到前端任何一個呼叫） |
 | hold-out D | 0.87／1.00 | 不變 |
 | hold-out E（已見過） | 1.00／1.00 | 不變 |
 | AICS | 0.97／0.78 | 不變 |
@@ -164,3 +164,23 @@
 ## 程式碼照慣例重整（2026-11-04）
 
 四個慣例從文件變成程式碼的切法：`Conventions/`（`Vocabulary`、`NameTable` ①、`EnvScope`／`KeyReads` ③、`UseSite` ④；② 仍是 `AddressShape`）、`CodeExtraction/` 只剩格式轉接器（`ConfigExtractor` 拆成五個讀取器＋`DescriptorRows`），`CodeGraphMerger` 的 `indexMeta`／`mergeOne` 各拆成有名字的步驟，`RuleTrace` 報表按慣例分組。29 份字詞表集中在 `Vocabulary`，`vocabulary.md` 由程式碼產生。每一步回歸 same 23 / different 0，一條邊都沒變。細節見 `architecture.md`。
+
+## Spring profile 只在部署啟用時才算（2026-11-10）
+
+接 11/6 查到的 yas 錯邊真因（見上方 hold-out C 那列的更正）：`application-dev.yaml` 是開發者本機用的範本，部署跑的是 prod。修法併進第 57 條（Spring 設定檔轉接器，原本就跳過測試 profile 與範本檔），規則數不變：
+
+- **profile 檔與 profile 文件**：`application-<p>.yml`／`bootstrap-<p>.properties`，以及同檔 `---` 分隔、`spring.config.activate.on-profile: <p>` 的文件，只有 `<p>` 被啟用時才讀（`CodeExtraction/ActiveProfiles`）。
+- **誰說了算**：部署檔（Compose 的 `SPRING_PROFILES_ACTIVE`、manifest／Helm values 的 `- name: SPRING_PROFILES_ACTIVE` + `value:`、Dockerfile 的 `ENV`、建置檔進入點的 `-Dspring.profiles.active=`、`.env`）有寫，就以部署為準；部署都沒寫，才用服務自己 `application.yml` 的 `spring.profiles.active`。Spring Boot 的外部設定順序本來就是環境變數與命令列蓋過設定檔——yas 的 BFF 自己寫 `active: dev`，Compose 和 Helm 蓋成 prod。
+- **保守的地方**：整個 repo 沒有任何字面的啟用 → 全讀（同以前）；有 profile group（`spring.profiles.group.*`）→ 全讀；`default` 一律算；否定式（`!prod`）算；佔位符取預設值（`${P:dev}` → dev），沒預設值的不算一次啟用。所有部署變體的啟用合起來算（Compose 跑 eureka、另一份跑預設，兩個都算）。
+- **界線**：合併是整個 repo 一份，不是每個模組一份——某個模組沒有任何部署檔提到它時，用其他模組的部署值判斷。
+
+### 量測
+
+| 量測 | 之前（r8） | 現在（r9） |
+|---|---|---|
+| hold-out C | 0.98／0.98 | **1.00／0.98**（yas 錯 2 → 0：backoffice → order、storefront → payment 消失；漏的 2 條不變） |
+| 其他 22 系統（含 AICS） | — | 一條邊都沒變 |
+| 第 57 條新觸發 | — | 4 個系統：ecommerce（Compose 跑 dev，跳過 stage／prod 共 18 檔）、mall-swarm（進入點與 manifest 跑 prod，跳過 dev 7 檔）、spring-petclinic（Dockerfile 跑 docker，跳過 config-server 的 local 文件）、yas（跳過兩個 BFF 的 dev 檔）；只有 yas 的邊因此改變 |
+| 測試 | — | `ActiveProfilesTest` 10 個 |
+
+輸出：`holdout-c/*.r9.*`、`holdout-c/scores-r9.md`，`regress.sh` 的 hold-out C 基準改 r9。

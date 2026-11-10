@@ -36,6 +36,8 @@ public class ConfigExtractor {
         k8s.prepare(root, ledger);
         List<Path> files = SourceScanner.filesWithExtensions(root,
                 List.of(".yml", ".yaml", ".properties", ".env", ".conf", ".conf.template"));
+        // Which Spring profiles the deployment runs: a profile's file is read only then (rule 57).
+        ActiveProfiles profiles = ActiveProfiles.scan(root, files);
         // A Compose project's .env, interpolated the way Compose does, per project directory.
         Map<Path, Map<String, String>> projectEnvs = new java.util.HashMap<>();
 
@@ -149,6 +151,10 @@ public class ConfigExtractor {
             // .mvn/wrapper/maven-wrapper.properties: where to download the build tool) are
             // not the service's runtime configuration.
             if (name.endsWith("-wrapper.properties")) continue;
+            // A profile's file (application-dev.yaml) is loaded only when the deployment runs
+            // that profile; yas's dev file is a developer's local route template (2026-11-06).
+            if (isSpringConfig && RuleTrace.hitIf(profiles.inactive(ActiveProfiles.profileOfFile(name)), 57,
+                    "inactive-profile " + relative + " " + profiles.active())) continue;
             try {
                 if (name.endsWith(".properties") || isEnv) {
                     appConfig.readKeyValueFile(file, relative, ledger);
@@ -171,7 +177,7 @@ public class ConfigExtractor {
                     compose.extractComposeDependsOn(loaded, relative, ledger);
                     compose.extractComposeEnvironment(loaded, root, file.getParent(), projectEnv, relative, ledger);
                 } else if (isSpringConfig) {
-                    for (Object doc : AppConfigReader.springDocuments(file, relative)) appConfig.flatten("", doc, relative, ledger);
+                    for (Object doc : AppConfigReader.springDocuments(file, relative, profiles)) appConfig.flatten("", doc, relative, ledger);
                 } else if (isYaml) {
                     // Any other YAML is either a k8s manifest (the workload inventory and
                     // the env -> host table that resolve targets with no cluster — the
@@ -180,7 +186,7 @@ public class ConfigExtractor {
                     // client service (shared/account-service.yml). Piggymetrics's datasources
                     // all live in such files, and the analysis saw none of them (2026-09-22).
                     if (!k8s.extractK8sEnvAddresses(file, relative, ledger)) {
-                        List<Object> docs = AppConfigReader.springDocuments(file, relative);
+                        List<Object> docs = AppConfigReader.springDocuments(file, relative, profiles);
                         Object loaded = docs.isEmpty() ? null : docs.get(0);
                         // An Envoy static config is a reverse proxy's routing table in YAML:
                         // its clusters are the upstreams, as nginx's proxy_pass are.

@@ -32,16 +32,18 @@ final class AppConfigReader {
      * {@code ---} document in one application.yml ({@code spring.profiles: docker} /
      * {@code spring.config.activate.on-profile: docker}); a single-document load threw on the
      * second {@code ---} and the whole file was dropped as unreadable, with its datasource
-     * and discovery addresses (12 of the 100 mining systems, 92 files; 2026-11-03). The
-     * active profile is not known statically, so every document is read; a document whose
-     * profile names a test run is skipped, as test directories are (rule 42).
+     * and discovery addresses (12 of the 100 mining systems, 92 files; 2026-11-03). A
+     * document whose profile names a test run is skipped, as test directories are (rule 42),
+     * and so is one for a profile the deployment never activates ({@link ActiveProfiles};
+     * when the repository does not say, every document is read).
      */
-    static List<Object> springDocuments(Path file, String relative) throws java.io.IOException {
+    static List<Object> springDocuments(Path file, String relative, ActiveProfiles profiles) throws java.io.IOException {
         List<Object> docs = new ArrayList<>();
         for (Object doc : new Yaml().loadAll(Files.newBufferedReader(file, StandardCharsets.UTF_8))) {
             if (doc == null) continue;
             String profile = documentProfile(doc);
             if (RuleTrace.hitIf(profile != null && TEST_PROFILE.matcher(profile).find(), 57, "test-profile " + relative + " " + profile)) continue;
+            if (RuleTrace.hitIf(profiles.inactive(profile), 57, "inactive-profile " + relative + " " + profile)) continue;
             docs.add(doc);
         }
         RuleTrace.hitIf(docs.size() > 1, 57, "documents " + relative + " " + docs.size());
