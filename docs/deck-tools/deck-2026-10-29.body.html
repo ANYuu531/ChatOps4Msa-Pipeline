@@ -1,0 +1,652 @@
+<title>靜態層優化：recall 低的原因、四批規則、三組 hold-out</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+  /* SOSEL weekly-meeting deck style (docs/deck-template.html). Single theme on purpose. */
+  :root {
+    --coral: #ff7b7b; --pink: #f86bc5;
+    --grad: linear-gradient(90deg, #ff7b7b 0%, #f86bc5 100%);
+    --ink: #1c1c1c; --grey: #6f6f6f; --line: #e3e3e3; --paper: #ffffff; --ground: #f2f2f2;
+    --green: #2e8b57; --bubble: #d9d9d9;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; background: var(--ground); }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "Nunito", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; font-size: 18px; line-height: 1.55; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .9em; }
+  h1, h2, h3, h4 { margin: 0; font-weight: 800; }
+  p { margin: 0; }
+  ul { margin: .2rem 0 0; padding-left: 1.4em; }
+  ul ul { margin-top: .1rem; }
+  li { margin: .18rem 0; }
+  .id { color: var(--green); font-weight: 700; }
+  .k { font-weight: 800; }
+
+  .slide { position: relative; width: min(100vw, 1280px); aspect-ratio: 16 / 9; margin: 24px auto; background: var(--paper);
+    scroll-snap-align: center; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.08); display: grid; grid-template-rows: 64px 1fr 34px; }
+  .hdr { display: flex; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--line); box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+  .hdr img { height: 44px; }
+  .hdr .t { font-size: 24px; font-weight: 900; }
+  .hdr .t small { font-size: 13px; font-weight: 700; margin-left: 10px; color: var(--ink); }
+  .burger { margin-left: auto; width: 30px; display: grid; gap: 6px; }
+  .burger i { display: block; height: 3px; background: var(--coral); border-radius: 2px; }
+  .bd { padding: 18px 40px 10px; overflow: hidden; }
+  .ftr { background: var(--grad); }
+  .num { position: absolute; right: 22px; bottom: 16px; width: 54px; height: 54px; border-radius: 50%; background: var(--bubble);
+    color: #fff; font-weight: 800; font-size: 20px; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+
+  .sec { font-size: 22px; font-weight: 900; margin: 2px 0 8px; }
+  .sec::before { content: "丨"; margin-right: 2px; }
+  .sub { font-size: 19px; font-weight: 900; margin-top: 12px; }
+  .sub:first-child { margin-top: 0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; }
+  .two.w64 { grid-template-columns: 1.15fr .85fr; }
+  .two.w46 { grid-template-columns: .9fr 1.1fr; }
+  .two.w73 { grid-template-columns: 1.5fr 1fr; }
+  .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 26px; align-items: start; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 17px; }
+  th, td { border: 1px solid #222; padding: 7px 12px; text-align: left; vertical-align: top; }
+  th { font-weight: 800; text-align: center; background: #fff; }
+  td.c, th.c { text-align: center; }
+  table.sm { font-size: 15px; } table.sm th, table.sm td { padding: 5px 10px; }
+  table.xs { font-size: 14px; line-height: 1.45; } table.xs th, table.xs td { padding: 4px 8px; }
+  tr.hot td { background: #fff1f4; font-weight: 700; }
+  .tag { display: inline-block; padding: 1px 10px; border-radius: 6px; font-size: 14px; font-weight: 800; color: #fff; white-space: nowrap; }
+  .tag.code { background: #2f5fb3; } .tag.ai { background: #a24fd1; } .tag.mix { background: var(--grad); }
+  .ok { color: var(--green); font-weight: 800; } .bad { color: #d0342c; font-weight: 800; }
+
+  .box { border: 2.5px solid var(--coral); border-radius: 44px; padding: 26px 30px; background: #fff; min-height: 300px; font-size: 17px; }
+  .box h3 { text-align: center; font-size: 21px; margin-bottom: 12px; }
+  .box.hot { background: var(--grad); border: 0; color: #fff; }
+  .box.hot .id { color: #fff; text-decoration: underline; }
+  .note { border-left: 4px solid var(--coral); background: #fff6f6; padding: 8px 14px; font-size: 16px; margin-top: 12px; }
+  .stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 4px 0 12px; }
+  .stat div { border: 2px solid var(--coral); border-radius: 18px; padding: 8px 14px; text-align: center; }
+  .stat b { display: block; font-size: 30px; font-weight: 900; line-height: 1.2; color: #f0617f; }
+  .stat span { font-size: 14px; color: #333; }
+  .fig { text-align: center; }
+  .fig img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; }
+  .cap { font-size: 13px; color: var(--grey); margin-top: 4px; text-align: center; }
+  .pill2 { display: inline-block; background: var(--grad); color: #fff; font-weight: 800; padding: 1px 10px; border-radius: 6px; font-size: 14px; }
+  a { color: inherit; text-decoration: underline; text-decoration-color: var(--coral); text-decoration-thickness: 1.5px; text-underline-offset: 2.5px; }
+  a:hover { color: #d0347c; }
+  .box.hot a, .tag a { color: #fff; text-decoration-color: rgba(255,255,255,.8); }
+  .srcs { font-size: 12.5px; color: var(--grey); margin-top: 8px; line-height: 1.5; }
+  .srcs a { color: var(--grey); }
+  pre.code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.45; background: #f7f7f7; border-radius: 8px; padding: 9px 13px; margin: 6px 0; overflow: hidden; white-space: pre; }
+
+  /* A pattern section as it stands in the paper: the draft on the left, what to say on the right. */
+  .draft { border-left: 5px solid var(--pink); background: #fbfbfb; padding: 14px 20px; font-size: 17px; line-height: 1.65; border-radius: 0 10px 10px 0; }
+  .draft p { margin: 0 0 .55em; } .draft p:last-child { margin-bottom: 0; }
+  .draft ul, .draft ol { margin: .2em 0 .4em; padding-left: 1.3em; } .draft li { margin: .12em 0; }
+  .draft .lbl { display: inline-block; font-size: 12px; font-weight: 800; color: #fff; background: var(--pink); border-radius: 5px; padding: 0 8px; margin-bottom: 6px; letter-spacing: .04em; }
+  .draft blockquote { margin: 0 0 .5em; padding: 6px 12px; border-left: 3px solid var(--coral); background: #fff; font-weight: 700; }
+  .hl { background: #fff1a8; padding: 0 2px; border-radius: 3px; }
+  .pts { font-size: 17px; }
+  .pts h4 { font-size: 19px; margin-bottom: 6px; }
+  .pts h4::before { content: "◆ "; color: var(--coral); }
+  .pts ul { padding-left: 1.2em; } .pts li { margin: .3em 0; }
+  .pts .ask { margin-top: 12px; border: 1.5px dashed var(--coral); border-radius: 10px; padding: 8px 14px; font-size: 16px; }
+  .pts .ask b { color: #d0347c; }
+
+  /* A Discord exchange, drawn as a chat. */
+  .chat { display: grid; grid-template-columns: 74px 1fr; gap: 6px 12px; font-size: 13px; line-height: 1.45; }
+  .chat .who { font-weight: 800; color: var(--grey); text-align: right; padding-top: 7px; font-size: 12.5px; }
+  .chat .who.bot { color: #f0617f; }
+  .chat .msg { background: #f7f7f7; border-radius: 10px; padding: 7px 12px; }
+  .chat .msg.me { background: #eef6ff; }
+  .chat .btn { display: inline-block; border: 1.5px solid #5865f2; color: #5865f2; border-radius: 5px; padding: 0 9px; font-weight: 800; font-size: 12.5px; margin-top: 4px; }
+  .chat .form { border: 1.5px dashed #999; border-radius: 8px; padding: 6px 10px; margin-top: 2px; background: #fff; }
+  .chat .form label { display: block; font-size: 12px; color: var(--grey); margin-top: 3px; }
+  .chat .form input { display: block; width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 1px 8px; font: inherit; font-size: 13px; background: #fff; }
+
+  .cover { display: block; }
+  .cover .wave { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .cover .logo { position: absolute; left: 80px; top: 205px; height: 60px; }
+  .cover h1 { position: absolute; left: 80px; top: 285px; font-size: 62px; font-weight: 900; letter-spacing: .02em; }
+  .cover .when { position: absolute; left: 82px; top: 380px; color: var(--grey); font-size: 18px; }
+  .cover .pill { position: absolute; left: 70px; bottom: 96px; background: var(--grad); color: #fff; font-weight: 800; padding: 6px 18px; border-radius: 8px; font-size: 20px; }
+  .cover .cat { position: absolute; right: 120px; bottom: 90px; width: 380px; }
+  .cover .burger { position: absolute; right: 56px; top: 50px; width: 32px; }
+  .cover .ftr { display: none; }
+
+  .notes { display: none; position: absolute; left: 40px; right: 100px; bottom: 44px; background: rgba(255,255,255,.96); border-left: 4px solid var(--pink);
+    padding: 8px 14px; font-size: 14px; color: #333; box-shadow: 0 -2px 10px rgba(0,0,0,.1); }
+  body.show-notes .notes { display: block; }
+  .hud { position: fixed; right: 14px; top: 12px; display: flex; gap: .5rem; font-size: 13px; z-index: 5; }
+  .hud button { font: inherit; border: 1px solid #ccc; background: #fff; color: #333; border-radius: 6px; padding: .3em .7em; cursor: pointer; }
+  .hud button:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+  @page { size: 1280px 720px; margin: 0; }
+  @media print { html { scroll-snap-type: none; background: #fff; } .slide { margin: 0; box-shadow: none; page-break-after: always; width: 100%; } .hud { display: none; } }
+
+  /* 2026-10-22：整體放大一級 */
+  table.xs { font-size: 15.5px; } table.xs th, table.xs td { padding: 6px 10px; }
+  table.sm { font-size: 17px; } table.sm th, table.sm td { padding: 7px 12px; }
+  .srcs { font-size: 14px; }
+  .bd ul, .bd ol { font-size: 17px; }
+  .box h3 { font-size: 20px; }
+</style>
+<style>
+  /* 2026-10-29：本次新增 */
+  td b.ho { background: #fff1a8; padding: 0 4px; border-radius: 3px; }
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 6px; }
+  .flow > div { border: 2px solid var(--coral); border-radius: 18px; padding: 10px 14px; font-size: 15.5px; position: relative; background: #fff; }
+  .flow > div.hot { background: var(--grad); border: 0; color: #fff; }
+  .flow > div:not(:last-child)::after { content: "➜"; position: absolute; right: -15px; top: 42%; color: #f0617f; font-weight: 900; font-size: 18px; }
+  .flow h4 { font-size: 17px; margin-bottom: 4px; }
+  .flow .r { font-size: 14px; opacity: .9; }
+</style>
+
+<!-- 1 · 封面 -->
+<section class="slide cover" id="s1">
+  <img class="wave" src="{{WAVE}}" alt="">
+  <div class="burger"><i></i><i></i><i></i></div>
+  <img class="logo" src="{{LOGO}}" alt="SOSEL">
+  <h1>碩一週進度會議</h1>
+  <p class="when">會議時間：2026/10/29　·　主題：靜態層優化：recall 低的原因、四批規則、三組 hold-out</p>
+  <span class="pill">學生：李安喻</span>
+  <img class="cat" src="{{CAT}}" alt="">
+  <div class="notes"><b>講稿</b>　這次主要講程式碼的優化：上次問 recall 為什麼低，查下去發現都是規則缺口；補規則的同時，用事先選好、沒看過的系統量規則能不能轉移。pattern 稿的改動直接看 PDF。</div>
+</section>
+
+<!-- 2 · 上次反饋九點 -->
+<section class="slide" id="s2">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 上次的反饋：九點的狀態 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.2">
+    <div class="two" style="gap:24px;grid-template-columns:1.1fr 1fr">
+      <div>
+        <p class="sec">AsianPLoP 稿（①–⑦，看 PDF）</p>
+        <table class="xs">
+          <tr><th style="width:8%"></th><th>反饋</th><th style="width:19%" class="c">狀態</th></tr>
+          <tr><td class="c">①</td><td>每個 Solution 畫流程圖</td><td class="c"><span class="ok">✔</span> 4 張</td></tr>
+          <tr><td class="c">②</td><td>language 改名：相依架構抽取（Dependency Architecture Extraction）</td><td class="c"><span class="ok">✔</span></td></tr>
+          <tr><td class="c">③</td><td>一個 pattern 一章，底下 X.1 Context … X.9 Related Patterns</td><td class="c"><span class="ok">✔</span> §5–§8</td></tr>
+          <tr><td class="c">④–⑥</td><td>Observation over Inference、Human-Confirmed Name-Mapping、基於事實的解釋（Fact-Based Explanation）</td><td class="c"><span class="ok">✔</span></td></tr>
+          <tr><td class="c">⑦</td><td>每個 pattern 一句 slogan（中英各一句）</td><td class="c"><span class="ok">✔</span></td></tr>
+        </table>
+        <p class="srcs">英文標題：<i>A Pattern Language for Dependency Architecture Extraction in Microservice Systems</i>；Word 匯出 19 頁（上限 20）；四個「一句話摘要」縮到 40 字左右。</p>
+      </div>
+      <div>
+        <p class="sec">COMPSAC（⑧⑨，今天的主題）</p>
+        <table class="xs">
+          <tr><th style="width:10%"></th><th>反饋</th><th style="width:40%" class="c">狀態</th></tr>
+          <tr class="hot"><td class="c">⑧</td><td>查靜態層 recall 低的原因</td><td class="c"><span class="ok">✔</span> 已修，第 3–12 頁</td></tr>
+          <tr class="hot"><td class="c">⑨</td><td>AICS 當測試 repo</td><td class="c"><span class="ok">✔</span> 靜態層＋假想敵；執行期層未做</td></tr>
+        </table>
+        <div class="note" style="margin-top:14px">⑧ 的結論：原本歸因於「靜態分析的極限」的三處，<b>都是規則缺口</b>。補規則有「只對看過的系統有效」的風險，所以每一批規則都拿事先選定、沒看過的系統量轉移。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　上次九點。前七點是 pattern 稿，都改完了，等一下直接看 PDF。今天講後兩點：recall 為什麼低，以及 AICS。</div>
+  </div>
+  <div class="ftr"></div><div class="num">2</div>
+</section>
+
+<!-- 3 · recall 低的原因 -->
+<section class="slide" id="s3">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] recall 低的原因：逐條追下去都是規則缺口 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.17">
+    <table class="xs">
+      <tr><th style="width:13%">系統</th><th class="c" style="width:10%">修正前 P / R</th><th>漏或錯的真正原因</th><th class="c" style="width:11%">補的規則</th><th class="c" style="width:10%">現在 P / R</th></tr>
+      <tr><td><span class="id">ecommerce</span></td><td class="c">1.00 / <span class="bad">0.54</span></td><td>漏 17 條控制面：8 條是 <span class="mono">localhost:9296</span>，正好是 <span class="id">cloud-config</span> 宣告的 port；9 條只有 Eureka client 依賴，位址是 Spring Cloud 隱含預設 <span class="mono">localhost:8761</span></td><td class="c">15、16</td><td class="c"><span class="ok">1.00 / 1.00</span></td></tr>
+      <tr><td><span class="id">TeaStore</span></td><td class="c">1.00 / <span class="bad">0.46</span></td><td>漏 7 條業務邊：<span class="mono">Service.PERSISTENCE</span> 的字串值 <span class="mono">tools.descartes.teastore.persistence</span> 就是模組名；registry 只決定實例位址，<b>不是動態分派</b></td><td class="c">17</td><td class="c"><span class="ok">1.00 / 1.00</span></td></tr>
+      <tr><td><span class="id">robot-shop</span></td><td class="c">1.00 / <span class="bad">0.86</span></td><td>漏 3 條：<span class="id">shipping</span> → <span class="id">cart</span> 是 Java <span class="mono">String.format</span>＋<span class="mono">getenv("CART_ENDPOINT", "cart")</span>；另 2 條在沒文法的 Node 與 PHP</td><td class="c">18；47–56 的文法</td><td class="c"><span class="ok">1.00 / 1.00</span></td></tr>
+      <tr><td><span class="id">piggymetrics</span></td><td class="c"><span class="bad">0.80</span> / 1.00</td><td>錯 8 條：共用 <span class="mono">application.yml</span> 的 OAuth、RabbitMQ、Eureka 設定被攤到每個 config client，實際上只有宣告對應函式庫的服務會用</td><td class="c">23</td><td class="c"><span class="ok">1.00 / 1.00</span></td></tr>
+      <tr><td>其餘 3 個</td><td class="c">1.00 / 1.00</td><td>Bank of Anthos、ewolff、Online Boutique</td><td class="c">—</td><td class="c">1.00 / 1.00</td></tr>
+      <tr class="hot"><td>7 個平均</td><td class="c">0.97 / 0.84</td><td>F1 0.88 → 1.00</td><td class="c"></td><td class="c">1.00 / 1.00</td></tr>
+    </table>
+    <div class="two" style="gap:24px;margin-top:12px">
+      <div class="note" style="margin-top:0">查核時另發現參考邊集有 <b>2 條沒有證據</b>，已刪除：<span class="id">service-discovery</span> → <span class="id">cloud-config</span>（pom 沒有 config client）、<span class="id">monitoring</span> → <span class="id">registry</span>（沒有 Eureka client）。</div>
+      <div class="note" style="margin-top:0">這 7 個系統就是歸納規則的系統，<b>修正後的 1.00 不能當泛化數字</b> → 下一頁的 hold-out 才是。</div>
+    </div>
+    <div class="notes"><b>講稿</b>　三個 recall 低的系統逐條追。ecommerce 的位址是 localhost 加 port，port 可以讀回是誰；TeaStore 的 enum 字串就是模組名；robot-shop 有一條是 Java 的 getenv 預設值。piggymetrics 反過來是錯邊太多。補上後 7 個都 1.00，但這是在同一批系統上歸納的，不算數，所以要看下一頁。</div>
+  </div>
+  <div class="ftr"></div><div class="num">3</div>
+</section>
+
+<!-- 3b · 解法細節 -->
+<section class="slide" id="s3b">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 解法細節：repo 裡寫了什麼、規則怎麼讀、什麼時候不畫 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.05">
+    <table class="xs">
+      <tr><th style="width:15%">例子</th><th style="width:31%">repo 裡寫了什麼</th><th style="width:30%">規則（通用說法）</th><th>什麼時候不畫</th></tr>
+      <tr><td><span class="id">ecommerce</span> → <span class="id">cloud-config</span></td><td>每個服務：<span class="mono">optional:configserver:http://localhost:9296</span><br><span class="id">cloud-config</span>：<span class="mono">server.port: 9296</span></td><td><b>15</b>　loopback 位址用 port 讀回「<b>唯一</b>宣告這個 port 的模組」</td><td>沒有人或<b>不只一個</b>模組宣告這個 port → 不畫；畫出來標「推測」</td></tr>
+      <tr><td><span class="id">ecommerce</span> → <span class="id">service-discovery</span></td><td>pom 有 <span class="mono">spring-cloud-starter-netflix-eureka-client</span>、<span class="mono">@EnableEurekaClient</span>；repo 內外沒有任何 <span class="mono">eureka.client.*</span></td><td><b>16</b>　Eureka client 沒寫位址＝Spring Cloud 預設 <span class="mono">localhost:8761</span> → repo 裡<b>唯一</b>的 Eureka server 模組</td><td>有多個 Eureka server、server 不在部署清單、client 自己寫了位址 → 不套</td></tr>
+      <tr><td><span class="id">TeaStore</span> → <span class="id">persistence</span></td><td><span class="mono">PERSISTENCE("tools.descartes.teastore.persistence")</span><br>呼叫：<span class="mono">loadBalanceRESTOperation(Service.PERSISTENCE, …)</span></td><td><b>17</b>　常數的字串值<b>等於某個模組名</b>，又被當成呼叫參數 → 目標就是那個模組</td><td>值不是模組名、呼叫者是共用函式庫 → 不畫</td></tr>
+      <tr><td><span class="id">robot-shop</span> <span class="id">shipping</span> → <span class="id">cart</span></td><td><span class="mono">String.format("http://%s/shipping/", getenv("CART_ENDPOINT", "cart"))</span></td><td><b>18</b>　<span class="mono">%s</span> 先查部署描述檔與 Dockerfile 的 <span class="mono">ENV</span>，查不到才用 <span class="mono">getenv</span> 的預設值</td><td>兩者都沒有 → 不畫（Python 版早就這樣做）</td></tr>
+      <tr><td><span class="id">piggymetrics</span> 的 8 條錯邊</td><td>共用 <span class="mono">shared/application.yml</span> 有 <span class="mono">spring.rabbitmq.*</span>、<span class="mono">security.oauth2.*</span>、<span class="mono">eureka.client.*</span>，被攤到每個 config client</td><td><b>23</b>　共用設定的 key 只在<b>建置檔有對應函式庫</b>的 client 生效（沒有 amqp 函式庫就不會連 RabbitMQ）</td><td>看不到建置檔 → 保留，不刪</td></tr>
+    </table>
+    <div class="box hot" style="min-height:0;padding:12px 22px;font-size:17px;margin-top:12px">
+      <p><b>共同點</b>：每一條都只是把 repo <b>已經寫明</b>的事實讀出來，再對上名字；條件不唯一就不畫；畫出來的邊附出處（檔案＋行號或設定鍵）和等級（實測／有文件／推測）。規則裡沒有任何專案名或服務名。</p>
+    </div>
+    <div class="notes"><b>講稿</b>　這頁回答「到底怎麼補的」。每一列左邊是 repo 裡原本就有的字，中間是規則用一般化的說法寫，右邊是它什麼時候會放棄。例如 localhost:9296，只有剛好一個模組宣告 9296 才會讀回去，兩個就不畫。所以補規則不是在幫某個專案補邊，而是把框架的慣例寫成程式。</div>
+  </div>
+  <div class="ftr"></div><div class="num">4</div>
+</section>
+
+<!-- 3c · 為什麼純程式碼做得到 -->
+<section class="slide" id="s3c">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 為什麼純程式碼做得到：相依關係本來就寫在 repo 裡 <small>3</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.12">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">四種檔案已經寫明大部分的邊</p>
+        <table class="xs">
+          <tr><th style="width:34%">來源</th><th>寫了什麼</th></tr>
+          <tr><td>部署描述檔<br>（Kubernetes、Compose、Helm）</td><td>有哪些服務；環境變數裡的位址（<span class="mono">CART_ENDPOINT: cart</span>）</td></tr>
+          <tr><td>設定檔</td><td>連線字串、gateway 路由、註冊中心位址</td></tr>
+          <tr><td>建置檔（pom、package.json…）</td><td>用了哪些函式庫：決定哪些設定真的會生效</td></tr>
+          <tr><td>程式碼呼叫點</td><td>呼叫哪個 URL、哪個常數、哪個環境變數</td></tr>
+        </table>
+        <p style="font-size:17px;margin-top:8px">工具只做兩件事：<b>讀出來</b>、<b>對上名字</b>。不推論。</p>
+        <div class="note" style="font-size:16.5px">佐證：LLM 給檔案 F1 0.90、零檔案 0.70；私有 AICS 零檔案只有 0.42。<b>資訊在檔案裡，不在模型的記憶裡</b>；規則把同樣的資訊確定地讀出來。</div>
+      </div>
+      <div>
+        <p class="sec">precision 高，是因為保守</p>
+        <ul style="font-size:17px">
+          <li><b>不唯一不畫</b>：port、Eureka server、常數值都要對到唯一的模組</li>
+          <li><b>宣告不等於使用</b>：ecommerce 常數檔 25 條位址，19 條沒被引用 → 不畫</li>
+          <li><b>localhost 不是節點</b>：除非 port 讀得回唯一擁有者</li>
+          <li><b>對不上就列出來</b>：註冊中心的名稱要對到登記它的服務，對不上就列為待確認</li>
+        </ul>
+        <p class="sec" style="margin-top:12px">純程式碼做不到的，交給另外兩個來源</p>
+        <ul style="font-size:17px">
+          <li>repo 裡找不到登記者的名稱、沒有文法的語言 → <b>問人</b>（pattern ③）</li>
+          <li>哪條路徑真的被走到、走了幾次 → <b>執行期觀測</b>（pattern ①②）</li>
+        </ul>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　為什麼純程式碼可以到這麼高？因為相依關係大部分本來就寫在部署描述檔、設定檔和程式碼裡，工具只是讀出來、對名字。LLM 給檔案能到 0.90、不給只有 0.70 也說明了這點。precision 高是因為規則很保守，不唯一就不畫。做不到的部分，本來就設計成交給執行期觀測和問人。</div>
+  </div>
+  <div class="ftr"></div><div class="num">5</div>
+</section>
+
+<!-- 4 · 方法：先選 hold-out 再補規則 -->
+<section class="slide" id="s4">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 怎麼避免「只對看過的系統有效」：每批規則用下一組沒看過的系統量 <small>4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.16">
+    <p class="sec">流程：先選系統、先寫參考邊集、先記修正前分數，才補規則</p>
+    <div class="flow">
+      <div><h4>規則 15–23</h4><p class="r">歸納自：7 個系統的錯誤分析＋私有 AICS</p><p style="margin-top:6px">量 <b>hold-out B</b>（3 個）<br>opentelemetry-demo、mall-swarm、hotelReservation</p></div>
+      <div><h4>規則 24–35</h4><p class="r">歸納自：hold-out B</p><p style="margin-top:6px">量 <b>hold-out C</b>（2 個）<br>yas、run-aspnetcore-microservices</p></div>
+      <div><h4>規則 36–46</h4><p class="r">歸納自：hold-out C</p><p style="margin-top:6px">量 <b>hold-out D</b>（2 個）<br>kiali travels、skywalking-showcase</p></div>
+      <div class="hot"><h4>規則 47–56</h4><p class="r">歸納自：hold-out D</p><p style="margin-top:6px"><b>不再「一種寫法一條規則」</b>，改補通用機制（第 10 頁）</p></div>
+    </div>
+    <div class="two w64" style="gap:24px;margin-top:14px">
+      <div>
+        <p class="sub">三組 hold-out 刻意挑不同的形狀</p>
+        <p style="font-size:15.5px">條件：GitHub 公開、未封存、至少 6 個服務、技術棧與先前各組不同；鎖定 commit。不符合的候選留底（例：food-delivery-microservices 實際只部署 4 個服務，淘汰）。</p>
+        <ul>
+          <li><b>B</b>：10 種語言混合（otel）、Spring Cloud <b>Alibaba</b>＋Nacos（mall）、Go＋Consul（hotel）</li>
+          <li><b>C</b>：Spring Boot 3＋Keycloak＋Kafka（yas）、<b>.NET 8</b>（aspnetrun）</li>
+          <li><b>D</b>：純 Kubernetes＋Istio、3 個 namespace（travels）；Helm template＋20 份 Compose＋APISIX（skywalking）</li>
+        </ul>
+      </div>
+      <div>
+        <p class="sub">每批之後的回歸檢查</p>
+        <ul>
+          <li>先前所有系統逐邊重算，<b>沒有退步</b></li>
+          <li>邊有變動的只有：train-ticket 少 1 條 Swagger 假邊、多 38 條入口路由；hotelReservation 多 9 條呼叫</li>
+          <li>第三方 MicroDepGraph 維持 93/95</li>
+          <li>測試 337：1 失敗（既有、要叢集）、10 略過</li>
+        </ul>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　方法是這樣：每一組 hold-out 都是在補規則之前就選好、參考邊集先寫好、修正前的分數先記下來。用上一組歸納的規則去量下一組。三組刻意挑不同語言和部署方式。每批做完，前面所有系統都重跑，沒有退步。</div>
+  </div>
+  <div class="ftr"></div><div class="num">6</div>
+</section>
+
+<!-- 4b · 規則一覽（一） -->
+<section class="slide" id="s4b">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 新增的 42 條規則在做什麼（一）：找到位址、對上名字 <small>5</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.03">
+    <p style="font-size:16px;margin-bottom:6px">規則 1–14 是之前報告過的基本讀法（讀部署檔的服務清單、設定檔裡的位址、Compose）。這次新增的 15–56 依「在解決什麼問題」分四類，括號是第一次遇到的系統。</p>
+    <div class="two" style="gap:20px;grid-template-columns:1.25fr 1fr">
+      <div>
+        <p class="sec">找到位址：位址不在呼叫旁邊，去它真正寫的地方找</p>
+        <table class="xs">
+          <tr><td class="c" style="width:13%;white-space:nowrap"><b>15</b></td><td><span class="mono">localhost:9296</span> → 找<b>唯一</b>用 9296 的服務（ecommerce → 設定中心）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>16</b></td><td>裝了 Eureka 卻沒寫位址 → 連 repo 裡<b>唯一</b>的註冊中心（ecommerce）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>17</b></td><td>常數的值等於某個服務的資料夾名 → 就是呼叫那個服務（TeaStore）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>18、48</b></td><td>拼網址用的環境變數：先查部署檔，沒設才用程式寫的預設值（robot-shop）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>20</b></td><td>環境變數只在讀它的那個服務自己的設定裡找，不拿別人的來套（AICS）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>24、50</b></td><td>Compose 只寫變數名、值放在 <span class="mono">.env</span> 檔 → 去 <span class="mono">.env</span> 找（opentelemetry-demo、yas）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>27、32</b></td><td>Nacos、Kafka 的「主機:port」清單、.NET 的 <span class="mono">Host=db;…</span> 連線字串也是位址（mall-swarm、opentelemetry-demo）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>46</b></td><td>nginx 先 <span class="mono">set $x</span> 再轉發 → 把變數值填回去（yas）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>47</b></td><td>網址先存進變數、隔幾行才呼叫 → 所有語言都往回追（通用機制）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>53</b></td><td>寫在容器啟動指令裡的位址（skywalking）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>55</b></td><td>一個設定寫了好幾個網址 → 每個都是一條線（travels）</td></tr>
+        </table>
+      </div>
+      <div>
+        <p class="sec">對上名字：同一個服務有好幾種叫法</p>
+        <table class="xs">
+          <tr><td class="c" style="width:15%;white-space:nowrap"><b>19</b></td><td><span class="mono">order-v1</span>、<span class="mono">order-v2</span> 是 order 的兩個版本，不是兩個服務（AICS）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>25、37</b></td><td>Compose 的別名：mysql 在某個服務裡被叫成 <span class="mono">db</span>（mall-swarm、.NET 系統）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>36</b></td><td>只切真正的網域字尾：<span class="mono">catalog.api</span> 是服務名，不是網域（.NET 系統）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>44</b></td><td>Compose 的 <span class="mono">build</span> 指向哪個資料夾，那份程式碼就是這個服務（yas）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>54</b></td><td>不同 namespace 的同名服務是兩個服務（travels）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>49</b></td><td>Consul：frontend 找 <span class="mono">srv-search</span>，search 在程式碼裡登記成 <span class="mono">srv-search</span> → 就是它；沒人登記才問人（hotelReservation）</td></tr>
+        </table>
+        <div class="note" style="font-size:15.5px;margin-top:12px">名字對不上，線就算畫了也不算數：.NET 系統只因為 <span class="mono">catalog.api</span> 被切成 <span class="mono">catalog</span>，整張圖 0 分。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　見講稿檔。</div>
+  </div>
+  <div class="ftr"></div><div class="num">7</div>
+</section>
+
+<!-- 4c · 規則一覽（二） -->
+<section class="slide" id="s4c">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 新增的 42 條規則在做什麼（二）：不該畫的不畫、讀得懂更多格式 <small>6</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.08">
+    <div class="two" style="gap:20px;grid-template-columns:1.25fr 1fr">
+      <div>
+        <p class="sec">不該畫的不畫：看起來像連線，其實不是</p>
+        <table class="xs">
+          <tr><td class="c" style="width:13%;white-space:nowrap"><b>21、41</b></td><td>共用的函式庫不是服務；它裡面的呼叫算在引用它的服務頭上（AICS、yas）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>22</b></td><td>只是宣告、從來沒被呼叫的網址不畫（AICS）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>23</b></td><td>共用設定只對裝了對應套件的服務有效（piggymetrics）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>29、43</b></td><td>API 文件裡的授權條款、聯絡人網址不是呼叫（mall-swarm、yas）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>30</b></td><td>訊息佇列的 queue 名稱不是服務，線連到 RabbitMQ／Kafka 本身（mall-swarm）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>31、42</b></td><td>測試用的 Compose 檔和測試資料夾不算（opentelemetry-demo、yas）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>33</b></td><td><span class="mono">example.com</span>、<span class="mono">.test</span> 這類保留網域不是相依（opentelemetry-demo）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>35</b></td><td><span class="mono">depends_on</span> 只表示「等它先啟動」：服務自己寫了別的位址、卻沒寫到它就不畫；完全沒寫位址才畫虛線（opentelemetry-demo）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>45</b></td><td><span class="mono">feature.url=disabled</span> 這種值不是服務（yas）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>51</b></td><td>網頁 <span class="mono">&lt;script&gt;</span> 裡的呼叫是使用者瀏覽器發的，不是伺服器（AICS）</td></tr>
+        </table>
+      </div>
+      <div>
+        <p class="sec">讀得懂更多格式與語言</p>
+        <table class="xs">
+          <tr><td class="c" style="width:19%;white-space:nowrap"><b>28、40</b></td><td>Kotlin、C# 改用語法解析（opentelemetry-demo、.NET 系統）；第 47–56 批再加 JS、TS、Go、PHP</td></tr>
+          <tr><td class="c"><b>34、38、<br>56</b></td><td>Envoy、YARP、Istio 入口、APISIX 的設定：都是「閘道把流量轉給誰」的表</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>52</b></td><td>Helm 是填空式的部署檔 → 先用預設值填好再讀（skywalking）</td></tr>
+          <tr><td class="c" style="white-space:nowrap"><b>26、39</b></td><td>連線字串開頭決定種類：<span class="mono">mysql://</span> 是資料庫、<span class="mono">amqp://</span> 是訊息佇列（mall-swarm、.NET 系統）</td></tr>
+        </table>
+        <div class="box hot" style="min-height:0;padding:12px 18px;font-size:16px;margin-top:12px">
+          <p>四類合起來：<b>找到位址、對上名字</b>提高 recall；<b>不該畫的不畫</b>提高 precision；<b>讀得懂更多</b>讓前兩者能用在更多語言與部署方式。每一條都沒有寫死專案名。</p>
+        </div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　見講稿檔。</div>
+  </div>
+  <div class="ftr"></div><div class="num">8</div>
+</section>
+
+<!-- 5 · 轉移表 -->
+<section class="slide" id="s5">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 結果：第一批零轉移，之後越來越好 <small>7</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.22">
+    <div>
+      <div>
+        <table class="xs" style="white-space:nowrap">
+          <tr><th>系統</th><th class="c">14 條</th><th class="c">15–23 後</th><th class="c">24–35 後</th><th class="c">36–46 後</th><th class="c">47–56 後</th></tr>
+          <tr><td>opentelemetry-demo（B）</td><td class="c">0.79 / 0.82</td><td class="c"><b class="ho">0.79 / 0.82</b></td><td class="c">0.97 / 1.00</td><td class="c">0.97 / 1.00</td><td class="c">0.97 / 1.00</td></tr>
+          <tr><td>mall-swarm（B）</td><td class="c">0.43 / 0.50</td><td class="c"><b class="ho">0.43 / 0.50</b></td><td class="c">1.00 / 0.96</td><td class="c">1.00 / 0.96</td><td class="c">1.00 / 0.96</td></tr>
+          <tr><td>hotelReservation（B）</td><td class="c">1.00 / 0.71</td><td class="c"><b class="ho">1.00 / 0.71</b></td><td class="c">1.00 / 0.71</td><td class="c">1.00 / 0.71</td><td class="c">1.00 / 1.00</td></tr>
+          <tr><td>yas（C）</td><td class="c">—</td><td class="c">0.58 / 0.58</td><td class="c"><b class="ho">0.68 / 0.81</b></td><td class="c">0.83 / 0.96</td><td class="c">0.83 / 0.96</td></tr>
+          <tr><td>run-aspnetcore（C）</td><td class="c">—</td><td class="c">0.00 / 0.00</td><td class="c"><b class="ho">0.00 / 0.00</b></td><td class="c">1.00 / 1.00</td><td class="c">1.00 / 1.00</td></tr>
+          <tr><td>travels（D）</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c"><b class="ho">1.00 / 0.84</b></td><td class="c">0.95 / 1.00</td></tr>
+          <tr><td>skywalking-showcase（D）</td><td class="c">—</td><td class="c">—</td><td class="c">—</td><td class="c"><b class="ho">0.08 / 0.25</b></td><td class="c">0.44 / 1.00</td></tr>
+        </table>
+        <p class="srcs">每格 P / R。<b>空白</b>＝那時這組系統還沒選進來（每組都是上一批規則做完才加入，沒有拿舊版工具回頭跑）。<b class="ho" style="background:#fff1a8">黃底</b>＝這組選定後完成的第一批規則的成績，規則沒看過這組；黃底左邊是加入時的起始分數，同樣沒看過；黃底右邊是看過這組的錯誤、補了規則後的分數，不算泛化。</p>
+      </div>
+      <div class="three" style="gap:16px;margin-top:10px">
+        <div class="box" style="min-height:0;padding:10px 16px;font-size:15.5px"><b>B：零轉移</b>。15–23 是 Spring Cloud 與 Python 慣例；B 的錯來自另一批寫法（Compose <span class="mono">- KEY</span> 轉發＋<span class="mono">.env</span>、links 別名、Nacos、OpenAPI 假邊）</div>
+        <div class="box" style="min-height:0;padding:10px 16px;font-size:15.5px"><b>C：部分轉移</b>。yas 業務邊 R <b>0.11 → 0.89</b>（Compose 轉發那條轉移了）；aspnetrun 仍 0：服務名 <span class="mono">catalog.api</span> 被當 DNS 字尾截斷</div>
+        <div class="box hot" style="min-height:0;padding:10px 16px;font-size:15.5px"><b>D：travels 完全轉移</b>（P 1.00）；skywalking 是沒見過的部署形狀。對沒看過的系統，修正前 recall 落在 <b>0.25–0.84</b>（.NET 系統的名稱 bug 除外）</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　看黃底那幾格就好，那才是 hold-out。第一批在 B 上一條邊都沒變，這是誠實的結果。第二批在 C 的 yas 上轉移了，業務邊 recall 從 0.11 到 0.89。第三批在 travels 上完全轉移。skywalking 是新的部署形狀，下一頁講怎麼處理。</div>
+  </div>
+  <div class="ftr"></div><div class="num">9</div>
+</section>
+
+<!-- 6 · 47–56：機制 -->
+<section class="slide" id="s6">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 規則 47–56：不再一種寫法一條規則，改補通用機制 <small>8</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.08">
+    <div class="two w64" style="gap:24px">
+      <div>
+        <table class="xs">
+          <tr><th style="width:34%">機制</th><th>取代或擴充了什麼</th></tr>
+          <tr><td><b>6 個 tree-sitter 文法</b></td><td>JavaScript、TypeScript、Go、PHP 從「沒有」變成有；Kotlin、C# 從正規表示式換成文法（Linux x86-64 實測可載入）</td></tr>
+          <tr><td><b>跨語言變數解析</b></td><td>「呼叫點的變數追到字面值」原本只有 Python 版，改成所有文法共用一個解析器</td></tr>
+          <tr><td><b>Helm 先渲染再讀</b></td><td>用 <span class="mono">values.yaml</span> 預設值渲染 template（原本整份被 YAML 解析例外吞掉）</td></tr>
+          <tr><td><b>別名統一</b></td><td>Compose 的 <span class="mono">image:</span> 名稱、<span class="mono">networks.*.aliases</span> 併進既有別名機制</td></tr>
+          <tr><td><b>命令列也是位址來源</b></td><td>Compose <span class="mono">command:</span> 與容器 <span class="mono">args</span></td></tr>
+          <tr><td><b>namespace 決定身分</b>／<b>多位址值</b></td><td>同名但不同 namespace 不再併成自迴圈；一個值列多個 URL 逐一建邊</td></tr>
+          <tr><td><b>入口路由</b></td><td>Istio VirtualService、APISIX 路由檔當入口來源</td></tr>
+          <tr><td><b>註冊名稱對上登記者</b></td><td>呼叫端交給 Consul 的名稱，對上被呼叫端在程式碼裡登記的名稱；一份程式碼跑多個服務時，依目錄名分給各服務</td></tr>
+        </table>
+      </div>
+      <div>
+        <p class="sec">結果（逐邊重算）</p>
+        <table class="xs" style="white-space:nowrap">
+          <tr><th></th><th class="c">之前</th><th class="c">之後</th></tr>
+          <tr><td>歸納用 7 個</td><td class="c">1.00 / 0.99</td><td class="c"><b>1.00 / 1.00</b></td></tr>
+          <tr><td>hold-out D</td><td class="c">0.44 / 0.67</td><td class="c"><b>0.71 / 1.00</b></td></tr>
+          <tr><td>私有 AICS</td><td class="c">0.89 / 0.63</td><td class="c"><b>0.90 / 0.76</b></td></tr>
+          <tr><td>hold-out B</td><td class="c">0.99 / 0.89</td><td class="c"><b>0.99 / 0.99</b></td></tr>
+          <tr><td>hold-out C</td><td class="c" colspan="2">逐邊不變</td></tr>
+          <tr><td>MicroDepGraph</td><td class="c" colspan="2">93/95 不變</td></tr>
+        </table>
+        <div class="note" style="font-size:16px">robot-shop 最後 2 條（Node、PHP）由文法補上。hotelReservation 的 9 條 Consul 呼叫：frontend 找 <span class="mono">srv-search</span>，search 在程式碼裡登記成 <span class="mono">srv-search</span>，<b>兩邊對上才畫</b>；沒人登記的名稱才列給操作者（pattern ③）。</div>
+        <p class="srcs">入口邊標註方式統一：Online Boutique、Bank of Anthos、robot-shop 參考邊集各補 1 條 <span class="mono">istio-ingressgateway</span> 邊（repo 裡都有綁 Gateway 的 VirtualService）。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　這一批刻意換做法：不再看到一種寫法就加一條規則，而是補通用的機制，最大的是六個文法和跨語言的變數解析。結果 7 個系統全 1.00、hold-out D recall 到 1.00、AICS recall 0.63 到 0.76，其他組不退步。hotelReservation 的 Consul 名稱，對上被呼叫端登記的名字就畫，對不上才問人。</div>
+  </div>
+  <div class="ftr"></div><div class="num">10</div>
+</section>
+
+<!-- 6b · 是不是窮舉：判準與程式檢查 -->
+<section class="slide" id="s6b">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 是不是窮舉？證據一：程式裡沒有寫死任何專案 <small>9</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.08">
+    <div class="two" style="gap:24px">
+      <div>
+        <table class="xs">
+          <tr><th style="width:50%">窮舉（沒有這樣做）</th><th>規則（實際的做法）</th></tr>
+          <tr><td><span class="mono">if service == "teastore-webui":<br>&nbsp;&nbsp;addEdge(→ "teastore-persistence")</span></td><td>常數的字串值等於某個模組名，又被當呼叫參數 → 呼叫那個模組</td></tr>
+          <tr><td>寫死「ecommerce 的服務都連 cloud-config」</td><td>localhost:PORT → 唯一宣告這個 port 的模組</td></tr>
+          <tr><td>每個新專案手動補邊</td><td>每種<b>框架或部署慣例</b>寫一次，所有專案共用</td></tr>
+        </table>
+        <p class="sub" style="margin-top:12px">檢查結果：搜尋靜態層全部原始碼</p>
+        <ul style="font-size:16.5px">
+          <li>程式邏輯裡的專案名、服務名：<b class="ok">0 處</b></li>
+          <li>註解提到專案名 132 行：說明規則從哪個系統歸納、被哪個測試鎖住</li>
+          <li>有的是<b>技術詞彙</b>：Spring 設定 key 前綴 → 函式庫（10 列：rabbitmq、kafka、mongodb、redis、oauth2、eureka、consul、zipkin…）、平台元件名（eureka、zipkin、jaeger）。這是框架公開的慣例，換專案不用改</li>
+        </ul>
+      </div>
+      <div>
+        <div class="box" style="min-height:0;padding:14px 20px;font-size:16.5px">
+          <h3 style="font-size:18px;margin-bottom:6px">對新專案有沒有用：誠實的答案</h3>
+          <p>還沒為它改任何東西時（第 9 頁黃底）：</p>
+          <table class="xs" style="margin-top:6px;white-space:nowrap">
+            <tr><th>系統</th><th class="c">P / R</th></tr>
+            <tr><td>travels（D）</td><td class="c"><span class="ok">1.00 / 0.84</span></td></tr>
+            <tr><td>hotelReservation（B）</td><td class="c"><span class="ok">1.00 / 0.71</span></td></tr>
+            <tr><td>opentelemetry-demo（B）</td><td class="c">0.79 / 0.82</td></tr>
+            <tr><td>yas（C）</td><td class="c">0.68 / 0.81</td></tr>
+            <tr><td>mall-swarm（B）</td><td class="c"><span class="bad">0.43 / 0.50</span></td></tr>
+            <tr><td>skywalking-showcase（D）</td><td class="c"><span class="bad">0.08 / 0.25</span></td></tr>
+            <tr><td>run-aspnetcore（C）</td><td class="c"><span class="bad">0.00 / 0.00</span></td></tr>
+          </table>
+          <p style="margin-top:8px">有用，但不是每個都好。aspnetrun 的 0 主要是<b>一個 bug</b>：服務名 <span class="mono">catalog.api</span> 被當 DNS 字尾截斷，整張圖對不上名字；修掉（規則 36）再補 .NET 的寫法（37–40）後 1.00 / 1.00。</p>
+        </div>
+        <div class="note" style="font-size:16px">新寫法出現時，補的是一個慣例，<b>下一個專案也受益</b>：從 B 歸納的 Compose 轉發規則，讓沒看過的 yas 業務邊 R 從 0.11 變 0.89。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　判準是：程式裡有沒有寫死專案。我把靜態層全部原始碼搜過一遍，程式邏輯裡一個專案名都沒有，只有註解寫規則從哪裡來。有的是框架的詞彙表，像 Spring 的 key 前綴對應哪個函式庫。右邊是對新專案的誠實答案：沒改任何東西時，有的很好，有的很差；差的多半是單一 bug，修了下一個專案也受益。</div>
+  </div>
+  <div class="ftr"></div><div class="num">11</div>
+</section>
+
+<!-- 7 · 規則觸發計數 -->
+<section class="slide" id="s7">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 是不是窮舉？證據二：每條規則在 22 個系統裡用到幾個 <small>10</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.02">
+    <p style="font-size:17px">每條規則都是看 1–3 個系統的錯誤寫出來的。如果它在<b>其他系統</b>也會改變畫出來的圖，就代表它抓到的是大家共通的寫法，不是某個系統的特例。程式裡記錄了每條規則在每個系統上實際改變了什麼：多畫一條線、少畫一條線、實線改虛線、或把兩個名字合成一個節點。</p>
+    <div class="stat" style="grid-template-columns:repeat(4,1fr);margin-top:10px">
+      <div><b>23 條</b><span>在 5 個以上的系統用到</span></div>
+      <div><b>21 條</b><span>在 2–4 個系統用到<br>每條都有寫規則時沒看的系統</span></div>
+      <div><b>11 條</b><span>只在寫出它的那個系統用到</span></div>
+      <div><b>1 條</b><span>從沒用到（第 26 條）</span></div>
+    </div>
+    <div class="two" style="gap:22px;grid-template-columns:1.15fr 1fr">
+      <div>
+        <p class="sub">用得最廣的六條</p>
+        <table class="xs">
+          <tr><th>規則在做什麼</th><th class="c" style="width:21%">用到的系統<br><span style="font-weight:500;font-size:12.5px">（22 個中幾個）</span></th></tr>
+          <tr><td><b>8</b>　看起來像位址、其實不是的不畫：<span class="mono">localhost</span>（指自己）、Feign 的設定名稱</td><td class="c">16</td></tr>
+          <tr><td><b>11</b>　Compose 檔列的服務名，就是這個系統有哪些服務</td><td class="c">16</td></tr>
+          <tr><td><b>44</b>　Compose 的 <span class="mono">build</span> 指向哪個資料夾，那份程式碼就是這個服務</td><td class="c">17</td></tr>
+          <tr><td><b>9</b>　寫了網址、但程式從來沒用到的不畫</td><td class="c">15</td></tr>
+          <tr><td><b>35</b>　<span class="mono">depends_on</span>（等它先啟動）不一定有連線：位址對得上才算，完全沒寫位址只畫虛線</td><td class="c">15</td></tr>
+          <tr><td><b>14</b>　部署檔裡，某服務的環境變數寫了別人的位址 → 畫一條虛線</td><td class="c">11</td></tr>
+        </table>
+      </div>
+      <div>
+        <p class="sub">只在 1 個系統用到的 11 條</p>
+        <ul style="font-size:16px">
+          <li>6 條是那種技術在 22 個系統裡只出現一次：Kotlin、Envoy、YARP、nginx 變數、SOAP、Python 函式庫</li>
+          <li>5 條是某種寫法只出現一次（17、23、48、49、50），要再遇到一個系統才知道是共通寫法還是特例</li>
+        </ul>
+        <div class="box" style="min-height:0;padding:10px 16px;font-size:15.5px;margin-top:8px">
+          <p><b>從沒用到的第 26 條：看連線字串開頭判斷種類</b></p>
+          <p style="margin-top:4px">開頭是 <span class="mono">jdbc:</span>、<span class="mono">mongodb://</span> 就是資料庫，<span class="mono">amqp://</span> 就是訊息佇列，不管主機叫什麼。平常工具看名字判斷（名字有 mysql 就是資料庫）；22 個系統的資料庫都叫 mysql、mongodb 這類名字，看名字就判對了，這條沒機會改變結果。留著當保險：防資料庫取了看不出來的名字，例如 <span class="mono">jdbc:postgresql://orders-store</span>。</p>
+        </div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　見講稿檔。</div>
+  </div>
+  <div class="ftr"></div><div class="num">12</div>
+</section>
+
+<!-- 8 · 假想敵擴大到 hold-out 與 AICS -->
+<section class="slide" id="s8">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 假想敵擴大到 hold-out 與私有系統 <small>11</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.22">
+    <div class="two" style="gap:22px">
+      <div>
+        <table class="sm" style="white-space:nowrap">
+          <tr><th>F1</th><th class="c">歸納用 7 個</th><th class="c">hold-out 5 個</th><th class="c">私有 AICS</th></tr>
+          <tr><td>LLM 零檔案</td><td class="c">0.70</td><td class="c"><b>0.55</b></td><td class="c"><b class="bad">0.42</b></td></tr>
+          <tr><td>LLM 給檔案</td><td class="c">0.90</td><td class="c">0.83</td><td class="c">0.60</td></tr>
+          <tr><td>LLM 給檔案、不給名稱</td><td class="c">0.77</td><td class="c">0.87</td><td class="c">0.46</td></tr>
+          <tr class="hot"><td>DepWeaver 靜態層</td><td class="c">1.00</td><td class="c">0.97</td><td class="c">0.82</td></tr>
+        </table>
+        <p class="srcs">gpt-4.1-mini、temperature 0、每格 3 次 macro 平均；hold-out 5 個＝B、C，共 45 次呼叫；AICS 9 次，在機器 B 跑。靜態層是現在的規則，<b>在這些系統上補過規則，不是 hold-out 數字</b>（hold-out 數字見第 9 頁黃底）。不給名稱＝嚴格對名。</p>
+      </div>
+      <div>
+        <div class="box hot" style="min-height:0;padding:14px 20px;font-size:16.5px">
+          <h3 style="font-size:18px;margin-bottom:6px">不基於事實畫不出來</h3>
+          <p>AICS 不可能在訓練資料裡：零檔案組畫對的幾乎都是<b>從名稱就猜得到的邊</b>（X-service → X-service-mongo、爬蟲 → 外部 API）；服務到服務只有 <b>P 0.21、R 0.20</b>。</p>
+        </div>
+        <ul style="font-size:16px;margin-top:10px">
+          <li>零檔案越冷門越差：yas 0.37／0.29</li>
+          <li>給檔案組也有天花板：yas 17 個模組超過預算，三次都只畫一半；AICS 6 條入口路由三次全漏；又有 3 次輸出陷入迴圈</li>
+          <li>LLM 唯一明顯贏的是 hotelReservation（<b>1.00 對第三批規則時的 0.71</b>）：它把 <span class="mono">srv-search</span> 對上 search 的登記；靜態層補上第 49 條後也是 1.00</li>
+        </ul>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　上次假想敵只在 7 個歸納用系統跑。這次擴大到 hold-out 和 AICS。AICS 是最直接的證據：模型沒看過，零檔案只能從名稱猜，服務之間的呼叫幾乎全錯。LLM 唯一贏的是 Consul 名稱對應，靜態層現在也把兩邊的名字對起來了。</div>
+  </div>
+  <div class="ftr"></div><div class="num">13</div>
+</section>
+
+<!-- 9 · 還剩下的邊界 -->
+<section class="slide" id="s9">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 還沒解決的，以及刻意不做的 <small>12</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.32">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">還在的錯與漏</p>
+        <table class="xs">
+          <tr><th style="width:30%">哪裡</th><th>原因</th></tr>
+          <tr><td><span class="id">skywalking-showcase</span><br>P 0.44（錯 10 條）</td><td><b>8 條</b>只有 depends_on：等健康檢查、共用 volume，沒有網路連線，第 35 條照規則畫成「推測」；1 條名稱對不上（<span class="mono">executeJob</span> 對 <span class="mono">execute-flink-job</span>）；1 條參考邊集存疑（宣告了 RestTemplate 但沒有使用）</td></tr>
+          <tr><td>沒有文法的語言</td><td>語料中只剩 Rust、Ruby</td></tr>
+          <tr><td>AICS R 0.76</td><td>剩下的多是叢集外元件與經 SDK 呼叫的外部服務</td></tr>
+        </table>
+      </div>
+      <div>
+        <p class="sec">刻意不做</p>
+        <ul>
+          <li><b>depends_on 再降級</b>：MicroDepGraph 7 個系統裡只有 depends_on 的 100 條邊，90 條對；再降會丟掉這 90 條換 skywalking 的 8 條</li>
+          <li><b>SDK → 主機對照表</b>、<b>叢集外元件</b>：要逐一列舉，就是窮舉</li>
+          <li><b>憑名字相似猜</b>：<span class="mono">srv-search</span> 看起來像 search 也不畫，要對到登記它的程式碼</li>
+        </ul>
+        <div class="note" style="margin-top:12px;font-size:16px">論文寫法：<b>只把黃底格當泛化數字</b>；修正後的數字一律標明「在該系統補過規則」。四組的共同現象也照實寫：每組沒看過的系統都會暴露新寫法。</div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　剩下的錯和漏都有原因。skywalking 的錯邊大多是 depends_on，再降級的話 MicroDepGraph 那 90 條對的也會跟著掉，不划算。SDK 對照表不做，那是窮舉；名字也不憑相似猜。</div>
+  </div>
+  <div class="ftr"></div><div class="num">14</div>
+</section>
+
+<!-- 10 · 下一步與想問 -->
+<section class="slide" id="s10">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 下一步，以及想討論的 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.42">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">下一步</p>
+        <ol style="font-size:17.5px;margin:0;padding-left:1.4em">
+          <li><b>LLM 當管線的一個來源</b>：假想敵顯示它在 registry 名稱、沒有文法的語言上有用；輸出進同一套等級與出處，等級不高於「推測」，名稱走同一確認流程</li>
+          <li><b>AICS 執行期層</b>：在機器 B 部署；部署步驟已由程式碼反推，還有四個設定要向系統擁有者確認</li>
+          <li><b>COMPSAC 頁數</b>：Word 匯出 <b>26 頁</b>（上限 10 頁含參考文獻），其中附錄 56 條規則表佔大半，要移到線上 artifact，正文只留節錄</li>
+          <li>AsianPLoP 12/7 截止；COMPSAC 2027-01-31 截止</li>
+        </ol>
+      </div>
+      <div>
+        <p class="sec">想討論的</p>
+        <div class="pts">
+          <div class="ask"><b>最後一組 hold-out</b>　每組 hold-out 補過規則後就不再是 hold-out。是否再選一組 <b>只量不修</b>，當論文的最終泛化數字？</div>
+          <div class="ask"><b>附錄規則表</b>　56 條全表移到線上 artifact，正文只留觸發最廣的幾條與觸發計數摘要，可以嗎？</div>
+        </div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　接下來是把 LLM 接進管線當一個來源，以及 AICS 的執行期層。想討論兩件事：要不要再留一組只量不修的系統當最終數字；附錄規則表移出正文。</div>
+  </div>
+  <div class="ftr"></div><div class="num">15</div>
+</section>
+
+<!-- 11 · 參考資料與產出 -->
+<section class="slide" id="s11">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 受測系統與產出 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.32">
+    <div class="two" style="gap:26px">
+      <div>
+        <p class="sec">新加入的受測系統（固定 commit）</p>
+        <ul style="font-size:16px">
+          <li><a href="https://github.com/open-telemetry/opentelemetry-demo">opentelemetry-demo</a> @ad06a6f、<a href="https://github.com/macrozheng/mall-swarm">mall-swarm</a> @04c442f、<a href="https://github.com/delimitrou/DeathStarBench">DeathStarBench hotelReservation</a> @6ecb097（B）</li>
+          <li><a href="https://github.com/nashtech-garage/yas">yas</a> @179e813、<a href="https://github.com/aspnetrun/run-aspnetcore-microservices">run-aspnetcore-microservices</a> @e3549ab（C）</li>
+          <li><a href="https://github.com/kiali/demos">kiali demos／travels</a> @38ceb5a、<a href="https://github.com/apache/skywalking-showcase">skywalking-showcase</a> @7d955be（D）</li>
+          <li>AICS：私有 polyrepo（13 個 repo，Python FastAPI），評估資料放在私有 repo，不進公開 fork</li>
+        </ul>
+      </div>
+      <div>
+        <p class="sec">這次的產出</p>
+        <table class="xs">
+          <tr><th style="width:50%">檔案</th><th>內容</th></tr>
+          <tr><td><span class="mono">docs/generalization/holdout*/</span></td><td>三組 hold-out 的參考邊集、逐條歸因、每輪分數</td></tr>
+          <tr><td><span class="mono">docs/generalization/rule-triggers.md</span></td><td>56 條 × 22 系統觸發表（程式產生）</td></tr>
+          <tr><td><span class="mono">docs/experiments/2026-10-26-holdout/</span></td><td>hold-out 假想敵 45 次原始回應與計分</td></tr>
+          <tr><td><span class="mono">docs/papers/</span></td><td>AsianPLoP 19 頁、COMPSAC 26 頁（Word＋PDF）</td></tr>
+        </table>
+        <p class="sub" style="margin-top:10px">程式</p>
+        <ul style="font-size:16px">
+          <li>規則 15–56、6 個 tree-sitter 文法、<span class="mono">RuleTrace</span></li>
+          <li>測試 337：1 失敗（既有、要叢集）、10 略過</li>
+        </ul>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　新系統都固定 commit，可以重跑。產出都已經 commit、push 到分支上。</div>
+  </div>
+  <div class="ftr"></div><div class="num">16</div>
+</section>
+
+<div class="hud"><button type="button" onclick="document.body.classList.toggle('show-notes')">講稿</button><button type="button" onclick="window.print()">列印</button></div>

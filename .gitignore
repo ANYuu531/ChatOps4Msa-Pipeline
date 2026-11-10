@@ -44,3 +44,11 @@ kube/config
 # dependency-analysis checkpoints
 dep-state/
 dep-reports/
+
+# local broker data (docker compose bind mount)
+rabbitmq/
+
+# editor and OS leftovers
+.DS_Store
+__pycache__/
+.$*.bkp

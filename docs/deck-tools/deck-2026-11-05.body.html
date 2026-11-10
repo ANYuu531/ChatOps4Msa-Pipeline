@@ -1,0 +1,406 @@
+<title>從窮舉規則到四個慣例；程式碼照慣例重整</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+  /* SOSEL weekly-meeting deck style (docs/deck-template.html). Single theme on purpose. */
+  :root {
+    --coral: #ff7b7b; --pink: #f86bc5;
+    --grad: linear-gradient(90deg, #ff7b7b 0%, #f86bc5 100%);
+    --ink: #1c1c1c; --grey: #6f6f6f; --line: #e3e3e3; --paper: #ffffff; --ground: #f2f2f2;
+    --green: #2e8b57; --bubble: #d9d9d9;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-snap-type: y mandatory; scroll-behavior: smooth; background: var(--ground); }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "Nunito", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; font-size: 18px; line-height: 1.55; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .9em; }
+  h1, h2, h3, h4 { margin: 0; font-weight: 800; }
+  p { margin: 0; }
+  ul { margin: .2rem 0 0; padding-left: 1.4em; }
+  ul ul { margin-top: .1rem; }
+  li { margin: .18rem 0; }
+  .id { color: var(--green); font-weight: 700; }
+  .k { font-weight: 800; }
+
+  .slide { position: relative; width: min(100vw, 1280px); aspect-ratio: 16 / 9; margin: 24px auto; background: var(--paper);
+    scroll-snap-align: center; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.08); display: grid; grid-template-rows: 64px 1fr 34px; }
+  .hdr { display: flex; align-items: center; gap: 18px; padding: 0 22px; border-bottom: 1px solid var(--line); box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+  .hdr img { height: 44px; }
+  .hdr .t { font-size: 24px; font-weight: 900; }
+  .hdr .t small { font-size: 13px; font-weight: 700; margin-left: 10px; color: var(--ink); }
+  .burger { margin-left: auto; width: 30px; display: grid; gap: 6px; }
+  .burger i { display: block; height: 3px; background: var(--coral); border-radius: 2px; }
+  .bd { padding: 18px 40px 10px; overflow: hidden; }
+  .ftr { background: var(--grad); }
+  .num { position: absolute; right: 22px; bottom: 16px; width: 54px; height: 54px; border-radius: 50%; background: var(--bubble);
+    color: #fff; font-weight: 800; font-size: 20px; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+
+  .sec { font-size: 22px; font-weight: 900; margin: 2px 0 8px; }
+  .sec::before { content: "丨"; margin-right: 2px; }
+  .sub { font-size: 19px; font-weight: 900; margin-top: 12px; }
+  .sub:first-child { margin-top: 0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; }
+  .two.w64 { grid-template-columns: 1.15fr .85fr; }
+  .two.w46 { grid-template-columns: .9fr 1.1fr; }
+  .two.w73 { grid-template-columns: 1.5fr 1fr; }
+  .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 26px; align-items: start; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 17px; }
+  th, td { border: 1px solid #222; padding: 7px 12px; text-align: left; vertical-align: top; }
+  th { font-weight: 800; text-align: center; background: #fff; }
+  td.c, th.c { text-align: center; }
+  table.sm { font-size: 15px; } table.sm th, table.sm td { padding: 5px 10px; }
+  table.xs { font-size: 14px; line-height: 1.45; } table.xs th, table.xs td { padding: 4px 8px; }
+  tr.hot td { background: #fff1f4; font-weight: 700; }
+  .tag { display: inline-block; padding: 1px 10px; border-radius: 6px; font-size: 14px; font-weight: 800; color: #fff; white-space: nowrap; }
+  .tag.code { background: #2f5fb3; } .tag.ai { background: #a24fd1; } .tag.mix { background: var(--grad); }
+  .ok { color: var(--green); font-weight: 800; } .bad { color: #d0342c; font-weight: 800; }
+
+  .box { border: 2.5px solid var(--coral); border-radius: 44px; padding: 26px 30px; background: #fff; min-height: 300px; font-size: 17px; }
+  .box h3 { text-align: center; font-size: 21px; margin-bottom: 12px; }
+  .box.hot { background: var(--grad); border: 0; color: #fff; }
+  .box.hot .id { color: #fff; text-decoration: underline; }
+  .note { border-left: 4px solid var(--coral); background: #fff6f6; padding: 8px 14px; font-size: 16px; margin-top: 12px; }
+  .stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 4px 0 12px; }
+  .stat div { border: 2px solid var(--coral); border-radius: 18px; padding: 8px 14px; text-align: center; }
+  .stat b { display: block; font-size: 30px; font-weight: 900; line-height: 1.2; color: #f0617f; }
+  .stat span { font-size: 14px; color: #333; }
+  .fig { text-align: center; }
+  .fig img { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; }
+  .cap { font-size: 13px; color: var(--grey); margin-top: 4px; text-align: center; }
+  .pill2 { display: inline-block; background: var(--grad); color: #fff; font-weight: 800; padding: 1px 10px; border-radius: 6px; font-size: 14px; }
+  a { color: inherit; text-decoration: underline; text-decoration-color: var(--coral); text-decoration-thickness: 1.5px; text-underline-offset: 2.5px; }
+  a:hover { color: #d0347c; }
+  .box.hot a, .tag a { color: #fff; text-decoration-color: rgba(255,255,255,.8); }
+  .srcs { font-size: 12.5px; color: var(--grey); margin-top: 8px; line-height: 1.5; }
+  .srcs a { color: var(--grey); }
+  pre.code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.45; background: #f7f7f7; border-radius: 8px; padding: 9px 13px; margin: 6px 0; overflow: hidden; white-space: pre; }
+
+  /* A pattern section as it stands in the paper: the draft on the left, what to say on the right. */
+  .draft { border-left: 5px solid var(--pink); background: #fbfbfb; padding: 14px 20px; font-size: 17px; line-height: 1.65; border-radius: 0 10px 10px 0; }
+  .draft p { margin: 0 0 .55em; } .draft p:last-child { margin-bottom: 0; }
+  .draft ul, .draft ol { margin: .2em 0 .4em; padding-left: 1.3em; } .draft li { margin: .12em 0; }
+  .draft .lbl { display: inline-block; font-size: 12px; font-weight: 800; color: #fff; background: var(--pink); border-radius: 5px; padding: 0 8px; margin-bottom: 6px; letter-spacing: .04em; }
+  .draft blockquote { margin: 0 0 .5em; padding: 6px 12px; border-left: 3px solid var(--coral); background: #fff; font-weight: 700; }
+  .hl { background: #fff1a8; padding: 0 2px; border-radius: 3px; }
+  .pts { font-size: 17px; }
+  .pts h4 { font-size: 19px; margin-bottom: 6px; }
+  .pts h4::before { content: "◆ "; color: var(--coral); }
+  .pts ul { padding-left: 1.2em; } .pts li { margin: .3em 0; }
+  .pts .ask { margin-top: 12px; border: 1.5px dashed var(--coral); border-radius: 10px; padding: 8px 14px; font-size: 16px; }
+  .pts .ask b { color: #d0347c; }
+
+  /* A Discord exchange, drawn as a chat. */
+  .chat { display: grid; grid-template-columns: 74px 1fr; gap: 6px 12px; font-size: 13px; line-height: 1.45; }
+  .chat .who { font-weight: 800; color: var(--grey); text-align: right; padding-top: 7px; font-size: 12.5px; }
+  .chat .who.bot { color: #f0617f; }
+  .chat .msg { background: #f7f7f7; border-radius: 10px; padding: 7px 12px; }
+  .chat .msg.me { background: #eef6ff; }
+  .chat .btn { display: inline-block; border: 1.5px solid #5865f2; color: #5865f2; border-radius: 5px; padding: 0 9px; font-weight: 800; font-size: 12.5px; margin-top: 4px; }
+  .chat .form { border: 1.5px dashed #999; border-radius: 8px; padding: 6px 10px; margin-top: 2px; background: #fff; }
+  .chat .form label { display: block; font-size: 12px; color: var(--grey); margin-top: 3px; }
+  .chat .form input { display: block; width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 1px 8px; font: inherit; font-size: 13px; background: #fff; }
+
+  .cover { display: block; }
+  .cover .wave { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .cover .logo { position: absolute; left: 80px; top: 205px; height: 60px; }
+  .cover h1 { position: absolute; left: 80px; top: 285px; font-size: 62px; font-weight: 900; letter-spacing: .02em; }
+  .cover .when { position: absolute; left: 82px; top: 380px; color: var(--grey); font-size: 18px; }
+  .cover .pill { position: absolute; left: 70px; bottom: 96px; background: var(--grad); color: #fff; font-weight: 800; padding: 6px 18px; border-radius: 8px; font-size: 20px; }
+  .cover .cat { position: absolute; right: 120px; bottom: 90px; width: 380px; }
+  .cover .burger { position: absolute; right: 56px; top: 50px; width: 32px; }
+  .cover .ftr { display: none; }
+
+  .notes { display: none; position: absolute; left: 40px; right: 100px; bottom: 44px; background: rgba(255,255,255,.96); border-left: 4px solid var(--pink);
+    padding: 8px 14px; font-size: 14px; color: #333; box-shadow: 0 -2px 10px rgba(0,0,0,.1); }
+  body.show-notes .notes { display: block; }
+  .hud { position: fixed; right: 14px; top: 12px; display: flex; gap: .5rem; font-size: 13px; z-index: 5; }
+  .hud button { font: inherit; border: 1px solid #ccc; background: #fff; color: #333; border-radius: 6px; padding: .3em .7em; cursor: pointer; }
+  .hud button:focus-visible { outline: 2px solid var(--coral); outline-offset: 2px; }
+  @page { size: 1280px 720px; margin: 0; }
+  @media print { html { scroll-snap-type: none; background: #fff; } .slide { margin: 0; box-shadow: none; page-break-after: always; width: 100%; } .hud { display: none; } }
+
+  /* 2026-10-22：整體放大一級 */
+  table.xs { font-size: 15.5px; } table.xs th, table.xs td { padding: 6px 10px; }
+  table.sm { font-size: 17px; } table.sm th, table.sm td { padding: 7px 12px; }
+  .srcs { font-size: 14px; }
+  .bd ul, .bd ol { font-size: 17px; }
+  .box h3 { font-size: 20px; }
+</style>
+<style>
+  /* 2026-10-29 新增（沿用） */
+  td b.ho { background: #fff1a8; padding: 0 4px; border-radius: 3px; }
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 6px; }
+  .flow > div { border: 2px solid var(--coral); border-radius: 18px; padding: 10px 14px; font-size: 15.5px; position: relative; background: #fff; }
+  .flow > div.hot { background: var(--grad); border: 0; color: #fff; }
+  .flow > div:not(:last-child)::after { content: "➜"; position: absolute; right: -15px; top: 42%; color: #f0617f; font-weight: 900; font-size: 18px; }
+  .flow h4 { font-size: 17px; margin-bottom: 4px; }
+  .flow .r { font-size: 14px; opacity: .9; }
+</style>
+
+
+<!-- 1 · 封面 -->
+<section class="slide cover" id="s1">
+  <img class="wave" src="{{WAVE}}" alt="">
+  <div class="burger"><i></i><i></i><i></i></div>
+  <img class="logo" src="{{LOGO}}" alt="SOSEL">
+  <h1>碩一週進度會議</h1>
+  <p class="when">會議時間：2026/11/05　·　主題：從窮舉規則到四個慣例；程式碼照慣例重整</p>
+  <span class="pill">學生：李安喻</span>
+  <img class="cat" src="{{CAT}}" alt="">
+  <div class="notes"><b>講稿</b>　這次兩件事：上次說「不要測一次修一次、要找通用規則」，做下去的結果是 61 條規則其實只在回答四個問題，程式碼也照這四個問題重整了。數字沒退、架構變乾淨。</div>
+</section>
+
+<!-- 3 · 四個慣例 -->
+<section class="slide" id="s3">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 一條邊 A → B 成立，要回答四個問題 <small>1</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.06">
+    <div class="flow">
+      <div class="hot"><h4>① 名字表</h4><p class="r">誰能被連？部署宣告了哪些名字</p><p style="margin-top:6px">保留網域 → 別名 → localhost → 外部網域 → 宣告的名字 → 才准新節點</p><p class="r" style="margin-top:6px">18 條</p></div>
+      <div><h4>② 位址形狀</h4><p class="r">什麼值是位址？</p><p style="margin-top:6px">scheme、鍵名最後一個字（host／url／addresses）、連線字串、host:port；<span class="mono">http:${X}</span> 沒有 <span class="mono">//</span>，整段都不是主機</p><p class="r" style="margin-top:6px">9 條</p></div>
+      <div><h4>③ 歸屬</h4><p class="r">這個值送到誰手上？</p><p style="margin-top:6px">寫在自己 env 區塊的是自己的；整包注入（envFrom、env_file）的，<b>讀了那個鍵</b>才算</p><p class="r" style="margin-top:6px">15 條</p></div>
+      <div><h4>④ 使用</h4><p class="r">程式有沒有在呼叫點用它？</p><p style="margin-top:6px">URL 字串只在呼叫那一行（或名字追到呼叫點）才算；沒人引用的常數、API 說明頁上給人點的連結、死碼都不是</p><p class="r" style="margin-top:6px">13 條規則</p></div>
+    </div>
+    <div class="two" style="margin-top:14px;gap:26px">
+      <div>
+        <p class="sub">另外 6 條是格式轉接器</p>
+        <p style="font-size:16px">Compose v1、Kotlin、C#、nginx 變數、Helm 渲染、多文件 YAML——<b>只負責讀得懂</b>，不判斷相依。</p>
+        <p class="sub" style="margin-top:10px">每個慣例都有外面的依據</p>
+        <ul style="font-size:15.5px">
+          <li>① Compose 網路與 k8s Service DNS 文件、RFC 2606／6761 保留網域</li>
+          <li>② RFC 3986 URI、JDBC／ADO.NET 連線字串、Twelve-Factor backing services</li>
+          <li>③ Compose <span class="mono">environment</span>／<span class="mono">env_file</span>、k8s <span class="mono">envFrom</span>／<span class="mono">configMapKeyRef</span>、Spring 與 ASP.NET 的設定綁定文件</li>
+          <li>④ 自己的方法：靜態分析區分「宣告」與「使用」</li>
+        </ul>
+      </div>
+      <div>
+        <p class="sub">為什麼說 11 條錯邊都是「沒統一」</p>
+        <ul style="font-size:15.5px">
+          <li><b>③ 7 條</b>：「共用 ConfigMap 的服務位址不畫」只套在 k8s 的服務類，資料庫照畫、Compose 的 <span class="mono">env_file</span> 完全沒套——連 <span class="id">postgres</span> 容器都有出邊</li>
+          <li><b>④ 4 條</b>：「URL 只在呼叫點才算」只套 JS／Go／PHP，Java／C# 抓任何地方的 http 字串再逐個排除——RFC 文件連結、錯誤回應裡的型別網址、API 說明頁的授權條款連結漏網</li>
+        </ul>
+        <p class="note" style="margin-top:10px">統一後：11 條全消失、AICS 畫對的比例 0.90 → 0.97、語料 21 個系統 −137 條（查證約 121 條是錯邊）。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　一條線要成立，工具其實在問四個問題（程式碼處理一列時是倒著問：先④有沒有用、再③誰的、②是不是位址、最後①查名字表）。原本 61 條規則是這四個問題在不同檔案格式上各寫一次，寫漏的格式就錯。審查抓到的 11 條錯邊全部是這樣：7 條是整包 ConfigMap 給了沒在讀的服務，4 條是程式碼裡的 http 字串根本不是呼叫。統一成一份實作之後這 11 條全消失。</div>
+  </div>
+  <div class="ftr"></div><div class="num">2</div>
+</section>
+
+<!-- 4 · depends_on -->
+<section class="slide" id="s4">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 慣例③的一個案例：Compose 的 depends_on 是「先啟動」，不是「我呼叫你」 <small>2</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.16">
+    <div class="two w64" style="gap:26px">
+      <div>
+        <p class="sec">三種結局</p>
+        <table class="xs">
+          <tr><th style="width:30%">寫法</th><th>怎麼畫</th><th style="width:22%" class="c">例子</th></tr>
+          <tr><td>來源自己的位址也指名同一個目標</td><td>兩個宣告一致 → <b>呼叫邊，documented</b></td><td class="c"><span class="id">web</span> → <span class="id">cart</span>（robot-shop）</td></tr>
+          <tr><td>來源是<b>這個 repo 自己程式碼</b>跑的容器，而且哪裡都沒寫位址</td><td>作者對自己程式碼需求的唯一陳述 → 呼叫邊，<b>inferred</b></td><td class="c"><span class="id">search</span> → <span class="id">geo</span>（hotelReservation：位址在沒人擁有的根目錄 config.json）</td></tr>
+          <tr class="hot"><td>第三方映像，或來源的位址指的是別人</td><td>它的接線在映像裡、讀不到 → 只留<b>啟動順序關係</b>（新型別 <span class="mono">startup</span>，另列、不計分）</td><td class="c"><span class="id">node-exporter</span> ~&gt; <span class="id">oap</span>（skywalking：等它起來，從不連它）</td></tr>
+        </table>
+        <p class="note" style="margin-top:12px">先試過更乾淨的版本——depends_on 一律不當呼叫：hotelReservation 掉 22 條真邊、robot-shop 5 條、第三方資料集 6 條。這些邊的程式碼證據都在沒人擁有的共用設定檔裡，depends_on 一直在替這個缺口撐著。所以留第二種，並且寫成「作者對自己容器的陳述」。</p>
+      </div>
+      <div>
+        <p class="sec">效果</p>
+        <ul style="font-size:16px">
+          <li>舊做法「沒位址就畫」：61 條對、9 條錯，錯的 8 條全在 skywalking-showcase 的第三方映像</li>
+          <li>hold-out D：skywalking 畫對的比例 <b>0.44 → 0.73</b>，錯邊 10 → 3；整組 P <b>0.71 → 0.87</b></li>
+          <li>啟動順序關係：skywalking 27 條、otel-demo 5 條、yas 1 條，摘要檔另列 <span class="mono">~&gt;</span> 區</li>
+        </ul>
+        <p class="sub" style="margin-top:12px">順手補的兩條②④</p>
+        <ul style="font-size:15.5px">
+          <li>② <span class="mono">http:${PROMETHEUS_ADDR}</span> 沒有 <span class="mono">//</span>，是 opaque URI，沒有主機（E 原本多畫 <span class="id">jaeger</span> → <span class="id">http</span>）</li>
+          <li>④ Python 的 <span class="mono">smtplib.SMTP(</span> 進呼叫詞彙：AICS 補上 <span class="id">mail-service</span> → smtp.gmail.com</li>
+        </ul>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　depends_on 的意思是「它先起來我再起來」，不是「我會連它」。skywalking 的 node-exporter 等 oap 起來，但從頭到尾沒連過它，舊做法畫了 8 條這種錯邊。現在分三種：來源自己也寫了那個位址就是呼叫；來源是我們自己的程式碼、又完全沒寫位址，當作者的陳述畫成推測；第三方映像只留啟動順序，另外列、不計分。</div>
+  </div>
+  <div class="ftr"></div><div class="num">3</div>
+</section>
+
+<!-- 5 · 三個轉接器 -->
+<section class="slide" id="s5">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 「只畫對的、不畫錯的」要先讓④追得到：補三個綁定轉接器 <small>3</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.0">
+    <p class="sec">想做的事：程式碼讀得到的容器，env 區塊裡的服務位址交給程式碼層畫（yas 的 storefront 被交到 10 個位址、一個都沒用）</p>
+    <p style="font-size:16px">第一次開：yas 錯邊消失，但<b>掉 27 條真邊</b>（yas 16、TeaStore 5、otel 4…）——程式碼真的有用，只是④追不到。逐條看是三種寫法：</p>
+    <div class="three" style="margin-top:10px;gap:18px;grid-template-columns:repeat(3,minmax(0,1fr))">
+      <div class="box" style="min-height:0;min-width:0;padding:16px 18px;border-radius:24px"><h3>Spring 三段式綁定</h3>
+        <pre class="code" style="white-space:pre-wrap;word-break:break-all;font-size:12.5px">YAS_SERVICES_PRODUCT=http://product
+↕ 寬鬆綁定
+yas.services.product
+↕ @ConfigurationProperties(prefix="yas.services")
+record ServiceUrlConfig(String product)
+↕ 存取子在呼叫點
+fromUriString(serviceUrlConfig.product())</pre>
+        <p style="font-size:14.5px">環境變數 ↔ 屬性鍵 ↔ 欄位 ↔ 呼叫點。存取子要在呼叫點那幾行才算，所以 <span class="id">cart</span> → <span class="id">product</span>（有用）畫、<span class="id">storefront</span>（綁了沒用）不畫</p></div>
+      <div class="box" style="min-height:0;min-width:0;padding:16px 18px;border-radius:24px"><h3>映像的命令列</h3>
+        <pre class="code" style="white-space:pre-wrap;word-break:break-all;font-size:12.5px">ENTRYPOINT locust \
+  --host="http://${FRONTEND_ADDR}"</pre>
+        <p style="font-size:14.5px">Dockerfile 的 <span class="mono">ENTRYPOINT</span>／<span class="mono">CMD</span> 和同目錄 <span class="mono">*.sh</span> 裡的 URL 是程式碼層的列，佔位符用該容器的 env 填。Online Boutique／Bank of Anthos 的 <span class="id">loadgenerator</span> → <span class="id">frontend</span> 由此畫出</p></div>
+      <div class="box" style="min-height:0;min-width:0;padding:16px 18px;border-radius:24px"><h3>FROM 鏈</h3>
+        <pre class="code" style="white-space:pre-wrap;word-break:break-all;font-size:12.5px">dockerbase/start.sh:
+  http://${REGISTRY_HOST}:${REGISTRY_PORT}/…
+teastore-webui/Dockerfile:
+  FROM descartesresearch/teastore-base</pre>
+        <p style="font-size:14.5px">基底映像目錄的啟動腳本跑在每個建在它上面的映像裡：TeaStore 五個服務各自用自己的 <span class="mono">REGISTRY_HOST</span> 解成 → <span class="id">teastore-registry</span>；沒有 manifest 跑的 all-in-one 不繼承</p></div>
+    </div>
+    <p class="note" style="margin-top:12px">三個都是「值從哪來」的新路徑，不是新規則；做完再開那條延伸：hold-out C <b>0.87／0.97 → 0.98／0.98</b>（yas 錯 13 → 2），其他組不變。</p>
+    <div class="notes"><b>講稿</b>　問題是 yas 的 storefront 被塞了十個服務位址，程式碼一個都沒用，描述檔卻照畫。要改成「程式碼讀得到就交給程式碼決定」，第一次開掉了 27 條真邊——程式碼確實有用，但工具追不到。追不到的三種寫法：Spring 把環境變數綁到一個 record 再經 getter 進呼叫；locust 的位址寫在 Dockerfile 的命令列；TeaStore 的位址寫在基底映像的啟動腳本。補了這三個轉接器再開，C 組從 0.87 到 0.98，別組沒掉。</div>
+  </div>
+  <div class="ftr"></div><div class="num">4</div>
+</section>
+
+<!-- 6 · 數字 -->
+<section class="slide" id="s6">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 數字：規則 57–61 時 → 四個慣例 → 現在 <small>4</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.1">
+    <table class="xs">
+      <tr><th style="width:26%">組別（P／R）</th><th class="c">規則 57–61 後（上次）</th><th class="c">四個慣例各一份實作</th><th class="c">＋depends_on、三個轉接器（現在）</th><th style="width:30%">現在還錯／漏的是什麼</th></tr>
+      <tr><td>7 個歸納系統</td><td class="c">1.00／1.00</td><td class="c">1.00／1.00</td><td class="c"><b>1.00／1.00</b></td><td style="font-size:14px">—（TeaStore 的 5 條 → registry 改由 start.sh 出處，documented）</td></tr>
+      <tr><td>hold-out B（otel、mall、hotel）</td><td class="c">0.99／0.99</td><td class="c">0.98／0.99</td><td class="c"><b>0.98／0.97</b></td><td style="font-size:14px">漏 2：<span class="id">load-generator</span> → frontend-proxy、<span class="id">fraud-detection</span> → flagd——套件自己讀 env，repo 裡看不到</td></tr>
+      <tr class="hot"><td>hold-out C（yas、aspnetrun）</td><td class="c">0.85／0.97</td><td class="c">0.87／0.97</td><td class="c"><b>0.98／0.98</b></td><td style="font-size:14px">yas 錯 13 → 2（<span class="mono">application-dev.yaml</span> 那條路這次沒動）、漏 3 → 2</td></tr>
+      <tr class="hot"><td>hold-out D（travels、skywalking）</td><td class="c">0.71／1.00</td><td class="c">0.71／1.00</td><td class="c"><b>0.87／1.00</b></td><td style="font-size:14px">skywalking 錯 3：自家映像的 depends_on、沒人注入的 RestTemplate、名字對不上</td></tr>
+      <tr><td>hold-out E（go-food-delivery）</td><td class="c">0／8</td><td class="c">8／8，P 0.73</td><td class="c"><b>1.00／1.00</b></td><td style="font-size:14px"><b>不算沒看過</b>：抽到那天（規則 1–56 的版本）先跑是 0／8，缺口（模組 JSON 裡的 localhost:PORT）當時就看到、寫進論文；57–61 條後仍 0／8，統一①②才補上，所以不算轉移</td></tr>
+      <tr><td>AICS（私有）</td><td class="c">0.90／0.76</td><td class="c">0.97／0.76</td><td class="c"><b>0.97／0.78</b></td><td style="font-size:14px">只算叢集內 <b>0.97／0.94</b>；漏的 9 條是叢集外（外部 SaaS、瀏覽器端）</td></tr>
+      <tr><td>第三方資料集 MicroDepGraph</td><td class="c">93／95</td><td class="c">93／95</td><td class="c"><b>93／95</b></td><td style="font-size:14px">不變</td></tr>
+    </table>
+    <p class="srcs">每一步 23 個回歸系統逐邊重算；參考邊集合依檔頭既有慣例補了遙測 variant（ecommerce 10 條 → zipkin、E 3 條 → otelcol），更正紀錄在 truth/README.md。測試 361：1 失敗（既有、要叢集）、11 略過。</p>
+    <div class="notes"><b>講稿</b>　三欄：上次報告時、統一成四個慣例後、現在。C 組從 0.85 到 0.98 是最大的改善，D 組 0.71 到 0.87 是 depends_on。B 組 R 掉 0.02 是 locust 和 flagd 這兩個套件自己讀環境變數，repo 裡沒有那行程式碼，這是方法的界線，不補。AICS 全部 0.78 是因為一半的漏邊連到叢集外的 SaaS；只算叢集內是 0.94。</div>
+  </div>
+  <div class="ftr"></div><div class="num">5</div>
+</section>
+
+<!-- 7 · 架構重整 -->
+<section class="slide" id="s7">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 程式碼照四個慣例重整：轉接器只讀格式、慣例負責判斷、字詞表集中一處 <small>5</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.1">
+    <div class="two" style="gap:28px;grid-template-columns:.9fr 1.1fr;align-items:stretch">
+      <div class="box" style="min-height:0;padding:20px 26px;border-radius:28px"><h3>之前：依格式、依 section 切</h3>
+        <ul style="font-size:15.5px">
+          <li><span class="mono">CodeGraphMerger</span> 3,073 行：一個方法 500 行建索引、一個方法 500 行合併，用 20 多個 <span class="mono">section.equals</span> 分支</li>
+          <li><span class="mono">ConfigExtractor</span> 2,210 行：九種檔案格式全在一個類別，夾著判斷</li>
+          <li><span class="mono">TreeSitterExtractor</span> 1,254 行：文法驅動＋八個「是不是使用」的後處理</li>
+          <li>20 份字詞表散在 6 個類別</li>
+          <li>四個慣例只存在於文件</li>
+        </ul>
+      </div>
+      <div class="box hot" style="min-height:0;padding:20px 26px;border-radius:28px"><h3>現在：照慣例切（一條邊都沒變）</h3>
+        <pre class="code" style="background:rgba(255,255,255,.14);color:#fff;font-size:13.5px">Conventions/  Vocabulary（29 份字詞表）
+              NameTable ①  EnvScope／KeyReads ③  UseSite ④
+CodeExtraction/  TreeSitterExtractor（只剩文法驅動，496 行）
+              ConfigExtractor（210 行派工）→ Compose／Kubernetes／
+              Docker／AppConfig 四個讀取器 ＋ DescriptorRows
+              AddressShape ②
+Graph/        DeployedNames ①（這個部署的名字表）
+              Ownership ③（誰的值）
+              CodeGraphMerger 1,411 行：每列依 ④→③→②→① 問，
+              派工＋14 個處理器
+RuleTrace     61 條按慣例分組</pre>
+      </div>
+    </div>
+    <div class="two" style="margin-top:12px;gap:26px">
+      <div><p class="sub">怎麼保證沒改到行為</p><ul style="font-size:15.5px"><li>每一步都跑 23 個系統＋AICS 逐邊回歸：<b>same 23／different 0</b>，全套 361 個測試</li><li>逐行用腳本搬、搬之前檢查錨點，搬完編譯器指出每個跨類別引用</li></ul></div>
+      <div><p class="sub">路上抓到一個真 bug</p><p style="font-size:15.5px">Java 的 <span class="mono">Set.of</span> 迭代順序每次 JVM 啟動都不同；叢集 DNS 字尾清單一旦 <span class="mono">.cluster.local</span> 排到 <span class="mono">.svc.cluster.local</span> 前面，<span class="id">web</span>.robot-shop.svc.cluster.local 就剝成「web.robot-shop」，<span class="id">istio-ingressgateway</span> → <span class="id">web</span> 的邊消失。單跑一次抓不到，連跑才炸；已改成保留宣告順序＋測試守著。</p></div>
+    </div>
+    <div class="notes"><b>講稿</b>　上次問「現在都是慣例、沒有特例嗎」，我回答判斷是四個慣例，但程式碼的切法還是依格式，字詞表散在六個地方。這次把程式碼切成跟文件一樣：轉接器只讀檔，判斷在 Conventions，字詞表集中。三個大檔拆成十幾個，合併器從三千行到一千四。每一步跑 23 個系統逐邊比對，一條邊都沒變。</div>
+  </div>
+  <div class="ftr"></div><div class="num">6</div>
+</section>
+
+<!-- 8 · 字詞表與特例 -->
+<section class="slide" id="s8">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 老實說「有沒有特例」：慣例之下是 29 份字詞表＋幾條靠資料定的子句 <small>6</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.14">
+    <div class="two w64" style="gap:26px">
+      <div>
+        <p class="sec">字詞表：29 份、306 個詞，每份寫清楚三件事</p>
+        <table class="xs">
+          <tr><th style="width:26%">清單（例）</th><th>原則</th><th style="width:30%">來源生態系</th></tr>
+          <tr><td><span class="mono">DB_SCHEMES</span>（17）</td><td>URI scheme 說目標是資料庫</td><td>JDBC、MongoDB、Redis… 官方連線 URL</td></tr>
+          <tr><td><span class="mono">HOST_WORDS</span>（8）</td><td>鍵名最後一個字說值是主機</td><td>Spring <span class="mono">.host</span>、.NET <span class="mono">HostName</span>、Nacos <span class="mono">server-addr</span></td></tr>
+          <tr><td><span class="mono">INBOUND_WORDS</span>（18）</td><td>「誰能連我」不是我的相依</td><td>CORS origins、OAuth redirect、AllowedHosts</td></tr>
+          <tr><td><span class="mono">CLIENT_CALL_*</span>（45）</td><td>這些呼叫會發出連線</td><td>RestTemplate、HttpClient、requests、grpc…</td></tr>
+          <tr><td><span class="mono">SOURCE_STOP</span>（35）</td><td>這些目錄名不是服務</td><td>Maven／Go／Node 的專案結構</td></tr>
+        </table>
+        <p style="font-size:15px;margin-top:8px"><b>新增一個詞的條件</b>一律是「某生態系的文件這樣拼」，不是「某個受測系統需要」。清單由程式碼產生 <span class="mono">vocabulary.md</span>，測試保證一致。</p>
+      </div>
+      <div>
+        <p class="sec">靠資料決定的子句（審查會指著說「特例」的）</p>
+        <ul style="font-size:15px">
+          <li>depends_on：自家容器且哪裡都沒位址 → 畫 inferred（純慣例會掉 hotelReservation 22 條）</li>
+          <li><span class="mono">links</span> 與 depends_on 不同待遇（Compose v1 文件）</li>
+          <li>程式碼產生工具有 <span class="mono">main</span> 就算服務（mall-mbg 那條錯邊就是它）</li>
+          <li>FROM 鏈只給<b>有部署的</b>子映像（TeaStore all-in-one）</li>
+          <li>「同一層先」：<span class="mono">server.port</span> 贏過 Compose 發佈的 port（Tap-And-Eat）</li>
+        </ul>
+        <p class="note" style="margin-top:10px">每一條寫成「這一類寫法怎麼看」，程式碼裡沒有任何系統的名字；但「為什麼存在」的答案都是某個系統。論文打算把這幾條和字詞表列成一張表，比說「沒有特例」站得住。</p>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　判斷邏輯是四個慣例沒錯，但底下有兩層東西要老實列出來：29 份字詞表，像「哪些 scheme 是資料庫」「鍵名最後一個字是 host」，這些是各生態系的拼法，不是從慣例推出來的；還有五條靠資料定的子句，每條都是先遇到某個系統才寫的。我的想法是論文直接列表，不說「沒有特例」。</div>
+  </div>
+  <div class="ftr"></div><div class="num">7</div>
+</section>
+
+<!-- 9 · 界線 -->
+<section class="slide" id="s9">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 還會漏、還會錯的，寫成界線 <small>7</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.35">
+    <div class="two" style="gap:28px">
+      <div>
+        <p class="sec">刻意不補的（方法的界線）</p>
+        <ul style="font-size:16px">
+          <li><b>套件自己讀 env</b>：locust 讀 <span class="mono">LOCUST_HOST</span>、OpenFeature SDK 讀 <span class="mono">FLAGD_HOST</span>，repo 裡沒有那行讀取。要補得維護「套件 → 它讀哪個 env」的表，目前只有兩例</li>
+          <li><b>第三方映像的接線</b>：nacos 讀 <span class="mono">MYSQL_SERVICE_HOST</span> 在映像裡；只留啟動順序</li>
+          <li><b>叢集外</b>：AICS 漏的 9 條連到外部 SaaS 或瀏覽器端，靜態層不主張</li>
+          <li><b>經自己寫的函式參數</b>才到 client 的 URL（<span class="mono">scrape("Amazon", "https://…")</span>）</li>
+        </ul>
+      </div>
+      <div>
+        <p class="sec">還能做、但這次沒動</p>
+        <ul style="font-size:16px">
+          <li>yas 剩 2 條錯邊：<span class="mono">application-dev.yaml</span> 這一路（模組自己的設定檔）沒套③的延伸</li>
+          <li>skywalking 3 條：自家映像的 depends_on、沒人注入的 RestTemplate、<span class="id">executejob</span> 名字對不上</li>
+          <li>來源歸屬退回到目錄名（<span class="mono">resources</span>、<span class="mono">quickstart</span>）</li>
+          <li>給瀏覽器的連結網址（<span class="mono">Url:Website</span>、<span class="mono">SpaBaseUrl</span>）靠鍵名分不出來</li>
+        </ul>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　左邊是我判斷不該補的：套件自己讀環境變數、第三方映像裡的接線、叢集外的東西，工具沒有依據主張。右邊是還能做但這次沒動的，都是個位數的邊。</div>
+  </div>
+  <div class="ftr"></div><div class="num">8</div>
+</section>
+
+<!-- 10 · 下一步 -->
+<section class="slide" id="s10">
+  <div class="hdr"><img src="{{LOGO}}" alt="SOSEL"><span class="t">[碩論] 下一步，和想討論的 <small>8</small></span><div class="burger"><i></i><i></i><i></i></div></div>
+  <div class="bd" style="zoom:1.35">
+    <div class="two" style="gap:28px">
+      <div>
+        <p class="sec">下一步</p>
+        <ol style="font-size:16.5px;padding-left:1.4em">
+          <li><b>hold-out F</b>：再抽一個真的沒看過的系統，用現在的程式碼跑一次——r8 的數字都是看過的系統，重整後的泛化要有一個新的量法</li>
+          <li><b>COMPSAC 方法章</b>改寫：四個慣例＋字詞表那張表（<span class="mono">vocabulary.md</span> 已是現成的）＋靠資料定的子句表；表 VIII 加「四慣例」欄</li>
+          <li>AsianPLoP 稿不動：四個 pattern 的 Solution 本來就是這四個問題的另一種寫法</li>
+        </ol>
+      </div>
+      <div>
+        <p class="sec">想討論</p>
+        <div class="pts">
+          <div class="ask"><b>hold-out E 的定位</b>：抽到時就看過，論文裡寫成「探勘的盲點案例」而不是轉移結果——這樣處理可以嗎？</div>
+          <div class="ask"><b>特例怎麼寫</b>：方法章直接列「字詞表＋五條子句」，承認它們是資料逼出來的，還是只寫慣例？</div>
+          <div class="ask"><b>B 組掉的 0.02</b>（套件自己讀 env）：寫成界線，還是補一份「套件 → env」的表？</div>
+        </div>
+      </div>
+    </div>
+    <div class="notes"><b>講稿</b>　下一步最重要的是再抽一個沒看過的系統，因為現在所有數字都是看過的。三個想討論的：E 怎麼定位、特例要不要明寫、B 組那兩條要不要補表。</div>
+  </div>
+  <div class="ftr"></div><div class="num">9</div>
+</section>
+
+<div class="hud"><button type="button" onclick="document.body.classList.toggle('show-notes')">講稿</button><button type="button" onclick="window.print()">列印</button></div>
+</body>
+</html>
