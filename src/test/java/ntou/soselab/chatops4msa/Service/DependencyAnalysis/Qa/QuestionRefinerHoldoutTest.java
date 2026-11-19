@@ -119,7 +119,10 @@ public class QuestionRefinerHoldoutTest {
 
         boolean accepted(double t, double m, double h) {
             SemanticRouter.Decision d = rewriteRoute(t, m, h);
-            return d != null && d.confident && d.intent.equals(refined.proposedIntent);
+            // The same gates as QuestionRefiner.refine, in the same order: language first (it never
+            // depends on the thresholds), then a confident route to the intent the model named.
+            return d != null && QuestionRefiner.sameLanguage(row.question, refined.rewrite)
+                    && d.confident && d.intent.equals(refined.proposedIntent);
         }
 
         QuestionRefiner.Verdict verdict(double t, double m, double h, String originalIntent) {
