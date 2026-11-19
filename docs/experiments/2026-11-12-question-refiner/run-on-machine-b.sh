@@ -16,6 +16,11 @@ command -v mvn >/dev/null || { echo "找不到 mvn"; exit 1; }
 mkdir -p "$KEEP"
 [ -f target/qa-calibration/embeddings-cache.json ] && cp target/qa-calibration/embeddings-cache.json "$KEEP/"
 [ -f target/qa-calibration/chat-cache.json ] && cp target/qa-calibration/chat-cache.json "$KEEP/"
+if [ -d target ] && [ ! -w target ] || find target -not -user "$(id -un)" 2>/dev/null | grep -q .; then
+  echo "target/ 裡有不是你的檔案（通常是之前用 sudo 或 docker 跑過），mvn clean 會刪不掉。先執行："
+  echo "  sudo chown -R \"\$USER\":\"\$USER\" target"
+  exit 1
+fi
 mvn -q clean compile test-compile > "$LOG/compile.log" 2>&1 || { echo "編譯失敗，log 在 $LOG/compile.log"; tail -30 "$LOG/compile.log"; exit 1; }
 mkdir -p target/qa-calibration
 cp "$KEEP"/*.json target/qa-calibration/ 2>/dev/null
