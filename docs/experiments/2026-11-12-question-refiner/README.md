@@ -125,7 +125,7 @@ bash docs/experiments/2026-11-12-question-refiner/run-on-machine-b.sh 3 nearest 
 
 ## 11/19 第二次修法（第四輪待跑：`run-on-machine-b.sh` 不帶參數 → `refine-summary-k5-all-judge.md`）
 
-**意思判定**（`QuestionRefiner.sameMeaning`、`prompts/question_same.txt`）：改寫句過了語言、路由、標籤一致三道門之後，再問模型一次「B 問的和 A 是不是完全同一件事」（同種資訊、同服務、同方向、同正反、同範圍），回 `{"same": true|false}`；false 或沒答案都拒絕、退回 planner。只對會被採用的改寫句問，第三輪是 47 句、47 次小呼叫。`-Dqa.refiner.judge=off`／腳本第三個參數 `off` 可關掉對照。
+**意思判定**（`QuestionRefiner.sameMeaning`、`prompts/question_same.txt`）：改寫句過了語言、路由、標籤一致三道門之後，再問模型一次「B 問的和 A 是不是完全同一件事」（同種資訊、同服務、同方向、同正反、同範圍），回 `{"same": true|false}`；false 或沒答案都拒絕、退回 planner。只對過了語言、路由、標籤一致三道門的改寫句問，包含帶寬裡有把握句子的第二意見；第五輪 83 次。`-Dqa.refiner.judge=off`／腳本第三個參數 `off` 可關掉對照。
 
 ## 結果四（2026-11-19 機器 B 第四輪，`refine-summary-k5-all-judge.md`；加意思判定，第一版 prompt「完全同一件事、同範圍」）
 
@@ -150,7 +150,7 @@ bash docs/experiments/2026-11-12-question-refiner/run-on-machine-b.sh 3 nearest 
 | 採用但錯 | — | 5 | 4 | 1 | 0 | **0** |
 | 有把握（102 句） | 36（35.3%） | 85（83.3%） | 86（84.3%） | 83（81.4%） | 65（63.7%） | 78（**76.5%**） |
 
-判定擋 5 句：namespace 那句（真漂移）＋「排在最後部署→先部署哪個」「哪個收集步驟失敗→怎麼產生」「LLM 寫的還是程式寫的→怎麼產生」「orders、payment 和中間連線→只畫 orders 和 payment」。這 4 句退回 planner：2 句對、2 句空（about-report 那兩句 planner 本來就空），沒有變錯。pick 56 對 1 錯。帶寬仍 0.06／0.02：目前門檻 9 句全 AGREE、誤傷 0；9/14 之前那組錯的 10 句攔到 9（判定讓多 1 句變 DISAGREE）。校準 33/33。
+判定擋 5 句：namespace 那句（真漂移）＋「排在最後部署→先部署哪個」「哪個收集步驟失敗→怎麼產生」「LLM 寫的還是程式寫的→怎麼產生」「orders、payment 和中間連線→只畫 orders 和 payment」。這 4 句退回 planner：2 句對、2 句空（about-report 那兩句 planner 本來就空），沒有變錯。pick 56 對 1 錯。帶寬仍 0.06／0.02：目前門檻 9 句全 AGREE、harm 0；9/14 之前那組錯的 10 句攔到 9（前兩輪 8，第三輪看全部意圖之後改寫句變了就 9，判定只會把 AGREE／DISAGREE 變 FAILED、不會多攔）。校準 33/33。
 
 **定案**：`dependency.qa.question-refiner=true`、`dependency.qa.refiner.band.score=0.06`、`dependency.qa.refiner.band.lead=0.02` 填進 `application-template.properties`。待辦：hold-out F（沒看過的系統）再驗一次判定，因為判定的標準是看著這批的錯例改的。
 
