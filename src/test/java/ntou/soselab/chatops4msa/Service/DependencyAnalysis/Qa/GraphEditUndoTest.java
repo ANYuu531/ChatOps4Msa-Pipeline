@@ -46,7 +46,7 @@ public class GraphEditUndoTest {
         });
         stateStore = new DependencyAnalysisStateStore(work.resolve("dep-state").toString(), 24);
         service = new ReportQaService(new ReportArchiveStore(work.resolve("reports"), Duration.ofDays(1)),
-                stateStore, llm, null, new GraphQueryPlanner(llm), false, true, false, 16, 0.51, 0.10, 0.80);
+                stateStore, llm, null, new GraphQueryPlanner(llm), false, true, false, 16, 0.51, 0.10, 0.80, true, 0, 0);
         graph = new DependencyGraph("");
         graph.addNode("orders", DependencyGraph.KIND_SERVICE);
         graph.addNode("connector", DependencyGraph.KIND_SERVICE);

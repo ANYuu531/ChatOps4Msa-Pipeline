@@ -96,8 +96,10 @@ public class ReportQaService {
     private final JDAService jdaService;
     private final GraphQueryPlanner planner;
     private final SemanticRouter router;
+    private final QuestionRefiner refiner;
     private final boolean embeddingsEnabled;
     private final boolean plannerEnabled;
+    private final boolean refinerEnabled;
     private final boolean injectionCheck;
     private final int topK;
     private final String promptTemplate;
@@ -121,15 +123,23 @@ public class ReportQaService {
                            @Value("${dependency.qa.top-k:16}") int topK,
                            @Value("${dependency.qa.router.threshold:0.51}") double routerThreshold,
                            @Value("${dependency.qa.router.margin:0.10}") double routerMargin,
-                           @Value("${dependency.qa.router.high:0.80}") double routerHigh) {
+                           @Value("${dependency.qa.router.high:0.80}") double routerHigh,
+                           @Value("${dependency.qa.question-refiner:true}") boolean refinerEnabled,
+                           @Value("${dependency.qa.refiner.band.score:0}") double refinerBandScore,
+                           @Value("${dependency.qa.refiner.band.lead:0}") double refinerBandLead) {
         this.store = store;
         this.stateStore = stateStore;
         this.llmService = llmService;
         this.jdaService = jdaService;
         this.planner = planner;
         this.router = new SemanticRouter(llmService::embed, routerThreshold, routerMargin, routerHigh);
+        this.refiner = new QuestionRefiner(router, llmService::embed, (system, user) -> llmService.callAPIFromOutside(
+                new JSONArray().put(new JSONObject().put("role", "system").put("content", system))
+                        .put(new JSONObject().put("role", "user").put("content", user))),
+                refinerBandScore, refinerBandLead);
         this.embeddingsEnabled = embeddingsEnabled;
         this.plannerEnabled = plannerEnabled;
+        this.refinerEnabled = refinerEnabled;
         this.injectionCheck = injectionCheck;
         this.topK = topK;
         this.promptTemplate = loadPrompt();
@@ -340,20 +350,40 @@ public class ReportQaService {
         // by meaning, at no extra call; the model planner takes over only when the
         // router is not confident, and not at all for questions about the report itself.
         List<DependencyGraph.Node> mentioned = GraphGrounding.mentionedNodes(question, graph);
-        SemanticRouter.Decision routed = questionVector == null ? null : router.routeQuestion(question, questionVector, mentioned);
+        // routeQuestion, in two steps: the masked vector is also what the refiner retrieves examples with.
+        double[] routingVector = questionVector == null ? null : router.routingVector(question, questionVector, mentioned);
+        SemanticRouter.Decision routed = routingVector == null ? null : router.route(routingVector, question, mentioned);
         List<GraphQuery> queries = List.of();
         String planSource;
         // Right after a partial graph, a confident subgraph route may be an edit of it
         // ("加上 contacts" names one node and would draw contacts alone); only the
         // planner, which is shown the previous seeds, can tell an edit from a new request.
-        boolean mayEditPartialGraph = routed != null && routed.confident && "subgraph".equals(routed.intent)
-                && archive.lastPlan.contains("subgraph(");
-        if (routed != null && routed.confident && !mayEditPartialGraph) {
+        boolean afterPartialGraph = archive.lastPlan.contains("subgraph(");
+        boolean mayEditPartialGraph = routed != null && routed.confident && "subgraph".equals(routed.intent) && afterPartialGraph;
+        // Unsure: before the planner, let the model reword the question towards the nearest
+        // examples and route the rewording (QuestionRefiner). Not right after a partial
+        // graph — "add contacts too" is an edit of it, and only the planner sees its seeds.
+        QuestionRefiner.Result refined = null;
+        // Confident but only just (inside the second-opinion band): the same rewording as a
+        // second reading. Disagreement hands the question to the planner; anything else
+        // leaves the route as the thresholds decided it.
+        QuestionRefiner.Opinion opinion = null;
+        if (refinerEnabled && !afterPartialGraph && QuestionRefiner.applies(routed, routingVector)) {
+            refined = refiner.refine(question, routingVector, mentioned);
+            System.out.println("[DEBUG] question refined: " + refined);
+            if (refined.accepted) routed = refined.rerouted;
+        } else if (refinerEnabled && !afterPartialGraph && !mayEditPartialGraph && routed != null && refiner.marginal(routed)) {
+            opinion = refiner.secondOpinion(question, routingVector, mentioned, routed);
+            System.out.println("[DEBUG] second opinion on " + routed + ": " + opinion);
+        }
+        boolean overruled = opinion != null && opinion.verdict == QuestionRefiner.Verdict.DISAGREE;
+        if (routed != null && routed.confident && !mayEditPartialGraph && !overruled) {
             queries = routed.queries;
-            planSource = "router " + routed;
+            planSource = (refined != null && refined.accepted ? "router after rewrite \"" + refined.rewrite + "\" " : "router ")
+                    + routed + (opinion == null ? "" : ", second opinion " + opinion.verdict);
         } else if (plannerEnabled && !(routed != null && routed.skipLlm)) {
             queries = planner.plan(graph, question, plannerHints(archive, question, questionVector), previousTurn(archive));
-            planSource = "llm" + (routed == null ? "" : ", router " + routed);
+            planSource = "llm" + (routed == null ? "" : ", router " + routed) + (overruled ? ", second opinion DISAGREE" : "");
         } else {
             planSource = "none" + (routed == null ? "" : ", router " + routed);
         }

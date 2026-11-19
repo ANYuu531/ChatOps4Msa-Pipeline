@@ -2,7 +2,10 @@ package ntou.soselab.chatops4msa;
 
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.CodeGraphMerger;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DependencyGraph;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.DotEmitter;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphEdit;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.GraphvizRenderer;
+import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.SubgraphExtractor;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Graph.AliasResolution;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Qa.EvidenceFinder;
 import ntou.soselab.chatops4msa.Service.DependencyAnalysis.Qa.GraphEditDialogue;
@@ -24,6 +27,9 @@ import java.util.List;
  *     -Dprobe.edit.out=docs/experiments/2026-11-06-graph-edit/yas.md
  * </pre>
  * A request is {@code op|arg|arg|answer|answer…}; requests are separated by {@code ;}.
+ * With {@code -Dprobe.edit.png=<dir>} the graph is also drawn: the whole graph before any
+ * edit and after all of them, and for each edge request the partial graph around its two
+ * endpoints (the same slice the thread posts, endpoints highlighted) before and after.
  */
 @EnabledIfSystemProperty(named = "probe.edit.repo", matches = ".+")
 public class GraphEditProbeTest {
@@ -64,6 +70,9 @@ public class GraphEditProbeTest {
 
         StringBuilder out = new StringBuilder("# graph-edit probe · " + probe.repoName + "\n\n");
         out.append("graph: ").append(graph.getNodes().size()).append(" nodes / ").append(graph.getEdges().size()).append(" edges\n");
+        String pngDir = System.getProperty("probe.edit.png", "");
+        Path pngs = pngDir.isBlank() ? null : Path.of(pngDir.replaceFirst("^~", System.getProperty("user.home")));
+        draw(pngs, "full-before", graph, probe.repoName, List.of());
         String script = System.getProperty("probe.edit.script", "");
         for (String request : script.split(";")) {
             if (request.isBlank()) continue;
@@ -72,10 +81,13 @@ public class GraphEditProbeTest {
             List<String> args = op.equals(GraphEdit.ADD_NODE) ? List.of(parts[1].trim()) : List.of(parts[1].trim(), parts[2].trim());
             int firstAnswer = op.equals(GraphEdit.ADD_NODE) ? 2 : 3;
             String question = op.equals(GraphEdit.ADD_NODE) ? "幫我在圖上新增節點 " + args.get(0)
+                    : op.equals(GraphEdit.REMOVE_EDGE) ? "把 " + args.get(0) + " 到 " + args.get(1) + " 那條線拿掉"
                     : "圖上少了 " + args.get(0) + " 連到 " + args.get(1) + " 的線，幫我加上";
             out.append("\n## ").append(question).append("\n\n");
-            boolean before = op.equals(GraphEdit.ADD_EDGE) && hasEdge(graph, args.get(0), args.get(1));
+            boolean before = !op.equals(GraphEdit.ADD_NODE) && hasEdge(graph, args.get(0), args.get(1));
             out.append("_edge on the graph before: ").append(before).append("_\n\n");
+            String slice = args.size() == 2 ? args.get(0) + "-" + args.get(1) : args.get(0);
+            draw(pngs, slice + "-before", graph, probe.repoName, args);
 
             GraphEditDialogue.Turn turn = GraphEditDialogue.start(op, args, question, env);
             out.append("**bot:**\n```\n").append(turn.reply).append("\n```\n");
@@ -86,9 +98,11 @@ public class GraphEditProbeTest {
                 if (turn.applied != null) {
                     turn.applied.apply(graph);
                     out.append("_applied: ").append(turn.applied.toJson()).append("_\n\n");
+                    draw(pngs, slice + "-after", graph, probe.repoName, args);
                 }
             }
         }
+        draw(pngs, "full-after", graph, probe.repoName, List.of());
         String text = out.toString();
         System.out.println(text);
         String outPath = System.getProperty("probe.edit.out");
@@ -97,6 +111,25 @@ public class GraphEditProbeTest {
             if (target.getParent() != null) Files.createDirectories(target.getParent());
             Files.writeString(target, text);
         }
+    }
+
+    /** The picture the thread would post: the slice around {@code seeds} (whole graph when empty), seeds highlighted. */
+    private static void draw(Path dir, String name, DependencyGraph graph, String repoName, List<String> seeds) throws Exception {
+        if (dir == null) return;
+        Files.createDirectories(dir);
+        DependencyGraph shown = graph;
+        String title = repoName + " · " + name;
+        if (!seeds.isEmpty()) {
+            int maxNodes = Integer.getInteger("probe.edit.pngNodes", SubgraphExtractor.MAX_NODES);
+            SubgraphExtractor.Result slice = SubgraphExtractor.extract(graph, seeds, maxNodes, SubgraphExtractor.MAX_PATH_HOPS);
+            shown = slice.graph;
+            title += " · " + slice.graph.getNodes().size() + " of " + graph.getNodes().size() + " nodes";
+        }
+        String dot = DotEmitter.emit(shown, title, new java.util.HashSet<>(seeds));
+        Files.writeString(dir.resolve(name + ".dot"), dot);
+        byte[] png = GraphvizRenderer.toPng(dot);
+        if (png != null) Files.write(dir.resolve(name + ".png"), png);
+        else System.out.println("[WARNING] Graphviz not available, only " + name + ".dot written");
     }
 
     private static boolean hasEdge(DependencyGraph graph, String s, String t) {

@@ -272,6 +272,76 @@ final class CalibrationSupport {
         }
     }
 
+    // ---------- chat cache ----------
+
+    static final Path CHAT_CACHE_FILE = OUT_DIR.resolve("chat-cache.json");
+
+    /**
+     * The same idea for chat completions: one answer per (model, system, user) prompt,
+     * kept in a JSON file, so a re-run of an experiment that asks the model replays the
+     * stored answers (same numbers, no cost) and only new prompts are sent.
+     * {@code temperature=0} is what makes a stored answer stand for the call.
+     */
+    static final class ChatCache implements QuestionRefiner.Chat {
+        private final Path file;
+        private final String model;
+        private final ChatCompletions remote;
+        private final Map<String, JSONObject> entries = new LinkedHashMap<>();
+        int hits;
+        int misses;
+
+        ChatCache(Path file, String model, ChatCompletions remote) throws Exception {
+            this.file = file;
+            this.model = model;
+            this.remote = remote;
+            if (Files.exists(file)) {
+                JSONObject all = new JSONObject(Files.readString(file)).optJSONObject("entries");
+                if (all != null) for (String key : all.keySet()) entries.put(key, all.getJSONObject(key));
+            }
+        }
+
+        String model() {
+            return model;
+        }
+
+        boolean isEmpty() {
+            return entries.isEmpty();
+        }
+
+        /** {@code null} when the prompt is new and no key is available, or the call fails. */
+        @Override
+        public String complete(String system, String user) {
+            String key = EmbeddingCache.key(model, system + "\n\u0000\n" + user);
+            JSONObject hit = entries.get(key);
+            if (hit != null) {
+                hits++;
+                return hit.optString("answer", null);
+            }
+            misses++;
+            if (remote == null) return null;
+            try {
+                String answer = remote.ask(system, user);
+                entries.put(key, new JSONObject().put("model", model).put("system", system).put("user", user).put("answer", answer));
+                save();
+                return answer;
+            } catch (Exception e) {
+                System.out.println("[WARNING] chat call failed: " + e.getMessage());
+                return null;
+            }
+        }
+
+        private void save() {
+            try {
+                JSONObject all = new JSONObject();
+                for (Map.Entry<String, JSONObject> e : entries.entrySet()) all.put(e.getKey(), e.getValue());
+                Files.createDirectories(file.getParent());
+                Files.writeString(file, new JSONObject().put("entries", all).toString());
+            } catch (Exception e) {
+                System.out.println("[WARNING] chat cache not saved: " + e.getMessage());
+            }
+        }
+    }
+
     // ---------- small output helpers ----------
 
     static String csvRow(Object... cells) {

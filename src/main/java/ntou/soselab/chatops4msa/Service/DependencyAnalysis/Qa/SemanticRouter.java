@@ -26,8 +26,11 @@ import java.util.regex.Pattern;
  * that were NOT observed" sit close together in embedding space and mean opposite
  * things.
  *
- * When the router is not confident, the caller falls back to the model planner, which
- * sees the node ids and handles what neither examples nor rules anticipated.
+ * When the router is not confident, the caller may first let {@link QuestionRefiner}
+ * reword the question towards the nearest examples ({@link #shortlist}) and route the
+ * rewording through this same decision; failing that, it falls back to the model
+ * planner, which sees the node ids and handles what neither examples nor rules
+ * anticipated.
  *
  * A request to change the graph ("add an edge from X to Y") is not an intent here: the
  * intents and their thresholds were calibrated on questions, and an edit request reads
@@ -72,14 +75,21 @@ public final class SemanticRouter {
         /** The message reads as a request to change the graph more than as any question (score of the nearest edit phrasing). */
         public final boolean editLike;
         public final double editScore;
+        /**
+         * The intent needs a node the question did not name ("what breaks if the login
+         * service fails?"): not confident, and no rewording can supply the id — only the
+         * planner, which sees the ids, can.
+         */
+        public final boolean missingNode;
 
         Decision(String intent, double score, String runnerUp, double runnerUpScore,
                  boolean confident, List<GraphQuery> queries, boolean skipLlm) {
-            this(intent, score, runnerUp, runnerUpScore, confident, queries, skipLlm, false, Double.NEGATIVE_INFINITY);
+            this(intent, score, runnerUp, runnerUpScore, confident, queries, skipLlm, false, Double.NEGATIVE_INFINITY, false);
         }
 
         Decision(String intent, double score, String runnerUp, double runnerUpScore,
-                 boolean confident, List<GraphQuery> queries, boolean skipLlm, boolean editLike, double editScore) {
+                 boolean confident, List<GraphQuery> queries, boolean skipLlm, boolean editLike, double editScore,
+                 boolean missingNode) {
             this.intent = intent;
             this.score = score;
             this.runnerUp = runnerUp;
@@ -89,11 +99,12 @@ public final class SemanticRouter {
             this.skipLlm = skipLlm;
             this.editLike = editLike;
             this.editScore = editScore;
+            this.missingNode = missingNode;
         }
 
         /** The same decision, vetoed: not confident, no queries, the planner decides. */
         Decision asEdit(double edit) {
-            return new Decision(intent, score, runnerUp, runnerUpScore, false, List.of(), false, true, edit);
+            return new Decision(intent, score, runnerUp, runnerUpScore, false, List.of(), false, true, edit, missingNode);
         }
 
         @Override
@@ -252,15 +263,23 @@ public final class SemanticRouter {
      * @param rawVector the embedding of the question as typed; may be null
      */
     public Decision routeQuestion(String question, double[] rawVector, List<DependencyGraph.Node> mentioned) {
-        double[] vector = rawVector;
+        return route(routingVector(question, rawVector, mentioned), question, mentioned);
+    }
+
+    /**
+     * The vector {@link #routeQuestion} scores: the masked form's when masking changed
+     * the text (one embedding call), else the raw vector as given. Exposed so a caller
+     * that also needs this vector — the refiner's example retrieval — embeds once.
+     */
+    public double[] routingVector(String question, double[] rawVector, List<DependencyGraph.Node> mentioned) {
         if (question != null && mentioned != null && !mentioned.isEmpty() && embedder != null) {
             String masked = GraphGrounding.maskMentions(question, mentioned);
             if (!masked.equals(question)) {
                 List<double[]> v = embedder.embed(List.of(masked));
-                if (v != null && v.size() == 1) vector = v.get(0);
+                if (v != null && v.size() == 1) return v.get(0);
             }
         }
-        return route(vector, question, mentioned);
+        return rawVector;
     }
 
     /**
@@ -272,6 +291,66 @@ public final class SemanticRouter {
         Decision d = decide(scores(questionVector), question, mentioned, threshold, margin, high);
         double edit = editScore(questionVector);
         return edit > d.score ? d.asEdit(edit) : d;
+    }
+
+    /**
+     * A confident decision that only just cleared the thresholds: no high exemption, and
+     * the score within {@code bandScore} of T or the lead within {@code bandLead} of M.
+     * Such a route is the kind the calibration could not have told from a wrong one by
+     * much, so the caller may ask for a second opinion ({@link QuestionRefiner}). The
+     * band widths are not chosen here: they are swept like T, M and H.
+     */
+    public boolean marginal(Decision d, double bandScore, double bandLead) {
+        return marginal(d, threshold, margin, high, bandScore, bandLead);
+    }
+
+    /** Static and pure so the band sweep replays it under other thresholds. */
+    static boolean marginal(Decision d, double threshold, double margin, double high, double bandScore, double bandLead) {
+        if (d == null || !d.confident || d.score >= high) return false;
+        return d.score - threshold < bandScore || (d.score - d.runnerUpScore) - margin < bandLead;
+    }
+
+    /** One of the examples nearest to a question, with the intent it belongs to. */
+    public static final class Candidate {
+        public final Intent intent;
+        public final String example;
+        public final double score;
+
+        Candidate(Intent intent, String example, double score) {
+            this.intent = intent;
+            this.example = example;
+            this.score = score;
+        }
+    }
+
+    /**
+     * The examples nearest to a question, for the question refiner: the {@code intents}
+     * best-scoring intents, and for each its {@code perIntent} nearest examples, best
+     * first. This is the retrieval step of "retrieve examples, then reword" — the
+     * question's own vector against the example vectors the router already holds, so
+     * it costs no call. Empty when nothing is indexed.
+     */
+    public List<Candidate> shortlist(double[] questionVector, int intents, int perIntent) {
+        List<Candidate> out = new ArrayList<>();
+        if (questionVector == null || !ensureIndexed()) return out;
+        List<Candidate> all = new ArrayList<>();
+        for (int i = 0; i < exampleVectors.size(); i++) {
+            all.add(new Candidate(exampleOwner.get(i), exampleText.get(i), ChunkRetriever.cosine(questionVector, exampleVectors.get(i))));
+        }
+        all.sort((a, b) -> Double.compare(b.score, a.score));
+        List<String> chosen = new ArrayList<>();
+        for (Candidate c : all) {
+            if (!chosen.contains(c.intent.name)) {
+                if (chosen.size() == intents) continue;
+                chosen.add(c.intent.name);
+            }
+            int have = 0;
+            for (Candidate o : out) if (o.intent == c.intent) have++;
+            if (have < perIntent) out.add(c);
+        }
+        // Grouped by intent in score order, best intent first.
+        out.sort((a, b) -> Integer.compare(chosen.indexOf(a.intent.name), chosen.indexOf(b.intent.name)));
+        return out;
     }
 
     /** The best cosine to an edit phrasing; negative infinity when nothing is indexed. */
@@ -323,9 +402,13 @@ public final class SemanticRouter {
 
         boolean confident = bestScore >= high || (bestScore >= threshold && bestScore - secondScore >= margin);
         Intent intent = byName(best);
+        List<DependencyGraph.Node> named = mentioned == null ? List.of() : mentioned;
+        // Threshold-independent: the nearest intent wants a node the question never named.
+        boolean missingNode = intent != null
+                && ((intent.arity == 1 && named.isEmpty()) || (intent.arity == GraphQuery.VARIADIC && named.isEmpty())
+                || (intent.arity == 2 && named.size() < 2));
         List<GraphQuery> queries = new ArrayList<>();
         if (confident && intent != null) {
-            List<DependencyGraph.Node> named = mentioned == null ? List.of() : mentioned;
             if (intent.arity == 0) {
                 for (String op : intent.ops) queries.add(new GraphQuery(op, List.of()));
             } else if (intent.arity == 1) {
@@ -345,7 +428,7 @@ public final class SemanticRouter {
         }
         boolean skipLlm = confident && intent != null && intent.aboutReport;
         return new Decision(best, bestScore, second == null ? "none" : second, secondScore == Double.NEGATIVE_INFINITY ? 0 : secondScore,
-                confident, queries, skipLlm);
+                confident, queries, skipLlm, false, Double.NEGATIVE_INFINITY, missingNode);
     }
 
     static Intent byName(String name) {

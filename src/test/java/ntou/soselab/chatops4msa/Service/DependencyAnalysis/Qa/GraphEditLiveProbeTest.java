@@ -141,7 +141,10 @@ public class GraphEditLiveProbeTest {
                 true, true, false, 16,
                 Double.parseDouble(p.getProperty("dependency.qa.router.threshold", "0.51")),
                 Double.parseDouble(p.getProperty("dependency.qa.router.margin", "0.10")),
-                Double.parseDouble(p.getProperty("dependency.qa.router.high", "0.80")));
+                Double.parseDouble(p.getProperty("dependency.qa.router.high", "0.80")),
+                Boolean.parseBoolean(p.getProperty("dependency.qa.question-refiner", "true")),
+                Double.parseDouble(p.getProperty("dependency.qa.refiner.band.score", "0")),
+                Double.parseDouble(p.getProperty("dependency.qa.refiner.band.lead", "0")));
 
         // The analysis the report came from: the same static run a greenfield request makes.
         GreenfieldProbeTest.Probe probe;

@@ -129,6 +129,22 @@ log 印 `graph query plan (router <intent> <score> (next <intent> <score>)): [..
 **校準**：`SemanticRouterCalibrationTest` 用 33 句不在例句裡的問法對真實 embedding 模型跑，印出每句的最高分／第二名與正確率，
 門檻由此決定；要有額度的 key，指令見第 5 節。
 
+**路由沒把握時先修飾問句（`QuestionRefiner`，2026-11-12 老師反饋）**：老師的話是「問句分數低的部分，可以把我們例句做成 RAG 之類的，讓 LLM 根據 RAG 先修飾問句，再跑接下來流程」。之前分數低的處理方式是人工補例句（11/10 的 externals 三句就是），每次都要重掃門檻；這一步讓模型在執行期自己補那個落差：
+
+1. **檢索例句**（RAG 的檢索部分，`SemanticRouter.shortlist`）：用路由已經算好的問句向量（遮名後的那個），對全部例句算 cosine，取最接近的 **3 個意圖、每個意圖最近的 3 句例句**。不多一次呼叫。
+2. **改寫**（`prompts/question_refine.txt`，一次小的 chat 呼叫）：模型只看到這 9 句例句與使用者的問句，要它輸出 `{"intent": 候選之一或 none, "rewrite": 一句話}`——用使用者的語言、照例句的說法把問題再講一次，服務名照抄、不准改方向或丟掉否定。
+3. **改寫句走原本的路由**：遮名（用**原問句**偵測到的節點）、embed 一次、同一組 T／M／H 判定；查詢的節點參數也是原問句的，不是改寫句的。
+4. **守門**：改寫句的路由要**有把握**，而且**意圖要等於模型自己說的那個**，才採用；模型說 none、意圖不在候選三個裡、改寫句仍沒把握、改寫句路到別的意圖、輸出不是 JSON、呼叫失敗——全部照舊交給 planner。
+5. 不做的情況：問句缺節點名（「登入服務掛了會影響誰」，改寫補不出 id，只有看得到 id 的 planner 能對）、訊息像改圖、上一題剛畫過部分圖（「把 contacts 也加進去」是修改那張圖，只有 planner 看得到上一輪的起點）。
+
+為什麼不直接信模型選的意圖：門檻是為了「有把握但錯＝0」校準的；要是改寫等於模型決定路由，那個校準就失效。現在模型只能在 embedding 已經覺得像的三個意圖裡提議，提議還得過同一套門檻並和它自己的標籤一致。被採用的改寫句會印在 log（`graph query plan (router after rewrite "…" …)`），之後可以從 log 撈真實使用者的說法、看過再加進例句——這才是補例句該有的來源，不是作者自己想。
+
+成本：只在路由沒把握時多一次小 chat 呼叫＋一次 embedding；採用時省掉 planner 那次呼叫，被拒時多一次。`dependency.qa.question-refiner=false` 可關掉。
+
+**有把握但剛好過的也問一次（第二意見）**：0.541 那句當時是有把握的（兩個門檻各只多 0.031 與 0.002），照上面的規則不會走修飾；老師說的「分數低」包含這一帶。所以第二段觸發：有把握、分數 < H、而且分數離 T 不到 `band.score` 或領先離 M 不到 `band.lead` 的路由，同樣改寫一次當第二意見——改寫句路到**同一個**意圖就照原路由走並記下這句（AGREE）；路到**不同**意圖就交 planner（DISAGREE）；其他情況原路由照走，門檻本來就守住它（FAILED）。**帶寬多寬是一個門檻**，照 `threshold-design.md` 的規矩掃描選（§3.8），選定前預設 0／0 即關閉；設定 `dependency.qa.refiner.band.score`／`band.lead`。
+
+**驗證**（`QuestionRefinerHoldoutTest`，`-Dqa.calibrate=true`，機器 B；指令 `docs/experiments/2026-11-12-question-refiner/run-on-machine-b.sh`）：102 句 hold-out 照正式路徑路由，沒把握的那六成左右各做三件事——①planner（現況）②改寫後重新路由（老師的提議＋守門）③模型直接選意圖不改寫（同一次呼叫的標籤，用來量「重新路由這道守門買到什麼」）。看的數字：有把握比例加上採用的改寫句之後是多少、**採用的改寫句裡錯的有幾句**（這是門檻守的那個 0）、同一批沒把握的句子 planner 答對幾句 vs 改寫管線答對幾句。同一次跑也掃第二意見的帶寬（`threshold-design.md` §3.8）：每句只問一次模型，之後任何帶寬與門檻都離線重播，選定規則先寫在程式裡。chat 回答與 embedding 一樣有快取（`target/qa-calibration/chat-cache.json`），重跑免費、數字固定。**結果待機器 B 跑，本機沒有額度不填數字。**
+
 **同義詞**：`GraphGrounding.mentionedNodes` 認兩組角色詞——「前端／front-end／網頁」→ id 含 frontend 的節點、「閘道／入口／gateway／ingress」→ gateway 類節點。
 其餘同義詞交給 LLM planner（它看得到 id 清單）；**planner 解出的節點 id 會回饋給事實表**（`ground(graph, question, extraNodeIds)`），
 所以「登入服務」對到 `userservice` 後，事實表也會有它。
@@ -239,7 +255,7 @@ runtime 模式下更準的做法是用 Postman collection 裡「checkout」那�
 
 ## 6. 已知界線與下一步
 
-- 每個問題兩次 LLM 呼叫（planner 小、answer 大）加一次 embedding。planner 選錯算子時答案會少一塊事實，
+- 每個問題兩次 LLM 呼叫（planner 小、answer 大）加一次 embedding；路由沒把握時再多一次修飾問句的小呼叫（2.4b）。planner 選錯算子時答案會少一塊事實，
   但 grounding 與 passages 仍在，且模型被禁止編造；要驗證的是 planner 對中文問句的選擇率，真環境跑幾輪看 log 的
   `[DEBUG] graph query plan:`。
 - 節點偵測是字串比對，同義詞（「前端」→ frontend）抓不到；planner 那一步模型看得到 id 清單，通常能對上，
