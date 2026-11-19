@@ -305,7 +305,10 @@ public class QuestionRefinerHoldoutTest {
                 Double.parseDouble(p.getProperty("dependency.qa.router.high", String.valueOf(SemanticRouter.DEFAULT_HIGH))));
         SemanticRouter router = new SemanticRouter(embeddings, current.t, current.m, current.h);
         assertTrue(router.ensureIndexed(), "could not index the examples");
-        QuestionRefiner refiner = new QuestionRefiner(router, embeddings, chat);
+        // -Dqa.refiner.shortlist=5 widens the shortlist the model sees; the production width is QuestionRefiner.INTENTS
+        int shortlistWidth = Integer.parseInt(System.getProperty("qa.refiner.shortlist", String.valueOf(QuestionRefiner.INTENTS)));
+        QuestionRefiner refiner = new QuestionRefiner(router, embeddings, chat,
+                QuestionRefiner.DEFAULT_BAND_SCORE, QuestionRefiner.DEFAULT_BAND_LEAD, shortlistWidth);
         GraphQueryPlanner plannerPrompt = new GraphQueryPlanner(null);
 
         List<Row> rows = new ArrayList<>();
@@ -434,7 +437,8 @@ public class QuestionRefinerHoldoutTest {
         sb.append("# Question refiner on the hold-out\n\n");
         sb.append("- embedding model: `").append(embeddingModel).append("`; chat model: `").append(chat.model()).append("`\n");
         sb.append(String.format(Locale.ROOT, "- thresholds T=%.2f M=%.2f H=%.2f; shortlist %d intents × %d examples%n",
-                t, m, h, QuestionRefiner.INTENTS, QuestionRefiner.EXAMPLES_PER_INTENT));
+                t, m, h, Integer.parseInt(System.getProperty("qa.refiner.shortlist", String.valueOf(QuestionRefiner.INTENTS))),
+                QuestionRefiner.EXAMPLES_PER_INTENT));
         Predicate<Row> deferred = r -> !r.route(t, m, h).confident;
         long n = rows.size(), nDeferred = rows.stream().filter(deferred).count();
         long refinableDeferred = rows.stream().filter(r -> deferred.test(r) && r.refinable).count();

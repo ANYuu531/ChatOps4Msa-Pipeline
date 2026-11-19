@@ -130,18 +130,30 @@ public final class QuestionRefiner {
     private final String template;
     private final double bandScore;
     private final double bandLead;
+    /** How many nearest intents the model is shown; {@link #INTENTS} unless an experiment widens it. */
+    private final int intents;
 
     public QuestionRefiner(SemanticRouter router, SemanticRouter.Embedder embedder, Chat chat) {
         this(router, embedder, chat, DEFAULT_BAND_SCORE, DEFAULT_BAND_LEAD);
     }
 
     public QuestionRefiner(SemanticRouter router, SemanticRouter.Embedder embedder, Chat chat, double bandScore, double bandLead) {
+        this(router, embedder, chat, bandScore, bandLead, INTENTS);
+    }
+
+    public QuestionRefiner(SemanticRouter router, SemanticRouter.Embedder embedder, Chat chat, double bandScore, double bandLead, int intents) {
         this.router = router;
         this.embedder = embedder;
         this.chat = chat;
         this.bandScore = bandScore;
         this.bandLead = bandLead;
+        this.intents = Math.max(1, intents);
         this.template = loadTemplate();
+    }
+
+    /** The shortlist width this refiner shows the model. */
+    public int intents() {
+        return intents;
     }
 
     /** A confident decision inside the second-opinion band; never when the band is zero. */
@@ -176,7 +188,7 @@ public final class QuestionRefiner {
      * @param mentioned      the nodes the question names; the rewording's arguments are these
      */
     public Result refine(String question, double[] questionVector, List<DependencyGraph.Node> mentioned) {
-        List<SemanticRouter.Candidate> candidates = router.shortlist(questionVector, INTENTS, EXAMPLES_PER_INTENT);
+        List<SemanticRouter.Candidate> candidates = router.shortlist(questionVector, intents, EXAMPLES_PER_INTENT);
         List<String> shortlist = new ArrayList<>();
         for (SemanticRouter.Candidate c : candidates) if (!shortlist.contains(c.intent.name)) shortlist.add(c.intent.name);
         if (shortlist.isEmpty()) return new Result(shortlist, NONE, "", null, false, "no examples indexed");
