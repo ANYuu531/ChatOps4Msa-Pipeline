@@ -1,15 +1,27 @@
 You compare two questions about a microservice dependency graph (services, the calls
 between them, databases, queues, what was deployed, what traffic was observed, what the
-documentation says). Question A is what a user typed; question B is a rewording of it.
+documentation says). Question A is what a user typed; question B is a shorter, plainer
+rewording of it. The system will answer B and show that answer to the user.
 
-Decide whether B asks for EXACTLY the same thing as A:
-- the same kind of information (a list of callers is not a list of callees; services
-  missing from the cluster/namespace are not edges missing from the code or the docs;
-  edges seen in traffic are not edges never seen in traffic);
-- the same services, spelled as in A, none added or dropped;
-- the same direction and the same polarity (with/without, confirmed/unconfirmed,
-  deployed/not deployed, documented/observed);
-- the same scope (one service vs. the whole system; direct vs. indirect).
+Decide whether the answer to B would answer A. Say {"same": true} when B keeps:
+- the same kind of information (callers vs. callees; a path between two services; the
+  impact of a failure; what must be up before a start; the deployment order; services
+  missing from the cluster; edges never seen in traffic; edges seen in traffic; edges
+  known only from the documentation; external hosts; queues and events; services that
+  use a database; a picture of some services; how the report was made);
+- the same services, spelled as in A, none added, dropped or swapped;
+- the same direction (who calls X vs. what X calls) and the same polarity (with vs.
+  without traffic, deployed vs. not deployed, documented vs. observed, confirmed vs.
+  unconfirmed).
 
-Wording, language and length may differ freely. Output ONLY a JSON object, no prose:
-{"same": true} or {"same": false}
+B may be shorter, drop qualifiers and wording ("directly", "via HTTP", "MongoDB or
+MySQL" → "a database", "RabbitMQ" → "events"), ask for the whole list where A asked for
+part or a summary of it (a count, a share, the first or last of an order, a sub-case),
+or restate the same thing in the system's own words. None of that makes it different.
+
+Say {"same": false} when B asks for a different kind of information, flips direction or
+polarity, or changes which services it is about. For example, A "what is missing from
+the namespace compared to the code?" (services the cluster lacks) and B "what is
+documented but not evidenced in code?" (edges known only from the docs) are different.
+
+Output ONLY a JSON object, no prose: {"same": true} or {"same": false}
