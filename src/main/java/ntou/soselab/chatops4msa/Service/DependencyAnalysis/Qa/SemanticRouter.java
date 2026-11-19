@@ -331,6 +331,18 @@ public final class SemanticRouter {
      * it costs no call. Empty when nothing is indexed.
      */
     public List<Candidate> shortlist(double[] questionVector, int intents, int perIntent) {
+        return shortlist(questionVector, intents, perIntent, 0);
+    }
+
+    /**
+     * As {@link #shortlist(double[], int, int)}, and the intents beyond the {@code intents}
+     * nearest get {@code restPerIntent} examples each (0 = left out). With a positive
+     * {@code restPerIntent} the model sees the whole menu — the 2026-11-19 runs showed
+     * that when the right intent is missing from a short list, the model picks the
+     * nearest wrong one and the re-routing cannot tell — while the nearest intents still
+     * carry the most examples. Grouped by intent in score order, best intent first.
+     */
+    public List<Candidate> shortlist(double[] questionVector, int intents, int perIntent, int restPerIntent) {
         List<Candidate> out = new ArrayList<>();
         if (questionVector == null || !ensureIndexed()) return out;
         List<Candidate> all = new ArrayList<>();
@@ -338,18 +350,15 @@ public final class SemanticRouter {
             all.add(new Candidate(exampleOwner.get(i), exampleText.get(i), ChunkRetriever.cosine(questionVector, exampleVectors.get(i))));
         }
         all.sort((a, b) -> Double.compare(b.score, a.score));
-        List<String> chosen = new ArrayList<>();
+        List<String> ranked = new ArrayList<>();
         for (Candidate c : all) {
-            if (!chosen.contains(c.intent.name)) {
-                if (chosen.size() == intents) continue;
-                chosen.add(c.intent.name);
-            }
+            if (!ranked.contains(c.intent.name)) ranked.add(c.intent.name);
+            int cap = ranked.indexOf(c.intent.name) < intents ? perIntent : restPerIntent;
             int have = 0;
             for (Candidate o : out) if (o.intent == c.intent) have++;
-            if (have < perIntent) out.add(c);
+            if (have < cap) out.add(c);
         }
-        // Grouped by intent in score order, best intent first.
-        out.sort((a, b) -> Integer.compare(chosen.indexOf(a.intent.name), chosen.indexOf(b.intent.name)));
+        out.sort((a, b) -> Integer.compare(ranked.indexOf(a.intent.name), ranked.indexOf(b.intent.name)));
         return out;
     }
 

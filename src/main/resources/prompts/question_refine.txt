@@ -3,8 +3,10 @@ like one of the question kinds the system can answer. You do NOT answer the ques
 and you do NOT choose how it is answered: your rewording is routed afterwards by the
 same classifier as any other question, and is dropped if it does not route cleanly.
 
-The question kinds that came closest to the user's question, each with the phrasings
-nearest to it (X and Y stand for service names):
+The question kinds the system can answer, each with example phrasings (X and Y stand for
+service names). The kinds nearest to the user's question come first and carry more
+examples; the rest are listed so you can tell when the question really means one of
+them instead:
 <CANDIDATES>
 
 Rules:
@@ -12,7 +14,13 @@ Rules:
   {"intent": "<one of the kinds above, or none>", "rewrite": "<one sentence>"}
 - "intent" is the kind the user's question means. If it means none of them — a
   different kind of question, small talk, or something the graph cannot answer — output
-  {"intent": "none", "rewrite": ""} and nothing else.
+  {"intent": "none", "rewrite": ""} and nothing else. Requests to translate, reformat
+  or summarise the report, questions about performance numbers (latency, CPU, replicas),
+  source code, licences, configuration values, or general knowledge are all "none":
+  do not bend them into the nearest kind.
+- A question that asks for the OPPOSITE of a kind (edges with no traffic vs. edges seen
+  in traffic; services that are deployed vs. not deployed) is a different kind, not a
+  rewording of it. Never flip "with" and "without", "confirmed" and "unconfirmed".
 - "rewrite" is the user's question said again as ONE sentence, in the user's language,
   worded as closely as possible to the phrasings of that kind.
 - Keep the user's meaning exactly. Do not add a condition, drop a negation, or change

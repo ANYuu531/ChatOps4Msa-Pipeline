@@ -57,8 +57,9 @@ public final class QuestionRefiner {
     }
 
     /** The intents the model is shown: the three nearest, with the nearest examples of each. */
-    static final int INTENTS = 3;
+    static final int INTENTS = 5;
     static final int EXAMPLES_PER_INTENT = 3;
+    static final int REST_EXAMPLES = 1;
     private static final String PROMPT_FILE = "prompts/question_refine.txt";
     static final String NONE = "none";
 
@@ -130,30 +131,54 @@ public final class QuestionRefiner {
     private final String template;
     private final double bandScore;
     private final double bandLead;
-    /** How many nearest intents the model is shown; {@link #INTENTS} unless an experiment widens it. */
+    /** How many nearest intents carry {@link #EXAMPLES_PER_INTENT} examples; {@link #INTENTS} unless an experiment changes it. */
     private final int intents;
+    /** Examples for every other intent: {@link #REST_EXAMPLES} (the whole menu) or 0 (the nearest only). */
+    private final int restExamples;
 
     public QuestionRefiner(SemanticRouter router, SemanticRouter.Embedder embedder, Chat chat) {
         this(router, embedder, chat, DEFAULT_BAND_SCORE, DEFAULT_BAND_LEAD);
     }
 
     public QuestionRefiner(SemanticRouter router, SemanticRouter.Embedder embedder, Chat chat, double bandScore, double bandLead) {
-        this(router, embedder, chat, bandScore, bandLead, INTENTS);
+        this(router, embedder, chat, bandScore, bandLead, INTENTS, REST_EXAMPLES);
     }
 
-    public QuestionRefiner(SemanticRouter router, SemanticRouter.Embedder embedder, Chat chat, double bandScore, double bandLead, int intents) {
+    public QuestionRefiner(SemanticRouter router, SemanticRouter.Embedder embedder, Chat chat, double bandScore, double bandLead,
+                           int intents, int restExamples) {
         this.router = router;
         this.embedder = embedder;
         this.chat = chat;
         this.bandScore = bandScore;
         this.bandLead = bandLead;
         this.intents = Math.max(1, intents);
+        this.restExamples = Math.max(0, restExamples);
         this.template = loadTemplate();
     }
 
-    /** The shortlist width this refiner shows the model. */
+    /** How many nearest intents carry the full set of examples. */
     public int intents() {
         return intents;
+    }
+
+    /** Examples per intent outside the nearest ones; 0 when the model sees the nearest only. */
+    public int restExamples() {
+        return restExamples;
+    }
+
+    /** True when both texts are in the same script: a CJK question must stay CJK, an English one English. */
+    static boolean sameLanguage(String a, String b) {
+        return hasCjk(a) == hasCjk(b);
+    }
+
+    private static boolean hasCjk(String s) {
+        if (s == null) return false;
+        for (int i = 0; i < s.length(); ) {
+            int cp = s.codePointAt(i);
+            if (Character.UnicodeScript.of(cp) == Character.UnicodeScript.HAN) return true;
+            i += Character.charCount(cp);
+        }
+        return false;
     }
 
     /** A confident decision inside the second-opinion band; never when the band is zero. */
@@ -188,7 +213,7 @@ public final class QuestionRefiner {
      * @param mentioned      the nodes the question names; the rewording's arguments are these
      */
     public Result refine(String question, double[] questionVector, List<DependencyGraph.Node> mentioned) {
-        List<SemanticRouter.Candidate> candidates = router.shortlist(questionVector, intents, EXAMPLES_PER_INTENT);
+        List<SemanticRouter.Candidate> candidates = router.shortlist(questionVector, intents, EXAMPLES_PER_INTENT, restExamples);
         List<String> shortlist = new ArrayList<>();
         for (SemanticRouter.Candidate c : candidates) if (!shortlist.contains(c.intent.name)) shortlist.add(c.intent.name);
         if (shortlist.isEmpty()) return new Result(shortlist, NONE, "", null, false, "no examples indexed");
@@ -206,6 +231,9 @@ public final class QuestionRefiner {
         if (NONE.equals(p.intent)) return new Result(shortlist, NONE, "", null, false, "model: none of these");
         if (!shortlist.contains(p.intent)) return new Result(shortlist, p.intent, p.rewrite, null, false, "intent not on the shortlist");
         if (p.rewrite.isBlank()) return new Result(shortlist, p.intent, "", null, false, "empty rewrite");
+        // A rewording in another script is not the user's question any more (11/19: "translate the
+        // report into Japanese?" came back as a Chinese about-report question and routed at 0.90).
+        if (!sameLanguage(question, p.rewrite)) return new Result(shortlist, p.intent, p.rewrite, null, false, "rewrite changes language");
 
         List<double[]> v = embedder == null ? null : embedder.embed(List.of(p.rewrite));
         if (v == null || v.size() != 1 || v.get(0) == null) return new Result(shortlist, p.intent, p.rewrite, null, false, "rewrite not embedded");

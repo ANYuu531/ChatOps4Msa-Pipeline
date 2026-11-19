@@ -85,7 +85,36 @@ public class QuestionRefinerTest {
     }
 
     @Test
-    void theModelSeesOnlyTheShortlistAndTheQuestion() {
+    void theWholeMenuListsEveryIntentWithTheNearestOnesCarryingMoreExamples() {
+        SemanticRouter router = strictRouter();
+        List<SemanticRouter.Candidate> nearestOnly = router.shortlist(vec("哪些邊沒跑到？流量沒經過哪些邊？"), 2, 2);
+        List<SemanticRouter.Candidate> menu = router.shortlist(vec("哪些邊沒跑到？流量沒經過哪些邊？"), 2, 2, 1);
+        List<String> intents = new ArrayList<>();
+        for (SemanticRouter.Candidate x : menu) if (!intents.contains(x.intent.name)) intents.add(x.intent.name);
+        assertEquals(SemanticRouter.INTENTS.size(), intents.size(), menu.toString());
+        assertEquals("uncovered", intents.get(0));
+        // The two nearest keep their two examples and come first; every other intent has exactly one.
+        assertEquals(nearestOnly.stream().map(x -> x.example).toList(),
+                menu.subList(0, nearestOnly.size()).stream().map(x -> x.example).toList());
+        for (String name : intents.subList(2, intents.size())) {
+            assertEquals(1, menu.stream().filter(x -> x.intent.name.equals(name)).count(), name);
+        }
+    }
+
+    @Test
+    void rejectedWhenTheRewordingChangesLanguage() {
+        // 11/19: "can you translate the report into Japanese?" came back as a Chinese about-report question.
+        assertTrue(QuestionRefiner.sameLanguage("orders 會呼叫誰？", "orders 的下游有哪些？"));
+        assertFalse(QuestionRefiner.sameLanguage("can you translate the report into Japanese?", "這份報告是怎麼產生的？"));
+        QuestionRefiner.Result r = refine(strictRouter(), says("{\"intent\": \"uncovered\", \"rewrite\": \"which edges got no traffic?\"}"),
+                "流量 沒跑到 的邊 哪些");
+        assertFalse(r.accepted, r.toString());
+        assertEquals("rewrite changes language", r.reason);
+        assertNull(r.rerouted);
+    }
+
+    @Test
+    void theModelSeesTheMenuNearestFirstAndTheQuestion() {
         SemanticRouter router = strictRouter();
         AtomicReference<String> system = new AtomicReference<>();
         AtomicReference<String> user = new AtomicReference<>();
@@ -98,9 +127,12 @@ public class QuestionRefinerTest {
         assertEquals("流量 沒跑到 的邊 哪些", user.get());
         assertTrue(system.get().contains("- uncovered\n    \""), system.get());
         assertFalse(system.get().contains("<CANDIDATES>"));
-        // Three intents, no more: the model cannot pick a meaning the embedding found implausible.
-        long intents = system.get().lines().filter(l -> l.matches("- [a-z-]+")).count();
-        assertEquals(3, intents, system.get());
+        // The whole menu, nearest first: the right intent is never missing (11/19: 4 of 5 wrong
+        // acceptances had it off a 3-intent shortlist), and uncovered leads with its full examples.
+        List<String> intents = system.get().lines().filter(l -> l.matches("- [a-z-]+")).map(l -> l.substring(2)).toList();
+        assertEquals(SemanticRouter.INTENTS.size(), intents.size(), system.get());
+        assertEquals("uncovered", intents.get(0), system.get());
+        assertTrue(system.get().lines().filter(l -> l.startsWith("    \"")).count() > intents.size(), system.get());
     }
 
     @Test
@@ -136,7 +168,7 @@ public class QuestionRefinerTest {
         SemanticRouter router = strictRouter();
         String q = "流量 沒跑到 的邊 哪些";
         assertEquals("model: none of these", refine(router, says("{\"intent\": \"none\", \"rewrite\": \"\"}"), q).reason);
-        assertEquals("intent not on the shortlist", refine(router, says("{\"intent\": \"deploy-order\", \"rewrite\": \"建議的部署順序是什麼？\"}"), q).reason);
+        assertEquals("intent not on the shortlist", refine(router, says("{\"intent\": \"fly-to-mars\", \"rewrite\": \"建議的部署順序是什麼？\"}"), q).reason);
         assertEquals("unparseable answer", refine(router, says("Sure! Here is a rewrite."), q).reason);
         assertEquals("empty rewrite", refine(router, says("{\"intent\": \"uncovered\"}"), q).reason);
         assertEquals("no model answer", refine(router, (s, u) -> null, q).reason);

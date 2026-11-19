@@ -305,10 +305,10 @@ public class QuestionRefinerHoldoutTest {
                 Double.parseDouble(p.getProperty("dependency.qa.router.high", String.valueOf(SemanticRouter.DEFAULT_HIGH))));
         SemanticRouter router = new SemanticRouter(embeddings, current.t, current.m, current.h);
         assertTrue(router.ensureIndexed(), "could not index the examples");
-        // -Dqa.refiner.shortlist=5 widens the shortlist the model sees; the production width is QuestionRefiner.INTENTS
-        int shortlistWidth = Integer.parseInt(System.getProperty("qa.refiner.shortlist", String.valueOf(QuestionRefiner.INTENTS)));
+        // -Dqa.refiner.shortlist=N: how many nearest intents carry 3 examples; -Dqa.refiner.menu=nearest: the model sees
+        // those only (the 11/19 runs), menu=all: every other intent with one example (production since 11/19)
         QuestionRefiner refiner = new QuestionRefiner(router, embeddings, chat,
-                QuestionRefiner.DEFAULT_BAND_SCORE, QuestionRefiner.DEFAULT_BAND_LEAD, shortlistWidth);
+                QuestionRefiner.DEFAULT_BAND_SCORE, QuestionRefiner.DEFAULT_BAND_LEAD, shortlistWidth(), restExamples());
         GraphQueryPlanner plannerPrompt = new GraphQueryPlanner(null);
 
         List<Row> rows = new ArrayList<>();
@@ -430,15 +430,25 @@ public class QuestionRefinerHoldoutTest {
         return g;
     }
 
+    /** -Dqa.refiner.shortlist: how many nearest intents carry the full examples (production: QuestionRefiner.INTENTS). */
+    static int shortlistWidth() {
+        return Integer.parseInt(System.getProperty("qa.refiner.shortlist", String.valueOf(QuestionRefiner.INTENTS)));
+    }
+
+    /** -Dqa.refiner.menu=nearest: the model sees the nearest intents only (the 11/19 runs); all (production): the rest with one example. */
+    static int restExamples() {
+        return "nearest".equalsIgnoreCase(System.getProperty("qa.refiner.menu", "all")) ? 0 : QuestionRefiner.REST_EXAMPLES;
+    }
+
     private static String summary(List<Row> rows, String embeddingModel, ChatCache chat, Thresholds cur, List<Thresholds> loose,
                                   List<Band> grid, Band selected) {
         double t = cur.t, m = cur.m, h = cur.h;
         StringBuilder sb = new StringBuilder();
         sb.append("# Question refiner on the hold-out\n\n");
         sb.append("- embedding model: `").append(embeddingModel).append("`; chat model: `").append(chat.model()).append("`\n");
-        sb.append(String.format(Locale.ROOT, "- thresholds T=%.2f M=%.2f H=%.2f; shortlist %d intents × %d examples%n",
-                t, m, h, Integer.parseInt(System.getProperty("qa.refiner.shortlist", String.valueOf(QuestionRefiner.INTENTS))),
-                QuestionRefiner.EXAMPLES_PER_INTENT));
+        sb.append(String.format(Locale.ROOT, "- thresholds T=%.2f M=%.2f H=%.2f; menu: %d nearest intents × %d examples, %s%n",
+                t, m, h, shortlistWidth(), QuestionRefiner.EXAMPLES_PER_INTENT,
+                restExamples() > 0 ? "every other intent × " + restExamples() + " example" : "nothing else"));
         Predicate<Row> deferred = r -> !r.route(t, m, h).confident;
         long n = rows.size(), nDeferred = rows.stream().filter(deferred).count();
         long refinableDeferred = rows.stream().filter(r -> deferred.test(r) && r.refinable).count();

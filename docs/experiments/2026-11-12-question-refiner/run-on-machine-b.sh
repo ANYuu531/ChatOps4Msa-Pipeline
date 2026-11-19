@@ -2,14 +2,16 @@
 # 機器 B：問句修飾（2026-11-12 老師反饋）在 102 句 hold-out 上的實驗，真的 OpenAI。
 #   第一部分：路由沒把握的句子 → ①planner（現況）②改寫後重新路由（老師的提議＋守門）③模型直接選意圖（不改寫）
 #   第二部分：有把握但剛好過門檻的句子要不要再問一次——帶寬掃描（threshold-design.md §3.8），同一次跑、離線重播
-# 用法（在 repo 根目錄）：bash docs/experiments/2026-11-12-question-refiner/run-on-machine-b.sh [候選意圖數]
-#   不給參數＝正式的 3 個候選意圖，結果寫 refine-summary.md；給 5 就是「模型看 5 個候選」的對照跑，結果寫 refine-summary-k5.md
+# 用法（在 repo 根目錄）：bash docs/experiments/2026-11-12-question-refiner/run-on-machine-b.sh [最近幾個意圖給 3 句例句] [all|nearest]
+#   不給參數＝正式設定（5 個最近的意圖各 3 句例句、其餘每個意圖 1 句），結果寫 refine-summary-k5-all.md
+#   `3 nearest`、`5 nearest` 是 11/19 前兩輪的設定（模型只看最近的幾個），結果已存成 -k3-nearest、-k5-nearest
 # 需要：mvn、git、src/main/resources/application.properties（有額度的 openai.api.key、openai.api.model）。
 # 費用：102 句 × 2 次小呼叫（修飾 + planner）＋ 約 100 句改寫的 embedding；embedding 與 chat 都有快取，重跑免費。
 set -u
 D=docs/experiments/2026-11-12-question-refiner
-W=${1:-3}
-SUF=""; [ "$W" != "3" ] && SUF="-k$W"
+W=${1:-5}
+MENU=${2:-all}
+SUF="-k$W-$MENU"
 KEEP="$HOME/.depweaver-qa-cache"
 LOG=$(mktemp -d "${TMPDIR:-/tmp}/refiner.XXXX")
 command -v mvn >/dev/null || { echo "找不到 mvn"; exit 1; }
@@ -28,8 +30,8 @@ mvn -q clean compile test-compile > "$LOG/compile.log" 2>&1 || { echo "編譯失
 mkdir -p target/qa-calibration
 cp "$KEEP"/*.json target/qa-calibration/ 2>/dev/null
 
-echo "== 1/2 問句修飾 hold-out，模型看 $W 個候選意圖（約 2–4 分鐘）"
-mvn -q test -Dqa.calibrate=true -Dqa.refiner.shortlist="$W" -Dtest=QuestionRefinerHoldoutTest -Dsurefire.failIfNoSpecifiedTests=false > "$LOG/refine.log" 2>&1
+echo "== 1/2 問句修飾 hold-out，最近 $W 個意圖各 3 句例句、其餘 $MENU（約 2–4 分鐘）"
+mvn -q test -Dqa.calibrate=true -Dqa.refiner.shortlist="$W" -Dqa.refiner.menu="$MENU" -Dtest=QuestionRefinerHoldoutTest -Dsurefire.failIfNoSpecifiedTests=false > "$LOG/refine.log" 2>&1
 [ -f target/qa-calibration/refine-summary.md ] || { echo "沒有產出，log 在 $LOG/refine.log"; tail -30 "$LOG/refine.log"; exit 1; }
 cp target/qa-calibration/refine-summary.md "$D/refine-summary$SUF.md"
 cp target/qa-calibration/refine-per-question.csv "$D/refine-per-question$SUF.csv"
@@ -48,5 +50,5 @@ echo
 grep -E "^accuracy" "$D/router-calibration.txt"
 echo
 echo "完整結果：$D/refine-summary$SUF.md、$D/refine-per-question$SUF.csv、$D/refine-band$SUF.csv；log：$LOG"
-echo "傳回來：git add $D && git commit -m 'question refiner: machine B hold-out run (shortlist $W)' && git push"
-echo "（push 不行的話，把 refine-summary.md 貼給我就好）"
+echo "傳回來：git add $D && git commit -m 'question refiner: machine B hold-out run (shortlist $W, menu $MENU)' && git push"
+echo "（push 不行的話，把 refine-summary$SUF.md 貼給我就好）"
