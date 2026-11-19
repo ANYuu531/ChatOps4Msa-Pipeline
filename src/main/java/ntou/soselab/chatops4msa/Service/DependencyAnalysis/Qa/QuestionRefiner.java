@@ -56,11 +56,16 @@ public final class QuestionRefiner {
         String complete(String system, String user);
     }
 
-    /** The intents the model is shown: the three nearest, with the nearest examples of each. */
+    /** The menu the model is shown: the nearest intents with the nearest examples of each, every other intent with one. */
     static final int INTENTS = 5;
     static final int EXAMPLES_PER_INTENT = 3;
     static final int REST_EXAMPLES = 1;
+    /** Before a rewording is accepted, ask once more whether it asks the same thing as the question (one small call). */
+    static final boolean JUDGE = true;
     private static final String PROMPT_FILE = "prompts/question_refine.txt";
+    private static final String JUDGE_FILE = "prompts/question_same.txt";
+    /** The first line of the judge prompt, so a test double can tell the two prompts apart. */
+    private static final String JUDGE_MARK = "You compare two questions";
     static final String NONE = "none";
 
     /** What the model proposed and what became of it. */
@@ -75,15 +80,23 @@ public final class QuestionRefiner {
         /** True when {@link #rerouted} is the decision to use instead of the planner. */
         public final boolean accepted;
         public final String reason;
+        /** The same-meaning judge's answer on a cleanly routed rewording; {@code null} when it was not asked or did not answer. */
+        public final Boolean same;
 
         Result(List<String> shortlist, String proposedIntent, String rewrite, SemanticRouter.Decision rerouted,
                boolean accepted, String reason) {
+            this(shortlist, proposedIntent, rewrite, rerouted, accepted, reason, null);
+        }
+
+        Result(List<String> shortlist, String proposedIntent, String rewrite, SemanticRouter.Decision rerouted,
+               boolean accepted, String reason, Boolean same) {
             this.shortlist = shortlist;
             this.proposedIntent = proposedIntent;
             this.rewrite = rewrite;
             this.rerouted = rerouted;
             this.accepted = accepted;
             this.reason = reason;
+            this.same = same;
         }
 
         @Override
@@ -135,17 +148,20 @@ public final class QuestionRefiner {
     private final int intents;
     /** Examples for every other intent: {@link #REST_EXAMPLES} (the whole menu) or 0 (the nearest only). */
     private final int restExamples;
+    /** Whether a cleanly routed rewording is still compared with the question before it is accepted. */
+    private final boolean judge;
+    private final String judgeTemplate;
 
     public QuestionRefiner(SemanticRouter router, SemanticRouter.Embedder embedder, Chat chat) {
         this(router, embedder, chat, DEFAULT_BAND_SCORE, DEFAULT_BAND_LEAD);
     }
 
     public QuestionRefiner(SemanticRouter router, SemanticRouter.Embedder embedder, Chat chat, double bandScore, double bandLead) {
-        this(router, embedder, chat, bandScore, bandLead, INTENTS, REST_EXAMPLES);
+        this(router, embedder, chat, bandScore, bandLead, INTENTS, REST_EXAMPLES, JUDGE);
     }
 
     public QuestionRefiner(SemanticRouter router, SemanticRouter.Embedder embedder, Chat chat, double bandScore, double bandLead,
-                           int intents, int restExamples) {
+                           int intents, int restExamples, boolean judge) {
         this.router = router;
         this.embedder = embedder;
         this.chat = chat;
@@ -153,7 +169,21 @@ public final class QuestionRefiner {
         this.bandLead = bandLead;
         this.intents = Math.max(1, intents);
         this.restExamples = Math.max(0, restExamples);
-        this.template = loadTemplate();
+        this.judge = judge;
+        this.template = loadTemplate(PROMPT_FILE, "Reword the user's question as one of these kinds, keeping its meaning and service names:\n<CANDIDATES>\n"
+                + "Reply with {\"intent\": \"<kind or none>\", \"rewrite\": \"<one sentence>\"} only.");
+        this.judgeTemplate = loadTemplate(JUDGE_FILE, JUDGE_MARK + " about a dependency graph. Does B ask exactly the same thing as A "
+                + "(same kind, same services, same direction and polarity)? Reply with {\"same\": true} or {\"same\": false} only.");
+    }
+
+    /** Whether the same-meaning judge runs before a rewording is accepted. */
+    public boolean judge() {
+        return judge;
+    }
+
+    /** True for the judge's system prompt rather than the rewording prompt. */
+    static boolean isJudgePrompt(String system) {
+        return system != null && system.startsWith(JUDGE_MARK);
     }
 
     /** How many nearest intents carry the full set of examples. */
@@ -240,7 +270,33 @@ public final class QuestionRefiner {
         SemanticRouter.Decision d = router.routeQuestion(p.rewrite, v.get(0), mentioned);
         if (!d.confident) return new Result(shortlist, p.intent, p.rewrite, d, false, "rewrite routes unsure");
         if (!d.intent.equals(p.intent)) return new Result(shortlist, p.intent, p.rewrite, d, false, "rewrite routes to another intent");
-        return new Result(shortlist, p.intent, p.rewrite, d, true, "");
+        if (!judge) return new Result(shortlist, p.intent, p.rewrite, d, true, "");
+        // Routing cleanly to the intent the model named only says the rewording is a good example of
+        // that intent — not that it is still the user's question (11/19: "what is missing from the
+        // namespace compared to the code?" became "what is documented but not evidenced in code?").
+        Boolean same = sameMeaning(question, p.rewrite);
+        if (same == null) return new Result(shortlist, p.intent, p.rewrite, d, false, "no judge answer", null);
+        if (!same) return new Result(shortlist, p.intent, p.rewrite, d, false, "rewrite drifts from the question", false);
+        return new Result(shortlist, p.intent, p.rewrite, d, true, "", true);
+    }
+
+    /** One small call: does the rewording ask exactly what the question asks? {@code null} when the model gave no usable answer. */
+    Boolean sameMeaning(String question, String rewrite) {
+        String response;
+        try {
+            response = chat == null ? null : chat.complete(judgeTemplate, "A: " + question + "\nB: " + rewrite);
+        } catch (Exception e) {
+            response = null;
+        }
+        if (response == null) return null;
+        int from = response.indexOf('{'), to = response.lastIndexOf('}');
+        if (from < 0 || to <= from) return null;
+        try {
+            JSONObject o = new JSONObject(response.substring(from, to + 1));
+            return o.has("same") ? o.getBoolean("same") : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /** The prompt with the shortlisted intents and their nearest examples filled in. */
@@ -282,13 +338,12 @@ public final class QuestionRefiner {
         }
     }
 
-    private static String loadTemplate() {
+    private static String loadTemplate(String file, String fallback) {
         try {
-            return new String(FileCopyUtils.copyToByteArray(new ClassPathResource(PROMPT_FILE).getInputStream()), StandardCharsets.UTF_8);
+            return new String(FileCopyUtils.copyToByteArray(new ClassPathResource(file).getInputStream()), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            System.out.println("[WARNING] question refine prompt missing (" + PROMPT_FILE + ")");
-            return "Reword the user's question as one of these kinds, keeping its meaning and service names:\n<CANDIDATES>\n"
-                    + "Reply with {\"intent\": \"<kind or none>\", \"rewrite\": \"<one sentence>\"} only.";
+            System.out.println("[WARNING] prompt missing (" + file + ")");
+            return fallback;
         }
     }
 }

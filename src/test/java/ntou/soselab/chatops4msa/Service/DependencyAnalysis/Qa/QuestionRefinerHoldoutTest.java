@@ -122,7 +122,8 @@ public class QuestionRefinerHoldoutTest {
             // The same gates as QuestionRefiner.refine, in the same order: language first (it never
             // depends on the thresholds), then a confident route to the intent the model named.
             return d != null && QuestionRefiner.sameLanguage(row.question, refined.rewrite)
-                    && d.confident && d.intent.equals(refined.proposedIntent);
+                    && d.confident && d.intent.equals(refined.proposedIntent)
+                    && (!judge() || Boolean.TRUE.equals(refined.same));
         }
 
         QuestionRefiner.Verdict verdict(double t, double m, double h, String originalIntent) {
@@ -310,8 +311,9 @@ public class QuestionRefinerHoldoutTest {
         assertTrue(router.ensureIndexed(), "could not index the examples");
         // -Dqa.refiner.shortlist=N: how many nearest intents carry 3 examples; -Dqa.refiner.menu=nearest: the model sees
         // those only (the 11/19 runs), menu=all: every other intent with one example (production since 11/19)
+        // -Dqa.refiner.judge=off: skip the same-meaning check on would-be-accepted rewordings (production: on)
         QuestionRefiner refiner = new QuestionRefiner(router, embeddings, chat,
-                QuestionRefiner.DEFAULT_BAND_SCORE, QuestionRefiner.DEFAULT_BAND_LEAD, shortlistWidth(), restExamples());
+                QuestionRefiner.DEFAULT_BAND_SCORE, QuestionRefiner.DEFAULT_BAND_LEAD, shortlistWidth(), restExamples(), judge());
         GraphQueryPlanner plannerPrompt = new GraphQueryPlanner(null);
 
         List<Row> rows = new ArrayList<>();
@@ -385,7 +387,7 @@ public class QuestionRefinerHoldoutTest {
     private static void writePerQuestion(List<Row> rows, Thresholds cur, Band selected) throws Exception {
         StringBuilder sb = new StringBuilder(CalibrationSupport.csvRow("project", "lang", "has_node", "expected", "question",
                 "router_intent", "router_score", "router_runner_up", "router_confident", "in_selected_band", "second_opinion",
-                "refinable", "shortlist", "model_intent", "rewrite", "rewrite_route", "rewrite_outcome", "pick_outcome",
+                "refinable", "shortlist", "model_intent", "rewrite", "rewrite_route", "judge", "rewrite_outcome", "pick_outcome",
                 "planner_intents", "planner_outcome", "pipeline_outcome", "note"));
         for (Row r : rows) {
             SemanticRouter.Decision d = r.route(cur.t, cur.m, cur.h);
@@ -399,6 +401,7 @@ public class QuestionRefinerHoldoutTest {
                     r.refinable, r.refined == null ? "" : String.join("|", r.refined.shortlist),
                     r.refined == null ? "" : r.refined.proposedIntent, r.refined == null ? "" : r.refined.rewrite,
                     rr == null ? "" : rr.toString(),
+                    r.refined == null || r.refined.same == null ? "" : (r.refined.same ? "same" : "drifts"),
                     deferred ? r.rewriteOutcome(cur.t, cur.m, cur.h) : "", deferred ? r.pickOutcome() : "",
                     r.plannerIntents(), r.plannerOutcome() + (r.planError.isEmpty() ? "" : " (" + r.planError + ")"),
                     deferred ? r.pipelineOutcome(cur.t, cur.m, cur.h) : "", r.row.note));
@@ -443,15 +446,21 @@ public class QuestionRefinerHoldoutTest {
         return "nearest".equalsIgnoreCase(System.getProperty("qa.refiner.menu", "all")) ? 0 : QuestionRefiner.REST_EXAMPLES;
     }
 
+    /** -Dqa.refiner.judge=off: no same-meaning check (the 11/19 third run); on (production): one more small call per accepted rewording. */
+    static boolean judge() {
+        return !"off".equalsIgnoreCase(System.getProperty("qa.refiner.judge", "on"));
+    }
+
     private static String summary(List<Row> rows, String embeddingModel, ChatCache chat, Thresholds cur, List<Thresholds> loose,
                                   List<Band> grid, Band selected) {
         double t = cur.t, m = cur.m, h = cur.h;
         StringBuilder sb = new StringBuilder();
         sb.append("# Question refiner on the hold-out\n\n");
         sb.append("- embedding model: `").append(embeddingModel).append("`; chat model: `").append(chat.model()).append("`\n");
-        sb.append(String.format(Locale.ROOT, "- thresholds T=%.2f M=%.2f H=%.2f; menu: %d nearest intents × %d examples, %s%n",
+        sb.append(String.format(Locale.ROOT, "- thresholds T=%.2f M=%.2f H=%.2f; menu: %d nearest intents × %d examples, %s; same-meaning judge %s%n",
                 t, m, h, shortlistWidth(), QuestionRefiner.EXAMPLES_PER_INTENT,
-                restExamples() > 0 ? "every other intent × " + restExamples() + " example" : "nothing else"));
+                restExamples() > 0 ? "every other intent × " + restExamples() + " example" : "nothing else",
+                judge() ? "on" : "off"));
         Predicate<Row> deferred = r -> !r.route(t, m, h).confident;
         long n = rows.size(), nDeferred = rows.stream().filter(deferred).count();
         long refinableDeferred = rows.stream().filter(r -> deferred.test(r) && r.refinable).count();
@@ -618,7 +627,8 @@ public class QuestionRefinerHoldoutTest {
         Row r = new Row(new HoldoutRow("sock-shop", "q " + expected, new LinkedHashSet<>(List.of(expected)), ""), List.of());
         r.scores = route;
         r.refinable = true;
-        r.refined = new QuestionRefiner.Result(List.of(modelIntent), modelIntent, "rewrite", null, false, "");
+        // A rewording the judge passed: the band tests are about the routes, not the judge.
+        r.refined = new QuestionRefiner.Result(List.of(modelIntent), modelIntent, "rewrite", null, false, "", true);
         r.rewriteScores = scores(rewriteIntent, 1.0, "about-report", 0.2);
         r.plan = plannerOp == null ? List.of() : List.of(new GraphQuery(plannerOp, List.of()));
         return r;

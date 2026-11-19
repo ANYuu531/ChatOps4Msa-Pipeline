@@ -45,8 +45,13 @@ public class QuestionRefinerTest {
         return g;
     }
 
+    /** The model's rewording answer; the same-meaning judge (second prompt) says "same" unless told otherwise. */
     private static QuestionRefiner.Chat says(String json) {
-        return (system, user) -> json;
+        return says(json, "{\"same\": true}");
+    }
+
+    private static QuestionRefiner.Chat says(String json, String judgeJson) {
+        return (system, user) -> QuestionRefiner.isJudgePrompt(system) ? judgeJson : json;
     }
 
     /** Routes as production does, then refines when the router was unsure. */
@@ -99,6 +104,38 @@ public class QuestionRefinerTest {
         for (String name : intents.subList(2, intents.size())) {
             assertEquals(1, menu.stream().filter(x -> x.intent.name.equals(name)).count(), name);
         }
+    }
+
+    @Test
+    void rejectedWhenTheJudgeSaysTheRewordingAsksSomethingElse() {
+        // 11/19 third run: "what is missing from the namespace compared to the code?" came back as
+        // "what is documented but not evidenced in code?" — routed cleanly to the intent the model
+        // named, so only a comparison with the original question can catch it.
+        String q = "流量 沒跑到 的邊 哪些";
+        String ok = "{\"intent\": \"uncovered\", \"rewrite\": \"哪些邊沒跑到？\"}";
+        QuestionRefiner.Result drift = refine(strictRouter(), says(ok, "{\"same\": false}"), q);
+        assertFalse(drift.accepted, drift.toString());
+        assertEquals("rewrite drifts from the question", drift.reason);
+        assertEquals(Boolean.FALSE, drift.same);
+        assertNotNull(drift.rerouted);
+        QuestionRefiner.Result silent = refine(strictRouter(), says(ok, "not json"), q);
+        assertFalse(silent.accepted, silent.toString());
+        assertEquals("no judge answer", silent.reason);
+        assertNull(silent.same);
+        QuestionRefiner.Result same = refine(strictRouter(), says(ok), q);
+        assertTrue(same.accepted, same.toString());
+        assertEquals(Boolean.TRUE, same.same);
+        // The judge sees both questions and nothing about intents.
+        AtomicReference<String> judgeUser = new AtomicReference<>();
+        QuestionRefiner.Chat spy = (s, u) -> {
+            if (QuestionRefiner.isJudgePrompt(s)) {
+                judgeUser.set(u);
+                return "{\"same\": true}";
+            }
+            return ok;
+        };
+        refine(strictRouter(), spy, q);
+        assertEquals("A: " + q + "\nB: 哪些邊沒跑到？", judgeUser.get());
     }
 
     @Test

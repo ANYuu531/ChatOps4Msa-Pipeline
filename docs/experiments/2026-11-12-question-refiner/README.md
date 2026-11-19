@@ -109,6 +109,24 @@ bash docs/experiments/2026-11-12-question-refiner/run-on-machine-b.sh 3 nearest 
 2. **語言守門**：改寫句的文字系統要和原句一樣（`QuestionRefiner.sameLanguage`，有無漢字），不一樣就拒絕、退回 planner。在前兩輪的 csv 上離線算：第一輪會攔 1 句（對的，退回 planner 也對）、第二輪攔 3 句（翻譯那句＋2 句對的，退回 planner 也對）。
 3. **prompt 明說 none**：翻譯／改格式／摘要報告、效能數字、程式碼、授權、設定值、常識都是 none；並明說「反義是另一個種類，不要把 with／without、confirmed／unconfirmed 翻掉」。
 
+## 結果三（2026-11-19 機器 B 第三輪，`refine-summary-k5-all.md`；全部意圖＋語言守門，還沒有意思判定）
+
+| 66 句沒把握的 | planner | 最近 3 | 最近 5 | 全部意圖＋語言守門 |
+|---|---|---|---|---|
+| 對 | 60 | 60 | 62 | **65** |
+| 錯 | 3 | 5 | 4 | **1** |
+| none | 3 | 1 | 0 | 0 |
+
+有把握 36 → 83（81.4%）；採用 47、採用但錯 **1**；被拒 10（none 7、換語言 1、路由沒把握 1、路到別的意圖 1）。pick 對 56 錯 1：模型看到全部意圖後標籤本身就準了。帶寬仍 0.06／0.02，校準仍 33/33。
+
+前兩輪錯的 6 句全部解決：accounts-db 當機→impact-of 對、實測確認→observed-edges 對、broker→async 對、still waiting→uncovered 對、ledger-db 那句被「路到別的意圖」擋回 planner（對）、翻成日文模型自己說 none。
+
+**剩的 1 句**：`what is missing from the namespace compared to the code?`（期望 undeployed）→ 模型把 namespace 當成文件，改成 "what is documented but not evidenced in code?"、標 mentioned-only，改寫句路到 mentioned-only 1.00 和標籤一致，守門過了。第一輪它是對的（改成 "what is referenced but missing from the namespace?"）。這一句候選沒缺席、語言沒換，是純粹的意思漂移：只有「改寫句和原句意思一樣嗎」這道門攔得到。
+
+## 11/19 第二次修法（第四輪待跑：`run-on-machine-b.sh` 不帶參數 → `refine-summary-k5-all-judge.md`）
+
+**意思判定**（`QuestionRefiner.sameMeaning`、`prompts/question_same.txt`）：改寫句過了語言、路由、標籤一致三道門之後，再問模型一次「B 問的和 A 是不是完全同一件事」（同種資訊、同服務、同方向、同正反、同範圍），回 `{"same": true|false}`；false 或沒答案都拒絕、退回 planner。只對會被採用的改寫句問，第三輪是 47 句、47 次小呼叫。`-Dqa.refiner.judge=off`／腳本第三個參數 `off` 可關掉對照。
+
 在採用但錯回到 0 之前，`dependency.qa.question-refiner` 不該預設開；帶寬 0.06／0.02 和它一起決定。
 
 **第二部分（帶寬）**：選定 **0.06／0.02**。目前門檻下帶寬裡 9 句、全部 AGREE、誤傷 0、白問 0（本來就沒有可攔的）。替身：「≤1 錯」那組（0.51/0.08/0.80）錯的 1 句在帶寬裡、第二意見說 DISAGREE；9/14 之前那組（0.58/0.04/0.85）錯的 10 句全在帶寬裡，DISAGREE 8、AGREE 1（「有哪些依賴是經過實測確認存在的」，和第一部分錯的是同一句）、FAILED 1（none 那句）。天花板「H 以下全部」也是攔 8，所以 0.06／0.02 用最少的呼叫（9 句對 31 句）拿到一樣的攔截。33 句校準仍 33/33、有把握的沒被碰。
